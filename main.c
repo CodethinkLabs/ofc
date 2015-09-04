@@ -2,18 +2,7 @@
 #include <stdio.h>
 
 #include "file.h"
-
-
-static bool print_line(const line_t* line, void* param)
-{
-	(void)param; /* Unused */
-
-	const char* strz = line_strz(line, true);
-	if (!strz) return false;
-
-	printf("%s\n", strz);
-	return true;
-}
+#include "preprocess.h"
 
 
 int main(int argc, const char* argv[])
@@ -33,19 +22,27 @@ int main(int argc, const char* argv[])
 
 	lang_opts_t opts = LANG_OPTS_F77;
 
-	file_t* file = file_create(path, opts);
+	file_t* file = file_create(path);
 	if (!file)
 	{
-		fprintf(stderr, "Error: Failed process source file '%s'\n", path);
+		fprintf(stderr, "Error: Failed read source file '%s'\n", path);
 		return EXIT_FAILURE;
 	}
 
-	bool success = file_foreach_line(
-		file, NULL, print_line);
+	preprocess_t* context = preprocess(file, opts);
+	if (!context)
+	{
+		fprintf(stderr, "Error: Failed preprocess source file '%s'\n", path);
+		file_delete(file);
+		return EXIT_FAILURE;
+	}
+
+	const char* output = preprocess_strz(context);
+	printf("%s\n", output);
 
 	/* TODO - Further process file. */
 
-	file_delete(file);
+	preprocess_delete(context);
 
-	return (success ? EXIT_SUCCESS : EXIT_FAILURE);
+	return EXIT_SUCCESS;
 }

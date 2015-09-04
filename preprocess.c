@@ -1,9 +1,60 @@
 #include "preprocess.h"
+#include "rope.h"
+#include "label_table.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 
+
+struct preprocess_s
+{
+	file_t*     file;
+	lang_opts_t opts;
+
+	rope_t*        output;
+	label_table_t* labels;
+};
+
+
+
+static preprocess_t* preprocess__create(
+	file_t* file, lang_opts_t opts)
+{
+	preprocess_t* context
+		= (preprocess_t*)malloc(
+			sizeof(preprocess_t));
+	if (!context) return NULL;
+
+	context->file = file;
+	context->opts = opts;
+
+	context->output = rope_create();
+	context->labels = label_table_create();
+
+	if (!context->output
+		|| !context->labels)
+	{
+		rope_delete(context->output);
+		label_table_delete(context->labels);
+		free(context);
+		return NULL;
+	}
+
+	return context;
+}
+
+void preprocess_delete(preprocess_t* context)
+{
+	if (!context)
+		return;
+
+	label_table_delete(context->labels);
+	rope_delete(context->output);
+	file_delete(context->file);
+	free(context);
+}
 
 
 
@@ -190,16 +241,16 @@ static unsigned preprocess_fixed_form__code(
 	return i;
 }
 
-bool preprocess_fixed_form(file_t* file)
+bool preprocess__fixed_form(preprocess_t* context)
 {
-	if (!file)
-		return false;
-
-	const char* path = file_get_path(file);
-	const char* src  = file_get_strz(file);
-	lang_opts_t opts = file_get_lang_opts(file);
+	const char* path = file_get_path(context->file);
+	const char* src  = file_get_strz(context->file);
+	lang_opts_t opts = context->opts;
 
 	bool first_code_line = true;
+
+	unsigned newline_row = 0;
+	unsigned newline_col = 0;
 
 	if (!src)
 		return false;
@@ -236,50 +287,120 @@ bool preprocess_fixed_form(file_t* file)
 			len = preprocess_fixed_form__code(
 				path, row, col, &src[pos], opts, &rope);
 			pos += len;
+			col += len;
 			if (len == 0)
 				return false;
 		}
 
+		/* Skip to the actual end of the line, including all ignored characters. */
 		for (; (src[pos] != '\0') && !is_vspace(src[pos]); pos++);
-		if (is_vspace(src[pos])) pos++;
 
 		if (first_code_line && continuation)
 		{
 			fprintf(stderr, "Warning:%s:%u: Initial line shouldn't be a continuation, ignoring.\n", path, (row + 1));
 		}
 
-		if (has_label && continuation)
+		if (has_label)
 		{
-			fprintf(stderr, "Warning:%s:%u: Labeling a continuation line doesn't make sense, ignoring.\n", path, (row + 1));
-		}
-
-		/* Skip empty line. */
-		if (!rope)
-			continue;
-
-		if (first_code_line || !continuation)
-		{
-			line_t* line = line_create((has_label ? &label : NULL), rope);
-			if (!line) return false;
-
-			if (!file_append_line(file, line))
+			if (continuation)
 			{
-				line_delete(line);
-				return false;
+				fprintf(stderr, "Warning:%s:%u: Labeling a continuation line doesn't make sense, ignoring.\n", path, (row + 1));
 			}
-
-			first_code_line = false;
+			else
+			{
+				/* Mark current position in rope as label. */
+				unsigned position = rope_len(context->output);
+				if (!label_table_add(context->labels, position, label))
+					return false;
+			}
 		}
-		else
+
+		if (rope)
 		{
-			bool append_success = file_append_rope(file, rope);
+			static const char* PREPROCESS_NEWLINE = "\n";
+
+			/* Insert single newline character at the end of each line in output. */
+			if (!first_code_line && !continuation
+				&& !rope_append_strn(context->output,
+					path, newline_row, newline_col, PREPROCESS_NEWLINE, 1))
+				return false;
+
+			/* Append non-empty line to output. */
+			bool append_success = rope_append_rope(context->output, rope);
 			rope_delete(rope);
 			if (!append_success)
 				return false;
+
+			newline_row = row;
+			newline_col = col;
+
+			first_code_line = false;
 		}
 
-
+		/* Eat vspace in input code. */
+		if (is_vspace(src[pos])) pos++;
 	}
 
 	return true;
+}
+
+
+preprocess_t* preprocess(file_t* file, lang_opts_t opts)
+{
+	if (!file)
+		return NULL;
+
+	preprocess_t* context = preprocess__create(file, opts);
+	if (!context) return NULL;
+
+	bool success;
+	switch (opts.form)
+	{
+		case LANG_FORM_FIXED:
+		case LANG_FORM_TAB:
+			success = preprocess__fixed_form(context);
+			break;
+		default:
+			/* TODO - Parse free-form. */
+			success = false;
+			break;
+	}
+
+	if (!success)
+	{
+		preprocess_delete(context);
+		return NULL;
+	}
+
+	return context;
+}
+
+
+const char* preprocess_strz(const preprocess_t* context)
+{
+	if (!context)
+		return NULL;
+	return rope_strz(context->output);
+}
+
+bool preprocess_debug_position(
+	const preprocess_t* context, unsigned position,
+	const char** file, unsigned *row, unsigned* col)
+{
+	if (!context)
+		return false;
+	return rope_position(
+		context->output, position,
+		file, row, col);
+}
+
+bool preprocess_has_label(
+	const preprocess_t* context, unsigned position,
+	unsigned* number)
+{
+	if (!context)
+		return false;
+	return label_table_find(
+		context->labels,
+		position, number);
 }

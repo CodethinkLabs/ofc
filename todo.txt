@@ -1,6 +1,3 @@
-Make preprocessor output a single character stream with newlines in it.
-Implement file_position to get the debug position of any character (including inserted newline) in the stream.
-Implement file_label to which should use a hash table to determine whether a character in the stream has an assoiciated label (first character in stream).
 Change processing to ignore semicolons or double semi-colons at end of line.
 Add a post-process step to convert semicolons into newlines?
 Add a free-form parser that will insert a single space in place of multiple whitespace in the original source.
