@@ -196,9 +196,32 @@ static unsigned preprocess_fixed_form__label(
 	return i;
 }
 
+
+/* This struct holds all temporary preprocessor state. */
+typedef struct
+{
+	char string_delim;
+	bool was_escape;
+
+	bool     hollerith_out_of_range;
+	unsigned hollerith_size;
+	unsigned hollerith_remain;
+} pre_state_t;
+
+static const pre_state_t PRE_STATE_DEFAULT =
+{
+	.string_delim = '\0',
+	.was_escape = false,
+	.hollerith_out_of_range = false,
+	.hollerith_size = 0,
+	.hollerith_remain = 0,
+};
+
+
 static unsigned preprocess_fixed_form__code(
 	const char* path, unsigned row, unsigned col,
-	const char* src, lang_opts_t opts, rope_t** rope)
+	const char* src, lang_opts_t opts,
+	pre_state_t* state, rope_t** rope)
 {
 	if (!src)
 		return 0;
@@ -215,10 +238,72 @@ static unsigned preprocess_fixed_form__code(
 	for (i = 0; i < remain; i++)
 	{
 		bool eol = ((src[i] == '\0')
-			|| (src[i] == '!')
 			|| is_vspace(src[i]));
 
-		if (eol || is_hspace(src[i]))
+		bool ignore = false;
+		if (state->hollerith_remain > 0)
+		{
+			/* In a hollerith constant. */
+			state->hollerith_remain--;
+		}
+		else if (state->string_delim != '\0')
+		{
+			/* In a string. */
+			if ((src[i] == state->string_delim)
+				&& !state->was_escape)
+				state->string_delim = '\0';
+
+			state->was_escape = (src[i] == '\\');
+		}
+		else
+		{
+			/* Not in a string. */
+
+			if (src[i] == '!')
+			{
+				eol = true;
+			}
+			else if ((src[i] == '\'')
+				|| (src[i] == '\"'))
+			{
+				/* Entering a string. */
+				state->string_delim = src[i];
+				state->was_escape = false;
+			}
+
+			if (toupper(src[i] == 'H'))
+			{
+				if (state->hollerith_out_of_range)
+				{
+					fprintf(stderr, "Warning: Potential hollerith constant has length over 4GiB, ignoring.\n");
+				}
+				else
+				{
+					/* Entering a hollerith constant. */
+					state->hollerith_remain = state->hollerith_size;
+				}
+			}
+			else if (isdigit(src[i]))
+			{
+				unsigned nsize = (state->hollerith_size * 10) + (src[i] - '0');
+
+				/* Is the hollerith length going out of range? */
+				if (((nsize / 10) != state->hollerith_size)
+					|| ((nsize % 10) != (src[i] - '0')))
+					state->hollerith_out_of_range = true;
+				else
+					state->hollerith_size = nsize;
+			}
+			else
+			{
+				state->hollerith_out_of_range = false;
+				state->hollerith_size = 0;
+			}
+
+			ignore = is_hspace(src[i]);
+		}
+
+		if (eol || ignore)
 		{
 			if ((size > 0) && rope && !rope_append_strn(
 				r, path, row, col, base, size))
@@ -252,6 +337,8 @@ bool preprocess__fixed_form(preprocess_t* context)
 	unsigned newline_row = 0;
 	unsigned newline_col = 0;
 
+	pre_state_t state = PRE_STATE_DEFAULT;
+
 	if (!src)
 		return false;
 
@@ -276,24 +363,21 @@ bool preprocess__fixed_form(preprocess_t* context)
 		col  = len;
 		pos += len;
 
-		for(; is_hspace(src[pos]); pos++, col++);
-
-		rope_t* rope = NULL;
-		if ((col < opts.columns)
-			&& (src[pos] != '\0')
-			&& !is_vspace(src[pos])
-			&& (src[pos] != '!'))
+		if (!continuation)
 		{
-			len = preprocess_fixed_form__code(
-				path, row, col, &src[pos], opts, &rope);
-			pos += len;
-			col += len;
-			if (len == 0)
-				return false;
-		}
+			if (state.string_delim != '\0')
+			{
+				fprintf(stderr, "Warning:%s:%u: Unterminated string.\n", path, (row + 1));
+			}
 
-		/* Skip to the actual end of the line, including all ignored characters. */
-		for (; (src[pos] != '\0') && !is_vspace(src[pos]); pos++);
+			if (state.hollerith_remain > 0)
+			{
+				fprintf(stderr, "Warning:%s:%u: Incomplete potential hollerith constant.\n", path, (row + 1));
+			}
+
+			/* Wipe state if not a continuation line. */
+			state = PRE_STATE_DEFAULT;
+		}
 
 		if (first_code_line && continuation)
 		{
@@ -314,6 +398,35 @@ bool preprocess__fixed_form(preprocess_t* context)
 					return false;
 			}
 		}
+
+		for(; is_hspace(src[pos]); pos++, col++);
+
+		bool is_comment = ((state.string_delim == '\0')
+			&& (state.hollerith_remain == 0)
+			&& (src[pos] == '!'));
+
+		rope_t* rope = NULL;
+		if ((col < opts.columns)
+			&& (src[pos] != '\0')
+			&& !is_vspace(src[pos])
+			&& !is_comment)
+		{
+			len = preprocess_fixed_form__code(
+				path, row, col,
+				&src[pos], opts,
+				&state, &rope);
+			pos += len;
+			col += len;
+			if (len == 0)
+				return false;
+		}
+		else
+		{
+			fprintf(stderr, "Warning:%s:%u: Blank or comment line with non-empty first column.\n", path, (row + 1));
+		}
+
+		/* Skip to the actual end of the line, including all ignored characters. */
+		for (; (src[pos] != '\0') && !is_vspace(src[pos]); pos++);
 
 		if (rope)
 		{
