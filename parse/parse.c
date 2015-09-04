@@ -1,7 +1,12 @@
+#include "parse.h"
+#include <string.h>
+#include <ctype.h>
+
+
 unsigned parse_keyword(const char* src, const char* keyword)
 {
 	unsigned len = strlen(keyword);
-	return (strncmp(src, keyword, len) == 0 ? len : 0);
+	return (strncasecmp(src, keyword, len) == 0 ? len : 0);
 }
 
 unsigned parse_name(const char* src, parse_t* entry)

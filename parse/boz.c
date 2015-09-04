@@ -12,7 +12,7 @@ static bool is_base_digit(char c, unsigned base)
 	if ((c >= '0') && (c <= '9'))
 		value = (c - '0');
 	else
-		value = 10 + (c - 'A');
+		value = 10 + (toupper(c) - 'A');
 	return (value < base);
 }
 

@@ -1,3 +1,9 @@
+#include "parse.h"
+#include <string.h>
+#include <ctype.h>
+
+
+
 unsigned parse_program(const char* src, parse_t* entry)
 {
 	unsigned i = parse_keyword(src, "PROGRAM");

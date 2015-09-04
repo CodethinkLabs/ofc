@@ -135,12 +135,7 @@ const char* rope_strz(const rope_t* rope)
 		unsigned i;
 		rope__string_t* str;
 		for (str = rope->base, i = 0; str; i += str->len, str = str->next)
-		{
-			/* Convert to uppercase since FORTRAN is case insensitive. */
-			unsigned j;
-			for (j = 0; j < str->len; j++)
-				strz[i + j] = toupper(str->src[j]);
-		}
+			memcpy(&strz[i], str->src, str->len);
 		strz[i] = '\0';
 
 		/* Cast to non-const because we're caching and
