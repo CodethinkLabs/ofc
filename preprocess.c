@@ -91,7 +91,7 @@ static unsigned preprocess_fixed_form__blank_or_comment(
 	{
 		unsigned i;
 		for (i = 1; (src[i] != '\0') && !is_vspace(src[i]); i++);
-		if (is_vspace) i++;
+		if (is_vspace(src[i])) i++;
 		return i;
 	}
 	else
@@ -134,7 +134,7 @@ static unsigned preprocess_fixed_form__label(
 				seen_digit = true;
 				unsigned nvalue = (label_value * 10) + (src[i] - '0');
 				if (((nvalue / 10) != label_value)
-					|| ((nvalue % 10) != (src[i] - '0')))
+					|| ((nvalue % 10U) != (unsigned)(src[i] - '0')))
 				{
 					/* TODO - Positional error. */
 					fprintf(stderr, "Error: Label number too large.\n");
@@ -180,8 +180,7 @@ static unsigned preprocess_fixed_form__label(
 		/* Empty maybe labelled statement */
 		if ((i < 5)
 			|| (src[i] == '\0')
-			|| is_vspace(src[i])
-			|| (src[i] == '!'))
+			|| is_vspace(src[i]))
 			return i;
 
 		is_cont = (!is_hspace(src[i]) && (src[i] != '0'));
@@ -271,7 +270,7 @@ static unsigned preprocess_fixed_form__code(
 				state->was_escape = false;
 			}
 
-			if (toupper(src[i] == 'H'))
+			if (toupper(src[i]) == 'H')
 			{
 				if (state->hollerith_out_of_range)
 				{
@@ -289,7 +288,7 @@ static unsigned preprocess_fixed_form__code(
 
 				/* Is the hollerith length going out of range? */
 				if (((nsize / 10) != state->hollerith_size)
-					|| ((nsize % 10) != (src[i] - '0')))
+					|| ((nsize % 10U) != (unsigned)(src[i] - '0')))
 					state->hollerith_out_of_range = true;
 				else
 					state->hollerith_size = nsize;
@@ -320,6 +319,13 @@ static unsigned preprocess_fixed_form__code(
 		if (size == 0)
 			base = &src[i];
 		size += 1;
+	}
+
+	if ((size > 0) && rope && !rope_append_strn(
+		r, path, row, col, base, size))
+	{
+		rope_delete(r);
+		return 0;
 	}
 
 	if (rope) *rope = r;
