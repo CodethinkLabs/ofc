@@ -15,7 +15,7 @@ struct rope_s
 struct rope__string_s
 {
 	const char* file;
-	unsigned    row, col;
+	unsigned    row, col, pos;
 	const char* src;
 	unsigned    len;
 
@@ -67,7 +67,7 @@ unsigned rope_len(const rope_t* rope)
 
 bool rope_append_strn(
 	rope_t* rope,
-	const char* file, unsigned row, unsigned col,
+	const char* file, unsigned row, unsigned col, unsigned pos,
 	const char* src, unsigned len)
 {
 	if (!rope)
@@ -81,6 +81,7 @@ bool rope_append_strn(
 	str->file = file;
 	str->row  = row;
 	str->col  = col;
+	str->pos  = pos;
 	str->src  = src;
 	str->len  = len;
 
@@ -112,7 +113,7 @@ bool rope_append_rope(rope_t* a, const rope_t* b)
 	for (str = b->base; str; str = str->next)
 	{
 		if (!rope_append_strn(a,
-			str->file, str->row, str->col,
+			str->file, str->row, str->col, str->pos,
 			str->src, str->len))
 			return false;
 	}
@@ -148,7 +149,7 @@ const char* rope_strz(const rope_t* rope)
 
 bool rope_position(
 	const rope_t* rope, unsigned offset,
-	const char** file, unsigned *row, unsigned* col)
+	const char** file, unsigned *row, unsigned* col, unsigned* pos)
 {
 	if (!rope)
 		return false;
@@ -162,6 +163,7 @@ bool rope_position(
 			if (file) *file = str->file;
 			if (row ) *row  = str->row;
 			if (col ) *col  = str->col + (offset - i);
+			if (pos ) *pos  = str->pos + (offset - i);
 			return true;
 		}
 	}

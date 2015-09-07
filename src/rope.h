@@ -12,7 +12,7 @@ unsigned rope_len(const rope_t* rope);
 
 bool rope_append_strn(
 	rope_t* rope,
-	const char* file, unsigned row, unsigned col,
+	const char* file, unsigned row, unsigned col, unsigned pos,
 	const char* src, unsigned len);
 
 /* This operation is non-atomic, on failure rope may be partially appended. */
@@ -22,6 +22,6 @@ const char* rope_strz(const rope_t* rope);
 
 bool rope_position(
 	const rope_t* rope, unsigned offset,
-	const char** file, unsigned *row, unsigned* col);
+	const char** file, unsigned *row, unsigned* col, unsigned* pos);
 
 #endif

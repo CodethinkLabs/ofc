@@ -37,10 +37,12 @@ int main(int argc, const char* argv[])
 		return EXIT_FAILURE;
 	}
 
-	const char* output = preprocess_strz(context);
-	printf("%s\n", output);
+	const rope_t* condense
+		= preprocess_condense_rope(context);
+	const char* strz = rope_strz(condense);
+	printf("%s\n", strz);
 
-	/* TODO - Further process file. */
+	/* TODO - Parse. */
 
 	preprocess_delete(context);
 

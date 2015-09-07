@@ -1,5 +1,4 @@
 #include "preprocess.h"
-#include "rope.h"
 #include "label_table.h"
 
 #include <stdlib.h>
@@ -13,7 +12,8 @@ struct preprocess_s
 	file_t*     file;
 	lang_opts_t opts;
 
-	rope_t*        output;
+	rope_t*        unformat;
+	rope_t*        condense;
 	label_table_t* labels;
 };
 
@@ -30,13 +30,16 @@ static preprocess_t* preprocess__create(
 	context->file = file;
 	context->opts = opts;
 
-	context->output = rope_create();
-	context->labels = label_table_create();
+	context->unformat = rope_create();
+	context->condense = rope_create();
+	context->labels   = label_table_create();
 
-	if (!context->output
+	if (!context->unformat
+		|| !context->condense
 		|| !context->labels)
 	{
-		rope_delete(context->output);
+		rope_delete(context->unformat);
+		rope_delete(context->condense);
 		label_table_delete(context->labels);
 		free(context);
 		return NULL;
@@ -51,7 +54,8 @@ void preprocess_delete(preprocess_t* context)
 		return;
 
 	label_table_delete(context->labels);
-	rope_delete(context->output);
+	rope_delete(context->condense);
+	rope_delete(context->unformat);
 	file_delete(context->file);
 	free(context);
 }
@@ -78,7 +82,7 @@ static bool is_hspace(char c)
 	return false;
 }
 
-static unsigned preprocess_fixed_form__blank_or_comment(
+static unsigned preprocess__unformat_fixed_form_blank_or_comment(
 	const char* src, lang_opts_t opts)
 {
 	if (!src)
@@ -110,7 +114,7 @@ static unsigned preprocess_fixed_form__blank_or_comment(
 	return 0;
 }
 
-static unsigned preprocess_fixed_form__label(
+static unsigned preprocess__unformat_fixed_form_label(
 	const char* src, lang_opts_t opts,
 	bool* has_label, unsigned* label, bool* continuation)
 {
@@ -195,144 +199,26 @@ static unsigned preprocess_fixed_form__label(
 	return i;
 }
 
-
-/* This struct holds all temporary preprocessor state. */
-typedef struct
-{
-	char string_delim;
-	bool was_escape;
-
-	bool     hollerith_out_of_range;
-	unsigned hollerith_size;
-	unsigned hollerith_remain;
-} pre_state_t;
-
-static const pre_state_t PRE_STATE_DEFAULT =
-{
-	.string_delim = '\0',
-	.was_escape = false,
-	.hollerith_out_of_range = false,
-	.hollerith_size = 0,
-	.hollerith_remain = 0,
-};
-
-
-static unsigned preprocess_fixed_form__code(
-	const char* path, unsigned row, unsigned col,
-	const char* src, lang_opts_t opts,
-	pre_state_t* state, rope_t** rope)
+static unsigned preprocess__unformat_fixed_form_code(
+	const char* path, unsigned row, unsigned col, unsigned pos,
+	const char* src, lang_opts_t opts, rope_t** rope)
 {
 	if (!src)
 		return 0;
 
 	unsigned remain = (col < opts.columns ? (opts.columns - col) : 0);
 
-	rope_t* r = (rope ? rope_create() : NULL);
-	if (!r) return 0;
-
-	const char* base = src;
-	unsigned    size = 0;
-
 	unsigned i;
-	for (i = 0; i < remain; i++)
-	{
-		bool eol = ((src[i] == '\0')
-			|| is_vspace(src[i]));
+	for (i = 0; (i < remain) && !is_vspace(src[i]) && (src[i] != '\0'); i++);
 
-		bool ignore = false;
-		if (state->hollerith_remain > 0)
-		{
-			/* In a hollerith constant. */
-			state->hollerith_remain--;
-		}
-		else if (state->string_delim != '\0')
-		{
-			/* In a string. */
-			if ((src[i] == state->string_delim)
-				&& !state->was_escape)
-				state->string_delim = '\0';
-
-			state->was_escape = (src[i] == '\\');
-		}
-		else
-		{
-			/* Not in a string. */
-
-			if (src[i] == '!')
-			{
-				eol = true;
-			}
-			else if ((src[i] == '\'')
-				|| (src[i] == '\"'))
-			{
-				/* Entering a string. */
-				state->string_delim = src[i];
-				state->was_escape = false;
-			}
-
-			if (toupper(src[i]) == 'H')
-			{
-				if (state->hollerith_out_of_range)
-				{
-					fprintf(stderr, "Warning: Potential hollerith constant has length over 4GiB, ignoring.\n");
-				}
-				else
-				{
-					/* Entering a hollerith constant. */
-					state->hollerith_remain = state->hollerith_size;
-				}
-			}
-			else if (isdigit(src[i]))
-			{
-				unsigned nsize = (state->hollerith_size * 10) + (src[i] - '0');
-
-				/* Is the hollerith length going out of range? */
-				if (((nsize / 10) != state->hollerith_size)
-					|| ((nsize % 10U) != (unsigned)(src[i] - '0')))
-					state->hollerith_out_of_range = true;
-				else
-					state->hollerith_size = nsize;
-			}
-			else
-			{
-				state->hollerith_out_of_range = false;
-				state->hollerith_size = 0;
-			}
-
-			ignore = is_hspace(src[i]);
-		}
-
-		if (eol || ignore)
-		{
-			if ((size > 0) && rope && !rope_append_strn(
-				r, path, row, col, base, size))
-			{
-				rope_delete(r);
-				return 0;
-			}
-
-			size = 0;
-			if (eol) break;
-			continue;
-		}
-
-		if (size == 0)
-			base = &src[i];
-		size += 1;
-	}
-
-	if ((size > 0) && rope && !rope_append_strn(
-		r, path, row, col, base, size))
-	{
-		rope_delete(r);
+	if (rope && !rope_append_strn(
+		*rope, path, row, col, pos, src, i))
 		return 0;
-	}
 
-	if (rope) *rope = r;
 	return i;
 }
 
-bool preprocess__fixed_form(preprocess_t* context)
+static bool preprocess__unformat_fixed_form(preprocess_t* context)
 {
 	const char* path = file_get_path(context->file);
 	const char* src  = file_get_strz(context->file);
@@ -342,8 +228,7 @@ bool preprocess__fixed_form(preprocess_t* context)
 
 	unsigned newline_row = 0;
 	unsigned newline_col = 0;
-
-	pre_state_t state = PRE_STATE_DEFAULT;
+	unsigned newline_pos = 0;
 
 	if (!src)
 		return false;
@@ -353,7 +238,7 @@ bool preprocess__fixed_form(preprocess_t* context)
 	{
 		unsigned len, col;
 
-		len = preprocess_fixed_form__blank_or_comment(
+		len = preprocess__unformat_fixed_form_blank_or_comment(
 			&src[pos], opts);
 		pos += len;
 		if (len > 0) continue;
@@ -362,69 +247,61 @@ bool preprocess__fixed_form(preprocess_t* context)
 		unsigned label = 0;
 		bool continuation = false;
 
-		len = preprocess_fixed_form__label(
+		len = preprocess__unformat_fixed_form_label(
 			&src[pos], opts,
 			&has_label, &label, &continuation);
 		if (len == 0) return false;
 		col  = len;
 		pos += len;
 
-		if (!continuation)
-		{
-			if (state.string_delim != '\0')
-			{
-				fprintf(stderr, "Warning:%s:%u: Unterminated string.\n", path, (row + 1));
-			}
-
-			if (state.hollerith_remain > 0)
-			{
-				fprintf(stderr, "Warning:%s:%u: Incomplete potential hollerith constant.\n", path, (row + 1));
-			}
-
-			/* Wipe state if not a continuation line. */
-			state = PRE_STATE_DEFAULT;
-		}
-
 		if (first_code_line && continuation)
 		{
-			fprintf(stderr, "Warning:%s:%u: Initial line shouldn't be a continuation, ignoring.\n", path, (row + 1));
+			fprintf(stderr, "Warning:%s:%u: Initial line can't be a continuation"
+				", treating as non-continuation line.\n", path, (row + 1));
 		}
 
 		if (has_label)
 		{
 			if (continuation)
 			{
-				fprintf(stderr, "Warning:%s:%u: Labeling a continuation line doesn't make sense, ignoring.\n", path, (row + 1));
+				fprintf(stderr, "Warning:%s:%u: Labeling a continuation line doesn't make sense"
+					", ignoring label.\n", path, (row + 1));
 			}
 			else
 			{
 				/* Mark current position in rope as label. */
-				unsigned position = rope_len(context->output);
+				unsigned position = rope_len(context->unformat);
 				if (!label_table_add(context->labels, position, label))
 					return false;
 			}
 		}
 
+		/* Skip initial space. */
 		for(; is_hspace(src[pos]); pos++, col++);
 
-		bool is_comment = ((state.string_delim == '\0')
-			&& (state.hollerith_remain == 0)
-			&& (src[pos] == '!'));
-
-		rope_t* rope = NULL;
-		if ((col < opts.columns)
+		bool has_code = ((col < opts.columns)
 			&& (src[pos] != '\0')
-			&& !is_vspace(src[pos])
-			&& !is_comment)
+			&& !is_vspace(src[pos]));
+
+		if (has_code)
 		{
-			len = preprocess_fixed_form__code(
-				path, row, col,
-				&src[pos], opts,
-				&state, &rope);
+			static const char* PREPROCESS_NEWLINE = "\n";
+
+			/* Insert single newline character at the end of each line in output. */
+			if (!first_code_line && !continuation
+				&& !rope_append_strn(context->unformat,
+					path, newline_row, newline_col, newline_pos, PREPROCESS_NEWLINE, 1))
+				return false;
+
+			/* Append non-empty line to output. */
+			len = preprocess__unformat_fixed_form_code(
+				path, row, col, pos, &src[pos], opts, &context->unformat);
 			pos += len;
 			col += len;
 			if (len == 0)
 				return false;
+
+			first_code_line = false;
 		}
 		else
 		{
@@ -434,30 +311,50 @@ bool preprocess__fixed_form(preprocess_t* context)
 		/* Skip to the actual end of the line, including all ignored characters. */
 		for (; (src[pos] != '\0') && !is_vspace(src[pos]); pos++);
 
-		if (rope)
+		if (has_code)
 		{
-			static const char* PREPROCESS_NEWLINE = "\n";
-
-			/* Insert single newline character at the end of each line in output. */
-			if (!first_code_line && !continuation
-				&& !rope_append_strn(context->output,
-					path, newline_row, newline_col, PREPROCESS_NEWLINE, 1))
-				return false;
-
-			/* Append non-empty line to output. */
-			bool append_success = rope_append_rope(context->output, rope);
-			rope_delete(rope);
-			if (!append_success)
-				return false;
-
 			newline_row = row;
 			newline_col = col;
-
-			first_code_line = false;
+			newline_pos = pos;
 		}
 
 		/* Eat vspace in input code. */
 		if (is_vspace(src[pos])) pos++;
+	}
+
+	return true;
+}
+
+static bool preprocess__condense(preprocess_t* context)
+{
+	if (!context)
+		return false;
+
+	const char* src
+		= rope_strz(context->unformat);
+	if (!src) return false;
+
+	unsigned i = 0;
+	while (src[i] != '\0')
+	{
+		/* Skip whitespace. */
+		for (; (src[i] != '\0') && is_hspace(src[i]); i++);
+
+		if (src[i] == '\0')
+			break;
+
+		/* Parse non-whitespace. */
+		const char* base = &src[i];
+		unsigned pos = i;
+		unsigned size;
+		for(size = 0; (src[i] != '\0') && !is_hspace(src[i]); size++, i++);
+
+		/* Append non-whitespace to condense rope. */
+		if (!rope_append_strn(
+			context->condense,
+			NULL, 0, 0, pos,
+			base, size))
+			return false;
 	}
 
 	return true;
@@ -477,13 +374,16 @@ preprocess_t* preprocess(file_t* file, lang_opts_t opts)
 	{
 		case LANG_FORM_FIXED:
 		case LANG_FORM_TAB:
-			success = preprocess__fixed_form(context);
+			success = preprocess__unformat_fixed_form(context);
 			break;
 		default:
 			/* TODO - Parse free-form. */
 			success = false;
+			/* preprocess__unformat_free_form(context); */
 			break;
 	}
+
+	success = success && preprocess__condense(context);
 
 	if (!success)
 	{
@@ -495,25 +395,25 @@ preprocess_t* preprocess(file_t* file, lang_opts_t opts)
 }
 
 
-const char* preprocess_strz(const preprocess_t* context)
+
+const file_t* preprocess_original_file(const preprocess_t* context)
 {
-	if (!context)
-		return NULL;
-	return rope_strz(context->output);
+	return (context ? context->file : NULL);
 }
 
-bool preprocess_debug_position(
-	const preprocess_t* context, unsigned position,
-	const char** file, unsigned *row, unsigned* col)
+const rope_t* preprocess_unformat_rope(const preprocess_t* context)
 {
-	if (!context)
-		return false;
-	return rope_position(
-		context->output, position,
-		file, row, col);
+	return (context ? context->unformat : NULL);
 }
 
-bool preprocess_has_label(
+const rope_t* preprocess_condense_rope(const preprocess_t* context)
+{
+	return (context ? context->condense : NULL);
+}
+
+
+
+bool preprocess_unformat_has_label(
 	const preprocess_t* context, unsigned position,
 	unsigned* number)
 {
@@ -522,4 +422,23 @@ bool preprocess_has_label(
 	return label_table_find(
 		context->labels,
 		position, number);
+}
+
+bool preprocess_condense_has_label(
+	const preprocess_t* context, unsigned position,
+	unsigned* number)
+{
+	if (!context
+		|| !context->unformat
+		|| !context->condense)
+		return false;
+
+	unsigned unformat_position;
+	if (!rope_position(
+		context->condense, position,
+		NULL, NULL, NULL, &unformat_position))
+		return false;
+
+	return preprocess_unformat_has_label(
+		context, unformat_position, number);
 }
