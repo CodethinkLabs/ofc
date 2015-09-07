@@ -387,6 +387,9 @@ preprocess_t* preprocess(file_t* file, lang_opts_t opts)
 
 	if (!success)
 	{
+		/* We don't take ownership of the file on failure. */
+		context->file = NULL;
+
 		preprocess_delete(context);
 		return NULL;
 	}
