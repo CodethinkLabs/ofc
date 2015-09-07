@@ -82,7 +82,7 @@ static bool is_hspace(char c)
 	return false;
 }
 
-static unsigned preprocess__unformat_fixed_form_blank_or_comment(
+static unsigned preprocess__unformat_blank_or_comment(
 	const char* src, lang_opts_t opts)
 {
 	if (!src)
@@ -199,7 +199,7 @@ static unsigned preprocess__unformat_fixed_form_label(
 	return i;
 }
 
-static unsigned preprocess__unformat_fixed_form_code(
+static unsigned preprocess__unformat_code(
 	const char* path, unsigned row, unsigned col, unsigned pos,
 	const char* src, lang_opts_t opts, rope_t** rope)
 {
@@ -238,7 +238,7 @@ static bool preprocess__unformat_fixed_form(preprocess_t* context)
 	{
 		unsigned len, col;
 
-		len = preprocess__unformat_fixed_form_blank_or_comment(
+		len = preprocess__unformat_blank_or_comment(
 			&src[pos], opts);
 		pos += len;
 		if (len > 0) continue;
@@ -294,7 +294,7 @@ static bool preprocess__unformat_fixed_form(preprocess_t* context)
 				return false;
 
 			/* Append non-empty line to output. */
-			len = preprocess__unformat_fixed_form_code(
+			len = preprocess__unformat_code(
 				path, row, col, pos, &src[pos], opts, &context->unformat);
 			pos += len;
 			col += len;
