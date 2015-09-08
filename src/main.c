@@ -1,9 +1,26 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "file.h"
 #include "preprocess.h"
 
+
+const char *get_filename_ext(const char *file_name) {
+	if (!file_name)
+		return NULL;
+
+	const char *dot = NULL;
+	unsigned i;
+	for (i = 0; file_name[i] != '\0'; i++)
+	{
+		if (file_name[i] == '/')
+			dot = NULL;
+		else if (file_name[i] == '.')
+			dot = &file_name[i];
+	}
+  return (dot ? &dot[1] : NULL);
+}
 
 int main(int argc, const char* argv[])
 {
@@ -20,7 +37,17 @@ int main(int argc, const char* argv[])
 
 	const char* path = argv[1];
 
-	lang_opts_t opts = LANG_OPTS_F77;
+  const char* source_file_ext = get_filename_ext(path);
+
+	lang_opts_t opts;
+
+	if (source_file_ext)
+	{
+		if (strcasecmp(source_file_ext, "F90") == 0)
+			opts = LANG_OPTS_F90;
+		else
+			opts = LANG_OPTS_F77;
+	}
 
 	file_t* file = file_create(path);
 	if (!file)
