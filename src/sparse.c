@@ -155,8 +155,6 @@ bool sparse__ptr(
 
 	for (mid = lo + ((hi - lo) / 2); hi != lo; mid = lo + ((hi - lo) / 2))
 	{
-		unsigned mid = lo + ((hi - lo) / 2);
-
 		unsigned start = sparse->entry[mid].off;
 		unsigned end   = start + sparse->entry[mid].len;
 
@@ -173,6 +171,40 @@ bool sparse__ptr(
 	return true;
 }
 
+
+bool sparse_sequential(
+	const sparse_t* sparse, const char* ptr, unsigned size)
+{
+	if (!sparse || !ptr)
+		return false;
+
+	sparse_entry_t entry;
+	unsigned offset;
+
+	if (!sparse__ptr(
+		sparse, ptr,
+		&entry, &offset))
+		return NULL;
+
+	return ((offset + size) <= entry.len);
+}
+
+const char* sparse_parent_pointer(
+	const sparse_t* sparse, const char* ptr)
+{
+	if (!sparse || !ptr)
+		return NULL;
+
+	sparse_entry_t entry;
+	unsigned offset;
+
+	if (!sparse__ptr(
+		sparse, ptr,
+		&entry, &offset))
+		return NULL;
+
+	return &entry.ptr[offset];
+}
 
 const char* sparse_file_pointer(
 	const sparse_t* sparse, const char* ptr)
@@ -227,4 +259,54 @@ bool sparse_file_position(
 	}
 
 	return true;
+}
+
+
+
+#include <stdio.h>
+
+void sparse_error(
+	const sparse_t* sparse, const char* ptr,
+	const char* format, ...)
+{
+	fprintf(stderr, "Error:");
+
+	const char* path;
+	unsigned row, col;
+	if (sparse_file_position(
+		sparse, ptr,
+		&path, &row, &col))
+		fprintf(stderr, "%s:%u,%u:",
+			path, (row + 1), col);
+
+	fprintf(stderr, " ");
+
+	va_list args;
+	va_start(args, format);
+	vfprintf(stderr, format, args);
+	va_end(args);
+	fprintf(stderr, "\n");
+}
+
+void sparse_warning(
+	const sparse_t* sparse, const char* ptr,
+	const char* format, ...)
+{
+	fprintf(stderr, "Warning:");
+
+	const char* path;
+	unsigned row, col;
+	if (sparse_file_position(
+		sparse, ptr,
+		&path, &row, &col))
+		fprintf(stderr, "%s:%u,%u:",
+			path, (row + 1), col);
+
+	fprintf(stderr, " ");
+
+	va_list args;
+	va_start(args, format);
+	vfprintf(stderr, format, args);
+	va_end(args);
+	fprintf(stderr, "\n");
 }

@@ -20,11 +20,27 @@ void sparse_lock(sparse_t* sparse);
 /* This will return NULL unless the sparse is locked. */
 const char* sparse_strz(const sparse_t* sparse);
 
+bool sparse_sequential(
+	const sparse_t* sparse, const char* ptr, unsigned size);
+
+const char* sparse_parent_pointer(
+	const sparse_t* sparse, const char* ptr);
+
 const char* sparse_file_pointer(
 	const sparse_t* sparse, const char* ptr);
 
 bool sparse_file_position(
 	const sparse_t* sparse, const char* ptr,
 	const char** path, unsigned *row, unsigned* col);
+
+
+#include <stdarg.h>
+
+void sparse_error(
+	const sparse_t* sparse, const char* ptr,
+	const char* format, ...);
+void sparse_warning(
+	const sparse_t* sparse, const char* ptr,
+	const char* format, ...);
 
 #endif

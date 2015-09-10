@@ -2,7 +2,7 @@ FRONTEND = unfortranizer
 
 BASE = src/
 
-SRC_DIR = .
+SRC_DIR = . parse
 SRC_DIR_BASE = $(addprefix $(BASE),$(SRC_DIR))
 CFLAGS = -O3 -Wall -Wextra -MD -MP
 

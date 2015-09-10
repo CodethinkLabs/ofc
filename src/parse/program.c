@@ -4,58 +4,59 @@
 
 
 
-unsigned parse_program(const char* src, parse_t* entry)
+unsigned parse_program(
+	const sparse_t* src, const char* ptr,
+	parse_program_t* program)
 {
-	unsigned i = parse_keyword(src, "PROGRAM");
+	str_ref_t name = STR_REF_EMPTY;
+	unsigned i = parse_keyword_name(
+		src, ptr, PARSE_KEYWORD_PROGRAM, &name);
 	if (i == 0) return 0;
 
-	parse_t name;
-	unsigned len = parse_name(&src[i], &name);
-	if (len == 0)
+	if (str_ref_empty(name))
 	{
-		fprintf(stderr, "Error: Expected name in PROGRAM statement.\n");
-		return 0;
-	}
-	i += len;
-
-	if (src[i++] != '\n')
-	{
-		fprintf(stderr, "Error: Expected newline after PROGRAM statement.\n");
+		sparse_error(src, ptr, "Expected name in PROGRAM statement");
 		return 0;
 	}
 
-	/* TODO - Parse specification-part */
+	if ((ptr[i] != '\n')
+		&& (ptr[i] != '\r'))
+	{
+		sparse_error(src, &ptr[i],
+			"Expected newline after PROGRAM statement");
+		return 0;
+	}
+	i += 1;
+
+	/* TODO - Parse implicit/declarations */
 
 	/* TODO - Parse execution-part */
 
-	/* TODO - Parse inernal-subprogram-part */
+	/* TODO - Parse internal-subprogram-part */
 
-	len = parse_keyword(&src[i], "ENDPROGRAM");
-	if (len != 0)
+	str_ref_t end_name = STR_REF_EMPTY;
+	unsigned len = parse_keyword_name(
+		src, &ptr[i], PARSE_KEYWORD_END_PROGRAM, &end_name);
+	if (len == 0)
 	{
-		parse_t endname;
-		unsigned nlen = parse_name(&src[i + len], &endname);
-		if ((nlen > 0) && ((name.name.size != endname.name.size)
-			|| (strncmp(name.name.base, endname.name.base, nlen) != 0)))
-		{
-			fprintf(stderr, "Warning: END PROGRAM name doesn't match PROGRAM name.\n");
-		}
-		len += nlen;
+		sparse_error(src, &ptr[i],
+			"Expected end of program");
+		return 0;
 	}
-	else
+
+	/* TODO - Compare cases depending on lang opts. */
+	if (!str_ref_empty(end_name)
+		&& !str_ref_equal(name, end_name))
 	{
-		len = parse_keyword(src[i], "END");
-		if (len == 0)
-		{
-			fprintf(stderr, "Error: Expected end of program.\n");
-			return 0;
-		}
+		sparse_warning(src, &ptr[i],
+			"END PROGRAM name doesn't match PROGRAM name");
 	}
 	i += len;
 
-	if (src[i] != '\0')
+	if (ptr[i] != '\0')
 	{
-		fprintf(stderr, "Error: Expected end of input after main program.\n");
+		sparse_error(src, &ptr[i],
+			"Expected end of input after main program.\n");
 		return 0;
 	}
 
