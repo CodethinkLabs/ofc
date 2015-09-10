@@ -6,7 +6,7 @@ typedef struct label_s label_t;
 
 struct label_s
 {
-	unsigned position;
+	const char* ptr;
 	unsigned number;
 
 	label_t* next;
@@ -51,29 +51,30 @@ void label_table_delete(label_table_t* table)
 }
 
 
-static uint8_t label_table__position_hash(unsigned position)
+static uint8_t label_table__ptr_hash(const char* ptr)
 {
-	position = ((position >> 16) ^ (position & 0xFFFF));
-	position = ((position >>  8) ^ (position & 0x00FF));
-	return position;
+	uint32_t h = ((uintptr_t)ptr & 0xFFFFFFFFU);
+	h = (h & 0x0000FFFF) ^ (h >> 16U);
+	h = (h & 0x000000FF) ^ (h >>  8U);
+	return h;
 }
 
 bool label_table_add(
-	label_table_t* table, unsigned position, unsigned number)
+	label_table_t* table, const char* ptr, unsigned number)
 {
 	if (!table)
 		return false;
 
-	/* Don't allow duplicate labels in the same position. */
-	if (label_table_find(table, position, NULL))
+	/* Don't allow duplicate labels at the same position. */
+	if (label_table_find(table, ptr, NULL))
 		return false;
 
-	uint8_t hash = label_table__position_hash(position);
+	uint8_t hash = label_table__ptr_hash(ptr);
 
 	label_t* label = (label_t*)malloc(sizeof(label_t));
 	if (!label) return false;
 
-	label->position = position;
+	label->ptr      = ptr;
 	label->number   = number;
 	label->next     = table->base[hash];
 
@@ -83,17 +84,17 @@ bool label_table_add(
 }
 
 bool label_table_find(
-	const label_table_t* table, unsigned position, unsigned* number)
+	const label_table_t* table, const char* ptr, unsigned* number)
 {
 	if (!table)
 		return false;
 
-	uint8_t hash = label_table__position_hash(position);
+	uint8_t hash = label_table__ptr_hash(ptr);
 
 	label_t* label;
 	for (label = table->base[hash]; label; label = label->next)
 	{
-		if (label->position == position)
+		if (label->ptr == ptr)
 		{
 			if (number) *number = label->number;
 			return true;

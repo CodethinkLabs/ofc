@@ -64,9 +64,9 @@ int main(int argc, const char* argv[])
 		return EXIT_FAILURE;
 	}
 
-	const rope_t* condense
-		= preprocess_condense_rope(context);
-	const char* strz = rope_strz(condense);
+	const sparse_t* condense
+		= preprocess_condense_sparse(context);
+	const char* strz = sparse_strz(condense);
 	printf("%s\n", strz);
 
 	/* TODO - Parse. */

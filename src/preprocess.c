@@ -12,8 +12,8 @@ struct preprocess_s
 	file_t*     file;
 	lang_opts_t opts;
 
-	rope_t*        unformat;
-	rope_t*        condense;
+	sparse_t*        unformat;
+	sparse_t*        condense;
 	label_table_t* labels;
 };
 
@@ -29,17 +29,15 @@ static preprocess_t* preprocess__create(
 	context->file = file;
 	context->opts = opts;
 
-	context->unformat = rope_create();
-	context->condense = rope_create();
+	context->unformat = sparse_create_file(file);
+	context->condense = NULL;
 	context->labels   = label_table_create();
 
 	if (!context->unformat
-		|| !context->condense
 		|| !context->labels)
 	{
-		rope_delete(context->unformat);
-		rope_delete(context->condense);
 		label_table_delete(context->labels);
+		sparse_delete(context->unformat);
 		free(context);
 		return NULL;
 	}
@@ -52,9 +50,9 @@ void preprocess_delete(preprocess_t* context)
 	if (!context)
 		return;
 
+	sparse_delete(context->condense);
 	label_table_delete(context->labels);
-	rope_delete(context->condense);
-	rope_delete(context->unformat);
+	sparse_delete(context->unformat);
 	file_delete(context->file);
 	free(context);
 }
@@ -238,8 +236,7 @@ static unsigned preprocess__unformat_free_form_label(
 }
 
 static unsigned preprocess__unformat_fixed_form_code(
-	const char* path, unsigned row, unsigned col, unsigned pos,
-	const char* src, lang_opts_t opts, rope_t** rope)
+	unsigned col, const char* src, lang_opts_t opts, sparse_t** sparse)
 {
 	if (!src)
 		return 0;
@@ -249,8 +246,7 @@ static unsigned preprocess__unformat_fixed_form_code(
 	unsigned i;
 	for (i = 0; (i < remain) && !is_vspace(src[i]) && (src[i] != '\0'); i++);
 
-	if (rope && !rope_append_strn(
-		*rope, path, row, col, pos, src, i))
+	if (sparse && !sparse_append_strn(*sparse, src, i))
 		return 0;
 
 	return i;
@@ -277,8 +273,9 @@ static const pre_state_t PRE_STATE_DEFAULT =
 };
 
 static unsigned preprocess__unformat_free_form_code(
-	const char* path, unsigned row, unsigned col, unsigned pos, pre_state_t* state,
-	const char* src, lang_opts_t opts, rope_t** rope, bool* continuation)
+	unsigned col, pre_state_t* state,
+	const char* src, lang_opts_t opts,
+	sparse_t** sparse, bool* continuation)
 {
 	if (!src)
 		return 0;
@@ -390,8 +387,8 @@ static unsigned preprocess__unformat_free_form_code(
 	if (valid_ampersand)
 		code_len = last_ampersand;
 
-	if (rope && !rope_append_strn(
-		*rope, path, row, col, pos, src, code_len))
+	if (sparse && !sparse_append_strn(
+		*sparse, src, code_len))
 		return 0;
 
 	return i;
@@ -405,9 +402,7 @@ static bool preprocess__unformat_fixed_form(preprocess_t* context)
 
 	bool first_code_line = true;
 
-	unsigned newline_row = 0;
-	unsigned newline_col = 0;
-	unsigned newline_pos = 0;
+	const char* newline = NULL;
 
 	if (!src)
 		return false;
@@ -430,8 +425,6 @@ static bool preprocess__unformat_fixed_form(preprocess_t* context)
 			&src[pos], opts,
 			&has_label, &label, &continuation);
 		if (len == 0) return false;
-		col  = len;
-		pos += len;
 
 		if (first_code_line && continuation)
 		{
@@ -448,12 +441,14 @@ static bool preprocess__unformat_fixed_form(preprocess_t* context)
 			}
 			else
 			{
-				/* Mark current position in rope as label. */
-				unsigned position = rope_len(context->unformat);
-				if (!label_table_add(context->labels, position, label))
+				/* Mark current position in file as label. */
+				if (!label_table_add(context->labels, &src[pos], label))
 					return false;
 			}
 		}
+
+		col  = len;
+		pos += len;
 
 		/* Skip initial space. */
 		for(; is_hspace(src[pos]); pos++, col++);
@@ -464,17 +459,14 @@ static bool preprocess__unformat_fixed_form(preprocess_t* context)
 
 		if (has_code)
 		{
-			static const char* PREPROCESS_NEWLINE = "\n";
-
 			/* Insert single newline character at the end of each line in output. */
 			if (!first_code_line && !continuation
-				&& !rope_append_strn(context->unformat,
-					path, newline_row, newline_col, newline_pos, PREPROCESS_NEWLINE, 1))
+				&& !sparse_append_strn(context->unformat, newline, 1))
 				return false;
 
 			/* Append non-empty line to output. */
 			len = preprocess__unformat_fixed_form_code(
-				path, row, col, pos, &src[pos], opts, &context->unformat);
+				col, &src[pos], opts, &context->unformat);
 			pos += len;
 			col += len;
 			if (len == 0)
@@ -491,11 +483,7 @@ static bool preprocess__unformat_fixed_form(preprocess_t* context)
 		for (; (src[pos] != '\0') && !is_vspace(src[pos]); pos++);
 
 		if (has_code)
-		{
-			newline_row = row;
-			newline_col = col;
-			newline_pos = pos;
-		}
+			newline = &src[pos];
 
 		/* Eat vspace in input code. */
 		if (is_vspace(src[pos])) pos++;
@@ -506,7 +494,6 @@ static bool preprocess__unformat_fixed_form(preprocess_t* context)
 
 static bool preprocess__unformat_free_form(preprocess_t* context)
 {
-	const char* path = file_get_path(context->file);
 	const char* src  = file_get_strz(context->file);
 	lang_opts_t opts = context->opts;
 	pre_state_t state = PRE_STATE_DEFAULT;
@@ -514,9 +501,7 @@ static bool preprocess__unformat_free_form(preprocess_t* context)
 	bool first_code_line = true;
 	bool continuation = false;
 
-	unsigned newline_row = 0;
-	unsigned newline_col = 0;
-	unsigned newline_pos = 0;
+	const char* newline = NULL;
 
 	if (!src)
 		return false;
@@ -540,12 +525,9 @@ static bool preprocess__unformat_free_form(preprocess_t* context)
 			&src[pos], &label);
 		has_label = (len > 0);
 
-		if (has_label)
-		{
-			unsigned position = rope_len(context->unformat);
-			if (!label_table_add(context->labels, position, label))
-				return false;
-		}
+		if (has_label && !label_table_add(
+			context->labels, &src[pos], label))
+			return false;
 
 		col  = len;
 		pos += len;
@@ -558,13 +540,13 @@ static bool preprocess__unformat_free_form(preprocess_t* context)
 
 		if (has_code)
 		{
-			static const char* PREPROCESS_NEWLINE = "\n";
-
 			if (!first_code_line && !continuation
-				&& !rope_append_strn(context->unformat, path, newline_row, newline_col, newline_pos, PREPROCESS_NEWLINE, 1))
+				&& !sparse_append_strn(context->unformat, newline, 1))
 				return false;
 
-			len = preprocess__unformat_free_form_code(path, row, col, pos, &state, &src[pos], opts, &context->unformat, &continuation);
+			len = preprocess__unformat_free_form_code(
+				col, &state, &src[pos], opts,
+				&context->unformat, &continuation);
 			pos += len;
 			col += len;
 			if (len == 0) return false;
@@ -578,11 +560,7 @@ static bool preprocess__unformat_free_form(preprocess_t* context)
 		for (; (src[pos] != '\0') && !is_vspace(src[pos]); pos++);
 
 		if (has_code)
-		{
-			newline_row = row;
-			newline_col = col;
-			newline_pos = pos;
-		}
+			newline = &src[pos];
 
 		/* Eat vspace in input code. */
 		if (is_vspace(src[pos])) pos++;
@@ -591,14 +569,20 @@ static bool preprocess__unformat_free_form(preprocess_t* context)
 	return true;
 }
 
-static bool preprocess__condense(preprocess_t* context)
+static sparse_t* preprocess__condense(preprocess_t* context)
 {
 	if (!context)
-		return false;
+		return NULL;
+
+	sparse_lock(context->unformat);
 
 	const char* src
-		= rope_strz(context->unformat);
-	if (!src) return false;
+		= sparse_strz(context->unformat);
+	if (!src) return NULL;
+
+	sparse_t* condense
+		= sparse_create_child(context->unformat);
+	if (!condense) return NULL;
 
 	unsigned i = 0;
 	while (src[i] != '\0')
@@ -611,19 +595,19 @@ static bool preprocess__condense(preprocess_t* context)
 
 		/* Parse non-whitespace. */
 		const char* base = &src[i];
-		unsigned pos = i;
 		unsigned size;
 		for(size = 0; (src[i] != '\0') && !is_hspace(src[i]); size++, i++);
 
-		/* Append non-whitespace to condense rope. */
-		if (!rope_append_strn(
-			context->condense,
-			NULL, 0, 0, pos,
-			base, size))
-			return false;
+		/* Append non-whitespace to condense sparse. */
+		if (!sparse_append_strn(condense, base, size))
+		{printf("XXX %p %u \"%.*s\"\n", base, size, size, base);
+			sparse_delete(condense);
+			return NULL;
+		}
 	}
 
-	return true;
+	sparse_lock(condense);
+	return condense;
 }
 
 
@@ -650,9 +634,10 @@ preprocess_t* preprocess(file_t* file, lang_opts_t opts)
 			break;
 	}
 
-	success = success && preprocess__condense(context);
+	if (success)
+		context->condense = preprocess__condense(context);
 
-	if (!success)
+	if (!context->condense)
 	{
 		/* We don't take ownership of the file on failure. */
 		context->file = NULL;
@@ -671,12 +656,12 @@ const file_t* preprocess_original_file(const preprocess_t* context)
 	return (context ? context->file : NULL);
 }
 
-const rope_t* preprocess_unformat_rope(const preprocess_t* context)
+const sparse_t* preprocess_unformat_sparse(const preprocess_t* context)
 {
 	return (context ? context->unformat : NULL);
 }
 
-const rope_t* preprocess_condense_rope(const preprocess_t* context)
+const sparse_t* preprocess_condense_sparse(const preprocess_t* context)
 {
 	return (context ? context->condense : NULL);
 }
@@ -684,31 +669,31 @@ const rope_t* preprocess_condense_rope(const preprocess_t* context)
 
 
 bool preprocess_unformat_has_label(
-	const preprocess_t* context, unsigned position,
-	unsigned* number)
+	const preprocess_t* context, const char* ptr, unsigned* number)
 {
 	if (!context)
 		return false;
+
+	const char* fptr = sparse_file_pointer(
+		context->unformat, ptr);
+	if (!fptr) return NULL;
+
 	return label_table_find(
 		context->labels,
-		position, number);
+		fptr, number);
 }
 
 bool preprocess_condense_has_label(
-	const preprocess_t* context, unsigned position,
-	unsigned* number)
+	const preprocess_t* context, const char* ptr, unsigned* number)
 {
-	if (!context
-		|| !context->unformat
-		|| !context->condense)
+	if (!context)
 		return false;
 
-	unsigned unformat_position;
-	if (!rope_position(
-		context->condense, position,
-		NULL, NULL, NULL, &unformat_position))
-		return false;
+	const char* fptr = sparse_file_pointer(
+		context->condense, ptr);
+	if (!fptr) return NULL;
 
-	return preprocess_unformat_has_label(
-		context, unformat_position, number);
+	return label_table_find(
+		context->labels,
+		fptr, number);
 }
