@@ -286,7 +286,7 @@ static unsigned preprocess__unformat_free_form_code(
 	unsigned remain = (col < opts.columns ? (opts.columns - col) : 0);
 
 	bool     valid_ampersand = false;
-	unsigned last_ampersand;
+	unsigned last_ampersand = 0;
 
 	unsigned hollerith_size   = 0;
 	unsigned hollerith_remain = 0;
