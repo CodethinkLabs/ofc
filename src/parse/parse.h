@@ -8,6 +8,7 @@
 #include "literal.h"
 #include "operator.h"
 #include "type.h"
+#include "expr.h"
 #include "implicit.h"
 #include "decl.h"
 #include "stmt.h"

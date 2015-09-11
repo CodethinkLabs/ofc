@@ -45,7 +45,7 @@ unsigned parse_operator(
 			break;
 
 		case '-':
-			op = PARSE_OPERATOR_SUBRACT;
+			op = PARSE_OPERATOR_SUBTRACT;
 			break;
 
 		case '=':

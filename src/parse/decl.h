@@ -3,9 +3,11 @@
 
 typedef struct
 {
-	parse_type_t    type;
-	str_ref_t       name;
-	parse_literal_t init;
+	parse_type_t type;
+	str_ref_t    name;
+
+	bool         has_init;
+	parse_expr_t init;
 } parse_decl_t;
 
 
