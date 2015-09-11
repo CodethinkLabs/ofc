@@ -54,6 +54,27 @@ unsigned parse_keyword_name(
 			match = strncasecmp(ptr, "IMPLICITNONE", len);
 			expect_space = 8;
 			break;
+		case PARSE_KEYWORD_IF:
+			len = 2;
+			match = strncasecmp(ptr, "IF", len);
+			break;
+		case PARSE_KEYWORD_GO_TO:
+			len = 4;
+			match = strncasecmp(ptr, "GOTO", len);
+			expect_space = 2;
+			break;
+		case PARSE_KEYWORD_CONTINUE:
+			len = 8;
+			match = strncasecmp(ptr, "CONTINUE", len);
+			break;
+		case PARSE_KEYWORD_WRITE:
+			len = 5;
+			match = strncasecmp(ptr, "WRITE", len);
+			break;
+		case PARSE_KEYWORD_FORMAT:
+			len = 6;
+			match = strncasecmp(ptr, "FORMAT", len);
+			break;
 		default:
 			/* Unknown keyword. */
 			return 0;
