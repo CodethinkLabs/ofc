@@ -60,5 +60,7 @@ unsigned parse_program(
 		return 0;
 	}
 
+	program->name     = name;
+	program->implicit = PARSE_IMPLICIT_DEFAULT;
 	return i;
 }
