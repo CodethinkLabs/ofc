@@ -7,8 +7,10 @@
 #include "keyword.h"
 #include "literal.h"
 #include "operator.h"
-#include "program.h"
 #include "type.h"
 #include "implicit.h"
+#include "decl.h"
+
+#include "program.h"
 
 #endif

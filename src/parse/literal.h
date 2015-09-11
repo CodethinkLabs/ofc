@@ -5,6 +5,7 @@
 
 typedef enum
 {
+	PARSE_LITERAL_NONE = 0,
 	PARSE_LITERAL_BINARY,
 	PARSE_LITERAL_OCTAL,
 	PARSE_LITERAL_HEX,
@@ -30,6 +31,11 @@ typedef struct
 		long double real;
 	};
 } parse_literal_t;
+
+static const parse_literal_t PARSE_LITERAL_NONE_DEFAULT =
+{
+	.type = PARSE_LITERAL_NONE,
+};
 
 
 unsigned parse_literal(

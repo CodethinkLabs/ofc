@@ -62,5 +62,9 @@ unsigned parse_program(
 
 	program->name     = name;
 	program->implicit = PARSE_IMPLICIT_DEFAULT;
+
+	program->decl_count = 0;
+	program->decl       = NULL;
+
 	return i;
 }
