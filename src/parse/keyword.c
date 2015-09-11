@@ -49,10 +49,30 @@ unsigned parse_keyword_name(
 			len = 3;
 			match = strncasecmp(ptr, "END", len);
 			break;
+
 		case PARSE_KEYWORD_IF:
 			len = 2;
 			match = strncasecmp(ptr, "IF", len);
 			break;
+		case PARSE_KEYWORD_THEN:
+			len = 4;
+			match = strncasecmp(ptr, "THEN", len);
+			break;
+		case PARSE_KEYWORD_ELSE_IF:
+			len = 6;
+			match = strncasecmp(ptr, "ELSEIF", len);
+			expect_space = 4;
+			break;
+		case PARSE_KEYWORD_ELSE:
+			len = 4;
+			match = strncasecmp(ptr, "ELSE", len);
+			break;
+		case PARSE_KEYWORD_END_IF:
+			len = 5;
+			match = strncasecmp(ptr, "ENDIF", len);
+			expect_space = 3;
+			break;
+
 		case PARSE_KEYWORD_GO_TO:
 			len = 4;
 			match = strncasecmp(ptr, "GOTO", len);
@@ -130,6 +150,7 @@ unsigned parse_keyword_name(
 		switch (keyword)
 		{
 			case PARSE_KEYWORD_END_PROGRAM:
+			case PARSE_KEYWORD_END_IF:
 				return parse_keyword_name(
 					src, ptr, PARSE_KEYWORD_END, name);
 			default:
