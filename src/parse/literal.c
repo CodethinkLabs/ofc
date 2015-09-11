@@ -121,6 +121,180 @@ static unsigned parse_literal__hex(
 	return (len + 1);
 }
 
+static unsigned parse_literal__hollerith(
+	const sparse_t* src, const char* ptr,
+	parse_literal_t* literal)
+{
+	uint64_t u;
+	unsigned i = parse_literal__base(
+		src, ptr, 10, false, &u);
+	if (i == 0) return 0;
+	unsigned holl_len = (unsigned)u;
+	if ((uint64_t)holl_len != u)
+	{
+		sparse_error(src, ptr,
+			"Hollerith length out of range");
+		return 0;
+	}
+
+	if (toupper(ptr[i]) != 'H')
+		return 0;
+
+	const char* pptr
+		= sparse_parent_pointer(src, &ptr[i]);
+	if (!pptr) return 0;
+	i += 1;
+
+	char* holl = (char*)malloc(holl_len + 1);
+	if (!holl) return 0;
+
+	unsigned j, holl_pos;
+	for (j = 1, holl_pos = 0; holl_pos < holl_len; j++)
+	{
+		if ((pptr[j] == '\r')
+			|| (pptr[j] == '\n')
+			|| (pptr[j] == '\0'))
+			break;
+
+		if (ptr[i] == pptr[j])
+			i++;
+
+		holl[holl_pos++] = pptr[j];
+	}
+
+	if (holl_pos < holl_len)
+	{
+		while (holl_pos < holl_len)
+			holl[holl_pos++] = ' ';
+	}
+
+	/* NULL terminate string for convenience. */
+	holl[holl_pos] = '\0';
+
+	literal->string.base = holl;
+	literal->string.size = holl_len;
+	literal->type = PARSE_LITERAL_HOLLERITH;
+	return i;
+}
+
+static unsigned parse_literal__character(
+	const sparse_t* src, const char* ptr,
+	parse_literal_t* literal)
+{
+	unsigned i = 0;
+
+	char quote = ptr[i];
+	if ((quote != '\"')
+		&& (quote != '\''))
+		return 0;
+
+	const char* pptr
+		= sparse_parent_pointer(src, &ptr[i]);
+	if (!pptr) return 0;
+	i += 1;
+
+	/* Skip to the end of condense string. */
+	bool is_escaped = false;
+	for (i++; (ptr[i] != '\0') && ((ptr[i] != quote) || is_escaped); i++)
+		is_escaped = !is_escaped && (ptr[i] == '\\');
+	if (ptr[i++] != quote)
+	{
+		sparse_error(src, ptr, "Unterminated string");
+		return 0;
+	}
+
+	unsigned str_len = 0;
+	unsigned j;
+	for (j = 1, is_escaped = false; (pptr[j] != quote) || is_escaped; j++)
+	{
+		if ((pptr[j] == '\r')
+			|| (pptr[j] == '\n'))
+		{
+			sparse_error(src, ptr,
+				"Unexpected end of line in character constant");
+			return 0;
+		}
+
+		if ((pptr[j] == '\\') && !is_escaped)
+		{
+			is_escaped = true;
+			continue;
+		}
+
+		is_escaped = false;
+		str_len++;
+	}
+
+	unsigned str_pos = 0;
+	unsigned str_end = j;
+	char *str = (char*)malloc(str_len + 1);
+	if (!str) return 0;
+
+	for(j = 1, is_escaped = false; j < str_end; j++)
+	{
+		if (is_escaped)
+		{
+			char c = pptr[j];
+			switch (pptr[j])
+			{
+				case 'n':
+					c = '\n';
+					break;
+				case 'r':
+					c = '\r';
+					break;
+				case 't':
+					c = '\t';
+					break;
+				case 'b':
+					c = '\b';
+					break;
+				case 'f':
+					c = '\f';
+					break;
+				case 'v':
+					c = '\v';
+					break;
+				case '0':
+					c = '\0';
+					break;
+				case '\'':
+					c = '\'';
+					break;
+				case '\"':
+					c = '\"';
+					break;
+				case '\\':
+					c = '\\';
+					break;
+
+				/* '\x' where x is any other character */
+				default:
+					sparse_warning(src, ptr,
+						"Unknown escape sequence in string, ignoring");
+					break;
+			}
+			is_escaped = false;
+			str[str_pos++] = c;
+		}
+		else if (pptr[j] == '\\')
+		{
+			is_escaped = true;
+		}
+		else
+		{
+			str[str_pos++] = pptr[j];
+		}
+	}
+
+	/* NULL terminate string for convenience. */
+	str[str_pos] = '\0';
+
+	literal->string.base = str;
+	literal->string.size = str_len;
+	literal->type = PARSE_LITERAL_CHARACTER;
+	return i;
+}
 
 static unsigned parse_literal__uint(
 	const sparse_t* src, const char* ptr,
@@ -281,16 +455,14 @@ unsigned parse_literal(
 	l.kind = 0;
 
 	unsigned len = 0;
+	if (len == 0) len = parse_literal__character(src, ptr, &l);
+	if (len == 0) len = parse_literal__hollerith(src, ptr, &l);
 	if (len == 0) len = parse_literal__binary(src, ptr, &l);
 	if (len == 0) len = parse_literal__octal(src, ptr, &l);
 	if (len == 0) len = parse_literal__hex(src, ptr, &l);
 	if (len == 0) len = parse_literal__uint(src, ptr, &l);
 	if (len == 0) len = parse_literal__sint(src, ptr, &l);
 	if (len == 0) len = parse_literal__real(src, ptr, &l);
-
-	/* TODO - Implement Hollerith and string parsing. */
-	/*if (len == 0) len = parse_literal__hollerith(src, ptr, &l);*/
-	/*if (len == 0) len = parse_literal__string(src, ptr, &l);*/
 
 	if (len == 0)
 		return 0;

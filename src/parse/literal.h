@@ -9,7 +9,7 @@ typedef enum
 	PARSE_LITERAL_OCTAL,
 	PARSE_LITERAL_HEX,
 	PARSE_LITERAL_HOLLERITH,
-	PARSE_LITERAL_STRING,
+	PARSE_LITERAL_CHARACTER,
 	PARSE_LITERAL_UNSIGNED_INT,
 	PARSE_LITERAL_SIGNED_INT,
 	PARSE_LITERAL_REAL,
@@ -22,7 +22,8 @@ typedef struct
 
 	union
 	{
-		str_ref_t hollerith;
+		/* This isn't a reference. */
+		str_ref_t string;
 
 		uint64_t uint;
 		int64_t  sint;
