@@ -45,15 +45,6 @@ unsigned parse_keyword_name(
 			len = 3;
 			match = strncasecmp(ptr, "END", len);
 			break;
-		case PARSE_KEYWORD_IMPLICIT:
-			len = 8;
-			match = strncasecmp(ptr, "IMPLICIT", len);
-			break;
-		case PARSE_KEYWORD_IMPLICIT_NONE:
-			len = 12;
-			match = strncasecmp(ptr, "IMPLICITNONE", len);
-			expect_space = 8;
-			break;
 		case PARSE_KEYWORD_IF:
 			len = 2;
 			match = strncasecmp(ptr, "IF", len);
@@ -67,6 +58,52 @@ unsigned parse_keyword_name(
 			len = 8;
 			match = strncasecmp(ptr, "CONTINUE", len);
 			break;
+
+		case PARSE_KEYWORD_LOGICAL:
+			len = 7;
+			match = strncasecmp(ptr, "LOGICAL", len);
+			break;
+		case PARSE_KEYWORD_CHARACTER:
+			len = 9;
+			match = strncasecmp(ptr, "CHARACTER", len);
+			break;
+		case PARSE_KEYWORD_INTEGER:
+			len = 7;
+			match = strncasecmp(ptr, "INTEGER", len);
+			break;
+		case PARSE_KEYWORD_REAL:
+			len = 4;
+			match = strncasecmp(ptr, "REAL", len);
+			break;
+		case PARSE_KEYWORD_COMPLEX:
+			len = 7;
+			match = strncasecmp(ptr, "COMPLEX", len);
+			break;
+		case PARSE_KEYWORD_BYTE:
+			len = 4;
+			match = strncasecmp(ptr, "BYTE", len);
+			break;
+		case PARSE_KEYWORD_DOUBLE_PRECISION:
+			len = 15;
+			match = strncasecmp(ptr, "DOUBLEPRECISION", len);
+			expect_space = 6;
+			break;
+		case PARSE_KEYWORD_DOUBLE_COMPLEX:
+			len = 13;
+			match = strncasecmp(ptr, "DOUBLECOMPLEX", len);
+			expect_space = 6;
+			break;
+
+		case PARSE_KEYWORD_IMPLICIT:
+			len = 8;
+			match = strncasecmp(ptr, "IMPLICIT", len);
+			break;
+		case PARSE_KEYWORD_IMPLICIT_NONE:
+			len = 12;
+			match = strncasecmp(ptr, "IMPLICITNONE", len);
+			expect_space = 8;
+			break;
+
 		case PARSE_KEYWORD_WRITE:
 			len = 5;
 			match = strncasecmp(ptr, "WRITE", len);

@@ -8,5 +8,7 @@
 #include "literal.h"
 #include "operator.h"
 #include "program.h"
+#include "type.h"
+#include "implicit.h"
 
 #endif
