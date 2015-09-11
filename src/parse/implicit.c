@@ -5,34 +5,34 @@ const parse_implicit_t PARSE_IMPLICIT_DEFAULT =
 {
 	.c =
 	{
-		{ .type = PARSE_TYPE_REAL, .kind = 0, .count = 0 }, /* A */
-		{ .type = PARSE_TYPE_REAL, .kind = 0, .count = 0 }, /* B */
-		{ .type = PARSE_TYPE_REAL, .kind = 0, .count = 0 }, /* C */
-		{ .type = PARSE_TYPE_REAL, .kind = 0, .count = 0 }, /* D */
-		{ .type = PARSE_TYPE_REAL, .kind = 0, .count = 0 }, /* E */
-		{ .type = PARSE_TYPE_REAL, .kind = 0, .count = 0 }, /* F */
-		{ .type = PARSE_TYPE_REAL, .kind = 0, .count = 0 }, /* G */
-		{ .type = PARSE_TYPE_REAL, .kind = 0, .count = 0 }, /* H */
+		PARSE_TYPE_REAL_DEFAULT, /* A */
+		PARSE_TYPE_REAL_DEFAULT, /* B */
+		PARSE_TYPE_REAL_DEFAULT, /* C */
+		PARSE_TYPE_REAL_DEFAULT, /* D */
+		PARSE_TYPE_REAL_DEFAULT, /* E */
+		PARSE_TYPE_REAL_DEFAULT, /* F */
+		PARSE_TYPE_REAL_DEFAULT, /* G */
+		PARSE_TYPE_REAL_DEFAULT, /* H */
 
-		{ .type = PARSE_TYPE_INTEGER, .kind = 0, .count = 0 }, /* I */
-		{ .type = PARSE_TYPE_INTEGER, .kind = 0, .count = 0 }, /* J */
-		{ .type = PARSE_TYPE_INTEGER, .kind = 0, .count = 0 }, /* K */
-		{ .type = PARSE_TYPE_INTEGER, .kind = 0, .count = 0 }, /* L */
-		{ .type = PARSE_TYPE_INTEGER, .kind = 0, .count = 0 }, /* M */
-		{ .type = PARSE_TYPE_INTEGER, .kind = 0, .count = 0 }, /* N */
+		PARSE_TYPE_INTEGER_DEFAULT, /* I */
+		PARSE_TYPE_INTEGER_DEFAULT, /* J */
+		PARSE_TYPE_INTEGER_DEFAULT, /* K */
+		PARSE_TYPE_INTEGER_DEFAULT, /* L */
+		PARSE_TYPE_INTEGER_DEFAULT, /* M */
+		PARSE_TYPE_INTEGER_DEFAULT, /* N */
 
-		{ .type = PARSE_TYPE_REAL, .kind = 0, .count = 0 }, /* O */
-		{ .type = PARSE_TYPE_REAL, .kind = 0, .count = 0 }, /* P */
-		{ .type = PARSE_TYPE_REAL, .kind = 0, .count = 0 }, /* Q */
-		{ .type = PARSE_TYPE_REAL, .kind = 0, .count = 0 }, /* R */
-		{ .type = PARSE_TYPE_REAL, .kind = 0, .count = 0 }, /* S */
-		{ .type = PARSE_TYPE_REAL, .kind = 0, .count = 0 }, /* T */
-		{ .type = PARSE_TYPE_REAL, .kind = 0, .count = 0 }, /* U */
-		{ .type = PARSE_TYPE_REAL, .kind = 0, .count = 0 }, /* V */
-		{ .type = PARSE_TYPE_REAL, .kind = 0, .count = 0 }, /* W */
-		{ .type = PARSE_TYPE_REAL, .kind = 0, .count = 0 }, /* X */
-		{ .type = PARSE_TYPE_REAL, .kind = 0, .count = 0 }, /* Y */
-		{ .type = PARSE_TYPE_REAL, .kind = 0, .count = 0 }, /* Z */
+		PARSE_TYPE_REAL_DEFAULT, /* O */
+		PARSE_TYPE_REAL_DEFAULT, /* P */
+		PARSE_TYPE_REAL_DEFAULT, /* Q */
+		PARSE_TYPE_REAL_DEFAULT, /* R */
+		PARSE_TYPE_REAL_DEFAULT, /* S */
+		PARSE_TYPE_REAL_DEFAULT, /* T */
+		PARSE_TYPE_REAL_DEFAULT, /* U */
+		PARSE_TYPE_REAL_DEFAULT, /* V */
+		PARSE_TYPE_REAL_DEFAULT, /* W */
+		PARSE_TYPE_REAL_DEFAULT, /* X */
+		PARSE_TYPE_REAL_DEFAULT, /* Y */
+		PARSE_TYPE_REAL_DEFAULT, /* Z */
 	},
 };
 
