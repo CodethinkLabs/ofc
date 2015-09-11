@@ -78,7 +78,7 @@ static unsigned parse_literal__binary(
 	const sparse_t* src, const char* ptr,
 	parse_literal_t* literal)
 {
-	if (ptr[0] != 'B')
+	if (toupper(ptr[0]) != 'B')
 		return 0;
 
 	unsigned len = parse_literal__base(
@@ -93,7 +93,7 @@ static unsigned parse_literal__octal(
 	const sparse_t* src, const char* ptr,
 	parse_literal_t* literal)
 {
-	if (ptr[0] != 'O')
+	if (toupper(ptr[0]) != 'O')
 		return 0;
 
 	unsigned len = parse_literal__base(
@@ -109,8 +109,8 @@ static unsigned parse_literal__hex(
 	parse_literal_t* literal)
 {
 	/* Accepting 'X' in a BOZ literal is an extension. */
-	if ((ptr[0] != 'X')
-		&& (ptr[0] != 'Z'))
+	if ((toupper(ptr[0]) != 'X')
+		&& (toupper(ptr[0]) != 'Z'))
 		return 0;
 
 	unsigned len = parse_literal__base(
@@ -208,7 +208,8 @@ static unsigned parse_literal__real(
 	}
 
 	bool had_exponent
-		= ((ptr[i] == 'E') || (ptr[i] == 'D'));
+		= ((toupper(ptr[i]) == 'E')
+			|| (toupper(ptr[i]) == 'D'));
 
 	unsigned k;
 	if (ptr[i] == 'D')
