@@ -4,6 +4,7 @@
 
 #include "file.h"
 #include "preprocess.h"
+#include "parse/parse.h"
 
 
 const char *get_filename_ext(const char *file_name) {
@@ -67,11 +68,20 @@ int main(int argc, const char* argv[])
 	const sparse_t* condense
 		= preprocess_condense_sparse(context);
 	const char* strz = sparse_strz(condense);
-	printf("%s\n", strz);
 
-	/* TODO - Parse. */
+	/*printf("%s\n", strz);*/
+
+	parse_program_t program;
+	unsigned parse_len = parse_program(
+		condense, strz, &program);
 
 	preprocess_delete(context);
+
+	if (parse_len == 0)
+	{
+		fprintf(stderr, "Error: Failed to parse program\n");
+		return EXIT_FAILURE;
+	}
 
 	return EXIT_SUCCESS;
 }

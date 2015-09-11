@@ -55,7 +55,7 @@ unsigned parse_decl(
 	}
 	else
 	{
-		sparse_warning(src, ptr,
+		sparse_warning(src, &ptr[i],
 			"Expected newline at end of declaration");
 	}
 

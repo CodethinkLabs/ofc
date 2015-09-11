@@ -146,7 +146,7 @@ bool sparse__ptr(
 		return false;
 
 	uintptr_t off = ((uintptr_t)ptr - (uintptr_t)sparse->strz);
-	if (off > sparse->len)
+	if (off >= sparse->len)
 		return false;
 
 	unsigned hi  = (sparse->count - 1);
@@ -158,10 +158,10 @@ bool sparse__ptr(
 		unsigned start = sparse->entry[mid].off;
 		unsigned end   = start + sparse->entry[mid].len;
 
-		if (start > off)
-			lo = (mid + 1);
-		else if (end < off)
+		if (off < start)
 			hi = (mid - 1);
+		else if (off > end)
+			lo = (mid + 1);
 		else
 			break;
 	}
