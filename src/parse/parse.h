@@ -10,6 +10,7 @@
 #include "type.h"
 #include "implicit.h"
 #include "decl.h"
+#include "stmt.h"
 
 #include "program.h"
 

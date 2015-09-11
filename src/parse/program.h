@@ -8,6 +8,9 @@ typedef struct
 
 	unsigned      decl_count;
 	parse_decl_t* decl;
+
+	unsigned      stmt_count;
+	parse_stmt_t* stmt;
 } parse_program_t;
 
 
