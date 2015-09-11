@@ -18,6 +18,7 @@ typedef enum
 typedef struct
 {
 	parse_literal_e type;
+	unsigned        kind;
 
 	union
 	{
@@ -31,7 +32,7 @@ typedef struct
 } parse_literal_t;
 
 
-unsigned parse_literal_boz(
+unsigned parse_literal(
 	const sparse_t* src, const char* ptr,
 	parse_literal_t* literal);
 

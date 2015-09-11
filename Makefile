@@ -4,6 +4,7 @@ BASE = src/
 
 SRC_DIR = . parse
 SRC_DIR_BASE = $(addprefix $(BASE),$(SRC_DIR))
+LDFLAGS = -lm
 CFLAGS = -O3 -Wall -Wextra -MD -MP
 
 SRC = $(foreach dir, $(SRC_DIR_BASE), $(wildcard $(dir)/*.c))
@@ -17,7 +18,7 @@ BINDIR = $(PREFIX)/bin
 all : $(FRONTEND)
 
 $(FRONTEND) : $(OBJ)
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 clean :
 	rm -f $(FRONTEND) $(OBJ) $(DEB)
