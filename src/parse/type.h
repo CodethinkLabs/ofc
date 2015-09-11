@@ -20,19 +20,19 @@ typedef struct
 } parse_type_t;
 
 
-static const parse_type_t PARSE_TYPE_INTEGER_DEFAULT =
-{
-	.type  = PARSE_TYPE_INTEGER,
-	.kind  = 0,
-	.count = 0,
-};
+#define PARSE_TYPE_INTEGER_DEFAULT (parse_type_t)\
+{\
+	.type  = PARSE_TYPE_INTEGER,\
+	.kind  = 0,\
+	.count = 0,\
+}
 
-static const parse_type_t PARSE_TYPE_REAL_DEFAULT =
-{
-	.type  = PARSE_TYPE_REAL,
-	.kind  = 0,
-	.count = 0,
-};
+#define PARSE_TYPE_REAL_DEFAULT (parse_type_t)\
+{\
+	.type  = PARSE_TYPE_REAL,\
+	.kind  = 0,\
+	.count = 0,\
+}
 
 
 unsigned parse_type(
