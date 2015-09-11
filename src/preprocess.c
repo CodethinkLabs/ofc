@@ -12,8 +12,8 @@ struct preprocess_s
 	file_t*     file;
 	lang_opts_t opts;
 
-	sparse_t*        unformat;
-	sparse_t*        condense;
+	sparse_t*      unformat;
+	sparse_t*      condense;
 	label_table_t* labels;
 };
 
@@ -294,7 +294,8 @@ static unsigned preprocess__unformat_free_form_code(
 	unsigned i;
 	for (i = 0; (i < remain) && !is_vspace(src[i]) && (src[i] != '\0'); i++)
 	{
-		if (!is_hspace(src[i]))
+		/* Allow the last ampersand prior to a bang comment as continuation. */
+		if (!is_hspace(src[i]) && (src[i] != '!'))
 			valid_ampersand = false;
 
 		if (state->string_delim != '\0')
@@ -319,6 +320,10 @@ static unsigned preprocess__unformat_free_form_code(
 		}
 		else
 		{
+			/* Break if we see the start of a bang comment. */
+			if (src[i] == '!')
+				break;
+
 			if (src[i] == '&')
 			{
 				last_ampersand = i;
