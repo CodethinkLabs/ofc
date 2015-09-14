@@ -37,4 +37,8 @@ unsigned parse_literal(
 	const sparse_t* src, const char* ptr,
 	parse_literal_t* literal);
 
+unsigned parse_unsigned(
+	const sparse_t* src, const char* ptr,
+	unsigned* value);
+
 #endif

@@ -470,3 +470,20 @@ unsigned parse_literal(
 	*literal = l;
 	return len;
 }
+
+unsigned parse_unsigned(
+	const sparse_t* src, const char* ptr,
+	unsigned* value)
+{
+	parse_literal_t l;
+	unsigned len = parse_literal__uint(
+		src, ptr, &l);
+	if (len == 0) return 0;
+
+	unsigned v = (unsigned)l.uint;
+	if ((uint64_t)v != l.uint)
+		return 0;
+
+	*value = v;
+	return len;
+}

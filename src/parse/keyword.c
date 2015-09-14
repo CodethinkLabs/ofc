@@ -86,6 +86,10 @@ unsigned parse_keyword_name(
 			len = 4;
 			match = strncasecmp(ptr, "STOP", len);
 			break;
+		case PARSE_KEYWORD_PAUSE:
+			len = 5;
+			match = strncasecmp(ptr, "PAUSE", len);
+			break;
 
 		case PARSE_KEYWORD_LOGICAL:
 			len = 7;

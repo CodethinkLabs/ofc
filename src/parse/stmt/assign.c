@@ -23,5 +23,6 @@ unsigned parse_stmt_assign(
 		return 0;
 	}
 
+	stmt->type = PARSE_STMT_ASSIGN;
 	return (i + len);
 }

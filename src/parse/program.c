@@ -85,7 +85,6 @@ unsigned parse_program(
 				program->decl, program->decl_count,
 				&program->implicit,
 				&decl);
-			i += len;
 
 			if (len > 0)
 			{
@@ -94,6 +93,7 @@ unsigned parse_program(
 					/* This should never happen, likely out of memory. */
 					return 0;
 				}
+				i += len;
 				continue;
 			}
 		}
@@ -102,15 +102,20 @@ unsigned parse_program(
 			parse_stmt_t stmt;
 			len = parse_stmt(
 				src, &ptr[i], &stmt);
-			i += len;
 
 			if (len > 0)
 			{
-				if (!parse_program_add_stmt(program, stmt))
+				if (stmt.type == PARSE_STMT_EMPTY)
+				{
+					sparse_warning(src, &ptr[i],
+						"Empty statement");
+				}
+				else if (!parse_program_add_stmt(program, stmt))
 				{
 					/* This should never happen, likely out of memory. */
 					return 0;
 				}
+				i += len;
 				continue;
 			}
 		}
