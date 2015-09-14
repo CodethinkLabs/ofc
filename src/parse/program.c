@@ -79,14 +79,17 @@ unsigned parse_program(
 		/* TODO - Disambiguate assign statements and declarations. */
 
 		{
-			parse_stmt_t stmt;
-			len = parse_stmt(
-				src, &ptr[i], &stmt);
+			parse_decl_t decl;
+			len = parse_decl(
+				src, &ptr[i],
+				program->decl, program->decl_count,
+				&program->implicit,
+				&decl);
 			i += len;
 
 			if (len > 0)
 			{
-				if (!parse_program_add_stmt(program, stmt))
+				if (!parse_program_add_decl(program, decl))
 				{
 					/* This should never happen, likely out of memory. */
 					return 0;
@@ -96,16 +99,14 @@ unsigned parse_program(
 		}
 
 		{
-			parse_decl_t decl;
-			len = parse_decl(
-				src, &ptr[i],
-				&program->implicit,
-				&decl);
+			parse_stmt_t stmt;
+			len = parse_stmt(
+				src, &ptr[i], &stmt);
 			i += len;
 
 			if (len > 0)
 			{
-				if (!parse_program_add_decl(program, decl))
+				if (!parse_program_add_stmt(program, stmt))
 				{
 					/* This should never happen, likely out of memory. */
 					return 0;

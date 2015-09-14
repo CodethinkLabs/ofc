@@ -4,22 +4,40 @@
 
 unsigned parse_decl(
 	const sparse_t* src, const char* ptr,
+	const parse_decl_t* decl_list, unsigned decl_list_count,
 	parse_implicit_t* implicit,
 	parse_decl_t* decl)
 {
 	unsigned i = parse_type(
 		src, ptr, &decl->type);
 
-	bool is_implicit = (i == 0);
+	decl->type_implicit = (i == 0);
 
 	unsigned len = parse_name(src, &ptr[i]);
 	if (len == 0) return 0;
 
-	decl->name.base = &ptr[i];
-	decl->name.size = len;
+	decl->name = str_ref(&ptr[i], len);
 	i += len;
 
-	if (is_implicit)
+	decl->redecl = NULL;
+	unsigned d;
+	for (d = 0 ; d < decl_list_count; d++)
+	{
+		const parse_decl_t* existing = &decl_list[d];
+		if (str_ref_equal(
+			decl->name, existing->name))
+		{
+			if (decl->type_implicit)
+			{
+				/* This is an assignment. */
+				return 0;
+			}
+
+			decl->redecl = existing;
+		}
+	}
+
+	if (decl->type_implicit)
 	{
 		if (!implicit)
 			return 0;
