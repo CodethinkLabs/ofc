@@ -390,3 +390,26 @@ unsigned parse_expr(
 	return parse_expr__level_5(
 		src, ptr, expr);
 }
+
+void parse_expr_cleanup(
+	parse_expr_t expr)
+{
+	switch (expr.type)
+	{
+		case PARSE_EXPR_CONSTANT:
+			parse_literal_cleanup(expr.literal);
+			break;
+		case PARSE_EXPR_UNARY:
+			parse_expr_cleanup(*expr.unary.a);
+			free(expr.unary.a);
+			break;
+		case PARSE_EXPR_BINARY:
+			parse_expr_cleanup(*expr.binary.a);
+			parse_expr_cleanup(*expr.binary.b);
+			free(expr.binary.a);
+			free(expr.binary.b);
+			break;
+		default:
+			break;
+	}
+}

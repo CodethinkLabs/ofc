@@ -47,3 +47,21 @@ unsigned parse_stmt(
 
 	return len;
 }
+
+void parse_stmt_cleanup(
+	parse_stmt_t stmt)
+{
+	switch (stmt.type)
+	{
+		case PARSE_STMT_ASSIGN:
+			parse_expr_cleanup(stmt.assign.rhs);
+			break;
+		case PARSE_STMT_STOP:
+		case PARSE_STMT_PAUSE:
+			if (stmt.stop_pause.has_code)
+				parse_expr_cleanup(stmt.stop_pause.code);
+			break;
+		default:
+			break;
+	}
+}

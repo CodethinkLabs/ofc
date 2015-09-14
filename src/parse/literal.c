@@ -471,6 +471,22 @@ unsigned parse_literal(
 	return len;
 }
 
+void parse_literal_cleanup(
+	parse_literal_t literal)
+{
+	switch (literal.type)
+	{
+		case PARSE_LITERAL_CHARACTER:
+		case PARSE_LITERAL_HOLLERITH:
+			/* TODO - Use string class, not str_ref for this. */
+			free((void*)literal.string.base);
+			break;
+		default:
+			break;
+	}
+}
+
+
 unsigned parse_unsigned(
 	const sparse_t* src, const char* ptr,
 	unsigned* value)

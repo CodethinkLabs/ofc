@@ -18,4 +18,7 @@ unsigned parse_program(
 	const sparse_t* src, const char* ptr,
 	parse_program_t* program);
 
+void parse_program_cleanup(
+	parse_program_t program);
+
 #endif

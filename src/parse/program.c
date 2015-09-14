@@ -153,3 +153,17 @@ unsigned parse_program(
 
 	return i;
 }
+
+void parse_program_cleanup(
+	parse_program_t program)
+{
+	unsigned i;
+
+	for (i = 0; i < program.stmt_count; i++)
+		parse_stmt_cleanup(program.stmt[i]);
+	free(program.stmt);
+
+	for (i = 0; i < program.decl_count; i++)
+		parse_decl_cleanup(program.decl[i]);
+	free(program.decl);
+}

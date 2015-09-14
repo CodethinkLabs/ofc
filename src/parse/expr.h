@@ -40,4 +40,7 @@ unsigned parse_expr(
 	const sparse_t* src, const char* ptr,
 	parse_expr_t* expr);
 
+void parse_expr_cleanup(
+	parse_expr_t expr);
+
 #endif

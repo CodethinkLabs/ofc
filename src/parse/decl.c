@@ -78,3 +78,10 @@ unsigned parse_decl(
 
 	return i;
 }
+
+void parse_decl_cleanup(
+	parse_decl_t decl)
+{
+	if (decl.has_init)
+		parse_expr_cleanup(decl.init);
+}

@@ -54,4 +54,7 @@ unsigned parse_stmt(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
 
+void parse_stmt_cleanup(
+	parse_stmt_t stmt);
+
 #endif

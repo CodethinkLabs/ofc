@@ -37,6 +37,9 @@ unsigned parse_literal(
 	const sparse_t* src, const char* ptr,
 	parse_literal_t* literal);
 
+void parse_literal_cleanup(
+	parse_literal_t literal);
+
 unsigned parse_unsigned(
 	const sparse_t* src, const char* ptr,
 	unsigned* value);

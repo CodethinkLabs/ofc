@@ -23,4 +23,7 @@ unsigned parse_decl(
 	parse_implicit_t* implicit,
 	parse_decl_t* decl);
 
+void parse_decl_cleanup(
+	parse_decl_t decl);
+
 #endif
