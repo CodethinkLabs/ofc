@@ -160,7 +160,7 @@ bool sparse__ptr(
 
 		if (off < start)
 			hi = (mid - 1);
-		else if (off > end)
+		else if (off >= end)
 			lo = (mid + 1);
 		else
 			break;

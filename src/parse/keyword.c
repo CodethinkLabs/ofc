@@ -19,7 +19,7 @@ unsigned parse_name(
 	}
 
 	/* END is reserved, an identifier may never begin with these letters. */
-	if ((i > 3) && (strncasecmp(ptr, "END", 3) == 0))
+	if ((i >= 3) && (strncasecmp(ptr, "END", 3) == 0))
 		return 0;
 
 	return i;

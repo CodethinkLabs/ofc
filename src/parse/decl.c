@@ -12,7 +12,7 @@ unsigned parse_decl(
 
 	bool is_implicit = (i == 0);
 
-	unsigned len = parse_name(src, ptr);
+	unsigned len = parse_name(src, &ptr[i]);
 	if (len == 0) return 0;
 
 	decl->name.base = &ptr[i];
@@ -34,6 +34,7 @@ unsigned parse_decl(
 	}
 
 	decl->has_init = (ptr[i] == '=');
+
 	if (decl->has_init)
 	{
 		i += 1;
