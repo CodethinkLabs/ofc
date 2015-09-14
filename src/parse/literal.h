@@ -2,6 +2,8 @@
 #define __parse_literal_h__
 
 #include <stdint.h>
+#include "../string.h"
+
 
 typedef enum
 {
@@ -22,8 +24,7 @@ typedef struct
 
 	union
 	{
-		/* This isn't a reference. */
-		str_ref_t string;
+		string_t string;
 
 		uint64_t uint;
 		int64_t  sint;

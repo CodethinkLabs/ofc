@@ -145,8 +145,9 @@ static unsigned parse_literal__hollerith(
 	if (!pptr) return 0;
 	i += 1;
 
-	char* holl = (char*)malloc(holl_len + 1);
-	if (!holl) return 0;
+	literal->string = string_create(NULL, holl_len);
+	if (string_empty(literal->string))
+		return 0;
 
 	unsigned j, holl_pos;
 	for (j = 1, holl_pos = 0; holl_pos < holl_len; j++)
@@ -159,20 +160,15 @@ static unsigned parse_literal__hollerith(
 		if (ptr[i] == pptr[j])
 			i++;
 
-		holl[holl_pos++] = pptr[j];
+		literal->string.base[holl_pos++] = pptr[j];
 	}
 
 	if (holl_pos < holl_len)
 	{
 		while (holl_pos < holl_len)
-			holl[holl_pos++] = ' ';
+			literal->string.base[holl_pos++] = ' ';
 	}
 
-	/* NULL terminate string for convenience. */
-	holl[holl_pos] = '\0';
-
-	literal->string.base = holl;
-	literal->string.size = holl_len;
 	literal->type = PARSE_LITERAL_HOLLERITH;
 	return i;
 }
@@ -227,8 +223,10 @@ static unsigned parse_literal__character(
 
 	unsigned str_pos = 0;
 	unsigned str_end = j;
-	char *str = (char*)malloc(str_len + 1);
-	if (!str) return 0;
+
+	literal->string = string_create(NULL, str_len);
+	if (string_empty(literal->string))
+		return 0;
 
 	for(j = 1, is_escaped = false; j < str_end; j++)
 	{
@@ -275,7 +273,7 @@ static unsigned parse_literal__character(
 					break;
 			}
 			is_escaped = false;
-			str[str_pos++] = c;
+			literal->string.base[str_pos++] = c;
 		}
 		else if (pptr[j] == '\\')
 		{
@@ -283,15 +281,10 @@ static unsigned parse_literal__character(
 		}
 		else
 		{
-			str[str_pos++] = pptr[j];
+			literal->string.base[str_pos++] = pptr[j];
 		}
 	}
 
-	/* NULL terminate string for convenience. */
-	str[str_pos] = '\0';
-
-	literal->string.base = str;
-	literal->string.size = str_len;
 	literal->type = PARSE_LITERAL_CHARACTER;
 	return i;
 }
@@ -478,8 +471,7 @@ void parse_literal_cleanup(
 	{
 		case PARSE_LITERAL_CHARACTER:
 		case PARSE_LITERAL_HOLLERITH:
-			/* TODO - Use string class, not str_ref for this. */
-			free((void*)literal.string.base);
+			string_delete(literal.string);
 			break;
 		default:
 			break;
