@@ -19,11 +19,25 @@ struct parse_decl_s
 
 unsigned parse_decl(
 	const sparse_t* src, const char* ptr,
-	const parse_decl_t* decl_list, unsigned decl_list_count,
+	const hashmap_t* decl_map,
 	parse_implicit_t* implicit,
 	parse_decl_t* decl);
 
 void parse_decl_cleanup(
 	parse_decl_t decl);
+
+/* Heap allocation functions. */
+parse_decl_t* parse_decl_alloc(
+	parse_decl_t decl);
+void parse_decl_delete(
+	parse_decl_t* decl);
+
+/* Hash table functions. */
+uint8_t parse_decl_hash(
+	const str_ref_t* key);
+const str_ref_t* parse_decl_key(
+	const parse_decl_t* decl);
+bool parse_decl_key_compare(
+	const str_ref_t* a, const str_ref_t* b);
 
 #endif

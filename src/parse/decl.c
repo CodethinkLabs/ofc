@@ -4,7 +4,7 @@
 
 unsigned parse_decl(
 	const sparse_t* src, const char* ptr,
-	const parse_decl_t* decl_list, unsigned decl_list_count,
+	const hashmap_t* decl_map,
 	parse_implicit_t* implicit,
 	parse_decl_t* decl)
 {
@@ -20,21 +20,18 @@ unsigned parse_decl(
 	i += len;
 
 	decl->redecl = NULL;
-	unsigned d;
-	for (d = 0 ; d < decl_list_count; d++)
-	{
-		const parse_decl_t* existing = &decl_list[d];
-		if (str_ref_equal(
-			decl->name, existing->name))
-		{
-			if (decl->type_implicit)
-			{
-				/* This is an assignment. */
-				return 0;
-			}
 
-			decl->redecl = existing;
+	const parse_decl_t* existing = hashmap_find(
+		decl_map, &decl->name);
+	if (existing)
+	{
+		if (decl->type_implicit)
+		{
+			/* This is an assignment. */
+			return 0;
 		}
+
+		decl->redecl = existing;
 	}
 
 	if (decl->type_implicit)
@@ -84,4 +81,50 @@ void parse_decl_cleanup(
 {
 	if (decl.has_init)
 		parse_expr_cleanup(decl.init);
+}
+
+
+parse_decl_t* parse_decl_alloc(
+	parse_decl_t decl)
+{
+	parse_decl_t* adecl
+		= (parse_decl_t*)malloc(
+			sizeof(parse_decl_t));
+	if (adecl) *adecl = decl;
+	return adecl;
+}
+
+void parse_decl_delete(
+	parse_decl_t* decl)
+{
+	if (!decl)
+		return;
+
+	parse_decl_cleanup(*decl);
+	free(decl);
+}
+
+
+uint8_t parse_decl_hash(
+	const str_ref_t* key)
+{
+	uint8_t h = 0;
+	unsigned i;
+	for (i = 0; i < key->size; i++)
+		h += key->base[i];
+	return h;
+}
+
+const str_ref_t* parse_decl_key(
+	const parse_decl_t* decl)
+{
+	return (decl ? &decl->name : NULL);
+}
+
+bool parse_decl_key_compare(
+	const str_ref_t* a, const str_ref_t* b)
+{
+	if (!a || !b)
+		return false;
+	return str_ref_equal(*a, *b);
 }

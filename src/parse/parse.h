@@ -3,6 +3,7 @@
 
 #include "../sparse.h"
 #include "../str_ref.h"
+#include "../hashmap.h"
 
 #include "keyword.h"
 #include "literal.h"

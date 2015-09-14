@@ -3,20 +3,23 @@
 #include <ctype.h>
 
 
-/* TODO - Replace decl list with hash table for lookup speed. */
+
 static bool parse_program_add_decl(
 	parse_program_t* program, parse_decl_t decl)
 {
 	if (!program)
 		return false;
 
-	parse_decl_t* ndecl
-		= (parse_decl_t*)realloc(program->decl,
-			(sizeof(parse_decl_t) * (program->decl_count + 1)));
-	if (!ndecl) return false;
+	parse_decl_t* adecl
+		= parse_decl_alloc(decl);
+	if (!adecl) return false;
 
-	program->decl = ndecl;
-	program->decl[program->decl_count++] = decl;
+	if (!hashmap_add(program->decl, adecl))
+	{
+		parse_decl_delete(adecl);
+		return false;
+	}
+
 	return true;
 }
 
@@ -62,8 +65,13 @@ unsigned parse_program(
 
 	program->implicit = PARSE_IMPLICIT_DEFAULT;
 
-	program->decl_count = 0;
-	program->decl       = NULL;
+	program->decl = hashmap_create(
+		(void*)parse_decl_hash,
+		(void*)parse_decl_key_compare,
+		(void*)parse_decl_key,
+		(void*)parse_decl_delete);
+	if (!program->decl)
+		return 0;
 
 	program->stmt_count = 0;
 	program->stmt       = NULL;
@@ -76,13 +84,11 @@ unsigned parse_program(
 		i += len;
 		if (len > 0) continue;
 
-		/* TODO - Disambiguate assign statements and declarations. */
-
 		{
 			parse_decl_t decl;
 			len = parse_decl(
 				src, &ptr[i],
-				program->decl, program->decl_count,
+				program->decl,
 				&program->implicit,
 				&decl);
 
@@ -91,6 +97,7 @@ unsigned parse_program(
 				if (!parse_program_add_decl(program, decl))
 				{
 					/* This should never happen, likely out of memory. */
+					parse_program_cleanup(*program);
 					return 0;
 				}
 				i += len;
@@ -113,6 +120,7 @@ unsigned parse_program(
 				else if (!parse_program_add_stmt(program, stmt))
 				{
 					/* This should never happen, likely out of memory. */
+					parse_program_cleanup(*program);
 					return 0;
 				}
 				i += len;
@@ -130,6 +138,7 @@ unsigned parse_program(
 	{
 		sparse_error(src, &ptr[i],
 			"Expected END PROGRAM");
+		parse_program_cleanup(*program);
 		return 0;
 	}
 
@@ -148,6 +157,7 @@ unsigned parse_program(
 	{
 		sparse_error(src, &ptr[i],
 			"Expected end of input after main program.\n");
+		parse_program_cleanup(*program);
 		return 0;
 	}
 
@@ -158,12 +168,9 @@ void parse_program_cleanup(
 	parse_program_t program)
 {
 	unsigned i;
-
 	for (i = 0; i < program.stmt_count; i++)
 		parse_stmt_cleanup(program.stmt[i]);
 	free(program.stmt);
 
-	for (i = 0; i < program.decl_count; i++)
-		parse_decl_cleanup(program.decl[i]);
-	free(program.decl);
+	hashmap_delete(program.decl);
 }

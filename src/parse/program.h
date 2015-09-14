@@ -6,8 +6,7 @@ typedef struct
 	str_ref_t        name;
 	parse_implicit_t implicit;
 
-	unsigned      decl_count;
-	parse_decl_t* decl;
+	hashmap_t* decl;
 
 	unsigned      stmt_count;
 	parse_stmt_t* stmt;
