@@ -1,4 +1,6 @@
 #include "parse.h"
+#include <ctype.h>
+#include <string.h>
 
 typedef struct
 {
@@ -45,7 +47,74 @@ unsigned parse_type(
 	if (i == 0)
 		return 0;
 
-	unsigned k = 4;
+	bool implicit_kind = false;
+	unsigned k;
+	if (ptr[i] == '*')
+	{
+		i += 1;
+		unsigned len = parse_unsigned(
+			src, &ptr[i], &k);
+		if (len == 0)
+		{
+			sparse_error(src, &ptr[i],
+				"Expected kind value after asterisk in type specifier");
+			return 0;
+		}
+		i += len;
+	}
+	else if (ptr[i] == '(')
+	{
+		i += 1;
+
+		unsigned len = parse_keyword(src, ptr, PARSE_KEYWORD_KIND);
+		if (len > 0)
+		{
+			i += len;
+			if (ptr[i] != '=')
+			{
+				sparse_error(src, ptr,
+					"Expected '=' after KIND in type specifier");
+				return 0;
+			}
+			i += 1;
+		}
+
+		len = parse_unsigned(
+			src, &ptr[i], &k);
+		if (len == 0)
+		{
+			sparse_error(src, &ptr[i],
+				"Expected kind value after 'KIND=' in type specifier");
+			return 0;
+		}
+		i += len;
+
+		if (ptr[i] == ')')
+		{
+			sparse_error(src, &ptr[i],
+				"Epected closing bracket in kind declaration");
+		}
+		i += 1;
+	}
+	else
+	{
+		implicit_kind = true;
+		k = 4;
+	}
+
+	if (k == 0)
+	{
+		sparse_warning(src, ptr,
+			"Kind value must be non-zero, using default");
+		k = 4;
+	}
+
+	if (dbl && !implicit_kind)
+	{
+		sparse_warning(src, ptr,
+			"DOUBLE types shouldn't have a kind, doubling kind value");
+	}
+
 	if (dbl) k *= 2;
 
 	type->type  = t;
