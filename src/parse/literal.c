@@ -121,9 +121,9 @@ static unsigned parse_literal__hex(
 	return (len + 1);
 }
 
-static unsigned parse_literal__hollerith(
+unsigned parse_hollerith(
 	const sparse_t* src, const char* ptr,
-	parse_literal_t* literal)
+	string_t* string)
 {
 	uint64_t u;
 	unsigned i = parse_literal__base(
@@ -145,8 +145,8 @@ static unsigned parse_literal__hollerith(
 	if (!pptr) return 0;
 	i += 1;
 
-	literal->string = string_create(NULL, holl_len);
-	if (string_empty(literal->string))
+	*string = string_create(NULL, holl_len);
+	if (string_empty(*string))
 		return 0;
 
 	unsigned j, holl_pos;
@@ -160,22 +160,34 @@ static unsigned parse_literal__hollerith(
 		if (ptr[i] == pptr[j])
 			i++;
 
-		literal->string.base[holl_pos++] = pptr[j];
+		string->base[holl_pos++] = pptr[j];
 	}
 
 	if (holl_pos < holl_len)
 	{
 		while (holl_pos < holl_len)
-			literal->string.base[holl_pos++] = ' ';
+			string->base[holl_pos++] = ' ';
 	}
 
-	literal->type = PARSE_LITERAL_HOLLERITH;
 	return i;
 }
 
-static unsigned parse_literal__character(
+static unsigned parse_literal__hollerith(
 	const sparse_t* src, const char* ptr,
 	parse_literal_t* literal)
+{
+	unsigned len = parse_hollerith(
+		src, ptr, &literal->string);
+	if (len == 0) return 0;
+
+	literal->type = PARSE_LITERAL_HOLLERITH;
+	return len;
+}
+
+
+unsigned parse_character(
+	const sparse_t* src, const char* ptr,
+	string_t* string)
 {
 	unsigned i = 0;
 
@@ -189,7 +201,7 @@ static unsigned parse_literal__character(
 	if (!pptr) return 0;
 	i += 1;
 
-	/* Skip to the end of condense string. */
+	/* Skip to the end of condense string-> */
 	bool is_escaped = false;
 	for (i++; (ptr[i] != '\0') && ((ptr[i] != quote) || is_escaped); i++)
 		is_escaped = !is_escaped && (ptr[i] == '\\');
@@ -224,8 +236,8 @@ static unsigned parse_literal__character(
 	unsigned str_pos = 0;
 	unsigned str_end = j;
 
-	literal->string = string_create(NULL, str_len);
-	if (string_empty(literal->string))
+	*string = string_create(NULL, str_len);
+	if (string_empty(*string))
 		return 0;
 
 	for(j = 1, is_escaped = false; j < str_end; j++)
@@ -273,7 +285,7 @@ static unsigned parse_literal__character(
 					break;
 			}
 			is_escaped = false;
-			literal->string.base[str_pos++] = c;
+			string->base[str_pos++] = c;
 		}
 		else if (pptr[j] == '\\')
 		{
@@ -281,13 +293,25 @@ static unsigned parse_literal__character(
 		}
 		else
 		{
-			literal->string.base[str_pos++] = pptr[j];
+			string->base[str_pos++] = pptr[j];
 		}
 	}
 
-	literal->type = PARSE_LITERAL_CHARACTER;
 	return i;
 }
+
+static unsigned parse_literal__character(
+	const sparse_t* src, const char* ptr,
+	parse_literal_t* literal)
+{
+	unsigned len = parse_character(
+		src, ptr, &literal->string);
+	if (len == 0) return 0;
+
+	literal->type = PARSE_LITERAL_CHARACTER;
+	return len;
+}
+
 
 static unsigned parse_literal__uint(
 	const sparse_t* src, const char* ptr,

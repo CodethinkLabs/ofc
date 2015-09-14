@@ -12,6 +12,7 @@
 #include "expr.h"
 #include "implicit.h"
 #include "decl.h"
+#include "format.h"
 #include "stmt.h"
 
 #include "program.h"

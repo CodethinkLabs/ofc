@@ -34,6 +34,13 @@ typedef struct
 } parse_literal_t;
 
 
+unsigned parse_hollerith(
+	const sparse_t* src, const char* ptr,
+	string_t* string);
+unsigned parse_character(
+	const sparse_t* src, const char* ptr,
+	string_t* string);
+
 unsigned parse_literal(
 	const sparse_t* src, const char* ptr,
 	parse_literal_t* literal);
