@@ -40,7 +40,8 @@ typedef enum
 } parse_keyword_e;
 
 unsigned parse_name(
-	const sparse_t* src, const char* ptr);
+	const sparse_t* src, const char* ptr,
+	str_ref_t* name);
 
 unsigned parse_keyword(
 	const sparse_t* src, const char* ptr,

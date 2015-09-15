@@ -4,12 +4,10 @@ unsigned parse_stmt_assignment(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt)
 {
-	unsigned i = parse_name(src, ptr);
+	/* TODO - parse_lhs. */
+	unsigned i = parse_name(src, ptr,
+		&stmt->assignment.lhs);
 	if (i == 0) return 0;
-
-	stmt->assignment.lhs = str_ref(ptr, i);
-
-	/* TODO - Parse more complex lhs. */
 
 	if (ptr[i++] != '=')
 		return 0;
@@ -45,9 +43,9 @@ unsigned parse_stmt_assign(
 	if (len == 0) return 0;
 	i += 2;
 
-	len = parse_name(src, &ptr[i]);
+	len = parse_name(src, &ptr[i],
+		&stmt->assign.variable);
 	if (len == 0) return 0;
-	stmt->assign.variable = str_ref(&ptr[i], len);
 	i += len;
 
 	stmt->type = PARSE_STMT_ASSIGN;

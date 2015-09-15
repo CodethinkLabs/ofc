@@ -13,7 +13,8 @@ unsigned parse_decl(
 
 	decl->type_implicit = (i == 0);
 
-	unsigned len = parse_name(src, &ptr[i]);
+	unsigned len = parse_name(
+		src, &ptr[i], &decl->name);
 	if (len == 0) return 0;
 
 	decl->name = str_ref(&ptr[i], len);

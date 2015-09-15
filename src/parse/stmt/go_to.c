@@ -8,9 +8,8 @@ unsigned parse_stmt_go_to(
 		src, ptr, PARSE_KEYWORD_GO_TO);
 	if (i == 0) return 0;
 
-	unsigned label = 0;
-	unsigned len = parse_unsigned(
-		src, &ptr[i], &label);
+	unsigned len = parse_label(
+		src, &ptr[i], &stmt->go_to.label);
 	if (len == 0)
 	{
 		sparse_error(src, &ptr[i],

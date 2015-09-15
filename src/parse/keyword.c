@@ -4,7 +4,8 @@
 
 
 unsigned parse_name(
-	const sparse_t* src, const char* ptr)
+	const sparse_t* src, const char* ptr,
+	str_ref_t* name)
 {
 	if (!isalpha(ptr[0]))
 		return 0;
@@ -22,6 +23,7 @@ unsigned parse_name(
 	if ((i >= 3) && (strncasecmp(ptr, "END", 3) == 0))
 		return 0;
 
+	if (name) *name = str_ref(ptr, i);
 	return i;
 }
 
@@ -207,9 +209,8 @@ unsigned parse_keyword_name(
 
 	if (name != NULL)
 	{
-		unsigned nlen = parse_name(src, &ptr[len]);
-		name->base = &ptr[len];
-		name->size = nlen;
+		unsigned nlen = parse_name(
+			src, &ptr[len], name);
 
 		if ((nlen > 0) && sparse_sequential(
 			src, &ptr[len - 1], 2))

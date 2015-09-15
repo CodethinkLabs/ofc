@@ -19,7 +19,7 @@ static unsigned parse_stmt_data__nlist(
 
 		/* TODO - Create parse_lhs function and use here. */
 		unsigned len = parse_name(
-			src, &ptr[j]);
+			src, &ptr[j], NULL);
 		if (len == 0) break;
 
 		if (*count >= *max_count)

@@ -39,29 +39,29 @@ typedef struct
 
 		struct
 		{
-			unsigned label;
+			parse_label_t label;
 		} go_to;
 
 		struct
 		{
-			parse_expr_t cond;
-			unsigned  label_count;
-			unsigned* label;
+			parse_expr_t   cond;
+			unsigned       label_count;
+			parse_label_t* label;
 		} if_comp;
 
 		struct
 		{
-			unsigned     end_label;
-			str_ref_t    iterator;
-			parse_expr_t init;
-			parse_expr_t last;
-			parse_expr_t step;
+			parse_label_t end_label;
+			str_ref_t     iterator;
+			parse_expr_t  init;
+			parse_expr_t  last;
+			parse_expr_t  step;
 		} do_loop;
 
 		struct
 		{
-			parse_expr_t file;
-			unsigned     format_label;
+			parse_expr_t  file;
+			parse_label_t format_label;
 
 			unsigned      elem_count;
 			parse_expr_t* elem;
@@ -82,8 +82,8 @@ typedef struct
 
 		struct
 		{
-			unsigned      label;
-			str_ref_t     variable;
+			unsigned  label;
+			str_ref_t variable;
 		} assign;
 	};
 } parse_stmt_t;

@@ -9,13 +9,14 @@ unsigned parse_stmt_do(
 	if (i == 0) return 0;
 
 	/* TODO - parse_label */
-	unsigned len = parse_unsigned(
+	unsigned len = parse_label(
 		src, &ptr[i], &stmt->do_loop.end_label);
 	if (len == 0) return 0;
 	i += len;
 
 	/* TODO - parse_lhs */
-	len = parse_name(src, &ptr[i]);
+	len = parse_name(src, &ptr[i],
+		&stmt->do_loop.iterator);
 	if (len == 0) return 0;
 	stmt->do_loop.iterator = str_ref(&ptr[i], len);
 	i += len;

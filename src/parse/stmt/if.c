@@ -23,9 +23,8 @@ unsigned parse_stmt_if_computed(
 		return 0;
 	}
 
-	/* TODO - Create parse_label and use here. */
-	unsigned label = 0;
-	len = parse_unsigned(
+	parse_label_t label;
+	len = parse_label(
 		src, &ptr[i], &label);
 	if (len == 0)
 	{
@@ -38,8 +37,8 @@ unsigned parse_stmt_if_computed(
 	stmt->type = PARSE_STMT_IF_COMPUTED;
 
 	stmt->if_comp.label_count = 1;
-	stmt->if_comp.label = (unsigned*)malloc(
-		sizeof(unsigned) * stmt->if_comp.label_count);
+	stmt->if_comp.label = (parse_label_t*)malloc(
+		sizeof(parse_label_t) * stmt->if_comp.label_count);
 	if (!stmt->if_comp.label)
 	{
 		parse_expr_cleanup(
@@ -51,12 +50,12 @@ unsigned parse_stmt_if_computed(
 	while (ptr[i] == ',')
 	{
 		unsigned j = (i + 1);
-		len = parse_unsigned(
+		len = parse_label(
 			src, &ptr[j], &label);
 		if (len == 0) break;
 
-		unsigned* nlabel = (unsigned*)realloc(stmt->if_comp.label,
-			sizeof(unsigned) * (stmt->if_comp.label_count + 1));
+		parse_label_t* nlabel = (parse_label_t*)realloc(stmt->if_comp.label,
+			sizeof(parse_label_t) * (stmt->if_comp.label_count + 1));
 		if (!nlabel)
 		{
 			parse_stmt_cleanup(*stmt);

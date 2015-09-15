@@ -27,11 +27,10 @@ static unsigned parse_expr__primary(
 	if (len > 0) return len;
 
 	/* TODO - Check for intrinsics first. */
-	len = parse_name(src, ptr);
+	len = parse_name(
+		src, ptr, &expr->variable);
 	if (len > 0)
 	{
-		expr->variable.base = ptr;
-		expr->variable.size = len;
 		expr->type = PARSE_EXPR_VARIABLE;
 		return len;
 	}

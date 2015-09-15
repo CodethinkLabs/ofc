@@ -24,7 +24,7 @@ unsigned parse_stmt_write(
 		return 0;
 	}
 
-	len = parse_unsigned(
+	len = parse_label(
 		src, &ptr[i], &stmt->write.format_label);
 	if (len == 0)
 	{
