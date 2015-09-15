@@ -9,6 +9,7 @@ typedef enum
 	PARSE_STMT_STOP,
 	PARSE_STMT_PAUSE,
 	PARSE_STMT_GO_TO,
+	PARSE_STMT_IF_COMPUTED,
 } parse_stmt_e;
 
 typedef struct
@@ -35,6 +36,13 @@ typedef struct
 			bool         has_code;
 			parse_expr_t code;
 		} stop_pause;
+
+		struct
+		{
+			parse_expr_t cond;
+			unsigned  label_count;
+			unsigned* label;
+		} if_comp;
 	};
 } parse_stmt_t;
 
@@ -49,6 +57,9 @@ unsigned parse_stmt_go_to(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
 unsigned parse_stmt_assign(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
+unsigned parse_stmt_if_computed(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
 

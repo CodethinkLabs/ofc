@@ -69,8 +69,10 @@ unsigned parse_decl(
 	}
 	else
 	{
-		sparse_warning(src, &ptr[i],
-			"Expected newline or semicolon at end of declaration");
+		/* Not a declaration. */
+		if (decl->has_init)
+			parse_expr_cleanup(decl->init);
+		return 0;
 	}
 
 	return i;
