@@ -199,7 +199,7 @@ unsigned parse_program(
 	if (ptr[i] != '\0')
 	{
 		sparse_error(src, &ptr[i],
-			"Expected end of input after main program.\n");
+			"Expected end of input after main program");
 		parse_program_cleanup(*program);
 		return 0;
 	}

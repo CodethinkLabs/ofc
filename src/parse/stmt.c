@@ -34,7 +34,7 @@ unsigned parse_stmt(
 		if (len == 0)
 			return 0;
 
-		sparse_warning(src, ptr,
+		sparse_warning(src, &ptr[len],
 			"Expected newline or semicolon after statement");
 	}
 
