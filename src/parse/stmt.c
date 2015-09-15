@@ -48,6 +48,7 @@ void parse_stmt_cleanup(
 	switch (stmt.type)
 	{
 		case PARSE_STMT_ASSIGNMENT:
+			parse_lhs_cleanup(stmt.assignment.lhs);
 			parse_expr_cleanup(stmt.assignment.rhs);
 			break;
 		case PARSE_STMT_STOP:
@@ -60,6 +61,7 @@ void parse_stmt_cleanup(
 			parse_expr_cleanup(stmt.if_comp.cond);
 			break;
 		case PARSE_STMT_DO:
+			parse_lhs_cleanup(stmt.do_loop.iterator);
 			parse_expr_cleanup(stmt.do_loop.init);
 			parse_expr_cleanup(stmt.do_loop.last);
 			parse_expr_cleanup(stmt.do_loop.step);
@@ -79,6 +81,8 @@ void parse_stmt_cleanup(
 			for (i = 0; i < stmt.data.count; i++)
 				parse_expr_cleanup(stmt.data.init[i]);
 			free(stmt.data.init);
+			for (i = 0; i < stmt.data.count; i++)
+				parse_lhs_cleanup(stmt.data.name[i]);
 			free(stmt.data.name);
 			break;
 		default:

@@ -14,11 +14,9 @@ unsigned parse_stmt_do(
 	if (len == 0) return 0;
 	i += len;
 
-	/* TODO - parse_lhs */
-	len = parse_name(src, &ptr[i],
+	len = parse_lhs(src, &ptr[i],
 		&stmt->do_loop.iterator);
 	if (len == 0) return 0;
-	stmt->do_loop.iterator = str_ref(&ptr[i], len);
 	i += len;
 
 	if (ptr[i++] != '=')

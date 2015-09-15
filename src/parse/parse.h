@@ -8,6 +8,7 @@
 #include "keyword.h"
 #include "literal.h"
 #include "label.h"
+#include "lhs.h"
 #include "operator.h"
 #include "type.h"
 #include "expr.h"

@@ -116,8 +116,10 @@ unsigned parse_program(
 
 			if (len > 0)
 			{
+				/* TODO - Update this to handle implicit arrays. */
 				if ((stmt.type == PARSE_STMT_ASSIGNMENT)
-					&& !hashmap_find(program->decl, &stmt.assignment.lhs))
+					&& (stmt.assignment.lhs.type == PARSE_LHS_VARIABLE)
+					&& !hashmap_find(program->decl, &stmt.assignment.lhs.variable))
 				{
 					/* This is an implicit declaration
 					   Fall-through and handle as such. */

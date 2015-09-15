@@ -4,8 +4,7 @@ unsigned parse_stmt_assignment(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt)
 {
-	/* TODO - parse_lhs. */
-	unsigned i = parse_name(src, ptr,
+	unsigned i = parse_lhs(src, ptr,
 		&stmt->assignment.lhs);
 	if (i == 0) return 0;
 

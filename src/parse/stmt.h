@@ -27,7 +27,7 @@ typedef struct
 	{
 		struct
 		{
-			str_ref_t    lhs;
+			parse_lhs_t  lhs;
 			parse_expr_t rhs;
 		} assignment;
 
@@ -52,7 +52,7 @@ typedef struct
 		struct
 		{
 			parse_label_t end_label;
-			str_ref_t     iterator;
+			parse_lhs_t   iterator;
 			parse_expr_t  init;
 			parse_expr_t  last;
 			parse_expr_t  step;
@@ -76,7 +76,7 @@ typedef struct
 		struct
 		{
 			unsigned      count;
-			str_ref_t*    name;
+			parse_lhs_t*  name;
 			parse_expr_t* init;
 		} data;
 

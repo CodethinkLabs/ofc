@@ -3,7 +3,7 @@
 
 static unsigned parse_stmt_data__nlist(
 	const sparse_t* src, const char* ptr,
-	str_ref_t** name, unsigned* count, unsigned* max_count)
+	parse_lhs_t** name, unsigned* count, unsigned* max_count)
 {
 	unsigned ocount = *count;
 	unsigned i = 0, c;
@@ -17,20 +17,24 @@ static unsigned parse_stmt_data__nlist(
 			j += 1;
 		}
 
-		/* TODO - Create parse_lhs function and use here. */
-		unsigned len = parse_name(
-			src, &ptr[j], NULL);
+		parse_lhs_t lhs;
+		unsigned len = parse_lhs(
+			src, &ptr[j], &lhs);
 		if (len == 0) break;
 
 		if (*count >= *max_count)
 		{
 			unsigned ncount = (*max_count << 1);
 			if (ncount == 0) ncount = 16;
-			str_ref_t* nname
-				= (str_ref_t*)realloc(*name,
-					(sizeof(str_ref_t) * ncount));
+			parse_lhs_t* nname
+				= (parse_lhs_t*)realloc(*name,
+					(sizeof(parse_lhs_t) * ncount));
 			if (!nname)
 			{
+				parse_lhs_cleanup(lhs);
+				unsigned e;
+				for (e = ocount; e < *count; e++)
+					parse_lhs_cleanup((*name)[e]);
 				*count = ocount;
 				return 0;
 			}
@@ -39,7 +43,7 @@ static unsigned parse_stmt_data__nlist(
 			*max_count = ncount;
 		}
 
-		(*name)[(*count)++] = str_ref(&ptr[j], len);
+		(*name)[(*count)++] = lhs;
 		i = (j + len);
 	}
 
@@ -168,6 +172,10 @@ static unsigned parse_stmt_data__list(
 	{
 		sparse_warning(src, ptr,
 			"Too few initializers for names in DATA statement");
+
+		unsigned e;
+		for (e = ccount; e < ncount; e++)
+			parse_lhs_cleanup(stmt->data.name[e]);
 		ncount = ccount;
 	}
 
