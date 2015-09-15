@@ -48,6 +48,9 @@ unsigned parse_literal(
 void parse_literal_cleanup(
 	parse_literal_t literal);
 
+bool parse_literal_clone(
+	parse_literal_t* dst, const parse_literal_t* src);
+
 unsigned parse_unsigned(
 	const sparse_t* src, const char* ptr,
 	unsigned* value);

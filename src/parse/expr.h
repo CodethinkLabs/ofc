@@ -3,6 +3,7 @@
 
 typedef enum
 {
+	PARSE_EXPR_NONE,
 	PARSE_EXPR_CONSTANT,
 	PARSE_EXPR_VARIABLE,
 	PARSE_EXPR_UNARY,
@@ -36,11 +37,17 @@ struct parse_expr_s
 };
 
 
+#define PARSE_EXPR_EMPTY (parse_expr_t){ .type = PARSE_EXPR_NONE };
+
+
 unsigned parse_expr(
 	const sparse_t* src, const char* ptr,
 	parse_expr_t* expr);
 
 void parse_expr_cleanup(
 	parse_expr_t expr);
+
+bool parse_expr_clone(
+	parse_expr_t* dst, const parse_expr_t* src);
 
 #endif

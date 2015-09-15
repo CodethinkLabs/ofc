@@ -495,6 +495,29 @@ void parse_literal_cleanup(
 	}
 }
 
+bool parse_literal_clone(
+	parse_literal_t* dst, const parse_literal_t* src)
+{
+	if (!dst || !src)
+		return false;
+
+	parse_literal_t clone = *src;
+	switch (src->type)
+	{
+		case PARSE_LITERAL_CHARACTER:
+		case PARSE_LITERAL_HOLLERITH:
+			clone.string = string_copy(src->string);
+			if (string_empty(clone.string))
+				return false;
+			break;
+		default:
+			break;
+	}
+
+	*dst = clone;
+	return true;
+}
+
 
 unsigned parse_unsigned(
 	const sparse_t* src, const char* ptr,

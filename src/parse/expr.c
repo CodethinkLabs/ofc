@@ -387,8 +387,14 @@ unsigned parse_expr(
 {
 	/* TODO - Defined binary operators. */
 
-	return parse_expr__level_5(
-		src, ptr, expr);
+	parse_expr_t e;
+	unsigned len = parse_expr__level_5(
+		src, ptr, &e);
+
+	if (expr) *expr = e;
+	else parse_expr_cleanup(e);
+
+	return len;
 }
 
 void parse_expr_cleanup(
@@ -412,4 +418,74 @@ void parse_expr_cleanup(
 		default:
 			break;
 	}
+}
+
+
+bool parse_expr_clone(
+	parse_expr_t* dst, const parse_expr_t* src)
+{
+	if (!src || !dst)
+		return false;
+
+	parse_expr_t clone = *src;
+	switch (src->type)
+	{
+		case PARSE_EXPR_NONE:
+			break;
+		case PARSE_EXPR_CONSTANT:
+			if (!parse_literal_clone(
+				&clone.literal, &src->literal))
+				return false;
+			break;
+		case PARSE_EXPR_VARIABLE:
+			break;
+		case PARSE_EXPR_UNARY:
+			clone.unary.a
+				= (parse_expr_t*)malloc(
+					sizeof(parse_expr_t));
+			if (!clone.unary.a) return false;
+			if (!parse_expr_clone(
+				clone.unary.a, src->unary.a))
+			{
+				free(clone.unary.a);
+				return false;
+			}
+			break;
+		case PARSE_EXPR_BINARY:
+			clone.binary.a
+				= (parse_expr_t*)malloc(
+					sizeof(parse_expr_t));
+			if (!clone.binary.a) return false;
+			if (!parse_expr_clone(
+				clone.binary.a, src->binary.a))
+			{
+				free(clone.unary.a);
+				return false;
+			}
+
+			clone.binary.b
+				= (parse_expr_t*)malloc(
+					sizeof(parse_expr_t));
+			if (!clone.binary.b)
+			{
+				parse_expr_cleanup(*clone.binary.a);
+				free(clone.binary.a);
+				return false;
+			}
+			if (!parse_expr_clone(
+				clone.binary.b, src->binary.b))
+			{
+				parse_expr_cleanup(*clone.binary.a);
+				free(clone.binary.a);
+				free(clone.binary.b);
+				return false;
+			}
+
+			break;
+		default:
+			return false;
+	}
+
+	*dst = clone;
+	return true;
 }

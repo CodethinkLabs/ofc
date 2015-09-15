@@ -9,7 +9,8 @@ typedef struct
 	unsigned size;
 } string_t;
 
-string_t string_create(char* base, unsigned size);
+string_t string_create(const char* base, unsigned size);
+string_t string_copy(const string_t src);
 void     string_delete(string_t string);
 
 bool string_empty(const string_t string);

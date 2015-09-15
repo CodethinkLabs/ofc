@@ -3,7 +3,7 @@
 #include <string.h>
 
 
-string_t string_create(char* base, unsigned size)
+string_t string_create(const char* base, unsigned size)
 {
 	string_t string;
 	string.base = (char*)malloc(size + 1);
@@ -21,6 +21,12 @@ string_t string_create(char* base, unsigned size)
 		}
 	}
 	return string;
+}
+
+string_t string_copy(const string_t src)
+{
+	return string_create(
+		src.base, src.size);
 }
 
 void string_delete(string_t string)

@@ -30,6 +30,7 @@ typedef enum
 
 	PARSE_KEYWORD_KIND,
 
+	PARSE_KEYWORD_DATA,
 	PARSE_KEYWORD_WRITE,
 	PARSE_KEYWORD_FORMAT,
 } parse_keyword_e;
