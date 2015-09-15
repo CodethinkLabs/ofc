@@ -378,10 +378,10 @@ static unsigned parse_literal__real(
 		v = (v * 10.0) + d;
 	}
 
-	bool had_fract = false;
-	if (ptr[i] == '.')
+	bool had_fract = (ptr[i] == '.');
+	if (had_fract)
 	{
-		had_fract = isdigit(ptr[++i]);
+		i += 1;
 
 		long double f;
 		for (f = 10.0; isdigit(ptr[i]); i++, f *= 10.0)
@@ -470,9 +470,23 @@ unsigned parse_literal(
 	if (len == 0) len = parse_literal__binary(src, ptr, &l);
 	if (len == 0) len = parse_literal__octal(src, ptr, &l);
 	if (len == 0) len = parse_literal__hex(src, ptr, &l);
-	if (len == 0) len = parse_literal__uint(src, ptr, &l);
-	if (len == 0) len = parse_literal__sint(src, ptr, &l);
-	if (len == 0) len = parse_literal__real(src, ptr, &l);
+
+	if (len == 0)
+	{
+		/* Integer and real parsing is ambiguous. */
+
+		len = parse_literal__uint(src, ptr, &l);
+		if (len == 0)
+			len = parse_literal__sint(src, ptr, &l);
+
+		parse_literal_t rl;
+		unsigned real_len = parse_literal__real(src, ptr, &rl);
+		if (real_len > len)
+		{
+			l = rl;
+			len = real_len;
+		}
+	}
 
 	if (len == 0)
 		return 0;
