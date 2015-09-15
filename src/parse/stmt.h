@@ -15,6 +15,8 @@ typedef struct
 {
 	parse_stmt_e type;
 
+	const unsigned* label;
+
 	union
 	{
 		struct
@@ -52,6 +54,7 @@ unsigned parse_stmt_assign(
 
 unsigned parse_stmt(
 	const sparse_t* src, const char* ptr,
+	const unsigned* label,
 	parse_stmt_t* stmt);
 
 void parse_stmt_cleanup(

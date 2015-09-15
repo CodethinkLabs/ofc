@@ -73,7 +73,9 @@ int main(int argc, const char* argv[])
 
 	parse_program_t program;
 	unsigned parse_len = parse_program(
-		condense, strz, &program);
+		condense, strz,
+		preprocess_labels(context),
+		&program);
 
 	if (parse_len > 0)
 		parse_program_cleanup(program);

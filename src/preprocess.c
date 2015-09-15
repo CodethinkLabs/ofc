@@ -434,22 +434,7 @@ static bool preprocess__unformat_fixed_form(preprocess_t* context)
 		if (first_code_line && continuation)
 		{
 			fprintf(stderr, "Warning:%s:%u: Initial line can't be a continuation"
-				", treating as non-continuation line.\n", path, (row + 1));
-		}
-
-		if (has_label)
-		{
-			if (continuation)
-			{
-				fprintf(stderr, "Warning:%s:%u: Labeling a continuation line doesn't make sense"
-					", ignoring label.\n", path, (row + 1));
-			}
-			else
-			{
-				/* Mark current position in file as label. */
-				if (!label_table_add(context->labels, &src[pos], label))
-					return false;
-			}
+				", treating as non-continuation line\n", path, (row + 1));
 		}
 
 		col  = len;
@@ -469,6 +454,22 @@ static bool preprocess__unformat_fixed_form(preprocess_t* context)
 				&& !sparse_append_strn(context->unformat, newline, 1))
 				return false;
 
+			if (has_label)
+			{
+				if (continuation)
+				{
+					fprintf(stderr, "Warning:%s:%u: "
+						"Labeling a continuation line doesn't make sense"
+						", ignoring label", path, (row + 1));
+				}
+				else
+				{
+					/* Mark current position in file as label. */
+					if (!label_table_add(context->labels, &src[pos], label))
+						return false;
+				}
+			}
+
 			/* Append non-empty line to output. */
 			len = preprocess__unformat_fixed_form_code(
 				col, &src[pos], opts, &context->unformat);
@@ -481,7 +482,16 @@ static bool preprocess__unformat_fixed_form(preprocess_t* context)
 		}
 		else
 		{
-			fprintf(stderr, "Warning:%s:%u: Blank or comment line with non-empty first column.\n", path, (row + 1));
+			fprintf(stderr, "Warning:%s:%u: "
+				"Blank or comment line with non-empty first column", path, (row + 1));
+
+			if (has_label)
+			{
+				/* TODO - Attach label to next code line, this leads to the possibility
+				          of duplicate labels on a line, which we can't yet handle. */
+				fprintf(stderr, "Warning:%s:%u: "
+					"Label attached to blank line, will be ignored", path, (row + 1));
+			}
 		}
 
 		/* Skip to the actual end of the line, including all ignored characters. */
@@ -671,34 +681,7 @@ const sparse_t* preprocess_condense_sparse(const preprocess_t* context)
 	return (context ? context->condense : NULL);
 }
 
-
-
-bool preprocess_unformat_has_label(
-	const preprocess_t* context, const char* ptr, unsigned* number)
+const label_table_t* preprocess_labels(const preprocess_t* context)
 {
-	if (!context)
-		return false;
-
-	const char* fptr = sparse_file_pointer(
-		context->unformat, ptr);
-	if (!fptr) return NULL;
-
-	return label_table_find(
-		context->labels,
-		fptr, number);
-}
-
-bool preprocess_condense_has_label(
-	const preprocess_t* context, const char* ptr, unsigned* number)
-{
-	if (!context)
-		return false;
-
-	const char* fptr = sparse_file_pointer(
-		context->condense, ptr);
-	if (!fptr) return NULL;
-
-	return label_table_find(
-		context->labels,
-		fptr, number);
+	return (context ? context->labels : NULL);
 }

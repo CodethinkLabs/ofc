@@ -3,12 +3,12 @@
 
 unsigned parse_stmt(
 	const sparse_t* src, const char* ptr,
+	const unsigned* label,
 	parse_stmt_t* stmt)
 {
 	unsigned len = 0;
-	stmt->type = PARSE_STMT_EMPTY;
-
-	/* TODO - Handle labels. */
+	stmt->type  = PARSE_STMT_EMPTY;
+	stmt->label = label;
 
 	if (len == 0) len = parse_stmt_continue(src, ptr, stmt);
 	if (len == 0) len = parse_stmt_stop_pause(src, ptr, stmt);
