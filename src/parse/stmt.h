@@ -10,6 +10,7 @@ typedef enum
 	PARSE_STMT_PAUSE,
 	PARSE_STMT_GO_TO,
 	PARSE_STMT_IF_COMPUTED,
+	PARSE_STMT_DO,
 	PARSE_STMT_WRITE,
 	PARSE_STMT_FORMAT,
 	PARSE_STMT_DATA,
@@ -31,14 +32,14 @@ typedef struct
 
 		struct
 		{
-			unsigned label;
-		} go_to;
-
-		struct
-		{
 			bool         has_code;
 			parse_expr_t code;
 		} stop_pause;
+
+		struct
+		{
+			unsigned label;
+		} go_to;
 
 		struct
 		{
@@ -46,6 +47,15 @@ typedef struct
 			unsigned  label_count;
 			unsigned* label;
 		} if_comp;
+
+		struct
+		{
+			unsigned     end_label;
+			str_ref_t    iterator;
+			parse_expr_t init;
+			parse_expr_t last;
+			parse_expr_t step;
+		} do_loop;
 
 		struct
 		{
@@ -72,6 +82,9 @@ typedef struct
 } parse_stmt_t;
 
 
+unsigned parse_stmt_assign(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
 unsigned parse_stmt_continue(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
@@ -81,10 +94,10 @@ unsigned parse_stmt_stop_pause(
 unsigned parse_stmt_go_to(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
-unsigned parse_stmt_assign(
+unsigned parse_stmt_if_computed(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
-unsigned parse_stmt_if_computed(
+unsigned parse_stmt_do(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
 unsigned parse_stmt_write(

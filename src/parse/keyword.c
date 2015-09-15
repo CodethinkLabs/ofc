@@ -78,6 +78,10 @@ unsigned parse_keyword_name(
 			match = strncasecmp(ptr, "GOTO", len);
 			expect_space = 2;
 			break;
+		case PARSE_KEYWORD_DO:
+			len = 2;
+			match = strncasecmp(ptr, "DO", len);
+			break;
 		case PARSE_KEYWORD_CONTINUE:
 			len = 8;
 			match = strncasecmp(ptr, "CONTINUE", len);
