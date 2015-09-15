@@ -40,14 +40,14 @@ static unsigned parse_literal__base(
 
 	if (!is_base_digit(ptr[i], base, NULL))
 	{
-		sparse_error(src, &ptr[2],
+		sparse_error(src, &ptr[i],
 			"Valid digit expected in literal");
 		return 0;
 	}
 
 	unsigned d = 0;
 	uint64_t v;
-	for (v = 0; is_base_digit(ptr[i], base, &d); i++);
+	for (v = 0; is_base_digit(ptr[i], base, &d); i++)
 	{
 		uint64_t nv = (v * base) + d;
 		if (((nv / base) != v)
@@ -125,17 +125,10 @@ unsigned parse_hollerith(
 	const sparse_t* src, const char* ptr,
 	string_t* string)
 {
-	uint64_t u;
-	unsigned i = parse_literal__base(
-		src, ptr, 10, false, &u);
+	unsigned holl_len;
+	unsigned i = parse_unsigned(
+		src, ptr, &holl_len);
 	if (i == 0) return 0;
-	unsigned holl_len = (unsigned)u;
-	if ((uint64_t)holl_len != u)
-	{
-		sparse_error(src, ptr,
-			"Hollerith length out of range");
-		return 0;
-	}
 
 	if (toupper(ptr[i]) != 'H')
 		return 0;
@@ -507,13 +500,13 @@ unsigned parse_unsigned(
 	const sparse_t* src, const char* ptr,
 	unsigned* value)
 {
-	parse_literal_t l;
-	unsigned len = parse_literal__uint(
-		src, ptr, &l);
+	uint64_t u;
+	unsigned len = parse_literal__base(
+		src, ptr, 10, false, &u);
 	if (len == 0) return 0;
 
-	unsigned v = (unsigned)l.uint;
-	if ((uint64_t)v != l.uint)
+	unsigned v = (unsigned)u;
+	if ((uint64_t)v != u)
 		return 0;
 
 	*value = v;
