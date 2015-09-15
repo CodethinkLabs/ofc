@@ -40,7 +40,7 @@ static unsigned parse_expr__primary(
 	{
 		unsigned len = parse_expr(
 			src, &ptr[1], expr);
-		if ((len > 0) && (ptr[1 + len] != ')'))
+		if ((len > 0) && (ptr[1 + len] == ')'))
 			return (len + 2);
 	}
 
