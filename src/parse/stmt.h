@@ -4,7 +4,7 @@
 typedef enum
 {
 	PARSE_STMT_EMPTY,
-	PARSE_STMT_ASSIGN,
+	PARSE_STMT_ASSIGNMENT,
 	PARSE_STMT_CONTINUE,
 	PARSE_STMT_STOP,
 	PARSE_STMT_PAUSE,
@@ -14,6 +14,7 @@ typedef enum
 	PARSE_STMT_WRITE,
 	PARSE_STMT_FORMAT,
 	PARSE_STMT_DATA,
+	PARSE_STMT_ASSIGN,
 } parse_stmt_e;
 
 typedef struct
@@ -28,7 +29,7 @@ typedef struct
 		{
 			str_ref_t    lhs;
 			parse_expr_t rhs;
-		} assign;
+		} assignment;
 
 		struct
 		{
@@ -78,11 +79,17 @@ typedef struct
 			str_ref_t*    name;
 			parse_expr_t* init;
 		} data;
+
+		struct
+		{
+			unsigned      label;
+			str_ref_t     variable;
+		} assign;
 	};
 } parse_stmt_t;
 
 
-unsigned parse_stmt_assign(
+unsigned parse_stmt_assignment(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
 unsigned parse_stmt_continue(
@@ -107,6 +114,9 @@ unsigned parse_stmt_format(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
 unsigned parse_stmt_data(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
+unsigned parse_stmt_assign(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
 

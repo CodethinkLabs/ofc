@@ -141,6 +141,15 @@ unsigned parse_keyword_name(
 			match = strncasecmp(ptr, "KIND", len);
 			break;
 
+		case PARSE_KEYWORD_ASSIGN:
+			len = 6;
+			match = strncasecmp(ptr, "ASSIGN", len);
+			break;
+		case PARSE_KEYWORD_TO:
+			len = 2;
+			match = strncasecmp(ptr, "TO", len);
+			break;
+
 		case PARSE_KEYWORD_DATA:
 			len = 4;
 			match = strncasecmp(ptr, "DATA", len);
