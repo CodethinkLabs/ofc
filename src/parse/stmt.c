@@ -16,6 +16,7 @@ unsigned parse_stmt(
 	if (len == 0) len = parse_stmt_assign(src, ptr, stmt);
 	if (len == 0) len = parse_stmt_if_computed(src, ptr, stmt);
 	if (len == 0) len = parse_stmt_write(src, ptr, stmt);
+	if (len == 0) len = parse_stmt_format(src, ptr, stmt);
 
 	if ((ptr[len] == '\r')
 		|| (ptr[len] == '\n')
@@ -56,7 +57,13 @@ void parse_stmt_cleanup(
 		case PARSE_STMT_WRITE:
 			for (i = 0; i < stmt.write.elem_count; i++)
 				parse_expr_cleanup(stmt.write.elem[i]);
+			free(stmt.write.elem);
 			parse_expr_cleanup(stmt.write.file);
+			break;
+		case PARSE_STMT_FORMAT:
+			for (i = 0; i < stmt.format.desc_count; i++)
+				parse_format_desc_cleanup(stmt.format.desc[i]);
+			free(stmt.format.desc);
 			break;
 		default:
 			break;

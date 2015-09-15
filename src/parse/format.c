@@ -66,6 +66,7 @@ unsigned parse_format_desc(
 	unsigned m;
 	for (m = 0; parse_format_desc__map[m].name; m++)
 	{
+		len = strlen(parse_format_desc__map[m].name);
 		if (strncasecmp(&ptr[i],
 			parse_format_desc__map[m].name, len) == 0)
 			break;

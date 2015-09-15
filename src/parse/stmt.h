@@ -11,6 +11,7 @@ typedef enum
 	PARSE_STMT_GO_TO,
 	PARSE_STMT_IF_COMPUTED,
 	PARSE_STMT_WRITE,
+	PARSE_STMT_FORMAT,
 } parse_stmt_e;
 
 typedef struct
@@ -53,6 +54,12 @@ typedef struct
 			unsigned      elem_count;
 			parse_expr_t* elem;
 		} write;
+
+		struct
+		{
+			unsigned             desc_count;
+			parse_format_desc_t* desc;
+		} format;
 	};
 } parse_stmt_t;
 
@@ -73,6 +80,9 @@ unsigned parse_stmt_if_computed(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
 unsigned parse_stmt_write(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
+unsigned parse_stmt_format(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
 
