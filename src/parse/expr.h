@@ -36,6 +36,10 @@ struct parse_expr_s
 	};
 };
 
+/* Returns a literal wrapped in an expression type. */
+unsigned parse_expr_literal(
+	const sparse_t* src, const char* ptr,
+	parse_expr_t* expr);
 
 #define PARSE_EXPR_EMPTY (parse_expr_t){ .type = PARSE_EXPR_NONE };
 

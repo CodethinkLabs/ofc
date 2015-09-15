@@ -49,7 +49,48 @@ unsigned parse_type(
 
 	bool implicit_kind = false;
 	unsigned k;
-	if (ptr[i] == '*')
+	if ((PARSE_TYPE_CHARACTER == t)
+			&& (ptr[i] == '*'))
+	{
+		i += 1;
+		parse_expr_t count_expr;
+		if (ptr[i] == '(')
+		{
+			i += 1;
+
+			unsigned len = parse_expr(src, &ptr[i], &count_expr);
+			if (len == 0)
+			{
+				sparse_error(src, &ptr[i],
+					"Expected count expression or value for character");
+				return 0;
+			}
+			i += len;
+
+			if (ptr[i++] != ')')
+			{
+				parse_expr_cleanup(count_expr);
+				return 0;
+			}
+		}
+		else
+		{
+			unsigned len = parse_expr_literal(src, &ptr[i], &count_expr);
+			if (len == 0)
+			{
+				sparse_error(src, &ptr[i],
+					"Expected count expression or value for character");
+				return 0;
+			}
+			i += len;
+		}
+
+		type->type  = t;
+		type->kind  = 1;
+		type->count_expr = &count_expr;
+		return i;
+	}
+	else if (ptr[i] == '*')
 	{
 		i += 1;
 		unsigned len = parse_unsigned(
@@ -119,6 +160,13 @@ unsigned parse_type(
 
 	type->type  = t;
 	type->kind  = k;
-	type->count = 0;
+	type->count_expr = NULL;
 	return i;
+}
+
+void parse_type_cleanup(
+	parse_type_t type)
+{
+	if (type.count_expr)
+		parse_expr_cleanup(*type.count_expr);
 }

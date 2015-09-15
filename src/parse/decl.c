@@ -81,6 +81,8 @@ unsigned parse_decl(
 void parse_decl_cleanup(
 	parse_decl_t decl)
 {
+	if (!decl.type_implicit)
+		parse_type_cleanup(decl.type);
 	if (decl.has_init)
 		parse_expr_cleanup(decl.init);
 }

@@ -5,18 +5,26 @@ typedef unsigned (*parse_expr_func_t)(
 	const sparse_t*, const char*, parse_expr_t*);
 
 
+	unsigned parse_expr_literal(
+		const sparse_t* src, const char* ptr,
+		parse_expr_t* expr)
+	{
+		unsigned len = parse_literal(src, ptr, &expr->literal);
+		if (len == 0) return 0;
+
+		expr->type = PARSE_EXPR_CONSTANT;
+		return len;
+	}
+
 static unsigned parse_expr__primary(
 	const sparse_t* src, const char* ptr,
 	parse_expr_t* expr)
 {
 	unsigned len;
 
-	len = parse_literal(src, ptr, &expr->literal);
-	if (len > 0)
-	{
-		expr->type = PARSE_EXPR_CONSTANT;
-		return len;
-	}
+	len = parse_expr_literal(
+			src, ptr, expr);
+	if (len > 0) return len;
 
 	/* TODO - Check for intrinsics first. */
 	len = parse_name(src, ptr);
