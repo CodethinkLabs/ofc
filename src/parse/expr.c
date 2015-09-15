@@ -84,7 +84,7 @@ static unsigned parse_expr__mult_operand(
 	}
 
 	expr->type = PARSE_EXPR_BINARY;
-	expr->binary.operator = op;	
+	expr->binary.operator = op;
 
 	expr->binary.a = (parse_expr_t*)malloc(sizeof(parse_expr_t));
 	expr->binary.b = (parse_expr_t*)malloc(sizeof(parse_expr_t));
@@ -124,7 +124,7 @@ static unsigned parse_expr__partial(
 	parse_expr_t a = *expr;
 
 	expr->type = PARSE_EXPR_BINARY;
-	expr->binary.operator = op;	
+	expr->binary.operator = op;
 
 	expr->binary.a = (parse_expr_t*)malloc(sizeof(parse_expr_t));
 	expr->binary.b = (parse_expr_t*)malloc(sizeof(parse_expr_t));
@@ -280,7 +280,7 @@ static unsigned parse_expr__and_operand(
 	unsigned op_len = parse_operator(
 		src, ptr, &op);
 	if ((op_len > 0) && (op != PARSE_OPERATOR_NOT))
-		return 0;
+		op_len = 0;
 
 	parse_expr_t a;
 	unsigned a_len = parse_expr__level_4(
@@ -290,7 +290,7 @@ static unsigned parse_expr__and_operand(
 	if (op_len > 0)
 	{
 		expr->type = PARSE_EXPR_UNARY;
-		expr->unary.operator = op;	
+		expr->unary.operator = op;
 
 		expr->unary.a = (parse_expr_t*)malloc(sizeof(parse_expr_t));
 		if (!expr->unary.a)
