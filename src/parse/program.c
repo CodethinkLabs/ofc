@@ -110,54 +110,62 @@ unsigned parse_program(
 		}
 
 		{
-			parse_decl_t decl;
-			len = parse_decl(
-				src, &ptr[i],
-				program->decl,
-				&program->implicit,
-				&decl);
-
-			if (len > 0)
-			{
-				/* TODO - Implicit redeclarations with a label
-				          must be treated as an assignment. */
-				if (has_label)
-				{
-					sparse_warning(src, &ptr[i],
-						"Ignoring label on declaration");
-				}
-
-				if (!parse_program_add_decl(program, decl))
-				{
-					/* This should never happen, likely out of memory. */
-					parse_program_cleanup(*program);
-					return 0;
-				}
-				i += len;
-				continue;
-			}
-		}
-
-		{
 			parse_stmt_t stmt;
 			len = parse_stmt(
 				src, &ptr[i], (has_label ? &label : NULL), &stmt);
 
 			if (len > 0)
 			{
-				if (stmt.type == PARSE_STMT_EMPTY)
+				if ((stmt.type == PARSE_STMT_ASSIGNMENT)
+					&& !hashmap_find(program->decl, &stmt.assignment.lhs))
 				{
-					sparse_warning(src, &ptr[i],
-						"Empty statement");
+					/* This is an implicit declaration
+					   Fall-through and handle as such. */
+					parse_stmt_cleanup(stmt);
 				}
-				else if (!parse_program_add_stmt(program, stmt))
+				else
 				{
-					/* This should never happen, likely out of memory. */
-					parse_program_cleanup(*program);
-					return 0;
+					if (stmt.type == PARSE_STMT_EMPTY)
+					{
+						sparse_warning(src, &ptr[i],
+							"Empty statement");
+					}
+					else if (!parse_program_add_stmt(program, stmt))
+					{
+						/* This should never happen, likely out of memory. */
+						parse_program_cleanup(*program);
+						return 0;
+					}
+					i += len;
+					continue;
 				}
-				i += len;
-				continue;
+			}
+
+			{
+				parse_decl_t decl;
+				len = parse_decl(
+					src, &ptr[i],
+					program->decl,
+					&program->implicit,
+					&decl);
+
+				if (len > 0)
+				{
+					if (has_label)
+					{
+						sparse_warning(src, &ptr[i],
+							"Ignoring label on declaration");
+					}
+
+					if (!parse_program_add_decl(program, decl))
+					{
+						/* This should never happen, likely out of memory. */
+						parse_program_cleanup(*program);
+						return 0;
+					}
+					i += len;
+					continue;
+				}
 			}
 		}
 
