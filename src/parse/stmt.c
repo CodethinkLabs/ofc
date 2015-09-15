@@ -56,6 +56,11 @@ void parse_stmt_cleanup(
 			if (stmt.stop_pause.has_code)
 				parse_expr_cleanup(stmt.stop_pause.code);
 			break;
+		case PARSE_STMT_GO_TO_ASSIGNED:
+		case PARSE_STMT_GO_TO_COMPUTED:
+			free(stmt.go_to_comp.label);
+			parse_expr_cleanup(stmt.go_to_comp.cond);
+			break;
 		case PARSE_STMT_IF_COMPUTED:
 			free(stmt.if_comp.label);
 			parse_expr_cleanup(stmt.if_comp.cond);

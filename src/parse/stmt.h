@@ -9,6 +9,8 @@ typedef enum
 	PARSE_STMT_STOP,
 	PARSE_STMT_PAUSE,
 	PARSE_STMT_GO_TO,
+	PARSE_STMT_GO_TO_ASSIGNED,
+	PARSE_STMT_GO_TO_COMPUTED,
 	PARSE_STMT_IF_COMPUTED,
 	PARSE_STMT_DO,
 	PARSE_STMT_WRITE,
@@ -36,6 +38,13 @@ typedef struct
 			bool         has_code;
 			parse_expr_t code;
 		} stop_pause;
+
+		struct
+		{
+			parse_expr_t   cond;
+			unsigned       label_count;
+			parse_label_t* label;
+		} go_to_comp;
 
 		struct
 		{
