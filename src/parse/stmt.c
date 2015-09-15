@@ -15,6 +15,7 @@ unsigned parse_stmt(
 	if (len == 0) len = parse_stmt_go_to(src, ptr, stmt);
 	if (len == 0) len = parse_stmt_assign(src, ptr, stmt);
 	if (len == 0) len = parse_stmt_if_computed(src, ptr, stmt);
+	if (len == 0) len = parse_stmt_write(src, ptr, stmt);
 
 	if ((ptr[len] == '\r')
 		|| (ptr[len] == '\n')
@@ -37,6 +38,7 @@ unsigned parse_stmt(
 void parse_stmt_cleanup(
 	parse_stmt_t stmt)
 {
+	unsigned i;
 	switch (stmt.type)
 	{
 		case PARSE_STMT_ASSIGN:
@@ -50,6 +52,11 @@ void parse_stmt_cleanup(
 		case PARSE_STMT_IF_COMPUTED:
 			free(stmt.if_comp.label);
 			parse_expr_cleanup(stmt.if_comp.cond);
+			break;
+		case PARSE_STMT_WRITE:
+			for (i = 0; i < stmt.write.elem_count; i++)
+				parse_expr_cleanup(stmt.write.elem[i]);
+			parse_expr_cleanup(stmt.write.file);
 			break;
 		default:
 			break;
