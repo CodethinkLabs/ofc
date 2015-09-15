@@ -40,8 +40,11 @@ static unsigned parse_literal__base(
 
 	if (!is_base_digit(ptr[i], base, NULL))
 	{
-		sparse_error(src, &ptr[i],
-			"Valid digit expected in literal");
+		if (quoted)
+		{
+			sparse_error(src, &ptr[i],
+				"Valid digit expected in literal");
+		}
 		return 0;
 	}
 
