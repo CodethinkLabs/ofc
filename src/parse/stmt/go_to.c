@@ -4,9 +4,7 @@ static unsigned parse_stmt_go_to_unconditional(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt)
 {
-	unsigned i = parse_keyword(
-		src, ptr, PARSE_KEYWORD_GO_TO);
-	if (i == 0) return 0;
+	unsigned i = 0;
 
 	unsigned len = parse_label(
 		src, &ptr[i], &stmt->go_to.label);
@@ -21,9 +19,7 @@ static unsigned parse_stmt_go_to_assigned(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt)
 {
-	unsigned i = parse_keyword(
-		src, ptr, PARSE_KEYWORD_GO_TO);
-	if (i == 0) return 0;
+	unsigned i = 0;
 
 	unsigned len = parse_expr(
 		src, &ptr[i], &stmt->go_to_comp.cond);
@@ -97,9 +93,7 @@ static unsigned parse_stmt_go_to_computed(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt)
 {
-	unsigned i = parse_keyword(
-		src, ptr, PARSE_KEYWORD_GO_TO);
-	if (i == 0) return 0;
+	unsigned i = 0;
 
 	if (ptr[i++] != '(')
 		return 0;
@@ -162,14 +156,14 @@ unsigned parse_stmt_go_to(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt)
 {
-	unsigned len = parse_stmt_go_to_assigned(
-		src, ptr, stmt);
-	if (len > 0) return len;
+	unsigned i = parse_keyword(
+		src, ptr, PARSE_KEYWORD_GO_TO);
+	if (i == 0) return 0;
 
-	len = parse_stmt_go_to_computed(
-		src, ptr, stmt);
-	if (len > 0) return len;
+	unsigned len = 0;
+	if (len == 0) len = parse_stmt_go_to_assigned(src, &ptr[i], stmt);
+	if (len == 0) len = parse_stmt_go_to_computed(src, &ptr[i], stmt);
+	if (len == 0) len = parse_stmt_go_to_unconditional(src, &ptr[i], stmt);
 
-	return parse_stmt_go_to_unconditional(
-		src, ptr, stmt);
+	return (len ? (i + len) : 0);
 }
