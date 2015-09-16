@@ -13,6 +13,7 @@
 #include "type.h"
 #include "expr.h"
 #include "implicit.h"
+#include "dimension.h"
 #include "decl.h"
 #include "format.h"
 #include "stmt.h"

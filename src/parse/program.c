@@ -96,6 +96,22 @@ unsigned parse_program(
 		}
 
 		{
+			len = parse_dimension(
+				src, &ptr[i], program->decl);
+			if (len > 0)
+			{
+				if (has_label)
+				{
+					sparse_warning(src, &ptr[i],
+						"Ignoring label on DIMENSION statement");
+				}
+
+				i += len;
+				continue;
+			}
+		}
+
+		{
 			len = parse_decl(
 				src, &ptr[i],
 				program->decl);

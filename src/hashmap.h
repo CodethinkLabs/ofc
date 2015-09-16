@@ -22,4 +22,7 @@ bool hashmap_add(hashmap_t* map, void* item);
 
 const void* hashmap_find(const hashmap_t* map, const void* key);
 
+/* Don't modify the key in this function. */
+void* hashmap_find_modify(hashmap_t* map, const void* key);
+
 #endif

@@ -85,7 +85,7 @@ void hashmap_delete(hashmap_t* map)
 		return;
 
 	unsigned i;
-	for (i = 0; i < 256; i++)	
+	for (i = 0; i < 256; i++)
 		hashmap__entry_delete(
 			map->base[i], map->item_delete);
 	free(map);
@@ -120,13 +120,14 @@ bool hashmap_add(hashmap_t* map, void* item)
 	return true;
 }
 
-const void* hashmap_find(const hashmap_t* map, const void* key)
+
+void* hashmap_find_modify(hashmap_t* map, const void* key)
 {
 	if (!map || !key
 		|| !map->item_key)
 		return NULL;
 
-	uint8_t hash = map->hash(key);	
+	uint8_t hash = map->hash(key);
 
 	hashmap__entry_t* entry;
 	for (entry = map->base[hash]; entry; entry = entry->next)
@@ -142,4 +143,10 @@ const void* hashmap_find(const hashmap_t* map, const void* key)
 	}
 
 	return NULL;
+}
+
+const void* hashmap_find(const hashmap_t* map, const void* key)
+{
+	return (const void*)hashmap_find_modify(
+		(hashmap_t*)map, key);
 }
