@@ -2,6 +2,8 @@
 
 unsigned parse_stmt_assignment(
 	const sparse_t* src, const char* ptr,
+	const parse_implicit_t* implicit,
+	hashmap_t* decl,
 	parse_stmt_t* stmt)
 {
 	unsigned i = parse_lhs(src, ptr,
@@ -19,9 +21,43 @@ unsigned parse_stmt_assignment(
 			"Expected expression on right hand side of assignment");
 		return 0;
 	}
+	i += len;
 
 	stmt->type = PARSE_STMT_ASSIGNMENT;
-	return (i + len);
+
+	str_ref_t base_name;
+	if (parse_lhs_base_name(stmt->assignment.lhs, &base_name)
+		&& !hashmap_find(decl, &base_name))
+	{
+		parse_decl_t idecl;
+		if (!parse_decl_create_implicit(
+			base_name, implicit, &idecl))
+		{
+			sparse_error(src, ptr,
+				"Failed to create implicit declaration for variable '%.*s'",
+				base_name.size, base_name.base);
+			parse_stmt_cleanup(*stmt);
+			return 0;
+		}
+
+		parse_decl_t* aidecl
+			= parse_decl_alloc(idecl);
+		if (!aidecl)
+		{
+			parse_decl_cleanup(idecl);
+			parse_stmt_cleanup(*stmt);
+			return 0;
+		}
+
+		if (!hashmap_add(decl, aidecl))
+		{
+			parse_decl_delete(aidecl);
+			parse_stmt_cleanup(*stmt);
+			return 0;
+		}
+	}
+
+	return i;
 }
 
 unsigned parse_stmt_assign(

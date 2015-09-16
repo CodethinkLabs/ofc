@@ -100,6 +100,8 @@ typedef struct
 
 unsigned parse_stmt_assignment(
 	const sparse_t* src, const char* ptr,
+	const parse_implicit_t* implicit,
+	hashmap_t* decl,
 	parse_stmt_t* stmt);
 unsigned parse_stmt_continue(
 	const sparse_t* src, const char* ptr,
@@ -132,6 +134,8 @@ unsigned parse_stmt_assign(
 unsigned parse_stmt(
 	const sparse_t* src, const char* ptr,
 	const unsigned* label,
+	const parse_implicit_t* implicit,
+	hashmap_t* decl,
 	parse_stmt_t* stmt);
 
 void parse_stmt_cleanup(

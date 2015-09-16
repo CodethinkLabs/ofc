@@ -4,6 +4,8 @@
 unsigned parse_stmt(
 	const sparse_t* src, const char* ptr,
 	const unsigned* label,
+	const parse_implicit_t* implicit,
+	hashmap_t* decl,
 	parse_stmt_t* stmt)
 {
 	unsigned len = 0;
@@ -21,7 +23,11 @@ unsigned parse_stmt(
 	if (len == 0) len = parse_stmt_assign(src, ptr, stmt);
 
 	/* Assignments can clash. */
-	if (len == 0) len = parse_stmt_assignment(src, ptr, stmt);
+	if (len == 0)
+	{
+		len = parse_stmt_assignment(
+			src, ptr, implicit, decl, stmt);
+	}
 
 	if ((ptr[len] == '\r')
 		|| (ptr[len] == '\n')

@@ -2,16 +2,40 @@
 #include <ctype.h>
 
 
+bool parse_decl_create_implicit(
+	const str_ref_t name,
+	const parse_implicit_t* implicit,
+	parse_decl_t* decl)
+{
+	if (str_ref_empty(name)
+		|| !implicit)
+		return false;
+
+	unsigned index = (toupper(name.base[0]) - 'A');
+	if (index > 26) return false;
+
+	if (implicit->c[index].type == PARSE_TYPE_NONE)
+		return false;
+
+	decl->type_implicit = true;
+	decl->type = implicit->c[index];
+	decl->name = name;
+	decl->redecl = NULL;
+	decl->has_init = false;
+	decl->init = PARSE_EXPR_EMPTY;
+	return true;
+}
+
 unsigned parse_decl(
 	const sparse_t* src, const char* ptr,
 	const hashmap_t* decl_map,
-	parse_implicit_t* implicit,
 	parse_decl_t* decl)
 {
 	unsigned i = parse_type(
 		src, ptr, &decl->type);
+	if (i == 0) return 0;
 
-	decl->type_implicit = (i == 0);
+	decl->type_implicit = false;
 
 	unsigned len = parse_name(
 		src, &ptr[i], &decl->name);
@@ -25,32 +49,9 @@ unsigned parse_decl(
 	const parse_decl_t* existing = hashmap_find(
 		decl_map, &decl->name);
 	if (existing)
-	{
-		if (decl->type_implicit)
-		{
-			/* This is an assignment. */
-			return 0;
-		}
-
 		decl->redecl = existing;
-	}
-
-	if (decl->type_implicit)
-	{
-		if (!implicit)
-			return 0;
-
-		unsigned index = (toupper(decl->name.base[0]) - 'A');
-		if (index > 26) return 0;
-
-		if (implicit->c[index].type == PARSE_TYPE_NONE)
-			return 0;
-
-		decl->type = implicit->c[index];
-	}
 
 	decl->has_init = (ptr[i] == '=');
-
 	if (decl->has_init)
 	{
 		i += 1;
@@ -60,6 +61,10 @@ unsigned parse_decl(
 		if (len == 0) return 0;
 
 		i += len;
+	}
+	else
+	{
+		decl->init = PARSE_EXPR_EMPTY;
 	}
 
 	if ((ptr[i] == '\r')
