@@ -28,3 +28,20 @@ void parse_lhs_cleanup(
 			break;
 	}
 }
+
+bool parse_lhs_base_name(
+	const parse_lhs_t lhs,
+	str_ref_t* name)
+{
+	if (lhs.type == PARSE_LHS_VARIABLE)
+	{
+		if (name) *name = lhs.variable;
+		return true;
+	}
+
+	if (!lhs.parent)
+		return false;
+
+	return parse_lhs_base_name(
+		*lhs.parent, name);
+}

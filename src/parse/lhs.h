@@ -34,4 +34,8 @@ unsigned parse_lhs(
 void parse_lhs_cleanup(
 	parse_lhs_t lhs);
 
+bool parse_lhs_base_name(
+	const parse_lhs_t lhs,
+	str_ref_t* name);
+
 #endif
