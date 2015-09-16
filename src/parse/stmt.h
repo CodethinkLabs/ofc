@@ -84,8 +84,9 @@ typedef struct
 
 		struct
 		{
-			unsigned      count;
+			unsigned      name_count;
 			parse_lhs_t*  name;
+			unsigned      init_count;
 			parse_expr_t* init;
 		} data;
 

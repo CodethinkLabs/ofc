@@ -144,42 +144,18 @@ static unsigned parse_stmt_data__list(
 {
 	unsigned i = 0;
 
-	unsigned ncount = stmt->data.count;
-	unsigned ccount = stmt->data.count;
-	unsigned nmax = ncount, cmax = ccount;
+	unsigned nmax = stmt->data.name_count, cmax = stmt->data.init_count;
 
 	unsigned len = parse_stmt_data__nlist(
-		src, &ptr[i], &stmt->data.name, &ncount, &nmax);
+		src, &ptr[i], &stmt->data.name, &stmt->data.name_count, &nmax);
 	if (len == 0) return 0;
 	i += len;
 
 	len = parse_stmt_data__clist(
-		src, &ptr[i], &stmt->data.init, &ccount, &cmax);
+		src, &ptr[i], &stmt->data.init, &stmt->data.init_count, &cmax);
 	if (len == 0) return 0;
 	i += len;
 
-	if (ccount > ncount)
-	{
-		sparse_warning(src, ptr,
-			"Too many initializers for names in DATA statement");
-
-		unsigned e;
-		for (e = ncount; e < ccount; e++)
-			parse_expr_cleanup(stmt->data.init[e]);
-		ccount = ncount;
-	}
-	else if (ccount < ncount)
-	{
-		sparse_warning(src, ptr,
-			"Too few initializers for names in DATA statement");
-
-		unsigned e;
-		for (e = ccount; e < ncount; e++)
-			parse_lhs_cleanup(stmt->data.name[e]);
-		ncount = ccount;
-	}
-
-	stmt->data.count = ncount;
 	return i;
 }
 
@@ -192,8 +168,9 @@ unsigned parse_stmt_data(
 	if (i == 0) return 0;
 
 	stmt->type = PARSE_STMT_DATA;
-	stmt->data.count = 0;
+	stmt->data.name_count = 0;
 	stmt->data.name = NULL;
+	stmt->data.init_count = 0;
 	stmt->data.init = NULL;
 
 	unsigned len = parse_stmt_data__list(
@@ -203,6 +180,10 @@ unsigned parse_stmt_data(
 
 	while (len > 0)
 	{
+		/* TODO - Handle multiple list separately so
+		          we can recover properly if the number of elements
+		          doesn't match the name list. */
+
 		len = parse_stmt_data__list(
 			src, &ptr[i], stmt);
 		i += len;

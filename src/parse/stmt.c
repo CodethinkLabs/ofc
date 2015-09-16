@@ -89,10 +89,10 @@ void parse_stmt_cleanup(
 			free(stmt.format.desc);
 			break;
 		case PARSE_STMT_DATA:
-			for (i = 0; i < stmt.data.count; i++)
+			for (i = 0; i < stmt.data.init_count; i++)
 				parse_expr_cleanup(stmt.data.init[i]);
 			free(stmt.data.init);
-			for (i = 0; i < stmt.data.count; i++)
+			for (i = 0; i < stmt.data.name_count; i++)
 				parse_lhs_cleanup(stmt.data.name[i]);
 			free(stmt.data.name);
 			break;
