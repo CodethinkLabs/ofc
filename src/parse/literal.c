@@ -377,18 +377,29 @@ static unsigned parse_literal__number(
 		= ((toupper(ptr[i]) == 'E')
 			|| (toupper(ptr[i]) == 'D'));
 
-	unsigned k;
-	if (ptr[i] == 'D')
-		k = 8;
+	unsigned k = 0;
 
 	if (had_exponent)
 	{
-		i += 1;
+		unsigned j = (i + 1);
 
-		if ((ptr[i] == '-')
-			|| (ptr[i] == '+'))
-			i++;
-		for (; isdigit(ptr[i]); i++);
+		if ((ptr[j] == '-')
+			|| (ptr[j] == '+'))
+			j++;
+
+		if (!isdigit(ptr[i]))
+		{
+			had_exponent = false;
+		}
+		else
+		{
+			for (; isdigit(ptr[j]); j++);
+
+			if (ptr[i] == 'D')
+				k = 8;
+
+			i = j;
+		}
 	}
 
 	if (!had_fract && !had_int)
