@@ -16,8 +16,8 @@ typedef enum
 
 typedef struct
 {
-	parse_type_e type;
-	unsigned     kind;
+	parse_type_e  type;
+	unsigned      kind;
 	parse_expr_t* count_expr;
 } parse_type_t;
 
@@ -43,5 +43,8 @@ unsigned parse_type(
 
 void parse_type_cleanup(
 	parse_type_t type);
+
+bool parse_type_clone(
+	parse_type_t* dst, const parse_type_t* src);
 
 #endif

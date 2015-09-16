@@ -171,3 +171,32 @@ void parse_type_cleanup(
 	if (type.count_expr)
 		parse_expr_cleanup(*type.count_expr);
 }
+
+bool parse_type_clone(
+	parse_type_t* dst, const parse_type_t* src)
+{
+	if (!dst || !src)
+		return false;
+
+	parse_type_t clone = *src;
+
+	if (src->count_expr)
+	{
+		clone.count_expr
+			= (parse_expr_t*)malloc(
+				sizeof(parse_expr_t));
+		if (!clone.count_expr)
+			return false;
+
+		if (!parse_expr_clone(
+			clone.count_expr,
+			src->count_expr))
+		{
+			free(clone.count_expr);
+			return false;
+		}
+	}
+
+	*dst = clone;
+	return true;
+}

@@ -19,8 +19,7 @@ struct parse_decl_s
 
 unsigned parse_decl(
 	const sparse_t* src, const char* ptr,
-	const hashmap_t* decl_map,
-	parse_decl_t* decl);
+	hashmap_t* decl_map);
 
 bool parse_decl_create_implicit(
 	const str_ref_t name,

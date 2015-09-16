@@ -4,25 +4,6 @@
 
 
 
-static bool parse_program_add_decl(
-	parse_program_t* program, parse_decl_t decl)
-{
-	if (!program)
-		return false;
-
-	parse_decl_t* adecl
-		= parse_decl_alloc(decl);
-	if (!adecl) return false;
-
-	if (!hashmap_add(program->decl, adecl))
-	{
-		parse_decl_delete(adecl);
-		return false;
-	}
-
-	return true;
-}
-
 static bool parse_program_add_stmt(
 	parse_program_t* program, parse_stmt_t stmt)
 {
@@ -115,11 +96,9 @@ unsigned parse_program(
 		}
 
 		{
-			parse_decl_t decl;
 			len = parse_decl(
 				src, &ptr[i],
-				program->decl,
-				&decl);
+				program->decl);
 
 			if (len > 0)
 			{
@@ -129,12 +108,6 @@ unsigned parse_program(
 						"Ignoring label on declaration");
 				}
 
-				if (!parse_program_add_decl(program, decl))
-				{
-					/* This should never happen, likely out of memory. */
-					parse_program_cleanup(*program);
-					return 0;
-				}
 				i += len;
 				continue;
 			}

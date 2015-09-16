@@ -17,8 +17,11 @@ bool parse_decl_create_implicit(
 	if (implicit->c[index].type == PARSE_TYPE_NONE)
 		return false;
 
+	if (!parse_type_clone(
+		&decl->type, &implicit->c[index]))
+		return false;
+
 	decl->type_implicit = true;
-	decl->type = implicit->c[index];
 	decl->name = name;
 	decl->redecl = NULL;
 	decl->has_init = false;
@@ -26,46 +29,108 @@ bool parse_decl_create_implicit(
 	return true;
 }
 
-unsigned parse_decl(
+static unsigned parse__decl(
 	const sparse_t* src, const char* ptr,
+	const parse_type_t type,
 	const hashmap_t* decl_map,
-	parse_decl_t* decl)
+	parse_decl_t** decl)
 {
-	unsigned i = parse_type(
-		src, ptr, &decl->type);
+	parse_decl_t d;
+	unsigned i = parse_name(
+		src, ptr, &d.name);
 	if (i == 0) return 0;
 
-	decl->type_implicit = false;
-
-	unsigned len = parse_name(
-		src, &ptr[i], &decl->name);
-	if (len == 0) return 0;
-
-	decl->name = str_ref(&ptr[i], len);
-	i += len;
-
-	decl->redecl = NULL;
-
 	const parse_decl_t* existing = hashmap_find(
-		decl_map, &decl->name);
-	if (existing)
-		decl->redecl = existing;
+		decl_map, &d.name);
+	d.redecl = existing;
 
-	decl->has_init = (ptr[i] == '=');
-	if (decl->has_init)
+	d.has_init = (ptr[i] == '=');
+	if (d.has_init)
 	{
 		i += 1;
 
-		len = parse_expr(
-			src, &ptr[i], &decl->init);
+		unsigned len = parse_expr(
+			src, &ptr[i], &d.init);
 		if (len == 0) return 0;
 
 		i += len;
 	}
 	else
 	{
-		decl->init = PARSE_EXPR_EMPTY;
+		d.init = PARSE_EXPR_EMPTY;
 	}
+
+	d.type_implicit = false;
+	if (!parse_type_clone(
+		&d.type, &type))
+	{
+		if (d.has_init)
+			parse_expr_cleanup(d.init);
+		return 0;
+	}
+
+	*decl = parse_decl_alloc(d);
+	if (!*decl)
+	{
+		parse_decl_cleanup(d);
+		return 0;
+	}
+
+	return i;
+}
+
+unsigned parse_decl(
+	const sparse_t* src, const char* ptr,
+	hashmap_t* decl_map)
+{
+	parse_type_t type;
+	unsigned i = parse_type(
+		src, ptr, &type);
+	if (i == 0) return 0;
+
+	parse_decl_t** decl = NULL;
+	unsigned mc = 0;
+
+	unsigned c;
+	for (c = 0; true; c++)
+	{
+		unsigned j = i;
+		if (c > 0)
+		{
+			if (ptr[j] != ',')
+				break;
+			j += 1;
+		}
+
+		if (c >= mc)
+		{
+			mc = (mc == 0 ? 16 : (mc << 1));
+			parse_decl_t** ndecl
+				= (parse_decl_t**)realloc(decl,
+					(mc * sizeof(parse_decl_t*)));
+			if (!ndecl)
+			{
+				unsigned e;
+				for (e = 0; e < c; e++)
+					parse_decl_delete(decl[c]);
+				free(decl);
+				return 0;
+			}
+			decl = ndecl;
+		}
+
+		unsigned len = parse__decl(
+			src, &ptr[j], type, decl_map, &decl[c]);
+		if (len == 0)
+			break;
+
+		i = (j + len);
+	}
+
+	parse_type_cleanup(type);
+
+	if (c == 0)
+		return 0;
 
 	if ((ptr[i] == '\r')
 		|| (ptr[i] == '\n')
@@ -75,11 +140,23 @@ unsigned parse_decl(
 	}
 	else
 	{
-		/* Not a declaration. */
-		if (decl->has_init)
-			parse_expr_cleanup(decl->init);
+		unsigned e;
+		for (e = 0; e < c; e++)
+			parse_decl_delete(decl[e]);
+		free(decl);
 		return 0;
 	}
+
+	unsigned e;
+	for (e = 0; e < c; e++)
+	{
+		if (!hashmap_add(decl_map, decl[e]))
+		{
+			/* This should only happen if we run out of memory. */
+			abort();
+		}
+	}
+	free(decl);
 
 	return i;
 }
