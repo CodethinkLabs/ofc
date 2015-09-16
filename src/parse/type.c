@@ -49,7 +49,8 @@ unsigned parse_type(
 
 	bool implicit_kind = false;
 	unsigned k;
-	if ((PARSE_TYPE_CHARACTER == t)
+	if ((PARSE_TYPE_CHARACTER == t
+			|| PARSE_TYPE_BYTE == t)
 			&& (ptr[i] == '*'))
 	{
 		i += 1;
