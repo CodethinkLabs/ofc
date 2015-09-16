@@ -13,8 +13,15 @@ typedef enum
 	PARSE_LITERAL_HOLLERITH,
 	PARSE_LITERAL_CHARACTER,
 	PARSE_LITERAL_NUMBER,
+	PARSE_LITERAL_COMPLEX,
 	PARSE_LITERAL_LOGICAL,
 } parse_literal_e;
+
+typedef struct
+{
+	str_ref_t *left_number;
+	str_ref_t *right_number;
+} complex_t;
 
 typedef struct
 {
@@ -26,6 +33,8 @@ typedef struct
 		string_t string;
 
 		str_ref_t number;
+
+		complex_t complex;
 
 		bool logical;
 	};

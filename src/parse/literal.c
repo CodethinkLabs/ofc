@@ -437,6 +437,50 @@ static unsigned parse_literal__number(
 	return i;
 }
 
+static unsigned parse_literal__complex(
+		const sparse_t* src, const char* ptr,
+		parse_literal_t* literal)
+	{
+		unsigned i = 0;
+		if (ptr[i++] != '(')
+			return 0;
+
+		parse_literal_t left_number_literal;
+		unsigned len = parse_literal__number(src, &ptr[i], &left_number_literal);
+		if (len == 0) return 0;
+		i += len;
+
+		if (ptr[i++] != ',')
+			return 0;
+
+		len = 0;
+		parse_literal_t right_number_literal;
+		len = parse_literal__number(src,  &ptr[i], &right_number_literal);
+		if (len == 0) return 0;
+		i += len;
+
+		if (ptr[i++] != ')')
+			return 0;
+
+		literal->type = PARSE_LITERAL_COMPLEX;
+
+		literal->complex.left_number = (str_ref_t*)malloc(sizeof(str_ref_t));
+		literal->complex.right_number = (str_ref_t*)malloc(sizeof(str_ref_t));
+
+		if (!literal->complex.left_number
+			|| !literal->complex.right_number)
+		{
+			free(literal->complex.left_number);
+			free(literal->complex.right_number);
+			return 0;
+		}
+
+		*(literal->complex.left_number) = left_number_literal.number;
+		*(literal->complex.right_number) = right_number_literal.number;
+
+		return i;
+}
+
 
 
 unsigned parse_literal(
@@ -449,6 +493,7 @@ unsigned parse_literal(
 	unsigned len = 0;
 	if (len == 0) len = parse_literal__character(src, ptr, &l);
 	if (len == 0) len = parse_literal__hollerith(src, ptr, &l);
+	if (len == 0) len = parse_literal__complex(src, ptr, &l);
 	if (len == 0) len = parse_literal__binary(src, ptr, &l);
 	if (len == 0) len = parse_literal__octal(src, ptr, &l);
 	if (len == 0) len = parse_literal__hex(src, ptr, &l);
@@ -490,6 +535,12 @@ bool parse_literal_clone(
 			clone.string = string_copy(src->string);
 			if (string_empty(clone.string))
 				return false;
+			break;
+		case PARSE_LITERAL_COMPLEX:
+			if (src->complex.left_number)
+				free(src->complex.left_number);
+			if (src->complex.right_number)
+				free(src->complex.right_number);
 			break;
 		default:
 			break;
