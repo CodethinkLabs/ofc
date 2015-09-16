@@ -40,8 +40,10 @@ unsigned parse_stmt(
 		if (len == 0)
 			return 0;
 
-		sparse_warning(src, &ptr[len],
+		sparse_error(src, &ptr[len],
 			"Expected newline or semicolon after statement");
+		parse_stmt_cleanup(*stmt);
+		return 0;
 	}
 
 	return len;
