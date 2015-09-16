@@ -22,6 +22,16 @@ unsigned parse_stmt(
 	if (len == 0) len = parse_stmt_format(src, ptr, stmt);
 	if (len == 0) len = parse_stmt_assign(src, ptr, stmt);
 
+	if ((len > 0)
+		&& (ptr[len] != '\0')
+		&& (ptr[len] != '\r')
+		&& (ptr[len] != '\n')
+		&& (ptr[len] != ';'))
+	{
+		parse_stmt_cleanup(*stmt);
+		len = 0;
+	}
+
 	/* Assignments can clash. */
 	if (len == 0)
 	{
