@@ -97,7 +97,7 @@ unsigned parse_program(
 
 		{
 			len = parse_dimension(
-				src, &ptr[i], program->decl);
+				src, &ptr[i], &program->implicit, program->decl);
 			if (len > 0)
 			{
 				if (has_label)
