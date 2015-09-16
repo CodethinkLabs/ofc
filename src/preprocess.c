@@ -10,7 +10,6 @@
 struct preprocess_s
 {
 	file_t*     file;
-	lang_opts_t opts;
 
 	sparse_t*      unformat;
 	sparse_t*      condense;
@@ -19,7 +18,7 @@ struct preprocess_s
 
 
 static preprocess_t* preprocess__create(
-	file_t* file, lang_opts_t opts)
+	file_t* file)
 {
 	preprocess_t* context
 		= (preprocess_t*)malloc(
@@ -27,7 +26,6 @@ static preprocess_t* preprocess__create(
 	if (!context) return NULL;
 
 	context->file = file;
-	context->opts = opts;
 
 	context->unformat = sparse_create_file(file);
 	context->condense = NULL;
@@ -403,7 +401,7 @@ static bool preprocess__unformat_fixed_form(preprocess_t* context)
 {
 	const char* path = file_get_path(context->file);
 	const char* src  = file_get_strz(context->file);
-	lang_opts_t opts = context->opts;
+	lang_opts_t opts = file_get_lang_opts(context->file);
 
 	bool first_code_line = true;
 
@@ -510,7 +508,7 @@ static bool preprocess__unformat_fixed_form(preprocess_t* context)
 static bool preprocess__unformat_free_form(preprocess_t* context)
 {
 	const char* src  = file_get_strz(context->file);
-	lang_opts_t opts = context->opts;
+	lang_opts_t opts = file_get_lang_opts(context->file);
 	pre_state_t state = PRE_STATE_DEFAULT;
 
 	bool first_code_line = true;
@@ -626,12 +624,13 @@ static sparse_t* preprocess__condense(preprocess_t* context)
 }
 
 
-preprocess_t* preprocess(file_t* file, lang_opts_t opts)
+preprocess_t* preprocess(file_t* file)
 {
 	if (!file)
 		return NULL;
 
-	preprocess_t* context = preprocess__create(file, opts);
+	preprocess_t* context = preprocess__create(file);
+	lang_opts_t opts = file_get_lang_opts(file);
 	if (!context) return NULL;
 
 	bool success;

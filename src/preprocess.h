@@ -4,12 +4,11 @@
 #include "file.h"
 #include "sparse.h"
 #include "label_table.h"
-#include "lang_opts.h"
 
 typedef struct preprocess_s preprocess_t;
 
 /* If a non-null preprocess_t is returned it will own the file.*/
-preprocess_t* preprocess(file_t* file, lang_opts_t opts);
+preprocess_t* preprocess(file_t* file);
 void preprocess_delete(preprocess_t* context);
 
 const file_t*        preprocess_original_file(const preprocess_t* context);

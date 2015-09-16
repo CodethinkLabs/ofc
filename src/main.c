@@ -50,14 +50,14 @@ int main(int argc, const char* argv[])
 			opts = LANG_OPTS_F77;
 	}
 
-	file_t* file = file_create(path);
+	file_t* file = file_create(path, opts);
 	if (!file)
 	{
 		fprintf(stderr, "Error: Failed read source file '%s'\n", path);
 		return EXIT_FAILURE;
 	}
 
-	preprocess_t* context = preprocess(file, opts);
+	preprocess_t* context = preprocess(file);
 	if (!context)
 	{
 		fprintf(stderr, "Error: Failed preprocess source file '%s'\n", path);

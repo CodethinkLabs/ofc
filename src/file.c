@@ -11,6 +11,7 @@ struct file_s
 	const char* path;
 	unsigned    size;
 	char*       strz;
+	lang_opts_t opts;
 };
 
 
@@ -48,13 +49,14 @@ static char* file__read(const char* path, unsigned* size)
 	return buff;
 }
 
-file_t* file_create(const char* path)
+file_t* file_create(const char* path, lang_opts_t opts)
 {
 	file_t* file = (file_t*)malloc(sizeof(file_t));
 	if (!file) return NULL;
 
 	file->path = path;
 	file->strz = file__read(path, &file->size);
+	file->opts = opts;
 
 	if (!file->strz)
 	{
@@ -84,6 +86,11 @@ const char* file_get_path(const file_t* file)
 const char* file_get_strz(const file_t* file)
 {
 	return (file ? file->strz : NULL);
+}
+
+lang_opts_t file_get_lang_opts(const file_t* file)
+{
+	return (file ? file->opts : LANG_OPTS_F77);
 }
 
 

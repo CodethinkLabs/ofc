@@ -33,6 +33,8 @@ bool sparse_file_position(
 	const sparse_t* sparse, const char* ptr,
 	const char** path, unsigned *row, unsigned* col);
 
+lang_opts_t sparse_lang_opts(const sparse_t* sparse);
+
 
 #include <stdarg.h>
 

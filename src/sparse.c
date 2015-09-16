@@ -262,6 +262,16 @@ bool sparse_file_position(
 }
 
 
+lang_opts_t sparse_lang_opts(const sparse_t* sparse)
+{
+	if (!sparse)
+		return LANG_OPTS_F77;
+	if (sparse->file)
+		return file_get_lang_opts(sparse->file);
+	return sparse_lang_opts(sparse->parent);
+}
+
+
 
 #include <stdio.h>
 
