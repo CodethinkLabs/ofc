@@ -237,6 +237,35 @@ static unsigned parse_expr__level_4(
 		src, ptr, &a);
 	if (a_len == 0) return 0;
 
+	/* Handle case where we have something like:
+	   ( 3 .EQ. 76 ) */
+	if ((a.type == PARSE_EXPR_CONSTANT)
+		&& (a.literal.type == PARSE_LITERAL_NUMBER)
+		&& (a.literal.number.base[a.literal.number.size - 1] == '.'))
+	{
+
+		parse_operator_e op;
+		unsigned len = parse_operator(src,
+			&a.literal.number.base[a.literal.number.size - 1], &op);
+		if (len > 0)
+		{
+			switch (op)
+			{
+				case PARSE_OPERATOR_EQ:
+				case PARSE_OPERATOR_NE:
+				case PARSE_OPERATOR_GE:
+				case PARSE_OPERATOR_GT:
+				case PARSE_OPERATOR_LE:
+				case PARSE_OPERATOR_LT:
+					a.literal.number.size -= 1;
+					a_len -= 1;
+					break;
+				default:
+					break;
+			}
+		}
+	}
+
 	while (true)
 	{
 		unsigned len = parse_expr__partial(src, &ptr[a_len],
@@ -369,6 +398,30 @@ static unsigned parse_expr__level_5(
 	unsigned a_len = parse_expr__equiv_operand(
 		src, ptr, &a);
 	if (a_len == 0) return 0;
+
+	/* Handle case where we have something like:
+	   ( 3 .EQV. 76 ) */
+	if ((a.type == PARSE_EXPR_CONSTANT)
+		&& (a.literal.type == PARSE_LITERAL_NUMBER)
+		&& (a.literal.number.base[a.literal.number.size - 1] == '.'))
+	{
+		parse_operator_e op;
+		unsigned len = parse_operator(src,
+			&a.literal.number.base[a.literal.number.size - 1], &op);
+		if (len > 0)
+		{
+			switch (op)
+			{
+				case PARSE_OPERATOR_EQV:
+				case PARSE_OPERATOR_NEQV:
+					a.literal.number.size -= 1;
+					a_len -= 1;
+					break;
+				default:
+					break;
+			}
+		}
+	}
 
 	while (true)
 	{
