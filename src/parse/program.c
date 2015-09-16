@@ -151,9 +151,10 @@ unsigned parse_program(
 		return 0;
 	}
 
-	/* TODO - Compare cases depending on lang opts. */
 	if (!str_ref_empty(end_name)
-		&& !str_ref_equal(program->name, end_name))
+		&& (opts.case_sensitive
+			? !str_ref_equal(program->name, end_name)
+			: !str_ref_equal_ci(program->name, end_name)))
 	{
 		sparse_warning(src, &ptr[i],
 			"END PROGRAM name '%.*s' doesn't match PROGRAM name '%.*s'",
