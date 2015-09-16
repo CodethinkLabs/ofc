@@ -316,24 +316,26 @@ static unsigned parse_literal__logical(
 	unsigned i = 0;
 
 	if (ptr[i++] != '.')
-		return false;
+		return 0;
 
 	unsigned len = parse_keyword(
-		src, ptr, PARSE_KEYWORD_TRUE);
+		src, &ptr[i], PARSE_KEYWORD_TRUE);
+
 	bool v = (len > 0);
 	if (len == 0)
 	{
 		len = parse_keyword(
-			src, ptr, PARSE_KEYWORD_FALSE);
+			src, &ptr[i], PARSE_KEYWORD_FALSE);
 		if (len == 0) return 0;
 	}
+	i += len;
 
 	if (ptr[i++] != '.')
-		return false;
+		return 0;
 
 	literal->logical = v;
 	literal->type = PARSE_LITERAL_LOGICAL;
-	return len;
+	return i;
 }
 
 
@@ -409,10 +411,11 @@ static unsigned parse_literal__number(
 		v = (v * 10.0) + d;
 	}
 
-	bool had_fract = (ptr[i] == '.');
-	if (had_fract)
+	bool had_fract = false;
+	if (ptr[i] == '.')
 	{
 		i += 1;
+		had_fract = (had_int || isdigit(ptr[i]));
 
 		long double f;
 		for (f = 10.0; isdigit(ptr[i]); i++, f *= 10.0)
