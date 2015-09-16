@@ -27,7 +27,8 @@ static unsigned parse_expr__primary(
 	if (len > 0) return len;
 
 	/* TODO - Check for intrinsics first. */
-	len = parse_name(
+
+	len = parse_lhs(
 		src, ptr, &expr->variable);
 	if (len > 0)
 	{
@@ -412,6 +413,9 @@ void parse_expr_cleanup(
 		case PARSE_EXPR_CONSTANT:
 			parse_literal_cleanup(expr.literal);
 			break;
+		case PARSE_EXPR_VARIABLE:
+			parse_lhs_cleanup(expr.variable);
+			break;
 		case PARSE_EXPR_UNARY:
 			parse_expr_cleanup(*expr.unary.a);
 			free(expr.unary.a);
@@ -445,6 +449,9 @@ bool parse_expr_clone(
 				return false;
 			break;
 		case PARSE_EXPR_VARIABLE:
+			if (!parse_lhs_clone(
+				&clone.variable, &src->variable))
+				return false;
 			break;
 		case PARSE_EXPR_UNARY:
 			clone.unary.a
@@ -517,4 +524,18 @@ void parse_expr_delete(
 
 	parse_expr_cleanup(*expr);
 	free(expr);
+}
+
+parse_expr_t* parse_expr_copy(
+	const parse_expr_t* expr)
+{
+	parse_expr_t copy;
+	if (!parse_expr_clone(&copy, expr))
+		return NULL;
+
+	parse_expr_t* acopy
+		= parse_expr_alloc(copy);
+	if (!acopy)
+		parse_expr_cleanup(copy);
+	return acopy;
 }

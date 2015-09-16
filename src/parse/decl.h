@@ -1,8 +1,6 @@
 #ifndef __parse_decl_h__
 #define __parse_decl_h__
 
-typedef struct parse_decl_s parse_decl_t;
-
 struct parse_decl_s
 {
 	bool          type_implicit;

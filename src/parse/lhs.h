@@ -13,7 +13,6 @@ typedef enum
 	PARSE_LHS_MEMBER_STRUCTURE,
 } parse_lhs_e;
 
-typedef struct parse_lhs_s parse_lhs_t;
 
 struct parse_lhs_s
 {
@@ -21,8 +20,25 @@ struct parse_lhs_s
 
 	union
 	{
-		str_ref_t    variable;
-		parse_lhs_t* parent;
+		str_ref_t variable;
+
+		struct
+		{
+			parse_lhs_t* parent;
+
+			union
+			{
+				struct
+				{
+					parse_expr_t* index;
+				} array;
+
+				struct
+				{
+					str_ref_t name;
+				} member;
+			};
+		};
 	};
 };
 
@@ -37,5 +53,14 @@ void parse_lhs_cleanup(
 bool parse_lhs_base_name(
 	const parse_lhs_t lhs,
 	str_ref_t* name);
+
+bool parse_lhs_clone(
+	parse_lhs_t* dst, const parse_lhs_t* src);
+
+
+parse_lhs_t* parse_lhs_alloc(
+	parse_lhs_t lhs);
+void parse_lhs_delete(
+	parse_lhs_t* lhs);
 
 #endif

@@ -20,7 +20,6 @@ typedef enum
 	PARSE_STMT_ASSIGN,
 } parse_stmt_e;
 
-typedef struct parse_stmt_s parse_stmt_t;
 
 struct parse_stmt_s
 {

@@ -10,7 +10,6 @@ typedef enum
 	PARSE_EXPR_BINARY,
 } parse_expr_e;
 
-typedef struct parse_expr_s parse_expr_t;
 
 struct parse_expr_s
 {
@@ -19,7 +18,7 @@ struct parse_expr_s
 	union
 	{
 		parse_literal_t literal;
-		str_ref_t       variable;
+		parse_lhs_t     variable;
 
 		struct
 		{
@@ -58,5 +57,7 @@ parse_expr_t* parse_expr_alloc(
 	parse_expr_t expr);
 void parse_expr_delete(
 	parse_expr_t* expr);
+parse_expr_t* parse_expr_copy(
+	const parse_expr_t* expr);
 
 #endif
