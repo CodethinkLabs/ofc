@@ -362,7 +362,7 @@ static unsigned parse_literal__sint(
 	return i;
 }
 
-static unsigned parse_literal__real(
+static unsigned parse_literal__number(
 	const sparse_t* src, const char* ptr,
 	parse_literal_t* literal)
 {
@@ -416,9 +416,20 @@ static unsigned parse_literal__real(
 		v *= e;
 	}
 
+	/* This is an integer, not a real. */
+	if (had_int && !had_fract && !had_exponent)
+	{
+		return (negate
+			? parse_literal__sint(src, ptr, literal)
+			: parse_literal__uint(src, ptr, literal));
+	}
+
 	/* A REAL literal must have either an exponent or fractional part. */
 	bool valid = (had_fract || (had_int && had_exponent));
 	if (!valid) return 0;
+
+	if (negate)
+		v = -v;
 
 	bool kind_ambiguous = false;
 	if (ptr[i] == '_')
@@ -473,23 +484,7 @@ unsigned parse_literal(
 	if (len == 0) len = parse_literal__binary(src, ptr, &l);
 	if (len == 0) len = parse_literal__octal(src, ptr, &l);
 	if (len == 0) len = parse_literal__hex(src, ptr, &l);
-
-	if (len == 0)
-	{
-		/* Integer and real parsing is ambiguous. */
-
-		len = parse_literal__uint(src, ptr, &l);
-		if (len == 0)
-			len = parse_literal__sint(src, ptr, &l);
-
-		parse_literal_t rl;
-		unsigned real_len = parse_literal__real(src, ptr, &rl);
-		if (real_len > len)
-		{
-			l = rl;
-			len = real_len;
-		}
-	}
+	if (len == 0) len = parse_literal__number(src, ptr, &l);
 
 	if (len == 0)
 		return 0;
