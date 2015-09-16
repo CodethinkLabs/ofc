@@ -496,3 +496,25 @@ bool parse_expr_clone(
 	*dst = clone;
 	return true;
 }
+
+
+parse_expr_t* parse_expr_alloc(
+	parse_expr_t expr)
+{
+	parse_expr_t* aexpr
+		= (parse_expr_t*)malloc(
+			sizeof(parse_expr_t));
+	if (!aexpr) return NULL;
+	*aexpr = expr;
+	return aexpr;
+}
+
+void parse_expr_delete(
+	parse_expr_t* expr)
+{
+	if (!expr)
+		return;
+
+	parse_expr_cleanup(*expr);
+	free(expr);
+}

@@ -54,4 +54,9 @@ void parse_expr_cleanup(
 bool parse_expr_clone(
 	parse_expr_t* dst, const parse_expr_t* src);
 
+parse_expr_t* parse_expr_alloc(
+	parse_expr_t expr);
+void parse_expr_delete(
+	parse_expr_t* expr);
+
 #endif

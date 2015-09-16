@@ -40,6 +40,54 @@ static unsigned parse__decl(
 		src, ptr, &d.name);
 	if (i == 0) return 0;
 
+	d.type_implicit = false;
+	if (!parse_type_clone(
+		&d.type, &type))
+		return 0;
+
+	/* This entry is an array. */
+	if (ptr[i] == '(')
+	{
+		i += 1;
+
+		parse_expr_t count;
+		unsigned len = parse_expr(
+			src, &ptr[i], &count);
+		if (len == 0)
+		{
+			parse_type_cleanup(d.type);
+			return 0;
+		}
+		i += len;
+
+		if (ptr[i++] != ')')
+		{
+			parse_expr_cleanup(count);
+			parse_type_cleanup(d.type);
+			return 0;
+		}
+
+		if (d.type.count_expr)
+		{
+			/* TODO - Handle multi-dimensional arrays. */
+			parse_expr_cleanup(count);
+			parse_type_cleanup(d.type);
+			return 0;
+		}
+		else
+		{
+			parse_expr_delete(d.type.count_expr);
+			d.type.count_expr
+				= parse_expr_alloc(count);
+			if (!d.type.count_expr)
+			{
+				parse_expr_cleanup(count);
+				parse_type_cleanup(d.type);
+				return 0;
+			}
+		}
+	}
+
 	const parse_decl_t* existing = hashmap_find(
 		decl_map, &d.name);
 	d.redecl = existing;
@@ -51,22 +99,17 @@ static unsigned parse__decl(
 
 		unsigned len = parse_expr(
 			src, &ptr[i], &d.init);
-		if (len == 0) return 0;
+		if (len == 0)
+		{
+			parse_type_cleanup(d.type);
+			return 0;
+		}
 
 		i += len;
 	}
 	else
 	{
 		d.init = PARSE_EXPR_EMPTY;
-	}
-
-	d.type_implicit = false;
-	if (!parse_type_clone(
-		&d.type, &type))
-	{
-		if (d.has_init)
-			parse_expr_cleanup(d.init);
-		return 0;
 	}
 
 	*decl = parse_decl_alloc(d);
