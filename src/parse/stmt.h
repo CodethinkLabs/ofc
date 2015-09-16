@@ -12,6 +12,7 @@ typedef enum
 	PARSE_STMT_GO_TO_ASSIGNED,
 	PARSE_STMT_GO_TO_COMPUTED,
 	PARSE_STMT_IF_COMPUTED,
+	PARSE_STMT_IF_STATEMENT,
 	PARSE_STMT_DO,
 	PARSE_STMT_WRITE,
 	PARSE_STMT_FORMAT,
@@ -19,7 +20,9 @@ typedef enum
 	PARSE_STMT_ASSIGN,
 } parse_stmt_e;
 
-typedef struct
+typedef struct parse_stmt_s parse_stmt_t;
+
+struct parse_stmt_s
 {
 	parse_stmt_e type;
 
@@ -60,6 +63,12 @@ typedef struct
 
 		struct
 		{
+			parse_expr_t   cond;
+			parse_stmt_t*  stmt;
+		} if_stmt;
+
+		struct
+		{
 			parse_label_t end_label;
 			parse_lhs_t   iterator;
 			parse_expr_t  init;
@@ -96,7 +105,7 @@ typedef struct
 			str_ref_t variable;
 		} assign;
 	};
-} parse_stmt_t;
+};
 
 
 unsigned parse_stmt_assignment(
@@ -113,8 +122,10 @@ unsigned parse_stmt_stop_pause(
 unsigned parse_stmt_go_to(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
-unsigned parse_stmt_if_computed(
+unsigned parse_stmt_if(
 	const sparse_t* src, const char* ptr,
+	const parse_implicit_t* implicit,
+	hashmap_t* decl,
 	parse_stmt_t* stmt);
 unsigned parse_stmt_do(
 	const sparse_t* src, const char* ptr,
@@ -141,5 +152,12 @@ unsigned parse_stmt(
 
 void parse_stmt_cleanup(
 	parse_stmt_t stmt);
+
+
+
+parse_stmt_t* parse_stmt_alloc(
+	parse_stmt_t stmt);
+void parse_stmt_delete(
+	parse_stmt_t* stmt);
 
 #endif

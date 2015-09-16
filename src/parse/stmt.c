@@ -15,7 +15,7 @@ unsigned parse_stmt(
 	if (len == 0) len = parse_stmt_continue(src, ptr, stmt);
 	if (len == 0) len = parse_stmt_stop_pause(src, ptr, stmt);
 	if (len == 0) len = parse_stmt_go_to(src, ptr, stmt);
-	if (len == 0) len = parse_stmt_if_computed(src, ptr, stmt);
+	if (len == 0) len = parse_stmt_if(src, ptr, implicit, decl, stmt);
 	if (len == 0) len = parse_stmt_do(src, ptr, stmt);
 	if (len == 0) len = parse_stmt_data(src, ptr, stmt);
 	if (len == 0) len = parse_stmt_write(src, ptr, stmt);
@@ -73,6 +73,10 @@ void parse_stmt_cleanup(
 			free(stmt.if_comp.label);
 			parse_expr_cleanup(stmt.if_comp.cond);
 			break;
+		case PARSE_STMT_IF_STATEMENT:
+			parse_stmt_delete(stmt.if_stmt.stmt);
+			parse_expr_cleanup(stmt.if_stmt.cond);
+			break;
 		case PARSE_STMT_DO:
 			parse_lhs_cleanup(stmt.do_loop.iterator);
 			parse_expr_cleanup(stmt.do_loop.init);
@@ -101,4 +105,27 @@ void parse_stmt_cleanup(
 		default:
 			break;
 	}
+}
+
+
+parse_stmt_t* parse_stmt_alloc(
+	parse_stmt_t stmt)
+{
+	parse_stmt_t* astmt
+		= (parse_stmt_t*)malloc(
+			sizeof(parse_stmt_t));
+	if (!astmt) return NULL;
+
+	*astmt = stmt;
+	return astmt;
+}
+
+void parse_stmt_delete(
+	parse_stmt_t* stmt)
+{
+	if (!stmt)
+		return;
+
+	parse_stmt_cleanup(*stmt);
+	free(stmt);
 }
