@@ -185,7 +185,36 @@ static unsigned parse_expr__level_2(
 	parse_expr_t a;
 	unsigned a_len = parse_expr__add_operand(
 		src, ptr, &a);
-	if (a_len == 0) return 0;
+	if (a_len == 0)
+	{
+		parse_operator_e op;
+		unsigned op_len = parse_operator(
+			src, ptr, &op);
+		if (op_len == 0) return 0;
+		switch (op)
+		{
+			case PARSE_OPERATOR_ADD:
+			case PARSE_OPERATOR_SUBTRACT:
+				break;
+			default:
+				return 0;
+		}
+
+		a_len = parse_expr__add_operand(
+			src, &ptr[op_len], &a);
+		if (a_len == 0) return 0;
+
+		expr->type = PARSE_EXPR_UNARY;
+		expr->unary.operator = op;
+		expr->unary.a = parse_expr_alloc(a);
+		if (!expr->unary.a)
+		{
+			parse_expr_cleanup(a);
+			return 0;
+		}
+
+		return (op_len + a_len);
+	}
 
 	while (true)
 	{
