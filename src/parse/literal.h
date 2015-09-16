@@ -12,9 +12,7 @@ typedef enum
 	PARSE_LITERAL_HEX,
 	PARSE_LITERAL_HOLLERITH,
 	PARSE_LITERAL_CHARACTER,
-	PARSE_LITERAL_UNSIGNED_INT,
-	PARSE_LITERAL_SIGNED_INT,
-	PARSE_LITERAL_REAL,
+	PARSE_LITERAL_NUMBER,
 	PARSE_LITERAL_LOGICAL,
 } parse_literal_e;
 
@@ -27,10 +25,7 @@ typedef struct
 	{
 		string_t string;
 
-		uint64_t uint;
-		int64_t  sint;
-
-		long double real;
+		str_ref_t number;
 
 		bool logical;
 	};

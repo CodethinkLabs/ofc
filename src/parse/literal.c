@@ -43,35 +43,43 @@ static unsigned parse_literal__base(
 		if (quoted)
 		{
 			sparse_error(src, &ptr[i],
-				"Valid digit expected in literal");
+				"Valid digit expected in BOZ literal");
 		}
 		return 0;
 	}
 
-	unsigned d = 0;
-	uint64_t v;
+	unsigned d;
+	uint64_t v = 0;
 	for (v = 0; is_base_digit(ptr[i], base, &d); i++)
 	{
-		uint64_t nv = (v * base) + d;
-		if (((nv / base) != v)
-			|| ((nv % base) != d))
+		if (value)
 		{
-			sparse_error(src, ptr,
-				"Literal exceeds 64-bits");
-			return 0;
+			uint64_t nv = (v * 10) + d;
+			if (((nv / base) != v)
+				|| ((nv % base) != d))
+			{
+				sparse_warning(src, ptr,
+					"Literal value exceeds 64-bit size");
+				return 0;
+			}
+			v = nv;
 		}
-		v = nv;
 	}
 
 	if (quoted && (ptr[i++] != quote))
 	{
 		sparse_error(src, &ptr[i],
-			"Invalid character in literal");
+			"Invalid character in BOZ literal");
 		return 0;
 	}
 
 	/* We allow spaces in BOZ literals because they're likely to be used
        for digit grouping, like: B'0101 1100' */
+	if (!quoted && !sparse_sequential(src, ptr, i))
+	{
+		sparse_warning(src, ptr,
+			"Unexpected whitespace in literal");
+	}
 
 	if (value) *value = v;
 	return i;
@@ -85,9 +93,10 @@ static unsigned parse_literal__binary(
 		return 0;
 
 	unsigned len = parse_literal__base(
-		src, &ptr[1], 2, true, &literal->uint);
+		src, &ptr[1], 2, true, NULL);
 	if (len == 0) return 0;
 
+	literal->number = str_ref(&ptr[1], len);
 	literal->type = PARSE_LITERAL_BINARY;
 	return (len + 1);
 }
@@ -100,9 +109,10 @@ static unsigned parse_literal__octal(
 		return 0;
 
 	unsigned len = parse_literal__base(
-		src, &ptr[1], 8, true, &literal->uint);
+		src, &ptr[1], 8, true, NULL);
 	if (len == 0) return 0;
 
+	literal->number = str_ref(&ptr[1], len);
 	literal->type = PARSE_LITERAL_OCTAL;
 	return (len + 1);
 }
@@ -117,9 +127,10 @@ static unsigned parse_literal__hex(
 		return 0;
 
 	unsigned len = parse_literal__base(
-		src, &ptr[1], 16, true, &literal->uint);
+		src, &ptr[1], 16, true, NULL);
 	if (len == 0) return 0;
 
+	literal->number = str_ref(&ptr[1], len);
 	literal->type = PARSE_LITERAL_HEX;
 	return (len + 1);
 }
@@ -339,77 +350,19 @@ static unsigned parse_literal__logical(
 }
 
 
-static unsigned parse_literal__uint(
-	const sparse_t* src, const char* ptr,
-	parse_literal_t* literal)
-{
-	uint64_t v;
-	unsigned len = parse_literal__base(
-		src, ptr, 10, false, &v);
-
-	if (len != 0)
-	{
-		literal->type = PARSE_LITERAL_UNSIGNED_INT;
-		literal->uint = v;
-	}
-
-	return len;
-}
-
-static unsigned parse_literal__sint(
-	const sparse_t* src, const char* ptr,
-	parse_literal_t* literal)
-{
-	unsigned i = 0;
-
-	bool negate = (ptr[i] == '-');
-	if (negate || (ptr[i] == '+'))
-		i++;
-
-	uint64_t v;
-	unsigned len = parse_literal__base(
-		src, &ptr[i], 10, false, &v);
-	if (len == 0) return 0;
-	i += len;
-
-	if (negate
-		? (v >> 63)
-		: (v > (1ULL << 63U)))
-	{
-		sparse_error(src, ptr,
-			"Signed integer literal exceeds 64-bits");
-		return 0;
-	}
-
-	if (!sparse_sequential(src, ptr, i))
-	{
-		sparse_warning(src, ptr,
-			"Unexpected whitespace in signed literal");
-	}
-
-	literal->type = PARSE_LITERAL_SIGNED_INT;
-	literal->sint = (negate ? -((int64_t)v) : (int64_t)v);
-	return i;
-}
-
 static unsigned parse_literal__number(
 	const sparse_t* src, const char* ptr,
 	parse_literal_t* literal)
 {
 	unsigned i = 0;
 
-	bool negate = (ptr[i] == '-');
-	if (negate || (ptr[i] == '+'))
+	if ((ptr[i] == '-')
+		|| (ptr[i] == '+'))
 		i++;
 
 	bool had_int = isdigit(ptr[i]);
 
-	long double v;
-	for (v = 0.0; isdigit(ptr[i]); i++)
-	{
-		unsigned d = (ptr[i] - '0');
-		v = (v * 10.0) + d;
-	}
+	for (; isdigit(ptr[i]); i++);
 
 	bool had_fract = false;
 	if (ptr[i] == '.')
@@ -417,12 +370,7 @@ static unsigned parse_literal__number(
 		i += 1;
 		had_fract = (had_int || isdigit(ptr[i]));
 
-		long double f;
-		for (f = 10.0; isdigit(ptr[i]); i++, f *= 10.0)
-		{
-			unsigned d = (ptr[i] - '0');
-			v += (((long double)d) / f);
-		}
+		for (; isdigit(ptr[i]); i++);
 	}
 
 	bool had_exponent
@@ -437,47 +385,25 @@ static unsigned parse_literal__number(
 	{
 		i += 1;
 
-		parse_literal_t l;
-		unsigned len = parse_literal__sint(
-			src, &ptr[i], &l);
-		if (len == 0) return 0;
-		i += len;
-
-		double e = pow(10.0, (double)l.sint);
-		v *= e;
+		if ((ptr[i] == '-')
+			|| (ptr[i] == '+'))
+			i++;
+		for (; isdigit(ptr[i]); i++);
 	}
 
-	/* This is an integer, not a real. */
-	if (had_int && !had_fract && !had_exponent)
-	{
-		return (negate
-			? parse_literal__sint(src, ptr, literal)
-			: parse_literal__uint(src, ptr, literal));
-	}
-
-	/* A REAL literal must have either an exponent or fractional part. */
-	bool valid = (had_fract || (had_int && had_exponent));
-	if (!valid) return 0;
-
-	if (negate)
-		v = -v;
+	if (!had_fract && !had_int)
+		return 0;
 
 	bool kind_ambiguous = false;
 	if (ptr[i] == '_')
 	{
 		i += 1;
 
-		uint64_t nk;
-		unsigned len = parse_literal__base(
-			src, &ptr[i], 10, false, &nk);
+		unsigned ok = k;
+		unsigned len = parse_unsigned(
+			src, &ptr[i], &k);
 		if (len == 0) return 0;
 		i += len;
-
-		unsigned ok = k;
-
-		k = nk;
-		if (k != nk)
-			return 0;
 
 		kind_ambiguous = ((ok > 0) && (k != ok));
 	}
@@ -485,7 +411,7 @@ static unsigned parse_literal__number(
 	if (!sparse_sequential(src, ptr, i))
 	{
 		sparse_warning(src, ptr,
-			"Unexpected whitespace in REAL literal");
+			"Unexpected whitespace in literal number");
 	}
 
 	if (kind_ambiguous)
@@ -494,9 +420,9 @@ static unsigned parse_literal__number(
 			"Kind is ambiguous, ignoring exponent kind");
 	}
 
-	literal->type = PARSE_LITERAL_REAL;
+	literal->type = PARSE_LITERAL_NUMBER;
 	literal->kind = k;
-	literal->real = v;
+	literal->number = str_ref(ptr, i);
 	return i;
 }
 
