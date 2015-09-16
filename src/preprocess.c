@@ -613,7 +613,7 @@ static sparse_t* preprocess__condense(preprocess_t* context)
 
 		/* Append non-whitespace to condense sparse. */
 		if (!sparse_append_strn(condense, base, size))
-		{printf("XXX %p %u \"%.*s\"\n", base, size, size, base);
+		{
 			sparse_delete(condense);
 			return NULL;
 		}
