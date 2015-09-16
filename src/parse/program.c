@@ -66,9 +66,14 @@ unsigned parse_program(
 
 	program->implicit = PARSE_IMPLICIT_DEFAULT;
 
+	lang_opts_t opts = sparse_lang_opts(src);
 	program->decl = hashmap_create(
-		(void*)parse_decl_hash,
-		(void*)parse_decl_key_compare,
+		(void*)(opts.case_sensitive
+			? parse_decl_hash
+			: parse_decl_hash_ci),
+		(void*)(opts.case_sensitive
+			? parse_decl_key_compare
+			: parse_decl_key_compare_ci),
 		(void*)parse_decl_key,
 		(void*)parse_decl_delete);
 	if (!program->decl)

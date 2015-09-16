@@ -110,6 +110,16 @@ void parse_decl_delete(
 }
 
 
+uint8_t parse_decl_hash_ci(
+	const str_ref_t* key)
+{
+	uint8_t h = 0;
+	unsigned i;
+	for (i = 0; i < key->size; i++)
+		h += tolower(key->base[i]);
+	return h;
+}
+
 uint8_t parse_decl_hash(
 	const str_ref_t* key)
 {
@@ -124,6 +134,14 @@ const str_ref_t* parse_decl_key(
 	const parse_decl_t* decl)
 {
 	return (decl ? &decl->name : NULL);
+}
+
+bool parse_decl_key_compare_ci(
+	const str_ref_t* a, const str_ref_t* b)
+{
+	if (!a || !b)
+		return false;
+	return str_ref_equal_ci(*a, *b);
 }
 
 bool parse_decl_key_compare(

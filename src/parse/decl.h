@@ -33,10 +33,14 @@ void parse_decl_delete(
 	parse_decl_t* decl);
 
 /* Hash table functions. */
+uint8_t parse_decl_hash_ci(
+	const str_ref_t* key);
 uint8_t parse_decl_hash(
 	const str_ref_t* key);
 const str_ref_t* parse_decl_key(
 	const parse_decl_t* decl);
+bool parse_decl_key_compare_ci(
+	const str_ref_t* a, const str_ref_t* b);
 bool parse_decl_key_compare(
 	const str_ref_t* a, const str_ref_t* b);
 
