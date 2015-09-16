@@ -128,6 +128,15 @@ unsigned parse_keyword_name(
 			expect_space = 6;
 			break;
 
+		case PARSE_KEYWORD_TRUE:
+			len = 4;
+			match = strncasecmp(ptr, "TRUE", len);
+			break;
+		case PARSE_KEYWORD_FALSE:
+			len = 5;
+			match = strncasecmp(ptr, "FALSE", len);
+			break;
+
 		case PARSE_KEYWORD_IMPLICIT:
 			len = 8;
 			match = strncasecmp(ptr, "IMPLICIT", len);

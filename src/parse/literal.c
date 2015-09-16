@@ -309,6 +309,34 @@ static unsigned parse_literal__character(
 }
 
 
+static unsigned parse_literal__logical(
+	const sparse_t* src, const char* ptr,
+	parse_literal_t* literal)
+{
+	unsigned i = 0;
+
+	if (ptr[i++] != '.')
+		return false;
+
+	unsigned len = parse_keyword(
+		src, ptr, PARSE_KEYWORD_TRUE);
+	bool v = (len > 0);
+	if (len == 0)
+	{
+		len = parse_keyword(
+			src, ptr, PARSE_KEYWORD_FALSE);
+		if (len == 0) return 0;
+	}
+
+	if (ptr[i++] != '.')
+		return false;
+
+	literal->logical = v;
+	literal->type = PARSE_LITERAL_LOGICAL;
+	return len;
+}
+
+
 static unsigned parse_literal__uint(
 	const sparse_t* src, const char* ptr,
 	parse_literal_t* literal)
@@ -484,6 +512,7 @@ unsigned parse_literal(
 	if (len == 0) len = parse_literal__binary(src, ptr, &l);
 	if (len == 0) len = parse_literal__octal(src, ptr, &l);
 	if (len == 0) len = parse_literal__hex(src, ptr, &l);
+	if (len == 0) len = parse_literal__logical(src, ptr, &l);
 	if (len == 0) len = parse_literal__number(src, ptr, &l);
 
 	if (len == 0)
