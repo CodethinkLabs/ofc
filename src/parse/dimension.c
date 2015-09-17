@@ -109,17 +109,14 @@ unsigned parse_dimension(
 	/* TODO - Make this more atomic so that a
 	          failure part-way through is recoverable. */
 
-	if ((ptr[i] == '\r')
-		|| (ptr[i] == '\n')
-		|| (ptr[i] == ';'))
+	unsigned len = 0;
+	if (!is_end_statement(ptr[i], &len))
 	{
-		i += 1;
-	}
-	else
-	{
+		/* TODO - This should mean we don't treat it as a dimension statement. */
 		sparse_warning(src, &ptr[i],
 			"Expected newline or semicolon after DIMENSION statement");
 	}
+	i += len;
 
 	return i;
 }

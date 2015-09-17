@@ -1,7 +1,7 @@
 #include "parse.h"
 
 
-const parse_implicit_t PARSE_IMPLICIT_DEFAULT = 
+const parse_implicit_t PARSE_IMPLICIT_DEFAULT =
 {
 	.c =
 	{
@@ -61,16 +61,10 @@ unsigned parse_implicit(
 		return 0;
 	}
 
-	if ((ptr[i] == '\r')
-		|| (ptr[i] == '\n'))
-	{
-		i += 1;
-	}
-	else
-	{
-		sparse_warning(src, &ptr[i],
-			"Expected newline after implicit statement");
-	}
+	unsigned len = 0;
+	if (!is_end_statement(ptr[i], &len))
+		return 0;
+	i += len;
 
 	return i;
 }

@@ -1,5 +1,4 @@
 #include "parse.h"
-#include "../fctype.h"
 
 
 typedef unsigned (*parse_expr_func_t)(
@@ -35,12 +34,11 @@ static unsigned parse_expr__level(
 
 static bool parse_expr__term(char c)
 {
-	if (is_vspace(c))
+	if (is_end_statement(c, NULL))
 		return true;
 
 	switch (c)
 	{
-		case ';':
 		case ',':
 		case ')':
 			return true;

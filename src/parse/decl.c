@@ -1,5 +1,4 @@
 #include "parse.h"
-#include <ctype.h>
 
 
 bool parse_decl_create_implicit(
@@ -175,13 +174,8 @@ unsigned parse_decl(
 	if (c == 0)
 		return 0;
 
-	if ((ptr[i] == '\r')
-		|| (ptr[i] == '\n')
-		|| (ptr[i] == ';'))
-	{
-		i += 1;
-	}
-	else
+	unsigned len = 0;
+	if (!is_end_statement(ptr[i], &len))
 	{
 		unsigned e;
 		for (e = 0; e < c; e++)
@@ -189,6 +183,7 @@ unsigned parse_decl(
 		free(decl);
 		return 0;
 	}
+	i += len;
 
 	unsigned e;
 	for (e = 0; e < c; e++)

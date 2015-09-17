@@ -218,7 +218,8 @@ unsigned parse_character(
 	for (j = 1, is_escaped = false; (pptr[j] != quote) || is_escaped; j++)
 	{
 		if ((pptr[j] == '\r')
-			|| (pptr[j] == '\n'))
+			|| (pptr[j] == '\n')
+			|| (pptr[j] == '\0'))
 		{
 			sparse_error(src, ptr,
 				"Unexpected end of line in character constant");

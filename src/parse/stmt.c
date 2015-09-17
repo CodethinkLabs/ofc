@@ -8,55 +8,48 @@ unsigned parse_stmt(
 	hashmap_t* decl,
 	parse_stmt_t* stmt)
 {
-	unsigned len = 0;
+	unsigned i = 0;
 	stmt->type  = PARSE_STMT_EMPTY;
 	stmt->label = label;
 
-	if (len == 0) len = parse_stmt_continue(src, ptr, stmt);
-	if (len == 0) len = parse_stmt_stop_pause(src, ptr, stmt);
-	if (len == 0) len = parse_stmt_go_to(src, ptr, stmt);
-	if (len == 0) len = parse_stmt_if(src, ptr, implicit, decl, stmt);
-	if (len == 0) len = parse_stmt_do(src, ptr, stmt);
-	if (len == 0) len = parse_stmt_data(src, ptr, stmt);
-	if (len == 0) len = parse_stmt_write(src, ptr, stmt);
-	if (len == 0) len = parse_stmt_format(src, ptr, stmt);
-	if (len == 0) len = parse_stmt_assign(src, ptr, stmt);
+	if (i == 0) i = parse_stmt_continue(src, ptr, stmt);
+	if (i == 0) i = parse_stmt_stop_pause(src, ptr, stmt);
+	if (i == 0) i = parse_stmt_go_to(src, ptr, stmt);
+	if (i == 0) i = parse_stmt_if(src, ptr, implicit, decl, stmt);
+	if (i == 0) i = parse_stmt_do(src, ptr, stmt);
+	if (i == 0) i = parse_stmt_data(src, ptr, stmt);
+	if (i == 0) i = parse_stmt_write(src, ptr, stmt);
+	if (i == 0) i = parse_stmt_format(src, ptr, stmt);
+	if (i == 0) i = parse_stmt_assign(src, ptr, stmt);
 
-	if ((len > 0)
-		&& (ptr[len] != '\0')
-		&& (ptr[len] != '\r')
-		&& (ptr[len] != '\n')
-		&& (ptr[len] != ';'))
+	if ((i > 0)
+		&& !is_end_statement(ptr[i], NULL))
 	{
 		parse_stmt_cleanup(*stmt);
-		len = 0;
+		i = 0;
 	}
 
 	/* Assignments can clash. */
-	if (len == 0)
+	if (i == 0)
 	{
-		len = parse_stmt_assignment(
+		i = parse_stmt_assignment(
 			src, ptr, implicit, decl, stmt);
 	}
 
-	if ((ptr[len] == '\r')
-		|| (ptr[len] == '\n')
-		|| (ptr[len] == ';'))
+	unsigned len = 0;
+	if (!is_end_statement(ptr[i], &len))
 	{
-		len += 1;
-	}
-	else
-	{
-		if (len == 0)
+		if (i == 0)
 			return 0;
 
-		sparse_error(src, &ptr[len],
+		sparse_error(src, &ptr[i],
 			"Expected newline or semicolon after statement");
 		parse_stmt_cleanup(*stmt);
 		return 0;
 	}
+	i += len;
 
-	return len;
+	return i;
 }
 
 void parse_stmt_cleanup(

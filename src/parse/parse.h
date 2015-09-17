@@ -4,6 +4,7 @@
 #include "../sparse.h"
 #include "../str_ref.h"
 #include "../hashmap.h"
+#include "../fctype.h"
 
 typedef struct parse_lhs_s parse_lhs_t;
 typedef struct parse_expr_s parse_expr_t;
