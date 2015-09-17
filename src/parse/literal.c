@@ -463,20 +463,8 @@ static unsigned parse_literal__complex(
 			return 0;
 
 		literal->type = PARSE_LITERAL_COMPLEX;
-
-		literal->complex.left_number = (str_ref_t*)malloc(sizeof(str_ref_t));
-		literal->complex.right_number = (str_ref_t*)malloc(sizeof(str_ref_t));
-
-		if (!literal->complex.left_number
-			|| !literal->complex.right_number)
-		{
-			free(literal->complex.left_number);
-			free(literal->complex.right_number);
-			return 0;
-		}
-
-		*(literal->complex.left_number) = left_number_literal.number;
-		*(literal->complex.right_number) = right_number_literal.number;
+		literal->complex.left_number = left_number_literal.number;
+		literal->complex.right_number = right_number_literal.number;
 
 		return i;
 }
@@ -535,12 +523,6 @@ bool parse_literal_clone(
 			clone.string = string_copy(src->string);
 			if (string_empty(clone.string))
 				return false;
-			break;
-		case PARSE_LITERAL_COMPLEX:
-			if (src->complex.left_number)
-				free(src->complex.left_number);
-			if (src->complex.right_number)
-				free(src->complex.right_number);
 			break;
 		default:
 			break;

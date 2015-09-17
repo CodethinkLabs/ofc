@@ -19,8 +19,8 @@ typedef enum
 
 typedef struct
 {
-	str_ref_t *left_number;
-	str_ref_t *right_number;
+	str_ref_t left_number;
+	str_ref_t right_number;
 } complex_t;
 
 typedef struct
