@@ -75,11 +75,6 @@ static unsigned parse_literal__base(
 
 	/* We allow spaces in BOZ literals because they're likely to be used
        for digit grouping, like: B'0101 1100' */
-	if (!quoted && !sparse_sequential(src, ptr, i))
-	{
-		sparse_warning(src, ptr,
-			"Unexpected whitespace in literal");
-	}
 
 	if (value) *value = v;
 	return i;
@@ -417,12 +412,6 @@ static unsigned parse_literal__number(
 		i += len;
 
 		kind_ambiguous = ((ok > 0) && (k != ok));
-	}
-
-	if (!sparse_sequential(src, ptr, i))
-	{
-		sparse_warning(src, ptr,
-			"Unexpected whitespace in literal number");
 	}
 
 	if (kind_ambiguous)

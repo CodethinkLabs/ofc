@@ -151,6 +151,51 @@ unsigned parse_operator(
 	return size;
 }
 
+bool parse_operator_unary(
+	parse_operator_e operator)
+{
+	switch (operator)
+	{
+		case PARSE_OPERATOR_ADD:
+		case PARSE_OPERATOR_SUBTRACT:
+		case PARSE_OPERATOR_NOT:
+			return true;
+		default:
+			break;
+
+	}
+
+	return false;
+}
+
+bool parse_operator_binary(
+	parse_operator_e operator)
+{
+	switch (operator)
+	{
+		case PARSE_OPERATOR_POWER:
+		case PARSE_OPERATOR_MULTIPLY:
+		case PARSE_OPERATOR_DIVIDE:
+		case PARSE_OPERATOR_ADD:
+		case PARSE_OPERATOR_SUBTRACT:
+		case PARSE_OPERATOR_CONCAT:
+		case PARSE_OPERATOR_EQ:
+		case PARSE_OPERATOR_NE:
+		case PARSE_OPERATOR_LT:
+		case PARSE_OPERATOR_LE:
+		case PARSE_OPERATOR_GT:
+		case PARSE_OPERATOR_GE:
+		case PARSE_OPERATOR_AND:
+		case PARSE_OPERATOR_OR:
+		case PARSE_OPERATOR_EQV:
+		case PARSE_OPERATOR_NEQV:
+			return true;
+		default:
+			break;
+	}
+
+	return false;
+}
 
 unsigned parse_operator_precedence(
 	parse_operator_e operator)

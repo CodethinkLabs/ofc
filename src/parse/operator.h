@@ -23,9 +23,16 @@ typedef enum
 } parse_operator_e;
 
 
+static const unsigned OPERATOR_PRECEDENCE_MAX = 11;
+
 unsigned parse_operator(
 	const sparse_t* sparse, const char* ptr,
 	parse_operator_e* operator);
+
+bool parse_operator_unary(
+	parse_operator_e operator);
+bool parse_operator_binary(
+	parse_operator_e operator);
 
 unsigned parse_operator_precedence(
 	parse_operator_e operator);

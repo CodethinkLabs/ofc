@@ -1,4 +1,5 @@
 #include "parse.h"
+#include "../fctype.h"
 
 
 typedef unsigned (*parse_expr_func_t)(
@@ -14,6 +15,39 @@ unsigned parse_expr_literal(
 
 	expr->type = PARSE_EXPR_CONSTANT;
 	return len;
+}
+
+static unsigned parse_expr__level(
+	parse_expr_t expr)
+{
+	switch (expr.type)
+	{
+		case PARSE_EXPR_UNARY:
+			return parse_operator_precedence(expr.unary.operator);
+		case PARSE_EXPR_BINARY:
+			return parse_operator_precedence(expr.binary.operator);
+		default:
+			break;
+	}
+
+	return 0;
+}
+
+static bool parse_expr__term(char c)
+{
+	if (is_vspace(c))
+		return true;
+
+	switch (c)
+	{
+		case ';':
+		case ',':
+		case ')':
+			return true;
+		default:
+			break;
+	}
+	return false;
 }
 
 static unsigned parse_expr__primary(
@@ -46,429 +80,225 @@ static unsigned parse_expr__primary(
 
 	if (ptr[0] == '(')
 	{
+		parse_expr_t expr_brackets;
 		unsigned len = parse_expr(
-			src, &ptr[1], expr);
-		if ((len > 0) && (ptr[1 + len] == ')'))
-			return (len + 2);
+			src, &ptr[1], &expr_brackets);
+		if (len > 0)
+		{
+			if  (ptr[1 + len] != ')')
+			{
+				parse_expr_cleanup(expr_brackets);
+			}
+			else
+			{
+				expr->brackets.expr
+					= parse_expr_alloc(expr_brackets);
+				if (!expr->brackets.expr)
+				{
+					parse_expr_cleanup(expr_brackets);
+					return 0;
+				}
+				expr->type = PARSE_EXPR_BRACKETS;
+				return (len + 2);
+			}
+		}
 	}
 
 	return 0;
 }
 
-static unsigned parse_expr__level_1(
+static unsigned parse_expr__at_or_below(
 	const sparse_t* src, const char* ptr,
-	parse_expr_t* expr)
+	parse_expr_t* expr, unsigned level);
+
+static unsigned parse_expr__unary(
+	const sparse_t* src, const char* ptr,
+	parse_expr_t* expr, unsigned level)
 {
 	/* TODO - Defined unary operators. */
 
-	return parse_expr__primary(src, ptr, expr);
-}
-
-static unsigned parse_expr__mult_operand(
-	const sparse_t* src, const char* ptr,
-	parse_expr_t* expr)
-{
-	parse_expr_t a;
-	unsigned a_len = parse_expr__level_1(
-		src, ptr, &a);
-	if (a_len == 0) return 0;
-
-	parse_operator_e op;
-	unsigned op_len = parse_operator(
-		src, &ptr[a_len], &op);
-	if ((op_len == 0) || (op != PARSE_OPERATOR_POWER))
-	{
-		*expr = a;
-		return a_len;
-	}
-
-	parse_expr_t b;
-	unsigned b_len = parse_expr__mult_operand(
-		src, &ptr[a_len + op_len], &b);
-	if (b_len == 0)
-	{
-		*expr = a;
-		return a_len;
-	}
-
-	expr->type = PARSE_EXPR_BINARY;
-	expr->binary.operator = op;
-
-	expr->binary.a = (parse_expr_t*)malloc(sizeof(parse_expr_t));
-	expr->binary.b = (parse_expr_t*)malloc(sizeof(parse_expr_t));
-	if (!expr->binary.a
-		|| !expr->binary.b)
-	{
-		free(expr->binary.a);
-		free(expr->binary.b);
-		return 0;
-	}
-
-	*(expr->binary.a) = a;
-	*(expr->binary.b) = b;
-
-	return (a_len + op_len + b_len);
-}
-
-static unsigned parse_expr__partial(
-	const sparse_t* src, const char* ptr,
-	parse_expr_func_t term_func, parse_operator_e allow_op,
-	parse_expr_t* expr)
-{
 	parse_operator_e op;
 	unsigned op_len = parse_operator(
 		src, ptr, &op);
-	if (op_len == 0)
+	if ((op_len == 0)
+		|| !parse_operator_unary(op))
 		return 0;
 
-	if (op != allow_op)
+	unsigned op_level = parse_operator_precedence(op);
+	if (op_level > level)
 		return 0;
 
-	parse_expr_t b;
-	unsigned b_len = term_func(
-		src, &ptr[op_len], &b);
-	if (b_len == 0) return 0;
+	parse_expr_t a;
+	unsigned a_len = parse_expr__at_or_below(
+		src, &ptr[op_len], &a, op_level);
+	if (a_len == 0) return 0;
 
-	parse_expr_t a = *expr;
+	expr->type = PARSE_EXPR_UNARY;
+	expr->unary.operator = op;
 
-	expr->type = PARSE_EXPR_BINARY;
-	expr->binary.operator = op;
-
-	expr->binary.a = (parse_expr_t*)malloc(sizeof(parse_expr_t));
-	expr->binary.b = (parse_expr_t*)malloc(sizeof(parse_expr_t));
-	if (!expr->binary.a
-		|| !expr->binary.b)
+	expr->unary.a = parse_expr_alloc(a);
+	if (!expr->unary.a)
 	{
-		free(expr->binary.a);
-		free(expr->binary.b);
+		parse_expr_cleanup(a);
 		return 0;
-	}
-
-	*(expr->binary.a) = a;
-	*(expr->binary.b) = b;
-
-	return (op_len + b_len);
-}
-
-static unsigned parse_expr__add_operand(
-	const sparse_t* src, const char* ptr,
-	parse_expr_t* expr)
-{
-	parse_expr_t a;
-	unsigned a_len = parse_expr__mult_operand(
-		src, ptr, &a);
-	if (a_len == 0) return 0;
-
-	while (true)
-	{
-		unsigned len = parse_expr__partial(src, &ptr[a_len],
-			parse_expr__mult_operand,
-			PARSE_OPERATOR_MULTIPLY, &a);
-		if (len == 0)
-		{
-			len = parse_expr__partial(src, &ptr[a_len],
-				parse_expr__mult_operand,
-				PARSE_OPERATOR_DIVIDE, &a);
-		}
-		if (len == 0) break;
-		a_len += len;
-	}
-
-	*expr = a;
-	return a_len;
-}
-
-static unsigned parse_expr__level_2(
-	const sparse_t* src, const char* ptr,
-	parse_expr_t* expr)
-{
-	parse_expr_t a;
-	unsigned a_len = parse_expr__add_operand(
-		src, ptr, &a);
-	if (a_len == 0)
-	{
-		parse_operator_e op;
-		unsigned op_len = parse_operator(
-			src, ptr, &op);
-		if (op_len == 0) return 0;
-		switch (op)
-		{
-			case PARSE_OPERATOR_ADD:
-			case PARSE_OPERATOR_SUBTRACT:
-				break;
-			default:
-				return 0;
-		}
-
-		a_len = parse_expr__add_operand(
-			src, &ptr[op_len], &a);
-		if (a_len == 0) return 0;
-
-		expr->type = PARSE_EXPR_UNARY;
-		expr->unary.operator = op;
-		expr->unary.a = parse_expr_alloc(a);
-		if (!expr->unary.a)
-		{
-			parse_expr_cleanup(a);
-			return 0;
-		}
-
-		return (op_len + a_len);
-	}
-
-	while (true)
-	{
-		unsigned len = parse_expr__partial(src, &ptr[a_len],
-			parse_expr__add_operand,
-			PARSE_OPERATOR_ADD, &a);
-		if (len == 0)
-		{
-			len = parse_expr__partial(src, &ptr[a_len],
-				parse_expr__add_operand,
-				PARSE_OPERATOR_SUBTRACT, &a);
-		}
-		if (len == 0) break;
-		a_len += len;
-	}
-
-	*expr = a;
-	return a_len;
-}
-
-static unsigned parse_expr__level_3(
-	const sparse_t* src, const char* ptr,
-	parse_expr_t* expr)
-{
-	parse_expr_t a;
-	unsigned a_len = parse_expr__level_2(
-		src, ptr, &a);
-	if (a_len == 0) return 0;
-
-	while (true)
-	{
-		unsigned len = parse_expr__partial(src, &ptr[a_len],
-			parse_expr__level_2,
-			PARSE_OPERATOR_CONCAT, &a);
-		if (len == 0) break;
-		a_len += len;
-	}
-
-	*expr = a;
-	return a_len;
-}
-
-static unsigned parse_expr__level_4(
-	const sparse_t* src, const char* ptr,
-	parse_expr_t* expr)
-{
-	parse_expr_t a;
-	unsigned a_len = parse_expr__level_3(
-		src, ptr, &a);
-	if (a_len == 0) return 0;
-
-	/* Handle case where we have something like:
-	   ( 3 .EQ. 76 ) */
-	if ((a.type == PARSE_EXPR_CONSTANT)
-		&& (a.literal.type == PARSE_LITERAL_NUMBER)
-		&& (a.literal.number.base[a.literal.number.size - 1] == '.'))
-	{
-
-		parse_operator_e op;
-		unsigned len = parse_operator(src,
-			&a.literal.number.base[a.literal.number.size - 1], &op);
-		if (len > 0)
-		{
-			switch (op)
-			{
-				case PARSE_OPERATOR_EQ:
-				case PARSE_OPERATOR_NE:
-				case PARSE_OPERATOR_GE:
-				case PARSE_OPERATOR_GT:
-				case PARSE_OPERATOR_LE:
-				case PARSE_OPERATOR_LT:
-					a.literal.number.size -= 1;
-					a_len -= 1;
-					break;
-				default:
-					break;
-			}
-		}
-	}
-
-	while (true)
-	{
-		unsigned len = parse_expr__partial(src, &ptr[a_len],
-			parse_expr__level_3,
-			PARSE_OPERATOR_EQ, &a);
-		if (len == 0)
-		{
-			len = parse_expr__partial(src, &ptr[a_len],
-				parse_expr__level_3,
-				PARSE_OPERATOR_NE, &a);
-		}
-		if (len == 0)
-		{
-			len = parse_expr__partial(src, &ptr[a_len],
-				parse_expr__level_3,
-				PARSE_OPERATOR_GE, &a);
-		}
-		if (len == 0)
-		{
-			len = parse_expr__partial(src, &ptr[a_len],
-				parse_expr__level_3,
-				PARSE_OPERATOR_GT, &a);
-		}
-		if (len == 0)
-		{
-			len = parse_expr__partial(src, &ptr[a_len],
-				parse_expr__level_3,
-				PARSE_OPERATOR_LE, &a);
-		}
-		if (len == 0)
-		{
-			len = parse_expr__partial(src, &ptr[a_len],
-				parse_expr__level_3,
-				PARSE_OPERATOR_LT, &a);
-		}
-		if (len == 0) break;
-		a_len += len;
-	}
-
-	*expr = a;
-	return a_len;
-}
-
-static unsigned parse_expr__and_operand(
-	const sparse_t* src, const char* ptr,
-	parse_expr_t* expr)
-{
-	parse_operator_e op;
-	unsigned op_len = parse_operator(
-		src, ptr, &op);
-	if ((op_len > 0) && (op != PARSE_OPERATOR_NOT))
-		op_len = 0;
-
-	parse_expr_t a;
-	unsigned a_len = parse_expr__level_4(
-		src, &ptr[op_len], &a);
-	if (a_len == 0) return 0;
-
-	if (op_len > 0)
-	{
-		expr->type = PARSE_EXPR_UNARY;
-		expr->unary.operator = op;
-
-		expr->unary.a = (parse_expr_t*)malloc(sizeof(parse_expr_t));
-		if (!expr->unary.a)
-		{
-			free(expr->unary.a);
-			return 0;
-		}
-
-		*(expr->unary.a) = a;
-	}
-	else
-	{
-		*expr = a;
 	}
 
 	return (op_len + a_len);
 }
 
-static unsigned parse_expr__or_operand(
-	const sparse_t* src, const char* ptr,
+static bool parse_expr__has_right_ambig_point(
 	parse_expr_t* expr)
 {
-	parse_expr_t a;
-	unsigned a_len = parse_expr__and_operand(
-		src, ptr, &a);
-	if (a_len == 0) return 0;
+	if (!expr)
+		return false;
 
-	while (true)
+	switch (expr->type)
 	{
-		unsigned len = parse_expr__partial(src, &ptr[a_len],
-			parse_expr__and_operand,
-			PARSE_OPERATOR_AND, &a);
-		if (len == 0) break;
-		a_len += len;
+		case PARSE_EXPR_CONSTANT:
+			return ((expr->literal.type == PARSE_LITERAL_NUMBER)
+				&& (expr->literal.number.base[expr->literal.number.size - 1] == '.'));
+		case PARSE_EXPR_UNARY:
+			return parse_expr__has_right_ambig_point(expr->unary.a);
+		case PARSE_EXPR_BINARY:
+			return parse_expr__has_right_ambig_point(expr->binary.b);
+		default:
+			break;
 	}
-
-	*expr = a;
-	return a_len;
+	return false;
 }
 
-static unsigned parse_expr__equiv_operand(
-	const sparse_t* src, const char* ptr,
+static void parse_expr__cull_right_ambig_point(
 	parse_expr_t* expr)
 {
-	parse_expr_t a;
-	unsigned a_len = parse_expr__or_operand(
-		src, ptr, &a);
-	if (a_len == 0) return 0;
+	if (!expr)
+		return;
 
-	while (true)
+	switch (expr->type)
 	{
-		unsigned len = parse_expr__partial(src, &ptr[a_len],
-			parse_expr__or_operand,
-			PARSE_OPERATOR_OR, &a);
-		if (len == 0) break;
-		a_len += len;
+		case PARSE_EXPR_CONSTANT:
+			if (expr->literal.type == PARSE_LITERAL_NUMBER)
+				expr->literal.number.size -= 1;
+			break;
+		case PARSE_EXPR_UNARY:
+			parse_expr__cull_right_ambig_point(expr->unary.a);
+			break;
+		case PARSE_EXPR_BINARY:
+			parse_expr__cull_right_ambig_point(expr->binary.b);
+			break;
+		default:
+			break;
 	}
-
-	*expr = a;
-	return a_len;
 }
 
-static unsigned parse_expr__level_5(
+static unsigned parse_expr__binary_at_or_below(
 	const sparse_t* src, const char* ptr,
-	parse_expr_t* expr)
+	parse_expr_t* expr, unsigned level)
 {
 	parse_expr_t a;
-	unsigned a_len = parse_expr__equiv_operand(
-		src, ptr, &a);
+	unsigned a_len = parse_expr__at_or_below(
+		src, ptr, &a, (level - 1));
 	if (a_len == 0) return 0;
+
+	/* Optimize by returning a if we see end of statement or close bracket. */
+	if (parse_expr__term(ptr[a_len]))
+	{
+		*expr = a;
+		return a_len;
+	}
 
 	/* Handle case where we have something like:
-	   ( 3 .EQV. 76 ) */
-	if ((a.type == PARSE_EXPR_CONSTANT)
-		&& (a.literal.type == PARSE_LITERAL_NUMBER)
-		&& (a.literal.number.base[a.literal.number.size - 1] == '.'))
+	   ( 3 ** 3 .EQ. 76 ) */
+	if (parse_expr__has_right_ambig_point(&a))
 	{
 		parse_operator_e op;
-		unsigned len = parse_operator(src,
-			&a.literal.number.base[a.literal.number.size - 1], &op);
-		if (len > 0)
+		unsigned op_len = parse_operator(src, &ptr[a_len - 1], &op);
+		if ((op_len > 0)
+			&& parse_operator_binary(op)
+			&& (parse_operator_precedence(op) <= level))
 		{
-			switch (op)
-			{
-				case PARSE_OPERATOR_EQV:
-				case PARSE_OPERATOR_NEQV:
-					a.literal.number.size -= 1;
-					a_len -= 1;
-					break;
-				default:
-					break;
-			}
+			parse_expr__cull_right_ambig_point(&a);
+			a_len -= 1;
 		}
 	}
 
-	while (true)
+	/* TODO - Defined binary operators. */
+
+	parse_operator_e op;
+	unsigned op_len = parse_operator(
+		src, &ptr[a_len], &op);
+	if ((op_len == 0) || !parse_operator_binary(op))
 	{
-		unsigned len = parse_expr__partial(src, &ptr[a_len],
-			parse_expr__equiv_operand,
-			PARSE_OPERATOR_EQV, &a);
-		if (len == 0)
-		{
-			len = parse_expr__partial(src, &ptr[a_len],
-				parse_expr__equiv_operand,
-				PARSE_OPERATOR_NEQV, &a);
-		}
-		if (len == 0) break;
-		a_len += len;
+		parse_expr_cleanup(a);
+		return 0;
 	}
 
-	*expr = a;
-	return a_len;
+	unsigned op_level = parse_operator_precedence(op);
+	if ((op_level > level)
+		|| (parse_expr__level(a) >= op_level))
+	{
+		parse_expr_cleanup(a);
+		return 0;
+	}
+
+	parse_expr_t b;
+	unsigned b_len = parse_expr__at_or_below(
+		src, &ptr[a_len + op_len], &b, op_level);
+	if (b_len == 0)
+	{
+		parse_expr_cleanup(a);
+		return 0;
+	}
+
+	expr->type = PARSE_EXPR_BINARY;
+	expr->binary.operator = op;
+
+	expr->binary.a = parse_expr_alloc(a);
+	if (!expr->binary.a)
+	{
+		parse_expr_cleanup(a);
+		parse_expr_cleanup(b);
+		return 0;
+	}
+
+	expr->binary.b = parse_expr_alloc(b);
+	if (!expr->binary.b)
+	{
+		parse_expr_delete(expr->binary.a);
+		parse_expr_cleanup(b);
+		return 0;
+	}
+
+	return (a_len + op_len + b_len);
+}
+
+static unsigned parse_expr__binary(
+	const sparse_t* src, const char* ptr,
+	parse_expr_t* expr, unsigned level)
+{
+	unsigned i;
+	for (i = level; i > 0; i--)
+	{
+		unsigned len = parse_expr__binary_at_or_below(
+			src, ptr, expr, i);
+		if (len > 0) return len;
+	}
+	return 0;
+}
+
+static unsigned parse_expr__at_or_below(
+	const sparse_t* src, const char* ptr,
+	parse_expr_t* expr, unsigned level)
+{
+	unsigned len = parse_expr__binary(
+		src, ptr, expr, level);
+	if (len > 0) return len;
+
+	len = parse_expr__unary(
+		src, ptr, expr, level);
+	if (len > 0) return len;
+
+	return parse_expr__primary(
+		src, ptr, expr);
 }
 
 unsigned parse_expr(
@@ -478,8 +308,9 @@ unsigned parse_expr(
 	/* TODO - Defined binary operators. */
 
 	parse_expr_t e;
-	unsigned len = parse_expr__level_5(
-		src, ptr, &e);
+	unsigned len = parse_expr__at_or_below(
+		src, ptr, &e, OPERATOR_PRECEDENCE_MAX);
+	if (len == 0) return 0;
 
 	if (expr) *expr = e;
 	else parse_expr_cleanup(e);
@@ -495,19 +326,24 @@ void parse_expr_cleanup(
 		case PARSE_EXPR_CONSTANT:
 			parse_literal_cleanup(expr.literal);
 			break;
+
 		case PARSE_EXPR_VARIABLE:
 			parse_lhs_cleanup(expr.variable);
 			break;
+
+		case PARSE_EXPR_BRACKETS:
+			parse_expr_delete(expr.brackets.expr);
+			break;
+
 		case PARSE_EXPR_UNARY:
-			parse_expr_cleanup(*expr.unary.a);
-			free(expr.unary.a);
+			parse_expr_delete(expr.unary.a);
 			break;
+
 		case PARSE_EXPR_BINARY:
-			parse_expr_cleanup(*expr.binary.a);
-			parse_expr_cleanup(*expr.binary.b);
-			free(expr.binary.a);
-			free(expr.binary.b);
+			parse_expr_delete(expr.binary.a);
+			parse_expr_delete(expr.binary.b);
 			break;
+
 		default:
 			break;
 	}
@@ -521,63 +357,52 @@ bool parse_expr_clone(
 		return false;
 
 	parse_expr_t clone = *src;
-	switch (src->type)
+	switch (clone.type)
 	{
 		case PARSE_EXPR_NONE:
 			break;
+
 		case PARSE_EXPR_CONSTANT:
 			if (!parse_literal_clone(
 				&clone.literal, &src->literal))
 				return false;
 			break;
+
 		case PARSE_EXPR_VARIABLE:
 			if (!parse_lhs_clone(
 				&clone.variable, &src->variable))
 				return false;
 			break;
+
+		case PARSE_EXPR_BRACKETS:
+			clone.brackets.expr
+				= parse_expr_copy(src->brackets.expr);
+			if (!clone.brackets.expr)
+				return false;
+			break;
+
 		case PARSE_EXPR_UNARY:
 			clone.unary.a
-				= (parse_expr_t*)malloc(
-					sizeof(parse_expr_t));
-			if (!clone.unary.a) return false;
-			if (!parse_expr_clone(
-				clone.unary.a, src->unary.a))
-			{
-				free(clone.unary.a);
+				= parse_expr_copy(src->unary.a);
+			if (!clone.unary.a)
 				return false;
-			}
 			break;
+
 		case PARSE_EXPR_BINARY:
 			clone.binary.a
-				= (parse_expr_t*)malloc(
-					sizeof(parse_expr_t));
-			if (!clone.binary.a) return false;
-			if (!parse_expr_clone(
-				clone.binary.a, src->binary.a))
-			{
-				free(clone.unary.a);
+				= parse_expr_copy(src->binary.a);
+			if (!clone.binary.a)
 				return false;
-			}
 
 			clone.binary.b
-				= (parse_expr_t*)malloc(
-					sizeof(parse_expr_t));
+				= parse_expr_copy(src->binary.b);
 			if (!clone.binary.b)
 			{
-				parse_expr_cleanup(*clone.binary.a);
-				free(clone.binary.a);
+				parse_expr_delete(clone.binary.a);
 				return false;
 			}
-			if (!parse_expr_clone(
-				clone.binary.b, src->binary.b))
-			{
-				parse_expr_cleanup(*clone.binary.a);
-				free(clone.binary.a);
-				free(clone.binary.b);
-				return false;
-			}
-
 			break;
+
 		default:
 			return false;
 	}
