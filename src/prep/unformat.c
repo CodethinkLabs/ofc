@@ -148,7 +148,7 @@ static unsigned prep_unformat__free_form_label(
 		}
 	}
 
-	if ((i > 0) || is_hspace(src[i]))
+	if ((i > 0) && is_hspace(src[i]))
 	{
 		if (label) *label = label_value;
 		return (i + 1);
