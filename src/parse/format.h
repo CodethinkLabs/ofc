@@ -23,6 +23,7 @@ typedef enum
 	PARSE_FORMAT_DESC_SS,
 	PARSE_FORMAT_DESC_TL,
 	PARSE_FORMAT_DESC_TR,
+	PARSE_FORMAT_DESC_STRING,
 } parse_format_desc_e;
 
 typedef struct

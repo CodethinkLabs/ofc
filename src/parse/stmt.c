@@ -100,9 +100,8 @@ void parse_stmt_cleanup(
 			parse_expr_cleanup(stmt.write.file);
 			break;
 		case PARSE_STMT_FORMAT:
-			for (i = 0; i < stmt.format.desc_count; i++)
-				parse_format_desc_cleanup(stmt.format.desc[i]);
-			free(stmt.format.desc);
+			parse_format_desc_list_delete(
+				stmt.format.desc, stmt.format.desc_count);
 			break;
 		case PARSE_STMT_DATA:
 			for (i = 0; i < stmt.data.init_count; i++)

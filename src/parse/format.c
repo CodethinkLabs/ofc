@@ -21,7 +21,6 @@ static const parse_format_desc__map_t parse_format_desc__map[] =
 	{ "G" , PARSE_FORMAT_DESC_G         , 1, 1, 1 },
 	{ "A" , PARSE_FORMAT_DESC_CHARACTER , 1, 0, 0 },
 	{ "L" , PARSE_FORMAT_DESC_LOGICAL   , 1, 0, 0 },
-	{ "H" , PARSE_FORMAT_DESC_HOLLERITH , 0, 0, 0 },
 	{ "BZ", PARSE_FORMAT_DESC_BZ        , 0, 0, 0 },
 	{ "BN", PARSE_FORMAT_DESC_BN        , 0, 0, 0 },
 	{ "SP", PARSE_FORMAT_DESC_SP        , 0, 0, 0 },
@@ -59,7 +58,7 @@ unsigned parse_format_desc(
 	if (len > 0)
 	{
 		desc->n    = n;
-		desc->type = PARSE_FORMAT_DESC_CHARACTER;
+		desc->type = PARSE_FORMAT_DESC_STRING;
 		return (i + len);
 	}
 
@@ -114,7 +113,7 @@ void parse_format_desc_cleanup(
 	switch (desc.type)
 	{
 		case PARSE_FORMAT_DESC_HOLLERITH:
-		case PARSE_FORMAT_DESC_CHARACTER:
+		case PARSE_FORMAT_DESC_STRING:
 			string_delete(desc.string);
 			break;
 		default:
@@ -177,6 +176,9 @@ unsigned parse_format_desc_list(
 			dlist, dcount);
 		return 0;
 	}
+
+	if (dcount == 0)
+		return 0;
 
 	*list  = dlist;
 	*count = dcount;
