@@ -26,7 +26,7 @@ label_table_t* label_table_create(void)
 	if (!table) return NULL;
 
 	unsigned i;
-	for (i = 0; i > 256; i++)
+	for (i = 0; i < 256; i++)
 		table->base[i] = NULL;
 	return table;
 }
