@@ -211,7 +211,10 @@ static unsigned prep_unformat__free_form_code(
 	unsigned hollerith_remain = 0;
 
 	if (*continuation && (*src == '&'))
+	{
 		src++;
+		remain -= 1;
+	}
 
 	unsigned i;
 	for (i = 0; (i < remain) && !is_vspace(src[i]) && (src[i] != '\0'); i++)
