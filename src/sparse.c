@@ -13,24 +13,36 @@ typedef struct
 
 struct sparse_s
 {
-	const file_t*   file;
-	const sparse_t* parent;
+	file_t*   file;
+	sparse_t* parent;
 
 	unsigned len, count, max_count;
 	sparse_entry_t* entry;
 
 	char* strz;
+
+	label_table_t* labels;
+
+	unsigned ref;
 };
 
 
 
 sparse_t* sparse__create(
-	const file_t* file, sparse_t* parent)
+	file_t* file, sparse_t* parent)
 {
 	sparse_t* sparse
 		= (sparse_t*)malloc(
 			sizeof(sparse_t));
 	if (!sparse) return NULL;
+
+	sparse->labels
+		= label_table_create();
+	if (!sparse->labels)
+	{
+		free(sparse);
+		return NULL;
+	}
 
 	sparse->file   = file;
 	sparse->parent = parent;
@@ -42,20 +54,33 @@ sparse_t* sparse__create(
 
 	sparse->strz = NULL;
 
+	sparse->ref = 0;
+
 	return sparse;
 }
 
-sparse_t* sparse_create_file(const file_t* file)
+sparse_t* sparse_create_file(file_t* file)
 {
-	if (!file) return NULL;
-	return sparse__create(file, NULL);
+	if (!file_reference(file))
+		return NULL;
+	sparse_t* sparse
+		= sparse__create(file, NULL);
+	if (!sparse) file_delete(file);
+	return sparse;
 }
 
 sparse_t* sparse_create_child(sparse_t* parent)
 {
-	if (!parent) return NULL;
-	sparse_t* sparse = sparse__create(NULL, parent);
-	if (!sparse) return NULL;
+	if (!sparse_reference(parent))
+		return NULL;
+
+	sparse_t* sparse
+		= sparse__create(NULL, parent);
+	if (!sparse)
+	{
+		sparse_delete(parent);
+		return NULL;
+	}
 
 	/* Lock parent so it can't be modified. */
 	sparse_lock(parent);
@@ -63,10 +88,33 @@ sparse_t* sparse_create_child(sparse_t* parent)
 	return sparse;
 }
 
+bool sparse_reference(sparse_t* sparse)
+{
+	if (!sparse)
+		return false;
+
+	unsigned nref = sparse->ref + 1;
+	if (nref == 0) return false;
+
+	sparse->ref += 1;
+	return true;
+}
+
 void sparse_delete(sparse_t* sparse)
 {
 	if (!sparse)
 		return;
+
+	if (sparse->ref > 0)
+	{
+		sparse->ref -= 1;
+		return;
+	}
+
+	sparse_delete(sparse->parent);
+	file_delete(sparse->file);
+
+	label_table_delete(sparse->labels);
 
 	free(sparse->strz);
 	free(sparse->entry);
@@ -169,6 +217,30 @@ bool sparse__ptr(
 	if (entry ) *entry  = sparse->entry[mid];
 	if (offset) *offset = (off - sparse->entry[mid].off);
 	return true;
+}
+
+
+bool sparse_label_add(
+	sparse_t* sparse, const char* ptr, unsigned number)
+{
+	if (!sparse)
+		return false;
+	return label_table_add(
+		sparse->labels, ptr, number);
+}
+
+bool sparse_label_find(
+	const sparse_t* sparse, const char* ptr, unsigned* number)
+{
+	if (!sparse)
+		return false;
+
+	const char* pptr
+		= sparse_parent_pointer(sparse, ptr);
+	if (!pptr) return NULL;
+
+	return label_table_find(
+		sparse->labels, pptr, number);
 }
 
 

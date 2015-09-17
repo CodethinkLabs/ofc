@@ -22,7 +22,6 @@ static bool parse_program_add_stmt(
 
 unsigned parse_program(
 	const sparse_t* src, const char* ptr,
-	const label_table_t* labels,
 	parse_program_t* program)
 {
 	program->name = STR_REF_EMPTY;
@@ -66,18 +65,8 @@ unsigned parse_program(
 	unsigned len;
 	while (true)
 	{
-		const char* fptr = sparse_file_pointer(src, &ptr[i]);
-		if (!fptr)
-		{
-			/* This should never happen, should always have a
-			   corresponding file pointer. */
-			parse_program_cleanup(*program);
-			return 0;
-		}
-
 		unsigned label = 0;
-		bool has_label = label_table_find(
-			labels, fptr, &label);
+		bool has_label = sparse_label_find(src, ptr, &label);
 
 		{
 			len = parse_implicit(

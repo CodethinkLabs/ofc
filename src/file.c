@@ -12,6 +12,7 @@ struct file_s
 	unsigned    size;
 	char*       strz;
 	lang_opts_t opts;
+	unsigned    ref;
 };
 
 
@@ -58,6 +59,8 @@ file_t* file_create(const char* path, lang_opts_t opts)
 	file->strz = file__read(path, &file->size);
 	file->opts = opts;
 
+	file->ref = 0;
+
 	if (!file->strz)
 	{
 		free(file);
@@ -67,10 +70,28 @@ file_t* file_create(const char* path, lang_opts_t opts)
 	return file;
 }
 
+bool file_reference(file_t* file)
+{
+	if (!file)
+		return false;
+
+	unsigned nref = file->ref + 1;
+	if (nref == 0) return false;
+
+	file->ref += 1;
+	return true;
+}
+
 void file_delete(file_t* file)
 {
 	if (!file)
 		return;
+
+	if (file->ref > 0)
+	{
+		file->ref -= 1;
+		return;
+	}
 
 	free(file->strz);
 	free(file);

@@ -1,88 +1,12 @@
-#include "preprocess.h"
-#include "label_table.h"
+#include "../prep.h"
+#include "../fctype.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <ctype.h>
 
 
-struct preprocess_s
-{
-	file_t*     file;
-
-	sparse_t*      unformat;
-	sparse_t*      condense;
-	label_table_t* labels;
-};
-
-
-static preprocess_t* preprocess__create(
-	file_t* file)
-{
-	preprocess_t* context
-		= (preprocess_t*)malloc(
-			sizeof(preprocess_t));
-	if (!context) return NULL;
-
-	context->file = file;
-
-	context->unformat = sparse_create_file(file);
-	context->condense = NULL;
-	context->labels   = label_table_create();
-
-	if (!context->unformat
-		|| !context->labels)
-	{
-		label_table_delete(context->labels);
-		sparse_delete(context->unformat);
-		free(context);
-		return NULL;
-	}
-
-	return context;
-}
-
-void preprocess_delete(preprocess_t* context)
-{
-	if (!context)
-		return;
-
-	sparse_delete(context->condense);
-	label_table_delete(context->labels);
-	sparse_delete(context->unformat);
-	file_delete(context->file);
-	free(context);
-}
-
-
-
-static bool is_vspace(char c)
-{
-	return ((c == '\r') || (c == '\n'));
-}
-
-static bool is_hspace(char c)
-{
-	switch (c)
-	{
-		case ' ':
-		case '\t':
-		case '\f':
-		case '\v':
-			return true;
-		default:
-			break;
-	}
-	return false;
-}
-
-static bool is_ident(char c)
-{
-	return isalnum(c) || (c == '_');
-}
-
-static unsigned preprocess__unformat_blank_or_comment(
+static unsigned prep_unformat__blank_or_comment(
 	const char* src, lang_opts_t opts)
 {
 	if (!src)
@@ -119,7 +43,7 @@ static unsigned preprocess__unformat_blank_or_comment(
 	return 0;
 }
 
-static unsigned preprocess__unformat_fixed_form_label(
+static unsigned prep_unformat__fixed_form_label(
 	const char* src, lang_opts_t opts,
 	bool* has_label, unsigned* label, bool* continuation)
 {
@@ -204,7 +128,7 @@ static unsigned preprocess__unformat_fixed_form_label(
 	return i;
 }
 
-static unsigned preprocess__unformat_free_form_label(
+static unsigned prep_unformat__free_form_label(
 	const char* src, unsigned* label)
 {
   if (!src)
@@ -233,8 +157,8 @@ static unsigned preprocess__unformat_free_form_label(
 	return 0;
 }
 
-static unsigned preprocess__unformat_fixed_form_code(
-	unsigned col, const char* src, lang_opts_t opts, sparse_t** sparse)
+static unsigned prep_unformat__fixed_form_code(
+	unsigned col, const char* src, lang_opts_t opts, sparse_t* sparse)
 {
 	if (!src)
 		return 0;
@@ -244,7 +168,7 @@ static unsigned preprocess__unformat_fixed_form_code(
 	unsigned i;
 	for (i = 0; (i < remain) && !is_vspace(src[i]) && (src[i] != '\0'); i++);
 
-	if (sparse && !sparse_append_strn(*sparse, src, i))
+	if (sparse && !sparse_append_strn(sparse, src, i))
 		return 0;
 
 	return i;
@@ -270,10 +194,10 @@ static const pre_state_t PRE_STATE_DEFAULT =
 	.in_number = false,
 };
 
-static unsigned preprocess__unformat_free_form_code(
+static unsigned prep_unformat__free_form_code(
 	unsigned col, pre_state_t* state,
 	const char* src, lang_opts_t opts,
-	sparse_t** sparse, bool* continuation)
+	sparse_t* sparse, bool* continuation)
 {
 	if (!src)
 		return 0;
@@ -391,17 +315,18 @@ static unsigned preprocess__unformat_free_form_code(
 		code_len = last_ampersand;
 
 	if (sparse && !sparse_append_strn(
-		*sparse, src, code_len))
+		sparse, src, code_len))
 		return 0;
 
 	return i;
 }
 
-static bool preprocess__unformat_fixed_form(preprocess_t* context)
+static bool prep_unformat__fixed_form(
+	file_t* file, sparse_t* sparse)
 {
-	const char* path = file_get_path(context->file);
-	const char* src  = file_get_strz(context->file);
-	lang_opts_t opts = file_get_lang_opts(context->file);
+	const char* path = file_get_path(file);
+	const char* src  = file_get_strz(file);
+	lang_opts_t opts = file_get_lang_opts(file);
 
 	bool first_code_line = true;
 
@@ -415,7 +340,7 @@ static bool preprocess__unformat_fixed_form(preprocess_t* context)
 	{
 		unsigned len, col;
 
-		len = preprocess__unformat_blank_or_comment(
+		len = prep_unformat__blank_or_comment(
 			&src[pos], opts);
 		pos += len;
 		if (len > 0) continue;
@@ -424,7 +349,7 @@ static bool preprocess__unformat_fixed_form(preprocess_t* context)
 		unsigned label = 0;
 		bool continuation = false;
 
-		len = preprocess__unformat_fixed_form_label(
+		len = prep_unformat__fixed_form_label(
 			&src[pos], opts,
 			&has_label, &label, &continuation);
 		if (len == 0) return false;
@@ -449,7 +374,7 @@ static bool preprocess__unformat_fixed_form(preprocess_t* context)
 		{
 			/* Insert single newline character at the end of each line in output. */
 			if (!first_code_line && !continuation
-				&& !sparse_append_strn(context->unformat, newline, 1))
+				&& !sparse_append_strn(sparse, newline, 1))
 				return false;
 
 			if (has_label)
@@ -463,14 +388,14 @@ static bool preprocess__unformat_fixed_form(preprocess_t* context)
 				else
 				{
 					/* Mark current position in file as label. */
-					if (!label_table_add(context->labels, &src[pos], label))
+					if (!sparse_label_add(sparse, &src[pos], label))
 						return false;
 				}
 			}
 
 			/* Append non-empty line to output. */
-			len = preprocess__unformat_fixed_form_code(
-				col, &src[pos], opts, &context->unformat);
+			len = prep_unformat__fixed_form_code(
+				col, &src[pos], opts, sparse);
 			pos += len;
 			col += len;
 			if (len == 0)
@@ -505,10 +430,11 @@ static bool preprocess__unformat_fixed_form(preprocess_t* context)
 	return true;
 }
 
-static bool preprocess__unformat_free_form(preprocess_t* context)
+static bool prep_unformat__free_form(
+	file_t* file, sparse_t* sparse)
 {
-	const char* src  = file_get_strz(context->file);
-	lang_opts_t opts = file_get_lang_opts(context->file);
+	const char* src  = file_get_strz(file);
+	lang_opts_t opts = file_get_lang_opts(file);
 	pre_state_t state = PRE_STATE_DEFAULT;
 
 	bool first_code_line = true;
@@ -524,7 +450,7 @@ static bool preprocess__unformat_free_form(preprocess_t* context)
 	{
 		unsigned len, col;
 
-		len = preprocess__unformat_blank_or_comment(
+		len = prep_unformat__blank_or_comment(
 			&src[pos], opts);
 		pos += len;
 		if (len > 0) {
@@ -534,12 +460,12 @@ static bool preprocess__unformat_free_form(preprocess_t* context)
 		bool has_label;
 		unsigned label = 0;
 
-		len = preprocess__unformat_free_form_label(
+		len = prep_unformat__free_form_label(
 			&src[pos], &label);
 		has_label = (len > 0);
 
-		if (has_label && !label_table_add(
-			context->labels, &src[pos], label))
+		if (has_label && !sparse_label_add(
+			sparse, &src[pos], label))
 			return false;
 
 		col  = len;
@@ -554,12 +480,12 @@ static bool preprocess__unformat_free_form(preprocess_t* context)
 		if (has_code)
 		{
 			if (!first_code_line && !continuation
-				&& !sparse_append_strn(context->unformat, newline, 1))
+				&& !sparse_append_strn(sparse, newline, 1))
 				return false;
 
-			len = preprocess__unformat_free_form_code(
+			len = prep_unformat__free_form_code(
 				col, &state, &src[pos], opts,
-				&context->unformat, &continuation);
+				sparse, &continuation);
 			pos += len;
 			col += len;
 			if (len == 0) return false;
@@ -582,105 +508,32 @@ static bool preprocess__unformat_free_form(preprocess_t* context)
 	return true;
 }
 
-static sparse_t* preprocess__condense(preprocess_t* context)
+sparse_t* prep_unformat(file_t* file)
 {
-	if (!context)
-		return NULL;
+	sparse_t* unformat
+		= sparse_create_file(file);
+	if (!unformat) return NULL;
 
-	sparse_lock(context->unformat);
-
-	const char* src
-		= sparse_strz(context->unformat);
-	if (!src) return NULL;
-
-	sparse_t* condense
-		= sparse_create_child(context->unformat);
-	if (!condense) return NULL;
-
-	unsigned i = 0;
-	while (src[i] != '\0')
-	{
-		/* Skip whitespace. */
-		for (; (src[i] != '\0') && is_hspace(src[i]); i++);
-
-		if (src[i] == '\0')
-			break;
-
-		/* Parse non-whitespace. */
-		const char* base = &src[i];
-		unsigned size;
-		for(size = 0; (src[i] != '\0') && !is_hspace(src[i]); size++, i++);
-
-		/* Append non-whitespace to condense sparse. */
-		if (!sparse_append_strn(condense, base, size))
-		{
-			sparse_delete(condense);
-			return NULL;
-		}
-	}
-
-	sparse_lock(condense);
-	return condense;
-}
-
-
-preprocess_t* preprocess(file_t* file)
-{
-	if (!file)
-		return NULL;
-
-	preprocess_t* context = preprocess__create(file);
-	lang_opts_t opts = file_get_lang_opts(file);
-	if (!context) return NULL;
-
-	bool success;
-	switch (opts.form)
+	bool success = false;
+	switch (file_get_lang_opts(file).form)
 	{
 		case LANG_FORM_FIXED:
 		case LANG_FORM_TAB:
-			success = preprocess__unformat_fixed_form(context);
+			success = prep_unformat__fixed_form(file, unformat);
 			break;
 		case LANG_FORM_FREE:
-			success = preprocess__unformat_free_form(context);
+			success = prep_unformat__free_form(file, unformat);
 			break;
 		default:
-			success = false;
 			break;
 	}
 
-	if (success)
-		context->condense = preprocess__condense(context);
-
-	if (!context->condense)
+	if (!success)
 	{
-		/* We don't take ownership of the file on failure. */
-		context->file = NULL;
-
-		preprocess_delete(context);
+		sparse_delete(unformat);
 		return NULL;
 	}
 
-	return context;
-}
-
-
-
-const file_t* preprocess_original_file(const preprocess_t* context)
-{
-	return (context ? context->file : NULL);
-}
-
-const sparse_t* preprocess_unformat_sparse(const preprocess_t* context)
-{
-	return (context ? context->unformat : NULL);
-}
-
-const sparse_t* preprocess_condense_sparse(const preprocess_t* context)
-{
-	return (context ? context->condense : NULL);
-}
-
-const label_table_t* preprocess_labels(const preprocess_t* context)
-{
-	return (context ? context->labels : NULL);
+	sparse_lock(unformat);
+	return unformat;
 }

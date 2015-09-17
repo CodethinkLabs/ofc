@@ -3,11 +3,13 @@
 
 #include <stdbool.h>
 #include "file.h"
+#include "label_table.h"
 
 typedef struct sparse_s sparse_t;
 
-sparse_t* sparse_create_file(const file_t* file);
+sparse_t* sparse_create_file(file_t* file);
 sparse_t* sparse_create_child(sparse_t* parent);
+bool      sparse_reference(sparse_t* sparse);
 void      sparse_delete(sparse_t* sparse);
 
 unsigned sparse_len(const sparse_t* sparse);
@@ -19,6 +21,11 @@ void sparse_lock(sparse_t* sparse);
 
 /* This will return NULL unless the sparse is locked. */
 const char* sparse_strz(const sparse_t* sparse);
+
+bool sparse_label_add(
+	sparse_t* sparse, const char* ptr, unsigned number);
+bool sparse_label_find(
+	const sparse_t* sparse, const char* ptr, unsigned* number);
 
 bool sparse_sequential(
 	const sparse_t* sparse, const char* ptr, unsigned size);

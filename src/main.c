@@ -3,7 +3,7 @@
 #include <string.h>
 
 #include "file.h"
-#include "preprocess.h"
+#include "prep.h"
 #include "parse/parse.h"
 
 
@@ -38,7 +38,7 @@ int main(int argc, const char* argv[])
 
 	const char* path = argv[1];
 
-  const char* source_file_ext = get_filename_ext(path);
+	const char* source_file_ext = get_filename_ext(path);
 
 	lang_opts_t opts;
 
@@ -57,35 +57,29 @@ int main(int argc, const char* argv[])
 		return EXIT_FAILURE;
 	}
 
-	preprocess_t* context = preprocess(file);
-	if (!context)
+	sparse_t* condense = prep(file);
+	file_delete(file);
+	if (!condense)
 	{
 		fprintf(stderr, "Error: Failed preprocess source file '%s'\n", path);
-		file_delete(file);
 		return EXIT_FAILURE;
 	}
 
-	const sparse_t* condense
-		= preprocess_condense_sparse(context);
 	const char* strz = sparse_strz(condense);
-
-	/*printf("%s\n", strz);*/
 
 	parse_program_t program;
 	unsigned parse_len = parse_program(
 		condense, strz,
-		preprocess_labels(context),
 		&program);
-
-	if (parse_len > 0)
-		parse_program_cleanup(program);
-	preprocess_delete(context);
 
 	if (parse_len == 0)
 	{
 		fprintf(stderr, "Error: Failed to parse program\n");
+		sparse_delete(condense);
 		return EXIT_FAILURE;
 	}
 
+	parse_program_cleanup(program);
+	sparse_delete(condense);
 	return EXIT_SUCCESS;
 }
