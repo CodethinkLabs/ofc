@@ -103,9 +103,6 @@ bool hashmap_add(hashmap_t* map, void* item)
 	const void* key = map->item_key(item);
 	if (!key) return false;
 
-	if (hashmap_find(map, key))
-		return false;
-
 	uint8_t hash = map->hash(key);
 
 	hashmap__entry_t* entry
