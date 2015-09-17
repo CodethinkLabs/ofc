@@ -474,7 +474,7 @@ static bool prep_unformat__free_form(
 		col  = len;
 		pos += len;
 
-		for(; is_hspace(src[pos]); pos++);
+		for(; is_hspace(src[pos]); pos++, col++);
 
 		bool has_code = ((col < opts.columns)
 			&& (src[pos] != '\0')
