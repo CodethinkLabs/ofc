@@ -54,12 +54,13 @@ unsigned parse_type(
 			&& (ptr[i] == '*'))
 	{
 		i += 1;
-		parse_expr_t count_expr;
+		parse_expr_t *count_expr;
+		count_expr = (parse_expr_t*)malloc(sizeof(parse_expr_t));
 		if (ptr[i] == '(')
 		{
 			i += 1;
 
-			unsigned len = parse_expr(src, &ptr[i], &count_expr);
+			unsigned len = parse_expr(src, &ptr[i], count_expr);
 			if (len == 0)
 			{
 				sparse_error(src, &ptr[i],
@@ -70,13 +71,13 @@ unsigned parse_type(
 
 			if (ptr[i++] != ')')
 			{
-				parse_expr_cleanup(count_expr);
+				parse_expr_cleanup(*count_expr);
 				return 0;
 			}
 		}
 		else
 		{
-			unsigned len = parse_expr_literal(src, &ptr[i], &count_expr);
+			unsigned len = parse_expr_literal(src, &ptr[i], count_expr);
 			if (len == 0)
 			{
 				sparse_error(src, &ptr[i],
@@ -88,7 +89,7 @@ unsigned parse_type(
 
 		type->type  = t;
 		type->kind  = 1;
-		type->count_expr = &count_expr;
+		type->count_expr = count_expr;
 		return i;
 	}
 	else if (ptr[i] == '*')
