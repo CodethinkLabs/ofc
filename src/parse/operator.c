@@ -150,3 +150,42 @@ unsigned parse_operator(
 	if (operator) *operator = op;
 	return size;
 }
+
+
+unsigned parse_operator_precedence(
+	parse_operator_e operator)
+{
+	switch (operator)
+	{
+		case PARSE_OPERATOR_POWER:
+			return 2;
+		case PARSE_OPERATOR_MULTIPLY:
+		case PARSE_OPERATOR_DIVIDE:
+			return 3;
+		case PARSE_OPERATOR_ADD:
+		case PARSE_OPERATOR_SUBTRACT:
+			return 4;
+		case PARSE_OPERATOR_CONCAT:
+			return 5;
+		case PARSE_OPERATOR_EQ:
+		case PARSE_OPERATOR_NE:
+		case PARSE_OPERATOR_LT:
+		case PARSE_OPERATOR_LE:
+		case PARSE_OPERATOR_GT:
+		case PARSE_OPERATOR_GE:
+			return 6;
+		case PARSE_OPERATOR_NOT:
+			return 7;
+		case PARSE_OPERATOR_AND:
+			return 8;
+		case PARSE_OPERATOR_OR:
+			return 9;
+		case PARSE_OPERATOR_EQV:
+		case PARSE_OPERATOR_NEQV:
+		default:
+			break;
+
+	}
+
+	return 10;
+}

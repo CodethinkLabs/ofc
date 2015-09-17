@@ -27,4 +27,7 @@ unsigned parse_operator(
 	const sparse_t* sparse, const char* ptr,
 	parse_operator_e* operator);
 
+unsigned parse_operator_precedence(
+	parse_operator_e operator);
+
 #endif
