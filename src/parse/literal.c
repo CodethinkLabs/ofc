@@ -435,8 +435,9 @@ static unsigned parse_literal__complex(
 		if (ptr[i++] != '(')
 			return 0;
 
-		parse_literal_t left_number_literal;
-		unsigned len = parse_literal__number(src, &ptr[i], &left_number_literal);
+		parse_literal_t real;
+		unsigned len = parse_literal__number(
+			src, &ptr[i], &real);
 		if (len == 0) return 0;
 		i += len;
 
@@ -444,8 +445,9 @@ static unsigned parse_literal__complex(
 			return 0;
 
 		len = 0;
-		parse_literal_t right_number_literal;
-		len = parse_literal__number(src,  &ptr[i], &right_number_literal);
+		parse_literal_t imaginary;
+		len = parse_literal__number(
+			src,  &ptr[i], &imaginary);
 		if (len == 0) return 0;
 		i += len;
 
@@ -453,8 +455,8 @@ static unsigned parse_literal__complex(
 			return 0;
 
 		literal->type = PARSE_LITERAL_COMPLEX;
-		literal->complex.left_number = left_number_literal.number;
-		literal->complex.right_number = right_number_literal.number;
+		literal->complex.real      = real.number;
+		literal->complex.imaginary = imaginary.number;
 
 		return i;
 }

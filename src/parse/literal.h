@@ -19,12 +19,6 @@ typedef enum
 
 typedef struct
 {
-	str_ref_t left_number;
-	str_ref_t right_number;
-} complex_t;
-
-typedef struct
-{
 	parse_literal_e type;
 	unsigned        kind;
 
@@ -34,7 +28,10 @@ typedef struct
 
 		str_ref_t number;
 
-		complex_t complex;
+		struct
+		{
+			str_ref_t real, imaginary;
+		} complex;
 
 		bool logical;
 	};
