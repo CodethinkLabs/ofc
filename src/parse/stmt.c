@@ -4,18 +4,18 @@
 unsigned parse_stmt(
 	const sparse_t* src, const char* ptr,
 	const unsigned* label,
-	const parse_implicit_t* implicit,
-	hashmap_t* decl,
 	parse_stmt_t* stmt)
 {
 	unsigned i = 0;
 	stmt->type  = PARSE_STMT_EMPTY;
 	stmt->label = label;
 
+	if (i == 0) i = parse_stmt_implicit(src, ptr, stmt);
+	if (i == 0) i = parse_stmt_dimension(src, ptr, stmt);
 	if (i == 0) i = parse_stmt_continue(src, ptr, stmt);
 	if (i == 0) i = parse_stmt_stop_pause(src, ptr, stmt);
 	if (i == 0) i = parse_stmt_go_to(src, ptr, stmt);
-	if (i == 0) i = parse_stmt_if(src, ptr, implicit, decl, stmt);
+	if (i == 0) i = parse_stmt_if(src, ptr, stmt);
 	if (i == 0) i = parse_stmt_do(src, ptr, stmt);
 	if (i == 0) i = parse_stmt_data(src, ptr, stmt);
 	if (i == 0) i = parse_stmt_write(src, ptr, stmt);
@@ -29,11 +29,25 @@ unsigned parse_stmt(
 		i = 0;
 	}
 
+	/* Declarations can clash. */
+	if (i == 0)
+	{
+		i = parse_stmt_decl(
+			src, ptr, stmt);
+	}
+
+	if ((i > 0)
+		&& !is_end_statement(ptr[i], NULL))
+	{
+		parse_stmt_cleanup(*stmt);
+		i = 0;
+	}
+
 	/* Assignments can clash. */
 	if (i == 0)
 	{
 		i = parse_stmt_assignment(
-			src, ptr, implicit, decl, stmt);
+			src, ptr, stmt);
 	}
 
 	unsigned len = 0;
@@ -61,6 +75,24 @@ void parse_stmt_cleanup(
 		case PARSE_STMT_ASSIGNMENT:
 			parse_lhs_cleanup(stmt.assignment.lhs);
 			parse_expr_cleanup(stmt.assignment.rhs);
+			break;
+		case PARSE_STMT_IMPLICIT:
+			free(stmt.implicit);
+			break;
+		case PARSE_STMT_DECL:
+			parse_type_delete(stmt.decl.type);
+			for (i = 0; i < stmt.decl.count; i++)
+			{
+				parse_expr_delete(stmt.decl.entry[i].dimension);
+				parse_expr_delete(stmt.decl.entry[i].init);
+			}
+			free(stmt.decl.entry);
+			break;
+		case PARSE_STMT_DIMENSION:
+			free(stmt.dimension.name);
+			for (i = 0; i < stmt.dimension.count; i++)
+				parse_expr_delete(stmt.dimension.dimension[i]);
+			free(stmt.dimension.dimension);
 			break;
 		case PARSE_STMT_STOP:
 		case PARSE_STMT_PAUSE:

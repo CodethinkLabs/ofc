@@ -4,6 +4,9 @@
 typedef enum
 {
 	PARSE_STMT_EMPTY,
+	PARSE_STMT_IMPLICIT,
+	PARSE_STMT_DECL,
+	PARSE_STMT_DIMENSION,
 	PARSE_STMT_ASSIGNMENT,
 	PARSE_STMT_CONTINUE,
 	PARSE_STMT_STOP,
@@ -21,6 +24,21 @@ typedef enum
 } parse_stmt_e;
 
 
+typedef struct
+{
+	parse_type_t c[26]; /* A-Z */
+} parse_stmt_implicit_t;
+
+const parse_stmt_implicit_t PARSE_IMPLICIT_DEFAULT;
+
+typedef struct
+{
+	str_ref_t     name;
+	parse_expr_t* dimension;
+	parse_expr_t* init;
+} parse_stmt_decl_t;
+
+
 struct parse_stmt_s
 {
 	parse_stmt_e type;
@@ -29,6 +47,22 @@ struct parse_stmt_s
 
 	union
 	{
+		parse_stmt_implicit_t* implicit;
+
+		struct
+		{
+			parse_type_t*      type;
+			unsigned           count;
+			parse_stmt_decl_t* entry;
+		} decl;
+
+		struct
+		{
+			unsigned       count;
+			str_ref_t*     name;
+			parse_expr_t** dimension;
+		} dimension;
+
 		struct
 		{
 			parse_lhs_t  lhs;
@@ -107,10 +141,17 @@ struct parse_stmt_s
 };
 
 
+unsigned parse_stmt_implicit(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
+unsigned parse_stmt_decl(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
+unsigned parse_stmt_dimension(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
 unsigned parse_stmt_assignment(
 	const sparse_t* src, const char* ptr,
-	const parse_implicit_t* implicit,
-	hashmap_t* decl,
 	parse_stmt_t* stmt);
 unsigned parse_stmt_continue(
 	const sparse_t* src, const char* ptr,
@@ -123,8 +164,6 @@ unsigned parse_stmt_go_to(
 	parse_stmt_t* stmt);
 unsigned parse_stmt_if(
 	const sparse_t* src, const char* ptr,
-	const parse_implicit_t* implicit,
-	hashmap_t* decl,
 	parse_stmt_t* stmt);
 unsigned parse_stmt_do(
 	const sparse_t* src, const char* ptr,
@@ -145,8 +184,6 @@ unsigned parse_stmt_assign(
 unsigned parse_stmt(
 	const sparse_t* src, const char* ptr,
 	const unsigned* label,
-	const parse_implicit_t* implicit,
-	hashmap_t* decl,
 	parse_stmt_t* stmt);
 
 void parse_stmt_cleanup(

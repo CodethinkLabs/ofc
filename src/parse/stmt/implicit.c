@@ -1,7 +1,7 @@
-#include "parse.h"
+#include "../parse.h"
 
 
-const parse_implicit_t PARSE_IMPLICIT_DEFAULT =
+const parse_stmt_implicit_t parse_stmt_implicit_DEFAULT =
 {
 	.c =
 	{
@@ -37,34 +37,43 @@ const parse_implicit_t PARSE_IMPLICIT_DEFAULT =
 };
 
 
-unsigned parse_implicit(
+static unsigned parse_stmt__implicit(
 	const sparse_t* src, const char* ptr,
-	parse_implicit_t* implicit)
+	parse_stmt_implicit_t* implicit)
 {
-	unsigned i;
-
-	i = parse_keyword(src, ptr,
+	unsigned i = parse_keyword(src, ptr,
 		PARSE_KEYWORD_IMPLICIT_NONE);
 	if (i > 0)
 	{
 		unsigned j;
 		for (j = 0; j < 26; j++)
 			implicit->c[j].type = PARSE_TYPE_NONE;
-	}
-	else
-	{
-		i = parse_keyword(src, ptr,
-			PARSE_KEYWORD_IMPLICIT);
-		if (i == 0) return 0;
-
-		/* TODO - Implement other implicit rules. */
-		return 0;
+		return i;
 	}
 
-	unsigned len = 0;
-	if (!is_end_statement(ptr[i], &len))
-		return 0;
-	i += len;
 
-	return i;
+	i = parse_keyword(src, ptr,
+		PARSE_KEYWORD_IMPLICIT);
+	if (i == 0) return 0;
+
+	/* TODO - Implement other implicit rules. */
+	return 0;
+}
+
+unsigned parse_stmt_implicit(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt)
+{
+	parse_stmt_implicit_t implicit;
+	unsigned len = parse_stmt__implicit(
+		src, ptr, &implicit);
+	if (len == 0) return 0;
+
+	stmt->implicit = (parse_stmt_implicit_t*)malloc(
+		sizeof(parse_stmt_implicit_t));
+	if (!stmt->implicit) return 0;
+
+	*(stmt->implicit) = implicit;
+	stmt->type = PARSE_STMT_IMPLICIT;
+	return len;
 }

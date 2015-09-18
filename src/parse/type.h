@@ -47,4 +47,8 @@ void parse_type_cleanup(
 bool parse_type_clone(
 	parse_type_t* dst, const parse_type_t* src);
 
+parse_type_t* parse_type_alloc(parse_type_t type);
+parse_type_t* parse_type_copy(const parse_type_t* type);
+void parse_type_delete(parse_type_t* type);
+
 #endif

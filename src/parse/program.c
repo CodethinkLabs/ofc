@@ -44,21 +44,6 @@ unsigned parse_program(
 	}
 	i += 1;
 
-	program->implicit = PARSE_IMPLICIT_DEFAULT;
-
-	lang_opts_t opts = sparse_lang_opts(src);
-	program->decl = hashmap_create(
-		(void*)(opts.case_sensitive
-			? parse_decl_hash
-			: parse_decl_hash_ci),
-		(void*)(opts.case_sensitive
-			? parse_decl_key_compare
-			: parse_decl_key_compare_ci),
-		(void*)parse_decl_key,
-		(void*)parse_decl_delete);
-	if (!program->decl)
-		return 0;
-
 	program->stmt_count = 0;
 	program->stmt       = NULL;
 
@@ -69,60 +54,9 @@ unsigned parse_program(
 		bool has_label = sparse_label_find(src, ptr, &label);
 
 		{
-			len = parse_implicit(
-				src, &ptr[i], &program->implicit);
-			if (len > 0)
-			{
-				if (has_label)
-				{
-					sparse_warning(src, &ptr[i],
-						"Ignoring label on implicit statement");
-				}
-
-				i += len;
-				continue;
-			}
-		}
-
-		{
-			len = parse_dimension(
-				src, &ptr[i], &program->implicit, program->decl);
-			if (len > 0)
-			{
-				if (has_label)
-				{
-					sparse_warning(src, &ptr[i],
-						"Ignoring label on DIMENSION statement");
-				}
-
-				i += len;
-				continue;
-			}
-		}
-
-		{
-			len = parse_decl(
-				src, &ptr[i],
-				program->decl);
-
-			if (len > 0)
-			{
-				if (has_label)
-				{
-					sparse_warning(src, &ptr[i],
-						"Ignoring label on declaration");
-				}
-
-				i += len;
-				continue;
-			}
-		}
-
-		{
 			parse_stmt_t stmt;
 			len = parse_stmt(
-				src, &ptr[i], (has_label ? &label : NULL),
-				&program->implicit, program->decl, &stmt);
+				src, &ptr[i], (has_label ? &label : NULL), &stmt);
 
 			if (len > 0)
 			{
@@ -157,7 +91,7 @@ unsigned parse_program(
 	}
 
 	if (!str_ref_empty(end_name)
-		&& (opts.case_sensitive
+		&& (sparse_lang_opts(src).case_sensitive
 			? !str_ref_equal(program->name, end_name)
 			: !str_ref_equal_ci(program->name, end_name)))
 	{
@@ -186,6 +120,4 @@ void parse_program_cleanup(
 	for (i = 0; i < program.stmt_count; i++)
 		parse_stmt_cleanup(program.stmt[i]);
 	free(program.stmt);
-
-	hashmap_delete(program.decl);
 }

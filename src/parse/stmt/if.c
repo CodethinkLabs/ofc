@@ -69,8 +69,6 @@ static unsigned parse_stmt_if__computed(
 
 static unsigned parse_stmt_if__statement(
 	const sparse_t* src, const char* ptr,
-	const parse_implicit_t* implicit,
-	hashmap_t* decl,
 	parse_stmt_t* stmt)
 {
 	unsigned i = 0;
@@ -92,8 +90,7 @@ static unsigned parse_stmt_if__statement(
 
 	parse_stmt_t cstmt;
 	len = parse_stmt(
-		src, &ptr[i], NULL,
-		implicit, decl, &cstmt);
+		src, &ptr[i], NULL, &cstmt);
 	if (len == 0)
 	{
 		parse_expr_cleanup(
@@ -122,8 +119,6 @@ static unsigned parse_stmt_if__statement(
 
 unsigned parse_stmt_if(
 	const sparse_t* src, const char* ptr,
-	const parse_implicit_t* implicit,
-	hashmap_t* decl,
 	parse_stmt_t* stmt)
 {
 	unsigned i = parse_keyword(
@@ -131,7 +126,7 @@ unsigned parse_stmt_if(
 	if (i == 0) return 0;
 
 	unsigned len = 0;
-	if (len == 0) len = parse_stmt_if__statement(src, &ptr[i], implicit, decl, stmt);
+	if (len == 0) len = parse_stmt_if__statement(src, &ptr[i], stmt);
 	if (len == 0) len = parse_stmt_if__computed(src, &ptr[i], stmt);
 
 	return (len == 0 ? 0 : (i + len));

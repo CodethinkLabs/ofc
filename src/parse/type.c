@@ -205,3 +205,44 @@ bool parse_type_clone(
 	*dst = clone;
 	return true;
 }
+
+
+parse_type_t* parse_type_alloc(parse_type_t type)
+{
+	parse_type_t* atype
+		= (parse_type_t*)malloc(
+			sizeof(parse_type_t));
+	if (!atype) return NULL;
+
+	*atype = type;
+	return atype;
+}
+
+parse_type_t* parse_type_copy(const parse_type_t* type)
+{
+	if (!type)
+		return NULL;
+
+	parse_type_t clone;
+	if (!parse_type_clone(&clone, type))
+		return NULL;
+
+	parse_type_t* copy
+		= parse_type_alloc(clone);
+	if (!copy)
+	{
+		parse_type_cleanup(clone);
+		return NULL;
+	}
+
+	return copy;
+}
+
+void parse_type_delete(parse_type_t* type)
+{
+	if (!type)
+		return;
+
+	parse_type_cleanup(*type);
+	free(type);
+}

@@ -3,10 +3,7 @@
 
 typedef struct
 {
-	str_ref_t        name;
-	parse_implicit_t implicit;
-
-	hashmap_t* decl;
+	str_ref_t     name;
 
 	unsigned      stmt_count;
 	parse_stmt_t* stmt;
