@@ -444,7 +444,6 @@ static unsigned parse_literal__complex(
 		if (ptr[i++] != ',')
 			return 0;
 
-		len = 0;
 		parse_literal_t imaginary;
 		len = parse_literal__number(
 			src,  &ptr[i], &imaginary);
