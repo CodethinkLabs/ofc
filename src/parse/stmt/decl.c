@@ -14,22 +14,15 @@ static unsigned parse_stmt__decl(
 	{
 		i += 1;
 
-		parse_expr_t dimension;
-		unsigned len = parse_expr(
-			src, &ptr[i], &dimension);
-		if (len == 0) return 0;
+		unsigned len;
+		entry->dimension = parse_expr(
+			src, &ptr[i], &len);
+		if (!entry->dimension) return 0;
 		i += len;
 
 		if (ptr[i++] != ')')
 		{
-			parse_expr_cleanup(dimension);
-			return 0;
-		}
-
-		entry->dimension = parse_expr_alloc(dimension);
-		if (!entry->dimension)
-		{
-			parse_expr_cleanup(dimension);
+			parse_expr_delete(entry->dimension);
 			return 0;
 		}
 	}
@@ -37,22 +30,15 @@ static unsigned parse_stmt__decl(
 	entry->init = NULL;
 	if (ptr[i] == '=')
 	{
-		parse_expr_t init;
-		unsigned len = parse_expr(src, &ptr[i], &init);
-		if (len == 0)
+		unsigned len;
+		entry->init = parse_expr(
+			src, &ptr[i], &len);
+		if (!entry->init)
 		{
 			parse_expr_delete(entry->dimension);
 			return 0;
 		}
 		i += len;
-
-		entry->init = parse_expr_alloc(init);
-		if (!entry->init)
-		{
-			parse_expr_cleanup(init);
-			parse_expr_delete(entry->dimension);
-			return 0;
-		}
 	}
 
 	return i;

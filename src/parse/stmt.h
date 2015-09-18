@@ -65,19 +65,18 @@ struct parse_stmt_s
 
 		struct
 		{
-			parse_lhs_t  lhs;
-			parse_expr_t rhs;
+			parse_lhs_t   lhs;
+			parse_expr_t* rhs;
 		} assignment;
 
 		struct
 		{
-			bool         has_code;
-			parse_expr_t code;
+			parse_expr_t* code;
 		} stop_pause;
 
 		struct
 		{
-			parse_expr_t   cond;
+			parse_expr_t*  cond;
 			unsigned       label_count;
 			parse_label_t* label;
 		} go_to_comp;
@@ -89,14 +88,14 @@ struct parse_stmt_s
 
 		struct
 		{
-			parse_expr_t   cond;
+			parse_expr_t*  cond;
 			unsigned       label_count;
 			parse_label_t* label;
 		} if_comp;
 
 		struct
 		{
-			parse_expr_t   cond;
+			parse_expr_t*  cond;
 			parse_stmt_t*  stmt;
 		} if_stmt;
 
@@ -104,18 +103,18 @@ struct parse_stmt_s
 		{
 			parse_label_t end_label;
 			parse_lhs_t   iterator;
-			parse_expr_t  init;
-			parse_expr_t  last;
-			parse_expr_t  step;
+			parse_expr_t* init;
+			parse_expr_t* last;
+			parse_expr_t* step;
 		} do_loop;
 
 		struct
 		{
-			parse_expr_t  file;
+			parse_expr_t* file;
 			parse_label_t format_label;
 
-			unsigned      elem_count;
-			parse_expr_t* elem;
+			unsigned       elem_count;
+			parse_expr_t** elem;
 		} write;
 
 		struct
@@ -126,10 +125,10 @@ struct parse_stmt_s
 
 		struct
 		{
-			unsigned      name_count;
-			parse_lhs_t*  name;
-			unsigned      init_count;
-			parse_expr_t* init;
+			unsigned       name_count;
+			parse_lhs_t*   name;
+			unsigned       init_count;
+			parse_expr_t** init;
 		} data;
 
 		struct

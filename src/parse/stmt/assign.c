@@ -11,12 +11,14 @@ unsigned parse_stmt_assignment(
 	if (ptr[i++] != '=')
 		return 0;
 
-	unsigned len = parse_expr(
-		src, &ptr[i], &stmt->assignment.rhs);
-	if (len == 0)
+	unsigned len;
+	stmt->assignment.rhs = parse_expr(
+		src, &ptr[i], &len);
+	if (!stmt->assignment.rhs)
 	{
-		sparse_warning(src, &ptr[i],
+		sparse_error(src, &ptr[i],
 			"Expected expression on right hand side of assignment");
+		parse_stmt_cleanup(*stmt);
 		return 0;
 	}
 	i += len;

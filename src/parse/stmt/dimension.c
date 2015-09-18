@@ -12,21 +12,15 @@ unsigned parse_stmt_dimension__entry(
 	if (ptr[i++] != '(')
 		return 0;
 
-	parse_expr_t edim;
-	unsigned len = parse_expr(src, &ptr[i], &edim);
-	if (len == 0) return 0;
+	unsigned len;
+	parse_expr_t* edim = parse_expr(
+		src, &ptr[i], &len);
+	if (!edim) return 0;
 	i += len;
 
 	if (ptr[i++] != ')')
 	{
-		parse_expr_cleanup(edim);
-		return 0;
-	}
-
-	parse_expr_t* aedim = parse_expr_alloc(edim);
-	if (!aedim)
-	{
-		parse_expr_cleanup(edim);
+		parse_expr_delete(edim);
 		return 0;
 	}
 
@@ -42,12 +36,12 @@ unsigned parse_stmt_dimension__entry(
 
 	if (!nname || !ndim)
 	{
-		parse_expr_delete(aedim);
+		parse_expr_delete(edim);
 		return 0;
 	}
 
 	(*name)[*count] = ename;
-	(*dimension)[*count] = aedim;
+	(*dimension)[*count] = edim;
 	*count += 1;
 	return i;
 }

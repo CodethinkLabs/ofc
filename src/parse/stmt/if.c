@@ -9,14 +9,15 @@ static unsigned parse_stmt_if__computed(
 	if (ptr[i++] != '(')
 		return 0;
 
-	unsigned len = parse_expr(
-		src, &ptr[i], &stmt->if_comp.cond);
-	if (len == 0) return 0;
+	unsigned len;
+	stmt->if_comp.cond = parse_expr(
+		src, &ptr[i], &len);
+	if (!stmt->if_comp.cond) return 0;
 	i += len;
 
 	if (ptr[i++] != ')')
 	{
-		parse_expr_cleanup(
+		parse_expr_delete(
 			stmt->if_comp.cond);
 		return 0;
 	}
@@ -26,7 +27,7 @@ static unsigned parse_stmt_if__computed(
 		src, &ptr[i], &label);
 	if (len == 0)
 	{
-		parse_expr_cleanup(
+		parse_expr_delete(
 			stmt->if_comp.cond);
 		return 0;
 	}
@@ -39,7 +40,7 @@ static unsigned parse_stmt_if__computed(
 		sizeof(parse_label_t) * stmt->if_comp.label_count);
 	if (!stmt->if_comp.label)
 	{
-		parse_expr_cleanup(
+		parse_expr_delete(
 			stmt->if_comp.cond);
 		return 0;
 	}
@@ -76,14 +77,15 @@ static unsigned parse_stmt_if__statement(
 	if (ptr[i++] != '(')
 		return 0;
 
-	unsigned len = parse_expr(
-		src, &ptr[i], &stmt->if_stmt.cond);
-	if (len == 0) return 0;
+	unsigned len;
+	stmt->if_stmt.cond = parse_expr(
+		src, &ptr[i], &len);
+	if (!stmt->if_stmt.cond) return 0;
 	i += len;
 
 	if (ptr[i++] != ')')
 	{
-		parse_expr_cleanup(
+		parse_expr_delete(
 			stmt->if_stmt.cond);
 		return 0;
 	}
@@ -93,7 +95,7 @@ static unsigned parse_stmt_if__statement(
 		src, &ptr[i], NULL, &cstmt);
 	if (len == 0)
 	{
-		parse_expr_cleanup(
+		parse_expr_delete(
 			stmt->if_stmt.cond);
 		return 0;
 	}
@@ -108,7 +110,7 @@ static unsigned parse_stmt_if__statement(
 	if (!stmt->if_stmt.stmt)
 	{
 		parse_stmt_cleanup(cstmt);
-		parse_expr_cleanup(
+		parse_expr_delete(
 			stmt->if_stmt.cond);
 		return 0;
 	}

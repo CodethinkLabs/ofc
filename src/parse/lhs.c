@@ -22,26 +22,16 @@ unsigned parse_lhs(
 
 		lhs->type   = PARSE_LHS_ARRAY;
 		lhs->parent = plhs;
-		lhs->array.index = NULL;
 
-		parse_expr_t index;
-		unsigned len = parse_expr(
-			src, &ptr[i], &index);
-		if (len == 0)
+		unsigned len = 0;
+		lhs->array.index = parse_expr(
+			src, &ptr[i], &len);
+		if (!lhs->array.index)
 		{
 			parse_lhs_cleanup(*lhs);
 			return 0;
 		}
 		i += len;
-
-		lhs->array.index
-			= parse_expr_alloc(index);
-		if (!lhs->array.index)
-		{
-			parse_expr_cleanup(index);
-			parse_lhs_cleanup(*lhs);
-			return 0;
-		}
 
 		if (ptr[i++] != ')')
 		{

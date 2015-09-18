@@ -21,15 +21,16 @@ static unsigned parse_stmt_go_to_assigned(
 {
 	unsigned i = 0;
 
-	unsigned len = parse_expr(
-		src, &ptr[i], &stmt->go_to_comp.cond);
-	if (len == 0) return 0;
+	unsigned len;
+	stmt->go_to_comp.cond = parse_expr(
+		src, &ptr[i], &len);
+	if (!stmt->go_to_comp.cond) return 0;
 	i += len;
 
 	if ((ptr[i++] != ',')
 		|| (ptr[i++] != '('))
 	{
-		parse_expr_cleanup(
+		parse_expr_delete(
 			stmt->go_to_comp.cond);
 		return 0;
 	}
@@ -39,7 +40,7 @@ static unsigned parse_stmt_go_to_assigned(
 		src, &ptr[i], &label);
 	if (len == 0)
 	{
-		parse_expr_cleanup(
+		parse_expr_delete(
 			stmt->go_to_comp.cond);
 		return 0;
 	}
@@ -52,7 +53,7 @@ static unsigned parse_stmt_go_to_assigned(
 		sizeof(parse_label_t) * stmt->go_to_comp.label_count);
 	if (!stmt->go_to_comp.label)
 	{
-		parse_expr_cleanup(
+		parse_expr_delete(
 			stmt->go_to_comp.cond);
 		return 0;
 	}
@@ -81,7 +82,7 @@ static unsigned parse_stmt_go_to_assigned(
 	if (ptr[i++] != ')')
 	{
 		free(stmt->go_to_comp.label);
-		parse_expr_cleanup(
+		parse_expr_delete(
 			stmt->go_to_comp.cond);
 		return 0;
 	}
@@ -140,9 +141,9 @@ static unsigned parse_stmt_go_to_computed(
 		return 0;
 	}
 
-	len = parse_expr(
-		src, &ptr[i], &stmt->go_to_comp.cond);
-	if (len == 0)
+	stmt->go_to_comp.cond = parse_expr(
+		src, &ptr[i], &len);
+	if (!stmt->go_to_comp.cond)
 	{
 		free(stmt->go_to_comp.label);
 		return 0;

@@ -49,18 +49,20 @@ unsigned parse_type(
 
 	bool implicit_kind = false;
 	unsigned k;
-	if ((PARSE_TYPE_CHARACTER == t
-			|| PARSE_TYPE_BYTE == t)
-			&& (ptr[i] == '*'))
+	if (((PARSE_TYPE_CHARACTER == t)
+			|| (PARSE_TYPE_BYTE == t))
+		&& (ptr[i] == '*'))
 	{
 		i += 1;
-		parse_expr_t count_expr;
+
 		if (ptr[i] == '(')
 		{
 			i += 1;
 
-			unsigned len = parse_expr(src, &ptr[i], &count_expr);
-			if (len == 0)
+			unsigned len;
+			type->count_expr = parse_expr(
+				src, &ptr[i], &len);
+			if (!type->count_expr)
 			{
 				sparse_error(src, &ptr[i],
 					"Expected count expression or value for character");
@@ -70,14 +72,16 @@ unsigned parse_type(
 
 			if (ptr[i++] != ')')
 			{
-				parse_expr_cleanup(count_expr);
+				parse_expr_delete(type->count_expr);
 				return 0;
 			}
 		}
 		else
 		{
-			unsigned len = parse_expr_literal(src, &ptr[i], &count_expr);
-			if (len == 0)
+			unsigned len;
+			type->count_expr = parse_expr_literal(
+				src, &ptr[i], &len);
+			if (!type->count_expr)
 			{
 				sparse_error(src, &ptr[i],
 					"Expected count expression or value for character");
@@ -88,12 +92,6 @@ unsigned parse_type(
 
 		type->type  = t;
 		type->kind  = 1;
-		type->count_expr = parse_expr_alloc(count_expr);
-		if (!type->count_expr)
-		{
-			parse_expr_cleanup(count_expr);
-			return 0;
-		}
 		return i;
 	}
 	else if (ptr[i] == '*')
@@ -173,8 +171,7 @@ unsigned parse_type(
 void parse_type_cleanup(
 	parse_type_t type)
 {
-	if (type.count_expr)
-		parse_expr_cleanup(*type.count_expr);
+	parse_expr_delete(type.count_expr);
 }
 
 bool parse_type_clone(
@@ -187,19 +184,10 @@ bool parse_type_clone(
 
 	if (src->count_expr)
 	{
-		clone.count_expr
-			= (parse_expr_t*)malloc(
-				sizeof(parse_expr_t));
+		clone.count_expr = parse_expr_copy(
+			src->count_expr);
 		if (!clone.count_expr)
 			return false;
-
-		if (!parse_expr_clone(
-			clone.count_expr,
-			src->count_expr))
-		{
-			free(clone.count_expr);
-			return false;
-		}
 	}
 
 	*dst = clone;

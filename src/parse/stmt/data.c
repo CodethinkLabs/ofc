@@ -52,7 +52,7 @@ static unsigned parse_stmt_data__nlist(
 
 static unsigned parse_stmt_data__clist(
 	const sparse_t* src, const char* ptr,
-	parse_expr_t** init, unsigned* count, unsigned* max_count)
+	parse_expr_t*** init, unsigned* count, unsigned* max_count)
 {
 	unsigned ocount = *count;
 
@@ -80,10 +80,9 @@ static unsigned parse_stmt_data__clist(
 		else
 			ec = 1;
 
-		parse_expr_t expr;
-		len = parse_expr(
-			src, &ptr[j], &expr);
-		if (len == 0) break;
+		parse_expr_t* expr = parse_expr(
+			src, &ptr[j], &len);
+		if (!expr) break;
 		i = (j + len);
 
 		if ((*count + ec) > *max_count)
@@ -93,14 +92,15 @@ static unsigned parse_stmt_data__clist(
 			while ((*count + ec) > ncount)
 				ncount <<= 1;
 
-			parse_expr_t* ninit
-				= (parse_expr_t*)realloc(*init,
-					(sizeof(parse_expr_t) * ncount));
+			parse_expr_t** ninit
+				= (parse_expr_t**)realloc(*init,
+					(sizeof(parse_expr_t*) * ncount));
 			if (!ninit)
 			{
+				parse_expr_delete(expr);
 				unsigned e;
 				for (e = ocount; e < *count; e++)
-					parse_expr_cleanup((*init)[e]);
+					parse_expr_delete((*init)[e]);
 				*count = ocount;
 				return 0;
 			}
@@ -114,13 +114,12 @@ static unsigned parse_stmt_data__clist(
 		unsigned e;
 		for (e = 1; e < ec; e++)
 		{
-			if (!parse_expr_clone(
-				&((*init)[*count]), &expr))
+			((*init)[*count]) = parse_expr_copy(expr);
+			if (!(*init)[(*count)++])
 			{
 				/* This should never fail. */
 				abort();
 			}
-			*count += 1;
 		}
 
 		c += ec;
@@ -130,7 +129,7 @@ static unsigned parse_stmt_data__clist(
 	{
 		unsigned e;
 		for (e = ocount; e < *count; e++)
-			parse_expr_cleanup((*init)[e]);
+			parse_expr_delete((*init)[e]);
 		*count = ocount;
 		return 0;
 	}

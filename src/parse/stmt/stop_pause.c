@@ -18,9 +18,9 @@ unsigned parse_stmt_stop_pause(
 		stmt->type = PARSE_STMT_PAUSE;
 	}
 
-	unsigned len = parse_expr(
-		src, &ptr[i], &stmt->stop_pause.code);
-	stmt->stop_pause.has_code = (len > 0);
+	unsigned len = 0;
+	stmt->stop_pause.code = parse_expr(
+		src, &ptr[i], &len);
 
 	return (i + len);
 }

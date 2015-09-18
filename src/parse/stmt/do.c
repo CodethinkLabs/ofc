@@ -23,13 +23,14 @@ unsigned parse_stmt_do(
 		return 0;
 
 	stmt->type = PARSE_STMT_DO;
-	stmt->do_loop.init = PARSE_EXPR_EMPTY;
-	stmt->do_loop.last = PARSE_EXPR_EMPTY;
-	stmt->do_loop.step = PARSE_EXPR_EMPTY;
+	stmt->do_loop.init = NULL;
+	stmt->do_loop.last = NULL;
+	stmt->do_loop.step = NULL;
 
-	len = parse_expr(
-		src, &ptr[i], &stmt->do_loop.init);
-	if (len == 0) return 0;
+	stmt->do_loop.init = parse_expr(
+		src, &ptr[i], &len);
+	if (!stmt->do_loop.init)
+		return 0;
 	i += len;
 
 	if (ptr[i++] != ',')
@@ -38,9 +39,9 @@ unsigned parse_stmt_do(
 		return 0;
 	}
 
-	len = parse_expr(
-		src, &ptr[i], &stmt->do_loop.last);
-	if (len == 0)
+	stmt->do_loop.last = parse_expr(
+		src, &ptr[i], &len);
+	if (!stmt->do_loop.last)
 	{
 		parse_stmt_cleanup(*stmt);
 		return 0;
@@ -51,9 +52,9 @@ unsigned parse_stmt_do(
 	{
 		i += 1;
 
-		len = parse_expr(
-			src, &ptr[i], &stmt->do_loop.step);
-		if (len == 0)
+		stmt->do_loop.step = parse_expr(
+			src, &ptr[i], &len);
+		if (!stmt->do_loop.step)
 		{
 			parse_stmt_cleanup(*stmt);
 			return 0;

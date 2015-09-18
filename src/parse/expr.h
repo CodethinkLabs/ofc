@@ -42,25 +42,17 @@ struct parse_expr_s
 };
 
 /* Returns a literal wrapped in an expression type. */
-unsigned parse_expr_literal(
+parse_expr_t* parse_expr_literal(
 	const sparse_t* src, const char* ptr,
-	parse_expr_t* expr);
+	unsigned* len);
 
 #define PARSE_EXPR_EMPTY (parse_expr_t){ .type = PARSE_EXPR_NONE };
 
 
-unsigned parse_expr(
+parse_expr_t* parse_expr(
 	const sparse_t* src, const char* ptr,
-	parse_expr_t* expr);
+	unsigned* len);
 
-void parse_expr_cleanup(
-	parse_expr_t expr);
-
-bool parse_expr_clone(
-	parse_expr_t* dst, const parse_expr_t* src);
-
-parse_expr_t* parse_expr_alloc(
-	parse_expr_t expr);
 void parse_expr_delete(
 	parse_expr_t* expr);
 parse_expr_t* parse_expr_copy(
