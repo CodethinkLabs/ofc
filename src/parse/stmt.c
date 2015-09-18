@@ -10,17 +10,47 @@ unsigned parse_stmt(
 	stmt->type  = PARSE_STMT_EMPTY;
 	stmt->label = label;
 
-	if (i == 0) i = parse_stmt_implicit(src, ptr, stmt);
-	if (i == 0) i = parse_stmt_dimension(src, ptr, stmt);
-	if (i == 0) i = parse_stmt_continue(src, ptr, stmt);
-	if (i == 0) i = parse_stmt_stop_pause(src, ptr, stmt);
-	if (i == 0) i = parse_stmt_go_to(src, ptr, stmt);
-	if (i == 0) i = parse_stmt_if(src, ptr, stmt);
-	if (i == 0) i = parse_stmt_do(src, ptr, stmt);
-	if (i == 0) i = parse_stmt_data(src, ptr, stmt);
-	if (i == 0) i = parse_stmt_write(src, ptr, stmt);
-	if (i == 0) i = parse_stmt_format(src, ptr, stmt);
-	if (i == 0) i = parse_stmt_assign(src, ptr, stmt);
+	switch (toupper(ptr[0]))
+	{
+		case 'A':
+			if (i == 0) i = parse_stmt_assign(src, ptr, stmt);
+			break;
+
+		case 'C':
+			if (i == 0) i = parse_stmt_continue(src, ptr, stmt);
+			break;
+
+		case 'D':
+			if (i == 0) i = parse_stmt_do(src, ptr, stmt);
+			if (i == 0) i = parse_stmt_data(src, ptr, stmt);
+			if (i == 0) i = parse_stmt_dimension(src, ptr, stmt);
+			break;
+
+		case 'F':
+			if (i == 0) i = parse_stmt_format(src, ptr, stmt);
+			break;
+
+		case 'G':
+			if (i == 0) i = parse_stmt_go_to(src, ptr, stmt);
+			break;
+
+		case 'I':
+			if (i == 0) i = parse_stmt_implicit(src, ptr, stmt);
+			if (i == 0) i = parse_stmt_if(src, ptr, stmt);
+			break;
+
+		case 'P':
+		case 'S':
+			if (i == 0) i = parse_stmt_stop_pause(src, ptr, stmt);
+			break;
+
+		case 'W':
+			if (i == 0) i = parse_stmt_write(src, ptr, stmt);
+			break;
+
+		default:
+			break;
+	}
 
 	if ((i > 0)
 		&& !is_end_statement(ptr[i], NULL))
