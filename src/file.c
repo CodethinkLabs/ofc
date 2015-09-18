@@ -9,9 +9,9 @@
 struct file_s
 {
 	const char* path;
-	unsigned    size;
 	char*       strz;
 	lang_opts_t opts;
+	unsigned    size;
 	unsigned    ref;
 };
 
