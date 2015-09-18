@@ -40,15 +40,11 @@ int main(int argc, const char* argv[])
 
 	const char* source_file_ext = get_filename_ext(path);
 
-	lang_opts_t opts;
+	lang_opts_t opts = LANG_OPTS_F77;
 
-	if (source_file_ext)
-	{
-		if (strcasecmp(source_file_ext, "F90") == 0)
-			opts = LANG_OPTS_F90;
-		else
-			opts = LANG_OPTS_F77;
-	}
+	if (source_file_ext
+		&& (strcasecmp(source_file_ext, "F90") == 0))
+		opts = LANG_OPTS_F90;
 
 	file_t* file = file_create(path, opts);
 	if (!file)
