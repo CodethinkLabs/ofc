@@ -88,17 +88,11 @@ unsigned parse_stmt_decl(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt)
 {
-	parse_type_t type;
-	unsigned i = parse_type(
-		src, ptr, &type);
-	if (i == 0) return 0;
-
-	stmt->decl.type = parse_type_alloc(type);
+	unsigned i;
+	stmt->decl.type = parse_type(
+		src, ptr, &i);
 	if (!stmt->decl.type)
-	{
-		parse_type_cleanup(type);
 		return 0;
-	}
 
 	stmt->type = PARSE_STMT_DECL;
 	stmt->decl.count = 0;

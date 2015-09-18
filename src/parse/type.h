@@ -19,6 +19,8 @@ typedef struct
 	parse_type_e  type;
 	unsigned      kind;
 	parse_expr_t* count_expr;
+
+	unsigned ref;
 } parse_type_t;
 
 
@@ -37,18 +39,11 @@ typedef struct
 }
 
 
-unsigned parse_type(
+parse_type_t* parse_type(
 	const sparse_t* src, const char* ptr,
-	parse_type_t* type);
-
-void parse_type_cleanup(
-	parse_type_t type);
-
-bool parse_type_clone(
-	parse_type_t* dst, const parse_type_t* src);
-
-parse_type_t* parse_type_alloc(parse_type_t type);
+	unsigned* len);
 parse_type_t* parse_type_copy(const parse_type_t* type);
+bool parse_type_reference(parse_type_t* type);
 void parse_type_delete(parse_type_t* type);
 
 #endif
