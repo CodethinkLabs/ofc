@@ -380,11 +380,11 @@ static unsigned parse_literal__number(
 			|| (ptr[j] == '+'))
 			j++;
 
-		if (isdigit(ptr[i]))
+		if (isdigit(ptr[j]))
 		{
 			for (; isdigit(ptr[j]); j++);
 
-			if (ptr[i] == 'D')
+			if (ptr[j] == 'D')
 				k = 8;
 
 			i = j;
