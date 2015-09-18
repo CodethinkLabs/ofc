@@ -88,6 +88,7 @@ parse_type_t* parse_type(
 		return NULL;
 
 	type.count_expr = NULL;
+	type.kind = 0;
 
 	bool implicit_kind = true;
 	if (((type.type == PARSE_TYPE_CHARACTER)
@@ -150,50 +151,31 @@ parse_type_t* parse_type(
 	}
 	else if (ptr[i] == '(')
 	{
-		i += 1;
+		j = (i + 1);
 
-		unsigned l = parse_keyword(src, ptr, PARSE_KEYWORD_KIND);
-		if (l > 0)
+		unsigned l = parse_keyword(src, &ptr[j], PARSE_KEYWORD_KIND);
+		if ((l == 0) || (ptr[j + l] == '='))
 		{
-			i += l;
-			if (ptr[i] != '=')
+			if (l > 0) j += (l + 1);
+			unsigned bkind;
+			l = parse_unsigned(
+				src, &ptr[j], &bkind);
+			if ((l > 0) && (ptr[j + l] == ')'))
 			{
-				sparse_error(src, ptr,
-					"Expected '=' after KIND in type specifier");
-				return NULL;
+				implicit_kind = false;
+				type.kind = bkind;
+				i = j + l + 1;
 			}
-			i += 1;
 		}
-
-		l = parse_unsigned(
-			src, &ptr[i], &type.kind);
-		if (l == 0)
-		{
-			sparse_error(src, &ptr[i],
-				"Expected kind value after 'KIND=' in type specifier");
-			return NULL;
-		}
-		i += l;
-
-		if (ptr[i] == ')')
-		{
-			sparse_error(src, &ptr[i],
-				"Expected closing bracket in kind declaration");
-			return NULL;
-		}
-		i += 1;
-
-		implicit_kind = false;
-	}
-	else
-	{
-		type.kind = 4;
 	}
 
 	if (type.kind == 0)
 	{
-		sparse_warning(src, ptr,
-			"Kind value must be non-zero, using default");
+		if (!implicit_kind)
+		{
+			sparse_warning(src, ptr,
+				"Kind value must be non-zero, using default");
+		}
 		type.kind = 4;
 	}
 

@@ -4,6 +4,7 @@
 typedef enum
 {
 	PARSE_STMT_EMPTY,
+	PARSE_STMT_IMPLICIT_NONE,
 	PARSE_STMT_IMPLICIT,
 	PARSE_STMT_DECL,
 	PARSE_STMT_DIMENSION,
@@ -28,13 +29,6 @@ typedef enum
 
 typedef struct
 {
-	parse_type_t c[26]; /* A-Z */
-} parse_stmt_implicit_t;
-
-const parse_stmt_implicit_t PARSE_IMPLICIT_DEFAULT;
-
-typedef struct
-{
 	str_ref_t     name;
 	parse_expr_t* dimension;
 	parse_expr_t* init;
@@ -49,7 +43,7 @@ struct parse_stmt_s
 
 	union
 	{
-		parse_stmt_implicit_t* implicit;
+		parse_implicit_list_t* implicit;
 
 		struct
 		{

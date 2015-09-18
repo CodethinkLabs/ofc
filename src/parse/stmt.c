@@ -59,7 +59,7 @@ static void parse_stmt__cleanup(
 			parse_expr_delete(stmt.assignment.rhs);
 			break;
 		case PARSE_STMT_IMPLICIT:
-			free(stmt.implicit);
+			parse_implicit_list_delete(stmt.implicit);
 			break;
 		case PARSE_STMT_DECL:
 			parse_type_delete(stmt.decl.type);
