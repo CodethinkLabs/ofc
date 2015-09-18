@@ -29,6 +29,9 @@ install: $(FRONTEND)
 uninstall:
 	rm -f $(addprefix $(BINDIR)/,$(FRONTEND))
 
+cppcheck:
+	@cppcheck --enable=all --force $(SRC) > /dev/null
+
 scan:
 	@clang $(CFLAGS) -Weverything -o tempfile $(SRC) $(LDFLAGS) > /dev/null
 	@rm tempfile
@@ -37,12 +40,11 @@ scan-cc:
 	@$(CC) $(CFLAGS) -o tempfile $(SRC) $(LDFLAGS) > /dev/null
 	@rm tempfile
 
-cppcheck:
-	@cppcheck --enable=all --force $(SRC) > /dev/null
+scan-build:
+	@scan-build $(MAKE) scan-cc
 
-check: cppcheck scan
-	scan-build $(MAKE) scan-cc
+check: cppcheck scan scan-build
 
 -include $(DEB)
 
-.PHONY : all clean install uninstall scan scan-cc cppcheck check
+.PHONY : all clean install uninstall cppcheck scan scan-cc scan-build check
