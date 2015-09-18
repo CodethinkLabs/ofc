@@ -5,14 +5,14 @@
 
 
 static bool parse_program_add_stmt(
-	parse_program_t* program, parse_stmt_t stmt)
+	parse_program_t* program, parse_stmt_t* stmt)
 {
 	if (!program)
 		return false;
 
-	parse_stmt_t* nstmt
-		= (parse_stmt_t*)realloc(program->stmt,
-			(sizeof(parse_stmt_t) * (program->stmt_count + 1)));
+	parse_stmt_t** nstmt
+		= (parse_stmt_t**)realloc(program->stmt,
+			(sizeof(parse_stmt_t*) * (program->stmt_count + 1)));
 	if (!nstmt) return false;
 
 	program->stmt = nstmt;
@@ -47,40 +47,33 @@ unsigned parse_program(
 	program->stmt_count = 0;
 	program->stmt       = NULL;
 
-	unsigned len;
 	while (true)
 	{
 		unsigned label = 0;
 		bool has_label = sparse_label_find(src, ptr, &label);
 
+		unsigned len;
+		parse_stmt_t* stmt = parse_stmt(
+			src, &ptr[i], (has_label ? &label : NULL), &len);
+		if (!stmt) break;
+
+		if (stmt->type == PARSE_STMT_EMPTY)
 		{
-			parse_stmt_t stmt;
-			len = parse_stmt(
-				src, &ptr[i], (has_label ? &label : NULL), &stmt);
-
-			if (len > 0)
-			{
-				if (stmt.type == PARSE_STMT_EMPTY)
-				{
-					sparse_warning(src, &ptr[i],
-						"Empty statement");
-				}
-				else if (!parse_program_add_stmt(program, stmt))
-				{
-					/* This should never happen, likely out of memory. */
-					parse_program_cleanup(*program);
-					return 0;
-				}
-				i += len;
-				continue;
-			}
+			sparse_warning(src, &ptr[i],
+				"Empty statement");
+			parse_stmt_delete(stmt);
 		}
-
-		break;
+		else if (!parse_program_add_stmt(program, stmt))
+		{
+			/* This should never happen, likely out of memory. */
+			parse_program_cleanup(*program);
+			return 0;
+		}
+		i += len;
 	}
 
 	str_ref_t end_name = STR_REF_EMPTY;
-	len = parse_keyword_name(
+	unsigned len = parse_keyword_name(
 		src, &ptr[i], PARSE_KEYWORD_END_PROGRAM, &end_name);
 	if (len == 0)
 	{
@@ -118,6 +111,6 @@ void parse_program_cleanup(
 {
 	unsigned i;
 	for (i = 0; i < program.stmt_count; i++)
-		parse_stmt_cleanup(program.stmt[i]);
+		parse_stmt_delete(program.stmt[i]);
 	free(program.stmt);
 }

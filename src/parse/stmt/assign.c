@@ -18,7 +18,7 @@ unsigned parse_stmt_assignment(
 	{
 		sparse_error(src, &ptr[i],
 			"Expected expression on right hand side of assignment");
-		parse_stmt_cleanup(*stmt);
+		parse_lhs_cleanup(stmt->assignment.lhs);
 		return 0;
 	}
 	i += len;

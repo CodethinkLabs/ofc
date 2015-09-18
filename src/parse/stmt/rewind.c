@@ -49,7 +49,7 @@ unsigned parse_stmt_rewind(
 			return 0;
 	}
 
-	stmt->rewind.unit	= parse_expr(	src, &ptr[i], &len);
+	stmt->rewind.unit = parse_expr(src, &ptr[i], &len);
 	if (!stmt->rewind.unit) return 0;
 	i += len;
 
@@ -66,11 +66,12 @@ unsigned parse_stmt_rewind(
 	{
 		if (ptr[i++] != ')')
 		{
-			parse_stmt_cleanup(*stmt);
+			parse_expr_delete(stmt->rewind.unit);
+			parse_expr_delete(stmt->rewind.iostat);
+			parse_expr_delete(stmt->rewind.err);
 			return 0;
 		}
 	}
 
 	return i;
-
 }

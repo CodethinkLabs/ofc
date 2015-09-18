@@ -57,7 +57,9 @@ static unsigned parse_stmt_if__computed(
 			sizeof(parse_label_t) * (stmt->if_comp.label_count + 1));
 		if (!nlabel)
 		{
-			parse_stmt_cleanup(*stmt);
+			free(stmt->if_comp.label);
+			parse_expr_delete(
+				stmt->if_comp.cond);
 			return 0;
 		}
 		stmt->if_comp.label = nlabel;
@@ -90,10 +92,9 @@ static unsigned parse_stmt_if__statement(
 		return 0;
 	}
 
-	parse_stmt_t cstmt;
-	len = parse_stmt(
-		src, &ptr[i], NULL, &cstmt);
-	if (len == 0)
+	stmt->if_stmt.stmt = parse_stmt(
+		src, &ptr[i], NULL, &len);
+	if (!stmt->if_stmt.stmt)
 	{
 		parse_expr_delete(
 			stmt->if_stmt.cond);
@@ -104,16 +105,6 @@ static unsigned parse_stmt_if__statement(
 	if (ptr[i + len] != '\0')
 		len--;
 	i += len;
-
-	stmt->if_stmt.stmt
-		= parse_stmt_alloc(cstmt);
-	if (!stmt->if_stmt.stmt)
-	{
-		parse_stmt_cleanup(cstmt);
-		parse_expr_delete(
-			stmt->if_stmt.cond);
-		return 0;
-	}
 
 	stmt->type = PARSE_STMT_IF_STATEMENT;
 	return i;

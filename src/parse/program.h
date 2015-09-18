@@ -3,10 +3,10 @@
 
 typedef struct
 {
-	str_ref_t     name;
+	str_ref_t      name;
 
-	unsigned      stmt_count;
-	parse_stmt_t* stmt;
+	unsigned       stmt_count;
+	parse_stmt_t** stmt;
 } parse_program_t;
 
 

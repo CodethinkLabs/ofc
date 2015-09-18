@@ -71,7 +71,8 @@ static unsigned parse_stmt_go_to_assigned(
 		if (!nlabel)
 		{
 			free(stmt->go_to_comp.label);
-			parse_stmt_cleanup(*stmt);
+			parse_expr_delete(
+				stmt->go_to_comp.cond);
 			return 0;
 		}
 		stmt->go_to_comp.label = nlabel;

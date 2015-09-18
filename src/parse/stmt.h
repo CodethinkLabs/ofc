@@ -148,61 +148,11 @@ struct parse_stmt_s
 };
 
 
-unsigned parse_stmt_implicit(
-	const sparse_t* src, const char* ptr,
-	parse_stmt_t* stmt);
-unsigned parse_stmt_decl(
-	const sparse_t* src, const char* ptr,
-	parse_stmt_t* stmt);
-unsigned parse_stmt_dimension(
-	const sparse_t* src, const char* ptr,
-	parse_stmt_t* stmt);
-unsigned parse_stmt_assignment(
-	const sparse_t* src, const char* ptr,
-	parse_stmt_t* stmt);
-unsigned parse_stmt_continue(
-	const sparse_t* src, const char* ptr,
-	parse_stmt_t* stmt);
-unsigned parse_stmt_stop_pause(
-	const sparse_t* src, const char* ptr,
-	parse_stmt_t* stmt);
-unsigned parse_stmt_go_to(
-	const sparse_t* src, const char* ptr,
-	parse_stmt_t* stmt);
-unsigned parse_stmt_if(
-	const sparse_t* src, const char* ptr,
-	parse_stmt_t* stmt);
-unsigned parse_stmt_do(
-	const sparse_t* src, const char* ptr,
-	parse_stmt_t* stmt);
-unsigned parse_stmt_write(
-	const sparse_t* src, const char* ptr,
-	parse_stmt_t* stmt);
-unsigned parse_stmt_rewind(
-	const sparse_t* src, const char* ptr,
-	parse_stmt_t* stmt);
-unsigned parse_stmt_format(
-	const sparse_t* src, const char* ptr,
-	parse_stmt_t* stmt);
-unsigned parse_stmt_data(
-	const sparse_t* src, const char* ptr,
-	parse_stmt_t* stmt);
-unsigned parse_stmt_assign(
-	const sparse_t* src, const char* ptr,
-	parse_stmt_t* stmt);
-
-unsigned parse_stmt(
+parse_stmt_t* parse_stmt(
 	const sparse_t* src, const char* ptr,
 	const unsigned* label,
-	parse_stmt_t* stmt);
+	unsigned* len);
 
-void parse_stmt_cleanup(
-	parse_stmt_t stmt);
-
-
-
-parse_stmt_t* parse_stmt_alloc(
-	parse_stmt_t stmt);
 void parse_stmt_delete(
 	parse_stmt_t* stmt);
 

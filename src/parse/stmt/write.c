@@ -57,7 +57,13 @@ unsigned parse_stmt_write(
 	if (!stmt->write.elem)
 	{
 		parse_expr_delete(expr);
-		parse_stmt_cleanup(*stmt);
+
+		unsigned e;
+		for (e = 0; e < stmt->write.elem_count; e++)
+			parse_expr_delete(stmt->write.elem[e]);
+		free(stmt->write.elem);
+
+		parse_expr_delete(stmt->write.file);
 		return 0;
 	}
 
@@ -76,7 +82,13 @@ unsigned parse_stmt_write(
 		if (!nelem)
 		{
 			parse_expr_delete(expr);
-			parse_stmt_cleanup(*stmt);
+
+			unsigned e;
+			for (e = 0; e < stmt->write.elem_count; e++)
+				parse_expr_delete(stmt->write.elem[e]);
+			free(stmt->write.elem);
+
+			parse_expr_delete(stmt->write.file);
 			return 0;
 		}
 		stmt->write.elem = nelem;
