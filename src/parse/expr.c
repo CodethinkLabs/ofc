@@ -42,9 +42,6 @@ static bool parse_expr__clone(
 	parse_expr_t clone = *src;
 	switch (clone.type)
 	{
-		case PARSE_EXPR_NONE:
-			break;
-
 		case PARSE_EXPR_CONSTANT:
 			if (!parse_literal_clone(
 				&clone.literal, &src->literal))
