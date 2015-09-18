@@ -20,7 +20,7 @@ all : $(FRONTEND)
 $(FRONTEND) : $(OBJ)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-clean :
+clean:
 	rm -f $(FRONTEND) $(OBJ) $(DEB)
 
 install: $(FRONTEND)
@@ -29,6 +29,20 @@ install: $(FRONTEND)
 uninstall:
 	rm -f $(addprefix $(BINDIR)/,$(FRONTEND))
 
+scan:
+	@clang $(CFLAGS) -Weverything -o tempfile $(SRC) $(LDFLAGS) > /dev/null
+	@rm tempfile
+
+scan-cc:
+	@$(CC) $(CFLAGS) -o tempfile $(SRC) $(LDFLAGS) > /dev/null
+	@rm tempfile
+
+cppcheck:
+	@cppcheck --enable=all --force $(SRC) > /dev/null
+
+check: cppcheck scan
+	scan-build $(MAKE) scan-cc
+
 -include $(DEB)
 
-.PHONY : all clean install uninstall
+.PHONY : all clean install uninstall scan scan-cc cppcheck check
