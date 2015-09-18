@@ -30,6 +30,8 @@ static unsigned parse_stmt__decl(
 	entry->init = NULL;
 	if (ptr[i] == '=')
 	{
+		i += 1;
+
 		unsigned len;
 		entry->init = parse_expr(
 			src, &ptr[i], &len);
