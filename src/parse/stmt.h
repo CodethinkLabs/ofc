@@ -18,6 +18,7 @@ typedef enum
 	PARSE_STMT_IF_STATEMENT,
 	PARSE_STMT_DO,
 	PARSE_STMT_WRITE,
+	PARSE_STMT_READ,
 	PARSE_STMT_FORMAT,
 	PARSE_STMT_REWIND,
 	PARSE_STMT_DATA,
@@ -116,6 +117,14 @@ struct parse_stmt_s
 
 			parse_expr_list_t* elem;
 		} write;
+
+		struct
+		{
+			parse_expr_t* file;
+			parse_label_t format_label;
+
+			parse_expr_list_t* elem;
+		} read;
 
 		struct
 		{

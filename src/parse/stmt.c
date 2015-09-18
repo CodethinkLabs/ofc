@@ -30,6 +30,9 @@ unsigned parse_stmt_do(
 unsigned parse_stmt_write(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
+unsigned parse_stmt_read(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
 unsigned parse_stmt_rewind(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
@@ -99,6 +102,10 @@ static void parse_stmt__cleanup(
 		case PARSE_STMT_WRITE:
 			parse_expr_list_delete(stmt.write.elem);
 			parse_expr_delete(stmt.write.file);
+			break;
+		case PARSE_STMT_READ:
+			parse_expr_list_delete(stmt.read.elem);
+			parse_expr_delete(stmt.read.file);
 			break;
 		case PARSE_STMT_FORMAT:
 			parse_format_desc_list_delete(
@@ -180,6 +187,7 @@ parse_stmt_t* parse_stmt(
 			break;
 
 		case 'R':
+			if (i == 0) i = parse_stmt_read(src, ptr, &stmt);
 			if (i == 0) i = parse_stmt_rewind(src, ptr, &stmt);
 			break;
 
