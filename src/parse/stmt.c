@@ -40,6 +40,13 @@ unsigned parse_stmt(
 			break;
 
 		case 'P':
+			if (i == 0) i = parse_stmt_stop_pause(src, ptr, stmt);
+			break;
+
+		case 'R':
+			if (i == 0) i = parse_stmt_rewind(src, ptr, stmt);
+			break;
+
 		case 'S':
 			if (i == 0) i = parse_stmt_stop_pause(src, ptr, stmt);
 			break;
@@ -156,6 +163,11 @@ void parse_stmt_cleanup(
 		case PARSE_STMT_FORMAT:
 			parse_format_desc_list_delete(
 				stmt.format.desc, stmt.format.desc_count);
+			break;
+		case PARSE_STMT_REWIND:
+			parse_expr_delete(stmt.rewind.unit);
+			parse_expr_delete(stmt.rewind.iostat);
+			parse_expr_delete(stmt.rewind.err);
 			break;
 		case PARSE_STMT_DATA:
 			for (i = 0; i < stmt.data.init_count; i++)

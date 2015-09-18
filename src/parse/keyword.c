@@ -178,6 +178,23 @@ unsigned parse_keyword_name(
 			len = 6;
 			match = strncasecmp(ptr, "FORMAT", len);
 			break;
+		case PARSE_KEYWORD_REWIND:
+			len = 6;
+			match = strncasecmp(ptr, "REWIND", len);
+			break;
+		case PARSE_KEYWORD_UNIT:
+			len = 4;
+			match = strncasecmp(ptr, "UNIT", len);
+			break;
+		case PARSE_KEYWORD_IOSTAT:
+			len = 6;
+			match = strncasecmp(ptr, "IOSTAT", len);
+			break;
+		case PARSE_KEYWORD_ERR:
+			len = 3;
+			match = strncasecmp(ptr, "ERR", len);
+			break;
+
 		default:
 			/* Unknown keyword. */
 			return 0;

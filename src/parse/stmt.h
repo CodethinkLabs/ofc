@@ -19,6 +19,7 @@ typedef enum
 	PARSE_STMT_DO,
 	PARSE_STMT_WRITE,
 	PARSE_STMT_FORMAT,
+	PARSE_STMT_REWIND,
 	PARSE_STMT_DATA,
 	PARSE_STMT_ASSIGN,
 } parse_stmt_e;
@@ -125,6 +126,13 @@ struct parse_stmt_s
 
 		struct
 		{
+			parse_expr_t* unit;
+			parse_expr_t* iostat;
+			parse_expr_t* err;
+		} rewind;
+
+		struct
+		{
 			unsigned       name_count;
 			parse_lhs_t*   name;
 			unsigned       init_count;
@@ -168,6 +176,9 @@ unsigned parse_stmt_do(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
 unsigned parse_stmt_write(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
+unsigned parse_stmt_rewind(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
 unsigned parse_stmt_format(
