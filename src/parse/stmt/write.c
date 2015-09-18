@@ -43,58 +43,10 @@ unsigned parse_stmt_write(
 	}
 
 	stmt->type = PARSE_STMT_WRITE;
-	stmt->write.elem_count = 0;
-	stmt->write.elem = NULL;
 
-	parse_expr_t* expr = parse_expr(
+	stmt->write.elem = parse_expr_list(
 		src, &ptr[i], &len);
-	if (!expr) return i;
-	i += len;
-
-	stmt->write.elem
-		= (parse_expr_t**)malloc(
-			sizeof(parse_expr_t*));
-	if (!stmt->write.elem)
-	{
-		parse_expr_delete(expr);
-
-		unsigned e;
-		for (e = 0; e < stmt->write.elem_count; e++)
-			parse_expr_delete(stmt->write.elem[e]);
-		free(stmt->write.elem);
-
-		parse_expr_delete(stmt->write.file);
-		return 0;
-	}
-
-	stmt->write.elem[stmt->write.elem_count++] = expr;
-
-	while (ptr[i] == ',')
-	{
-		unsigned j = (i + 1);
-
-		expr = parse_expr(src, &ptr[j], &len);
-		if (!expr) break;
-
-		parse_expr_t** nelem
-			= (parse_expr_t**)realloc(stmt->write.elem,
-				sizeof(parse_expr_t*) * (stmt->write.elem_count + 1));
-		if (!nelem)
-		{
-			parse_expr_delete(expr);
-
-			unsigned e;
-			for (e = 0; e < stmt->write.elem_count; e++)
-				parse_expr_delete(stmt->write.elem[e]);
-			free(stmt->write.elem);
-
-			parse_expr_delete(stmt->write.file);
-			return 0;
-		}
-		stmt->write.elem = nelem;
-		stmt->write.elem[stmt->write.elem_count++] = expr;
-		i = (j + len);
-	}
+	if (stmt->write.elem) i += len;
 
 	return i;
 }

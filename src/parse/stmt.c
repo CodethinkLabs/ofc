@@ -97,9 +97,7 @@ static void parse_stmt__cleanup(
 			parse_expr_delete(stmt.do_loop.step);
 			break;
 		case PARSE_STMT_WRITE:
-			for (i = 0; i < stmt.write.elem_count; i++)
-				parse_expr_delete(stmt.write.elem[i]);
-			free(stmt.write.elem);
+			parse_expr_list_delete(stmt.write.elem);
 			parse_expr_delete(stmt.write.file);
 			break;
 		case PARSE_STMT_FORMAT:

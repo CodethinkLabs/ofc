@@ -9,6 +9,7 @@ typedef struct parse_lhs_s parse_lhs_t;
 typedef struct parse_expr_s parse_expr_t;
 typedef struct parse_stmt_s parse_stmt_t;
 
+#include "list.h"
 #include "keyword.h"
 #include "literal.h"
 #include "label.h"

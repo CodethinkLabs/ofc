@@ -481,3 +481,43 @@ parse_expr_t* parse_expr_copy(
 		parse_expr__cleanup(copy);
 	return acopy;
 }
+
+
+
+parse_expr_list_t* parse_expr_list(
+	const sparse_t* src, const char* ptr,
+	unsigned* len)
+{
+	parse_expr_list_t* list
+		= (parse_expr_list_t*)malloc(
+			sizeof(parse_expr_list_t));
+	if (!list) return NULL;
+
+	list->count = 0;
+	list->expr  = NULL;
+
+	unsigned i = parse_list(src, ptr,
+		&list->count, (void***)&list->expr,
+		(void*)parse_expr,
+		(void*)parse_expr_delete);
+	if (i == 0)
+	{
+		free(list);
+		return NULL;
+	}
+
+	if (len) *len = i;
+	return list;
+}
+
+void parse_expr_list_delete(
+	parse_expr_list_t* list)
+{
+	if (!list)
+		return;
+
+	parse_list_delete(
+		list->count, (void**)list->expr,
+		(void*)parse_expr_delete);
+	free(list);
+}

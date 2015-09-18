@@ -114,8 +114,7 @@ struct parse_stmt_s
 			parse_expr_t* file;
 			parse_label_t format_label;
 
-			unsigned       elem_count;
-			parse_expr_t** elem;
+			parse_expr_list_t* elem;
 		} write;
 
 		struct
