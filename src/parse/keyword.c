@@ -166,6 +166,11 @@ unsigned parse_keyword_name(
 			match = strncasecmp(ptr, "TO", len);
 			break;
 
+		case PARSE_KEYWORD_CALL:
+			len = 4;
+			match = strncasecmp(ptr, "CALL", len);
+			break;
+
 		case PARSE_KEYWORD_DATA:
 			len = 4;
 			match = strncasecmp(ptr, "DATA", len);

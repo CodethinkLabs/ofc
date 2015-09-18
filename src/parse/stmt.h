@@ -6,6 +6,7 @@ typedef enum
 	PARSE_STMT_EMPTY,
 	PARSE_STMT_IMPLICIT_NONE,
 	PARSE_STMT_IMPLICIT,
+	PARSE_STMT_CALL,
 	PARSE_STMT_DECL,
 	PARSE_STMT_DIMENSION,
 	PARSE_STMT_ASSIGNMENT,
@@ -44,6 +45,12 @@ struct parse_stmt_s
 	union
 	{
 		parse_implicit_list_t* implicit;
+
+		struct
+		{
+			str_ref_t          name;
+			parse_expr_list_t* args;
+		} call;
 
 		struct
 		{
