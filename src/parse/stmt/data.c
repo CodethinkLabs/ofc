@@ -179,13 +179,13 @@ unsigned parse_stmt_data(
 
 	while (len > 0)
 	{
-		/* TODO - Handle multiple list separately so
-		          we can recover properly if the number of elements
-		          doesn't match the name list. */
+		unsigned j = i;
+		if (ptr[j] == ',')
+			j++;
 
 		len = parse_stmt_data__list(
-			src, &ptr[i], stmt);
-		i += len;
+			src, &ptr[j], stmt);
+		i = j + len;
 	}
 
 	return i;
