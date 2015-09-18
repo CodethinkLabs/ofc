@@ -369,13 +369,10 @@ static unsigned parse_literal__number(
 		for (; isdigit(ptr[i]); i++);
 	}
 
-	bool had_exponent
-		= ((toupper(ptr[i]) == 'E')
-			|| (toupper(ptr[i]) == 'D'));
-
 	unsigned k = 0;
 
-	if (had_exponent)
+	if ((toupper(ptr[i]) == 'E')
+		|| (toupper(ptr[i]) == 'D'))
 	{
 		unsigned j = (i + 1);
 
@@ -383,11 +380,7 @@ static unsigned parse_literal__number(
 			|| (ptr[j] == '+'))
 			j++;
 
-		if (!isdigit(ptr[i]))
-		{
-			had_exponent = false;
-		}
-		else
+		if (isdigit(ptr[i]))
 		{
 			for (; isdigit(ptr[j]); j++);
 
