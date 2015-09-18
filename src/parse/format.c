@@ -133,20 +133,25 @@ unsigned parse_format_desc_list(
 	unsigned             dcount = 0;
 	unsigned             dmax   = 0;
 
+	bool was_slash = false;
 	while (ptr[i] != terminator)
 	{
 		unsigned comma = 0;
 		if (dcount > 0)
 		{
-			if (ptr[i] != ',')
+			if (ptr[i] == ',')
+				comma = 1;
+			else if (!was_slash
+				&& (ptr[i] != '/'))
 				break;
-			comma = 1;
 		}
 
 		parse_format_desc_t desc;
 		unsigned len = parse_format_desc(
 			src, &ptr[i + comma], &desc);
 		if (len == 0) break;
+
+		was_slash = (desc.type == PARSE_FORMAT_DESC_SLASH);
 
 		if (dcount >= dmax)
 		{
