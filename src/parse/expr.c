@@ -19,6 +19,10 @@ static void parse_expr__cleanup(
 			parse_expr_delete(expr.brackets.expr);
 			break;
 
+		case PARSE_EXPR_INTRINSIC:
+			parse_expr_list_delete(expr.intrinsic.args);
+			break;
+
 		case PARSE_EXPR_UNARY:
 			parse_expr_delete(expr.unary.a);
 			break;
@@ -60,6 +64,10 @@ static bool parse_expr__clone(
 			if (!clone.brackets.expr)
 				return false;
 			break;
+
+		case PARSE_EXPR_INTRINSIC:
+			/* TODO - Copying expressions containing intrinsics. */
+			return false;
 
 		case PARSE_EXPR_UNARY:
 			clone.unary.a
@@ -162,12 +170,44 @@ static unsigned parse_expr__literal(
 	return len;
 }
 
+static unsigned parse_expr__intrinsic(
+	const sparse_t* src, const char* ptr,
+	parse_expr_t* expr)
+{
+	unsigned i = parse_name(
+		src, ptr, &expr->intrinsic.name);
+	if (i == 0) return 0;
+
+	if (ptr[i++] != '(')
+		return 0;
+
+	unsigned len;
+	expr->intrinsic.args = parse_expr_list(
+		src, &ptr[i], &len);
+	if (!expr->intrinsic.args)
+		return 0;
+	i += len;
+
+	if (ptr[i++] != ')')
+	{
+		parse_expr_list_delete(
+			expr->intrinsic.args);
+		return 0;
+	}
+
+	expr->type = PARSE_EXPR_INTRINSIC;
+	return i;
+}
+
 static unsigned parse_expr__primary(
 	const sparse_t* src, const char* ptr,
 	parse_expr_t* expr)
 {
 	unsigned len = parse_expr__literal(
 		src, ptr, expr);
+	if (len > 0) return len;
+
+	len = parse_expr__intrinsic(src, ptr, expr);
 	if (len > 0) return len;
 
 	len = parse_expr__literal(
