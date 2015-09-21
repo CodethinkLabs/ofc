@@ -3,6 +3,62 @@
 #include <ctype.h>
 
 
+
+static const char* parse_keyword__name[] =
+{
+	"PROGRAM",
+	"SUBROUTINE",
+	"FUNCTION",
+	"IF",
+	"THEN",
+	"ELSE IF",
+	"ELSE",
+	"GO TO",
+	"DO",
+	"CONTINUE",
+	"STOP",
+	"PAUSE",
+
+	"LOGICAL",
+	"CHARACTER",
+	"INTEGER",
+	"REAL",
+	"COMPLEX",
+	"BYTE",
+	"DOUBLE PRECISION",
+	"DOUBLE COMPLEX",
+
+	"TRUE",
+	"FALSE",
+
+	"IMPLICIT",
+	"IMPLICIT NONE",
+
+	"COMMON",
+	"DIMENSION",
+	"EQUIVALENCE",
+
+	"KIND",
+
+	"ASSIGN",
+	"TO",
+
+	"CALL",
+
+	"DATA",
+	"WRITE",
+	"READ",
+	"FORMAT",
+
+	"REWIND",
+	"UNIT",
+	"IOSTAT",
+	"ERR",
+
+	NULL
+};
+
+
 unsigned parse_name(
 	const sparse_t* src, const char* ptr,
 	str_ref_t* name)
@@ -27,209 +83,58 @@ unsigned parse_name(
 	return i;
 }
 
-unsigned parse_keyword_name(
+
+
+const char* parse_keyword_name(
+	parse_keyword_e keyword)
+{
+	if (keyword >= PARSE_KEYWORD_COUNT)
+		return NULL;
+	return parse_keyword__name[keyword];
+}
+
+unsigned parse_keyword_named(
 	const sparse_t* src, const char* ptr,
 	parse_keyword_e keyword,
 	str_ref_t* name)
 {
-	unsigned expect_space = 0;
-	int      match = -1;
-	unsigned len = 0;
+	if (keyword >= PARSE_KEYWORD_COUNT)
+		return 0;
 
+	const char* kwstr = parse_keyword__name[keyword];
+
+	/* TODO - Make handling spaced keywords less manual. */
+	/* TODO - Differentiate between expected and optional spaces. */
+	unsigned expect_space = 0;
 	switch (keyword)
 	{
-		case PARSE_KEYWORD_PROGRAM:
-			len = 7;
-			match = strncasecmp(ptr, "PROGRAM", len);
-			break;
-		case PARSE_KEYWORD_END_PROGRAM:
-			len = 10;
-			match = strncasecmp(ptr, "ENDPROGRAM", len);
-			expect_space = 3;
-			break;
-		case PARSE_KEYWORD_END:
-			len = 3;
-			match = strncasecmp(ptr, "END", len);
-			break;
-
-		case PARSE_KEYWORD_IF:
-			len = 2;
-			match = strncasecmp(ptr, "IF", len);
-			break;
-		case PARSE_KEYWORD_THEN:
-			len = 4;
-			match = strncasecmp(ptr, "THEN", len);
-			break;
 		case PARSE_KEYWORD_ELSE_IF:
-			len = 6;
-			match = strncasecmp(ptr, "ELSEIF", len);
+			kwstr = "ELSEIF";
 			expect_space = 4;
 			break;
-		case PARSE_KEYWORD_ELSE:
-			len = 4;
-			match = strncasecmp(ptr, "ELSE", len);
-			break;
-		case PARSE_KEYWORD_END_IF:
-			len = 5;
-			match = strncasecmp(ptr, "ENDIF", len);
-			expect_space = 3;
-			break;
-
 		case PARSE_KEYWORD_GO_TO:
-			len = 4;
-			match = strncasecmp(ptr, "GOTO", len);
+			kwstr = "GOTO";
 			expect_space = 2;
 			break;
-		case PARSE_KEYWORD_DO:
-			len = 2;
-			match = strncasecmp(ptr, "DO", len);
-			break;
-		case PARSE_KEYWORD_CONTINUE:
-			len = 8;
-			match = strncasecmp(ptr, "CONTINUE", len);
-			break;
-		case PARSE_KEYWORD_STOP:
-			len = 4;
-			match = strncasecmp(ptr, "STOP", len);
-			break;
-
-		case PARSE_KEYWORD_LOGICAL:
-			len = 7;
-			match = strncasecmp(ptr, "LOGICAL", len);
-			break;
-		case PARSE_KEYWORD_CHARACTER:
-			len = 9;
-			match = strncasecmp(ptr, "CHARACTER", len);
-			break;
-		case PARSE_KEYWORD_INTEGER:
-			len = 7;
-			match = strncasecmp(ptr, "INTEGER", len);
-			break;
-		case PARSE_KEYWORD_REAL:
-			len = 4;
-			match = strncasecmp(ptr, "REAL", len);
-			break;
-		case PARSE_KEYWORD_COMPLEX:
-			len = 7;
-			match = strncasecmp(ptr, "COMPLEX", len);
-			break;
-		case PARSE_KEYWORD_BYTE:
-			len = 4;
-			match = strncasecmp(ptr, "BYTE", len);
-			break;
 		case PARSE_KEYWORD_DOUBLE_PRECISION:
-			len = 15;
-			match = strncasecmp(ptr, "DOUBLEPRECISION", len);
+			kwstr = "DOUBLEPRECISION";
 			expect_space = 6;
 			break;
 		case PARSE_KEYWORD_DOUBLE_COMPLEX:
-			len = 13;
-			match = strncasecmp(ptr, "DOUBLECOMPLEX", len);
+			kwstr = "DOUBLECOMPLEX";
 			expect_space = 6;
 			break;
-
-		case PARSE_KEYWORD_TRUE:
-			len = 4;
-			match = strncasecmp(ptr, "TRUE", len);
-			break;
-		case PARSE_KEYWORD_FALSE:
-			len = 5;
-			match = strncasecmp(ptr, "FALSE", len);
-			break;
-
-		case PARSE_KEYWORD_IMPLICIT:
-			len = 8;
-			match = strncasecmp(ptr, "IMPLICIT", len);
-			break;
 		case PARSE_KEYWORD_IMPLICIT_NONE:
-			len = 12;
-			match = strncasecmp(ptr, "IMPLICITNONE", len);
+			kwstr = "IMPLICITNONE";
 			expect_space = 8;
 			break;
-
-		case PARSE_KEYWORD_COMMON:
-			len = 6;
-			match = strncasecmp(ptr, "COMMON", len);
-			break;
-		case PARSE_KEYWORD_DIMENSION:
-			len = 9;
-			match = strncasecmp(ptr, "DIMENSION", len);
-			break;
-		case PARSE_KEYWORD_EQUIVALENCE:
-			len = 11;
-			match = strncasecmp(ptr, "EQUIVALENCE", len);
-			break;
-
-		case PARSE_KEYWORD_KIND:
-			len = 4;
-			match = strncasecmp(ptr, "KIND", len);
-			break;
-
-		case PARSE_KEYWORD_ASSIGN:
-			len = 6;
-			match = strncasecmp(ptr, "ASSIGN", len);
-			break;
-		case PARSE_KEYWORD_TO:
-			len = 2;
-			match = strncasecmp(ptr, "TO", len);
-			break;
-
-		case PARSE_KEYWORD_CALL:
-			len = 4;
-			match = strncasecmp(ptr, "CALL", len);
-			break;
-
-		case PARSE_KEYWORD_DATA:
-			len = 4;
-			match = strncasecmp(ptr, "DATA", len);
-			break;
-		case PARSE_KEYWORD_WRITE:
-			len = 5;
-			match = strncasecmp(ptr, "WRITE", len);
-			break;
-		case PARSE_KEYWORD_READ:
-			len = 4;
-			match = strncasecmp(ptr, "READ", len);
-			break;
-		case PARSE_KEYWORD_FORMAT:
-			len = 6;
-			match = strncasecmp(ptr, "FORMAT", len);
-			break;
-		case PARSE_KEYWORD_REWIND:
-			len = 6;
-			match = strncasecmp(ptr, "REWIND", len);
-			break;
-		case PARSE_KEYWORD_UNIT:
-			len = 4;
-			match = strncasecmp(ptr, "UNIT", len);
-			break;
-		case PARSE_KEYWORD_IOSTAT:
-			len = 6;
-			match = strncasecmp(ptr, "IOSTAT", len);
-			break;
-		case PARSE_KEYWORD_ERR:
-			len = 3;
-			match = strncasecmp(ptr, "ERR", len);
-			break;
-
 		default:
-			/* Unknown keyword. */
-			return 0;
+			break;
 	}
 
-	if (match != 0)
-	{
-		switch (keyword)
-		{
-			case PARSE_KEYWORD_END_PROGRAM:
-			case PARSE_KEYWORD_END_IF:
-				return parse_keyword_name(
-					src, ptr, PARSE_KEYWORD_END, name);
-			default:
-				break;
-		}
+	unsigned len = strlen(kwstr);
+	if (strncasecmp(ptr, kwstr, len) != 0)
 		return 0;
-	}
 
 	bool entirely_sequential
 		= sparse_sequential(src, ptr, len);
@@ -252,7 +157,7 @@ unsigned parse_keyword_name(
 	if (unexpected_space)
 	{
 		sparse_warning(src, ptr,
-			"Unexpected a space in keyword");
+			"Unexpected a space in %s", kwstr);
 	}
 
 	if (name != NULL)
@@ -264,7 +169,7 @@ unsigned parse_keyword_name(
 			src, &ptr[len - 1], 2))
 		{
 			sparse_warning(src, &ptr[len],
-				"Expected whitespace between keyword and name");
+				"Expected whitespace between %s and name", kwstr);
 		}
 
 		len += nlen;
@@ -273,12 +178,80 @@ unsigned parse_keyword_name(
 	return len;
 }
 
-
-
 unsigned parse_keyword(
 	const sparse_t* src, const char* ptr,
 	parse_keyword_e keyword)
 {
-	return parse_keyword_name(
+	return parse_keyword_named(
+		src, ptr, keyword, NULL);
+}
+
+
+unsigned parse_keyword_end_named(
+	const sparse_t* src, const char* ptr,
+	parse_keyword_e keyword,
+	str_ref_t* name)
+{
+	if (keyword >= PARSE_KEYWORD_COUNT)
+		return 0;
+
+	unsigned i = 0;
+	if (strncasecmp(&ptr[i], "END", 3) != 0)
+		return 0;
+	i += 3;
+
+	unsigned warn_end_kw_space = 0;
+
+	str_ref_t kname = STR_REF_EMPTY;
+	unsigned len = parse_keyword_named(
+		src, &ptr[i], keyword,
+		(name ? &kname : NULL));
+	if (len > 0)
+	{
+		if (sparse_sequential(src, &ptr[i - 1], 2))
+			warn_end_kw_space = i;
+	}
+	else if (name)
+	{
+		len = parse_name(src, &ptr[i], &kname);
+	}
+	i += len;
+
+	/* Expect but don't consume statement end. */
+	if (!is_end_statement(&ptr[i], &len))
+		return 0;
+
+	if (name && !str_ref_empty(kname)
+		&& !str_ref_equal(*name, kname))
+	{
+		sparse_warning(src, &ptr[i],
+			"END %s name '%.*s' doesn't match %s name '%.*s'",
+			parse_keyword__name[keyword],
+			kname.size, kname.base,
+			parse_keyword__name[keyword],
+			name->size, name->base);
+	}
+
+	if (!sparse_sequential(src, ptr, 3))
+	{
+		sparse_warning(src, ptr,
+			"Unexpected a space in END keyword");
+	}
+
+	if (warn_end_kw_space > 0)
+	{
+		sparse_warning(src, &ptr[warn_end_kw_space],
+			"Expected space between END and %s",
+			parse_keyword__name[keyword]);
+	}
+
+	return i;
+}
+
+unsigned parse_keyword_end(
+	const sparse_t* src, const char* ptr,
+	parse_keyword_e keyword)
+{
+	return parse_keyword_end_named(
 		src, ptr, keyword, NULL);
 }

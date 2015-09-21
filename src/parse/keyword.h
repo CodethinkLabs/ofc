@@ -4,13 +4,12 @@
 typedef enum
 {
 	PARSE_KEYWORD_PROGRAM = 0,
-	PARSE_KEYWORD_END,
-	PARSE_KEYWORD_END_PROGRAM,
+	PARSE_KEYWORD_SUBROUTINE,
+	PARSE_KEYWORD_FUNCTION,
 	PARSE_KEYWORD_IF,
 	PARSE_KEYWORD_THEN,
 	PARSE_KEYWORD_ELSE_IF,
 	PARSE_KEYWORD_ELSE,
-	PARSE_KEYWORD_END_IF,
 	PARSE_KEYWORD_GO_TO,
 	PARSE_KEYWORD_DO,
 	PARSE_KEYWORD_CONTINUE,
@@ -51,18 +50,35 @@ typedef enum
 	PARSE_KEYWORD_REWIND,
 	PARSE_KEYWORD_UNIT,
 	PARSE_KEYWORD_IOSTAT,
-	PARSE_KEYWORD_ERR
+	PARSE_KEYWORD_ERR,
+
+	PARSE_KEYWORD_COUNT
 } parse_keyword_e;
+
+
 
 unsigned parse_name(
 	const sparse_t* src, const char* ptr,
 	str_ref_t* name);
 
+
+const char* parse_keyword_name(
+	parse_keyword_e keyword);
+
 unsigned parse_keyword(
 	const sparse_t* src, const char* ptr,
 	parse_keyword_e keyword);
 
-unsigned parse_keyword_name(
+unsigned parse_keyword_named(
+	const sparse_t* src, const char* ptr,
+	parse_keyword_e keyword,
+	str_ref_t* name);
+
+unsigned parse_keyword_end(
+	const sparse_t* src, const char* ptr,
+	parse_keyword_e keyword);
+
+unsigned parse_keyword_end_named(
 	const sparse_t* src, const char* ptr,
 	parse_keyword_e keyword,
 	str_ref_t* name);

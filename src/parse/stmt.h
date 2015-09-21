@@ -1,9 +1,19 @@
 #ifndef __parse_stmt_h__
 #define __parse_stmt_h__
 
+
+typedef struct
+{
+	unsigned       count;
+	parse_stmt_t** stmt;
+} parse_stmt_list_t;
+
 typedef enum
 {
 	PARSE_STMT_EMPTY,
+	PARSE_STMT_PROGRAM,
+	PARSE_STMT_SUBROUTINE,
+	PARSE_STMT_FUNCTION,
 	PARSE_STMT_IMPLICIT_NONE,
 	PARSE_STMT_IMPLICIT,
 	PARSE_STMT_CALL,
@@ -28,15 +38,6 @@ typedef enum
 	PARSE_STMT_DATA,
 	PARSE_STMT_ASSIGN,
 } parse_stmt_e;
-
-
-typedef struct
-{
-	str_ref_t     name;
-	parse_expr_t* dimension;
-	parse_expr_t* init;
-} parse_stmt_decl_t;
-
 
 struct parse_stmt_s
 {
@@ -153,6 +154,16 @@ struct parse_stmt_s
 			unsigned  label;
 			str_ref_t variable;
 		} assign;
+
+		struct
+		{
+			/* type is only set for functions. */
+			parse_type_t*      type;
+			str_ref_t          name;
+			/* args is only set for functions and subroutines. */
+			parse_lhs_list_t*  args;
+			parse_stmt_list_t* body;
+		} program;
 	};
 };
 
@@ -163,13 +174,6 @@ parse_stmt_t* parse_stmt(
 void parse_stmt_delete(
 	parse_stmt_t* stmt);
 
-
-
-typedef struct
-{
-	unsigned       count;
-	parse_stmt_t** stmt;
-} parse_stmt_list_t;
 
 parse_stmt_list_t* parse_stmt_list(
 	const sparse_t* src, const char* ptr,

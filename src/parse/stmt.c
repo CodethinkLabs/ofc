@@ -1,5 +1,8 @@
 #include "parse.h"
 
+unsigned parse_stmt_program(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
 unsigned parse_stmt_implicit(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
@@ -63,6 +66,13 @@ static void parse_stmt__cleanup(
 	unsigned i;
 	switch (stmt.type)
 	{
+		case PARSE_STMT_PROGRAM:
+		case PARSE_STMT_SUBROUTINE:
+		case PARSE_STMT_FUNCTION:
+			parse_stmt_list_delete(stmt.program.body);
+			parse_lhs_list_delete(stmt.program.args);
+			parse_type_delete(stmt.program.type);
+			break;
 		case PARSE_STMT_ASSIGNMENT:
 			parse_assign_delete(stmt.assignment);
 			break;
@@ -159,6 +169,9 @@ parse_stmt_t* parse_stmt(
 	const sparse_t* src, const char* ptr,
 	unsigned* len)
 {
+	if (ptr[0] == '\0')
+		return NULL;
+
 	parse_stmt_t stmt;
 	stmt.type  = PARSE_STMT_EMPTY;
 
@@ -203,6 +216,7 @@ parse_stmt_t* parse_stmt(
 			break;
 
 		case 'P':
+			if (i == 0) i = parse_stmt_program(src, ptr, &stmt);
 			if (i == 0) i = parse_stmt_stop_pause(src, ptr, &stmt);
 			break;
 
@@ -237,7 +251,17 @@ parse_stmt_t* parse_stmt(
 	{
 		stmt.assignment = parse_assign(src, ptr, &i);
 		if (stmt.assignment)
-			stmt.type = PARSE_STMT_ASSIGNMENT;
+		{
+			if (!stmt.assignment->init)
+			{
+				i = 0;
+				parse_assign_delete(stmt.assignment);
+			}
+			else
+			{
+				stmt.type = PARSE_STMT_ASSIGNMENT;
+			}
+		}
 	}
 
 	unsigned l = 0;
