@@ -338,6 +338,10 @@ static bool prep_unformat__fixed_form(
 	if (!src)
 		return false;
 
+	bool had_label = false;
+	unsigned label_prev = 0;
+	unsigned label_row = 0;
+
 	unsigned row, pos;
 	for (row = 0, pos = 0; src[pos] != '\0'; row++)
 	{
@@ -366,6 +370,30 @@ static bool prep_unformat__fixed_form(
 		col  = len;
 		pos += len;
 
+		if (has_label && continuation)
+		{
+			fprintf(stderr, "Warning:%s:%u: "
+				"Labeling a continuation line doesn't make sense"
+				", ignoring label\n", path, (row + 1));
+			has_label = false;
+		}
+
+		if (had_label)
+		{
+			if (!continuation)
+			{
+				fprintf(stderr, "Warning:%s:%u: "
+					"Label attached to blank line, will be ignored\n", path, (label_row + 1));
+			}
+			else
+			{
+				has_label = true;
+				label = label_prev;
+			}
+
+			had_label = false;
+		}
+
 		/* Skip initial space. */
 		for(; is_hspace(src[pos]); pos++, col++);
 
@@ -382,18 +410,9 @@ static bool prep_unformat__fixed_form(
 
 			if (has_label)
 			{
-				if (continuation)
-				{
-					fprintf(stderr, "Warning:%s:%u: "
-						"Labeling a continuation line doesn't make sense"
-						", ignoring label", path, (row + 1));
-				}
-				else
-				{
-					/* Mark current position in file as label. */
-					if (!sparse_label_add(sparse, &src[pos], label))
-						return false;
-				}
+				/* Mark current position in file as label. */
+				if (!sparse_label_add(sparse, &src[pos], label))
+					return false;
 			}
 
 			/* Append non-empty line to output. */
@@ -406,18 +425,11 @@ static bool prep_unformat__fixed_form(
 
 			first_code_line = false;
 		}
-		else
+		else if (has_label)
 		{
-			fprintf(stderr, "Warning:%s:%u: "
-				"Blank or comment line with non-empty first column", path, (row + 1));
-
-			if (has_label)
-			{
-				/* TODO - Attach label to next code line, this leads to the possibility
-				          of duplicate labels on a line, which we can't yet handle. */
-				fprintf(stderr, "Warning:%s:%u: "
-					"Label attached to blank line, will be ignored", path, (row + 1));
-			}
+			had_label = true;
+			label_prev = label;
+			label_row = row;
 		}
 
 		/* Skip to the actual end of the line, including all ignored characters. */
