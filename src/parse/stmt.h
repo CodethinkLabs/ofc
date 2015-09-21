@@ -10,6 +10,7 @@ typedef enum
 	PARSE_STMT_DECL,
 	PARSE_STMT_DIMENSION,
 	PARSE_STMT_EQUIVALENCE,
+	PARSE_STMT_COMMON,
 	PARSE_STMT_ASSIGNMENT,
 	PARSE_STMT_CONTINUE,
 	PARSE_STMT_STOP,
@@ -59,6 +60,8 @@ struct parse_stmt_s
 			unsigned           count;
 			parse_stmt_decl_t* entry;
 		} decl;
+
+		parse_common_group_list_t* common;
 
 		struct
 		{

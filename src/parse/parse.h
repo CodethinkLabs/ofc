@@ -17,6 +17,7 @@ typedef struct parse_stmt_s parse_stmt_t;
 #include "lhs.h"
 #include "expr.h"
 #include "type.h"
+#include "common.h"
 #include "implicit.h"
 #include "format.h"
 #include "stmt.h"

@@ -9,6 +9,9 @@ unsigned parse_stmt_call(
 unsigned parse_stmt_decl(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
+unsigned parse_stmt_common(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
 unsigned parse_stmt_dimension(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
@@ -78,6 +81,9 @@ static void parse_stmt__cleanup(
 				parse_expr_delete(stmt.decl.entry[i].init);
 			}
 			free(stmt.decl.entry);
+			break;
+		case PARSE_STMT_COMMON:
+			parse_common_group_list_delete(stmt.common);
 			break;
 		case PARSE_STMT_DIMENSION:
 			free(stmt.dimension.name);
@@ -177,6 +183,7 @@ parse_stmt_t* parse_stmt(
 		case 'C':
 			if (i == 0) i = parse_stmt_continue(src, ptr, &stmt);
 			if (i == 0) i = parse_stmt_call(src, ptr, &stmt);
+			if (i == 0) i = parse_stmt_common(src, ptr, &stmt);
 			break;
 
 		case 'D':

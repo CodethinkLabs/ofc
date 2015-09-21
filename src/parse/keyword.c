@@ -147,6 +147,10 @@ unsigned parse_keyword_name(
 			expect_space = 8;
 			break;
 
+		case PARSE_KEYWORD_COMMON:
+			len = 6;
+			match = strncasecmp(ptr, "COMMON", len);
+			break;
 		case PARSE_KEYWORD_DIMENSION:
 			len = 9;
 			match = strncasecmp(ptr, "DIMENSION", len);
