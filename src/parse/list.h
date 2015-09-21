@@ -7,6 +7,12 @@ unsigned parse_list(
 	void* (*elem_parse)(const sparse_t*, const char*, unsigned*),
 	void (*elem_delete)(void*));
 
+bool parse_list_copy(
+	unsigned* dst_count, void*** dst,
+	unsigned  src_count, const void** src,
+	void* (*elem_copy)(const void*),
+	void (*elem_delete)(void*));
+
 void parse_list_delete(
 	unsigned elem_count, void** elem,
 	void (*elem_delete)(void*));

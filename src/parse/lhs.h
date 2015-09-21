@@ -30,7 +30,7 @@ struct parse_lhs_s
 			{
 				struct
 				{
-					parse_expr_t* index;
+					parse_array_index_t* index;
 				} array;
 
 				struct

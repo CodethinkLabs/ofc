@@ -56,6 +56,41 @@ unsigned parse_list(
 	return i;
 }
 
+bool parse_list_copy(
+	unsigned* dst_count, void*** dst,
+	unsigned  src_count, const void** src,
+	void* (*elem_copy)(const void*),
+	void (*elem_delete)(void*))
+{
+	if (!elem_copy || !src || !dst || !dst_count)
+		return false;
+
+	void** copy = (void**)malloc(
+		src_count * sizeof(void*));
+	if (!copy) return false;
+
+	unsigned i;
+	for (i = 0; i < src_count; i++)
+	{
+		copy[i] = elem_copy(src[i]);
+		if (!copy[i])
+		{
+			if (elem_delete)
+			{
+				unsigned j;
+				for (j = 0; j < i; j++)
+					elem_delete(copy[j]);
+			}
+			free(copy);
+			return false;
+		}
+	}
+
+	*dst = copy;
+	*dst_count = src_count;
+	return true;
+}
+
 void parse_list_delete(
 	unsigned elem_count, void** elem,
 	void (*elem_delete)(void*))

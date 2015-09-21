@@ -10,7 +10,7 @@ static void parse_lhs__cleanup(
 	switch (lhs.type)
 	{
 		case PARSE_LHS_ARRAY:
-			parse_expr_delete(lhs.array.index);
+			parse_array_index_delete(lhs.array.index);
 			break;
 		default:
 			break;
@@ -58,7 +58,7 @@ static bool parse_lhs__clone(
 	{
 		case PARSE_LHS_ARRAY:
 			if (src->array.index)
-				clone.array.index = parse_expr_copy(src->array.index);
+				clone.array.index = parse_array_index_copy(src->array.index);
 		default:
 			break;
 	}
@@ -90,15 +90,11 @@ parse_lhs_t* parse_lhs(
 
 	if (ptr[i] == '(')
 	{
-		/* TODO - Implement more complex array slices. */
-
-		i += 1;
-
 		lhs.type   = PARSE_LHS_ARRAY;
 		lhs.parent = alhs;
 
 		unsigned l = 0;
-		lhs.array.index = parse_expr(
+		lhs.array.index = parse_array_index(
 			src, &ptr[i], &l);
 		if (!lhs.array.index)
 		{
@@ -106,12 +102,6 @@ parse_lhs_t* parse_lhs(
 			return NULL;
 		}
 		i += l;
-
-		if (ptr[i++] != ')')
-		{
-			parse_lhs__cleanup(lhs);
-			return NULL;
-		}
 
 		parse_lhs_t* alhs
 			= parse_lhs__alloc(lhs);
