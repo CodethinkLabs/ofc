@@ -201,7 +201,6 @@ unsigned parse_character(
 	const char* pptr
 		= sparse_parent_pointer(src, &ptr[i]);
 	if (!pptr) return 0;
-	i += 1;
 
 	/* Skip to the end of condense string-> */
 	bool is_escaped = false;
