@@ -1,33 +1,5 @@
 #include "../parse.h"
 
-unsigned parse_stmt_assignment(
-	const sparse_t* src, const char* ptr,
-	parse_stmt_t* stmt)
-{
-	unsigned i;
-	stmt->assignment.lhs
-		= parse_lhs(src, ptr, &i);
-	if (!stmt->assignment.lhs)
-		return 0;
-
-	if (ptr[i++] != '=')
-		return 0;
-
-	unsigned len;
-	stmt->assignment.rhs = parse_expr(
-		src, &ptr[i], &len);
-	if (!stmt->assignment.rhs)
-	{
-		sparse_error(src, &ptr[i],
-			"Expected expression on right hand side of assignment");
-		parse_lhs_delete(stmt->assignment.lhs);
-		return 0;
-	}
-	i += len;
-
-	stmt->type = PARSE_STMT_ASSIGNMENT;
-	return i;
-}
 
 unsigned parse_stmt_assign(
 	const sparse_t* src, const char* ptr,

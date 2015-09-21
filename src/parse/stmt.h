@@ -56,9 +56,8 @@ struct parse_stmt_s
 
 		struct
 		{
-			parse_type_t*      type;
-			unsigned           count;
-			parse_stmt_decl_t* entry;
+			parse_type_t*        type;
+			parse_assign_list_t* entry;
 		} decl;
 
 		parse_common_group_list_t* common;
@@ -71,11 +70,7 @@ struct parse_stmt_s
 			parse_lhs_list_t** group;
 		} equivalence;
 
-		struct
-		{
-			parse_lhs_t*  lhs;
-			parse_expr_t* rhs;
-		} assignment;
+		parse_assign_t* assignment;
 
 		struct
 		{

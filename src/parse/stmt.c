@@ -64,8 +64,7 @@ static void parse_stmt__cleanup(
 	switch (stmt.type)
 	{
 		case PARSE_STMT_ASSIGNMENT:
-			parse_lhs_delete(stmt.assignment.lhs);
-			parse_expr_delete(stmt.assignment.rhs);
+			parse_assign_delete(stmt.assignment);
 			break;
 		case PARSE_STMT_IMPLICIT:
 			parse_implicit_list_delete(stmt.implicit);
@@ -75,12 +74,7 @@ static void parse_stmt__cleanup(
 			break;
 		case PARSE_STMT_DECL:
 			parse_type_delete(stmt.decl.type);
-			for (i = 0; i < stmt.decl.count; i++)
-			{
-				parse_expr_delete(stmt.decl.entry[i].dimension);
-				parse_expr_delete(stmt.decl.entry[i].init);
-			}
-			free(stmt.decl.entry);
+			parse_assign_list_delete(stmt.decl.entry);
 			break;
 		case PARSE_STMT_COMMON:
 			parse_common_group_list_delete(stmt.common);
@@ -236,7 +230,13 @@ parse_stmt_t* parse_stmt(
 	}
 
 	if (i == 0) i = parse_stmt_decl(src, ptr, &stmt);
-	if (i == 0) i = parse_stmt_assignment(src, ptr, &stmt);
+
+	if (i == 0)
+	{
+		stmt.assignment = parse_assign(src, ptr, &i);
+		if (stmt.assignment)
+			stmt.type = PARSE_STMT_ASSIGNMENT;
+	}
 
 	unsigned l = 0;
 	if (!is_end_statement(ptr[i], &l))
