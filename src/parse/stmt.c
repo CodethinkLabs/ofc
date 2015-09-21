@@ -3,6 +3,12 @@
 unsigned parse_stmt_program(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
+unsigned parse_stmt_subroutine(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
+unsigned parse_stmt_function(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
 unsigned parse_stmt_implicit(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
@@ -27,7 +33,13 @@ unsigned parse_stmt_assignment(
 unsigned parse_stmt_continue(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
-unsigned parse_stmt_stop_pause(
+unsigned parse_stmt_stop(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
+unsigned parse_stmt_pause(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
+unsigned parse_stmt_return(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
 unsigned parse_stmt_go_to(
@@ -100,7 +112,8 @@ static void parse_stmt__cleanup(
 			break;
 		case PARSE_STMT_STOP:
 		case PARSE_STMT_PAUSE:
-			parse_expr_delete(stmt.stop_pause.code);
+		case PARSE_STMT_RETURN:
+			parse_expr_delete(stmt.stop_pause_return.value);
 			break;
 		case PARSE_STMT_GO_TO_ASSIGNED:
 		case PARSE_STMT_GO_TO_COMPUTED:
@@ -217,16 +230,18 @@ parse_stmt_t* parse_stmt(
 
 		case 'P':
 			if (i == 0) i = parse_stmt_program(src, ptr, &stmt);
-			if (i == 0) i = parse_stmt_stop_pause(src, ptr, &stmt);
+			if (i == 0) i = parse_stmt_pause(src, ptr, &stmt);
 			break;
 
 		case 'R':
+			if (i == 0) i = parse_stmt_return(src, ptr, &stmt);
 			if (i == 0) i = parse_stmt_read(src, ptr, &stmt);
 			if (i == 0) i = parse_stmt_rewind(src, ptr, &stmt);
 			break;
 
 		case 'S':
-			if (i == 0) i = parse_stmt_stop_pause(src, ptr, &stmt);
+			if (i == 0) i = parse_stmt_subroutine(src, ptr, &stmt);
+			if (i == 0) i = parse_stmt_stop(src, ptr, &stmt);
 			break;
 
 		case 'W':
@@ -245,6 +260,7 @@ parse_stmt_t* parse_stmt(
 		i = 0;
 	}
 
+	if (i == 0) i = parse_stmt_function(src, ptr, &stmt);
 	if (i == 0) i = parse_stmt_decl(src, ptr, &stmt);
 
 	if (i == 0)

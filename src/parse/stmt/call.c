@@ -13,18 +13,21 @@ unsigned parse_stmt_call(
 	if (len == 0) return 0;
 	i += len;
 
-	if (ptr[i++] != '(')
-		return 0;
-
-	stmt->call.args = parse_expr_list(
-		src, &ptr[i], &len);
-	if (stmt->call.args) i += len;
-
-	if (ptr[i++] != ')')
+	stmt->call.args = NULL;
+	if (ptr[i] == '(')
 	{
-		parse_expr_list_delete(
-			stmt->call.args);
-		return 0;
+		i += 1;
+
+		stmt->call.args = parse_expr_list(
+			src, &ptr[i], &len);
+		if (stmt->call.args) i += len;
+
+		if (ptr[i++] != ')')
+		{
+			parse_expr_list_delete(
+				stmt->call.args);
+			return 0;
+		}
 	}
 
 	stmt->type = PARSE_STMT_CALL;

@@ -25,6 +25,7 @@ typedef enum
 	PARSE_STMT_CONTINUE,
 	PARSE_STMT_STOP,
 	PARSE_STMT_PAUSE,
+	PARSE_STMT_RETURN,
 	PARSE_STMT_GO_TO,
 	PARSE_STMT_GO_TO_ASSIGNED,
 	PARSE_STMT_GO_TO_COMPUTED,
@@ -75,8 +76,8 @@ struct parse_stmt_s
 
 		struct
 		{
-			parse_expr_t* code;
-		} stop_pause;
+			parse_expr_t* value;
+		} stop_pause_return;
 
 		struct
 		{
