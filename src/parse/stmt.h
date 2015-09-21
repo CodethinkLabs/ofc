@@ -69,8 +69,8 @@ struct parse_stmt_s
 
 		struct
 		{
-			unsigned       count;
-			parse_lhs_t**  name;
+			unsigned           count;
+			parse_lhs_list_t** group;
 		} equivalence;
 
 		struct

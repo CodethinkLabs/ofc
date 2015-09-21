@@ -42,6 +42,11 @@ struct parse_lhs_s
 	};
 };
 
+typedef struct
+{
+	unsigned      count;
+	parse_lhs_t** lhs;
+} parse_lhs_list_t;
 
 parse_lhs_t* parse_lhs(
 	const sparse_t* src, const char* ptr,
@@ -54,5 +59,14 @@ void parse_lhs_delete(
 bool parse_lhs_base_name(
 	const parse_lhs_t lhs,
 	str_ref_t* name);
+
+parse_lhs_list_t* parse_lhs_list(
+	const sparse_t* src, const char* ptr,
+	unsigned* len);
+parse_lhs_list_t* parse_lhs_list_bracketed(
+	const sparse_t* src, const char* ptr,
+	unsigned* len);
+void parse_lhs_list_delete(
+	parse_lhs_list_t* list);
 
 #endif

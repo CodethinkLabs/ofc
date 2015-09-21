@@ -88,8 +88,8 @@ static void parse_stmt__cleanup(
 		case PARSE_STMT_EQUIVALENCE:
 			parse_list_delete(
 				stmt.equivalence.count,
-				(void**)stmt.equivalence.name,
-				(void*)parse_lhs_delete);
+				(void**)stmt.equivalence.group,
+				(void*)parse_lhs_list_delete);
 			break;
 		case PARSE_STMT_STOP:
 		case PARSE_STMT_PAUSE:

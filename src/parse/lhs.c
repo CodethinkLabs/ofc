@@ -177,3 +177,68 @@ bool parse_lhs_base_name(
 	return parse_lhs_base_name(
 		*lhs.parent, name);
 }
+
+
+
+parse_lhs_list_t* parse_lhs_list(
+	const sparse_t* src, const char* ptr,
+	unsigned* len)
+{
+	parse_lhs_list_t* list
+		= (parse_lhs_list_t*)malloc(
+			sizeof(parse_lhs_list_t));
+	if (!list) return NULL;
+
+	list->count = 0;
+	list->lhs = NULL;
+
+	unsigned i = parse_list(src, ptr,
+		&list->count, (void***)&list->lhs,
+		(void*)parse_lhs,
+		(void*)parse_lhs_delete);
+	if (i == 0)
+	{
+		free(list);
+		return NULL;
+	}
+
+	if (len) *len = i;
+	return list;
+}
+
+parse_lhs_list_t* parse_lhs_list_bracketed(
+	const sparse_t* src, const char* ptr,
+	unsigned* len)
+{
+	unsigned i = 0;
+
+	if (ptr[i++] != '(')
+		return NULL;
+
+	unsigned l;
+	parse_lhs_list_t* list
+		= parse_lhs_list(src, &ptr[i], &l);
+	if (!list) return NULL;
+	i += l;
+
+	if (ptr[i++] != ')')
+	{
+		parse_lhs_list_delete(list);
+		return NULL;
+	}
+
+	if (len) *len = i;
+	return list;
+}
+
+void parse_lhs_list_delete(
+	parse_lhs_list_t* list)
+{
+	if (!list)
+		return;
+
+	parse_list_delete(
+		list->count, (void**)list->lhs,
+		(void*)parse_lhs_delete);
+	free(list);
+}
