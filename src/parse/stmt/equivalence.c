@@ -13,7 +13,7 @@ unsigned parse_stmt_equivalence(
 	stmt->equivalence.count = 0;
 	stmt->equivalence.group = NULL;
 
-	unsigned len = parse_list(src, ptr,
+	unsigned len = parse_list(src, &ptr[i],
 		&stmt->equivalence.count,
 		(void***)&stmt->equivalence.group,
 		(void*)parse_lhs_list_bracketed,
