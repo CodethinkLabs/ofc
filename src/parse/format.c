@@ -62,6 +62,29 @@ unsigned parse_format_desc(
 		return (i + len);
 	}
 
+	if (ptr[i] == '(')
+	{
+		i += 1;
+
+		unsigned len = parse_format_desc_list(
+			src, &ptr[i], ')',
+			&desc->repeat.list,
+			&desc->repeat.count);
+		i += len;
+
+		desc->n = n;
+		desc->type = PARSE_FORMAT_DESC_REPEAT;
+
+		if (ptr[i++] != ')')
+		{
+			parse_format_desc_list_delete(
+				desc->repeat.list, desc->repeat.count);
+			return 0;
+		}
+
+		return i;
+	}
+
 	unsigned m;
 	for (m = 0; parse_format_desc__map[m].name; m++)
 	{

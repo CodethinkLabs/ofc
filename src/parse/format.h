@@ -24,9 +24,12 @@ typedef enum
 	PARSE_FORMAT_DESC_TL,
 	PARSE_FORMAT_DESC_TR,
 	PARSE_FORMAT_DESC_STRING,
+	PARSE_FORMAT_DESC_REPEAT,
 } parse_format_desc_e;
 
-typedef struct
+typedef struct parse_format_desc_s parse_format_desc_t;
+
+struct parse_format_desc_s
 {
 	parse_format_desc_e type;
 
@@ -37,9 +40,16 @@ typedef struct
 		{
 			unsigned w, d, e;
 		};
+
 		string_t string;
+
+		struct
+		{
+			unsigned             count;
+			parse_format_desc_t* list;
+		} repeat;
 	};
-} parse_format_desc_t;
+};
 
 
 unsigned parse_format_desc(
