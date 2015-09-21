@@ -63,12 +63,7 @@ struct parse_stmt_s
 
 		parse_common_group_list_t* common;
 
-		struct
-		{
-			unsigned       count;
-			str_ref_t*     name;
-			parse_expr_t** dimension;
-		} dimension;
+		parse_lhs_list_t* dimension;
 
 		struct
 		{

@@ -1,13 +1,6 @@
 #ifndef __parse_array_h__
 #define __parse_array_h__
 
-typedef enum
-{
-	PARSE_ARRAY_RANGE_ALL,
-	PARSE_ARRAY_RANGE_SINGLE,
-	PARSE_ARRAY_RANGE_SLICE,
-} parse_array_range_e;
-
 typedef struct
 {
 	bool          is_slice;

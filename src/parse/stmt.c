@@ -86,10 +86,7 @@ static void parse_stmt__cleanup(
 			parse_common_group_list_delete(stmt.common);
 			break;
 		case PARSE_STMT_DIMENSION:
-			free(stmt.dimension.name);
-			for (i = 0; i < stmt.dimension.count; i++)
-				parse_expr_delete(stmt.dimension.dimension[i]);
-			free(stmt.dimension.dimension);
+			parse_lhs_list_delete(stmt.dimension);
 			break;
 		case PARSE_STMT_EQUIVALENCE:
 			parse_list_delete(
