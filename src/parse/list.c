@@ -3,6 +3,7 @@
 
 unsigned parse_list(
 	const sparse_t* sparse, const char* ptr,
+	char seperator,
 	unsigned* elem_count, void*** elem,
 	void* (*elem_parse)(const sparse_t*, const char*, unsigned*),
 	void (*elem_delete)(void*))
@@ -13,13 +14,14 @@ unsigned parse_list(
 	unsigned i = 0;
 
 	bool initial;
-	for (initial = true; initial || (ptr[i] == ','); initial = false)
+	for (initial = true; initial || (seperator == '\0')
+		|| (ptr[i] == seperator); initial = false)
 	{
-		unsigned j = i + (initial ? 0 : 1);
+		unsigned j = i + (!initial && (seperator != '\0') ? 1 : 0);
 
 		unsigned l;
 		void* e = elem_parse(sparse, &ptr[j], &l);
-		if (!e) return 0;
+		if (!e) break;
 		j += l;
 
 		if (*elem_count >= max_count)

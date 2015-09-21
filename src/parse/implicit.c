@@ -130,7 +130,7 @@ parse_implicit_list_t* parse_implicit_list(
 
 	list->count = 0;
 	list->rule = NULL;
-	unsigned i = parse_list(src, ptr,
+	unsigned i = parse_list(src, ptr, ',',
 		&list->count, (void***)&list->rule,
 		(void*)parse_implicit,
 		(void*)parse_implicit_delete);

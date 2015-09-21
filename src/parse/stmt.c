@@ -157,12 +157,14 @@ static parse_stmt_t* parse_stmt__alloc(
 
 parse_stmt_t* parse_stmt(
 	const sparse_t* src, const char* ptr,
-	const unsigned* label,
 	unsigned* len)
 {
 	parse_stmt_t stmt;
 	stmt.type  = PARSE_STMT_EMPTY;
-	stmt.label = label;
+
+	/* TODO - Allow handling of label 0? */
+	stmt.label = 0;
+	sparse_label_find(src, ptr, &stmt.label);
 
 	unsigned i = 0;
 	switch (toupper(ptr[0]))
@@ -223,7 +225,7 @@ parse_stmt_t* parse_stmt(
 
 	/* Drop incomplete statements, they may be an assignment or declaration. */
 	if ((i > 0)
-		&& !is_end_statement(ptr[i], NULL))
+		&& !is_end_statement(&ptr[i], NULL))
 	{
 		parse_stmt__cleanup(stmt);
 		i = 0;
@@ -239,7 +241,7 @@ parse_stmt_t* parse_stmt(
 	}
 
 	unsigned l = 0;
-	if (!is_end_statement(ptr[i], &l))
+	if (!is_end_statement(&ptr[i], &l))
 	{
 		if (i == 0)
 			return NULL;
@@ -271,4 +273,39 @@ void parse_stmt_delete(
 
 	parse_stmt__cleanup(*stmt);
 	free(stmt);
+}
+
+
+parse_stmt_list_t* parse_stmt_list(
+	const sparse_t* src, const char* ptr,
+	unsigned* len)
+{
+	parse_stmt_list_t* list
+		= (parse_stmt_list_t*)malloc(
+			sizeof(parse_stmt_list_t));
+	if (!list) return NULL;
+
+	list->count = 0;
+	list->stmt = NULL;
+
+	unsigned i = parse_list(src, ptr, '\0',
+		&list->count, (void***)&list->stmt,
+		(void*)parse_stmt,
+		(void*)parse_stmt_delete);
+	if (i == 0) return NULL;
+
+	if (len) *len = i;
+	return list;
+}
+
+void parse_stmt_list_delete(
+	parse_stmt_list_t* list)
+{
+	if (!list)
+		return;
+
+	parse_list_delete(
+		list->count, (void**)list->stmt,
+		(void*)parse_stmt_delete);
+	free(list);
 }

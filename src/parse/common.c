@@ -65,7 +65,7 @@ parse_common_group_list_t* parse_common_group_list(
 	list->count = 0;
 	list->group = NULL;
 
-	unsigned i = parse_list(src, ptr,
+	unsigned i = parse_list(src, ptr, ',',
 		&list->count, (void***)&list->group,
 		(void*)parse_common_group,
 		(void*)parse_common_group_delete);

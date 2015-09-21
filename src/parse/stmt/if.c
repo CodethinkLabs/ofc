@@ -93,7 +93,7 @@ static unsigned parse_stmt_if__statement(
 	}
 
 	stmt->if_stmt.stmt = parse_stmt(
-		src, &ptr[i], NULL, &len);
+		src, &ptr[i], &len);
 	if (!stmt->if_stmt.stmt)
 	{
 		parse_expr_delete(

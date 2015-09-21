@@ -25,14 +25,14 @@ bool is_ident(char c)
 	return (isalnum(c) || (c == '_'));
 }
 
-bool is_end_statement(char c, unsigned* len)
+bool is_end_statement(const char* c, unsigned* len)
 {
-	if (is_vspace(c) || (c == ';'))
+	if (is_vspace(c[0]) || (c[0] == ';'))
 	{
 		if (len) *len = 1;
 		return true;
 	}
 
 	if (len) *len = 0;
-	return (c == '\0');
+	return (c[0] == '\0');
 }

@@ -8,6 +8,6 @@ bool is_vspace(char c);
 bool is_hspace(char c);
 bool is_ident(char c);
 
-bool is_end_statement(char c, unsigned* len);
+bool is_end_statement(const char* c, unsigned* len);
 
 #endif

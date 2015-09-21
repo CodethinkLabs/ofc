@@ -128,12 +128,12 @@ static unsigned parse_expr__level(
 	return 0;
 }
 
-static bool parse_expr__term(char c)
+static bool parse_expr__term(const char* ptr)
 {
-	if (is_end_statement(c, NULL))
+	if (is_end_statement(ptr, NULL))
 		return true;
 
-	switch (c)
+	switch (ptr[0])
 	{
 		case ',':
 		case ')':
@@ -350,7 +350,7 @@ static unsigned parse_expr__binary_at_or_below(
 	if (a_len == 0) return 0;
 
 	/* Optimize by returning a if we see end of statement or close bracket. */
-	if (parse_expr__term(ptr[a_len]))
+	if (parse_expr__term(&ptr[a_len]))
 	{
 		*expr = a;
 		return a_len;
@@ -533,7 +533,7 @@ parse_expr_list_t* parse_expr_list(
 	list->count = 0;
 	list->expr  = NULL;
 
-	unsigned i = parse_list(src, ptr,
+	unsigned i = parse_list(src, ptr, ',',
 		&list->count, (void***)&list->expr,
 		(void*)parse_expr,
 		(void*)parse_expr_delete);

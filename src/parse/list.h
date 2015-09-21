@@ -2,7 +2,7 @@
 #define __parse_list_h__
 
 unsigned parse_list(
-	const sparse_t* sparse, const char* ptr,
+	const sparse_t* sparse, const char* ptr, char seperator,
 	unsigned* elem_count, void*** elem,
 	void* (*elem_parse)(const sparse_t*, const char*, unsigned*),
 	void (*elem_delete)(void*));

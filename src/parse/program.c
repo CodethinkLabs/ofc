@@ -3,23 +3,6 @@
 #include <ctype.h>
 
 
-
-static bool parse_program_add_stmt(
-	parse_program_t* program, parse_stmt_t* stmt)
-{
-	if (!program)
-		return false;
-
-	parse_stmt_t** nstmt
-		= (parse_stmt_t**)realloc(program->stmt,
-			(sizeof(parse_stmt_t*) * (program->stmt_count + 1)));
-	if (!nstmt) return false;
-
-	program->stmt = nstmt;
-	program->stmt[program->stmt_count++] = stmt;
-	return true;
-}
-
 unsigned parse_program(
 	const sparse_t* src, const char* ptr,
 	parse_program_t* program)
@@ -44,36 +27,12 @@ unsigned parse_program(
 	}
 	i += 1;
 
-	program->stmt_count = 0;
-	program->stmt       = NULL;
-
-	while (true)
-	{
-		unsigned label = 0;
-		bool has_label = sparse_label_find(src, ptr, &label);
-
-		unsigned len;
-		parse_stmt_t* stmt = parse_stmt(
-			src, &ptr[i], (has_label ? &label : NULL), &len);
-		if (!stmt) break;
-
-		if (stmt->type == PARSE_STMT_EMPTY)
-		{
-			sparse_warning(src, &ptr[i],
-				"Empty statement");
-			parse_stmt_delete(stmt);
-		}
-		else if (!parse_program_add_stmt(program, stmt))
-		{
-			/* This should never happen, likely out of memory. */
-			parse_program_cleanup(*program);
-			return 0;
-		}
-		i += len;
-	}
+	unsigned len = 0;
+	program->body = parse_stmt_list(src, &ptr[i], &len);
+	i += len;
 
 	str_ref_t end_name = STR_REF_EMPTY;
-	unsigned len = parse_keyword_name(
+	len = parse_keyword_name(
 		src, &ptr[i], PARSE_KEYWORD_END_PROGRAM, &end_name);
 	if (len == 0)
 	{
@@ -81,6 +40,12 @@ unsigned parse_program(
 			"Expected END PROGRAM");
 		parse_program_cleanup(*program);
 		return 0;
+	}
+
+	if (!program->body)
+	{
+		sparse_warning(src, &ptr[i],
+			"Empty program body");
 	}
 
 	if (!str_ref_empty(end_name)
@@ -109,8 +74,5 @@ unsigned parse_program(
 void parse_program_cleanup(
 	parse_program_t program)
 {
-	unsigned i;
-	for (i = 0; i < program.stmt_count; i++)
-		parse_stmt_delete(program.stmt[i]);
-	free(program.stmt);
+	parse_stmt_list_delete(program.body);
 }

@@ -95,7 +95,7 @@ parse_array_index_t* parse_array_index(
 	index->count = 0;
 	index->range = NULL;
 
-	unsigned l = parse_list(src, &ptr[i],
+	unsigned l = parse_list(src, &ptr[i], ',',
 		&index->count, (void***)&index->range,
 		(void*)parse_array__range,
 		(void*)parse_array__range_delete);

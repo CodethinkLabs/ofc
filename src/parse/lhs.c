@@ -182,7 +182,7 @@ parse_lhs_list_t* parse_lhs_list(
 	list->count = 0;
 	list->lhs = NULL;
 
-	unsigned i = parse_list(src, ptr,
+	unsigned i = parse_list(src, ptr, ',',
 		&list->count, (void***)&list->lhs,
 		(void*)parse_lhs,
 		(void*)parse_lhs_delete);

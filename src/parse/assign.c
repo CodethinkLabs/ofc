@@ -92,7 +92,7 @@ parse_assign_list_t* parse_assign_list(
 	list->count = 0;
 	list->assign = NULL;
 
-	unsigned i = parse_list(src, ptr,
+	unsigned i = parse_list(src, ptr, ',',
 		&list->count, (void***)&list->assign,
 		(void*)parse_assign,
 		(void*)parse_assign_delete);

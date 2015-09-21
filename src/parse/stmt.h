@@ -42,7 +42,7 @@ struct parse_stmt_s
 {
 	parse_stmt_e type;
 
-	const unsigned* label;
+	unsigned label;
 
 	union
 	{
@@ -159,10 +159,22 @@ struct parse_stmt_s
 
 parse_stmt_t* parse_stmt(
 	const sparse_t* src, const char* ptr,
-	const unsigned* label,
 	unsigned* len);
-
 void parse_stmt_delete(
 	parse_stmt_t* stmt);
+
+
+
+typedef struct
+{
+	unsigned       count;
+	parse_stmt_t** stmt;
+} parse_stmt_list_t;
+
+parse_stmt_list_t* parse_stmt_list(
+	const sparse_t* src, const char* ptr,
+	unsigned* len);
+void parse_stmt_list_delete(
+	parse_stmt_list_t* list);
 
 #endif
