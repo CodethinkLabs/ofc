@@ -151,6 +151,10 @@ unsigned parse_keyword_name(
 			len = 9;
 			match = strncasecmp(ptr, "DIMENSION", len);
 			break;
+		case PARSE_KEYWORD_EQUIVALENCE:
+			len = 11;
+			match = strncasecmp(ptr, "EQUIVALENCE", len);
+			break;
 
 		case PARSE_KEYWORD_KIND:
 			len = 4;

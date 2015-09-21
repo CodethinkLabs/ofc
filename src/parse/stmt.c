@@ -12,6 +12,9 @@ unsigned parse_stmt_decl(
 unsigned parse_stmt_dimension(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
+unsigned parse_stmt_equivalence(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
 unsigned parse_stmt_assignment(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
@@ -81,6 +84,12 @@ static void parse_stmt__cleanup(
 			for (i = 0; i < stmt.dimension.count; i++)
 				parse_expr_delete(stmt.dimension.dimension[i]);
 			free(stmt.dimension.dimension);
+			break;
+		case PARSE_STMT_EQUIVALENCE:
+			parse_list_delete(
+				stmt.equivalence.count,
+				(void**)stmt.equivalence.name,
+				(void*)parse_lhs_delete);
 			break;
 		case PARSE_STMT_STOP:
 		case PARSE_STMT_PAUSE:
@@ -174,6 +183,10 @@ parse_stmt_t* parse_stmt(
 			if (i == 0) i = parse_stmt_do(src, ptr, &stmt);
 			if (i == 0) i = parse_stmt_data(src, ptr, &stmt);
 			if (i == 0) i = parse_stmt_dimension(src, ptr, &stmt);
+			break;
+
+		case 'E':
+			if (i == 0) i = parse_stmt_equivalence(src, ptr, &stmt);
 			break;
 
 		case 'F':

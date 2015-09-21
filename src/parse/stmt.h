@@ -9,6 +9,7 @@ typedef enum
 	PARSE_STMT_CALL,
 	PARSE_STMT_DECL,
 	PARSE_STMT_DIMENSION,
+	PARSE_STMT_EQUIVALENCE,
 	PARSE_STMT_ASSIGNMENT,
 	PARSE_STMT_CONTINUE,
 	PARSE_STMT_STOP,
@@ -65,6 +66,12 @@ struct parse_stmt_s
 			str_ref_t*     name;
 			parse_expr_t** dimension;
 		} dimension;
+
+		struct
+		{
+			unsigned       count;
+			parse_lhs_t**  name;
+		} equivalence;
 
 		struct
 		{
