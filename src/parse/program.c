@@ -37,7 +37,7 @@ unsigned parse_program(
 	if (len == 0)
 	{
 		sparse_error(src, &ptr[i],
-			"Expected END PROGRAM");
+			"Invalid statement in PROGRAM body");
 		parse_program_cleanup(*program);
 		return 0;
 	}
