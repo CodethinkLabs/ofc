@@ -3,7 +3,7 @@
 
 static unsigned parse_stmt_data__nlist(
 	const sparse_t* src, const char* ptr,
-	parse_lhs_t** name, unsigned* count, unsigned* max_count)
+	parse_lhs_t*** name, unsigned* count, unsigned* max_count)
 {
 	unsigned ocount = *count;
 	unsigned i = 0, c;
@@ -17,24 +17,24 @@ static unsigned parse_stmt_data__nlist(
 			j += 1;
 		}
 
-		parse_lhs_t lhs;
-		unsigned len = parse_lhs(
-			src, &ptr[j], &lhs);
-		if (len == 0) break;
+		unsigned len;
+		parse_lhs_t* lhs
+			= parse_lhs(src, &ptr[j], &len);
+		if (!lhs) break;
 
 		if (*count >= *max_count)
 		{
 			unsigned ncount = (*max_count << 1);
 			if (ncount == 0) ncount = 16;
-			parse_lhs_t* nname
-				= (parse_lhs_t*)realloc(*name,
-					(sizeof(parse_lhs_t) * ncount));
+			parse_lhs_t** nname
+				= (parse_lhs_t**)realloc(*name,
+					(sizeof(parse_lhs_t*) * ncount));
 			if (!nname)
 			{
-				parse_lhs_cleanup(lhs);
+				parse_lhs_delete(lhs);
 				unsigned e;
 				for (e = ocount; e < *count; e++)
-					parse_lhs_cleanup((*name)[e]);
+					parse_lhs_delete((*name)[e]);
 				*count = ocount;
 				return 0;
 			}

@@ -14,9 +14,10 @@ unsigned parse_stmt_do(
 	if (len == 0) return 0;
 	i += len;
 
-	len = parse_lhs(src, &ptr[i],
-		&stmt->do_loop.iterator);
-	if (len == 0) return 0;
+	stmt->do_loop.iterator
+		= parse_lhs(src, &ptr[i], &len);
+	if (!stmt->do_loop.iterator)
+		return 0;
 	i += len;
 
 	if (ptr[i++] != '=')
@@ -36,7 +37,7 @@ unsigned parse_stmt_do(
 	if (ptr[i++] != ',')
 	{
 		parse_expr_delete(stmt->do_loop.init);
-		parse_lhs_cleanup(stmt->do_loop.iterator);
+		parse_lhs_delete(stmt->do_loop.iterator);
 		return 0;
 	}
 
@@ -45,7 +46,7 @@ unsigned parse_stmt_do(
 	if (!stmt->do_loop.last)
 	{
 		parse_expr_delete(stmt->do_loop.init);
-		parse_lhs_cleanup(stmt->do_loop.iterator);
+		parse_lhs_delete(stmt->do_loop.iterator);
 		return 0;
 	}
 	i += len;
@@ -60,7 +61,7 @@ unsigned parse_stmt_do(
 		{
 			parse_expr_delete(stmt->do_loop.last);
 			parse_expr_delete(stmt->do_loop.init);
-			parse_lhs_cleanup(stmt->do_loop.iterator);
+			parse_lhs_delete(stmt->do_loop.iterator);
 			return 0;
 		}
 		i += len;

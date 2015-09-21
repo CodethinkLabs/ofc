@@ -12,7 +12,7 @@ static void parse_expr__cleanup(
 			break;
 
 		case PARSE_EXPR_VARIABLE:
-			parse_lhs_cleanup(expr.variable);
+			parse_lhs_delete(expr.variable);
 			break;
 
 		case PARSE_EXPR_BRACKETS:
@@ -53,8 +53,8 @@ static bool parse_expr__clone(
 			break;
 
 		case PARSE_EXPR_VARIABLE:
-			if (!parse_lhs_clone(
-				&clone.variable, &src->variable))
+			clone.variable = parse_lhs_copy(src->variable);
+			if (!clone.variable)
 				return false;
 			break;
 
@@ -216,9 +216,9 @@ static unsigned parse_expr__primary(
 
 	/* TODO - Check for intrinsics first. */
 
-	len = parse_lhs(
-		src, ptr, &expr->variable);
-	if (len > 0)
+	expr->variable
+		= parse_lhs(src, ptr, &len);
+	if (expr->variable)
 	{
 		expr->type = PARSE_EXPR_VARIABLE;
 		return len;

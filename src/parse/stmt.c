@@ -58,7 +58,7 @@ static void parse_stmt__cleanup(
 	switch (stmt.type)
 	{
 		case PARSE_STMT_ASSIGNMENT:
-			parse_lhs_cleanup(stmt.assignment.lhs);
+			parse_lhs_delete(stmt.assignment.lhs);
 			parse_expr_delete(stmt.assignment.rhs);
 			break;
 		case PARSE_STMT_IMPLICIT:
@@ -100,7 +100,7 @@ static void parse_stmt__cleanup(
 			parse_expr_delete(stmt.if_stmt.cond);
 			break;
 		case PARSE_STMT_DO:
-			parse_lhs_cleanup(stmt.do_loop.iterator);
+			parse_lhs_delete(stmt.do_loop.iterator);
 			parse_expr_delete(stmt.do_loop.init);
 			parse_expr_delete(stmt.do_loop.last);
 			parse_expr_delete(stmt.do_loop.step);
@@ -127,7 +127,7 @@ static void parse_stmt__cleanup(
 				parse_expr_delete(stmt.data.init[i]);
 			free(stmt.data.init);
 			for (i = 0; i < stmt.data.name_count; i++)
-				parse_lhs_cleanup(stmt.data.name[i]);
+				parse_lhs_delete(stmt.data.name[i]);
 			free(stmt.data.name);
 			break;
 		default:

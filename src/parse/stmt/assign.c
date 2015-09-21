@@ -4,9 +4,11 @@ unsigned parse_stmt_assignment(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt)
 {
-	unsigned i = parse_lhs(src, ptr,
-		&stmt->assignment.lhs);
-	if (i == 0) return 0;
+	unsigned i;
+	stmt->assignment.lhs
+		= parse_lhs(src, ptr, &i);
+	if (!stmt->assignment.lhs)
+		return 0;
 
 	if (ptr[i++] != '=')
 		return 0;
@@ -18,7 +20,7 @@ unsigned parse_stmt_assignment(
 	{
 		sparse_error(src, &ptr[i],
 			"Expected expression on right hand side of assignment");
-		parse_lhs_cleanup(stmt->assignment.lhs);
+		parse_lhs_delete(stmt->assignment.lhs);
 		return 0;
 	}
 	i += len;

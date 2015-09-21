@@ -1,51 +1,7 @@
 #include "parse.h"
 
-unsigned parse_lhs(
-	const sparse_t* src, const char* ptr,
-	parse_lhs_t* lhs)
-{
-	unsigned i = parse_name(
-		src, ptr, &lhs->variable);
-	if (i == 0) return 0;
 
-	lhs->type = PARSE_LHS_VARIABLE;
-
-	if (ptr[i] == '(')
-	{
-		/* TODO - Implement more complex array slices. */
-
-		i += 1;
-
-		parse_lhs_t* plhs
-			= parse_lhs_alloc(*lhs);
-		if (!plhs) return 0;
-
-		lhs->type   = PARSE_LHS_ARRAY;
-		lhs->parent = plhs;
-
-		unsigned len = 0;
-		lhs->array.index = parse_expr(
-			src, &ptr[i], &len);
-		if (!lhs->array.index)
-		{
-			parse_lhs_cleanup(*lhs);
-			return 0;
-		}
-		i += len;
-
-		if (ptr[i++] != ')')
-		{
-			parse_lhs_cleanup(*lhs);
-			return 0;
-		}
-	}
-
-	/* TODO - Implement struct LHS types. */
-
-	return i;
-}
-
-void parse_lhs_cleanup(
+static void parse_lhs__cleanup(
 	parse_lhs_t lhs)
 {
 	if (lhs.type != PARSE_LHS_VARIABLE)
@@ -61,24 +17,19 @@ void parse_lhs_cleanup(
 	}
 }
 
-bool parse_lhs_base_name(
-	const parse_lhs_t lhs,
-	str_ref_t* name)
+static parse_lhs_t* parse_lhs__alloc(
+	parse_lhs_t lhs)
 {
-	if (lhs.type == PARSE_LHS_VARIABLE)
-	{
-		if (name) *name = lhs.variable;
-		return true;
-	}
+	parse_lhs_t* alhs
+		= (parse_lhs_t*)malloc(
+			sizeof(parse_lhs_t));
+	if (!alhs) return NULL;
 
-	if (!lhs.parent)
-		return false;
-
-	return parse_lhs_base_name(
-		*lhs.parent, name);
+	*alhs = lhs;
+	return alhs;
 }
 
-bool parse_lhs_clone(
+static bool parse_lhs__clone(
 	parse_lhs_t* dst, const parse_lhs_t* src)
 {
 	if (!src || !dst)
@@ -90,15 +41,15 @@ bool parse_lhs_clone(
 		&& src->parent)
 	{
 		parse_lhs_t parent;
-		if (!parse_lhs_clone(
+		if (!parse_lhs__clone(
 			&parent, src->parent))
 			return false;
 
 		clone.parent
-			= parse_lhs_alloc(parent);
+			= parse_lhs__alloc(parent);
 		if (!clone.parent)
 		{
-			parse_lhs_cleanup(parent);
+			parse_lhs__cleanup(parent);
 			return false;
 		}
 	}
@@ -117,16 +68,85 @@ bool parse_lhs_clone(
 }
 
 
-parse_lhs_t* parse_lhs_alloc(
-	parse_lhs_t lhs)
-{
-	parse_lhs_t* alhs
-		= (parse_lhs_t*)malloc(
-			sizeof(parse_lhs_t));
-	if (!alhs) return NULL;
 
-	*alhs = lhs;
+parse_lhs_t* parse_lhs(
+	const sparse_t* src, const char* ptr,
+	unsigned* len)
+{
+	parse_lhs_t lhs;
+	lhs.type = PARSE_LHS_VARIABLE;
+
+	unsigned i = parse_name(
+		src, ptr, &lhs.variable);
+	if (i == 0) return NULL;
+
+	parse_lhs_t* alhs
+		= parse_lhs__alloc(lhs);
+	if (!alhs)
+	{
+		parse_lhs__cleanup(lhs);
+		return NULL;
+	}
+
+	if (ptr[i] == '(')
+	{
+		/* TODO - Implement more complex array slices. */
+
+		i += 1;
+
+		lhs.type   = PARSE_LHS_ARRAY;
+		lhs.parent = alhs;
+
+		unsigned l = 0;
+		lhs.array.index = parse_expr(
+			src, &ptr[i], &l);
+		if (!lhs.array.index)
+		{
+			parse_lhs__cleanup(lhs);
+			return NULL;
+		}
+		i += l;
+
+		if (ptr[i++] != ')')
+		{
+			parse_lhs__cleanup(lhs);
+			return NULL;
+		}
+
+		parse_lhs_t* alhs
+			= parse_lhs__alloc(lhs);
+		if (!alhs)
+		{
+			parse_lhs__cleanup(lhs);
+			return NULL;
+		}
+	}
+
+	/* TODO - Implement struct LHS types. */
+
+	if (len) *len = i;
 	return alhs;
+}
+
+parse_lhs_t* parse_lhs_copy(
+	parse_lhs_t* lhs)
+{
+	if (!lhs)
+		return NULL;
+
+	parse_lhs_t clone;
+	if (!parse_lhs__clone(&clone, lhs))
+		return NULL;
+
+	parse_lhs_t* copy
+		= parse_lhs__alloc(clone);
+	if (!copy)
+	{
+		parse_lhs__cleanup(clone);
+		return NULL;
+	}
+
+	return copy;
 }
 
 void parse_lhs_delete(
@@ -135,6 +155,25 @@ void parse_lhs_delete(
 	if (!lhs)
 		return;
 
-	parse_lhs_cleanup(*lhs);
+	parse_lhs__cleanup(*lhs);
 	free(lhs);
+}
+
+
+
+bool parse_lhs_base_name(
+	const parse_lhs_t lhs,
+	str_ref_t* name)
+{
+	if (lhs.type == PARSE_LHS_VARIABLE)
+	{
+		if (name) *name = lhs.variable;
+		return true;
+	}
+
+	if (!lhs.parent)
+		return false;
+
+	return parse_lhs_base_name(
+		*lhs.parent, name);
 }

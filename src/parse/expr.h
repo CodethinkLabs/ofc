@@ -21,7 +21,7 @@ struct parse_expr_s
 	union
 	{
 		parse_literal_t literal;
-		parse_lhs_t     variable;
+		parse_lhs_t*    variable;
 
 		struct
 		{

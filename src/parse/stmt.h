@@ -68,7 +68,7 @@ struct parse_stmt_s
 
 		struct
 		{
-			parse_lhs_t   lhs;
+			parse_lhs_t*  lhs;
 			parse_expr_t* rhs;
 		} assignment;
 
@@ -105,7 +105,7 @@ struct parse_stmt_s
 		struct
 		{
 			parse_label_t end_label;
-			parse_lhs_t   iterator;
+			parse_lhs_t*  iterator;
 			parse_expr_t* init;
 			parse_expr_t* last;
 			parse_expr_t* step;
@@ -143,7 +143,7 @@ struct parse_stmt_s
 		struct
 		{
 			unsigned       name_count;
-			parse_lhs_t*   name;
+			parse_lhs_t**  name;
 			unsigned       init_count;
 			parse_expr_t** init;
 		} data;

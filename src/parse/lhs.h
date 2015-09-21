@@ -43,24 +43,16 @@ struct parse_lhs_s
 };
 
 
-unsigned parse_lhs(
+parse_lhs_t* parse_lhs(
 	const sparse_t* src, const char* ptr,
+	unsigned* len);
+parse_lhs_t* parse_lhs_copy(
 	parse_lhs_t* lhs);
-
-void parse_lhs_cleanup(
-	parse_lhs_t lhs);
+void parse_lhs_delete(
+	parse_lhs_t* lhs);
 
 bool parse_lhs_base_name(
 	const parse_lhs_t lhs,
 	str_ref_t* name);
-
-bool parse_lhs_clone(
-	parse_lhs_t* dst, const parse_lhs_t* src);
-
-
-parse_lhs_t* parse_lhs_alloc(
-	parse_lhs_t lhs);
-void parse_lhs_delete(
-	parse_lhs_t* lhs);
 
 #endif
