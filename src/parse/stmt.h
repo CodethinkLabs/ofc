@@ -60,8 +60,8 @@ struct parse_stmt_s
 
 		struct
 		{
-			parse_type_t*        type;
-			parse_assign_list_t* entry;
+			parse_type_t*      type;
+			parse_decl_list_t* decl;
 		} decl;
 
 		parse_common_group_list_t* common;

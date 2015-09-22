@@ -21,6 +21,7 @@ typedef struct parse_implicit_do_s parse_implicit_do_t;
 #include "assign.h"
 #include "implicit_do.h"
 #include "type.h"
+#include "decl.h"
 #include "common.h"
 #include "implicit.h"
 #include "iolist.h"

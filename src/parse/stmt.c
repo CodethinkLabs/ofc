@@ -103,7 +103,7 @@ static void parse_stmt__cleanup(
 			break;
 		case PARSE_STMT_DECL:
 			parse_type_delete(stmt.decl.type);
-			parse_assign_list_delete(stmt.decl.entry);
+			parse_decl_list_delete(stmt.decl.decl);
 			break;
 		case PARSE_STMT_COMMON:
 			parse_common_group_list_delete(stmt.common);

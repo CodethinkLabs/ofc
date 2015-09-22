@@ -12,9 +12,9 @@ unsigned parse_stmt_decl(
 		return 0;
 
 	unsigned l;
-	stmt->decl.entry = parse_assign_list(
+	stmt->decl.decl = parse_decl_list(
 		src, &ptr[i], &l);
-	if (!stmt->decl.entry)
+	if (!stmt->decl.decl)
 	{
 		parse_type_delete(stmt->decl.type);
 		return 0;
