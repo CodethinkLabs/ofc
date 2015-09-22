@@ -87,7 +87,16 @@ unsigned parse_stmt_subroutine(
 	unsigned len;
 	stmt->program.args = parse_lhs_list_bracketed(
 		src, &ptr[i], &len);
-	if (stmt->program.args) i += len;
+	if (stmt->program.args)
+	{
+		i += len;
+	}
+	else if (ptr[i] == '(')
+	{
+		i += 1;
+		if (ptr[i++] != ')')
+			return 0;
+	}
 
 	if (!is_end_statement(&ptr[i], &len))
 	{
@@ -133,7 +142,16 @@ unsigned parse_stmt_function(
 
 	stmt->program.args = parse_lhs_list_bracketed(
 		src, &ptr[i], &len);
-	if (stmt->program.args) i += len;
+	if (stmt->program.args)
+	{
+		i += len;
+	}
+	else if (ptr[i] == '(')
+	{
+		i += 1;
+		if (ptr[i++] != ')')
+			return 0;
+	}
 
 	if (!is_end_statement(&ptr[i], &len))
 	{

@@ -184,9 +184,7 @@ static unsigned parse_expr__intrinsic(
 	unsigned len;
 	expr->intrinsic.args = parse_expr_list(
 		src, &ptr[i], &len);
-	if (!expr->intrinsic.args)
-		return 0;
-	i += len;
+	if (expr->intrinsic.args) i += len;
 
 	if (ptr[i++] != ')')
 	{
