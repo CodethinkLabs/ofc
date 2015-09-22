@@ -130,12 +130,17 @@ static void parse_stmt__cleanup(
 			parse_expr_delete(stmt.go_to_comp.cond);
 			break;
 		case PARSE_STMT_IF_COMPUTED:
-			free(stmt.if_comp.label);
 			parse_expr_delete(stmt.if_comp.cond);
+			free(stmt.if_comp.label);
 			break;
 		case PARSE_STMT_IF_STATEMENT:
-			parse_stmt_delete(stmt.if_stmt.stmt);
 			parse_expr_delete(stmt.if_stmt.cond);
+			parse_stmt_delete(stmt.if_stmt.stmt);
+			break;
+		case PARSE_STMT_IF_THEN:
+			parse_expr_delete(stmt.if_then.cond);
+			parse_stmt_list_delete(stmt.if_then.block_then);
+			parse_stmt_list_delete(stmt.if_then.block_else);
 			break;
 		case PARSE_STMT_DO:
 			parse_assign_delete(stmt.do_loop.init);

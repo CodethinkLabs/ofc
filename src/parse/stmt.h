@@ -31,6 +31,7 @@ typedef enum
 	PARSE_STMT_GO_TO_COMPUTED,
 	PARSE_STMT_IF_COMPUTED,
 	PARSE_STMT_IF_STATEMENT,
+	PARSE_STMT_IF_THEN,
 	PARSE_STMT_DO,
 	PARSE_STMT_IO_REWIND,
 	PARSE_STMT_IO_BACKSPACE,
@@ -112,6 +113,13 @@ struct parse_stmt_s
 			parse_expr_t*  cond;
 			parse_stmt_t*  stmt;
 		} if_stmt;
+
+		struct
+		{
+			parse_expr_t*      cond;
+			parse_stmt_list_t* block_then;
+			parse_stmt_list_t* block_else;
+		} if_then;
 
 		struct
 		{
