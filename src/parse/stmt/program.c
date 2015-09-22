@@ -87,23 +87,27 @@ unsigned parse_stmt_subroutine(
 		src, ptr, PARSE_KEYWORD_SUBROUTINE, &stmt->program.name);
 	if (i == 0) return 0;
 
-	unsigned len;
-	stmt->program.args = parse_lhs_list_bracketed(
-		src, &ptr[i], &len);
-	if (stmt->program.args)
-	{
-		i += len;
-	}
-	else if (ptr[i] == '(')
+	stmt->program.args = NULL;
+	if (ptr[i] == '(')
 	{
 		i += 1;
+
+		unsigned len;
+		stmt->program.args = parse_call_arg_list(
+			src, &ptr[i], &len);
+		if (stmt->program.args) i += len;
+
 		if (ptr[i++] != ')')
+		{
+			parse_call_arg_list_delete(stmt->program.args);
 			return 0;
+		}
 	}
 
+	unsigned len;
 	if (!is_end_statement(&ptr[i], &len))
 	{
-		parse_lhs_list_delete(stmt->program.args);
+		parse_call_arg_list_delete(stmt->program.args);
 		return 0;
 	}
 	i += len;
@@ -112,7 +116,7 @@ unsigned parse_stmt_subroutine(
 		src, &ptr[i], PARSE_KEYWORD_SUBROUTINE, stmt);
 	if (len == 0)
 	{
-		parse_lhs_list_delete(stmt->program.args);
+		parse_call_arg_list_delete(stmt->program.args);
 		return 0;
 	}
 	i += len;
@@ -143,23 +147,27 @@ unsigned parse_stmt_function(
 	}
 	i += len;
 
-	stmt->program.args = parse_lhs_list_bracketed(
-		src, &ptr[i], &len);
-	if (stmt->program.args)
-	{
-		i += len;
-	}
-	else if (ptr[i] == '(')
+	stmt->program.args = NULL;
+	if (ptr[i] == '(')
 	{
 		i += 1;
+
+		unsigned len;
+		stmt->program.args = parse_call_arg_list(
+			src, &ptr[i], &len);
+		if (stmt->program.args) i += len;
+
 		if (ptr[i++] != ')')
+		{
+			parse_call_arg_list_delete(stmt->program.args);
 			return 0;
+		}
 	}
 
 	if (!is_end_statement(&ptr[i], &len))
 	{
 		parse_type_delete(stmt->program.type);
-		parse_lhs_list_delete(stmt->program.args);
+		parse_call_arg_list_delete(stmt->program.args);
 		return 0;
 	}
 	i += len;
@@ -169,7 +177,7 @@ unsigned parse_stmt_function(
 	if (len == 0)
 	{
 		parse_type_delete(stmt->program.type);
-		parse_lhs_list_delete(stmt->program.args);
+		parse_call_arg_list_delete(stmt->program.args);
 		return 0;
 	}
 	i += len;

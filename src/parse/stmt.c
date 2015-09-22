@@ -111,7 +111,7 @@ static void parse_stmt__cleanup(
 		case PARSE_STMT_FUNCTION:
 		case PARSE_STMT_BLOCK_DATA:
 			parse_stmt_list_delete(stmt.program.body);
-			parse_lhs_list_delete(stmt.program.args);
+			parse_call_arg_list_delete(stmt.program.args);
 			parse_type_delete(stmt.program.type);
 			break;
 		case PARSE_STMT_ASSIGNMENT:

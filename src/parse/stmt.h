@@ -202,11 +202,11 @@ struct parse_stmt_s
 		struct
 		{
 			/* type is only set for functions. */
-			parse_type_t*      type;
-			str_ref_t          name;
+			parse_type_t*          type;
+			str_ref_t              name;
 			/* args is only set for functions and subroutines. */
-			parse_lhs_list_t*  args;
-			parse_stmt_list_t* body;
+			parse_call_arg_list_t* args;
+			parse_stmt_list_t*     body;
 		} program;
 	};
 };
