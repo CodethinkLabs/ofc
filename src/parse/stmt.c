@@ -67,6 +67,9 @@ unsigned parse_stmt_assign(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
 
+unsigned parse_stmt_io_open(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
 unsigned parse_stmt_io_rewind(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
@@ -173,6 +176,18 @@ static void parse_stmt__cleanup(
 			parse_expr_delete(stmt.io.err);
 			parse_iolist_delete(stmt.io.args);
 			break;
+		case PARSE_STMT_IO_OPEN:
+			parse_expr_delete(stmt.io_open.unit);
+			parse_expr_delete(stmt.io_open.access);
+			parse_expr_delete(stmt.io_open.blank);
+			parse_expr_delete(stmt.io_open.err);
+			parse_expr_delete(stmt.io_open.form);
+			parse_expr_delete(stmt.io_open.iostat);
+			parse_expr_delete(stmt.io_open.recl);
+			parse_expr_delete(stmt.io_open.status);
+			parse_expr_delete(stmt.io_open.fileopt);
+			parse_expr_delete(stmt.io_open.action);
+			break;
 		case PARSE_STMT_FORMAT:
 			parse_format_desc_list_delete(
 				stmt.format.desc, stmt.format.desc_count);
@@ -259,6 +274,10 @@ parse_stmt_t* parse_stmt(
 			if (i == 0) i = parse_stmt_implicit(src, ptr, &stmt);
 			if (i == 0) i = parse_stmt_if(src, ptr, &stmt);
 			if (i == 0) i = parse_stmt_intrinsic(src, ptr, &stmt);
+			break;
+
+		case 'O':
+			if (i == 0) i = parse_stmt_io_open(src, ptr, &stmt);
 			break;
 
 		case 'P':
