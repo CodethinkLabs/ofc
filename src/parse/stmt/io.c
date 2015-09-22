@@ -39,6 +39,7 @@ static unsigned parse_stmt__io(
 
 	stmt->io.unit   = NULL;
 	stmt->io.fmt    = NULL;
+	stmt->io.fmt_asterisk = false;
 	stmt->io.rec    = NULL;
 	stmt->io.end    = NULL;
 	stmt->io.iostat = NULL;
@@ -90,8 +91,16 @@ static unsigned parse_stmt__io(
 					src, &ptr[j], &len);
 				if (!stmt->io.fmt)
 				{
-					parse_expr_delete(stmt->io.unit);
-					return 0;
+					if (ptr[j] == '*')
+					{
+						stmt->io.fmt_asterisk = true;
+						len = 1;
+					}
+					else
+					{
+						parse_expr_delete(stmt->io.unit);
+						return 0;
+					}
 				}
 				i = (j + len);
 			}
