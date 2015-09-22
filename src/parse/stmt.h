@@ -90,6 +90,13 @@ struct parse_stmt_s
 
 		struct
 		{
+			parse_label_t  cond;
+			unsigned       label_count;
+			parse_label_t* label;
+		} go_to_assign;
+
+		struct
+		{
 			parse_label_t label;
 		} go_to;
 

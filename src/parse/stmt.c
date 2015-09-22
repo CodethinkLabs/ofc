@@ -123,6 +123,8 @@ static void parse_stmt__cleanup(
 			parse_expr_delete(stmt.stop_pause_return.value);
 			break;
 		case PARSE_STMT_GO_TO_ASSIGNED:
+			free(stmt.go_to_assign.label);
+			break;
 		case PARSE_STMT_GO_TO_COMPUTED:
 			free(stmt.go_to_comp.label);
 			parse_expr_delete(stmt.go_to_comp.cond);
