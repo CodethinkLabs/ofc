@@ -42,13 +42,16 @@ unsigned parse_stmt_program(
 		src, ptr, PARSE_KEYWORD_PROGRAM, &stmt->program.name);
 	if (i == 0) return 0;
 
-	lang_opts_t opts = sparse_lang_opts(src);
-	if (opts.case_sensitive
-		? str_ref_equal(stmt->program.name, parse_stmt_program__current)
-		: str_ref_equal_ci(stmt->program.name, parse_stmt_program__current))
+	if (!str_ref_empty(stmt->program.name))
 	{
-		stmt->type = PARSE_STMT_EMPTY;
-		return i;
+		lang_opts_t opts = sparse_lang_opts(src);
+		if (opts.case_sensitive
+			? str_ref_equal(stmt->program.name, parse_stmt_program__current)
+			: str_ref_equal_ci(stmt->program.name, parse_stmt_program__current))
+		{
+			stmt->type = PARSE_STMT_EMPTY;
+			return i;
+		}
 	}
 
 	unsigned len;
@@ -188,13 +191,16 @@ unsigned parse_stmt_block_data(
 		src, ptr, PARSE_KEYWORD_BLOCK_DATA, &stmt->program.name);
 	if (i == 0) return 0;
 
-	lang_opts_t opts = sparse_lang_opts(src);
-	if (opts.case_sensitive
-		? str_ref_equal(stmt->program.name, parse_stmt_block_data__current)
-		: str_ref_equal_ci(stmt->program.name, parse_stmt_block_data__current))
+	if (!str_ref_empty(stmt->program.name))
 	{
-		stmt->type = PARSE_STMT_EMPTY;
-		return i;
+		lang_opts_t opts = sparse_lang_opts(src);
+		if (opts.case_sensitive
+			? str_ref_equal(stmt->program.name, parse_stmt_block_data__current)
+			: str_ref_equal_ci(stmt->program.name, parse_stmt_block_data__current))
+		{
+			stmt->type = PARSE_STMT_EMPTY;
+			return i;
+		}
 	}
 
 	unsigned len;
