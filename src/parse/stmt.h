@@ -43,6 +43,7 @@ typedef enum
 	PARSE_STMT_IO_END_FILE,
 	PARSE_STMT_FORMAT,
 	PARSE_STMT_DATA,
+	PARSE_STMT_PARAMETER,
 	PARSE_STMT_ASSIGN,
 } parse_stmt_e;
 
@@ -179,6 +180,11 @@ struct parse_stmt_s
 			unsigned       init_count;
 			parse_expr_t** init;
 		} data;
+
+		struct
+		{
+			parse_assign_list_t* list;
+		} parameter;
 
 		struct
 		{

@@ -49,6 +49,7 @@ static const char* parse_keyword__name[] =
 	"INTRINSIC",
 
 	"DATA",
+	"PARAMETER",
 
 	"FORMAT",
 
