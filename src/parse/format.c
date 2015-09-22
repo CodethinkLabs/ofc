@@ -45,18 +45,26 @@ unsigned parse_format_desc(
 		src, ptr, &desc->string);
 	if (len > 0)
 	{
+		desc->neg  = false;
 		desc->n    = 0;
 		desc->type = PARSE_FORMAT_DESC_HOLLERITH;
 		return len;
 	}
 
-	unsigned i, n = 0;
-	i = parse_unsigned(src, ptr, &n);
+	unsigned i = 0;
+	bool negative = (ptr[i] == '-');
+	if (negative || (ptr[i] == '+'))
+		i += 1;
+
+	unsigned l, n = 0;
+	l = parse_unsigned(src, &ptr[i], &n);
+	i = (l > 0 ? i + l : 0);
 
 	len = parse_character(
 		src, &ptr[i], &desc->string);
 	if (len > 0)
 	{
+		desc->neg  = negative;
 		desc->n    = n;
 		desc->type = PARSE_FORMAT_DESC_STRING;
 		return (i + len);
@@ -72,7 +80,8 @@ unsigned parse_format_desc(
 			&desc->repeat.count);
 		i += len;
 
-		desc->n = n;
+		desc->neg = negative;
+		desc->n    = n;
 		desc->type = PARSE_FORMAT_DESC_REPEAT;
 
 		if (ptr[i++] != ')')
@@ -123,6 +132,7 @@ unsigned parse_format_desc(
 	}
 
 	desc->type = map.type;
+	desc->neg = negative;
 	desc->n = n;
 	desc->w = w;
 	desc->d = d;
@@ -156,25 +166,17 @@ unsigned parse_format_desc_list(
 	unsigned             dcount = 0;
 	unsigned             dmax   = 0;
 
-	bool was_slash = false;
 	while (ptr[i] != terminator)
 	{
 		unsigned comma = 0;
-		if (dcount > 0)
-		{
-			if (ptr[i] == ',')
-				comma = 1;
-			else if (!was_slash
-				&& (ptr[i] != '/'))
-				break;
-		}
+		if ((dcount > 0)
+			&& (ptr[i] == ','))
+			comma = 1;
 
 		parse_format_desc_t desc;
 		unsigned len = parse_format_desc(
 			src, &ptr[i + comma], &desc);
 		if (len == 0) break;
-
-		was_slash = (desc.type == PARSE_FORMAT_DESC_SLASH);
 
 		if (dcount >= dmax)
 		{

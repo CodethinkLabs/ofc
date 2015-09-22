@@ -33,6 +33,7 @@ struct parse_format_desc_s
 {
 	parse_format_desc_e type;
 
+	bool neg;
 	unsigned n;
 	union
 	{
