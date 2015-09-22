@@ -88,6 +88,7 @@ parse_type_t* parse_type(
 		return NULL;
 
 	type.count_expr = NULL;
+	type.count_var = false;
 	type.kind = 0;
 
 	bool implicit_kind = true;
@@ -106,9 +107,17 @@ parse_type_t* parse_type(
 				src, &ptr[i], &l);
 			if (!type.count_expr)
 			{
-				sparse_error(src, &ptr[i],
-					"Expected count expression or value for character");
-				return NULL;
+				if (ptr[i] == '*')
+				{
+					type.count_var = true;
+					l = 1;
+				}
+				else
+				{
+					sparse_error(src, &ptr[i],
+						"Expected count expression or value for character");
+					return NULL;
+				}
 			}
 			i += l;
 

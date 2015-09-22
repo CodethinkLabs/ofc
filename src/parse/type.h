@@ -19,6 +19,7 @@ typedef struct
 	parse_type_e  type;
 	unsigned      kind;
 	parse_expr_t* count_expr;
+	bool          count_var;
 
 	unsigned ref;
 } parse_type_t;
