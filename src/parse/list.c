@@ -1,9 +1,9 @@
 #include "parse.h"
 
 
-unsigned parse_list(
+static unsigned parse_list__seperator_optional(
 	const sparse_t* sparse, const char* ptr,
-	char seperator,
+	char seperator, bool optional,
 	unsigned* elem_count, void*** elem,
 	void* (*elem_parse)(const sparse_t*, const char*, unsigned*),
 	void (*elem_delete)(void*))
@@ -13,11 +13,19 @@ unsigned parse_list(
 
 	unsigned i = 0;
 
-	bool initial;
-	for (initial = true; initial || (seperator == '\0')
-		|| (ptr[i] == seperator); initial = false)
+	bool initial = true;
+	while (true)
 	{
-		unsigned j = i + (!initial && (seperator != '\0') ? 1 : 0);
+		unsigned j = i;
+
+		if (!initial && (seperator != '\0'))
+		{
+			if (ptr[j] == seperator)
+				j += 1;
+			else if (!optional)
+				break;
+		}
+		initial = false;
 
 		unsigned l;
 		void* e = elem_parse(sparse, &ptr[j], &l);
@@ -57,6 +65,31 @@ unsigned parse_list(
 
 	return i;
 }
+
+unsigned parse_list(
+	const sparse_t* sparse, const char* ptr,
+	char seperator,
+	unsigned* elem_count, void*** elem,
+	void* (*elem_parse)(const sparse_t*, const char*, unsigned*),
+	void (*elem_delete)(void*))
+{
+	return parse_list__seperator_optional(
+		sparse, ptr, seperator, false,
+		elem_count, elem, elem_parse, elem_delete);
+}
+
+unsigned parse_list_seperator_optional(
+	const sparse_t* sparse, const char* ptr,
+	char seperator,
+	unsigned* elem_count, void*** elem,
+	void* (*elem_parse)(const sparse_t*, const char*, unsigned*),
+	void (*elem_delete)(void*))
+{
+	return parse_list__seperator_optional(
+		sparse, ptr, seperator, true,
+		elem_count, elem, elem_parse, elem_delete);
+}
+
 
 bool parse_list_copy(
 	unsigned* dst_count, void*** dst,
