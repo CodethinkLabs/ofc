@@ -42,6 +42,8 @@ typedef enum
 
 	PARSE_KEYWORD_CALL,
 	PARSE_KEYWORD_RETURN,
+	PARSE_KEYWORD_EXTERNAL,
+	PARSE_KEYWORD_INTRINSIC,
 
 	PARSE_KEYWORD_DATA,
 
@@ -66,6 +68,9 @@ typedef enum
 unsigned parse_name(
 	const sparse_t* src, const char* ptr,
 	str_ref_t* name);
+str_ref_t* parse_name_alloc(
+	const sparse_t* src, const char* ptr,
+	unsigned* len);
 
 
 const char* parse_keyword_name(

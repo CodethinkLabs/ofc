@@ -45,6 +45,8 @@ static const char* parse_keyword__name[] =
 
 	"CALL",
 	"RETURN",
+	"EXTERNAL",
+	"INTRINSIC",
 
 	"DATA",
 
@@ -89,6 +91,24 @@ unsigned parse_name(
 	return i;
 }
 
+str_ref_t* parse_name_alloc(
+	const sparse_t* src, const char* ptr,
+	unsigned* len)
+{
+	str_ref_t name;
+	unsigned i = parse_name(
+		src, ptr, &name);
+	if (i == 0) return NULL;
+
+	str_ref_t* aname
+		= (str_ref_t*)malloc(
+			sizeof(str_ref_t));
+	if (!aname) return NULL;
+	*aname = name;
+
+	if (len) *len = i;
+	return aname;
+}
 
 
 const char* parse_keyword_name(

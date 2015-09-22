@@ -42,6 +42,12 @@ unsigned parse_stmt_pause(
 unsigned parse_stmt_return(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
+unsigned parse_stmt_external(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
+unsigned parse_stmt_intrinsic(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
 unsigned parse_stmt_go_to(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
@@ -121,6 +127,13 @@ static void parse_stmt__cleanup(
 		case PARSE_STMT_PAUSE:
 		case PARSE_STMT_RETURN:
 			parse_expr_delete(stmt.stop_pause_return.value);
+			break;
+		case PARSE_STMT_EXTERNAL:
+		case PARSE_STMT_INTRINSIC:
+			parse_list_delete(
+				stmt.external_intrinsic.count,
+				(void**)stmt.external_intrinsic.name,
+				free);
 			break;
 		case PARSE_STMT_GO_TO_ASSIGNED:
 			free(stmt.go_to_assign.label);
@@ -229,6 +242,7 @@ parse_stmt_t* parse_stmt(
 		case 'E':
 			if (i == 0) i = parse_stmt_equivalence(src, ptr, &stmt);
 			if (i == 0) i = parse_stmt_io_end_file(src, ptr, &stmt);
+			if (i == 0) i = parse_stmt_external(src, ptr, &stmt);
 			break;
 
 		case 'F':
@@ -242,6 +256,7 @@ parse_stmt_t* parse_stmt(
 		case 'I':
 			if (i == 0) i = parse_stmt_implicit(src, ptr, &stmt);
 			if (i == 0) i = parse_stmt_if(src, ptr, &stmt);
+			if (i == 0) i = parse_stmt_intrinsic(src, ptr, &stmt);
 			break;
 
 		case 'P':

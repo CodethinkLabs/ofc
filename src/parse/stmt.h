@@ -26,6 +26,8 @@ typedef enum
 	PARSE_STMT_STOP,
 	PARSE_STMT_PAUSE,
 	PARSE_STMT_RETURN,
+	PARSE_STMT_EXTERNAL,
+	PARSE_STMT_INTRINSIC,
 	PARSE_STMT_GO_TO,
 	PARSE_STMT_GO_TO_ASSIGNED,
 	PARSE_STMT_GO_TO_COMPUTED,
@@ -59,6 +61,7 @@ struct parse_stmt_s
 			parse_expr_list_t* args;
 		} call;
 
+
 		struct
 		{
 			parse_type_t*      type;
@@ -81,6 +84,12 @@ struct parse_stmt_s
 		{
 			parse_expr_t* value;
 		} stop_pause_return;
+
+		struct
+		{
+			unsigned    count;
+			str_ref_t** name;
+		} external_intrinsic;
 
 		struct
 		{
