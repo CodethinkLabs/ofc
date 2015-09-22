@@ -47,12 +47,16 @@ static const char* parse_keyword__name[] =
 	"RETURN",
 
 	"DATA",
-	"WRITE",
-	"READ",
+
 	"FORMAT",
 
 	"REWIND",
+	"BACKSPACE",
+	"READ",
+	"WRITE",
+
 	"UNIT",
+	"FMT",
 	"IOSTAT",
 	"ERR",
 

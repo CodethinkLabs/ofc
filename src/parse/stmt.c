@@ -51,13 +51,16 @@ unsigned parse_stmt_if(
 unsigned parse_stmt_do(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
-unsigned parse_stmt_write(
+unsigned parse_stmt_io_rewind(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
-unsigned parse_stmt_read(
+unsigned parse_stmt_io_backspace(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
-unsigned parse_stmt_rewind(
+unsigned parse_stmt_io_read(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
+unsigned parse_stmt_io_write(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
 unsigned parse_stmt_format(
@@ -134,19 +137,19 @@ static void parse_stmt__cleanup(
 			parse_expr_delete(stmt.do_loop.last);
 			parse_expr_delete(stmt.do_loop.step);
 			break;
-		case PARSE_STMT_READ:
-		case PARSE_STMT_WRITE:
-			parse_iolist_delete(stmt.read_write.args);
-			parse_expr_delete(stmt.read_write.file);
+		case PARSE_STMT_IO_REWIND:
+		case PARSE_STMT_IO_BACKSPACE:
+		case PARSE_STMT_IO_READ:
+		case PARSE_STMT_IO_WRITE:
+			parse_expr_delete(stmt.io.unit);
+			parse_expr_delete(stmt.io.fmt);
+			parse_expr_delete(stmt.io.iostat);
+			parse_expr_delete(stmt.io.err);
+			parse_iolist_delete(stmt.io.args);
 			break;
 		case PARSE_STMT_FORMAT:
 			parse_format_desc_list_delete(
 				stmt.format.desc, stmt.format.desc_count);
-			break;
-		case PARSE_STMT_REWIND:
-			parse_expr_delete(stmt.rewind.unit);
-			parse_expr_delete(stmt.rewind.iostat);
-			parse_expr_delete(stmt.rewind.err);
 			break;
 		case PARSE_STMT_DATA:
 			for (i = 0; i < stmt.data.init_count; i++)
@@ -196,6 +199,10 @@ parse_stmt_t* parse_stmt(
 			if (i == 0) i = parse_stmt_assign(src, ptr, &stmt);
 			break;
 
+		case 'B':
+			if (i == 0) i = parse_stmt_io_backspace(src, ptr, &stmt);
+			break;
+
 		case 'C':
 			if (i == 0) i = parse_stmt_continue(src, ptr, &stmt);
 			if (i == 0) i = parse_stmt_call(src, ptr, &stmt);
@@ -232,8 +239,8 @@ parse_stmt_t* parse_stmt(
 
 		case 'R':
 			if (i == 0) i = parse_stmt_return(src, ptr, &stmt);
-			if (i == 0) i = parse_stmt_read(src, ptr, &stmt);
-			if (i == 0) i = parse_stmt_rewind(src, ptr, &stmt);
+			if (i == 0) i = parse_stmt_io_read(src, ptr, &stmt);
+			if (i == 0) i = parse_stmt_io_rewind(src, ptr, &stmt);
 			break;
 
 		case 'S':
@@ -242,7 +249,7 @@ parse_stmt_t* parse_stmt(
 			break;
 
 		case 'W':
-			if (i == 0) i = parse_stmt_write(src, ptr, &stmt);
+			if (i == 0) i = parse_stmt_io_write(src, ptr, &stmt);
 			break;
 
 		default:

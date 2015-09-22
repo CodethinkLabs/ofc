@@ -32,10 +32,11 @@ typedef enum
 	PARSE_STMT_IF_COMPUTED,
 	PARSE_STMT_IF_STATEMENT,
 	PARSE_STMT_DO,
-	PARSE_STMT_WRITE,
-	PARSE_STMT_READ,
+	PARSE_STMT_IO_REWIND,
+	PARSE_STMT_IO_BACKSPACE,
+	PARSE_STMT_IO_READ,
+	PARSE_STMT_IO_WRITE,
 	PARSE_STMT_FORMAT,
-	PARSE_STMT_REWIND,
 	PARSE_STMT_DATA,
 	PARSE_STMT_ASSIGN,
 } parse_stmt_e;
@@ -115,24 +116,18 @@ struct parse_stmt_s
 
 		struct
 		{
-			parse_expr_t* file;
-			parse_label_t format_label;
-
+			parse_expr_t*   unit;
+			parse_expr_t*   fmt;
+			parse_expr_t*   iostat;
+			parse_expr_t*   err;
 			parse_iolist_t* args;
-		} read_write;
+		} io;
 
 		struct
 		{
 			unsigned             desc_count;
 			parse_format_desc_t* desc;
 		} format;
-
-		struct
-		{
-			parse_expr_t* unit;
-			parse_expr_t* iostat;
-			parse_expr_t* err;
-		} rewind;
 
 		struct
 		{
