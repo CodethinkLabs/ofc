@@ -9,6 +9,8 @@ static const char* parse_keyword__name[] =
 	"PROGRAM",
 	"SUBROUTINE",
 	"FUNCTION",
+	"BLOCK DATA",
+
 	"IF",
 	"THEN",
 	"ELSE IF",
@@ -149,6 +151,10 @@ unsigned parse_keyword_named(
 	unsigned expect_space = 0;
 	switch (keyword)
 	{
+		case PARSE_KEYWORD_BLOCK_DATA:
+			kwstr = "BLOCKDATA";
+			expect_space = 5;
+			break;
 		case PARSE_KEYWORD_ELSE_IF:
 			kwstr = "ELSEIF";
 			expect_space = 4;

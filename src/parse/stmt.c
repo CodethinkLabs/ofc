@@ -9,6 +9,9 @@ unsigned parse_stmt_subroutine(
 unsigned parse_stmt_function(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
+unsigned parse_stmt_block_data(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
 unsigned parse_stmt_implicit(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
@@ -103,6 +106,7 @@ static void parse_stmt__cleanup(
 		case PARSE_STMT_PROGRAM:
 		case PARSE_STMT_SUBROUTINE:
 		case PARSE_STMT_FUNCTION:
+		case PARSE_STMT_BLOCK_DATA:
 			parse_stmt_list_delete(stmt.program.body);
 			parse_lhs_list_delete(stmt.program.args);
 			parse_type_delete(stmt.program.type);
@@ -254,6 +258,7 @@ parse_stmt_t* parse_stmt(
 
 		case 'B':
 			if (i == 0) i = parse_stmt_io_backspace(src, ptr, &stmt);
+			if (i == 0) i = parse_stmt_block_data(src, ptr, &stmt);
 			break;
 
 		case 'C':
