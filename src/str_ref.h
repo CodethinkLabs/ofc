@@ -10,7 +10,7 @@ typedef struct
 	unsigned    size;
 } str_ref_t;
 
-static const str_ref_t STR_REF_EMPTY = { .base = NULL, .size = 0 };
+#define STR_REF_EMPTY (str_ref_t){ .base = NULL, .size = 0 }
 
 static inline str_ref_t str_ref(const char* base, unsigned size)
 	{ return (str_ref_t){ base, size }; }

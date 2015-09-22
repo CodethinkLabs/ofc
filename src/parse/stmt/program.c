@@ -30,6 +30,9 @@ unsigned parse_stmt_program__body(
 	return i;
 }
 
+/* This is hacky, but it means we can suppress redeclarations of the same program. */
+static str_ref_t parse_stmt_program__current = STR_REF_EMPTY;
+
 unsigned parse_stmt_program(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt)
@@ -39,20 +42,35 @@ unsigned parse_stmt_program(
 		src, ptr, PARSE_KEYWORD_PROGRAM, &stmt->program.name);
 	if (i == 0) return 0;
 
+	lang_opts_t opts = sparse_lang_opts(src);
+	if (opts.case_sensitive
+		? str_ref_equal(stmt->program.name, parse_stmt_program__current)
+		: str_ref_equal_ci(stmt->program.name, parse_stmt_program__current))
+	{
+		stmt->type = PARSE_STMT_EMPTY;
+		return i;
+	}
+
 	unsigned len;
 	if (!is_end_statement(&ptr[i], &len))
 		return 0;
 	i += len;
+
+	str_ref_t prev_program_name = parse_stmt_program__current;
+	parse_stmt_program__current = stmt->program.name;
 
 	len = parse_stmt_program__body(
 		src, &ptr[i], PARSE_KEYWORD_PROGRAM, stmt);
 	if (len == 0) return 0;
 	i += len;
 
+	parse_stmt_program__current = prev_program_name;
+
 	stmt->program.type = NULL;
 	stmt->program.args = NULL;
 
 	stmt->type = PARSE_STMT_PROGRAM;
+
 	return i;
 }
 
