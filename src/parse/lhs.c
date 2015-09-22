@@ -111,6 +111,52 @@ static bool parse_lhs__clone(
 
 
 
+static parse_lhs_t* parse_lhs__array(
+	const sparse_t* src, const char* ptr,
+	parse_lhs_t* parent, unsigned* len)
+{
+	if (!parent)
+		return NULL;
+
+	switch (parent->type)
+	{
+		case PARSE_LHS_IMPLICIT_DO:
+			return NULL;
+		default:
+			break;
+	}
+
+	unsigned i = 0;
+	if (ptr[i] != '(')
+		return 0;
+
+	parse_lhs_t lhs;
+	unsigned l = 0;
+	lhs.array.index = parse_array_index(
+		src, &ptr[i], &l);
+	if (!lhs.array.index)
+	{
+		if (ptr[i + 1] != ')')
+			return NULL;
+		l = 2;
+	}
+	i += l;
+
+	lhs.type        = PARSE_LHS_ARRAY;
+	lhs.parent      = parent;
+
+	parse_lhs_t* alhs
+		= parse_lhs__alloc(lhs);
+	if (!alhs)
+	{
+		parse_lhs__cleanup(lhs);
+		return NULL;
+	}
+
+	if (len) *len = i;
+	return alhs;
+}
+
 parse_lhs_t* parse_lhs(
 	const sparse_t* src, const char* ptr,
 	unsigned* len)
@@ -135,34 +181,15 @@ parse_lhs_t* parse_lhs(
 		return NULL;
 	}
 
-	if ((lhs.type == PARSE_LHS_VARIABLE)
-		&& (ptr[i] == '('))
+	while (true)
 	{
-
-		unsigned l = 0;
-		parse_array_index_t* index
-			= parse_array_index(
-				src, &ptr[i], &l);
-		if (!index
-			&& (ptr[i + 1] == ')'))
-			l = 2;
-
-		if (l > 0)
-		{
-			i += l;
-
-			lhs.type        = PARSE_LHS_ARRAY;
-			lhs.parent      = alhs;
-			lhs.array.index = index;
-
-			parse_lhs_t* alhs
-				= parse_lhs__alloc(lhs);
-			if (!alhs)
-			{
-				parse_lhs__cleanup(lhs);
-				return NULL;
-			}
-		}
+		unsigned l;
+		parse_lhs_t* array_lhs
+			= parse_lhs__array(
+				src, &ptr[i], alhs, &l);
+		if (!array_lhs) break;
+		i += l;
+		alhs = array_lhs;
 	}
 
 	/* TODO - Implement struct LHS types. */

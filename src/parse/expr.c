@@ -205,9 +205,6 @@ static unsigned parse_expr__primary(
 		src, ptr, expr);
 	if (len > 0) return len;
 
-	len = parse_expr__intrinsic(src, ptr, expr);
-	if (len > 0) return len;
-
 	len = parse_expr__literal(
 			src, ptr, expr);
 	if (len > 0) return len;
@@ -221,6 +218,9 @@ static unsigned parse_expr__primary(
 		expr->type = PARSE_EXPR_VARIABLE;
 		return len;
 	}
+
+	len = parse_expr__intrinsic(src, ptr, expr);
+	if (len > 0) return len;
 
 	/* TODO - Parse constant-subobject. */
 
