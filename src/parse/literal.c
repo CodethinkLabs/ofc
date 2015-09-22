@@ -204,8 +204,19 @@ unsigned parse_character(
 
 	/* Skip to the end of condense string-> */
 	bool is_escaped = false;
-	for (i++; (ptr[i] != '\0') && ((ptr[i] != quote) || is_escaped); i++)
-		is_escaped = !is_escaped && (ptr[i] == '\\');
+	for (i++; ptr[i] != '\0'; i++)
+	{
+		if (!is_escaped && (ptr[i] == quote))
+		{
+			if (ptr[i + 1] != quote)
+				break;
+			is_escaped = true;
+		}
+		else
+		{
+			is_escaped = !is_escaped && (ptr[i] == '\\');
+		}
+	}
 	if (ptr[i++] != quote)
 	{
 		sparse_error(src, ptr, "Unterminated string");
@@ -213,8 +224,9 @@ unsigned parse_character(
 	}
 
 	unsigned str_len = 0;
-	unsigned j;
-	for (j = 1, is_escaped = false; (pptr[j] != quote) || is_escaped; j++)
+	unsigned j = 1;
+	is_escaped = false;
+	while (true)
 	{
 		if ((pptr[j] == '\r')
 			|| (pptr[j] == '\n')
@@ -225,12 +237,32 @@ unsigned parse_character(
 			return 0;
 		}
 
-		if ((pptr[j] == '\\') && !is_escaped)
+		if (!is_escaped)
 		{
-			is_escaped = true;
-			continue;
+			if (pptr[j] == quote)
+			{
+				unsigned k;
+				for (k = 1; is_hspace(pptr[j + k]); k++);
+				if (pptr[j + k] == quote)
+				{
+					j += k;
+					is_escaped = true;
+					continue;
+				}
+				else
+				{
+					break;
+				}
+			}
+			else if (pptr[j] == '\\')
+			{
+				j++;
+				is_escaped = true;
+				continue;
+			}
 		}
 
+		j++;
 		is_escaped = false;
 		str_len++;
 	}
@@ -289,7 +321,8 @@ unsigned parse_character(
 			is_escaped = false;
 			string->base[str_pos++] = c;
 		}
-		else if (pptr[j] == '\\')
+		else if ((pptr[j] == '\\')
+			|| (pptr[j] == quote))
 		{
 			is_escaped = true;
 		}
