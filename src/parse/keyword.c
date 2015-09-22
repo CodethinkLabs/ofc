@@ -50,6 +50,7 @@ static const char* parse_keyword__name[] =
 
 	"DATA",
 	"PARAMETER",
+	"SAVE",
 
 	"FORMAT",
 

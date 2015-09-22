@@ -63,6 +63,9 @@ unsigned parse_stmt_format(
 unsigned parse_stmt_data(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
+unsigned parse_stmt_save(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
 unsigned parse_stmt_parameter(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
@@ -203,6 +206,9 @@ static void parse_stmt__cleanup(
 				parse_lhs_delete(stmt.data.name[i]);
 			free(stmt.data.name);
 			break;
+		case PARSE_STMT_SAVE:
+			parse_save_list_delete(stmt.save.list);
+			break;
 		case PARSE_STMT_PARAMETER:
 			parse_assign_list_delete(stmt.parameter.list);
 			break;
@@ -301,6 +307,7 @@ parse_stmt_t* parse_stmt(
 		case 'S':
 			if (i == 0) i = parse_stmt_subroutine(src, ptr, &stmt);
 			if (i == 0) i = parse_stmt_stop(src, ptr, &stmt);
+			if (i == 0) i = parse_stmt_save(src, ptr, &stmt);
 			break;
 
 		case 'W':
