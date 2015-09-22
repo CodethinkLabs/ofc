@@ -142,6 +142,8 @@ struct parse_stmt_s
 		{
 			parse_expr_t*   unit;
 			parse_expr_t*   fmt;
+			parse_expr_t*   rec;
+			parse_expr_t*   end;
 			parse_expr_t*   iostat;
 			parse_expr_t*   err;
 			parse_iolist_t* args;

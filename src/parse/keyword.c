@@ -60,6 +60,8 @@ static const char* parse_keyword__name[] =
 
 	"UNIT",
 	"FMT",
+	"REC",
+	"END",
 	"IOSTAT",
 	"ERR",
 

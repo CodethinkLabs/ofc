@@ -167,6 +167,8 @@ static void parse_stmt__cleanup(
 		case PARSE_STMT_IO_END_FILE:
 			parse_expr_delete(stmt.io.unit);
 			parse_expr_delete(stmt.io.fmt);
+			parse_expr_delete(stmt.io.rec);
+			parse_expr_delete(stmt.io.end);
 			parse_expr_delete(stmt.io.iostat);
 			parse_expr_delete(stmt.io.err);
 			parse_iolist_delete(stmt.io.args);

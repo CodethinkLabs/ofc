@@ -30,7 +30,7 @@ static parse_expr_t* parse_stmt__io_optarg(
 static unsigned parse_stmt__io(
 	const sparse_t* src, const char* ptr,
 	parse_keyword_e keyword,
-	bool fmt, bool args,
+	bool fmt, bool rec, bool end, bool args,
 	parse_stmt_t* stmt)
 {
 	unsigned i = parse_keyword(
@@ -39,6 +39,8 @@ static unsigned parse_stmt__io(
 
 	stmt->io.unit   = NULL;
 	stmt->io.fmt    = NULL;
+	stmt->io.rec    = NULL;
+	stmt->io.end    = NULL;
 	stmt->io.iostat = NULL;
 	stmt->io.err    = NULL;
 	stmt->io.args   = NULL;
@@ -98,6 +100,20 @@ static unsigned parse_stmt__io(
 			src, &ptr[i], PARSE_KEYWORD_IOSTAT, &len);
 		if (stmt->io.iostat) i += len;
 
+		if (rec)
+		{
+			stmt->io.rec = parse_stmt__io_optarg(
+				src, &ptr[i], PARSE_KEYWORD_REC, &len);
+			if (stmt->io.rec) i += len;
+		}
+
+		if (end)
+		{
+			stmt->io.end = parse_stmt__io_optarg(
+				src, &ptr[i], PARSE_KEYWORD_END, &len);
+			if (stmt->io.end) i += len;
+		}
+
 		stmt->io.err = parse_stmt__io_optarg(
 			src, &ptr[i], PARSE_KEYWORD_ERR, &len);
 		if (stmt->io.err) i += len;
@@ -106,6 +122,8 @@ static unsigned parse_stmt__io(
 		{
 			parse_expr_delete(stmt->io.unit);
 			parse_expr_delete(stmt->io.fmt);
+			parse_expr_delete(stmt->io.rec);
+			parse_expr_delete(stmt->io.end);
 			parse_expr_delete(stmt->io.iostat);
 			parse_expr_delete(stmt->io.err);
 			return 0;
@@ -130,7 +148,8 @@ unsigned parse_stmt_io_rewind(
 {
 	unsigned i = parse_stmt__io(
 		src, ptr,
-		PARSE_KEYWORD_REWIND, false, false,
+		PARSE_KEYWORD_REWIND,
+		false, false, false, false,
 		stmt);
 	if (i == 0) return 0;
 
@@ -144,7 +163,8 @@ unsigned parse_stmt_io_backspace(
 {
 	unsigned i = parse_stmt__io(
 		src, ptr,
-		PARSE_KEYWORD_BACKSPACE, false, false,
+		PARSE_KEYWORD_BACKSPACE,
+		false, false, false, false,
 		stmt);
 	if (i == 0) return 0;
 
@@ -159,7 +179,7 @@ unsigned parse_stmt_io_read(
 	unsigned i = parse_stmt__io(
 		src, ptr,
 		PARSE_KEYWORD_READ,
-		true, true,
+		true, true, true, true,
 		stmt);
 	if (i == 0) return 0;
 
@@ -174,7 +194,7 @@ unsigned parse_stmt_io_write(
 	unsigned i = parse_stmt__io(
 		src, ptr,
 		PARSE_KEYWORD_WRITE,
-		true, true,
+		true, true, false, true,
 		stmt);
 	if (i == 0) return 0;
 
@@ -188,7 +208,8 @@ unsigned parse_stmt_io_end_file(
 {
 	unsigned i = parse_stmt__io(
 		src, ptr,
-		PARSE_KEYWORD_END_FILE, false, false,
+		PARSE_KEYWORD_END_FILE,
+		false, false, false, false,
 		stmt);
 	if (i == 0) return 0;
 
