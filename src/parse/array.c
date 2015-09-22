@@ -6,19 +6,49 @@ static parse_array_range_t* parse_array__range(
 	unsigned* len)
 {
 	unsigned i = 0;
-	parse_expr_t* from = parse_expr(src, ptr, &i);
-	parse_expr_t* to   = NULL;
+	parse_expr_t* first  = parse_expr(src, ptr, &i);
+	parse_expr_t* last   = NULL;
+	parse_expr_t* stride = NULL;
 
-	bool is_slice = (ptr[i] == ':');
-	if (is_slice)
+	bool is_slice = false;
+	if (!first && (ptr[0] == '*'))
 	{
+		is_slice = true;
+		i += 1;
+	}
+
+	if (ptr[i] == ':')
+	{
+		is_slice = true;
 		i += 1;
 
 		unsigned l;
-		to = parse_expr(src, &ptr[i], &l);
-		if (to) i += l;
+		last = parse_expr(src, &ptr[i], &l);
+		if (last)
+		{
+			i += l;
+		}
+		else if (ptr[i] == '*')
+		{
+			i += 1;
+		}
+
+		if (ptr[i] == ':')
+		{
+			i += 1;
+
+			stride = parse_expr(src, &ptr[i], &l);
+			if (stride)
+			{
+				i += l;
+			}
+			else if (ptr[i] == '*')
+			{
+				i += 1;
+			}
+		}
 	}
-	else if (!from)
+	else if (!first)
 	{
 		return NULL;
 	}
@@ -28,14 +58,16 @@ static parse_array_range_t* parse_array__range(
 			sizeof(parse_array_range_t));
 	if (!range)
 	{
-		parse_expr_delete(from);
-		parse_expr_delete(to);
+		parse_expr_delete(first);
+		parse_expr_delete(last);
+		parse_expr_delete(stride);
 		return NULL;
 	}
 
 	range->is_slice = is_slice;
-	range->from     = from;
-	range->to       = to;
+	range->first    = first;
+	range->last     = last;
+	range->stride   = stride;
 
 	if (len) *len = i;
 	return range;
@@ -47,8 +79,9 @@ static void parse_array__range_delete(
 	if (!range)
 		return;
 
-	parse_expr_delete(range->to);
-	parse_expr_delete(range->from);
+	parse_expr_delete(range->first);
+	parse_expr_delete(range->last);
+	parse_expr_delete(range->stride);
 	free(range);
 }
 
@@ -64,11 +97,13 @@ static parse_array_range_t* parse_array__range_copy(
 	if (!copy) return NULL;
 
 	copy->is_slice = range->is_slice;
-	copy->from     = parse_expr_copy(range->from);
-	copy->to       = parse_expr_copy(range->to);
+	copy->first    = parse_expr_copy(range->first);
+	copy->last     = parse_expr_copy(range->last);
+	copy->stride   = parse_expr_copy(range->stride);
 
-	if ((range->from && !copy->from)
-		|| (range->to && !copy->to))
+	if ((range->first && !copy->first)
+		|| (range->last && !copy->last)
+		|| (range->stride && !copy->stride))
 	{
 		parse_array__range_delete(copy);
 		return NULL;

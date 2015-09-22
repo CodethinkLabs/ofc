@@ -4,8 +4,9 @@
 typedef struct
 {
 	bool          is_slice;
-	parse_expr_t* from;
-	parse_expr_t* to;
+	parse_expr_t* first;
+	parse_expr_t* last;
+	parse_expr_t* stride;
 } parse_array_range_t;
 
 typedef struct
