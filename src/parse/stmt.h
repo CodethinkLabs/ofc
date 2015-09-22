@@ -108,11 +108,10 @@ struct parse_stmt_s
 
 		struct
 		{
-			parse_label_t end_label;
-			parse_lhs_t*  iterator;
-			parse_expr_t* init;
-			parse_expr_t* last;
-			parse_expr_t* step;
+			parse_label_t   end_label;
+			parse_assign_t* init;
+			parse_expr_t*   last;
+			parse_expr_t*   step;
 		} do_loop;
 
 		struct

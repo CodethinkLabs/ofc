@@ -136,8 +136,7 @@ static void parse_stmt__cleanup(
 			parse_expr_delete(stmt.if_stmt.cond);
 			break;
 		case PARSE_STMT_DO:
-			parse_lhs_delete(stmt.do_loop.iterator);
-			parse_expr_delete(stmt.do_loop.init);
+			parse_assign_delete(stmt.do_loop.init);
 			parse_expr_delete(stmt.do_loop.last);
 			parse_expr_delete(stmt.do_loop.step);
 			break;
