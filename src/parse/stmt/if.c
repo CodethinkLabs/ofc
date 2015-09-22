@@ -90,23 +90,88 @@ static unsigned parse_stmt_if__then(
 		= parse_stmt_list(src, &ptr[i], &len);
 	if (stmt->if_then.block_then) i += len;
 
-	/* TODO - Support ELSE */
+	bool expect_end = true;
 
-	len = parse_keyword_end(
-		src, &ptr[i], PARSE_KEYWORD_IF);
-	if (len == 0)
+	stmt->if_then.block_else = NULL;
+	len = parse_keyword(
+		src, &ptr[i], PARSE_KEYWORD_ELSE);
+	if (len > 0)
 	{
-		parse_stmt_list_delete(
-			stmt->if_then.block_then);
-		return 0;
+		i += len;
+
+		parse_stmt_t* stmt_else
+			= parse_stmt(src, &ptr[i], &len);
+		if (stmt_else
+			&& (stmt_else->type != PARSE_STMT_IF_THEN))
+		{
+			parse_stmt_delete(stmt_else);
+			len = 0;
+		}
+
+		if (len > 0)
+		{
+			/* Don't absorb the end of statement here. */
+			if (ptr[i + len] != '\0')
+				len -= 1;
+
+			i += len;
+			expect_end = false;
+
+			stmt->if_then.block_else
+				= (parse_stmt_list_t*)malloc(
+					sizeof(parse_stmt_list_t*));
+			if (!stmt->if_then.block_else)
+			{
+				parse_stmt_delete(stmt_else);
+				parse_stmt_list_delete(stmt->if_then.block_then);
+				return 0;
+			}
+
+			stmt->if_then.block_else->stmt
+				= (parse_stmt_t**)malloc(
+					sizeof(parse_stmt_t*));
+			if (!stmt->if_then.block_else->stmt)
+			{
+				free(stmt->if_then.block_else);
+				parse_stmt_delete(stmt_else);
+				parse_stmt_list_delete(stmt->if_then.block_then);
+				return 0;
+			}
+
+			stmt->if_then.block_else->count = 1;
+			stmt->if_then.block_else->stmt[0] = stmt_else;
+		}
+		else
+		{
+			/* TODO - Make this optional? */
+			if (!is_end_statement(&ptr[i], &len))
+				return 0;
+			i += len;
+
+			stmt->if_then.block_else
+				= parse_stmt_list(src, &ptr[i], &len);
+			if (stmt->if_then.block_else) i += len;
+		}
 	}
-	i += len;
+
+	if (expect_end)
+	{
+		len = parse_keyword_end(
+			src, &ptr[i], PARSE_KEYWORD_IF);
+		if (len == 0)
+		{
+			parse_stmt_list_delete(
+				stmt->if_then.block_then);
+			return 0;
+		}
+		i += len;
+	}
 
 	stmt->type = PARSE_STMT_IF_THEN;
 	stmt->if_then.cond = cond;
-	stmt->if_then.block_else = NULL;
 	return i;
 }
+
 
 unsigned parse_stmt_if(
 	const sparse_t* src, const char* ptr,
