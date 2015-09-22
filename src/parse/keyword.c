@@ -75,6 +75,7 @@ static const char* parse_keyword__name[] =
 	"RECL",
 	"RECORDSIZE",
 	"STATUS",
+	"FILEOPT",
 	"READONLY",
 	"ACTION",
 	"FMT",

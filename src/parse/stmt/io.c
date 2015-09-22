@@ -7,9 +7,6 @@ static parse_expr_t* parse_stmt__io_optarg(
 	unsigned* len)
 {
 	unsigned i = 0;
-	if (ptr[i++] != ',')
-		return NULL;
-
 	unsigned l = parse_keyword(
 		src, &ptr[i], name);
 	if (l == 0) return NULL;
@@ -46,89 +43,160 @@ static unsigned parse_stmt__io(
 	stmt->io.err    = NULL;
 	stmt->io.args   = NULL;
 
-	bool bracketed = (ptr[i] == '(');
-	if (bracketed) i += 1;
-
 	unsigned len;
-	if (bracketed)
+	if (ptr[i] != '(')
 	{
-		len = parse_keyword(
-			src, &ptr[i], PARSE_KEYWORD_UNIT);
-		if ((len > 0) && (ptr[i + len] == '='))
-			i += (len + 1);
+		stmt->io.unit = parse_expr(src, &ptr[i], &len);
+		if (!stmt->io.unit) return 0;
+		i += len;
 	}
-
-	stmt->io.unit = parse_expr(src, &ptr[i], &len);
-	if (!stmt->io.unit) return 0;
-	i += len;
-
-	if (bracketed)
+	else
 	{
-		if (fmt && (ptr[i] == ','))
-		{
-			bool has_fmt = false;
-			unsigned j = (i + 1);
+		i += 1;
 
+		bool initial = true;
+
+		len = parse_name(src, &ptr[i], NULL);
+		if (len == 0)
 			len = parse_keyword(
-				src, &ptr[j], PARSE_KEYWORD_FMT);
-			if ((len > 0) && (ptr[j + len] == '='))
+				src, &ptr[i], PARSE_KEYWORD_END);
+		if ((len == 0) || (ptr[i + len] != '='))
+		{
+			stmt->io.unit = parse_expr(src, &ptr[i], &len);
+			if (!stmt->io.unit) return 0;
+			i += len;
+
+			if (fmt && (ptr[i] == ','))
 			{
-				j += (len + 1);
-				has_fmt = true;
-			}
-			else
-			{
-				len = parse_name(src, &ptr[j], NULL);
+				len = parse_name(src, &ptr[i + 1], NULL);
 				if (len == 0)
 					len = parse_keyword(
-						src, &ptr[j], PARSE_KEYWORD_END);
-				has_fmt = (len == 0) || (ptr[j + len] != '=');
-			}
-
-			if (has_fmt)
-			{
-				stmt->io.fmt = parse_expr(
-					src, &ptr[j], &len);
-				if (!stmt->io.fmt)
+						src, &ptr[i + 1], PARSE_KEYWORD_END);
+				if ((len == 0) || (ptr[i + 1 + len] != '='))
 				{
-					if (ptr[j] == '*')
+					i += 1;
+
+					stmt->io.fmt = parse_expr(src, &ptr[i], &len);
+					if (!stmt->io.fmt)
 					{
-						stmt->io.fmt_asterisk = true;
-						len = 1;
+						if (ptr[i] == '*')
+						{
+							stmt->io.fmt_asterisk = true;
+							len = 1;
+						}
+						else
+						{
+							parse_expr_delete(stmt->io.unit);
+							return 0;
+						}
 					}
-					else
-					{
-						parse_expr_delete(stmt->io.unit);
-						return 0;
-					}
+					i += len;
 				}
-				i = (j + len);
 			}
+
+			initial = false;
 		}
 
-		stmt->io.iostat = parse_stmt__io_optarg(
-			src, &ptr[i], PARSE_KEYWORD_IOSTAT, &len);
-		if (stmt->io.iostat) i += len;
-
-		if (rec)
+		bool failed = false;
+		while (true)
 		{
-			stmt->io.rec = parse_stmt__io_optarg(
-				src, &ptr[i], PARSE_KEYWORD_REC, &len);
-			if (stmt->io.rec) i += len;
+			if (!initial)
+			{
+				if (ptr[i] != ',')
+					break;
+				i += 1;
+			}
+			initial = false;
+
+			if (fmt && !stmt->io.fmt
+				&& !stmt->io.fmt_asterisk)
+			{
+				/* FMT is a special case because of its asterisk. */
+				len = parse_keyword(
+					src, &ptr[i], PARSE_KEYWORD_FMT);
+				if ((len > 0) && (ptr[i + len] == '='))
+				{
+					i += len + 1;
+					stmt->io.fmt = parse_expr(
+						src, &ptr[i], &len);
+					if (!stmt->io.fmt)
+					{
+						if (ptr[i] == '*')
+						{
+							stmt->io.fmt_asterisk = true;
+							len = 1;
+						}
+						else
+						{
+							failed = true;
+							break;
+						}
+					}
+					i += len;
+					continue;
+				}
+			}
+
+			if (!stmt->io.unit)
+			{
+				stmt->io.unit = parse_stmt__io_optarg(
+					src, &ptr[i], PARSE_KEYWORD_UNIT, &len);
+				if (stmt->io.unit)
+				{
+					i += len;
+					continue;
+				}
+			}
+
+			if (!stmt->io.iostat)
+			{
+				stmt->io.iostat = parse_stmt__io_optarg(
+					src, &ptr[i], PARSE_KEYWORD_IOSTAT, &len);
+				if (stmt->io.iostat)
+				{
+					i += len;
+					continue;
+				}
+			}
+
+			if (rec && !stmt->io.rec)
+			{
+				stmt->io.rec = parse_stmt__io_optarg(
+					src, &ptr[i], PARSE_KEYWORD_REC, &len);
+				if (stmt->io.rec)
+				{
+					i += len;
+					continue;
+				}
+			}
+
+			if (end && !stmt->io.end)
+			{
+				stmt->io.end = parse_stmt__io_optarg(
+					src, &ptr[i], PARSE_KEYWORD_END, &len);
+				if (stmt->io.end)
+				{
+					i += len;
+					continue;
+				}
+			}
+
+			if (!stmt->io.err)
+			{
+				stmt->io.err = parse_stmt__io_optarg(
+					src, &ptr[i], PARSE_KEYWORD_ERR, &len);
+				if (stmt->io.err)
+				{
+					i += len;
+					continue;
+				}
+			}
+
+			failed = true;
+			break;
 		}
 
-		if (end)
-		{
-			stmt->io.end = parse_stmt__io_optarg(
-				src, &ptr[i], PARSE_KEYWORD_END, &len);
-			if (stmt->io.end) i += len;
-		}
-
-		stmt->io.err = parse_stmt__io_optarg(
-			src, &ptr[i], PARSE_KEYWORD_ERR, &len);
-		if (stmt->io.err) i += len;
-
-		if (ptr[i++] != ')')
+		if (failed || (ptr[i++] != ')'))
 		{
 			parse_expr_delete(stmt->io.unit);
 			parse_expr_delete(stmt->io.fmt);
@@ -172,80 +240,201 @@ unsigned parse_stmt_io_open(
 	stmt->io_open.readonly = false;
 	stmt->io_open.action   = NULL;
 
-	bool bracketed = (ptr[i] == '(');
-	if (bracketed) i += 1;
-
 	unsigned len;
-	if (bracketed)
+	if (ptr[i] != '(')
 	{
-		len = parse_keyword(
-			src, &ptr[i], PARSE_KEYWORD_UNIT);
-		if ((len > 0) && (ptr[i + len] == '='))
-			i += (len + 1);
+		stmt->io_open.unit = parse_expr(src, &ptr[i], &len);
+		if (!stmt->io_open.unit) return 0;
+		i += len;
 	}
-
-	stmt->io_open.unit = parse_expr(src, &ptr[i], &len);
-	if (!stmt->io_open.unit) return 0;
-	i += len;
-
-	if (bracketed)
+	else
 	{
-		stmt->io_open.file = parse_stmt__io_optarg(
-			src, &ptr[i], PARSE_KEYWORD_FILE, &len);
-		if (!stmt->io_open.file)
-			stmt->io_open.file = parse_stmt__io_optarg(
-				src, &ptr[i], PARSE_KEYWORD_NAME, &len);
-		if (stmt->io_open.file) i += len;
+		i += 1;
 
-		stmt->io_open.access = parse_stmt__io_optarg(
-			src, &ptr[i], PARSE_KEYWORD_ACCESS, &len);
-		if (stmt->io_open.access) i += len;
+		bool initial = true;
 
-		stmt->io_open.blank = parse_stmt__io_optarg(
-			src, &ptr[i], PARSE_KEYWORD_BLANK, &len);
-		if (stmt->io_open.blank) i += len;
-
-		stmt->io_open.err = parse_stmt__io_optarg(
-			src, &ptr[i], PARSE_KEYWORD_ERR, &len);
-		if (stmt->io_open.err) i += len;
-
-		stmt->io_open.form = parse_stmt__io_optarg(
-			src, &ptr[i], PARSE_KEYWORD_FORM, &len);
-		if (stmt->io_open.form) i += len;
-
-		stmt->io_open.iostat = parse_stmt__io_optarg(
-			src, &ptr[i], PARSE_KEYWORD_IOSTAT, &len);
-		if (stmt->io_open.iostat) i += len;
-
-		stmt->io_open.recl = parse_stmt__io_optarg(
-			src, &ptr[i], PARSE_KEYWORD_RECL, &len);
-		if (!stmt->io_open.recl)
-			stmt->io_open.recl = parse_stmt__io_optarg(
-				src, &ptr[i], PARSE_KEYWORD_RECORDSIZE, &len);
-		if (stmt->io_open.recl) i += len;
-
-		stmt->io_open.status = parse_stmt__io_optarg(
-			src, &ptr[i], PARSE_KEYWORD_STATUS, &len);
-		if (stmt->io_open.status) i += len;
-
-		if (ptr[i] == ',')
-		{
+		len = parse_name(src, &ptr[i], NULL);
+		if (len == 0)
 			len = parse_keyword(
-				src, &ptr[i + 1], PARSE_KEYWORD_READONLY);
-			if (len > 0)
-			{
-				stmt->io_open.readonly = true;
-				i += (1 + len);
-			}
+				src, &ptr[i], PARSE_KEYWORD_END);
+		if ((len == 0) || (ptr[i + len] != '='))
+		{
+			stmt->io_open.unit = parse_expr(src, &ptr[i], &len);
+			if (!stmt->io_open.unit) return 0;
+			i += len;
+			initial = false;
 		}
 
-		stmt->io_open.action = parse_stmt__io_optarg(
-			src, &ptr[i], PARSE_KEYWORD_ACTION, &len);
-		if (stmt->io_open.action) i += len;
+		while (true)
+		{
+			if (!initial)
+			{
+				if (ptr[i] != ',')
+					break;
+				i += 1;
+			}
+			initial = false;
+
+			if (!stmt->io_open.readonly)
+			{
+				len = parse_keyword(
+					src, &ptr[i + 1], PARSE_KEYWORD_READONLY);
+				if (len > 0)
+				{
+					stmt->io_open.readonly = true;
+					i += (1 + len);
+					continue;
+				}
+			}
+
+			if (!stmt->io_open.unit)
+			{
+				stmt->io_open.unit = parse_stmt__io_optarg(
+					src, &ptr[i], PARSE_KEYWORD_UNIT, &len);
+				if (stmt->io_open.unit)
+				{
+					i += len;
+					continue;
+				}
+			}
+
+			if (!stmt->io_open.file)
+			{
+				stmt->io_open.file = parse_stmt__io_optarg(
+					src, &ptr[i], PARSE_KEYWORD_FILE, &len);
+				if (stmt->io_open.file)
+				{
+					i += len;
+					continue;
+				}
+				else
+				{
+					stmt->io_open.file = parse_stmt__io_optarg(
+						src, &ptr[i], PARSE_KEYWORD_NAME, &len);
+					if (stmt->io_open.file)
+					{
+						i += len;
+						continue;
+					}
+				}
+			}
+
+			if (!stmt->io_open.access)
+			{
+				stmt->io_open.access = parse_stmt__io_optarg(
+					src, &ptr[i], PARSE_KEYWORD_ACCESS, &len);
+				if (stmt->io_open.access)
+				{
+					i += len;
+					continue;
+				}
+			}
+
+			if (!stmt->io_open.blank)
+			{
+				stmt->io_open.blank = parse_stmt__io_optarg(
+					src, &ptr[i], PARSE_KEYWORD_BLANK, &len);
+				if (stmt->io_open.blank)
+				{
+					i += len;
+					continue;
+				}
+			}
+
+			if (!stmt->io_open.err)
+			{
+				stmt->io_open.err = parse_stmt__io_optarg(
+					src, &ptr[i], PARSE_KEYWORD_ERR, &len);
+				if (stmt->io_open.err)
+				{
+					i += len;
+					continue;
+				}
+			}
+
+			if (!stmt->io_open.form)
+			{
+				stmt->io_open.form = parse_stmt__io_optarg(
+					src, &ptr[i], PARSE_KEYWORD_FORM, &len);
+				if (stmt->io_open.form)
+				{
+					i += len;
+					continue;
+				}
+			}
+
+			if (!stmt->io_open.iostat)
+			{
+				stmt->io_open.iostat = parse_stmt__io_optarg(
+					src, &ptr[i], PARSE_KEYWORD_IOSTAT, &len);
+				if (stmt->io_open.iostat)
+				{
+					i += len;
+					continue;
+				}
+			}
+
+			if (!stmt->io_open.recl)
+			{
+				stmt->io_open.recl = parse_stmt__io_optarg(
+					src, &ptr[i], PARSE_KEYWORD_RECL, &len);
+				if (stmt->io_open.recl)
+				{
+					i += len;
+					continue;
+				}
+				else
+				{
+					stmt->io_open.recl = parse_stmt__io_optarg(
+						src, &ptr[i], PARSE_KEYWORD_RECORDSIZE, &len);
+					if (stmt->io_open.recl)
+					{
+						i += len;
+						continue;
+					}
+				}
+			}
+
+			if (!stmt->io_open.status)
+			{
+				stmt->io_open.status = parse_stmt__io_optarg(
+					src, &ptr[i], PARSE_KEYWORD_STATUS, &len);
+				if (stmt->io_open.status)
+				{
+					i += len;
+					continue;
+				}
+			}
+
+			if (!stmt->io_open.fileopt)
+			{
+				stmt->io_open.fileopt = parse_stmt__io_optarg(
+					src, &ptr[i], PARSE_KEYWORD_FILEOPT, &len);
+				if (stmt->io_open.fileopt)
+				{
+					i += len;
+					continue;
+				}
+			}
+
+			if (!stmt->io_open.action)
+			{
+				stmt->io_open.action = parse_stmt__io_optarg(
+					src, &ptr[i], PARSE_KEYWORD_ACTION, &len);
+				if (stmt->io_open.action)
+				{
+					i += len;
+					continue;
+				}
+			}
+
+			break;
+		}
 
 		if (ptr[i++] != ')')
 		{
 			parse_expr_delete(stmt->io_open.unit);
+			parse_expr_delete(stmt->io_open.file);
 			parse_expr_delete(stmt->io_open.access);
 			parse_expr_delete(stmt->io_open.blank);
 			parse_expr_delete(stmt->io_open.err);
