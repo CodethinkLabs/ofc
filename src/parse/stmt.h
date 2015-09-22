@@ -118,16 +118,8 @@ struct parse_stmt_s
 			parse_expr_t* file;
 			parse_label_t format_label;
 
-			parse_expr_list_t* elem;
-		} write;
-
-		struct
-		{
-			parse_expr_t* file;
-			parse_label_t format_label;
-
-			parse_expr_list_t* elem;
-		} read;
+			parse_iolist_t* args;
+		} read_write;
 
 		struct
 		{

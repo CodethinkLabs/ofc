@@ -18,6 +18,10 @@ parse_assign_t* parse_assign(
 	const sparse_t* src, const char* ptr,
 	unsigned* len);
 
+parse_assign_t* parse_assign_init(
+	const sparse_t* src, const char* ptr,
+	unsigned* len);
+
 parse_assign_t* parse_assign_copy(
 	const parse_assign_t* assign);
 

@@ -4,13 +4,24 @@
 static void parse_lhs__cleanup(
 	parse_lhs_t lhs)
 {
-	if (lhs.type != PARSE_LHS_VARIABLE)
-		parse_lhs_delete(lhs.parent);
+	switch (lhs.type)
+	{
+		case PARSE_LHS_ARRAY:
+		case PARSE_LHS_MEMBER_STRUCTURE:
+		case PARSE_LHS_MEMBER_TYPE:
+			parse_lhs_delete(lhs.parent);
+			break;
+		default:
+			break;
+	}
 
 	switch (lhs.type)
 	{
 		case PARSE_LHS_ARRAY:
 			parse_array_index_delete(lhs.array.index);
+			break;
+		case PARSE_LHS_IMPLICIT_DO:
+			parse_implicit_do_delete(lhs.implicit_do);
 			break;
 		default:
 			break;
@@ -37,28 +48,59 @@ static bool parse_lhs__clone(
 
 	parse_lhs_t clone = *src;
 
-	if ((src->type != PARSE_LHS_VARIABLE)
-		&& src->parent)
+	switch (src->type)
 	{
-		parse_lhs_t parent;
-		if (!parse_lhs__clone(
-			&parent, src->parent))
-			return false;
+		case PARSE_LHS_ARRAY:
+		case PARSE_LHS_MEMBER_STRUCTURE:
+		case PARSE_LHS_MEMBER_TYPE:
+			if (src->parent)
+			{
+				parse_lhs_t parent;
+				if (!parse_lhs__clone(
+					&parent, src->parent))
+					return false;
 
-		clone.parent
-			= parse_lhs__alloc(parent);
-		if (!clone.parent)
-		{
-			parse_lhs__cleanup(parent);
-			return false;
-		}
+				clone.parent
+					= parse_lhs__alloc(parent);
+				if (!clone.parent)
+				{
+					parse_lhs__cleanup(parent);
+					return false;
+				}
+			}
+			break;
+		default:
+			break;
 	}
 
 	switch (src->type)
 	{
 		case PARSE_LHS_ARRAY:
 			if (src->array.index)
-				clone.array.index = parse_array_index_copy(src->array.index);
+			{
+				clone.array.index = parse_array_index_copy(
+					src->array.index);
+				if (!clone.array.index)
+				{
+					parse_lhs__cleanup(clone);
+					return false;
+				}
+			}
+			break;
+
+		case PARSE_LHS_IMPLICIT_DO:
+			if (src->implicit_do)
+			{
+				clone.implicit_do = parse_implicit_do_copy(
+					src->implicit_do);
+				if (!clone.implicit_do)
+				{
+					parse_lhs__cleanup(clone);
+					return false;
+				}
+			}
+			break;
+
 		default:
 			break;
 	}
@@ -74,11 +116,16 @@ parse_lhs_t* parse_lhs(
 	unsigned* len)
 {
 	parse_lhs_t lhs;
-	lhs.type = PARSE_LHS_VARIABLE;
 
+	lhs.type = PARSE_LHS_VARIABLE;
 	unsigned i = parse_name(
 		src, ptr, &lhs.variable);
-	if (i == 0) return NULL;
+	if (i == 0)
+	{
+		lhs.implicit_do = parse_implicit_do(src, ptr, &i);
+		if (!lhs.implicit_do) return NULL;
+		lhs.type = PARSE_LHS_IMPLICIT_DO;
+	}
 
 	parse_lhs_t* alhs
 		= parse_lhs__alloc(lhs);
@@ -88,7 +135,8 @@ parse_lhs_t* parse_lhs(
 		return NULL;
 	}
 
-	if (ptr[i] == '(')
+	if ((lhs.type == PARSE_LHS_VARIABLE)
+		&& (ptr[i] == '('))
 	{
 		lhs.type   = PARSE_LHS_ARRAY;
 		lhs.parent = alhs;

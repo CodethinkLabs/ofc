@@ -11,6 +11,7 @@ typedef enum
 	PARSE_LHS_ARRAY,
 	PARSE_LHS_MEMBER_TYPE,
 	PARSE_LHS_MEMBER_STRUCTURE,
+	PARSE_LHS_IMPLICIT_DO,
 } parse_lhs_e;
 
 
@@ -39,6 +40,8 @@ struct parse_lhs_s
 				} member;
 			};
 		};
+
+		parse_implicit_do_t* implicit_do;
 	};
 };
 

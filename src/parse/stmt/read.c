@@ -14,23 +14,23 @@ unsigned parse_stmt_read(
 	/* TODO - Implement READ statements fully, not just the NIST form. */
 
 	unsigned len;
-	stmt->read.file = parse_expr(
+	stmt->read_write.file = parse_expr(
 		src, &ptr[i], &len);
-	if (!stmt->read.file) return 0;
+	if (!stmt->read_write.file) return 0;
 	i += len;
 
 	if (ptr[i++] != ',')
 	{
-		parse_expr_delete(stmt->read.file);
+		parse_expr_delete(stmt->read_write.file);
 		return 0;
 	}
 
 	len = parse_label(
-		src, &ptr[i], &stmt->read.format_label);
+		src, &ptr[i], &stmt->read_write.format_label);
 	if (len == 0)
 	{
 		parse_expr_delete(
-			stmt->read.file);
+			stmt->read_write.file);
 		return 0;
 	}
 	i += len;
@@ -38,15 +38,15 @@ unsigned parse_stmt_read(
 	if (ptr[i++] != ')')
 	{
 		parse_expr_delete(
-			stmt->read.file);
+			stmt->read_write.file);
 		return 0;
 	}
 
 	stmt->type = PARSE_STMT_READ;
 
-	stmt->read.elem = parse_expr_list(
+	stmt->read_write.args = parse_iolist(
 		src, &ptr[i], &len);
-	if (stmt->read.elem) i += len;
+	if (stmt->read_write.args) i += len;
 
 	return i;
 }

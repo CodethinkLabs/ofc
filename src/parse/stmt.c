@@ -134,13 +134,10 @@ static void parse_stmt__cleanup(
 			parse_expr_delete(stmt.do_loop.last);
 			parse_expr_delete(stmt.do_loop.step);
 			break;
-		case PARSE_STMT_WRITE:
-			parse_expr_list_delete(stmt.write.elem);
-			parse_expr_delete(stmt.write.file);
-			break;
 		case PARSE_STMT_READ:
-			parse_expr_list_delete(stmt.read.elem);
-			parse_expr_delete(stmt.read.file);
+		case PARSE_STMT_WRITE:
+			parse_iolist_delete(stmt.read_write.args);
+			parse_expr_delete(stmt.read_write.file);
 			break;
 		case PARSE_STMT_FORMAT:
 			parse_format_desc_list_delete(

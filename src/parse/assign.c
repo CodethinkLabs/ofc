@@ -43,6 +43,26 @@ parse_assign_t* parse_assign(
 	return assign;
 }
 
+/* TODO - Make this a flag to a static function for speed. */
+parse_assign_t* parse_assign_init(
+	const sparse_t* src, const char* ptr,
+	unsigned* len)
+{
+	unsigned i;
+	parse_assign_t* assign
+		= parse_assign(src, ptr, &i);
+	if (!assign) return NULL;
+
+	if (!assign->init)
+	{
+		parse_assign_delete(assign);
+		return NULL;
+	}
+
+	if (len) *len = i;
+	return assign;
+}
+
 parse_assign_t* parse_assign_copy(
 	const parse_assign_t* assign)
 {

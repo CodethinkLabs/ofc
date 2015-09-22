@@ -8,6 +8,7 @@
 typedef struct parse_lhs_s parse_lhs_t;
 typedef struct parse_expr_s parse_expr_t;
 typedef struct parse_stmt_s parse_stmt_t;
+typedef struct parse_implicit_do_s parse_implicit_do_t;
 
 #include "list.h"
 #include "keyword.h"
@@ -18,9 +19,11 @@ typedef struct parse_stmt_s parse_stmt_t;
 #include "lhs.h"
 #include "expr.h"
 #include "assign.h"
+#include "implicit_do.h"
 #include "type.h"
 #include "common.h"
 #include "implicit.h"
+#include "iolist.h"
 #include "format.h"
 #include "stmt.h"
 
