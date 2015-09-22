@@ -38,11 +38,13 @@ typedef enum
 	PARSE_STMT_IF_THEN,
 	PARSE_STMT_DO,
 	PARSE_STMT_IO_OPEN,
+	PARSE_STMT_IO_INQUIRE,
 	PARSE_STMT_IO_REWIND,
 	PARSE_STMT_IO_BACKSPACE,
 	PARSE_STMT_IO_READ,
 	PARSE_STMT_IO_WRITE,
 	PARSE_STMT_IO_END_FILE,
+	PARSE_STMT_IO_CLOSE,
 	PARSE_STMT_FORMAT,
 	PARSE_STMT_DATA,
 	PARSE_STMT_SAVE,
@@ -151,6 +153,7 @@ struct parse_stmt_s
 			parse_expr_t*   end;
 			parse_expr_t*   iostat;
 			parse_expr_t*   err;
+			parse_expr_t*   status;
 			parse_iolist_t* args;
 		} io;
 
@@ -169,6 +172,28 @@ struct parse_stmt_s
 			bool            readonly;
 			parse_expr_t*   action;
 		} io_open;
+
+		struct
+		{
+			parse_expr_t*   unit;
+			parse_expr_t*   file;
+			parse_expr_t*   err;
+			parse_expr_t*   exist;
+			parse_expr_t*   opened;
+			parse_expr_t*   named;
+			parse_expr_t*   access;
+			parse_expr_t*   sequential;
+			parse_expr_t*   direct;
+			parse_expr_t*   form;
+			parse_expr_t*   formatted;
+			parse_expr_t*   unformatted;
+			parse_expr_t*   name;
+			parse_expr_t*   blank;
+			parse_expr_t*   iostat;
+			parse_expr_t*   number;
+			parse_expr_t*   recl;
+			parse_expr_t*   nextrec;
+		} io_inquire;
 
 		struct
 		{

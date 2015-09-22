@@ -58,11 +58,13 @@ static const char* parse_keyword__name[] =
 	"FORMAT",
 
 	"OPEN",
+	"INQUIRE",
 	"REWIND",
 	"BACKSPACE",
 	"READ",
 	"WRITE",
 	"END FILE",
+	"CLOSE",
 
 	"UNIT",
 	"FILE",
@@ -81,6 +83,16 @@ static const char* parse_keyword__name[] =
 	"FMT",
 	"REC",
 	"END",
+
+	"EXIST",
+	"OPENED",
+	"NAMED",
+	"SEQUENTIAL",
+	"DIRECT",
+	"FORMATTED",
+	"UNFORMATTED",
+	"NUMBER",
+	"NEXTREC",
 
 	NULL
 };
