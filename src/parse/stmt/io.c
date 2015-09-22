@@ -181,3 +181,17 @@ unsigned parse_stmt_io_write(
 	stmt->type = PARSE_STMT_IO_WRITE;
 	return i;
 }
+
+unsigned parse_stmt_io_end_file(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt)
+{
+	unsigned i = parse_stmt__io(
+		src, ptr,
+		PARSE_KEYWORD_END_FILE, false, false,
+		stmt);
+	if (i == 0) return 0;
+
+	stmt->type = PARSE_STMT_IO_END_FILE;
+	return i;
+}

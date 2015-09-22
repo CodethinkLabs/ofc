@@ -54,6 +54,7 @@ static const char* parse_keyword__name[] =
 	"BACKSPACE",
 	"READ",
 	"WRITE",
+	"END FILE",
 
 	"UNIT",
 	"FMT",
@@ -132,6 +133,10 @@ unsigned parse_keyword_named(
 		case PARSE_KEYWORD_IMPLICIT_NONE:
 			kwstr = "IMPLICITNONE";
 			expect_space = 8;
+			break;
+		case PARSE_KEYWORD_END_FILE:
+			kwstr = "ENDFILE";
+			expect_space = 3;
 			break;
 		default:
 			break;

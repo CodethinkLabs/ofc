@@ -51,6 +51,16 @@ unsigned parse_stmt_if(
 unsigned parse_stmt_do(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
+unsigned parse_stmt_format(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
+unsigned parse_stmt_data(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
+unsigned parse_stmt_assign(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
+
 unsigned parse_stmt_io_rewind(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
@@ -63,13 +73,7 @@ unsigned parse_stmt_io_read(
 unsigned parse_stmt_io_write(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
-unsigned parse_stmt_format(
-	const sparse_t* src, const char* ptr,
-	parse_stmt_t* stmt);
-unsigned parse_stmt_data(
-	const sparse_t* src, const char* ptr,
-	parse_stmt_t* stmt);
-unsigned parse_stmt_assign(
+unsigned parse_stmt_io_end_file(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
 
@@ -141,6 +145,7 @@ static void parse_stmt__cleanup(
 		case PARSE_STMT_IO_BACKSPACE:
 		case PARSE_STMT_IO_READ:
 		case PARSE_STMT_IO_WRITE:
+		case PARSE_STMT_IO_END_FILE:
 			parse_expr_delete(stmt.io.unit);
 			parse_expr_delete(stmt.io.fmt);
 			parse_expr_delete(stmt.io.iostat);
@@ -217,6 +222,7 @@ parse_stmt_t* parse_stmt(
 
 		case 'E':
 			if (i == 0) i = parse_stmt_equivalence(src, ptr, &stmt);
+			if (i == 0) i = parse_stmt_io_end_file(src, ptr, &stmt);
 			break;
 
 		case 'F':
