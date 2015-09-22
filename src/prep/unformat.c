@@ -365,34 +365,29 @@ static bool prep_unformat__fixed_form(
 		{
 			fprintf(stderr, "Warning:%s:%u: Initial line can't be a continuation"
 				", treating as non-continuation line\n", path, (row + 1));
+			continuation = false;
+		}
+
+		if (continuation)
+		{
+			if (has_label)
+			{
+				fprintf(stderr, "Warning:%s:%u: "
+					"Labeling a continuation line doesn't make sense"
+					", ignoring label\n", path, (row + 1));
+			}
+			has_label = had_label;
+			label = label_prev;
+			had_label = false;
+		}
+		else if (had_label)
+		{
+			fprintf(stderr, "Warning:%s:%u: "
+				"Label attached to blank line, will be ignored\n", path, (label_row + 1));
 		}
 
 		col  = len;
 		pos += len;
-
-		if (has_label && continuation)
-		{
-			fprintf(stderr, "Warning:%s:%u: "
-				"Labeling a continuation line doesn't make sense"
-				", ignoring label\n", path, (row + 1));
-			has_label = false;
-		}
-
-		if (had_label)
-		{
-			if (!continuation)
-			{
-				fprintf(stderr, "Warning:%s:%u: "
-					"Label attached to blank line, will be ignored\n", path, (label_row + 1));
-			}
-			else
-			{
-				has_label = true;
-				label = label_prev;
-			}
-
-			had_label = false;
-		}
 
 		/* Skip initial space. */
 		for(; is_hspace(src[pos]); pos++, col++);
@@ -401,13 +396,14 @@ static bool prep_unformat__fixed_form(
 			&& (src[pos] != '\0')
 			&& !is_vspace(src[pos]));
 
+		/* Insert single newline character at the end of each line of output. */
+		if ((has_code || has_label)
+			&& !first_code_line && !continuation
+			&& !sparse_append_strn(sparse, newline, 1))
+			return false;
+
 		if (has_code)
 		{
-			/* Insert single newline character at the end of each line in output. */
-			if (!first_code_line && !continuation
-				&& !sparse_append_strn(sparse, newline, 1))
-				return false;
-
 			if (has_label)
 			{
 				/* Mark current position in file as label. */
@@ -427,9 +423,10 @@ static bool prep_unformat__fixed_form(
 		}
 		else if (has_label)
 		{
-			had_label = true;
+			/* Label is on blank line, attach to next code line. */
+			had_label  = true;
 			label_prev = label;
-			label_row = row;
+			label_row  = row;
 		}
 
 		/* Skip to the actual end of the line, including all ignored characters. */
