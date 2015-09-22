@@ -138,25 +138,30 @@ parse_lhs_t* parse_lhs(
 	if ((lhs.type == PARSE_LHS_VARIABLE)
 		&& (ptr[i] == '('))
 	{
-		lhs.type   = PARSE_LHS_ARRAY;
-		lhs.parent = alhs;
 
 		unsigned l = 0;
-		lhs.array.index = parse_array_index(
-			src, &ptr[i], &l);
-		if (!lhs.array.index)
-		{
-			parse_lhs__cleanup(lhs);
-			return NULL;
-		}
-		i += l;
+		parse_array_index_t* index
+			= parse_array_index(
+				src, &ptr[i], &l);
+		if (!index
+			&& (ptr[i + 1] == ')'))
+			l = 2;
 
-		parse_lhs_t* alhs
-			= parse_lhs__alloc(lhs);
-		if (!alhs)
+		if (l > 0)
 		{
-			parse_lhs__cleanup(lhs);
-			return NULL;
+			i += l;
+
+			lhs.type        = PARSE_LHS_ARRAY;
+			lhs.parent      = alhs;
+			lhs.array.index = index;
+
+			parse_lhs_t* alhs
+				= parse_lhs__alloc(lhs);
+			if (!alhs)
+			{
+				parse_lhs__cleanup(lhs);
+				return NULL;
+			}
 		}
 	}
 
