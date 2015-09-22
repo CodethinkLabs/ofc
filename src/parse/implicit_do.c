@@ -71,6 +71,7 @@ parse_implicit_do_t* parse_implicit_do(
 			parse_implicit_do_delete(id);
 			return 0;
 		}
+		i += l;
 	}
 
 	if (ptr[i++] != ')')
