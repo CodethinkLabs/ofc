@@ -18,6 +18,9 @@ unsigned parse_stmt_implicit(
 unsigned parse_stmt_call(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
+unsigned parse_stmt_entry(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
 unsigned parse_stmt_decl(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
@@ -118,7 +121,8 @@ static void parse_stmt__cleanup(
 			parse_implicit_list_delete(stmt.implicit);
 			break;
 		case PARSE_STMT_CALL:
-			parse_call_arg_list_delete(stmt.call.args);
+		case PARSE_STMT_ENTRY:
+			parse_call_arg_list_delete(stmt.call_entry.args);
 			break;
 		case PARSE_STMT_DECL:
 			parse_type_delete(stmt.decl.type);
@@ -277,6 +281,7 @@ parse_stmt_t* parse_stmt(
 			if (i == 0) i = parse_stmt_equivalence(src, ptr, &stmt);
 			if (i == 0) i = parse_stmt_io_end_file(src, ptr, &stmt);
 			if (i == 0) i = parse_stmt_external(src, ptr, &stmt);
+			if (i == 0) i = parse_stmt_entry(src, ptr, &stmt);
 			break;
 
 		case 'F':

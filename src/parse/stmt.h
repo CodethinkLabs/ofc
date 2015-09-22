@@ -18,6 +18,7 @@ typedef enum
 	PARSE_STMT_IMPLICIT_NONE,
 	PARSE_STMT_IMPLICIT,
 	PARSE_STMT_CALL,
+	PARSE_STMT_ENTRY,
 	PARSE_STMT_DECL,
 	PARSE_STMT_DIMENSION,
 	PARSE_STMT_EQUIVALENCE,
@@ -63,8 +64,7 @@ struct parse_stmt_s
 		{
 			str_ref_t              name;
 			parse_call_arg_list_t* args;
-		} call;
-
+		} call_entry;
 
 		struct
 		{

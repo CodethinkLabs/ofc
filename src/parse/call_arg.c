@@ -11,7 +11,8 @@ parse_call_arg_t* parse_call_arg(
 	if (!call_arg) return NULL;
 
 	unsigned i = 0;
-	if ((ptr[i] == '*')
+	bool was_asterisk = (ptr[i] == '*');
+	if (was_asterisk
 		|| (ptr[i] == '&'))
 	{
 		i += 1;
@@ -20,12 +21,19 @@ parse_call_arg_t* parse_call_arg(
 			src, &ptr[i], &call_arg->label);
 		if (l == 0)
 		{
-			free(call_arg);
-			return NULL;
-		}
-		i += l;
+			if (!was_asterisk)
+			{
+				free(call_arg);
+				return NULL;
+			}
 
-		call_arg->is_return = true;
+			call_arg->type = PARSE_CALL_ARG_ASTERISK;
+		}
+		else
+		{
+			i += l;
+			call_arg->type = PARSE_CALL_ARG_RETURN;
+		}
 	}
 	else
 	{
@@ -35,7 +43,7 @@ parse_call_arg_t* parse_call_arg(
 			free(call_arg);
 			return NULL;
 		}
-		call_arg->is_return = false;
+		call_arg->type = PARSE_CALL_ARG_EXPR;
 	}
 
 	if (len) *len = i;
@@ -48,7 +56,7 @@ void parse_call_arg_delete(
 	if (!call_arg)
 		return;
 
-	if (!call_arg->is_return)
+	if (call_arg->type == PARSE_CALL_ARG_EXPR)
 		parse_expr_delete(call_arg->expr);
 	free(call_arg);
 }

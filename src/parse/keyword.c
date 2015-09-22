@@ -46,6 +46,7 @@ static const char* parse_keyword__name[] =
 	"TO",
 
 	"CALL",
+	"ENTRY",
 	"RETURN",
 	"EXTERNAL",
 	"INTRINSIC",

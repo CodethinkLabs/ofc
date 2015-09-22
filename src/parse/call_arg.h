@@ -1,9 +1,16 @@
 #ifndef __parse_call_arg_h__
 #define __parse_call_arg_h__
 
+typedef enum
+{
+	PARSE_CALL_ARG_EXPR,
+	PARSE_CALL_ARG_RETURN,
+	PARSE_CALL_ARG_ASTERISK,
+} parse_call_arg_e;
+
 typedef struct
 {
-	bool is_return;
+	parse_call_arg_e type;
 	union
 	{
 		parse_expr_t* expr;
