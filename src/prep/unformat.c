@@ -390,7 +390,8 @@ static bool prep_unformat__fixed_form(
 		pos += len;
 
 		/* Skip initial space. */
-		for(; is_hspace(src[pos]); pos++, col++);
+		if (!continuation)
+			for(; is_hspace(src[pos]); pos++, col++);
 
 		bool has_code = ((col < opts.columns)
 			&& (src[pos] != '\0')
