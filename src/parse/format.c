@@ -32,6 +32,8 @@ static const parse_format_desc__map_t parse_format_desc__map[] =
 	{ "TR", PARSE_FORMAT_DESC_TR        , 1, 0, 0 },
 	{ "T" , PARSE_FORMAT_DESC_T         , 1, 0, 0 },
 	{ "/" , PARSE_FORMAT_DESC_SLASH     , 0, 0, 0 },
+	{ ":" , PARSE_FORMAT_DESC_DOLLAR    , 0, 0, 0 },
+	{ "$" , PARSE_FORMAT_DESC_COLON     , 0, 0, 0 },
 
 	{ NULL, 0, 0, 0, 0 }
 };
@@ -148,6 +150,11 @@ void parse_format_desc_cleanup(
 		case PARSE_FORMAT_DESC_HOLLERITH:
 		case PARSE_FORMAT_DESC_STRING:
 			string_delete(desc.string);
+			break;
+		case PARSE_FORMAT_DESC_REPEAT:
+			parse_format_desc_list_delete(
+				desc.repeat.list,
+				desc.repeat.count);
 			break;
 		default:
 			break;
