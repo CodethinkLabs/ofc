@@ -18,13 +18,13 @@ unsigned parse_stmt_call(
 	{
 		i += 1;
 
-		stmt->call.args = parse_expr_list(
+		stmt->call.args = parse_call_arg_list(
 			src, &ptr[i], &len);
 		if (stmt->call.args) i += len;
 
 		if (ptr[i++] != ')')
 		{
-			parse_expr_list_delete(
+			parse_call_arg_list_delete(
 				stmt->call.args);
 			return 0;
 		}

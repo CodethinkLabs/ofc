@@ -61,8 +61,8 @@ struct parse_stmt_s
 
 		struct
 		{
-			str_ref_t          name;
-			parse_expr_list_t* args;
+			str_ref_t              name;
+			parse_call_arg_list_t* args;
 		} call;
 
 

@@ -19,6 +19,7 @@ typedef struct parse_implicit_do_s parse_implicit_do_t;
 #include "lhs.h"
 #include "expr.h"
 #include "assign.h"
+#include "call_arg.h"
 #include "implicit_do.h"
 #include "type.h"
 #include "decl.h"

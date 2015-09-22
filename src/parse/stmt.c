@@ -118,7 +118,7 @@ static void parse_stmt__cleanup(
 			parse_implicit_list_delete(stmt.implicit);
 			break;
 		case PARSE_STMT_CALL:
-			parse_expr_list_delete(stmt.call.args);
+			parse_call_arg_list_delete(stmt.call.args);
 			break;
 		case PARSE_STMT_DECL:
 			parse_type_delete(stmt.decl.type);

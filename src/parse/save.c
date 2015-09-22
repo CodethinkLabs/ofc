@@ -17,7 +17,11 @@ parse_save_t* parse_save(
 
 		unsigned l = parse_name(
 			src, &ptr[i], &save->common);
-		if (l == 0) return NULL;
+		if (l == 0)
+		{
+			free(save);
+			return NULL;
+		}
 		i += l;
 
 		if (ptr[i++] != '/')
