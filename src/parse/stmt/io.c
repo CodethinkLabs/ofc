@@ -77,10 +77,11 @@ static unsigned parse_stmt__io(
 			}
 			else
 			{
-				parse_assign_t* a = parse_assign_init(
-					src, &ptr[j], &len);
-				parse_assign_delete(a);
-				has_fmt = (a == NULL);
+				len = parse_name(src, &ptr[j], NULL);
+				if (len == 0)
+					len = parse_keyword(
+						src, &ptr[j], PARSE_KEYWORD_END);
+				has_fmt = (len == 0) || (ptr[j + len] != '=');
 			}
 
 			if (has_fmt)
