@@ -5,6 +5,7 @@ typedef struct
 {
 	parse_lhs_t*  lhs;
 	parse_expr_t* len;
+	parse_expr_t* init;
 } parse_decl_t;
 
 typedef struct

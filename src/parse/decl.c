@@ -27,6 +27,15 @@ parse_decl_t* parse_decl(
 		if (decl->len) i += (l + 1);
 	}
 
+	decl->init = NULL;
+	if (ptr[i] == '=')
+	{
+		unsigned l;
+		decl->init = parse_expr(
+			src, &ptr[i + 1], &l);
+		if (decl->init) i += (l + 1);
+	}
+
 	if (len) *len = i;
 	return decl;
 }
