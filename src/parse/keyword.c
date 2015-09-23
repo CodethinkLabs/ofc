@@ -161,37 +161,39 @@ unsigned parse_keyword_named(
 	const char* kwstr = parse_keyword__name[keyword];
 
 	/* TODO - Make handling spaced keywords less manual. */
-	/* TODO - Differentiate between expected and optional spaces. */
-	unsigned expect_space = 0;
+	unsigned space = 0;
+	bool space_optional = false;
 	switch (keyword)
 	{
 		case PARSE_KEYWORD_BLOCK_DATA:
 			kwstr = "BLOCKDATA";
-			expect_space = 5;
+			space = 5;
 			break;
 		case PARSE_KEYWORD_ELSE_IF:
 			kwstr = "ELSEIF";
-			expect_space = 4;
+			space = 4;
 			break;
 		case PARSE_KEYWORD_GO_TO:
 			kwstr = "GOTO";
-			expect_space = 2;
+			space = 2;
+			space_optional = true;
 			break;
 		case PARSE_KEYWORD_DOUBLE_PRECISION:
 			kwstr = "DOUBLEPRECISION";
-			expect_space = 6;
+			space = 6;
 			break;
 		case PARSE_KEYWORD_DOUBLE_COMPLEX:
 			kwstr = "DOUBLECOMPLEX";
-			expect_space = 6;
+			space = 6;
 			break;
 		case PARSE_KEYWORD_IMPLICIT_NONE:
 			kwstr = "IMPLICITNONE";
-			expect_space = 8;
+			space = 8;
 			break;
 		case PARSE_KEYWORD_END_FILE:
 			kwstr = "ENDFILE";
-			expect_space = 3;
+			space = 3;
+			space_optional = true;
 			break;
 		default:
 			break;
@@ -205,17 +207,17 @@ unsigned parse_keyword_named(
 		= sparse_sequential(src, ptr, len);
 
 	bool unexpected_space = !entirely_sequential;
-	if (expect_space > 0)
+	if (space > 0)
 	{
-		unsigned remain = (len - expect_space);
-		unexpected_space = (!sparse_sequential(src, ptr, expect_space)
-			|| !sparse_sequential(src, &ptr[expect_space], remain));
+		unsigned remain = (len - space);
+		unexpected_space = (!sparse_sequential(src, ptr, space)
+			|| !sparse_sequential(src, &ptr[space], remain));
 
-		if (entirely_sequential)
+		if (entirely_sequential && !space_optional)
 		{
 			sparse_warning(src, ptr,
 				"Expected a space between keywords '%.*s' and '%.*s'",
-				expect_space, ptr, remain, &ptr[expect_space]);
+				space, ptr, remain, &ptr[space]);
 		}
 	}
 
