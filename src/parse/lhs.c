@@ -157,6 +157,56 @@ static parse_lhs_t* parse_lhs__array(
 	return alhs;
 }
 
+
+static parse_lhs_t* parse_lhs__member(
+	const sparse_t* src, const char* ptr,
+	parse_lhs_t* parent, unsigned* len)
+{
+	if (!parent)
+		return NULL;
+
+	switch (parent->type)
+	{
+		case PARSE_LHS_IMPLICIT_DO:
+			return NULL;
+		default:
+			break;
+	}
+
+	unsigned i = 0;
+	switch (ptr[i++])
+	{
+		case '.':
+			/* TODO - Handle this once ambiguity with operators can be resolved. */
+			return NULL;
+		case '%':
+			break;
+		default:
+			return NULL;
+	}
+
+	parse_lhs_t lhs;
+	unsigned l = parse_name(
+		src, &ptr[i], &lhs.member.name);
+	if (l == 0) return NULL;
+	i += l;
+
+	lhs.type   = PARSE_LHS_MEMBER_TYPE;
+	lhs.parent = parent;
+
+	parse_lhs_t* alhs
+		= parse_lhs__alloc(lhs);
+	if (!alhs)
+	{
+		parse_lhs__cleanup(lhs);
+		return NULL;
+	}
+
+	if (len) *len = i;
+	return alhs;
+}
+
+
 parse_lhs_t* parse_lhs(
 	const sparse_t* src, const char* ptr,
 	unsigned* len)
@@ -184,15 +234,28 @@ parse_lhs_t* parse_lhs(
 	while (true)
 	{
 		unsigned l;
-		parse_lhs_t* array_lhs
-			= parse_lhs__array(
-				src, &ptr[i], alhs, &l);
-		if (!array_lhs) break;
-		i += l;
-		alhs = array_lhs;
-	}
+		parse_lhs_t* child_lhs;
 
-	/* TODO - Implement struct LHS types. */
+		child_lhs = parse_lhs__array(
+				src, &ptr[i], alhs, &l);
+		if (child_lhs)
+		{
+			i += l;
+			alhs = child_lhs;
+			continue;
+		}
+
+		child_lhs = parse_lhs__member(
+				src, &ptr[i], alhs, &l);
+		if (child_lhs)
+		{
+			i += l;
+			alhs = child_lhs;
+			continue;
+		}
+
+		break;
+	}
 
 	if (len) *len = i;
 	return alhs;
