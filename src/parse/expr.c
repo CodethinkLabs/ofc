@@ -209,8 +209,6 @@ static unsigned parse_expr__primary(
 			src, ptr, expr);
 	if (len > 0) return len;
 
-	/* TODO - Check for intrinsics first. */
-
 	expr->variable
 		= parse_lhs(src, ptr, &len);
 	if (expr->variable)
@@ -221,14 +219,6 @@ static unsigned parse_expr__primary(
 
 	len = parse_expr__intrinsic(src, ptr, expr);
 	if (len > 0) return len;
-
-	/* TODO - Parse constant-subobject. */
-
-	/* TODO - Parse array constructor. */
-
-	/* TODO - Parse structure constructor. */
-
-	/* TODO - Parse function-reference. */
 
 	if (ptr[0] == '(')
 	{

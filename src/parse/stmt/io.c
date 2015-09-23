@@ -841,8 +841,6 @@ unsigned parse_stmt_io_close(
 		stmt);
 	if (i == 0) return 0;
 
-	/* TODO - Support STATUS. */
-
 	stmt->type = PARSE_STMT_IO_CLOSE;
 	return i;
 }
