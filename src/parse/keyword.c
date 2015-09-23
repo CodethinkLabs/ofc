@@ -65,6 +65,7 @@ static const char* parse_keyword__name[] =
 	"WRITE",
 	"END FILE",
 	"CLOSE",
+	"PRINT",
 
 	"UNIT",
 	"FILE",

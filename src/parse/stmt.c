@@ -103,6 +103,9 @@ unsigned parse_stmt_io_end_file(
 unsigned parse_stmt_io_close(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
+unsigned parse_stmt_io_print(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
 
 
 
@@ -231,6 +234,9 @@ static void parse_stmt__cleanup(
 			parse_expr_delete(stmt.io_inquire.recl       );
 			parse_expr_delete(stmt.io_inquire.nextrec    );
 			break;
+		case PARSE_STMT_IO_PRINT:
+			parse_iolist_delete(stmt.io_print.args);
+			break;
 		case PARSE_STMT_FORMAT:
 			parse_format_desc_list_delete(
 				stmt.format.desc, stmt.format.desc_count);
@@ -337,6 +343,7 @@ parse_stmt_t* parse_stmt(
 			if (i == 0) i = parse_stmt_parameter(src, ptr, &stmt);
 			if (i == 0) i = parse_stmt_program(src, ptr, &stmt);
 			if (i == 0) i = parse_stmt_pause(src, ptr, &stmt);
+			if (i == 0) i = parse_stmt_io_print(src, ptr, &stmt);
 			break;
 
 		case 'R':

@@ -45,6 +45,7 @@ typedef enum
 	PARSE_STMT_IO_WRITE,
 	PARSE_STMT_IO_END_FILE,
 	PARSE_STMT_IO_CLOSE,
+	PARSE_STMT_IO_PRINT,
 	PARSE_STMT_FORMAT,
 	PARSE_STMT_DATA,
 	PARSE_STMT_SAVE,
@@ -195,6 +196,13 @@ struct parse_stmt_s
 			parse_expr_t*   recl;
 			parse_expr_t*   nextrec;
 		} io_inquire;
+
+		struct
+		{
+			parse_label_t   format;
+			bool            format_asterisk;
+			parse_iolist_t* args;
+		} io_print;
 
 		struct
 		{

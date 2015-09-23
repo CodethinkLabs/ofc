@@ -866,3 +866,43 @@ unsigned parse_stmt_io_close(
 	stmt->type = PARSE_STMT_IO_CLOSE;
 	return i;
 }
+
+unsigned parse_stmt_io_print(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt)
+{
+	unsigned i = parse_keyword(
+		src, ptr, PARSE_KEYWORD_PRINT);
+	if (i == 0) return 0;
+
+	stmt->io_print.format_asterisk = false;
+	unsigned len = parse_label(
+		src, &ptr[i], &stmt->io_print.format);
+	if (len == 0)
+	{
+		if (ptr[i] == '*')
+		{
+			stmt->io_print.format_asterisk = true;
+			len = 1;
+		}
+		else
+		{
+			return 0;
+		}
+	}
+	i += len;
+
+	stmt->io_print.args = NULL;
+	if (ptr[i] == ',')
+	{
+		i += 1;
+
+		stmt->io.args = parse_iolist(
+			src, &ptr[i], &len);
+		if (!stmt->io.args) return 0;
+		i += len;
+	}
+
+	stmt->type = PARSE_STMT_IO_PRINT;
+	return i;
+}
