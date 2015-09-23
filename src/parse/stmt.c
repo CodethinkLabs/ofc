@@ -53,12 +53,6 @@ unsigned parse_stmt_pause(
 unsigned parse_stmt_return(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
-unsigned parse_stmt_external(
-	const sparse_t* src, const char* ptr,
-	parse_stmt_t* stmt);
-unsigned parse_stmt_intrinsic(
-	const sparse_t* src, const char* ptr,
-	parse_stmt_t* stmt);
 unsigned parse_stmt_go_to(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
@@ -81,6 +75,22 @@ unsigned parse_stmt_parameter(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
 unsigned parse_stmt_assign(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
+
+unsigned parse_stmt_decl_attr_external(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
+unsigned parse_stmt_decl_attr_intrinsic(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
+unsigned parse_stmt_decl_attr_automatic(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
+unsigned parse_stmt_decl_attr_static(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
+unsigned parse_stmt_decl_attr_volatile(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
 
@@ -162,11 +172,14 @@ static void parse_stmt__cleanup(
 		case PARSE_STMT_RETURN:
 			parse_expr_delete(stmt.stop_pause_return.value);
 			break;
-		case PARSE_STMT_EXTERNAL:
-		case PARSE_STMT_INTRINSIC:
+		case PARSE_STMT_DECL_ATTR_EXTERNAL:
+		case PARSE_STMT_DECL_ATTR_INTRINSIC:
+		case PARSE_STMT_DECL_ATTR_AUTOMATIC:
+		case PARSE_STMT_DECL_ATTR_STATIC:
+		case PARSE_STMT_DECL_ATTR_VOLATILE:
 			parse_list_delete(
-				stmt.external_intrinsic.count,
-				(void**)stmt.external_intrinsic.name,
+				stmt.decl_attr.count,
+				(void**)stmt.decl_attr.name,
 				free);
 			break;
 		case PARSE_STMT_GO_TO_ASSIGNED:
@@ -297,10 +310,23 @@ parse_stmt_t* parse_stmt(
 	sparse_label_find(src, ptr, &stmt.label);
 
 	unsigned i = 0;
+
+	if (i == 0) i = parse_stmt_function(src, ptr, &stmt);
+	if (i == 0) i = parse_stmt_decl(src, ptr, &stmt);
+
+	/* Drop incomplete statements. */
+	if ((i > 0)
+		&& !is_end_statement(&ptr[i], NULL))
+	{
+		parse_stmt__cleanup(stmt);
+		i = 0;
+	}
+
 	switch (toupper(ptr[0]))
 	{
 		case 'A':
 			if (i == 0) i = parse_stmt_assign(src, ptr, &stmt);
+			if (i == 0) i = parse_stmt_decl_attr_automatic(src, ptr, &stmt);
 			break;
 
 		case 'B':
@@ -324,7 +350,7 @@ parse_stmt_t* parse_stmt(
 		case 'E':
 			if (i == 0) i = parse_stmt_equivalence(src, ptr, &stmt);
 			if (i == 0) i = parse_stmt_io_end_file(src, ptr, &stmt);
-			if (i == 0) i = parse_stmt_external(src, ptr, &stmt);
+			if (i == 0) i = parse_stmt_decl_attr_external(src, ptr, &stmt);
 			if (i == 0) i = parse_stmt_entry(src, ptr, &stmt);
 			break;
 
@@ -339,7 +365,7 @@ parse_stmt_t* parse_stmt(
 		case 'I':
 			if (i == 0) i = parse_stmt_implicit(src, ptr, &stmt);
 			if (i == 0) i = parse_stmt_if(src, ptr, &stmt);
-			if (i == 0) i = parse_stmt_intrinsic(src, ptr, &stmt);
+			if (i == 0) i = parse_stmt_decl_attr_intrinsic(src, ptr, &stmt);
 			if (i == 0) i = parse_stmt_io_inquire(src, ptr, &stmt);
 			break;
 
@@ -364,6 +390,7 @@ parse_stmt_t* parse_stmt(
 			if (i == 0) i = parse_stmt_subroutine(src, ptr, &stmt);
 			if (i == 0) i = parse_stmt_stop(src, ptr, &stmt);
 			if (i == 0) i = parse_stmt_save(src, ptr, &stmt);
+			if (i == 0) i = parse_stmt_decl_attr_static(src, ptr, &stmt);
 			break;
 
 		case 'T':
@@ -372,6 +399,7 @@ parse_stmt_t* parse_stmt(
 
 		case 'V':
 			if (i == 0) i = parse_stmt_virtual(src, ptr, &stmt);
+			if (i == 0) i = parse_stmt_decl_attr_volatile(src, ptr, &stmt);
 			break;
 
 		case 'W':
@@ -382,16 +410,13 @@ parse_stmt_t* parse_stmt(
 			break;
 	}
 
-	/* Drop incomplete statements, they may be an assignment or declaration. */
+	/* Drop incomplete statements, they may be an assignment. */
 	if ((i > 0)
 		&& !is_end_statement(&ptr[i], NULL))
 	{
 		parse_stmt__cleanup(stmt);
 		i = 0;
 	}
-
-	if (i == 0) i = parse_stmt_function(src, ptr, &stmt);
-	if (i == 0) i = parse_stmt_decl(src, ptr, &stmt);
 
 	if (i == 0)
 	{
