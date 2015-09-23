@@ -51,6 +51,18 @@ static void parse_record_delete(
 	free(record);
 }
 
+static bool parse_record_print(
+	int fd, const parse_record_t* record)
+{
+	if (!record)
+		return false;
+
+	return (dprintf_bool(fd, "/")
+		&& str_ref_print(fd, record->structure)
+		&& dprintf_bool(fd, "/ ")
+		&& str_ref_print(fd, record->name));
+}
+
 
 
 parse_record_list_t* parse_record_list(
@@ -89,4 +101,15 @@ void parse_record_list_delete(
 		list->count, (void**)list->record,
 		(void*)parse_record_delete);
 	free(list);
+}
+
+bool parse_record_list_print(
+	int fd, const parse_record_list_t* list)
+{
+	if (!list)
+		return false;
+
+	return parse_list_print(fd,
+		list->count, (const void**)list->record,
+		(void*)parse_record_print);
 }

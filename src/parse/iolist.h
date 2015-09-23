@@ -24,5 +24,7 @@ parse_iolist_t* parse_iolist(
 	unsigned* len);
 void parse_iolist_delete(
 	parse_iolist_t* list);
+bool parse_iolist_print(
+	int fd, const parse_iolist_t* list);
 
 #endif

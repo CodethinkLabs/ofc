@@ -22,11 +22,15 @@ parse_decl_t* parse_decl(
 	unsigned* len);
 void parse_decl_delete(
 	parse_decl_t* decl);
+bool parse_decl_print(
+	int fd, const parse_decl_t* decl);
 
 parse_decl_list_t* parse_decl_list(
 	const sparse_t* src, const char* ptr,
 	unsigned* len);
 void parse_decl_list_delete(
 	parse_decl_list_t* decl);
+bool parse_decl_list_print(
+	int fd, const parse_decl_list_t* list);
 
 #endif

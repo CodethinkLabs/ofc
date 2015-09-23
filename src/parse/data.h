@@ -30,11 +30,15 @@ parse_clist_t* parse_clist(
 	unsigned* len);
 void parse_clist_delete(
 	parse_clist_t* clist);
+bool parse_clist_print(
+	int fd, const parse_clist_t* list);
 
 parse_data_list_t* parse_data_list(
 	const sparse_t* src, const char* ptr,
 	unsigned* len);
 void parse_data_list_delete(
 	parse_data_list_t* list);
+bool parse_data_list_print(
+	int fd, const parse_data_list_t* list);
 
 #endif

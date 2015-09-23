@@ -123,3 +123,24 @@ void parse_implicit_do_delete(
 	parse_expr_delete(id->step);
 	free(id);
 }
+
+bool parse_implicit_do_print(
+	int fd, const parse_implicit_do_t* id)
+{
+	if (!dprintf_bool(fd, "(")
+		|| !parse_lhs_print(fd, id->dlist)
+		|| !dprintf_bool(fd, ", ")
+		|| !parse_assign_print(fd, id->init)
+		|| !dprintf_bool(fd, ", ")
+		|| !parse_expr_print(fd, id->limit))
+		return false;
+
+	if (id->step)
+	{
+		if (!dprintf_bool(fd, ", ")
+			|| !parse_expr_print(fd, id->step))
+			return false;
+	}
+
+	return dprintf_bool(fd, ")");
+}

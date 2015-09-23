@@ -13,3 +13,11 @@ unsigned parse_label(
 		&label->variable);
 	return len;
 }
+
+bool parse_label_print(
+	int fd, const parse_label_t label)
+{
+	if (label.type == PARSE_LABEL_NUMBER)
+		return dprintf_bool(fd, "%u", label.number);
+	return str_ref_print(fd, label.variable);
+}

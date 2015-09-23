@@ -118,6 +118,52 @@ void parse_implicit_delete(
 	free(implicit);
 }
 
+bool parse_implicit_print(
+	int fd, const parse_implicit_t* implicit)
+{
+	if (!implicit)
+		return false;
+
+	if (!parse_type_print(
+		fd, implicit->type))
+		return false;
+
+	if (!dprintf_bool(fd, " ("))
+		return false;
+
+	bool first = true;
+	bool on = false;
+	unsigned i, m;
+	for (i = 0, m = 1; i < 26; i++, m <<= 1)
+	{
+		if ((implicit->mask & m) == 0)
+			continue;
+
+		if (on)
+		{
+			on = ((implicit->mask & (m << 1)) != 0);
+			if (!on && !dprintf_bool(fd, "%c", ('A' + i)))
+				return false;
+		}
+		else
+		{
+			if (!first && !dprintf_bool(fd, ", "))
+				return false;
+
+			if (!dprintf_bool(fd, "%c", ('A' + i)))
+				return false;
+
+			on = ((implicit->mask & (m << 1)) != 0);
+			if (on && !dprintf_bool(fd, "-"))
+				return false;
+		}
+
+		first = false;
+	}
+
+	return dprintf_bool(fd, ")");
+}
+
 
 parse_implicit_list_t* parse_implicit_list(
 	const sparse_t* src, const char* ptr,
@@ -154,4 +200,15 @@ void parse_implicit_list_delete(
 		list->count, (void**)list->rule,
 		(void*)parse_implicit_delete);
 	free(list);
+}
+
+bool parse_implicit_list_print(
+	int fd, const parse_implicit_list_t* list)
+{
+	if (!list)
+		return false;
+
+	return parse_list_print(fd,
+		list->count, (const void**)list->rule,
+		(void*)parse_implicit_print);
 }

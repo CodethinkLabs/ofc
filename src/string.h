@@ -21,4 +21,7 @@ const char* string_strz(const string_t string);
 unsigned string_length(const string_t string);
 bool     string_equal(const string_t a, const string_t b);
 
+bool string_print(int fd, const string_t string);
+bool string_print_escaped(int fd, const string_t string);
+
 #endif

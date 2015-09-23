@@ -3,7 +3,6 @@
 
 typedef enum
 {
-	PARSE_FORMAT_DESC_LITERAL,
 	PARSE_FORMAT_DESC_INTEGER,
 	PARSE_FORMAT_DESC_REAL,
 	PARSE_FORMAT_DESC_D,
@@ -66,6 +65,8 @@ parse_format_desc_t* parse_format_desc(
 	unsigned* len);
 void parse_format_desc_delete(
 	parse_format_desc_t* desc);
+bool parse_format_desc_print(
+	int fd, const parse_format_desc_t* desc);
 
 
 parse_format_desc_list_t* parse_format_desc_list(
@@ -73,5 +74,7 @@ parse_format_desc_list_t* parse_format_desc_list(
 	unsigned* len);
 void parse_format_desc_list_delete(
 	parse_format_desc_list_t* list);
+bool parse_format_desc_list_print(
+	int fd, const parse_format_desc_list_t* list);
 
 #endif

@@ -2,6 +2,18 @@
 #include <ctype.h>
 #include <string.h>
 
+static const char* parse_type__name[] =
+{
+	"NONE",
+	"LOGICAL",
+	"CHARACTER",
+	"INTEGER",
+	"REAL",
+	"DOUBLE PRECISION",
+	"COMPLEX",
+	"DOUBLE COMPLEX",
+	"BYTE",
+};
 
 static unsigned parse_decl_attr(
 	const sparse_t* src, const char* ptr,
@@ -238,4 +250,12 @@ void parse_type_delete(parse_type_t* type)
 
 	parse_type__cleanup(*type);
 	free(type);
+}
+
+bool parse_type_print(int fd, const parse_type_t* type)
+{
+	if (type->type >= PARSE_TYPE_COUNT)
+		return false;
+
+	return dprintf_bool(fd, "%s", parse_type__name[type->type]);
 }

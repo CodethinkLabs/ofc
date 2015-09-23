@@ -26,5 +26,8 @@ parse_array_index_t* parse_array_index_copy(
 void parse_array_index_delete(
 	parse_array_index_t* index);
 
+bool parse_array_index_print(
+	int fd, const parse_array_index_t* index);
+
 
 #endif

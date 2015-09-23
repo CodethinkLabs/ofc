@@ -165,3 +165,82 @@ unsigned parse_stmt_do(
 
 	return 0;
 }
+
+
+
+bool parse_stmt__do_while_block_print(
+	int fd, const parse_stmt_t* stmt, unsigned indent)
+{
+	if (!dprintf_bool(fd, "DO WHILE(")
+		|| !parse_expr_print(fd, stmt->do_while_block.cond)
+		|| !dprintf_bool(fd, ")\n")
+		|| !parse_stmt_list_print(
+			fd, stmt->do_while_block.block, (indent + 1)))
+		return false;
+
+	if (!dprintf_bool(fd, "      "))
+		return false;
+
+	unsigned j;
+	for (j = 0; j < indent; j++)
+	{
+		if (!dprintf_bool(fd, "  "))
+			return false;
+	}
+
+	return dprintf_bool(fd, "END DO");
+}
+
+bool parse_stmt__do_while_print(
+	int fd, const parse_stmt_t* stmt)
+{
+	return (dprintf_bool(fd, "DO ")
+		&& parse_label_print(fd, stmt->do_while.end_label)
+		&& dprintf_bool(fd, ", WHILE(")
+		&& parse_expr_print(fd, stmt->do_while.cond)
+		&& dprintf_bool(fd, ")"));
+}
+
+bool parse_stmt__do_print(
+	int fd, const parse_stmt_t* stmt)
+{
+	if (!dprintf_bool(fd, "DO ")
+		|| !parse_label_print(fd, stmt->do_loop.end_label)
+		|| !dprintf_bool(fd, ", ")
+		|| !parse_assign_print(fd, stmt->do_loop.init)
+		|| !dprintf_bool(fd, ", ")
+		|| !parse_expr_print(fd, stmt->do_loop.last))
+		return false;
+
+	if (stmt->do_loop.step)
+	{
+		if (!dprintf_bool(fd, ", ")
+			|| !parse_expr_print(
+				fd, stmt->do_loop.step))
+			return false;
+	}
+
+	return true;
+}
+
+bool parse_stmt_do_print(
+	int fd, const parse_stmt_t* stmt, unsigned indent)
+{
+	if (!stmt)
+		return false;
+
+	switch (stmt->type)
+	{
+		case PARSE_STMT_DO:
+			return parse_stmt__do_print(fd, stmt);
+		case PARSE_STMT_DO_WHILE:
+			return parse_stmt__do_while_print(fd, stmt);
+		case PARSE_STMT_DO_WHILE_BLOCK:
+			return parse_stmt__do_while_block_print(
+				fd, stmt, indent);
+		default:
+			break;
+	}
+
+	return false;
+}

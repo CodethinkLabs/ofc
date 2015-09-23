@@ -455,6 +455,52 @@ void parse_expr_delete(
 	free(expr);
 }
 
+bool parse_expr_print(
+	int fd, const parse_expr_t* expr)
+{
+	if (!expr)
+		return false;
+
+	switch(expr->type)
+	{
+		case PARSE_EXPR_CONSTANT:
+			if (!parse_literal_print(
+				fd, expr->literal))
+				return false;
+			break;
+		case PARSE_EXPR_VARIABLE:
+			if (!parse_lhs_print(
+				fd, expr->variable))
+				return false;
+			break;
+		case PARSE_EXPR_BRACKETS:
+			if (!dprintf_bool(fd, "(")
+				|| !parse_expr_print(
+					fd, expr->brackets.expr)
+				|| !dprintf_bool(fd, ")"))
+				return false;
+			break;
+		case PARSE_EXPR_UNARY:
+			if (!parse_operator_print(fd, expr->unary.operator)
+				|| !parse_expr_print(fd, expr->unary.a))
+				return false;
+			break;
+		case PARSE_EXPR_BINARY:
+			if (!parse_expr_print(fd, expr->binary.a)
+				|| !dprintf_bool(fd, " ")
+				|| !parse_operator_print(fd, expr->binary.operator)
+				|| !dprintf_bool(fd, " ")
+				|| !parse_expr_print(fd, expr->binary.b))
+				return false;
+			break;
+
+		default:
+			return false;
+	}
+
+	return true;
+}
+
 parse_expr_t* parse_expr_copy(
 	const parse_expr_t* expr)
 {

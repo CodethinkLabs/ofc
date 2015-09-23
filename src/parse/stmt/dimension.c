@@ -36,3 +36,13 @@ unsigned parse_stmt_virtual(
 	return parse_stmt__dimension_virtual(
 		src, ptr, PARSE_KEYWORD_VIRTUAL, stmt);
 }
+
+bool parse_stmt_dimension_print(
+	int fd, const parse_stmt_t* stmt)
+{
+	if (!stmt)
+		return false;
+
+	return (dprintf_bool(fd, "DIMENSION ")
+		&& parse_lhs_list_print(fd, stmt->dimension));
+}

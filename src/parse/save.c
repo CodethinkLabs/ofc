@@ -58,6 +58,20 @@ void parse_save_delete(
 	free(save);
 }
 
+bool parse_save_print(
+	int fd, const parse_save_t* save)
+{
+	if (!save)
+		return false;
+
+	if (save->is_common)
+		return (dprintf_bool(fd, "/")
+			&& str_ref_print(fd, save->common)
+			&& dprintf_bool(fd, "/"));
+
+	return parse_lhs_print(fd, save->lhs);
+}
+
 
 
 parse_save_list_t* parse_save_list(
@@ -96,4 +110,15 @@ void parse_save_list_delete(
 		list->count, (void**)list->save,
 		(void*)parse_save_delete);
 	free(list);
+}
+
+bool parse_save_list_print(
+	int fd, const parse_save_list_t* list)
+{
+	if (!list)
+		return false;
+
+	return parse_list_print(fd,
+		list->count, (const void**)list->save,
+		(void*)parse_save_print);
 }

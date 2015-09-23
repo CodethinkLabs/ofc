@@ -182,6 +182,86 @@ void parse_format_desc_delete(
 	free(desc);
 }
 
+const char* parse_format_desc__name[] =
+{
+	"I",
+	"F",
+	"D",
+	"E",
+	"G",
+	"A",
+	"L",
+	NULL,
+	"S",
+	"P",
+	"X",
+	"T",
+	"/",
+	"$",
+	":",
+	"BN",
+	"BZ",
+	"SP",
+	"SS",
+	"TL",
+	"TR",
+	NULL,
+	NULL,
+	"B",
+	"O",
+	"Z",
+};
+
+bool parse_format_desc_print(
+	int fd, const parse_format_desc_t* desc)
+{
+	if (!desc)
+		return false;
+
+	switch (desc->type)
+	{
+		case PARSE_FORMAT_DESC_HOLLERITH:
+			if (!dprintf_bool(fd, "%uH",
+				string_length(desc->string))
+				|| !string_print(fd, desc->string))
+				return false;
+			break;
+		case PARSE_FORMAT_DESC_STRING:
+			if (!dprintf_bool(fd, "\"")
+				|| !string_print_escaped(
+					fd, desc->string)
+				|| !dprintf_bool(fd, "\""))
+				return false;
+			break;
+		case PARSE_FORMAT_DESC_REPEAT:
+			if (!dprintf_bool(fd, "(")
+				|| !parse_format_desc_list_print(
+					fd, desc->repeat)
+				|| !dprintf_bool(fd, ")"))
+				return false;
+			break;
+		default:
+			if ((desc->n > 1)
+				&& !dprintf_bool(fd, "%u", desc->n))
+				return false;
+			if (!dprintf_bool(fd, "%s",
+				parse_format_desc__name[desc->type]))
+				return false;
+			if ((desc->w > 0)
+				&& !dprintf_bool(fd, "%u", desc->w))
+				return false;
+			if ((desc->d > 0)
+				&& !dprintf_bool(fd, ".%u", desc->d))
+				return false;
+			if ((desc->e > 0)
+				&& !dprintf_bool(fd, "E%u", desc->e))
+				return false;
+			break;
+	}
+
+	return true;
+}
+
 
 parse_format_desc_list_t* parse_format_desc_list(
 	const sparse_t* src, const char* ptr,
@@ -220,4 +300,15 @@ void parse_format_desc_list_delete(
 		list->count, (void**)list->desc,
 		(void*)parse_format_desc_delete);
 	free(list);
+}
+
+bool parse_format_desc_list_print(
+	int fd, const parse_format_desc_list_t* list)
+{
+	if (!list)
+		return false;
+
+	return parse_list_print(fd,
+		list->count, (const void**)list->desc,
+		(void*)parse_format_desc_print);
 }

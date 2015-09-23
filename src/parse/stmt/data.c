@@ -19,3 +19,10 @@ unsigned parse_stmt_data(
 	stmt->type = PARSE_STMT_DATA;
 	return i;
 }
+
+bool parse_stmt_data_print(
+	int fd, const parse_stmt_t* stmt)
+{
+	return (stmt && dprintf_bool(fd, "DATA ")
+		&& parse_data_list_print(fd, stmt->data));
+}

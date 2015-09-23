@@ -11,3 +11,12 @@ unsigned parse_stmt_continue(
 	stmt->type = PARSE_STMT_CONTINUE;
 	return i;
 }
+
+bool parse_stmt_continue_print(
+	int fd, const parse_stmt_t* stmt)
+{
+	if (!stmt)
+		return false;
+
+	return dprintf_bool(fd, "CONTINUE");
+}

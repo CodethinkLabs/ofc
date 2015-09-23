@@ -27,3 +27,13 @@ unsigned parse_stmt_assign(
 	stmt->type = PARSE_STMT_ASSIGN;
 	return i;
 }
+
+bool parse_stmt_assign_print(
+	int fd, const parse_stmt_t* stmt)
+{
+	if (!stmt)
+		return false;
+
+	return (dprintf_bool(fd, "ASSIGN %u TO ", stmt->assign.label)
+		&& str_ref_print(fd, stmt->assign.variable));
+}

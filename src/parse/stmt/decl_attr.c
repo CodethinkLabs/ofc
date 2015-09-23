@@ -83,3 +83,50 @@ unsigned parse_stmt_decl_attr_volatile(
 	stmt->type = PARSE_STMT_DECL_ATTR_VOLATILE;
 	return i;
 }
+
+
+bool parse_stmt_decl_attr_print(
+	int fd, const parse_stmt_t* stmt)
+{
+	if (!stmt)
+		return false;
+
+	const char* kwstr;
+	switch (stmt->type)
+	{
+		case PARSE_STMT_DECL_ATTR_EXTERNAL:
+			kwstr = "EXTERNAL";
+			break;
+		case PARSE_STMT_DECL_ATTR_INTRINSIC:
+			kwstr = "INTRINSIC";
+			break;
+		case PARSE_STMT_DECL_ATTR_AUTOMATIC:
+			kwstr = "AUTOMATIC";
+			break;
+		case PARSE_STMT_DECL_ATTR_STATIC:
+			kwstr = "STATIC";
+			break;
+		case PARSE_STMT_DECL_ATTR_VOLATILE:
+			kwstr = "VOLATILE";
+			break;
+		default:
+			return false;
+	}
+
+	if (!dprintf_bool(fd, "%s", kwstr))
+		return false;
+
+	unsigned i;
+	for (i = 0; i < stmt->decl_attr.count; i++)
+	{
+		if (!dprintf_bool(fd, "%s",
+			(i == 0 ? " " : ", ")))
+			return false;
+
+		if (!str_ref_print(fd,
+			*(stmt->decl_attr.name[i])))
+			return false;
+	}
+
+	return true;
+}

@@ -1,6 +1,8 @@
 #include "string.h"
+#include "util.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 
 string_t string_create(const char* base, unsigned size)
@@ -60,4 +62,56 @@ bool string_equal(const string_t a, const string_t b)
 		return true;
 
 	return (memcmp(a.base, b.base, a.size) == 0);
+}
+
+bool string_print(int fd, const string_t string)
+{
+	return dprintf_bool(fd, "%.*s",
+		string.size, string.base);
+}
+
+bool string_print_escaped(int fd, const string_t string)
+{
+	unsigned i;
+	for (i = 0; i < string.size; i++)
+	{
+		const char* str = NULL;
+		switch (string.base[i])
+		{
+			case '\r':
+				str = "\\r";
+				break;
+			case '\n':
+				str = "\\n";
+				break;
+			case '\v':
+				str = "\\v";
+				break;
+			case '\t':
+				str = "\\n";
+				break;
+			case '\"':
+				str = "\\\"";
+				break;
+			case '\'':
+				str = "\\'";
+				break;
+			case '\\':
+				str = "\\\\";
+				break;
+
+			/* TODO - Implement all possible escape sequences. */
+
+			default:
+				if (!dprintf_bool(
+					fd, "%c", string.base[i]))
+					return false;
+				break;
+		}
+
+		if (str && !dprintf_bool(fd, "%s", str))
+			return false;
+	}
+
+	return true;
 }

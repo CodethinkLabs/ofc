@@ -98,6 +98,26 @@ void parse_assign_delete(
 	free(assign);
 }
 
+bool parse_assign_print(
+	int fd, const parse_assign_t* assign)
+{
+	if (!assign)
+		return false;
+
+	if (!parse_lhs_print(
+		fd, assign->name))
+		return false;
+
+	if (assign->init)
+	{
+		if (!dprintf_bool(fd, " = ")
+			|| !parse_expr_print(fd, assign->init))
+			return false;
+	}
+
+	return true;
+}
+
 
 
 parse_assign_list_t* parse_assign_list(
@@ -160,4 +180,24 @@ void parse_assign_list_delete(
 		(void*)parse_assign_delete);
 
 	free(list);
+}
+
+bool parse_assign_list_print(
+	int fd, const parse_assign_list_t* list)
+{
+	if (!list)
+		return false;
+
+	unsigned i;
+	for (i = 0; i < list->count; i++)
+	{
+		if ((i > 0) && (!dprintf_bool(fd, ", ")))
+			return false;
+
+		if (!parse_assign_print(
+			fd, list->assign[i]))
+			return false;
+	}
+
+	return (i > 0);
 }

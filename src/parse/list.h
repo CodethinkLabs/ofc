@@ -23,4 +23,9 @@ void parse_list_delete(
 	unsigned elem_count, void** elem,
 	void (*elem_delete)(void*));
 
+bool parse_list_print(
+	int fd,
+	unsigned elem_count, const void** elem,
+	bool (*elem_print)(int, const void*));
+
 #endif

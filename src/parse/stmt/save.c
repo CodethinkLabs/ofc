@@ -18,3 +18,14 @@ unsigned parse_stmt_save(
 	stmt->type = PARSE_STMT_SAVE;
 	return i;
 }
+
+bool parse_stmt_save_print(
+	int fd, const parse_stmt_t* stmt)
+{
+	if (!stmt)
+		return false;
+
+	return (dprintf_bool(fd, "SAVE ")
+		&& parse_save_list_print(
+			fd, stmt->save.list));
+}

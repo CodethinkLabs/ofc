@@ -131,10 +131,7 @@ unsigned parse_stmt_io_end_file(
 unsigned parse_stmt_io_close(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
-unsigned parse_stmt_io_print(
-	const sparse_t* src, const char* ptr,
-	parse_stmt_t* stmt);
-unsigned parse_stmt_io_type(
+unsigned parse_stmt_io_print_type(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
 unsigned parse_stmt_io_encode(
@@ -375,7 +372,7 @@ parse_stmt_t* parse_stmt(
 			if (i == 0) i = parse_stmt_parameter(src, ptr, &stmt);
 			if (i == 0) i = parse_stmt_program(src, ptr, &stmt);
 			if (i == 0) i = parse_stmt_pause(src, ptr, &stmt);
-			if (i == 0) i = parse_stmt_io_print(src, ptr, &stmt);
+			if (i == 0) i = parse_stmt_io_print_type(src, ptr, &stmt);
 			break;
 
 		case 'R':
@@ -394,7 +391,7 @@ parse_stmt_t* parse_stmt(
 			break;
 
 		case 'T':
-			if (i == 0) i = parse_stmt_io_type(src, ptr, &stmt);
+			if (i == 0) i = parse_stmt_io_print_type(src, ptr, &stmt);
 			break;
 
 		case 'U':
@@ -475,6 +472,190 @@ void parse_stmt_delete(
 }
 
 
+
+bool parse_stmt_program_print(
+	int fd, const parse_stmt_t* stmt, unsigned indent);
+bool parse_stmt_assign_print(
+	int fd, const parse_stmt_t* stmt);
+bool parse_stmt_decl_print(
+	int fd, const parse_stmt_t* stmt);
+bool parse_stmt_if_print(
+	int fd, const parse_stmt_t* stmt, unsigned indent);
+bool parse_stmt_stop_pause_return_print(
+	int fd, const parse_stmt_t* stmt);
+bool parse_stmt_format_print(
+	int fd, const parse_stmt_t* stmt);
+bool parse_stmt_data_print(
+	int fd, const parse_stmt_t* stmt);
+bool parse_stmt_common_print(
+	int fd, const parse_stmt_t* stmt);
+bool parse_stmt_implicit_print(
+	int fd, const parse_stmt_t* stmt);
+bool parse_stmt_save_print(
+	int fd, const parse_stmt_t* stmt);
+bool parse_stmt_parameter_print(
+	int fd, const parse_stmt_t* stmt);
+bool parse_stmt_continue_print(
+	int fd, const parse_stmt_t* stmt);
+bool parse_stmt_dimension_print(
+	int fd, const parse_stmt_t* stmt);
+bool parse_stmt_call_entry_print(
+	int fd, const parse_stmt_t* stmt);
+bool parse_stmt_equivalence_print(
+	int fd, const parse_stmt_t* stmt);
+bool parse_stmt_do_print(
+	int fd, const parse_stmt_t* stmt, unsigned indent);
+bool parse_stmt_decl_attr_print(
+	int fd, const parse_stmt_t* stmt);
+bool parse_stmt_go_to_print(
+	int fd, const parse_stmt_t* stmt);
+bool parse_stmt_structure_print(
+	int fd, const parse_stmt_t* stmt, unsigned indent);
+bool parse_stmt_record_print(
+	int fd, const parse_stmt_t* stmt);
+bool parse_stmt_io_print(
+	int fd, const parse_stmt_t* stmt);
+bool parse_stmt_print_print(
+	int fd, const parse_stmt_t* stmt);
+
+
+bool parse_stmt_print(
+	int fd,
+	const parse_stmt_t* stmt,
+	unsigned indent)
+{
+	if (stmt->type == PARSE_STMT_EMPTY)
+		return true;
+
+	switch(stmt->type)
+	{
+		case PARSE_STMT_PROGRAM:
+		case PARSE_STMT_SUBROUTINE:
+		case PARSE_STMT_FUNCTION:
+		case PARSE_STMT_BLOCK_DATA:
+			if (!parse_stmt_program_print(
+				fd, stmt, indent))
+				return false;
+			break;
+		case PARSE_STMT_IMPLICIT_NONE:
+		case PARSE_STMT_IMPLICIT:
+			if (!parse_stmt_implicit_print(fd, stmt))
+				return false;
+			break;
+		case PARSE_STMT_CALL:
+		case PARSE_STMT_ENTRY:
+			if (!parse_stmt_call_entry_print(fd, stmt))
+				return false;
+			break;
+		case PARSE_STMT_DECL:
+			if (!parse_stmt_decl_print(fd, stmt))
+				return false;
+			break;
+		case PARSE_STMT_DIMENSION:
+			if (!parse_stmt_dimension_print(fd, stmt))
+				return false;
+			break;
+		case PARSE_STMT_EQUIVALENCE:
+			if (!parse_stmt_equivalence_print(fd, stmt))
+				return false;
+			break;
+		case PARSE_STMT_COMMON:
+			if (!parse_stmt_common_print(fd, stmt))
+				return false;
+			break;
+		case PARSE_STMT_ASSIGNMENT:
+			if (!parse_assign_print(
+				fd, stmt->assignment))
+				return false;
+			break;
+		case PARSE_STMT_CONTINUE:
+			if (!parse_stmt_continue_print(fd, stmt))
+				return false;
+			break;
+		case PARSE_STMT_STOP:
+		case PARSE_STMT_PAUSE:
+		case PARSE_STMT_RETURN:
+			if (!parse_stmt_stop_pause_return_print(fd, stmt))
+				return false;
+			break;
+		case PARSE_STMT_DECL_ATTR_EXTERNAL:
+		case PARSE_STMT_DECL_ATTR_INTRINSIC:
+		case PARSE_STMT_DECL_ATTR_AUTOMATIC:
+		case PARSE_STMT_DECL_ATTR_STATIC:
+		case PARSE_STMT_DECL_ATTR_VOLATILE:
+			if (!parse_stmt_decl_attr_print(fd, stmt))
+				return false;
+			break;
+		case PARSE_STMT_GO_TO:
+		case PARSE_STMT_GO_TO_ASSIGNED:
+		case PARSE_STMT_GO_TO_COMPUTED:
+			if (!parse_stmt_go_to_print(fd, stmt))
+				return false;
+			break;
+		case PARSE_STMT_IF_COMPUTED:
+		case PARSE_STMT_IF_STATEMENT:
+		case PARSE_STMT_IF_THEN:
+			if (!parse_stmt_if_print(fd, stmt, indent))
+				return false;
+			break;
+		case PARSE_STMT_DO:
+		case PARSE_STMT_DO_WHILE:
+		case PARSE_STMT_DO_WHILE_BLOCK:
+			if (!parse_stmt_do_print(fd, stmt, indent))
+				return false;
+			break;
+		case PARSE_STMT_STRUCTURE:
+		case PARSE_STMT_UNION:
+		case PARSE_STMT_MAP:
+			if (!parse_stmt_structure_print(fd, stmt, indent))
+				return false;
+			break;
+		case PARSE_STMT_RECORD:
+			if (!parse_stmt_record_print(fd, stmt))
+				return false;
+			break;
+		case PARSE_STMT_IO_OPEN:
+		case PARSE_STMT_IO_INQUIRE:
+		case PARSE_STMT_IO_REWIND:
+		case PARSE_STMT_IO_BACKSPACE:
+		case PARSE_STMT_IO_READ:
+		case PARSE_STMT_IO_WRITE:
+		case PARSE_STMT_IO_END_FILE:
+		case PARSE_STMT_IO_CLOSE:
+			parse_stmt_io_print(fd, stmt);
+			break;
+		case PARSE_STMT_IO_PRINT:
+			parse_stmt_print_print(fd, stmt);
+			break;
+		case PARSE_STMT_FORMAT:
+			if (!parse_stmt_format_print(fd, stmt))
+				return false;
+			break;
+		case PARSE_STMT_DATA:
+			if (!parse_stmt_data_print(fd, stmt))
+				return false;
+			break;
+		case PARSE_STMT_SAVE:
+			if (!parse_stmt_save_print(fd, stmt))
+				return false;
+			break;
+		case PARSE_STMT_PARAMETER:
+			if (!parse_stmt_parameter_print(fd, stmt))
+				return false;
+			break;
+		case PARSE_STMT_ASSIGN:
+			if (!parse_stmt_assign_print(fd, stmt))
+				return false;
+			break;
+		default:
+			return false;
+	}
+
+	return true;
+}
+
+
+
 parse_stmt_list_t* parse_stmt_list(
 	const sparse_t* src, const char* ptr,
 	unsigned* len)
@@ -497,6 +678,8 @@ parse_stmt_list_t* parse_stmt_list(
 	return list;
 }
 
+
+
 void parse_stmt_list_delete(
 	parse_stmt_list_t* list)
 {
@@ -507,4 +690,40 @@ void parse_stmt_list_delete(
 		list->count, (void**)list->stmt,
 		(void*)parse_stmt_delete);
 	free(list);
+}
+
+
+
+bool parse_stmt_list_print(
+	int fd,
+	const parse_stmt_list_t* list,
+	unsigned indent)
+{
+	if (!list)
+		return false;
+
+	unsigned i;
+	for (i = 0; i < list->count; i++)
+	{
+		if (!(list->stmt[i]->label > 0
+			? dprintf_bool(fd, "%5u ", list->stmt[i]->label)
+			: dprintf_bool(fd, "      ")))
+			return false;
+
+		unsigned j;
+		for (j = 0; j < indent; j++)
+		{
+			if (!dprintf_bool(fd, "  "))
+				return false;
+		}
+
+		if (!parse_stmt_print(
+			fd, list->stmt[i], indent))
+			return false;
+
+		if (!dprintf_bool(fd, "\n"))
+			return false;
+	}
+
+	return true;
 }

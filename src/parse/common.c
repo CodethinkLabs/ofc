@@ -52,6 +52,24 @@ void parse_common_group_delete(
     free(group);
 }
 
+bool parse_common_group_print(
+	int fd, const parse_common_group_t* group)
+{
+	if (!group)
+		return false;
+
+	if (!str_ref_empty(group->group))
+	{
+		if (!dprintf_bool(fd, "/")
+			|| !str_ref_print(fd, group->group)
+			|| !dprintf_bool(fd, "/"))
+			return false;
+	}
+
+	return parse_lhs_list_print(
+		fd, group->names);
+}
+
 
 parse_common_group_list_t* parse_common_group_list(
 	const sparse_t* src, const char* ptr,
@@ -90,4 +108,15 @@ void parse_common_group_list_delete(
 		list->count, (void**)list->group,
 		(void*)parse_common_group_delete);
 	free(list);
+}
+
+bool parse_common_group_list_print(
+	int fd, const parse_common_group_list_t* list)
+{
+	if (!list)
+		return false;
+
+	return parse_list_print(fd,
+		list->count, (const void**)list->group,
+		(void*)parse_common_group_print);
 }

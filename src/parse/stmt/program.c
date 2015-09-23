@@ -233,3 +233,105 @@ unsigned parse_stmt_block_data(
 
 	return i;
 }
+
+
+
+bool parse_stmt_program_print(
+	int fd, const parse_stmt_t* stmt, unsigned indent)
+{
+	if (!stmt) return false;
+
+	switch (stmt->type)
+	{
+		case PARSE_STMT_PROGRAM:
+		case PARSE_STMT_SUBROUTINE:
+		case PARSE_STMT_FUNCTION:
+		case PARSE_STMT_BLOCK_DATA:
+			break;
+		default:
+			return false;
+	}
+
+	if (stmt->program.type)
+	{
+		if (!parse_type_print(
+			fd, stmt->program.type)
+			|| !dprintf_bool(fd, " "))
+			return false;
+	}
+
+	const char* kwstr;
+	bool has_args = false;
+	switch (stmt->type)
+	{
+		case PARSE_STMT_PROGRAM:
+			kwstr = "PROGRAM";
+			break;
+		case PARSE_STMT_SUBROUTINE:
+			kwstr = "SUBROUTINE";
+			has_args = true;
+			break;
+		case PARSE_STMT_FUNCTION:
+			kwstr = "FUNCTION";
+			has_args = true;
+			break;
+		case PARSE_STMT_BLOCK_DATA:
+			kwstr = "BLOCK DATA";
+			break;
+		default:
+			return false;
+	}
+
+	if (!dprintf_bool(fd, "%s", kwstr))
+				return false;
+
+    if (!str_ref_empty(stmt->program.name))
+	{
+		if (!dprintf_bool(fd, " ")
+			|| !str_ref_print(fd, stmt->program.name))
+			return false;
+	}
+
+	if (has_args)
+	{
+		if (!dprintf_bool(fd, "("))
+			return false;
+
+		if (stmt->program.args
+			&& !parse_call_arg_list_print(
+				fd, stmt->program.args))
+			return false;
+
+		if (!dprintf_bool(fd, ")"))
+			return false;
+	}
+
+	if (!dprintf_bool(fd, "\n"))
+		return false;
+
+	if (stmt->program.body
+		&& !parse_stmt_list_print(
+			fd, stmt->program.body, (indent + 1)))
+		return false;
+
+	if (!dprintf_bool(fd, "      "))
+			return false;
+	unsigned i;
+	for (i = 0; i < indent; i++)
+	{
+		if (!dprintf_bool(fd, "  "))
+			return false;
+	}
+
+	if (!dprintf_bool(fd, "END %s", kwstr))
+				return false;
+
+	if (!str_ref_empty(stmt->program.name))
+	{
+		if (!dprintf_bool(fd, " ")
+			|| !str_ref_print(fd, stmt->program.name))
+			return false;
+	}
+
+	return true;
+}

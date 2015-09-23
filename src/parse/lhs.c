@@ -296,7 +296,38 @@ void parse_lhs_delete(
 	free(lhs);
 }
 
+bool parse_lhs_print(
+	int fd, const parse_lhs_t* lhs)
+{
+	switch (lhs->type)
+	{
+		case PARSE_LHS_VARIABLE:
+			return str_ref_print(fd, lhs->variable);
+		case PARSE_LHS_ARRAY:
+			if (!parse_lhs_print(
+				fd, lhs->parent))
+				return false;
+			if (lhs->array.index)
+				return parse_array_index_print(
+					fd, lhs->array.index);
+			return dprintf_bool(fd, "()");
+		case PARSE_LHS_MEMBER_TYPE:
+			return (parse_lhs_print(fd, lhs->parent)
+				&& dprintf_bool(fd, "%%")
+				&& str_ref_print(fd, lhs->member.name));
+		case PARSE_LHS_MEMBER_STRUCTURE:
+			return (parse_lhs_print(fd, lhs->parent)
+				&& dprintf_bool(fd, ".")
+				&& str_ref_print(fd, lhs->member.name));
+		case PARSE_LHS_IMPLICIT_DO:
+			return parse_implicit_do_print(
+				fd, lhs->implicit_do);
+		default:
+			break;
+	}
 
+	return false;
+}
 
 bool parse_lhs_base_name(
 	const parse_lhs_t lhs,
@@ -378,4 +409,20 @@ void parse_lhs_list_delete(
 		list->count, (void**)list->lhs,
 		(void*)parse_lhs_delete);
 	free(list);
+}
+
+bool parse_lhs_list_print(
+	int fd, const parse_lhs_list_t* list)
+{
+	return parse_list_print(fd,
+		list->count, (const void**)list->lhs,
+		(void*)parse_lhs_print);
+}
+
+bool parse_lhs_list_bracketed_print(
+	int fd, const parse_lhs_list_t* list)
+{
+	return (dprintf_bool(fd, "(")
+		&& parse_lhs_list_print(fd, list)
+		&& dprintf_bool(fd, ")"));
 }

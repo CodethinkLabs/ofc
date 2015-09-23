@@ -67,3 +67,35 @@ unsigned parse_stmt_entry(
 	stmt->type = PARSE_STMT_ENTRY;
 	return i;
 }
+
+bool parse_stmt_call_entry_print(
+	int fd, const parse_stmt_t* stmt)
+{
+	if (!stmt)
+		return false;
+
+	const char* kwstr;
+	switch (stmt->type)
+	{
+		case PARSE_STMT_CALL:
+			kwstr = "CALL";
+			break;
+		case PARSE_STMT_ENTRY:
+			kwstr = "ENTRY";
+			break;
+		default:
+			return false;
+	}
+
+	if (!dprintf_bool(fd, "%s ", kwstr)
+		|| !str_ref_print(fd, stmt->call_entry.name)
+		|| !dprintf_bool(fd, "("))
+		return false;
+
+	if (stmt->call_entry.args
+		&& !parse_call_arg_list_print(
+			fd, stmt->call_entry.args))
+		return false;
+
+	return dprintf_bool(fd, ")");
+}

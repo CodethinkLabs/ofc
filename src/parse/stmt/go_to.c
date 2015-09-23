@@ -21,7 +21,7 @@ static unsigned parse_stmt_go_to_assigned(
 {
 	unsigned i = 0;
 
-	unsigned len= parse_label(
+	unsigned len = parse_label(
 		src, &ptr[i], &stmt->go_to_assign.cond);
 	if (len == 0) return 0;
 	i += len;
@@ -154,4 +154,78 @@ unsigned parse_stmt_go_to(
 	if (len == 0) len = parse_stmt_go_to_unconditional(src, &ptr[i], stmt);
 
 	return (len ? (i + len) : 0);
+}
+
+
+
+static bool parse_stmt_go_to_assigned_print(
+	int fd, const parse_stmt_t* stmt)
+{
+    if (!dprintf_bool(fd, "GO TO ")
+		|| !parse_label_print(fd, stmt->go_to_assign.cond)
+		|| !dprintf_bool(fd, ", ("))
+		return false;
+
+	unsigned i;
+	for (i = 0; i < stmt->go_to_assign.label_count; i++)
+	{
+		if ((i > 0) && !dprintf_bool(fd, ", "))
+			return false;
+
+		if (!parse_label_print(fd,
+			stmt->go_to_assign.label[i]))
+			return false;
+	}
+
+	return dprintf_bool(fd, ")");
+}
+
+static bool parse_stmt_go_to_computed_print(
+	int fd, const parse_stmt_t* stmt)
+{
+    if (!dprintf_bool(fd, "GO TO ("))
+		return false;
+
+	unsigned i;
+	for (i = 0; i < stmt->go_to_comp.label_count; i++)
+	{
+		if ((i > 0) && !dprintf_bool(fd, ", "))
+			return false;
+
+		if (!parse_label_print(fd,
+			stmt->go_to_comp.label[i]))
+			return false;
+	}
+
+	return (dprintf_bool(fd, "), ")
+		&& parse_expr_print(fd,
+			stmt->go_to_comp.cond));
+}
+
+static bool parse_stmt_go_to_unconditional_print(
+	int fd, const parse_stmt_t* stmt)
+{
+	return (dprintf_bool(fd, "GO TO ")
+		&& parse_label_print(fd, stmt->go_to.label));
+}
+
+bool parse_stmt_go_to_print(
+	int fd, const parse_stmt_t* stmt)
+{
+	if (!stmt)
+		return false;
+
+	switch (stmt->type)
+	{
+		case PARSE_STMT_GO_TO_ASSIGNED:
+			return parse_stmt_go_to_assigned_print(fd, stmt);
+		case PARSE_STMT_GO_TO_COMPUTED:
+			return parse_stmt_go_to_computed_print(fd, stmt);
+		case PARSE_STMT_GO_TO:
+			return parse_stmt_go_to_unconditional_print(fd, stmt);
+		default:
+			break;
+	}
+
+	return false;
 }

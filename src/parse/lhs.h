@@ -59,6 +59,9 @@ parse_lhs_t* parse_lhs_copy(
 void parse_lhs_delete(
 	parse_lhs_t* lhs);
 
+bool parse_lhs_print(
+	 int fd, const parse_lhs_t* lhs);
+
 bool parse_lhs_base_name(
 	const parse_lhs_t lhs,
 	str_ref_t* name);
@@ -71,5 +74,9 @@ parse_lhs_list_t* parse_lhs_list_bracketed(
 	unsigned* len);
 void parse_lhs_list_delete(
 	parse_lhs_list_t* list);
+bool parse_lhs_list_print(
+	int fd, const parse_lhs_list_t* list);
+bool parse_lhs_list_bracketed_print(
+	int fd, const parse_lhs_list_t* list);
 
 #endif

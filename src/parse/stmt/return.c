@@ -48,3 +48,40 @@ unsigned parse_stmt_return(
 	stmt->type = PARSE_STMT_RETURN;
 	return i;
 }
+
+
+bool parse_stmt_stop_pause_return_print(
+	int fd, const parse_stmt_t* stmt)
+{
+	if (!stmt)
+		return false;
+
+	const char* kwstr;
+	switch (stmt->type)
+	{
+		case PARSE_STMT_STOP:
+			kwstr = "STOP";
+			break;
+		case PARSE_STMT_PAUSE:
+			kwstr = "PAUSE";
+			break;
+		case PARSE_STMT_RETURN:
+			kwstr = "RETURN";
+			break;
+		default:
+			return false;
+	}
+
+	if (!dprintf_bool(fd, "%s", kwstr))
+		return false;
+
+	if (stmt->stop_pause_return.value)
+	{
+		if (!dprintf_bool(fd, " ")
+			|| !parse_expr_print(fd,
+				stmt->stop_pause_return.value))
+			return false;
+	}
+
+	return true;
+}

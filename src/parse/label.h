@@ -26,5 +26,7 @@ typedef struct
 unsigned parse_label(
 	const sparse_t* src, const char* ptr,
 	parse_label_t* label);
+bool parse_label_print(
+	int fd, const parse_label_t label);
 
 #endif

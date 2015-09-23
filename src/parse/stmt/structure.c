@@ -107,3 +107,69 @@ unsigned parse_stmt_record(
 	stmt->type = PARSE_STMT_RECORD;
 	return i;
 }
+
+
+
+
+bool parse_stmt_structure_print(
+	int fd, const parse_stmt_t* stmt, unsigned indent)
+{
+	if (!stmt)
+		return false;
+
+	const char* kwstr;
+	switch (stmt->type)
+	{
+		case PARSE_STMT_STRUCTURE:
+			kwstr = "STRUCTURE";
+			break;
+		case PARSE_STMT_UNION:
+			kwstr = "UNION";
+			break;
+		case PARSE_STMT_MAP:
+			kwstr = "MAP";
+			break;
+		default:
+			return false;
+	}
+
+	if (!dprintf_bool(fd, "%s", kwstr))
+		return false;
+
+	if (!str_ref_empty(stmt->structure.name))
+	{
+		if (!dprintf_bool(fd, " /")
+			|| !str_ref_print(fd, stmt->structure.name)
+			|| !dprintf_bool(fd, "/"))
+			return false;
+	}
+
+	if (!dprintf_bool(fd, "\n"))
+		return false;
+
+	if (!parse_stmt_list_print(
+		fd, stmt->structure.block, (indent + 1)))
+		return false;
+
+	if (!dprintf_bool(fd, "      "))
+		return false;
+
+	unsigned j;
+	for (j = 0; j < indent; j++)
+	{
+		if (!dprintf_bool(fd, "  "))
+			return false;
+	}
+
+	return dprintf_bool(fd, "END %s", kwstr);
+}
+
+bool parse_stmt_record_print(
+	int fd, const parse_stmt_t* stmt)
+{
+	if (!stmt)
+		return false;
+
+	return (dprintf_bool(fd, "RECORD ")
+		&& parse_record_list_print(fd, stmt->record));
+}

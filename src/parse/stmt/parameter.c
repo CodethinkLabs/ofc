@@ -28,3 +28,14 @@ unsigned parse_stmt_parameter(
 	stmt->type = PARSE_STMT_PARAMETER;
 	return i;
 }
+
+bool parse_stmt_parameter_print(
+	int fd, const parse_stmt_t* stmt)
+{
+    if (!stmt)
+		return false;
+
+	return (dprintf_bool(fd, "PARAMETER ")
+		&& parse_assign_list_print(
+			fd, stmt->parameter.list));
+}

@@ -2,6 +2,39 @@
 
 
 
+struct entry {
+    char *keyword;
+    int key_val;
+};
+
+static const struct entry io_stmt__keyword[] =
+{
+		{ "OPEN ",      PARSE_STMT_IO_OPEN      },
+		{ "INQUIRE ",   PARSE_STMT_IO_INQUIRE   },
+		{ "REWIND ",    PARSE_STMT_IO_REWIND    },
+		{ "BACKSPACE ", PARSE_STMT_IO_BACKSPACE },
+		{ "READ ",      PARSE_STMT_IO_READ      },
+		{ "WRITE ",     PARSE_STMT_IO_WRITE     },
+		{ "ENDFILE ",   PARSE_STMT_IO_END_FILE  },
+		{ "CLOSE ",     PARSE_STMT_IO_CLOSE     },
+		{ 0, 0 }
+};
+
+static bool parse_io__print_keyword(
+int fd, int key_val)
+{
+	int i;
+	for(i = 0; io_stmt__keyword[i].keyword != 0; i++)
+	{
+		if (io_stmt__keyword[i].key_val == key_val)
+		{
+			return dprintf_bool(fd, "%s",
+        io_stmt__keyword[i].keyword);
+		}
+	}
+	return false;
+}
+
 static unsigned parse_stmt__io(
 	const sparse_t* src, const char* ptr,
 	parse_keyword_e keyword, bool iolist,
@@ -64,6 +97,49 @@ static unsigned parse_stmt__io(
 	return i;
 }
 
+bool parse_stmt_io_print(
+	int fd, const parse_stmt_t* stmt)
+{
+	if (!stmt)
+		return false;
+
+	if (!parse_io__print_keyword(fd, stmt->type))
+		return false;
+
+	if (!dprintf_bool(fd, "(")
+		|| !parse_call_arg_list_print(fd, stmt->io.params)
+		|| !dprintf_bool(fd, ")"))
+		return false;
+
+	if (stmt->io.iolist)
+		parse_iolist_print(fd, stmt->io.iolist);
+	return true;
+}
+
+bool parse_stmt_print_print(
+	int fd, const parse_stmt_t* stmt)
+{
+	if (!stmt)
+		return false;
+
+	if (!dprintf_bool(fd, "PRINT "))
+		return false;
+
+	if (!(stmt->io_print.format_asterisk
+		? dprintf_bool(fd, "*")
+		: parse_label_print(fd, stmt->io_print.format)))
+		return false;
+
+	if (stmt->io_print.iolist)
+	{
+		if (!dprintf_bool(fd, ", ")
+			|| !parse_iolist_print(
+				fd, stmt->io_print.iolist))
+			return false;
+	}
+
+	return true;
+}
 
 unsigned parse_stmt_io_open(
 	const sparse_t* src, const char* ptr,
@@ -236,9 +312,9 @@ static unsigned parse_stmt_io__print_type(
 	{
 		i += 1;
 
-		stmt->io.iolist = parse_iolist(
+		stmt->io_print.iolist = parse_iolist(
 			src, &ptr[i], &len);
-		if (!stmt->io.iolist) return 0;
+		if (!stmt->io_print.iolist) return 0;
 		i += len;
 	}
 
@@ -246,21 +322,15 @@ static unsigned parse_stmt_io__print_type(
 	return i;
 }
 
-unsigned parse_stmt_io_print(
-	const sparse_t* src, const char* ptr,
-	parse_stmt_t* stmt)
-{
-	return parse_stmt_io__print_type(
-		src, ptr, PARSE_KEYWORD_PRINT, stmt);
-}
-
 /* http://docs.oracle.com/cd/E19957-01/805-4939/6j4m0vnbi/index.html
    This won't conflict with the TYPE (name) declaration,
    because the brackets disambiguate it. */
-unsigned parse_stmt_io_type(
+unsigned parse_stmt_io_print_type(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt)
 {
 	return parse_stmt_io__print_type(
-		src, ptr, PARSE_KEYWORD_TYPE, stmt);
+		src, ptr, (ptr[0] == 'P'
+			? PARSE_KEYWORD_PRINT
+			: PARSE_KEYWORD_TYPE), stmt);
 }

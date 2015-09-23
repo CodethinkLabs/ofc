@@ -138,3 +138,26 @@ void parse_list_delete(
 		elem_delete(elem[i]);
 	free(elem);
 }
+
+
+bool parse_list_print(
+	int fd,
+	unsigned elem_count, const void** elem,
+	bool (*elem_print)(int, const void*))
+{
+	if (!elem || !elem_print)
+		return false;
+
+	unsigned i;
+	for (i = 0; i < elem_count; i++)
+	{
+		if ((i > 0) && !dprintf_bool(
+			fd, ", "))
+			return false;
+
+		if (!elem_print(fd, elem[i]))
+			return false;
+	}
+
+	return true;
+}

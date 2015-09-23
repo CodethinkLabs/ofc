@@ -18,5 +18,7 @@ parse_record_list_t* parse_record_list(
 	unsigned* len);
 void parse_record_list_delete(
 	parse_record_list_t* list);
+bool parse_record_list_print(
+	int fd, const parse_record_list_t* list);
 
 #endif

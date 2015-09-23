@@ -112,6 +112,48 @@ static parse_array_range_t* parse_array__range_copy(
 	return copy;
 }
 
+static bool parse_array__range_print(
+	int fd, const parse_array_range_t* range)
+{
+	if (!range)
+		return false;
+
+	if (range->first)
+	{
+		if (!parse_expr_print(
+			fd, range->first))
+			return false;
+	}
+
+	if (range->is_slice)
+	{
+		if (!dprintf_bool(fd, ":"))
+			return false;
+
+		if (range->last)
+		{
+			if (!parse_expr_print(
+				fd, range->last))
+				return false;
+		}
+
+		if (range->stride)
+		{
+			if (!dprintf_bool(fd, ":")
+				|| !parse_expr_print(
+					fd, range->stride))
+				return false;
+		}
+	}
+	else if (!range->first)
+	{
+		/* Invalid array index. */
+		return false;
+	}
+
+	return true;
+}
+
 
 
 parse_array_index_t* parse_array_index(
@@ -190,4 +232,30 @@ void parse_array_index_delete(
 		index->count, (void**)index->range,
 		(void*)parse_array__range_delete);
 	free(index);
+}
+
+bool parse_array_index_print(
+	int fd, const parse_array_index_t* index)
+{
+	if (!index)
+		return false;
+
+	if (!dprintf_bool(fd, "("))
+		return false;
+
+	unsigned i;
+	for (i = 0; i < index->count; i++)
+	{
+		if ((i > 0) && !dprintf_bool(fd, ", "))
+			return false;
+
+		if (!parse_array__range_print(
+			fd, index->range[i]))
+			return false;
+	}
+
+	if (!dprintf_bool(fd, ")"))
+		return false;
+
+	return true;
 }

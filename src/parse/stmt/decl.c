@@ -28,3 +28,11 @@ unsigned parse_stmt_decl(
 	stmt->type = PARSE_STMT_DECL;
 	return i;
 }
+
+bool parse_stmt_decl_print(
+	int fd, const parse_stmt_t* stmt)
+{
+	return (parse_type_print(fd, stmt->decl.type)
+		&& dprintf_bool(fd, " ")
+		&& parse_decl_list_print(fd, stmt->decl.decl));
+}

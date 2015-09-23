@@ -23,3 +23,16 @@ unsigned parse_stmt_equivalence(
 
 	return i;
 }
+
+bool parse_stmt_equivalence_print(
+	int fd, const parse_stmt_t* stmt)
+{
+	if (!stmt)
+		return false;
+
+	return (dprintf_bool(fd, "EQUIVALENCE ")
+		&& parse_list_print(fd,
+			stmt->equivalence.count,
+			(const void**)stmt->equivalence.group,
+			(void*)parse_lhs_list_bracketed_print));
+}

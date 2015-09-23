@@ -102,6 +102,49 @@ void parse_call_arg_delete(
 	free(call_arg);
 }
 
+bool parse_call_arg_print(
+	int fd, const parse_call_arg_t* call_arg)
+{
+	if (!call_arg)
+		return false;
+
+	if (!str_ref_empty(call_arg->name))
+	{
+		if (!str_ref_print(fd, call_arg->name)
+			|| !dprintf_bool(fd, "="))
+			return false;
+	}
+
+	switch (call_arg->type)
+	{
+		case PARSE_CALL_ARG_RETURN:
+		case PARSE_CALL_ARG_ASTERISK:
+			if (!dprintf_bool(fd, "*"))
+				return false;
+			break;
+		default:
+			break;
+	}
+
+	switch (call_arg->type)
+	{
+		case PARSE_CALL_ARG_RETURN:
+			if (!parse_label_print(
+				fd, call_arg->label))
+				return false;
+			break;
+		case PARSE_CALL_ARG_EXPR:
+			if (!parse_expr_print(
+				fd, call_arg->expr))
+				return false;
+			break;
+		default:
+			break;
+	}
+
+	return true;
+}
+
 
 
 static parse_call_arg_list_t* parse_call_arg__list(
@@ -191,4 +234,12 @@ void parse_call_arg_list_delete(
 		list->count, (void**)list->call_arg,
 		(void*)parse_call_arg_delete);
 	free(list);
+}
+
+bool parse_call_arg_list_print(
+	int fd, const parse_call_arg_list_t* list)
+{
+	return parse_list_print(
+		fd, list->count, (const void**)list->call_arg,
+		(void*)parse_call_arg_print);
 }

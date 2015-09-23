@@ -565,3 +565,50 @@ unsigned parse_unsigned(
 	*value = v;
 	return len;
 }
+
+
+bool parse_literal_print(
+	int fd, const parse_literal_t literal)
+{
+	switch (literal.type)
+	{
+		case PARSE_LITERAL_NUMBER:
+			return str_ref_print(
+				fd, literal.number);
+		case PARSE_LITERAL_BINARY:
+			return (dprintf_bool(fd, "B\"")
+				&& str_ref_print(fd, literal.number)
+				&& dprintf_bool(fd, "\""));
+		case PARSE_LITERAL_OCTAL:
+			return (dprintf_bool(fd, "O\"")
+				&& str_ref_print(fd, literal.number)
+				&& dprintf_bool(fd, "\""));
+		case PARSE_LITERAL_HEX:
+			return (dprintf_bool(fd, "Z\"")
+				&& str_ref_print(fd, literal.number)
+				&& dprintf_bool(fd, "\""));
+		case PARSE_LITERAL_HOLLERITH:
+			return (dprintf_bool(fd, "%uH",
+				string_length(literal.string))
+				&& string_print(fd, literal.string));
+		case PARSE_LITERAL_CHARACTER:
+			return (dprintf_bool(fd, "\"")
+				&& string_print_escaped(
+					fd, literal.string)
+				&& dprintf_bool(fd, "\""));
+		case PARSE_LITERAL_COMPLEX:
+			return dprintf_bool(fd, "(%.*s, %.*s)",
+				literal.complex.real.size,
+				literal.complex.real.base,
+				literal.complex.imaginary.size,
+				literal.complex.imaginary.base);
+		case PARSE_LITERAL_LOGICAL:
+			return dprintf_bool(fd, ".%s.",
+				(literal.logical
+					? "TRUE" : "FALSE"));
+		default:
+			break;
+	}
+
+	return false;
+}

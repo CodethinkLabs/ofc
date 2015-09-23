@@ -228,11 +228,21 @@ parse_stmt_t* parse_stmt(
 void parse_stmt_delete(
 	parse_stmt_t* stmt);
 
+bool parse_stmt_print(
+	int fd,
+	const parse_stmt_t* stmt,
+	unsigned indent);
+
 
 parse_stmt_list_t* parse_stmt_list(
 	const sparse_t* src, const char* ptr,
 	unsigned* len);
 void parse_stmt_list_delete(
 	parse_stmt_list_t* list);
+
+bool parse_stmt_list_print(
+	int fd,
+	const parse_stmt_list_t* list,
+	unsigned indent);
 
 #endif

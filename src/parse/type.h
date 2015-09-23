@@ -5,7 +5,7 @@
 
 typedef enum
 {
-	PARSE_TYPE_NONE,
+	PARSE_TYPE_NONE = 0,
 	PARSE_TYPE_LOGICAL,
 	PARSE_TYPE_CHARACTER,
 	PARSE_TYPE_INTEGER,
@@ -14,6 +14,8 @@ typedef enum
 	PARSE_TYPE_COMPLEX,
 	PARSE_TYPE_DOUBLE_COMPLEX,
 	PARSE_TYPE_BYTE,
+
+	PARSE_TYPE_COUNT,
 } parse_type_e;
 
 typedef struct
@@ -39,5 +41,6 @@ parse_type_t* parse_type(
 	const sparse_t* src, const char* ptr,
 	unsigned* len);
 void parse_type_delete(parse_type_t* type);
+bool parse_type_print(int fd, const parse_type_t* type);
 
 #endif

@@ -1,6 +1,27 @@
 #include "parse.h"
 #include <string.h>
 
+static const char* parse_operator__name[] =
+{
+		"**",
+		"*",
+		"//",
+		"/",
+		"+",
+		"-",
+		".EQ.",
+		".NE.",
+		".LT.",
+		".LE.",
+		".GT.",
+		".GE.",
+		".NOT.",
+		".AND.",
+		".OR.",
+		".EQV.",
+		".NEQV.",
+};
+
 
 unsigned parse_operator(
 	const sparse_t* src, const char* ptr,
@@ -233,4 +254,13 @@ unsigned parse_operator_precedence(
 	}
 
 	return 10;
+}
+
+bool parse_operator_print(
+	int fd, const parse_operator_e operator)
+{
+	if (operator >= PARSE_OPERATOR_COUNT)
+		return false;
+
+	return dprintf_bool(fd, "%s", parse_operator__name[operator]);
 }

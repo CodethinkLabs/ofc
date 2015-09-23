@@ -46,6 +46,19 @@ static void parse_clist_entry_delete(
 	free(entry);
 }
 
+static bool parse_clist_entry_print(
+	int fd, const parse_clist_entry_t* entry)
+{
+	if (!entry)
+		return false;
+
+	if ((entry->repeat > 1)
+		&& !dprintf_bool(fd, "%u*", entry->repeat))
+		return false;
+
+	return parse_expr_print(fd, entry->expr);
+}
+
 
 
 parse_clist_t* parse_clist(
@@ -98,6 +111,17 @@ void parse_clist_delete(
 	free(list);
 }
 
+bool parse_clist_print(
+	int fd, const parse_clist_t* list)
+{
+	if (!list)
+		return false;
+
+	return parse_list_print(fd,
+		list->count, (const void**)list->entry,
+		(void*)parse_clist_entry_print);
+}
+
 
 
 static parse_data_entry_t* parse_data_entry(
@@ -144,6 +168,18 @@ static void parse_data_entry_delete(
 	free(entry);
 }
 
+static bool parse_data_entry_print(
+	int fd, const parse_data_entry_t* entry)
+{
+	if (!entry)
+		return false;
+
+	return (parse_lhs_list_print(fd, entry->nlist)
+		&& dprintf_bool(fd, "/")
+		&& parse_clist_print(fd, entry->clist)
+		&& dprintf_bool(fd, "/"));
+}
+
 
 parse_data_list_t* parse_data_list(
 	const sparse_t* src, const char* ptr,
@@ -183,4 +219,15 @@ void parse_data_list_delete(
 		list->count, (void**)list->entry,
 		(void*)parse_data_entry_delete);
 	free(list);
+}
+
+bool parse_data_list_print(
+	int fd, const parse_data_list_t* list)
+{
+	if (!list)
+		return false;
+
+	return parse_list_print(fd,
+		list->count, (const void**)list->entry,
+		(void*)parse_data_entry_print);
 }

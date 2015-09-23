@@ -207,3 +207,85 @@ unsigned parse_stmt_if(
 
 	return (len == 0 ? 0 : (i + len));
 }
+
+bool parse_stmt_if_print(
+	int fd, const parse_stmt_t* stmt, unsigned indent)
+{
+	if (!stmt)
+		return false;
+
+	if (stmt->type == PARSE_STMT_IF_COMPUTED)
+	{
+		if (!dprintf_bool(fd, "IF (")
+			|| !parse_expr_print(fd, stmt->if_comp.cond)
+			|| !dprintf_bool(fd, ")"))
+			return false;
+
+		unsigned i;
+		for (i = 0; i < stmt->if_comp.label_count; i++)
+		{
+			if (!dprintf_bool(fd, (i > 0 ? ", " : " "))
+				|| !parse_label_print(fd ,stmt->if_comp.label[i]))
+				return false;
+		}
+	}
+	else if (stmt->type == PARSE_STMT_IF_STATEMENT)
+	{
+		if (!dprintf_bool(fd, "IF (")
+			|| !parse_expr_print(fd, stmt->if_stmt.cond)
+			|| !dprintf_bool(fd, ") ")
+			|| !parse_stmt_print(fd, stmt->if_stmt.stmt, indent))
+			return false;
+	}
+	else if (stmt->type == PARSE_STMT_IF_THEN)
+	{
+		if (!dprintf_bool(fd, "IF (")
+			|| !parse_expr_print(fd, stmt->if_then.cond)
+			|| !dprintf_bool(fd, ") THEN"))
+			return false;
+
+		if (stmt->if_then.block_then
+			&& !parse_stmt_list_print(
+				fd, stmt->if_then.block_then, (indent + 1)))
+			return false;
+
+		if (stmt->if_then.block_else)
+		{
+			if (!dprintf_bool(fd, "      "))
+				return false;
+
+			unsigned i;
+			for (i = 0; i < indent; i++)
+			{
+				if (!dprintf_bool(fd, "  "))
+					return false;
+			}
+
+			if (!dprintf_bool(fd, "ELSE\n"))
+				return false;
+
+			if (!parse_stmt_list_print(
+				fd, stmt->if_then.block_else, (indent + 1)))
+				return false;
+		}
+
+		if (!dprintf_bool(fd, "      "))
+			return false;
+
+		unsigned i;
+		for (i = 0; i < indent; i++)
+		{
+			if (!dprintf_bool(fd, "  "))
+				return false;
+		}
+
+		if (!dprintf_bool(fd, "END IF\n"))
+			return false;
+	}
+	else
+	{
+		return false;
+	}
+
+	return true;
+}

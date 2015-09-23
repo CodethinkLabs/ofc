@@ -19,11 +19,15 @@ parse_implicit_t* parse_implicit(
 	unsigned* len);
 void parse_implicit_delete(
 	parse_implicit_t* implicit);
+bool parse_implicit_print(
+	int fd, const parse_implicit_t* implicit);
 
 parse_implicit_list_t* parse_implicit_list(
 	const sparse_t* src, const char* ptr,
 	unsigned* len);
 void parse_implicit_list_delete(
 	parse_implicit_list_t* list);
+bool parse_implicit_list_print(
+	int fd, const parse_implicit_list_t* list);
 
 #endif

@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "file.h"
 #include "prep.h"
@@ -67,6 +68,14 @@ int main(int argc, const char* argv[])
 	if (!program)
 	{
 		fprintf(stderr, "Error: Failed to parse program\n");
+		sparse_delete(condense);
+		return EXIT_FAILURE;
+	}
+
+	if (!parse_stmt_list_print(
+		STDOUT_FILENO, program, 0))
+	{
+		fprintf(stderr, "Error: Failed to reprint program\n");
 		sparse_delete(condense);
 		return EXIT_FAILURE;
 	}

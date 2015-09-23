@@ -62,6 +62,37 @@ void parse_decl_delete(
 	free(decl);
 }
 
+bool parse_decl_print(
+	int fd, const parse_decl_t* decl)
+{
+	if (!decl) return false;
+
+	if (!parse_lhs_print(
+		fd, decl->lhs))
+		return false;
+
+	if (decl->len)
+	{
+		if (!dprintf_bool(fd, "*")
+			|| !parse_expr_print(fd, decl->len))
+			return false;
+	}
+
+	if (decl->init_expr)
+	{
+		if (!dprintf_bool(fd, " = ")
+			|| !parse_expr_print(fd, decl->init_expr))
+			return false;
+	}
+	else if (decl->init_clist)
+	{
+		if (!parse_clist_print(
+			fd, decl->init_clist))
+			return false;
+	}
+
+	return true;
+}
 
 
 parse_decl_list_t* parse_decl_list(
@@ -100,4 +131,12 @@ void parse_decl_list_delete(
 		list->count, (void**)list->decl,
 		(void*)parse_decl_delete);
 	free(list);
+}
+
+bool parse_decl_list_print(
+	int fd, const parse_decl_list_t* list)
+{
+	return parse_list_print(
+		fd, list->count, (const void**)list->decl,
+		(void*)parse_decl_print);
 }

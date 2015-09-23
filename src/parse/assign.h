@@ -28,6 +28,9 @@ parse_assign_t* parse_assign_copy(
 void parse_assign_delete(
 	parse_assign_t* assign);
 
+bool parse_assign_print(
+	int fd, const parse_assign_t* assign);
+
 
 parse_assign_list_t* parse_assign_list(
 	const sparse_t* src, const char* ptr,
@@ -38,6 +41,9 @@ parse_assign_list_t* parse_assign_list_copy(
 
 void parse_assign_list_delete(
 	parse_assign_list_t* list);
+
+bool parse_assign_list_print(
+	int fd, const parse_assign_list_t* list);
 
 
 #endif

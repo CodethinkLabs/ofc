@@ -23,11 +23,15 @@ parse_save_t* parse_save(
 	unsigned* len);
 void parse_save_delete(
 	parse_save_t* save);
+bool parse_save_print(
+	int fd, const parse_save_t* save);
 
 parse_save_list_t* parse_save_list(
 	const sparse_t* src, const char* ptr,
 	unsigned* len);
 void parse_save_list_delete(
 	parse_save_list_t* save);
+bool parse_save_list_print(
+	int fd, const parse_save_list_t* list);
 
 #endif
