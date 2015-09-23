@@ -44,7 +44,7 @@ static unsigned prep_unformat__blank_or_comment(
 }
 
 static unsigned prep_unformat__fixed_form_label(
-	const char* src, lang_opts_t opts,
+	const file_t* file, const char* src, lang_opts_t opts,
 	bool* has_label, unsigned* label, bool* continuation)
 {
 	if (!src)
@@ -69,15 +69,15 @@ static unsigned prep_unformat__fixed_form_label(
 				if (((nvalue / 10) != label_value)
 					|| ((nvalue % 10U) != (unsigned)(src[i] - '0')))
 				{
-					/* TODO - Positional error. */
-					fprintf(stderr, "Error: Label number too large.\n");
+					file_error(file, &src[i],
+						"Label number too large");
 					return 0;
 				}
 			}
 			else if (!is_hspace(src[i]))
 			{
-				/* TODO - Positional error. */
-				fprintf(stderr, "Error: Unexpected character in label.\n");
+				file_error(file, &src[i],
+					"Unexpected character in label");
 				return 0;
 			}
 		}
@@ -104,8 +104,8 @@ static unsigned prep_unformat__fixed_form_label(
 			}
 			else if (!is_hspace(src[i]))
 			{
-				/* TODO - Positional error. */
-				fprintf(stderr, "Error: Unexpected character in label.\n");
+				file_error(file, &src[i],
+					"Unexpected character in label");
 				return 0;
 			}
 		}
@@ -129,7 +129,7 @@ static unsigned prep_unformat__fixed_form_label(
 }
 
 static unsigned prep_unformat__free_form_label(
-	const char* src, unsigned* label)
+	const file_t* file, const char* src, unsigned* label)
 {
   if (!src)
 	  return 0;
@@ -142,8 +142,8 @@ static unsigned prep_unformat__free_form_label(
 		if (((nvalue / 10) != label_value)
 			|| ((nvalue % 10U) != (unsigned)(src[i] - '0')))
 		{
-			/* TODO - Positional error. */
-			fprintf(stderr, "Error: Label number too large.\n");
+			file_error(file, &src[i],
+				"Label number too large");
 			return 0;
 		}
 	}
@@ -196,7 +196,7 @@ static const pre_state_t PRE_STATE_DEFAULT =
 
 static unsigned prep_unformat__free_form_code(
 	unsigned col, pre_state_t* state,
-	const char* src, lang_opts_t opts,
+	const file_t* file, const char* src, lang_opts_t opts,
 	sparse_t* sparse, bool* continuation)
 {
 	if (!src)
@@ -285,8 +285,8 @@ static unsigned prep_unformat__free_form_code(
 					if (((nsize / 10) != hollerith_size)
 						|| ((nsize % 10U) != (unsigned)(src[i] - '0')))
 					{
-						/* TODO - Positional error. */
-						fprintf(stderr, "Error: Hollerith too long.\n");
+						file_error(file, &src[i],
+							"Hollerith too long");
 						return 0;
 					}
 
@@ -325,9 +325,8 @@ static unsigned prep_unformat__free_form_code(
 }
 
 static bool prep_unformat__fixed_form(
-	file_t* file, sparse_t* sparse)
+	const file_t* file, sparse_t* sparse)
 {
-	const char* path = file_get_path(file);
 	const char* src  = file_get_strz(file);
 	lang_opts_t opts = file_get_lang_opts(file);
 
@@ -340,7 +339,7 @@ static bool prep_unformat__fixed_form(
 
 	bool had_label = false;
 	unsigned label_prev = 0;
-	unsigned label_row = 0;
+	unsigned label_pos = 0;
 
 	unsigned row, pos;
 	for (row = 0, pos = 0; src[pos] != '\0'; row++)
@@ -357,14 +356,15 @@ static bool prep_unformat__fixed_form(
 		bool continuation = false;
 
 		len = prep_unformat__fixed_form_label(
-			&src[pos], opts,
+			file, &src[pos], opts,
 			&has_label, &label, &continuation);
 		if (len == 0) return false;
 
 		if (first_code_line && continuation)
 		{
-			fprintf(stderr, "Warning:%s:%u: Initial line can't be a continuation"
-				", treating as non-continuation line\n", path, (row + 1));
+			file_warning(file, &src[pos],
+				"Initial line can't be a continuation"
+				", treating as non-continuation line");
 			continuation = false;
 		}
 
@@ -372,9 +372,9 @@ static bool prep_unformat__fixed_form(
 		{
 			if (has_label)
 			{
-				fprintf(stderr, "Warning:%s:%u: "
+				file_warning(file, &src[pos],
 					"Labeling a continuation line doesn't make sense"
-					", ignoring label\n", path, (row + 1));
+					", ignoring label");
 			}
 			has_label = had_label;
 			label = label_prev;
@@ -382,8 +382,8 @@ static bool prep_unformat__fixed_form(
 		}
 		else if (had_label)
 		{
-			fprintf(stderr, "Warning:%s:%u: "
-				"Label attached to blank line, will be ignored\n", path, (label_row + 1));
+			file_warning(file, &src[label_pos],
+				"Label attached to blank line, will be ignored");
 		}
 
 		col  = len;
@@ -427,7 +427,7 @@ static bool prep_unformat__fixed_form(
 			/* Label is on blank line, attach to next code line. */
 			had_label  = true;
 			label_prev = label;
-			label_row  = row;
+			label_pos  = pos;
 		}
 
 		/* Skip to the actual end of the line, including all ignored characters. */
@@ -444,7 +444,7 @@ static bool prep_unformat__fixed_form(
 }
 
 static bool prep_unformat__free_form(
-	file_t* file, sparse_t* sparse)
+	const file_t* file, sparse_t* sparse)
 {
 	const char* src  = file_get_strz(file);
 	lang_opts_t opts = file_get_lang_opts(file);
@@ -474,7 +474,7 @@ static bool prep_unformat__free_form(
 		unsigned label = 0;
 
 		len = prep_unformat__free_form_label(
-			&src[pos], &label);
+			file, &src[pos], &label);
 		has_label = (len > 0);
 
 		if (has_label && !sparse_label_add(
@@ -497,7 +497,7 @@ static bool prep_unformat__free_form(
 				return false;
 
 			len = prep_unformat__free_form_code(
-				col, &state, &src[pos], opts,
+				col, &state, file, &src[pos], opts,
 				sparse, &continuation);
 			pos += len;
 			col += len;

@@ -186,7 +186,7 @@ const char* sparse_strz(const sparse_t* sparse)
 }
 
 
-bool sparse__ptr(
+static bool sparse__ptr(
 	const sparse_t* sparse, const char* ptr,
 	sparse_entry_t* entry, unsigned* offset)
 {
@@ -217,6 +217,19 @@ bool sparse__ptr(
 	if (entry ) *entry  = sparse->entry[mid];
 	if (offset) *offset = (off - sparse->entry[mid].off);
 	return true;
+}
+
+static const file_t* sparse__file(
+	const sparse_t* sparse)
+{
+	if (!sparse)
+		return NULL;
+
+	if (sparse->file)
+		return sparse->file;
+
+	return sparse__file(
+		sparse->parent);
 }
 
 
@@ -298,41 +311,6 @@ const char* sparse_file_pointer(
 	return (sparse->file ? pptr : NULL);
 }
 
-bool sparse_file_position(
-	const sparse_t* sparse, const char* ptr,
-	const char** path, unsigned *row, unsigned* col)
-{
-	sparse_entry_t entry;
-	unsigned offset;
-
-	if (!sparse__ptr(
-		sparse, ptr,
-		&entry, &offset))
-		return false;
-
-	const char* pptr = &entry.ptr[offset];
-
-	if (sparse->parent)
-	{
-		if (!sparse_file_position(
-			sparse->parent, pptr, path, row, col))
-			return false;
-	}
-	else if (sparse->file)
-	{
-		if (!file_get_position(sparse->file, pptr, row, col))
-			return false;
-		if (path) *path = file_get_path(sparse->file);
-	}
-	else
-	{
-		/* A sparse with no file or parent, can't have a file position. */
-		return false;
-	}
-
-	return true;
-}
-
 
 lang_opts_t sparse_lang_opts(const sparse_t* sparse)
 {
@@ -345,50 +323,28 @@ lang_opts_t sparse_lang_opts(const sparse_t* sparse)
 
 
 
-#include <stdio.h>
-
 void sparse_error(
 	const sparse_t* sparse, const char* ptr,
 	const char* format, ...)
 {
-	fprintf(stderr, "Error:");
-
-	const char* path;
-	unsigned row, col;
-	if (sparse_file_position(
-		sparse, ptr,
-		&path, &row, &col))
-		fprintf(stderr, "%s:%u,%u:",
-			path, (row + 1), col);
-
-	fprintf(stderr, " ");
+	const file_t* file = sparse__file(sparse);
+	const char*   fptr = sparse_file_pointer(sparse, ptr);
 
 	va_list args;
 	va_start(args, format);
-	vfprintf(stderr, format, args);
+	file_error_va(file, fptr, format, args);
 	va_end(args);
-	fprintf(stderr, "\n");
 }
 
 void sparse_warning(
 	const sparse_t* sparse, const char* ptr,
 	const char* format, ...)
 {
-	fprintf(stderr, "Warning:");
-
-	const char* path;
-	unsigned row, col;
-	if (sparse_file_position(
-		sparse, ptr,
-		&path, &row, &col))
-		fprintf(stderr, "%s:%u,%u:",
-			path, (row + 1), col);
-
-	fprintf(stderr, " ");
+	const file_t* file = sparse__file(sparse);
+	const char*   fptr = sparse_file_pointer(sparse, ptr);
 
 	va_list args;
 	va_start(args, format);
-	vfprintf(stderr, format, args);
+	file_warning_va(file, fptr, format, args);
 	va_end(args);
-	fprintf(stderr, "\n");
 }

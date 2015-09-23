@@ -1,5 +1,6 @@
 #include "file.h"
 #include <stdlib.h>
+#include <stdio.h>
 #include <stdint.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -147,4 +148,61 @@ bool file_get_position(
 	if (row) *row = r;
 	if (col) *col = c;
 	return true;
+}
+
+
+
+static void file__debug_va(
+	const file_t* file, const char* ptr,
+	const char* type, const char* format, va_list args)
+{
+	fprintf(stderr, "%s:", type);
+
+	unsigned row, col;
+	if (file_get_position(
+		file, ptr, &row, &col))
+		fprintf(stderr, "%s:%u,%u:",
+			file->path, (row + 1), col);
+
+	fprintf(stderr, " ");
+	vfprintf(stderr, format, args);
+	fprintf(stderr, "\n");
+}
+
+void file_error_va(
+	const file_t* file, const char* ptr,
+	const char* format, va_list args)
+{
+	file__debug_va(
+		file, ptr, "Error", format, args);
+}
+
+void file_warning_va(
+	const file_t* file, const char* ptr,
+	const char* format, va_list args)
+{
+	file__debug_va(
+		file, ptr, "Warning", format, args);
+}
+
+
+
+void file_error(
+	const file_t* file, const char* ptr,
+	const char* format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	file_warning_va(file, ptr, format, args);
+	va_end(args);
+}
+
+void file_warning(
+	const file_t* file, const char* ptr,
+	const char* format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	file_error_va(file, ptr, format, args);
+	va_end(args);
 }

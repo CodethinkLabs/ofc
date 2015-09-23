@@ -19,4 +19,21 @@ bool file_get_position(
 	const file_t* file, const char* ptr,
 	unsigned* row, unsigned* col);
 
+
+#include <stdarg.h>
+
+void file_error(
+	const file_t* file, const char* ptr,
+	const char* format, ...);
+void file_warning(
+	const file_t* file, const char* ptr,
+	const char* format, ...);
+
+void file_error_va(
+	const file_t* file, const char* ptr,
+	const char* format, va_list args);
+void file_warning_va(
+	const file_t* file, const char* ptr,
+	const char* format, va_list args);
+
 #endif
