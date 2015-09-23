@@ -867,12 +867,13 @@ unsigned parse_stmt_io_close(
 	return i;
 }
 
-unsigned parse_stmt_io_print(
+static unsigned parse_stmt_io__print_type(
 	const sparse_t* src, const char* ptr,
+	parse_keyword_e keyword,
 	parse_stmt_t* stmt)
 {
 	unsigned i = parse_keyword(
-		src, ptr, PARSE_KEYWORD_PRINT);
+		src, ptr, keyword);
 	if (i == 0) return 0;
 
 	stmt->io_print.format_asterisk = false;
@@ -905,4 +906,23 @@ unsigned parse_stmt_io_print(
 
 	stmt->type = PARSE_STMT_IO_PRINT;
 	return i;
+}
+
+unsigned parse_stmt_io_print(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt)
+{
+	return parse_stmt_io__print_type(
+		src, ptr, PARSE_KEYWORD_PRINT, stmt);
+}
+
+/* http://docs.oracle.com/cd/E19957-01/805-4939/6j4m0vnbi/index.html
+   This won't conflict with the TYPE (name) declaration,
+   because the brackets disambiguate it. */
+unsigned parse_stmt_io_type(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt)
+{
+	return parse_stmt_io__print_type(
+		src, ptr, PARSE_KEYWORD_TYPE, stmt);
 }

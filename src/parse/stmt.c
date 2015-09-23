@@ -106,6 +106,9 @@ unsigned parse_stmt_io_close(
 unsigned parse_stmt_io_print(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
+unsigned parse_stmt_io_type(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
 
 
 
@@ -356,6 +359,10 @@ parse_stmt_t* parse_stmt(
 			if (i == 0) i = parse_stmt_subroutine(src, ptr, &stmt);
 			if (i == 0) i = parse_stmt_stop(src, ptr, &stmt);
 			if (i == 0) i = parse_stmt_save(src, ptr, &stmt);
+			break;
+
+		case 'T':
+			if (i == 0) i = parse_stmt_io_type(src, ptr, &stmt);
 			break;
 
 		case 'W':
