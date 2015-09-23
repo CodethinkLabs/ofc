@@ -57,10 +57,7 @@ static unsigned parse_stmt__io(
 
 		bool initial = true;
 
-		len = parse_name(src, &ptr[i], NULL);
-		if (len == 0)
-			len = parse_keyword(
-				src, &ptr[i], PARSE_KEYWORD_END);
+		len = parse_ident(src, &ptr[i], NULL);
 		if ((len == 0) || (ptr[i + len] != '='))
 		{
 			stmt->io.unit = parse_expr(src, &ptr[i], &len);
@@ -69,10 +66,7 @@ static unsigned parse_stmt__io(
 
 			if (fmt && (ptr[i] == ','))
 			{
-				len = parse_name(src, &ptr[i + 1], NULL);
-				if (len == 0)
-					len = parse_keyword(
-						src, &ptr[i + 1], PARSE_KEYWORD_END);
+				len = parse_ident(src, &ptr[i + 1], NULL);
 				if ((len == 0) || (ptr[i + 1 + len] != '='))
 				{
 					i += 1;
@@ -265,10 +259,7 @@ unsigned parse_stmt_io_open(
 
 		bool initial = true;
 
-		len = parse_name(src, &ptr[i], NULL);
-		if (len == 0)
-			len = parse_keyword(
-				src, &ptr[i], PARSE_KEYWORD_END);
+		len = parse_ident(src, &ptr[i], NULL);
 		if ((len == 0) || (ptr[i + len] != '='))
 		{
 			stmt->io_open.unit = parse_expr(src, &ptr[i], &len);
@@ -504,10 +495,7 @@ unsigned parse_stmt_io_inquire(
 
 		bool initial = true;
 
-		len = parse_name(src, &ptr[i], NULL);
-		if (len == 0)
-			len = parse_keyword(
-				src, &ptr[i], PARSE_KEYWORD_END);
+		len = parse_ident(src, &ptr[i], NULL);
 		if ((len == 0) || (ptr[i + len] != '='))
 		{
 			stmt->io_inquire.unit = parse_expr(src, &ptr[i], &len);

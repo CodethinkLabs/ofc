@@ -95,6 +95,9 @@ typedef enum
 } parse_keyword_e;
 
 
+unsigned parse_ident(
+	const sparse_t* src, const char* ptr,
+	str_ref_t* ident);
 
 unsigned parse_name(
 	const sparse_t* src, const char* ptr,

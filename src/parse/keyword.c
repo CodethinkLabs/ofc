@@ -98,9 +98,10 @@ static const char* parse_keyword__name[] =
 };
 
 
-unsigned parse_name(
+
+unsigned parse_ident(
 	const sparse_t* src, const char* ptr,
-	str_ref_t* name)
+	str_ref_t* ident)
 {
 	if (!isalpha(ptr[0]))
 		return 0;
@@ -111,15 +112,22 @@ unsigned parse_name(
 	if (!sparse_sequential(src, ptr, i))
 	{
 		sparse_warning(src, ptr,
-			"Unexpected whitespace in name");
+			"Unexpected whitespace in ident");
 	}
 
+	if (ident) *ident = str_ref(ptr, i);
+	return i;
+}
+
+unsigned parse_name(
+	const sparse_t* src, const char* ptr,
+	str_ref_t* name)
+{
 	/* END is reserved, an identifier may never begin with these letters. */
-	if ((i >= 3) && (strncasecmp(ptr, "END", 3) == 0))
+	if (strncasecmp(ptr, "END", 3) == 0)
 		return 0;
 
-	if (name) *name = str_ref(ptr, i);
-	return i;
+	return parse_ident(src, ptr, name);
 }
 
 str_ref_t* parse_name_alloc(
