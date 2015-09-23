@@ -24,15 +24,20 @@ unsigned parse_stmt_entry(
 unsigned parse_stmt_decl(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
+
 unsigned parse_stmt_common(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
 unsigned parse_stmt_dimension(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
+unsigned parse_stmt_virtual(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
 unsigned parse_stmt_equivalence(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
+
 unsigned parse_stmt_assignment(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
@@ -363,6 +368,10 @@ parse_stmt_t* parse_stmt(
 
 		case 'T':
 			if (i == 0) i = parse_stmt_io_type(src, ptr, &stmt);
+			break;
+
+		case 'V':
+			if (i == 0) i = parse_stmt_virtual(src, ptr, &stmt);
 			break;
 
 		case 'W':

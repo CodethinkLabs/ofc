@@ -38,6 +38,7 @@ static const char* parse_keyword__name[] =
 
 	"COMMON",
 	"DIMENSION",
+	"VIRTUAL",
 	"EQUIVALENCE",
 
 	"KIND",
