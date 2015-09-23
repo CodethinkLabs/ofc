@@ -147,6 +147,7 @@ struct parse_stmt_s
 		struct
 		{
 			parse_expr_t*   unit;
+			bool            unit_asterisk;
 			parse_expr_t*   fmt;
 			bool            fmt_asterisk;
 			parse_expr_t*   rec;

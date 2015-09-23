@@ -35,6 +35,7 @@ static unsigned parse_stmt__io(
 	if (i == 0) return 0;
 
 	stmt->io.unit   = NULL;
+	stmt->io.unit_asterisk = false;
 	stmt->io.fmt    = NULL;
 	stmt->io.fmt_asterisk = false;
 	stmt->io.rec    = NULL;
@@ -48,7 +49,18 @@ static unsigned parse_stmt__io(
 	if (ptr[i] != '(')
 	{
 		stmt->io.unit = parse_expr(src, &ptr[i], &len);
-		if (!stmt->io.unit) return 0;
+		if (!stmt->io.unit)
+		{
+			if (ptr[i] == '*')
+			{
+				len = 1;
+				stmt->io.unit_asterisk = true;
+			}
+			else
+			{
+				return 0;
+			}
+		}
 		i += len;
 	}
 	else
@@ -61,7 +73,18 @@ static unsigned parse_stmt__io(
 		if ((len == 0) || (ptr[i + len] != '='))
 		{
 			stmt->io.unit = parse_expr(src, &ptr[i], &len);
-			if (!stmt->io.unit) return 0;
+			if (!stmt->io.unit)
+			{
+				if (ptr[i] == '*')
+				{
+					stmt->io.unit_asterisk = true;
+					len = 1;
+				}
+				else
+				{
+					return 0;
+				}
+			}
 			i += len;
 
 			if (fmt && (ptr[i] == ','))
@@ -132,7 +155,7 @@ static unsigned parse_stmt__io(
 				}
 			}
 
-			if (!stmt->io.unit)
+			if (!stmt->io.unit && !stmt->io.unit_asterisk)
 			{
 				stmt->io.unit = parse_stmt__io_optarg(
 					src, &ptr[i], PARSE_KEYWORD_UNIT, &len);
@@ -140,6 +163,17 @@ static unsigned parse_stmt__io(
 				{
 					i += len;
 					continue;
+				}
+				else
+				{
+					len = parse_keyword(src, &ptr[i], PARSE_KEYWORD_UNIT);
+					if ((len > 0) && (ptr[i + len] == '=')
+						&& (ptr[i + len + 1] == '*'))
+					{
+						stmt->io.unit_asterisk = true;
+						i += (len + 2);
+						continue;
+					}
 				}
 			}
 
