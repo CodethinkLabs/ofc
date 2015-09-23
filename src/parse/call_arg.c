@@ -1,9 +1,9 @@
 #include "parse.h"
 
 
-parse_call_arg_t* parse_call_arg(
+static parse_call_arg_t* parse__call_arg(
 	const sparse_t* src, const char* ptr,
-	unsigned* len)
+	bool named, unsigned* len)
 {
 	parse_call_arg_t* call_arg
 		= (parse_call_arg_t*)malloc(
@@ -11,6 +11,19 @@ parse_call_arg_t* parse_call_arg(
 	if (!call_arg) return NULL;
 
 	unsigned i = 0;
+	call_arg->name = STR_REF_EMPTY;
+	if (named)
+	{
+		str_ref_t ident;
+		unsigned l = parse_ident(
+			src, &ptr[i], &ident);
+		if ((l > 0) && (ptr[i + l] == '='))
+		{
+			call_arg->name = ident;
+			i += (l + 1);
+		}
+	}
+
 	bool was_asterisk = (ptr[i] == '*');
 	if (was_asterisk
 		|| (ptr[i] == '&'))
@@ -50,6 +63,20 @@ parse_call_arg_t* parse_call_arg(
 	return call_arg;
 }
 
+parse_call_arg_t* parse_call_arg_named(
+	const sparse_t* src, const char* ptr,
+	unsigned* len)
+{
+	return parse__call_arg(src, ptr, true, len);
+}
+
+parse_call_arg_t* parse_call_arg(
+	const sparse_t* src, const char* ptr,
+	unsigned* len)
+{
+	return parse__call_arg(src, ptr, false, len);
+}
+
 void parse_call_arg_delete(
 	parse_call_arg_t* call_arg)
 {
@@ -63,9 +90,9 @@ void parse_call_arg_delete(
 
 
 
-parse_call_arg_list_t* parse_call_arg_list(
+static parse_call_arg_list_t* parse_call_arg__list(
 	const sparse_t* src, const char* ptr,
-	unsigned* len)
+	bool named, unsigned* len)
 {
 	parse_call_arg_list_t* list
 		= (parse_call_arg_list_t*)malloc(
@@ -77,7 +104,8 @@ parse_call_arg_list_t* parse_call_arg_list(
 
 	unsigned i = parse_list(src, ptr, ',',
 		&list->count, (void***)&list->call_arg,
-		(void*)parse_call_arg,
+		(named ? (void*)parse_call_arg_named
+			: (void*)parse_call_arg_named),
 		(void*)parse_call_arg_delete);
 	if (i == 0)
 	{
@@ -87,6 +115,22 @@ parse_call_arg_list_t* parse_call_arg_list(
 
 	if (len) *len = i;
 	return list;
+}
+
+parse_call_arg_list_t* parse_call_arg_list_named(
+	const sparse_t* src, const char* ptr,
+	unsigned* len)
+{
+	return parse_call_arg__list(
+		src, ptr, true, len);
+}
+
+parse_call_arg_list_t* parse_call_arg_list(
+	const sparse_t* src, const char* ptr,
+	unsigned* len)
+{
+	return parse_call_arg__list(
+		src, ptr, false, len);
 }
 
 void parse_call_arg_list_delete(

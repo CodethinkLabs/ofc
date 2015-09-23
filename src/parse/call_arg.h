@@ -11,6 +11,7 @@ typedef enum
 typedef struct
 {
 	parse_call_arg_e type;
+	str_ref_t        name;
 	union
 	{
 		parse_expr_t* expr;
@@ -25,12 +26,18 @@ typedef struct
 } parse_call_arg_list_t;
 
 
+parse_call_arg_t* parse_call_arg_named(
+	const sparse_t* src, const char* ptr,
+	unsigned* len);
 parse_call_arg_t* parse_call_arg(
 	const sparse_t* src, const char* ptr,
 	unsigned* len);
 void parse_call_arg_delete(
 	parse_call_arg_t* call_arg);
 
+parse_call_arg_list_t* parse_call_arg_list_named(
+	const sparse_t* src, const char* ptr,
+	unsigned* len);
 parse_call_arg_list_t* parse_call_arg_list(
 	const sparse_t* src, const char* ptr,
 	unsigned* len);
