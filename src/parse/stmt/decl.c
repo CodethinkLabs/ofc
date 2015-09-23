@@ -11,6 +11,10 @@ unsigned parse_stmt_decl(
 	if (!stmt->decl.type)
 		return 0;
 
+	if ((ptr[i + 0] == ':')
+		&& (ptr[i + 1] == ':'))
+		i += 2;
+
 	unsigned l;
 	stmt->decl.decl = parse_decl_list(
 		src, &ptr[i], &l);
