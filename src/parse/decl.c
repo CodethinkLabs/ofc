@@ -22,7 +22,7 @@ parse_decl_t* parse_decl(
 	if (ptr[i] == '*')
 	{
 		unsigned l;
-		decl->len = parse_expr(
+		decl->len = parse_expr_literal(
 			src, &ptr[i + 1], &l);
 		if (decl->len) i += (l + 1);
 	}
