@@ -26,6 +26,9 @@ typedef struct
 } parse_call_arg_list_t;
 
 
+parse_call_arg_t* parse_call_arg_force_named(
+	const sparse_t* src, const char* ptr,
+	unsigned* len);
 parse_call_arg_t* parse_call_arg_named(
 	const sparse_t* src, const char* ptr,
 	unsigned* len);
@@ -35,6 +38,9 @@ parse_call_arg_t* parse_call_arg(
 void parse_call_arg_delete(
 	parse_call_arg_t* call_arg);
 
+parse_call_arg_list_t* parse_call_arg_list_force_named(
+	const sparse_t* src, const char* ptr,
+	unsigned* len);
 parse_call_arg_list_t* parse_call_arg_list_named(
 	const sparse_t* src, const char* ptr,
 	unsigned* len);

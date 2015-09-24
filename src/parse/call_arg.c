@@ -3,7 +3,7 @@
 
 static parse_call_arg_t* parse__call_arg(
 	const sparse_t* src, const char* ptr,
-	bool named, unsigned* len)
+	bool named, bool force, unsigned* len)
 {
 	parse_call_arg_t* call_arg
 		= (parse_call_arg_t*)malloc(
@@ -21,6 +21,11 @@ static parse_call_arg_t* parse__call_arg(
 		{
 			call_arg->name = ident;
 			i += (l + 1);
+		}
+		else if (force)
+		{
+			free(call_arg);
+			return NULL;
 		}
 	}
 
@@ -65,18 +70,25 @@ static parse_call_arg_t* parse__call_arg(
 	return call_arg;
 }
 
+parse_call_arg_t* parse_call_arg_force_named(
+	const sparse_t* src, const char* ptr,
+	unsigned* len)
+{
+	return parse__call_arg(src, ptr, true, true, len);
+}
+
 parse_call_arg_t* parse_call_arg_named(
 	const sparse_t* src, const char* ptr,
 	unsigned* len)
 {
-	return parse__call_arg(src, ptr, true, len);
+	return parse__call_arg(src, ptr, true, false, len);
 }
 
 parse_call_arg_t* parse_call_arg(
 	const sparse_t* src, const char* ptr,
 	unsigned* len)
 {
-	return parse__call_arg(src, ptr, false, len);
+	return parse__call_arg(src, ptr, false, false, len);
 }
 
 void parse_call_arg_delete(
@@ -94,7 +106,7 @@ void parse_call_arg_delete(
 
 static parse_call_arg_list_t* parse_call_arg__list(
 	const sparse_t* src, const char* ptr,
-	bool named, unsigned* len)
+	bool named, bool force, unsigned* len)
 {
 	parse_call_arg_list_t* list
 		= (parse_call_arg_list_t*)malloc(
@@ -106,8 +118,9 @@ static parse_call_arg_list_t* parse_call_arg__list(
 
 	unsigned i = parse_list(src, ptr, ',',
 		&list->count, (void***)&list->call_arg,
-		(named ? (void*)parse_call_arg_named
-			: (void*)parse_call_arg_named),
+		(named ? (force ? (void*)parse_call_arg_force_named
+				: (void*)parse_call_arg_named)
+			: (void*)parse_call_arg),
 		(void*)parse_call_arg_delete);
 	if (i == 0)
 	{
@@ -119,12 +132,20 @@ static parse_call_arg_list_t* parse_call_arg__list(
 	return list;
 }
 
+parse_call_arg_list_t* parse_call_arg_list_force_named(
+	const sparse_t* src, const char* ptr,
+	unsigned* len)
+{
+	return parse_call_arg__list(
+		src, ptr, true, true, len);
+}
+
 parse_call_arg_list_t* parse_call_arg_list_named(
 	const sparse_t* src, const char* ptr,
 	unsigned* len)
 {
 	return parse_call_arg__list(
-		src, ptr, true, len);
+		src, ptr, true, false, len);
 }
 
 parse_call_arg_list_t* parse_call_arg_list(
@@ -132,7 +153,7 @@ parse_call_arg_list_t* parse_call_arg_list(
 	unsigned* len)
 {
 	return parse_call_arg__list(
-		src, ptr, false, len);
+		src, ptr, false, false, len);
 }
 
 parse_call_arg_list_t* parse_call_arg_list_wrap(
