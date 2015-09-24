@@ -27,6 +27,9 @@ typedef enum
 	PARSE_FORMAT_DESC_TR,
 	PARSE_FORMAT_DESC_STRING,
 	PARSE_FORMAT_DESC_REPEAT,
+	PARSE_FORMAT_DESC_BINARY,
+	PARSE_FORMAT_DESC_OCTAL,
+	PARSE_FORMAT_DESC_HEX,
 } parse_format_desc_e;
 
 typedef struct parse_format_desc_s parse_format_desc_t;

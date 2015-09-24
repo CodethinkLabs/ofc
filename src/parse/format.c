@@ -35,6 +35,11 @@ static const parse_format_desc__map_t parse_format_desc__map[] =
 	{ ":" , PARSE_FORMAT_DESC_DOLLAR    , 0, 0, 0 },
 	{ "$" , PARSE_FORMAT_DESC_COLON     , 0, 0, 0 },
 
+	/* Extended descriptors. */
+	{ "B" , PARSE_FORMAT_DESC_BINARY    , 1, 1, 0 },
+	{ "O" , PARSE_FORMAT_DESC_OCTAL     , 1, 1, 0 },
+	{ "Z" , PARSE_FORMAT_DESC_HEX       , 1, 1, 1 },
+
 	{ NULL, 0, 0, 0, 0 }
 };
 
