@@ -73,34 +73,6 @@ static const char* parse_keyword__name[] =
 	"PRINT",
 	"TYPE",
 
-	"UNIT",
-	"FILE",
-	"NAME",
-	"ACCESS",
-	"BLANK",
-	"ERR",
-	"FORM",
-	"IOSTAT",
-	"RECL",
-	"RECORDSIZE",
-	"STATUS",
-	"FILEOPT",
-	"READONLY",
-	"ACTION",
-	"FMT",
-	"REC",
-	"END",
-
-	"EXIST",
-	"OPENED",
-	"NAMED",
-	"SEQUENTIAL",
-	"DIRECT",
-	"FORMATTED",
-	"UNFORMATTED",
-	"NUMBER",
-	"NEXTREC",
-
 	NULL
 };
 
