@@ -105,9 +105,12 @@ unsigned parse_name(
 	const sparse_t* src, const char* ptr,
 	str_ref_t* name)
 {
-	/* END is reserved, an identifier may never begin with these letters. */
 	if (strncasecmp(ptr, "END", 3) == 0)
-		return 0;
+	{
+		/* TODO - Enable this warning once we can suppress false positives. */
+		/*sparse_warning(src, ptr,
+			"Using END in a keyword is incompatible with Fortran 90");*/
+	}
 
 	return parse_ident(src, ptr, name);
 }
