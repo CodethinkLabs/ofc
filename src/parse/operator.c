@@ -74,57 +74,57 @@ unsigned parse_operator(
 			break;
 
 		case '.':
-			if (strncmp(ptr, ".EQ.", 4) == 0)
+			if (strncasecmp(ptr, ".EQ.", 4) == 0)
 			{
 				op = PARSE_OPERATOR_EQ;
 				size = 4;
 			}
-			else if (strncmp(ptr, ".NE.", 4) == 0)
+			else if (strncasecmp(ptr, ".NE.", 4) == 0)
 			{
 				op = PARSE_OPERATOR_NE;
 				size = 4;
 			}
-			else if (strncmp(ptr, ".LT.", 4) == 0)
+			else if (strncasecmp(ptr, ".LT.", 4) == 0)
 			{
 				op = PARSE_OPERATOR_LT;
 				size = 4;
 			}
-			else if (strncmp(ptr, ".LE.", 4) == 0)
+			else if (strncasecmp(ptr, ".LE.", 4) == 0)
 			{
 				op = PARSE_OPERATOR_LE;
 				size = 4;
 			}
-			else if (strncmp(ptr, ".GT.", 4) == 0)
+			else if (strncasecmp(ptr, ".GT.", 4) == 0)
 			{
 				op = PARSE_OPERATOR_GT;
 				size = 4;
 			}
-			else if (strncmp(ptr, ".GE.", 4) == 0)
+			else if (strncasecmp(ptr, ".GE.", 4) == 0)
 			{
 				op = PARSE_OPERATOR_GE;
 				size = 4;
 			}
-			else if (strncmp(ptr, ".NOT.", 5) == 0)
+			else if (strncasecmp(ptr, ".NOT.", 5) == 0)
 			{
 				op = PARSE_OPERATOR_NOT;
 				size = 5;
 			}
-			else if (strncmp(ptr, ".AND.", 5) == 0)
+			else if (strncasecmp(ptr, ".AND.", 5) == 0)
 			{
 				op = PARSE_OPERATOR_AND;
 				size = 5;
 			}
-			else if (strncmp(ptr, ".OR.", 4) == 0)
+			else if (strncasecmp(ptr, ".OR.", 4) == 0)
 			{
 				op = PARSE_OPERATOR_OR;
 				size = 4;
 			}
-			else if (strncmp(ptr, ".EQV.", 5) == 0)
+			else if (strncasecmp(ptr, ".EQV.", 5) == 0)
 			{
 				op = PARSE_OPERATOR_EQV;
 				size = 5;
 			}
-			else if (strncmp(ptr, ".NEQV.", 6) == 0)
+			else if (strncasecmp(ptr, ".NEQV.", 6) == 0)
 			{
 				op = PARSE_OPERATOR_NEQV;
 				size = 6;
