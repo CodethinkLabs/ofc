@@ -38,7 +38,7 @@ static const parse_format_desc__map_t parse_format_desc__map[] =
 	/* Extended descriptors. */
 	{ "B" , PARSE_FORMAT_DESC_BINARY    , 1, 1, 0 },
 	{ "O" , PARSE_FORMAT_DESC_OCTAL     , 1, 1, 0 },
-	{ "Z" , PARSE_FORMAT_DESC_HEX       , 1, 1, 1 },
+	{ "Z" , PARSE_FORMAT_DESC_HEX       , 1, 1, 0 },
 
 	{ NULL, 0, 0, 0, 0 }
 };
