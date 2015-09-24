@@ -30,6 +30,7 @@ typedef enum
 } parse_format_desc_e;
 
 typedef struct parse_format_desc_s parse_format_desc_t;
+typedef struct parse_format_desc_list_s parse_format_desc_list_t;
 
 struct parse_format_desc_s
 {
@@ -46,30 +47,28 @@ struct parse_format_desc_s
 
 		string_t string;
 
-		struct
-		{
-			unsigned             count;
-			parse_format_desc_t* list;
-		} repeat;
+		parse_format_desc_list_t* repeat;
 	};
 };
 
+struct parse_format_desc_list_s
+{
+	unsigned              count;
+	parse_format_desc_t** desc;
+};
 
-unsigned parse_format_desc(
+
+parse_format_desc_t* parse_format_desc(
 	const sparse_t* src, const char* ptr,
+	unsigned* len);
+void parse_format_desc_delete(
 	parse_format_desc_t* desc);
 
-void parse_format_desc_cleanup(
-	parse_format_desc_t desc);
 
-
-unsigned parse_format_desc_list(
+parse_format_desc_list_t* parse_format_desc_list(
 	const sparse_t* src, const char* ptr,
-	char terminator,
-	parse_format_desc_t** list, unsigned* count);
-
+	unsigned* len);
 void parse_format_desc_list_delete(
-	parse_format_desc_t* list, unsigned count);
+	parse_format_desc_list_t* list);
 
 #endif
-

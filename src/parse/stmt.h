@@ -161,11 +161,7 @@ struct parse_stmt_s
 			parse_iolist_t* iolist;
 		} io_print;
 
-		struct
-		{
-			unsigned             desc_count;
-			parse_format_desc_t* desc;
-		} format;
+		parse_format_desc_list_t* format;
 
 		parse_data_list_t* data;
 

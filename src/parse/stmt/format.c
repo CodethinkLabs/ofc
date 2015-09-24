@@ -12,20 +12,16 @@ unsigned parse_stmt_format(
 		return 0;
 
 	/* Empty FORMAT statements are valid as in nist/FM110.FOR */
-	if (ptr[i] == ')')
+	unsigned l;
+	stmt->format = parse_format_desc_list(
+		src, &ptr[i], &l);
+	if (stmt->format) i += l;
+
+	if (ptr[i++] != ')')
 	{
-		i += 1;
-		stmt->format.desc = NULL;
-		stmt->format.desc_count = 0;
-	}
-	else
-	{
-		unsigned len = parse_format_desc_list(
-			src, &ptr[i], ')',
-			&stmt->format.desc,
-			&stmt->format.desc_count);
-		if (len == 0) return 0;
-		i += (len + 1);
+		parse_format_desc_list_delete(
+			stmt->format);
+		return 0;
 	}
 
 	stmt->type = PARSE_STMT_FORMAT;

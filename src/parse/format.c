@@ -39,21 +39,27 @@ static const parse_format_desc__map_t parse_format_desc__map[] =
 };
 
 
-unsigned parse_format_desc(
+parse_format_desc_t* parse_format_desc(
 	const sparse_t* src, const char* ptr,
-	parse_format_desc_t* desc)
+	unsigned* len)
 {
-	unsigned len = parse_hollerith(
+	parse_format_desc_t* desc
+		= (parse_format_desc_t*)malloc(
+			sizeof(parse_format_desc_t));
+	if (!desc) return NULL;
+
+	unsigned i = parse_hollerith(
 		src, ptr, &desc->string);
-	if (len > 0)
+	if (i > 0)
 	{
 		desc->neg  = false;
 		desc->n    = 0;
 		desc->type = PARSE_FORMAT_DESC_HOLLERITH;
-		return len;
+
+		if (len) *len = i;
+		return desc;
 	}
 
-	unsigned i = 0;
 	bool negative = (ptr[i] == '-');
 	if (negative || (ptr[i] == '+'))
 		i += 1;
@@ -62,25 +68,26 @@ unsigned parse_format_desc(
 	l = parse_unsigned(src, &ptr[i], &n);
 	i = (l > 0 ? i + l : 0);
 
-	len = parse_character(
+	l = parse_character(
 		src, &ptr[i], &desc->string);
-	if (len > 0)
+	if (l > 0)
 	{
 		desc->neg  = negative;
 		desc->n    = n;
 		desc->type = PARSE_FORMAT_DESC_STRING;
-		return (i + len);
+
+		if (len) *len = (i + l);
+		return desc;
 	}
 
 	if (ptr[i] == '(')
 	{
 		i += 1;
 
-		unsigned len = parse_format_desc_list(
-			src, &ptr[i], ')',
-			&desc->repeat.list,
-			&desc->repeat.count);
-		i += len;
+		unsigned l;
+		desc->repeat = parse_format_desc_list(
+			src, &ptr[i], &l);
+		if (desc->repeat) i += l;
 
 		desc->neg = negative;
 		desc->n    = n;
@@ -89,26 +96,31 @@ unsigned parse_format_desc(
 		if (ptr[i++] != ')')
 		{
 			parse_format_desc_list_delete(
-				desc->repeat.list, desc->repeat.count);
-			return 0;
+				desc->repeat);
+			free(desc);
+			return NULL;
 		}
 
-		return i;
+		if (len) *len = i;
+		return desc;
 	}
 
 	unsigned m;
 	for (m = 0; parse_format_desc__map[m].name; m++)
 	{
-		len = strlen(parse_format_desc__map[m].name);
+		l = strlen(parse_format_desc__map[m].name);
 		if (strncasecmp(&ptr[i],
-			parse_format_desc__map[m].name, len) == 0)
+			parse_format_desc__map[m].name, l) == 0)
 			break;
 	}
 	parse_format_desc__map_t map
 		= parse_format_desc__map[m];
 	if (!map.name)
-		return 0;
-	i += len;
+	{
+		free(desc);
+		return NULL;
+	}
+	i += l;
 
 	unsigned w = 0;
 	if (map.w)
@@ -139,97 +151,68 @@ unsigned parse_format_desc(
 	desc->w = w;
 	desc->d = d;
 	desc->e = e;
-	return i;
+
+	if (len) *len = i;
+	return desc;
 }
 
-void parse_format_desc_cleanup(
-	parse_format_desc_t desc)
+void parse_format_desc_delete(
+	parse_format_desc_t* desc)
 {
-	switch (desc.type)
+	if (!desc)
+		return;
+
+	switch (desc->type)
 	{
 		case PARSE_FORMAT_DESC_HOLLERITH:
 		case PARSE_FORMAT_DESC_STRING:
-			string_delete(desc.string);
+			string_delete(desc->string);
 			break;
 		case PARSE_FORMAT_DESC_REPEAT:
-			parse_format_desc_list_delete(
-				desc.repeat.list,
-				desc.repeat.count);
+			parse_format_desc_list_delete(desc->repeat);
 			break;
 		default:
 			break;
 	}
+	free(desc);
 }
 
 
-unsigned parse_format_desc_list(
+parse_format_desc_list_t* parse_format_desc_list(
 	const sparse_t* src, const char* ptr,
-	char terminator,
-	parse_format_desc_t** list, unsigned* count)
+	unsigned* len)
 {
-	unsigned i = 0;
+	parse_format_desc_list_t* list
+		= (parse_format_desc_list_t*)malloc(
+			sizeof(parse_format_desc_list_t));
+	if (!list) return NULL;
 
-	parse_format_desc_t* dlist  = NULL;
-	unsigned             dcount = 0;
-	unsigned             dmax   = 0;
+	list->count = 0;
+	list->desc  = NULL;
 
-	while (ptr[i] != terminator)
+	unsigned i = parse_list_seperator_optional(
+		src, ptr, ',',
+		&list->count, (void***)&list->desc,
+		(void*)parse_format_desc,
+		(void*)parse_format_desc_delete);
+	if (i == 0)
 	{
-		unsigned comma = 0;
-		if ((dcount > 0)
-			&& (ptr[i] == ','))
-			comma = 1;
-
-		parse_format_desc_t desc;
-		unsigned len = parse_format_desc(
-			src, &ptr[i + comma], &desc);
-		if (len == 0) break;
-
-		if (dcount >= dmax)
-		{
-			dmax = (dmax ? (dmax << 1) : 16);
-			parse_format_desc_t* ndlist
-				= (parse_format_desc_t*)realloc(dlist,
-					(dmax * sizeof(parse_format_desc_t)));
-			if (!ndlist)
-			{
-				parse_format_desc_list_delete(
-					dlist, dcount);
-				return 0;
-			}
-			dlist = ndlist;
-			dlist[dcount++] = desc;
-		}
-
-		i += (comma + len);
+		free(list);
+		return NULL;
 	}
 
-	if ((terminator != '\0')
-		&& (ptr[i] != terminator))
-	{
-		sparse_error(src, &ptr[i],
-			"Expected '%c' after FORMAT descriptor list", terminator);
-		parse_format_desc_list_delete(
-			dlist, dcount);
-		return 0;
-	}
-
-	if (dcount == 0)
-		return 0;
-
-	*list  = dlist;
-	*count = dcount;
-	return i;
+	if (len) *len = i;
+	return list;
 }
 
 void parse_format_desc_list_delete(
-	parse_format_desc_t* list, unsigned count)
+	parse_format_desc_list_t* list)
 {
 	if (!list)
 		return;
 
-	unsigned i;
-	for (i = 0; i < count; i++)
-		parse_format_desc_cleanup(list[i]);
+	parse_list_delete(
+		list->count, (void**)list->desc,
+		(void*)parse_format_desc_delete);
 	free(list);
 }

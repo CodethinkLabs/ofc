@@ -221,8 +221,7 @@ static void parse_stmt__cleanup(
 			parse_iolist_delete(stmt.io_print.iolist);
 			break;
 		case PARSE_STMT_FORMAT:
-			parse_format_desc_list_delete(
-				stmt.format.desc, stmt.format.desc_count);
+			parse_format_desc_list_delete(stmt.format);
 			break;
 		case PARSE_STMT_DATA:
 			parse_data_list_delete(stmt.data);
