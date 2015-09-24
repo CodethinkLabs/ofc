@@ -72,6 +72,8 @@ static const char* parse_keyword__name[] =
 	"CLOSE",
 	"PRINT",
 	"TYPE",
+	"ENCODE",
+	"DECODE",
 
 	NULL
 };

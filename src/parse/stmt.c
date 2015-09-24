@@ -124,6 +124,12 @@ unsigned parse_stmt_io_print(
 unsigned parse_stmt_io_type(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
+unsigned parse_stmt_io_encode(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
+unsigned parse_stmt_io_decode(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
 
 
 
@@ -214,6 +220,8 @@ static void parse_stmt__cleanup(
 		case PARSE_STMT_IO_CLOSE:
 		case PARSE_STMT_IO_OPEN:
 		case PARSE_STMT_IO_INQUIRE:
+		case PARSE_STMT_IO_ENCODE:
+		case PARSE_STMT_IO_DECODE:
 			parse_call_arg_list_delete(stmt.io.params);
 			parse_iolist_delete(stmt.io.iolist);
 			break;
@@ -301,6 +309,7 @@ parse_stmt_t* parse_stmt(
 			if (i == 0) i = parse_stmt_do(src, ptr, &stmt);
 			if (i == 0) i = parse_stmt_data(src, ptr, &stmt);
 			if (i == 0) i = parse_stmt_dimension(src, ptr, &stmt);
+			if (i == 0) i = parse_stmt_io_decode(src, ptr, &stmt);
 			break;
 
 		case 'E':
@@ -308,6 +317,7 @@ parse_stmt_t* parse_stmt(
 			if (i == 0) i = parse_stmt_io_end_file(src, ptr, &stmt);
 			if (i == 0) i = parse_stmt_decl_attr_external(src, ptr, &stmt);
 			if (i == 0) i = parse_stmt_entry(src, ptr, &stmt);
+			if (i == 0) i = parse_stmt_io_encode(src, ptr, &stmt);
 			break;
 
 		case 'F':

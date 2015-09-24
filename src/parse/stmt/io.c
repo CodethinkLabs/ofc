@@ -5,6 +5,7 @@
 static unsigned parse_stmt__io(
 	const sparse_t* src, const char* ptr,
 	parse_keyword_e keyword, bool iolist,
+	bool force_brackets,
 	parse_stmt_t* stmt)
 {
 	unsigned i = parse_keyword(
@@ -27,6 +28,10 @@ static unsigned parse_stmt__io(
 				stmt->io.params);
 			return 0;
 		}
+	}
+	else if (force_brackets)
+	{
+		return 0;
 	}
 	else
 	{
@@ -66,7 +71,7 @@ unsigned parse_stmt_io_open(
 {
 	unsigned i = parse_stmt__io(
 		src, ptr,
-		PARSE_KEYWORD_OPEN, false,
+		PARSE_KEYWORD_OPEN, false, true,
 		stmt);
 	if (i == 0) return 0;
 
@@ -80,7 +85,7 @@ unsigned parse_stmt_io_inquire(
 {
 	unsigned i = parse_stmt__io(
 		src, ptr,
-		PARSE_KEYWORD_INQUIRE, false,
+		PARSE_KEYWORD_INQUIRE, false, true,
 		stmt);
 	if (i == 0) return 0;
 
@@ -94,7 +99,7 @@ unsigned parse_stmt_io_rewind(
 {
 	unsigned i = parse_stmt__io(
 		src, ptr,
-		PARSE_KEYWORD_REWIND, false,
+		PARSE_KEYWORD_REWIND, false, false,
 		stmt);
 	if (i == 0) return 0;
 
@@ -108,7 +113,7 @@ unsigned parse_stmt_io_backspace(
 {
 	unsigned i = parse_stmt__io(
 		src, ptr,
-		PARSE_KEYWORD_BACKSPACE, false,
+		PARSE_KEYWORD_BACKSPACE, false, false,
 		stmt);
 	if (i == 0) return 0;
 
@@ -122,7 +127,7 @@ unsigned parse_stmt_io_read(
 {
 	unsigned i = parse_stmt__io(
 		src, ptr,
-		PARSE_KEYWORD_READ, true,
+		PARSE_KEYWORD_READ, true, false,
 		stmt);
 	if (i == 0) return 0;
 
@@ -136,7 +141,7 @@ unsigned parse_stmt_io_write(
 {
 	unsigned i = parse_stmt__io(
 		src, ptr,
-		PARSE_KEYWORD_WRITE, true,
+		PARSE_KEYWORD_WRITE, true, false,
 		stmt);
 	if (i == 0) return 0;
 
@@ -150,7 +155,7 @@ unsigned parse_stmt_io_end_file(
 {
 	unsigned i = parse_stmt__io(
 		src, ptr,
-		PARSE_KEYWORD_END_FILE, false,
+		PARSE_KEYWORD_END_FILE, false, false,
 		stmt);
 	if (i == 0) return 0;
 
@@ -164,11 +169,39 @@ unsigned parse_stmt_io_close(
 {
 	unsigned i = parse_stmt__io(
 		src, ptr,
-		PARSE_KEYWORD_CLOSE, false,
+		PARSE_KEYWORD_CLOSE, false, true,
 		stmt);
 	if (i == 0) return 0;
 
 	stmt->type = PARSE_STMT_IO_CLOSE;
+	return i;
+}
+
+unsigned parse_stmt_io_encode(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt)
+{
+	unsigned i = parse_stmt__io(
+		src, ptr,
+		PARSE_KEYWORD_ENCODE, true, true,
+		stmt);
+	if (i == 0) return 0;
+
+	stmt->type = PARSE_STMT_IO_ENCODE;
+	return i;
+}
+
+unsigned parse_stmt_io_decode(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt)
+{
+	unsigned i = parse_stmt__io(
+		src, ptr,
+		PARSE_KEYWORD_DECODE, true, true,
+		stmt);
+	if (i == 0) return 0;
+
+	stmt->type = PARSE_STMT_IO_DECODE;
 	return i;
 }
 
