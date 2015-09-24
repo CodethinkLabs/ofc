@@ -50,12 +50,14 @@ static parse_call_arg_t* parse__call_arg(
 	}
 	else
 	{
-		call_arg->expr = parse_expr(src, ptr, &i);
+		unsigned l;
+		call_arg->expr = parse_expr(src, &ptr[i], &l);
 		if (!call_arg->expr)
 		{
 			free(call_arg);
 			return NULL;
 		}
+		i += l;
 		call_arg->type = PARSE_CALL_ARG_EXPR;
 	}
 
@@ -131,6 +133,31 @@ parse_call_arg_list_t* parse_call_arg_list(
 {
 	return parse_call_arg__list(
 		src, ptr, false, len);
+}
+
+parse_call_arg_list_t* parse_call_arg_list_wrap(
+	parse_call_arg_t* arg)
+{
+	if (!arg)
+		return NULL;
+
+	parse_call_arg_list_t* list
+		= (parse_call_arg_list_t*)malloc(
+			sizeof(parse_call_arg_list_t));
+	if (!list) return NULL;
+
+	list->call_arg = (parse_call_arg_t**)malloc(
+		sizeof(parse_call_arg_t*));
+	if (!list->call_arg)
+	{
+		free(list);
+		return NULL;
+	}
+
+	list->count = 1;
+	list->call_arg[0] = arg;
+
+	return list;
 }
 
 void parse_call_arg_list_delete(

@@ -41,6 +41,8 @@ parse_call_arg_list_t* parse_call_arg_list_named(
 parse_call_arg_list_t* parse_call_arg_list(
 	const sparse_t* src, const char* ptr,
 	unsigned* len);
+parse_call_arg_list_t* parse_call_arg_list_wrap(
+	parse_call_arg_t* arg);
 void parse_call_arg_list_delete(
 	parse_call_arg_list_t* call_arg);
 

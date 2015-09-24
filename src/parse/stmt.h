@@ -150,61 +150,15 @@ struct parse_stmt_s
 
 		struct
 		{
-			parse_expr_t*   unit;
-			bool            unit_asterisk;
-			parse_expr_t*   fmt;
-			bool            fmt_asterisk;
-			parse_expr_t*   rec;
-			parse_expr_t*   end;
-			parse_expr_t*   iostat;
-			parse_expr_t*   err;
-			parse_expr_t*   status;
-			parse_iolist_t* args;
+			parse_call_arg_list_t* params;
+			parse_iolist_t*        iolist;
 		} io;
-
-		struct
-		{
-			parse_expr_t*   unit;
-			parse_expr_t*   file;
-			parse_expr_t*   access;
-			parse_expr_t*   blank;
-			parse_expr_t*   err;
-			parse_expr_t*   form;
-			parse_expr_t*   iostat;
-			parse_expr_t*   recl;
-			parse_expr_t*   status;
-			parse_expr_t*   fileopt;
-			bool            readonly;
-			parse_expr_t*   action;
-		} io_open;
-
-		struct
-		{
-			parse_expr_t*   unit;
-			parse_expr_t*   file;
-			parse_expr_t*   err;
-			parse_expr_t*   exist;
-			parse_expr_t*   opened;
-			parse_expr_t*   named;
-			parse_expr_t*   access;
-			parse_expr_t*   sequential;
-			parse_expr_t*   direct;
-			parse_expr_t*   form;
-			parse_expr_t*   formatted;
-			parse_expr_t*   unformatted;
-			parse_expr_t*   name;
-			parse_expr_t*   blank;
-			parse_expr_t*   iostat;
-			parse_expr_t*   number;
-			parse_expr_t*   recl;
-			parse_expr_t*   nextrec;
-		} io_inquire;
 
 		struct
 		{
 			parse_label_t   format;
 			bool            format_asterisk;
-			parse_iolist_t* args;
+			parse_iolist_t* iolist;
 		} io_print;
 
 		struct

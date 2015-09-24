@@ -213,50 +213,13 @@ static void parse_stmt__cleanup(
 		case PARSE_STMT_IO_WRITE:
 		case PARSE_STMT_IO_END_FILE:
 		case PARSE_STMT_IO_CLOSE:
-			parse_expr_delete(stmt.io.unit);
-			parse_expr_delete(stmt.io.fmt);
-			parse_expr_delete(stmt.io.rec);
-			parse_expr_delete(stmt.io.end);
-			parse_expr_delete(stmt.io.iostat);
-			parse_expr_delete(stmt.io.err);
-			parse_expr_delete(stmt.io.status);
-			parse_iolist_delete(stmt.io.args);
-			break;
 		case PARSE_STMT_IO_OPEN:
-			parse_expr_delete(stmt.io_open.unit);
-			parse_expr_delete(stmt.io_open.file);
-			parse_expr_delete(stmt.io_open.access);
-			parse_expr_delete(stmt.io_open.blank);
-			parse_expr_delete(stmt.io_open.err);
-			parse_expr_delete(stmt.io_open.form);
-			parse_expr_delete(stmt.io_open.iostat);
-			parse_expr_delete(stmt.io_open.recl);
-			parse_expr_delete(stmt.io_open.status);
-			parse_expr_delete(stmt.io_open.fileopt);
-			parse_expr_delete(stmt.io_open.action);
-			break;
 		case PARSE_STMT_IO_INQUIRE:
-			parse_expr_delete(stmt.io_inquire.unit       );
-			parse_expr_delete(stmt.io_inquire.file       );
-			parse_expr_delete(stmt.io_inquire.err        );
-			parse_expr_delete(stmt.io_inquire.exist      );
-			parse_expr_delete(stmt.io_inquire.opened     );
-			parse_expr_delete(stmt.io_inquire.named      );
-			parse_expr_delete(stmt.io_inquire.access     );
-			parse_expr_delete(stmt.io_inquire.sequential );
-			parse_expr_delete(stmt.io_inquire.direct     );
-			parse_expr_delete(stmt.io_inquire.form       );
-			parse_expr_delete(stmt.io_inquire.formatted  );
-			parse_expr_delete(stmt.io_inquire.unformatted);
-			parse_expr_delete(stmt.io_inquire.name       );
-			parse_expr_delete(stmt.io_inquire.blank      );
-			parse_expr_delete(stmt.io_inquire.iostat     );
-			parse_expr_delete(stmt.io_inquire.number     );
-			parse_expr_delete(stmt.io_inquire.recl       );
-			parse_expr_delete(stmt.io_inquire.nextrec    );
+			parse_call_arg_list_delete(stmt.io.params);
+			parse_iolist_delete(stmt.io.iolist);
 			break;
 		case PARSE_STMT_IO_PRINT:
-			parse_iolist_delete(stmt.io_print.args);
+			parse_iolist_delete(stmt.io_print.iolist);
 			break;
 		case PARSE_STMT_FORMAT:
 			parse_format_desc_list_delete(
