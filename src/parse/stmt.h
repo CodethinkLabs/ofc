@@ -167,13 +167,7 @@ struct parse_stmt_s
 			parse_format_desc_t* desc;
 		} format;
 
-		struct
-		{
-			unsigned       name_count;
-			parse_lhs_t**  name;
-			unsigned       init_count;
-			parse_expr_t** init;
-		} data;
+		parse_data_list_t* data;
 
 		struct
 		{

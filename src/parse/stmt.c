@@ -130,7 +130,6 @@ unsigned parse_stmt_io_type(
 static void parse_stmt__cleanup(
 	parse_stmt_t stmt)
 {
-	unsigned i;
 	switch (stmt.type)
 	{
 		case PARSE_STMT_PROGRAM:
@@ -226,12 +225,7 @@ static void parse_stmt__cleanup(
 				stmt.format.desc, stmt.format.desc_count);
 			break;
 		case PARSE_STMT_DATA:
-			for (i = 0; i < stmt.data.init_count; i++)
-				parse_expr_delete(stmt.data.init[i]);
-			free(stmt.data.init);
-			for (i = 0; i < stmt.data.name_count; i++)
-				parse_lhs_delete(stmt.data.name[i]);
-			free(stmt.data.name);
+			parse_data_list_delete(stmt.data);
 			break;
 		case PARSE_STMT_SAVE:
 			parse_save_list_delete(stmt.save.list);
