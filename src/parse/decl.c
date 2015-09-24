@@ -40,8 +40,8 @@ parse_decl_t* parse_decl(
 	{
 		unsigned l;
 		decl->init_clist = parse_clist(
-			src, &ptr[i + 1], &l);
-		if (decl->init_clist) i += (l + 1);
+			src, &ptr[i], &l);
+		if (decl->init_clist) i += l;
 	}
 
 	if (len) *len = i;
