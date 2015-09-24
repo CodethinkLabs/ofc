@@ -3,6 +3,69 @@
 #include <string.h>
 
 
+static unsigned parse_decl_attr(
+	const sparse_t* src, const char* ptr,
+	parse_decl_attr_t* attr)
+{
+	attr->is_static    = false;
+	attr->is_automatic = false;
+	attr->is_volatile  = false;
+
+	unsigned i = 0;
+	while (true)
+	{
+		unsigned l;
+		l = parse_keyword(src, &ptr[i],
+			PARSE_KEYWORD_STATIC);
+		if (l > 0)
+		{
+			if (attr->is_static)
+			{
+				sparse_warning(src, &ptr[i],
+					"Duplicate definition of STATIC decl attribute");
+			}
+
+			attr->is_static = true;
+			i += l;
+			continue;
+		}
+
+		l = parse_keyword(src, &ptr[i],
+			PARSE_KEYWORD_AUTOMATIC);
+		if (l > 0)
+		{
+			if (attr->is_automatic)
+			{
+				sparse_warning(src, &ptr[i],
+					"Duplicate definition of AUTOMATIC decl attribute");
+			}
+
+			attr->is_automatic = true;
+			i += l;
+			continue;
+		}
+
+		l = parse_keyword(src, &ptr[i],
+			PARSE_KEYWORD_VOLATILE);
+		if (l > 0)
+		{
+			if (attr->is_volatile)
+			{
+				sparse_warning(src, &ptr[i],
+					"Duplicate definition of VOLATILE decl attribute");
+			}
+
+			attr->is_volatile = true;
+			i += l;
+			continue;
+		}
+
+		break;
+	}
+
+	return i;
+}
+
 parse_type_t* parse_type__alloc(parse_type_t type)
 {
 	parse_type_t* atype
@@ -46,9 +109,9 @@ parse_type_t* parse_type(
 	const sparse_t* src, const char* ptr,
 	unsigned* len)
 {
-	unsigned i = 0;
-
 	parse_type_t type;
+	unsigned i = parse_decl_attr(
+		src, ptr, &type.attr);
 
 	unsigned j;
 	for (j = 0; parse_type__keyword_map[j].type != PARSE_TYPE_NONE; j++)

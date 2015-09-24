@@ -18,7 +18,15 @@ typedef enum
 
 typedef struct
 {
+	bool is_static;
+	bool is_volatile;
+	bool is_automatic;
+} parse_decl_attr_t;
+
+typedef struct
+{
 	parse_type_e           type;
+	parse_decl_attr_t      attr;
 	unsigned               kind;
 	parse_expr_t*          count_expr;
 	bool                   count_var;
