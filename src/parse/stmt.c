@@ -212,6 +212,13 @@ static void parse_stmt__cleanup(
 			parse_expr_delete(stmt.do_loop.last);
 			parse_expr_delete(stmt.do_loop.step);
 			break;
+		case PARSE_STMT_DO_WHILE:
+			parse_expr_delete(stmt.do_while.cond);
+			break;
+		case PARSE_STMT_DO_WHILE_BLOCK:
+			parse_expr_delete(stmt.do_while_block.cond);
+			parse_stmt_list_delete(stmt.do_while_block.block);
+			break;
 		case PARSE_STMT_IO_REWIND:
 		case PARSE_STMT_IO_BACKSPACE:
 		case PARSE_STMT_IO_READ:

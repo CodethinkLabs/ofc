@@ -40,6 +40,8 @@ typedef enum
 	PARSE_STMT_IF_STATEMENT,
 	PARSE_STMT_IF_THEN,
 	PARSE_STMT_DO,
+	PARSE_STMT_DO_WHILE,
+	PARSE_STMT_DO_WHILE_BLOCK,
 	PARSE_STMT_IO_OPEN,
 	PARSE_STMT_IO_INQUIRE,
 	PARSE_STMT_IO_REWIND,
@@ -149,6 +151,18 @@ struct parse_stmt_s
 			parse_expr_t*   last;
 			parse_expr_t*   step;
 		} do_loop;
+
+		struct
+		{
+			parse_label_t end_label;
+			parse_expr_t* cond;
+		} do_while;
+
+		struct
+		{
+			parse_expr_t*      cond;
+			parse_stmt_list_t* block;
+		} do_while_block;
 
 		struct
 		{

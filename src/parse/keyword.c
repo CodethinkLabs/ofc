@@ -17,6 +17,7 @@ static const char* parse_keyword__name[] =
 	"ELSE",
 	"GO TO",
 	"DO",
+	"WHILE",
 	"CONTINUE",
 	"STOP",
 	"PAUSE",
