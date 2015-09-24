@@ -27,13 +27,21 @@ parse_decl_t* parse_decl(
 		if (decl->len) i += (l + 1);
 	}
 
-	decl->init = NULL;
+	decl->init_expr  = NULL;
+	decl->init_clist = NULL;
 	if (ptr[i] == '=')
 	{
 		unsigned l;
-		decl->init = parse_expr(
+		decl->init_expr = parse_expr(
 			src, &ptr[i + 1], &l);
-		if (decl->init) i += (l + 1);
+		if (decl->init_expr) i += (l + 1);
+	}
+	else if (ptr[i] == '/')
+	{
+		unsigned l;
+		decl->init_clist = parse_clist(
+			src, &ptr[i + 1], &l);
+		if (decl->init_clist) i += (l + 1);
 	}
 
 	if (len) *len = i;
@@ -45,6 +53,9 @@ void parse_decl_delete(
 {
 	if (!decl)
 		return;
+
+	parse_expr_delete(decl->init_expr);
+	parse_clist_delete(decl->init_clist);
 
 	parse_expr_delete(decl->len);
 	parse_lhs_delete(decl->lhs);
