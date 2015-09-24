@@ -45,7 +45,8 @@ static unsigned prep_unformat__blank_or_comment(
 
 static unsigned prep_unformat__fixed_form_label(
 	const file_t* file, const char* src, lang_opts_t opts,
-	bool* has_label, unsigned* label, bool* continuation)
+	bool* has_label, unsigned* label, bool* continuation,
+	unsigned* column)
 {
 	if (!src)
 		return 0;
@@ -53,6 +54,7 @@ static unsigned prep_unformat__fixed_form_label(
 	bool seen_digit = false;
 	unsigned label_value = 0;
 	bool is_cont = false;
+	unsigned col;
 
 	unsigned i = 0;
 	if ((toupper(src[i]) == 'D') && !opts.debug)
@@ -82,20 +84,23 @@ static unsigned prep_unformat__fixed_form_label(
 			}
 		}
 
-		if ((src[i] == '\0')
-			|| is_vspace(src[i])
-			|| (src[i] == '!'))
-			return i;
+		col = i;
+		if ((src[i] != '\0')
+			&& !is_vspace(src[i])
+			&& (src[i] != '!'))
+		{
+			/* Skip tab. */
+			col += opts.tab_width;
+			i += 1;
 
-		/* Skip tab. */
-		i += 1;
-
-		is_cont = (isdigit(src[i]) && (src[i] != '0'));
-		if (is_cont) i += 1;
+			is_cont = (isdigit(src[i]) && (src[i] != '0'));
+			if (is_cont)
+				col += (src[i++] == '\t' ? opts.tab_width : 1);
+		}
 	}
 	else
 	{
-		for (; (i < 5) && (src[i] != '\0') && !is_vspace(src[i]) && (src[i] != '!'); i++)
+		for (col = i; (col < 5) && (src[i] != '\0') && !is_vspace(src[i]) && (src[i] != '!'); i++)
 		{
 			if (isdigit(src[i]))
 			{
@@ -108,23 +113,26 @@ static unsigned prep_unformat__fixed_form_label(
 					"Unexpected character in label");
 				return 0;
 			}
+
+			col += (src[i] == '\t' ? opts.tab_width : 1);
 		}
 
 		/* Empty maybe labelled statement */
-		if ((i < 5)
-			|| (src[i] == '\0')
-			|| is_vspace(src[i]))
-			return i;
+		if ((col == 5)
+			&& (src[i] != '\0')
+			&& !is_vspace(src[i]))
+		{
+			is_cont = (!is_hspace(src[i]) && (src[i] != '0'));
 
-		is_cont = (!is_hspace(src[i]) && (src[i] != '0'));
-
-		/* Skip contuation character. */
-		i += 1;
+			/* Skip contuation character. */
+			col += (src[i++] == '\t' ? opts.tab_width : 1);
+		}
 	}
 
 	if (has_label   ) *has_label	= seen_digit;
 	if (label       ) *label        = label_value;
 	if (continuation) *continuation = is_cont;
+	if (column      ) *column       = col;
 	return i;
 }
 
@@ -151,22 +159,21 @@ static unsigned prep_unformat__free_form_label(
 	if ((i > 0) && is_hspace(src[i]))
 	{
 		if (label) *label = label_value;
-		return (i + 1);
+		return i;
 	}
 
 	return 0;
 }
 
 static unsigned prep_unformat__fixed_form_code(
-	unsigned col, const char* src, lang_opts_t opts, sparse_t* sparse)
+	unsigned* col, const char* src, lang_opts_t opts, sparse_t* sparse)
 {
 	if (!src)
 		return 0;
 
-	unsigned remain = (col < opts.columns ? (opts.columns - col) : 0);
-
 	unsigned i;
-	for (i = 0; (i < remain) && !is_vspace(src[i]) && (src[i] != '\0'); i++);
+	for (i = 0; (*col < opts.columns) && !is_vspace(src[i]) && (src[i] != '\0'); i++)
+		*col += (src[i] == '\t' ? opts.tab_width : 1);
 
 	if (sparse && !sparse_append_strn(sparse, src, i))
 		return 0;
@@ -195,14 +202,12 @@ static const pre_state_t PRE_STATE_DEFAULT =
 };
 
 static unsigned prep_unformat__free_form_code(
-	unsigned col, pre_state_t* state,
+	unsigned* col, pre_state_t* state,
 	const file_t* file, const char* src, lang_opts_t opts,
 	sparse_t* sparse, bool* continuation)
 {
 	if (!src)
 		return 0;
-
-	unsigned remain = (col < opts.columns ? (opts.columns - col) : 0);
 
 	bool     valid_ampersand = false;
 	unsigned last_ampersand = 0;
@@ -212,12 +217,12 @@ static unsigned prep_unformat__free_form_code(
 
 	if (*continuation && (*src == '&'))
 	{
-		src++;
-		remain -= 1;
+		 src += 1;
+		*col += 1;
 	}
 
 	unsigned i;
-	for (i = 0; (i < remain) && !is_vspace(src[i]) && (src[i] != '\0'); i++)
+	for (i = 0; (*col < opts.columns) && !is_vspace(src[i]) && (src[i] != '\0'); i++)
 	{
 		/* Allow the last ampersand prior to a bang comment as continuation. */
 		if (!is_hspace(src[i]) && (src[i] != '!'))
@@ -306,6 +311,8 @@ static unsigned prep_unformat__free_form_code(
 					hollerith_size = (src[i] - '0');
 			}
 		}
+
+		*col += (src[i] == '\t' ? opts.tab_width : 1);
 	}
 
 	unsigned code_len = i;
@@ -357,7 +364,7 @@ static bool prep_unformat__fixed_form(
 
 		len = prep_unformat__fixed_form_label(
 			file, &src[pos], opts,
-			&has_label, &label, &continuation);
+			&has_label, &label, &continuation, &col);
 		if (len == 0) return false;
 
 		if (first_code_line && continuation)
@@ -386,12 +393,14 @@ static bool prep_unformat__fixed_form(
 				"Label attached to blank line, will be ignored");
 		}
 
-		col  = len;
 		pos += len;
 
 		/* Skip initial space. */
 		if (!continuation)
-			for(; is_hspace(src[pos]); pos++, col++);
+		{
+			for(; is_hspace(src[pos]); pos++)
+				col += (src[pos] == '\t' ? opts.tab_width : 1);
+		}
 
 		bool has_code = ((col < opts.columns)
 			&& (src[pos] != '\0')
@@ -414,9 +423,8 @@ static bool prep_unformat__fixed_form(
 
 			/* Append non-empty line to output. */
 			len = prep_unformat__fixed_form_code(
-				col, &src[pos], opts, sparse);
+				&col, &src[pos], opts, sparse);
 			pos += len;
-			col += len;
 			if (len == 0)
 				return false;
 
@@ -484,7 +492,8 @@ static bool prep_unformat__free_form(
 		col  = len;
 		pos += len;
 
-		for(; is_hspace(src[pos]); pos++, col++);
+		for(; is_hspace(src[pos]); pos++)
+			col += (src[pos] == '\t' ? opts.tab_width : 1);
 
 		bool has_code = ((col < opts.columns)
 			&& (src[pos] != '\0')
@@ -497,10 +506,9 @@ static bool prep_unformat__free_form(
 				return false;
 
 			len = prep_unformat__free_form_code(
-				col, &state, file, &src[pos], opts,
+				&col, &state, file, &src[pos], opts,
 				sparse, &continuation);
 			pos += len;
-			col += len;
 			if (len == 0) return false;
 
 			if (!continuation)
