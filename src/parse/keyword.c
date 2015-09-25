@@ -13,7 +13,6 @@ static const char* parse_keyword__name[] =
 
 	"IF",
 	"THEN",
-	"ELSE IF",
 	"ELSE",
 	"GO TO",
 	"DO",
@@ -161,10 +160,6 @@ unsigned parse_keyword_named(
 		case PARSE_KEYWORD_BLOCK_DATA:
 			kwstr = "BLOCKDATA";
 			space = 5;
-			break;
-		case PARSE_KEYWORD_ELSE_IF:
-			kwstr = "ELSEIF";
-			space = 4;
 			break;
 		case PARSE_KEYWORD_GO_TO:
 			kwstr = "GOTO";
