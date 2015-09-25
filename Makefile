@@ -14,6 +14,8 @@ DEB = $(patsubst %.c, %.d, $(SRC))
 PREFIX = $(DESTDIR)/usr/local
 BINDIR = $(PREFIX)/bin
 
+TEST_DIR = tests
+TARGETS := $(wildcard $(TEST_DIR)/*.f $(TEST_DIR)/*.f77 $(TEST_DIR)/*.f90 $(TEST_DIR)/*.FOR)
 
 all : $(FRONTEND)
 
@@ -45,6 +47,11 @@ scan-build:
 
 check: cppcheck scan scan-build
 
+tests: $(TARGETS)
+
+$(TARGETS):
+	@$(FRONTEND) $@ > /dev/null 2>&1
+
 -include $(DEB)
 
-.PHONY : all clean install uninstall cppcheck scan scan-cc scan-build check
+.PHONY : all clean install uninstall cppcheck scan scan-cc scan-build check tests $(TARGETS)
