@@ -188,7 +188,8 @@ const char* sparse_strz(const sparse_t* sparse)
 
 static bool sparse__ptr(
 	const sparse_t* sparse, const char* ptr,
-	sparse_entry_t* entry, unsigned* offset)
+	sparse_entry_t* entry, unsigned* offset,
+	sparse_entry_t** prev)
 {
 	if (!sparse || !sparse->strz || !ptr)
 		return false;
@@ -214,8 +215,11 @@ static bool sparse__ptr(
 			break;
 	}
 
+	off -= sparse->entry[mid].off;
+
+	if (prev  ) *prev   = ((off == 0) && (mid > 0) ? &sparse->entry[mid - 1] : NULL);
 	if (entry ) *entry  = sparse->entry[mid];
-	if (offset) *offset = (off - sparse->entry[mid].off);
+	if (offset) *offset = off;
 	return true;
 }
 
@@ -234,26 +238,44 @@ static const file_t* sparse__file(
 
 
 bool sparse_label_add(
-	sparse_t* sparse, const char* ptr, unsigned number)
+	sparse_t* sparse, unsigned number)
 {
-	if (!sparse)
+	if (!sparse || sparse->strz)
 		return false;
 	return label_table_add(
-		sparse->labels, ptr, number);
+		sparse->labels, sparse->len, number);
 }
 
 bool sparse_label_find(
 	const sparse_t* sparse, const char* ptr, unsigned* number)
 {
-	if (!sparse)
+	if (!sparse || !sparse->strz)
 		return false;
 
-	const char* pptr
-		= sparse_parent_pointer(sparse, ptr);
-	if (!pptr) return NULL;
+	unsigned offset = ((uintptr_t)ptr - (uintptr_t)sparse->strz);
 
-	return label_table_find(
-		sparse->labels, pptr, number);
+	if (label_table_find(
+		sparse->labels, offset, number))
+		return true;
+
+	if (!sparse->parent)
+		return false;
+
+	sparse_entry_t entry;
+	sparse_entry_t* prev = NULL;
+
+	if (!sparse__ptr(sparse, ptr,
+		&entry, &offset, &prev))
+		return false;
+
+	/* If we're at an the start of an entry, ensure there's no label attached
+	   to the end of the previous entry. */
+	if (prev && sparse_label_find(
+		sparse->parent, &prev->ptr[prev->len], number))
+		return true;
+
+	return sparse_label_find(
+		sparse->parent, &entry.ptr[offset], number);
 }
 
 
@@ -268,7 +290,7 @@ bool sparse_sequential(
 
 	if (!sparse__ptr(
 		sparse, ptr,
-		&entry, &offset))
+		&entry, &offset, NULL))
 		return NULL;
 
 	return ((offset + size) <= entry.len);
@@ -285,7 +307,7 @@ const char* sparse_parent_pointer(
 
 	if (!sparse__ptr(
 		sparse, ptr,
-		&entry, &offset))
+		&entry, &offset, NULL))
 		return NULL;
 
 	return &entry.ptr[offset];
@@ -299,7 +321,7 @@ const char* sparse_file_pointer(
 
 	if (!sparse__ptr(
 		sparse, ptr,
-		&entry, &offset))
+		&entry, &offset, NULL))
 		return NULL;
 
 	const char* pptr = &entry.ptr[offset];

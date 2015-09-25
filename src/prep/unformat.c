@@ -416,8 +416,8 @@ static bool prep_unformat__fixed_form(
 		{
 			if (has_label)
 			{
-				/* Mark current position in file as label. */
-				if (!sparse_label_add(sparse, &src[pos], label))
+				/* Mark current position in unformat stream as label. */
+				if (!sparse_label_add(sparse, label))
 					return false;
 			}
 
@@ -466,6 +466,10 @@ static bool prep_unformat__free_form(
 	if (!src)
 		return false;
 
+	bool had_label = false;
+	unsigned label_prev = 0;
+	unsigned label_pos = 0;
+
 	unsigned row, pos;
 	for (row = 0, pos = 0; src[pos] != '\0'; row++)
 	{
@@ -485,15 +489,34 @@ static bool prep_unformat__free_form(
 			file, &src[pos], &label);
 		has_label = (len > 0);
 
-		if (has_label && !sparse_label_add(
-			sparse, &src[pos], label))
-			return false;
+		if (continuation)
+		{
+			if (has_label)
+			{
+				file_warning(file, &src[pos],
+					"Labeling a continuation line doesn't make sense"
+					", ignoring label");
+			}
+			has_label = had_label;
+			label = label_prev;
+			had_label = false;
+		}
+		else if (had_label)
+		{
+			file_warning(file, &src[label_pos],
+				"Label attached to blank line, will be ignored");
+		}
 
+		/* We can increment col by len, because
+		   a free-form label can't contain a tab. */
 		col  = len;
 		pos += len;
 
-		for(; is_hspace(src[pos]); pos++)
-			col += (src[pos] == '\t' ? opts.tab_width : 1);
+		if (!continuation)
+		{
+			for(; is_hspace(src[pos]); pos++)
+				col += (src[pos] == '\t' ? opts.tab_width : 1);
+		}
 
 		bool has_code = ((col < opts.columns)
 			&& (src[pos] != '\0')
@@ -501,6 +524,13 @@ static bool prep_unformat__free_form(
 
 		if (has_code)
 		{
+			if (has_label)
+			{
+				/* Mark current position in unformat stream as label. */
+				if (!sparse_label_add(sparse, label))
+					return false;
+			}
+
 			if (!first_code_line && !continuation
 				&& !sparse_append_strn(sparse, newline, 1))
 				return false;
@@ -516,7 +546,15 @@ static bool prep_unformat__free_form(
 
 			first_code_line = false;
 		}
+		else if (has_label)
+		{
+			/* Label is on blank line, attach to next code line. */
+			had_label  = true;
+			label_prev = label;
+			label_pos  = pos;
+		}
 
+		/* Skip to the actual end of the line, including all ignored characters. */
 		for (; (src[pos] != '\0') && !is_vspace(src[pos]); pos++);
 
 		if (has_code)

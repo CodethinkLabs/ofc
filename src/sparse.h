@@ -23,7 +23,7 @@ void sparse_lock(sparse_t* sparse);
 const char* sparse_strz(const sparse_t* sparse);
 
 bool sparse_label_add(
-	sparse_t* sparse, const char* ptr, unsigned number);
+	sparse_t* sparse, unsigned number);
 bool sparse_label_find(
 	const sparse_t* sparse, const char* ptr, unsigned* number);
 
