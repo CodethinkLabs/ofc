@@ -94,6 +94,19 @@ unsigned parse_stmt_decl_attr_volatile(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
 
+unsigned parse_stmt_structure(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
+unsigned parse_stmt_union(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
+unsigned parse_stmt_map(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
+unsigned parse_stmt_record(
+	const sparse_t* src, const char* ptr,
+	parse_stmt_t* stmt);
+
 unsigned parse_stmt_io_open(
 	const sparse_t* src, const char* ptr,
 	parse_stmt_t* stmt);
@@ -219,6 +232,14 @@ static void parse_stmt__cleanup(
 			parse_expr_delete(stmt.do_while_block.cond);
 			parse_stmt_list_delete(stmt.do_while_block.block);
 			break;
+		case PARSE_STMT_STRUCTURE:
+		case PARSE_STMT_UNION:
+		case PARSE_STMT_MAP:
+			parse_stmt_list_delete(stmt.structure.block);
+			break;
+		case PARSE_STMT_RECORD:
+			parse_record_list_delete(stmt.record);
+			break;
 		case PARSE_STMT_IO_REWIND:
 		case PARSE_STMT_IO_BACKSPACE:
 		case PARSE_STMT_IO_READ:
@@ -342,6 +363,10 @@ parse_stmt_t* parse_stmt(
 			if (i == 0) i = parse_stmt_io_inquire(src, ptr, &stmt);
 			break;
 
+		case 'M':
+			if (i == 0) i = parse_stmt_map(src, ptr, &stmt);
+			break;
+
 		case 'O':
 			if (i == 0) i = parse_stmt_io_open(src, ptr, &stmt);
 			break;
@@ -357,6 +382,7 @@ parse_stmt_t* parse_stmt(
 			if (i == 0) i = parse_stmt_return(src, ptr, &stmt);
 			if (i == 0) i = parse_stmt_io_read(src, ptr, &stmt);
 			if (i == 0) i = parse_stmt_io_rewind(src, ptr, &stmt);
+			if (i == 0) i = parse_stmt_record(src, ptr, &stmt);
 			break;
 
 		case 'S':
@@ -364,10 +390,15 @@ parse_stmt_t* parse_stmt(
 			if (i == 0) i = parse_stmt_stop(src, ptr, &stmt);
 			if (i == 0) i = parse_stmt_save(src, ptr, &stmt);
 			if (i == 0) i = parse_stmt_decl_attr_static(src, ptr, &stmt);
+			if (i == 0) i = parse_stmt_structure(src, ptr, &stmt);
 			break;
 
 		case 'T':
 			if (i == 0) i = parse_stmt_io_type(src, ptr, &stmt);
+			break;
+
+		case 'U':
+			if (i == 0) i = parse_stmt_union(src, ptr, &stmt);
 			break;
 
 		case 'V':

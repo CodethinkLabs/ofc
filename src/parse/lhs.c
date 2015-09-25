@@ -173,25 +173,29 @@ static parse_lhs_t* parse_lhs__member(
 			break;
 	}
 
-	unsigned i = 0;
-	switch (ptr[i++])
-	{
-		case '.':
-			/* TODO - Handle this once ambiguity with operators can be resolved. */
-			return NULL;
-		case '%':
-			break;
-		default:
-			return NULL;
-	}
 
 	parse_lhs_t lhs;
+	lhs.type = PARSE_LHS_MEMBER_TYPE;
+
+	unsigned i;
+	if (ptr[0] == '.')
+	{
+		i = parse_operator(
+			src, ptr, NULL);
+		if (i > 0) return NULL;
+		lhs.type = PARSE_LHS_MEMBER_STRUCTURE;
+	}
+	else if (ptr[0] != '%')
+	{
+		return NULL;
+	}
+	i = 1;
+
 	unsigned l = parse_name(
 		src, &ptr[i], &lhs.member.name);
 	if (l == 0) return NULL;
 	i += l;
 
-	lhs.type   = PARSE_LHS_MEMBER_TYPE;
 	lhs.parent = parent;
 
 	parse_lhs_t* alhs

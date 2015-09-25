@@ -11,6 +11,11 @@ static const char* parse_keyword__name[] =
 	"FUNCTION",
 	"BLOCK DATA",
 
+	"STRUCTURE",
+	"UNION",
+	"MAP",
+	"RECORD",
+
 	"IF",
 	"THEN",
 	"ELSE",

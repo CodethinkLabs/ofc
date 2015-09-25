@@ -42,6 +42,10 @@ typedef enum
 	PARSE_STMT_DO,
 	PARSE_STMT_DO_WHILE,
 	PARSE_STMT_DO_WHILE_BLOCK,
+	PARSE_STMT_STRUCTURE,
+	PARSE_STMT_UNION,
+	PARSE_STMT_MAP,
+	PARSE_STMT_RECORD,
 	PARSE_STMT_IO_OPEN,
 	PARSE_STMT_IO_INQUIRE,
 	PARSE_STMT_IO_REWIND,
@@ -81,6 +85,8 @@ struct parse_stmt_s
 			parse_type_t*      type;
 			parse_decl_list_t* decl;
 		} decl;
+
+		parse_record_list_t* record;
 
 		parse_common_group_list_t* common;
 
@@ -163,6 +169,12 @@ struct parse_stmt_s
 			parse_expr_t*      cond;
 			parse_stmt_list_t* block;
 		} do_while_block;
+
+		struct
+		{
+			str_ref_t          name;
+			parse_stmt_list_t* block;
+		} structure;
 
 		struct
 		{
