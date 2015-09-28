@@ -151,7 +151,7 @@ parse_assign_list_t* parse_assign_list_copy(
 	parse_assign_list_t* copy
 		= (parse_assign_list_t*)malloc(
 			sizeof(parse_assign_list_t));
-	if (!list) return NULL;
+	if (!copy) return NULL;
 
 	copy->count = 0;
 	copy->assign = NULL;
