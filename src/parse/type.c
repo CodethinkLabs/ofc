@@ -175,7 +175,7 @@ parse_type_t* parse_type(
 				}
 				else
 				{
-					parse_debug_error(debug, src, &ptr[i],
+					sparse_error(src, &ptr[i],
 						"Expected count expression or value for character");
 					return NULL;
 				}
@@ -196,7 +196,7 @@ parse_type_t* parse_type(
 				src, &ptr[i], debug, &l);
 			if (!type.count_expr)
 			{
-				parse_debug_error(debug, src, &ptr[i],
+				sparse_error(src, &ptr[i],
 					"Expected count expression or value for character");
 				return NULL;
 			}
@@ -210,7 +210,7 @@ parse_type_t* parse_type(
 			src, &ptr[i], debug, &type.kind);
 		if (l == 0)
 		{
-			parse_debug_error(debug, src, &ptr[i],
+			sparse_error(src, &ptr[i],
 				"Expected kind value after asterisk in type specifier");
 			return NULL;
 		}

@@ -7,7 +7,6 @@ typedef struct
 	const sparse_t* src;
 	const char*     ptr;
 
-	bool is_error;
 	char* message;
 } parse_debug_msg_t;
 
@@ -87,16 +86,8 @@ void parse_debug_print(const parse_debug_t* stack)
 			= stack->message[i];
 		if (!message) continue;
 
-		if (message->is_error)
-		{
-			sparse_error(message->src, message->ptr,
-				"%s", message->message);
-		}
-		else
-		{
-			sparse_warning(message->src, message->ptr,
-				"%s", message->message);
-		}
+		sparse_warning(message->src, message->ptr,
+			"%s", message->message);
 	}
 }
 
@@ -106,7 +97,7 @@ void parse_debug_print(const parse_debug_t* stack)
 static void parse_debug_message(
 	parse_debug_t* stack,
 	const sparse_t* src, const char* ptr,
-	bool is_error, const char* format, va_list args)
+	const char* format, va_list args)
 {
 	/* Error reporting is critical, if it fails we just abort. */
 
@@ -120,8 +111,6 @@ static void parse_debug_message(
 
 	message->src = src;
 	message->ptr = ptr;
-
-	message->is_error = is_error;
 
 	va_list largs;
 	va_copy(largs, args);
@@ -149,19 +138,6 @@ static void parse_debug_message(
 	stack->message[stack->count++] = message;
 }
 
-void parse_debug_error(
-	parse_debug_t* stack,
-	const sparse_t* src, const char* ptr,
-	const char* format, ...)
-{
-	va_list args;
-	va_start(args, format);
-	parse_debug_message(
-		stack, src, ptr,
-		true, format, args);
-	va_end(args);
-}
-
 void parse_debug_warning(
 	parse_debug_t* stack,
 	const sparse_t* src, const char* ptr,
@@ -171,6 +147,6 @@ void parse_debug_warning(
 	va_start(args, format);
 	parse_debug_message(
 		stack, src, ptr,
-		false, format, args);
+		format, args);
 	va_end(args);
 }

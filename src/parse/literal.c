@@ -43,7 +43,7 @@ static unsigned parse_literal__base(
 	{
 		if (quoted)
 		{
-			parse_debug_error(debug, src, &ptr[i],
+			sparse_error(src, &ptr[i],
 				"Valid digit expected in BOZ literal");
 		}
 		return 0;
@@ -69,7 +69,7 @@ static unsigned parse_literal__base(
 
 	if (quoted && (ptr[i++] != quote))
 	{
-		parse_debug_error(debug, src, &ptr[i],
+		sparse_error(src, &ptr[i],
 			"Invalid character in BOZ literal");
 		return 0;
 	}
@@ -226,7 +226,7 @@ unsigned parse_character(
 	}
 	if (ptr[i++] != quote)
 	{
-		parse_debug_error(debug, src, ptr,
+		sparse_error(src, ptr,
 			"Unterminated string");
 		return 0;
 	}
@@ -240,7 +240,7 @@ unsigned parse_character(
 			|| (pptr[j] == '\n')
 			|| (pptr[j] == '\0'))
 		{
-			parse_debug_error(debug, src, ptr,
+			sparse_error(src, ptr,
 				"Unexpected end of line in character constant");
 			return 0;
 		}

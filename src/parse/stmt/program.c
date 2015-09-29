@@ -16,7 +16,7 @@ unsigned parse_stmt_program__body(
 		&stmt->program.name);
 	if (len == 0)
 	{
-		parse_debug_error(debug, src, &ptr[i],
+		sparse_error(src, &ptr[i],
 			"Invalid statement in %s body",
 			parse_keyword_name(keyword));
 		parse_stmt_list_delete(stmt->program.body);

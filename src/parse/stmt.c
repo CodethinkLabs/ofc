@@ -495,7 +495,7 @@ parse_stmt_t* parse_stmt(
 			return NULL;
 		}
 
-		parse_debug_error(debug, src, &ptr[i],
+		sparse_error(src, &ptr[i],
 			"Expected newline or semicolon after statement");
 		parse_stmt__cleanup(stmt);
 		return NULL;
