@@ -206,12 +206,19 @@ unsigned parse_stmt_if(
 	if (i == 0) return 0;
 
 	if (ptr[i++] != '(')
+	{
+		parse_debug_rewind(debug, dpos);
 		return 0;
+	}
 
 	unsigned len;
 	parse_expr_t* cond = parse_expr(
 		src, &ptr[i], debug, &len);
-	if (!cond) return 0;
+	if (!cond)
+	{
+		parse_debug_rewind(debug, dpos);
+		return 0;
+	}
 	i += len;
 
 	if (ptr[i++] != ')')
