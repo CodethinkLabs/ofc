@@ -2,12 +2,13 @@
 
 static unsigned parse_stmt_go_to_unconditional(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_stmt_t* stmt)
 {
 	unsigned i = 0;
 
 	unsigned len = parse_label(
-		src, &ptr[i], &stmt->go_to.label);
+		src, &ptr[i], debug, &stmt->go_to.label);
 	if (len == 0)
 		return 0;
 
@@ -17,12 +18,16 @@ static unsigned parse_stmt_go_to_unconditional(
 
 static unsigned parse_stmt_go_to_assigned(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_stmt_t* stmt)
 {
+	unsigned dpos = parse_debug_position(debug);
+
 	unsigned i = 0;
 
 	unsigned len = parse_label(
-		src, &ptr[i], &stmt->go_to_assign.cond);
+		src, &ptr[i], debug,
+		&stmt->go_to_assign.cond);
 	if (len == 0) return 0;
 	i += len;
 
@@ -30,12 +35,19 @@ static unsigned parse_stmt_go_to_assigned(
 		i += 1;
 
 	if (ptr[i++] != '(')
+	{
+		parse_debug_rewind(debug, dpos);
 		return 0;
+	}
 
 	parse_label_t label;
 	len = parse_label(
-		src, &ptr[i], &label);
-	if (len == 0) return 0;
+		src, &ptr[i], debug, &label);
+	if (len == 0)
+	{
+		parse_debug_rewind(debug, dpos);
+		return 0;
+	}
 	i += len;
 
 	stmt->type = PARSE_STMT_GO_TO_ASSIGNED;
@@ -44,14 +56,17 @@ static unsigned parse_stmt_go_to_assigned(
 	stmt->go_to_assign.label = (parse_label_t*)malloc(
 		sizeof(parse_label_t) * stmt->go_to_assign.label_count);
 	if (!stmt->go_to_assign.label)
+	{
+		parse_debug_rewind(debug, dpos);
 		return 0;
+	}
 	stmt->go_to_assign.label[0] = label;
 
 	while (ptr[i] == ',')
 	{
 		unsigned j = (i + 1);
 		len = parse_label(
-			src, &ptr[j], &label);
+			src, &ptr[j], debug, &label);
 		if (len == 0) break;
 
 		parse_label_t* nlabel = (parse_label_t*)realloc(stmt->go_to_assign.label,
@@ -59,6 +74,7 @@ static unsigned parse_stmt_go_to_assigned(
 		if (!nlabel)
 		{
 			free(stmt->go_to_assign.label);
+			parse_debug_rewind(debug, dpos);
 			return 0;
 		}
 		stmt->go_to_assign.label = nlabel;
@@ -69,6 +85,7 @@ static unsigned parse_stmt_go_to_assigned(
 	if (ptr[i++] != ')')
 	{
 		free(stmt->go_to_assign.label);
+		parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 
@@ -77,6 +94,7 @@ static unsigned parse_stmt_go_to_assigned(
 
 static unsigned parse_stmt_go_to_computed(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_stmt_t* stmt)
 {
 	unsigned i = 0;
@@ -84,9 +102,11 @@ static unsigned parse_stmt_go_to_computed(
 	if (ptr[i++] != '(')
 		return 0;
 
+	unsigned dpos = parse_debug_position(debug);
+
 	parse_label_t label;
 	unsigned len = parse_label(
-		src, &ptr[i], &label);
+		src, &ptr[i], debug, &label);
 	if (len == 0)
 		return 0;
 	i += len;
@@ -97,14 +117,17 @@ static unsigned parse_stmt_go_to_computed(
 	stmt->go_to_comp.label = (parse_label_t*)malloc(
 		sizeof(parse_label_t) * stmt->go_to_comp.label_count);
 	if (!stmt->go_to_comp.label)
+	{
+		parse_debug_rewind(debug, dpos);
 		return 0;
+	}
 	stmt->go_to_comp.label[0] = label;
 
 	while (ptr[i] == ',')
 	{
 		unsigned j = (i + 1);
 		len = parse_label(
-			src, &ptr[j], &label);
+			src, &ptr[j], debug, &label);
 		if (len == 0) break;
 
 		parse_label_t* nlabel = (parse_label_t*)realloc(stmt->go_to_comp.label,
@@ -112,6 +135,7 @@ static unsigned parse_stmt_go_to_computed(
 		if (!nlabel)
 		{
 			free(stmt->go_to_comp.label);
+			parse_debug_rewind(debug, dpos);
 			return 0;
 		}
 		stmt->go_to_comp.label = nlabel;
@@ -122,6 +146,7 @@ static unsigned parse_stmt_go_to_computed(
 	if (ptr[i++] != ')')
 	{
 		free(stmt->go_to_comp.label);
+		parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 
@@ -129,10 +154,11 @@ static unsigned parse_stmt_go_to_computed(
 		i += 1;
 
 	stmt->go_to_comp.cond = parse_expr(
-		src, &ptr[i], &len);
+		src, &ptr[i], debug, &len);
 	if (!stmt->go_to_comp.cond)
 	{
 		free(stmt->go_to_comp.label);
+		parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	i += len;
@@ -142,18 +168,28 @@ static unsigned parse_stmt_go_to_computed(
 
 unsigned parse_stmt_go_to(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_stmt_t* stmt)
 {
+	unsigned dpos = parse_debug_position(debug);
+
 	unsigned i = parse_keyword(
-		src, ptr, PARSE_KEYWORD_GO_TO);
+		src, ptr, debug, PARSE_KEYWORD_GO_TO);
 	if (i == 0) return 0;
 
 	unsigned len = 0;
-	if (len == 0) len = parse_stmt_go_to_assigned(src, &ptr[i], stmt);
-	if (len == 0) len = parse_stmt_go_to_computed(src, &ptr[i], stmt);
-	if (len == 0) len = parse_stmt_go_to_unconditional(src, &ptr[i], stmt);
+	if (len == 0) len = parse_stmt_go_to_assigned(src, &ptr[i], debug, stmt);
+	if (len == 0) len = parse_stmt_go_to_computed(src, &ptr[i], debug, stmt);
+	if (len == 0) len = parse_stmt_go_to_unconditional(src, &ptr[i], debug, stmt);
 
-	return (len ? (i + len) : 0);
+	if (len == 0)
+	{
+		parse_debug_rewind(debug, dpos);
+		return 0;
+	}
+	i += len;
+
+	return i;
 }
 
 

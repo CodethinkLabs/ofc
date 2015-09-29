@@ -3,11 +3,14 @@
 
 static unsigned parse_stmt__structure(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_keyword_e keyword,
 	parse_stmt_t* stmt)
 {
+	unsigned dpos = parse_debug_position(debug);
+
 	unsigned i = parse_keyword(
-		src, ptr, keyword);
+		src, ptr, debug, keyword);
 	if (i == 0) return 0;
 
 	stmt->structure.name = STR_REF_EMPTY;
@@ -19,12 +22,19 @@ static unsigned parse_stmt__structure(
 			i += 1;
 
 			unsigned len = parse_name(
-				src, &ptr[i], &stmt->structure.name);
-			if (len == 0) return 0;
+				src, &ptr[i], debug, &stmt->structure.name);
+			if (len == 0)
+			{
+				parse_debug_rewind(debug, dpos);
+				return 0;
+			}
 			i += len;
 
 			if (ptr[i++] != '/')
+			{
+				parse_debug_rewind(debug, dpos);
 				return 0;
+			}
 		}
 
 		/* TODO - Parse field list. */
@@ -32,19 +42,23 @@ static unsigned parse_stmt__structure(
 
 	unsigned len;
 	if (!is_end_statement(&ptr[i], &len))
+	{
+		parse_debug_rewind(debug, dpos);
 		return 0;
+	}
 	i += len;
 
-	stmt->structure.block
-		= parse_stmt_list(src, &ptr[i], &len);
+	stmt->structure.block = parse_stmt_list(
+		src, &ptr[i], debug, &len);
 	if (stmt->structure.block) i += len;
 
 	len = parse_keyword_end(
-		src, &ptr[i], keyword);
+		src, &ptr[i], debug, keyword);
 	if (len == 0)
 	{
 		parse_stmt_list_delete(
 			stmt->structure.block);
+		parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	i += len;
@@ -56,10 +70,12 @@ static unsigned parse_stmt__structure(
 
 unsigned parse_stmt_structure(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_stmt_t* stmt)
 {
 	unsigned i = parse_stmt__structure(
-		src, ptr, PARSE_KEYWORD_STRUCTURE, stmt);
+		src, ptr, debug,
+		PARSE_KEYWORD_STRUCTURE, stmt);
 	if (i == 0) return 0;
 
 	stmt->type = PARSE_STMT_STRUCTURE;
@@ -68,10 +84,12 @@ unsigned parse_stmt_structure(
 
 unsigned parse_stmt_union(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_stmt_t* stmt)
 {
 	unsigned i = parse_stmt__structure(
-		src, ptr, PARSE_KEYWORD_UNION, stmt);
+		src, ptr, debug,
+		PARSE_KEYWORD_UNION, stmt);
 	if (i == 0) return 0;
 
 	stmt->type = PARSE_STMT_UNION;
@@ -80,10 +98,12 @@ unsigned parse_stmt_union(
 
 unsigned parse_stmt_map(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_stmt_t* stmt)
 {
 	unsigned i = parse_stmt__structure(
-		src, ptr, PARSE_KEYWORD_MAP, stmt);
+		src, ptr, debug,
+		PARSE_KEYWORD_MAP, stmt);
 	if (i == 0) return 0;
 
 	stmt->type = PARSE_STMT_MAP;
@@ -92,16 +112,23 @@ unsigned parse_stmt_map(
 
 unsigned parse_stmt_record(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_stmt_t* stmt)
 {
+	unsigned dpos = parse_debug_position(debug);
+
 	unsigned i = parse_keyword(
-		src, ptr, PARSE_KEYWORD_RECORD);
+		src, ptr, debug, PARSE_KEYWORD_RECORD);
 	if (i == 0) return 0;
 
 	unsigned l;
 	stmt->record = parse_record_list(
-		src, &ptr[i], &l);
-	if (l == 0) return 0;
+		src, &ptr[i], debug, &l);
+	if (l == 0)
+	{
+		parse_debug_rewind(debug, dpos);
+		return 0;
+	}
 	i += l;
 
 	stmt->type = PARSE_STMT_RECORD;

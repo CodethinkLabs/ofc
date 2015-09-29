@@ -18,6 +18,7 @@ typedef struct
 
 parse_array_index_t* parse_array_index(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len);
 
 parse_array_index_t* parse_array_index_copy(

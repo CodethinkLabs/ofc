@@ -21,6 +21,7 @@ struct parse_iolist_s
 
 parse_iolist_t* parse_iolist(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len);
 void parse_iolist_delete(
 	parse_iolist_t* list);

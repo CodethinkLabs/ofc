@@ -87,6 +87,7 @@ static const char* parse_keyword__name[] =
 
 unsigned parse_ident(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	str_ref_t* ident)
 {
 	if (!isalpha(ptr[0]))
@@ -97,7 +98,7 @@ unsigned parse_ident(
 
 	if (!sparse_sequential(src, ptr, i))
 	{
-		sparse_warning(src, ptr,
+		parse_debug_warning(debug, src, ptr,
 			"Unexpected whitespace in ident");
 	}
 
@@ -107,25 +108,26 @@ unsigned parse_ident(
 
 unsigned parse_name(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	str_ref_t* name)
 {
 	if (strncasecmp(ptr, "END", 3) == 0)
 	{
-		/* TODO - Enable this warning once we can suppress false positives. */
-		/*sparse_warning(src, ptr,
-			"Using END in a keyword is incompatible with Fortran 90");*/
+		parse_debug_warning(debug, src, ptr,
+			"Using END in a keyword is incompatible with Fortran 90");
 	}
 
-	return parse_ident(src, ptr, name);
+	return parse_ident(src, ptr, debug, name);
 }
 
 str_ref_t* parse_name_alloc(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len)
 {
 	str_ref_t name;
 	unsigned i = parse_name(
-		src, ptr, &name);
+		src, ptr, debug, &name);
 	if (i == 0) return NULL;
 
 	str_ref_t* aname
@@ -149,6 +151,7 @@ const char* parse_keyword_name(
 
 unsigned parse_keyword_named(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_keyword_e keyword,
 	str_ref_t* name)
 {
@@ -208,7 +211,7 @@ unsigned parse_keyword_named(
 
 		if (entirely_sequential && !space_optional)
 		{
-			sparse_warning(src, ptr,
+			parse_debug_warning(debug, src, ptr,
 				"Expected a space between keywords '%.*s' and '%.*s'",
 				space, ptr, remain, &ptr[space]);
 		}
@@ -216,23 +219,34 @@ unsigned parse_keyword_named(
 
 	if (unexpected_space)
 	{
-		sparse_warning(src, ptr,
+		parse_debug_warning(debug, src, ptr,
 			"Unexpected a space in %s", kwstr);
 	}
 
 	if (name != NULL)
 	{
 		unsigned nlen = parse_name(
-			src, &ptr[len], name);
+			src, &ptr[len], debug, name);
 
 		if ((nlen > 0) && sparse_sequential(
 			src, &ptr[len - 1], 2))
 		{
-			sparse_warning(src, &ptr[len],
+			parse_debug_warning(debug, src, &ptr[len],
 				"Expected whitespace between %s and name", kwstr);
 		}
 
 		len += nlen;
+	}
+
+	bool is_number = isdigit(ptr[len]);
+	bool is_ident  = (isalpha(ptr[len]) || (ptr[len] == '_'));
+
+	if ((is_number || is_ident)
+		&& sparse_sequential(src, &ptr[len - 1], 2))
+	{
+		parse_debug_warning(debug, src, &ptr[len],
+			"Expected whitespace between %s and %s", kwstr,
+			(is_number ? "number" : "identifier"));
 	}
 
 	return len;
@@ -240,15 +254,17 @@ unsigned parse_keyword_named(
 
 unsigned parse_keyword(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_keyword_e keyword)
 {
 	return parse_keyword_named(
-		src, ptr, keyword, NULL);
+		src, ptr, debug, keyword, NULL);
 }
 
 
 unsigned parse_keyword_end_named(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_keyword_e keyword,
 	str_ref_t* name)
 {
@@ -264,7 +280,7 @@ unsigned parse_keyword_end_named(
 
 	str_ref_t kname = STR_REF_EMPTY;
 	unsigned len = parse_keyword_named(
-		src, &ptr[i], keyword,
+		src, &ptr[i], debug, keyword,
 		(name ? &kname : NULL));
 	if (len > 0)
 	{
@@ -273,7 +289,8 @@ unsigned parse_keyword_end_named(
 	}
 	else if (name)
 	{
-		len = parse_name(src, &ptr[i], &kname);
+		len = parse_name(
+			src, &ptr[i], debug, &kname);
 	}
 	i += len;
 
@@ -284,7 +301,7 @@ unsigned parse_keyword_end_named(
 	if (name && !str_ref_empty(kname)
 		&& !str_ref_equal(*name, kname))
 	{
-		sparse_warning(src, &ptr[i],
+		parse_debug_warning(debug, src, &ptr[i],
 			"END %s name '%.*s' doesn't match %s name '%.*s'",
 			parse_keyword__name[keyword],
 			kname.size, kname.base,
@@ -294,13 +311,13 @@ unsigned parse_keyword_end_named(
 
 	if (!sparse_sequential(src, ptr, 3))
 	{
-		sparse_warning(src, ptr,
+		parse_debug_warning(debug, src, ptr,
 			"Unexpected a space in END keyword");
 	}
 
 	if (warn_end_kw_space > 0)
 	{
-		sparse_warning(src, &ptr[warn_end_kw_space],
+		parse_debug_warning(debug, src, &ptr[warn_end_kw_space],
 			"Expected space between END and %s",
 			parse_keyword__name[keyword]);
 	}
@@ -310,8 +327,9 @@ unsigned parse_keyword_end_named(
 
 unsigned parse_keyword_end(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_keyword_e keyword)
 {
 	return parse_keyword_end_named(
-		src, ptr, keyword, NULL);
+		src, ptr, debug, keyword, NULL);
 }

@@ -2,15 +2,23 @@
 
 unsigned parse_stmt_call(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_stmt_t* stmt)
 {
+	unsigned dpos = parse_debug_position(debug);
+
 	unsigned i = parse_keyword(
-		src, ptr, PARSE_KEYWORD_CALL);
+		src, ptr, debug, PARSE_KEYWORD_CALL);
 	if (i == 0) return 0;
 
 	unsigned len = parse_name(
-		src, &ptr[i], &stmt->call_entry.name);
-	if (len == 0) return 0;
+		src, &ptr[i], debug,
+		&stmt->call_entry.name);
+	if (len == 0)
+	{
+		parse_debug_rewind(debug, dpos);
+		return 0;
+	}
 	i += len;
 
 	stmt->call_entry.args = NULL;
@@ -19,13 +27,14 @@ unsigned parse_stmt_call(
 		i += 1;
 
 		stmt->call_entry.args = parse_call_arg_list(
-			src, &ptr[i], &len);
+			src, &ptr[i], debug, &len);
 		if (stmt->call_entry.args) i += len;
 
 		if (ptr[i++] != ')')
 		{
 			parse_call_arg_list_delete(
 				stmt->call_entry.args);
+			parse_debug_rewind(debug, dpos);
 			return 0;
 		}
 	}
@@ -36,15 +45,23 @@ unsigned parse_stmt_call(
 
 unsigned parse_stmt_entry(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_stmt_t* stmt)
 {
+	unsigned dpos = parse_debug_position(debug);
+
 	unsigned i = parse_keyword(
-		src, ptr, PARSE_KEYWORD_ENTRY);
+		src, ptr, debug, PARSE_KEYWORD_ENTRY);
 	if (i == 0) return 0;
 
 	unsigned len = parse_name(
-		src, &ptr[i], &stmt->call_entry.name);
-	if (len == 0) return 0;
+		src, &ptr[i], debug,
+		&stmt->call_entry.name);
+	if (len == 0)
+	{
+		parse_debug_rewind(debug, dpos);
+		return 0;
+	}
 	i += len;
 
 	stmt->call_entry.args = NULL;
@@ -53,13 +70,14 @@ unsigned parse_stmt_entry(
 		i += 1;
 
 		stmt->call_entry.args = parse_call_arg_list(
-			src, &ptr[i], &len);
+			src, &ptr[i], debug, &len);
 		if (stmt->call_entry.args) i += len;
 
 		if (ptr[i++] != ')')
 		{
 			parse_call_arg_list_delete(
 				stmt->call_entry.args);
+			parse_debug_rewind(debug, dpos);
 			return 0;
 		}
 	}

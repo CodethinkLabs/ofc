@@ -16,6 +16,7 @@ typedef struct
 
 parse_implicit_t* parse_implicit(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len);
 void parse_implicit_delete(
 	parse_implicit_t* implicit);
@@ -24,6 +25,7 @@ bool parse_implicit_print(
 
 parse_implicit_list_t* parse_implicit_list(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len);
 void parse_implicit_list_delete(
 	parse_implicit_list_t* list);

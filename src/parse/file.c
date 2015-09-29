@@ -5,10 +5,17 @@ parse_stmt_list_t* parse_file(const sparse_t* src)
 {
 	const char* ptr = sparse_strz(src);
 
+	parse_debug_t* debug
+		= parse_debug_create();
+	if (!debug) return NULL;
+
 	unsigned len;
 	parse_stmt_list_t* list
-		= parse_stmt_list(src, ptr, &len);
+		= parse_stmt_list(src, ptr, debug, &len);
 	if (!list) return NULL;
+
+	parse_debug_print(debug);
+	parse_debug_delete(debug);
 
 	if (ptr[len] != '\0')
 	{

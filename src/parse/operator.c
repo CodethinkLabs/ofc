@@ -25,6 +25,7 @@ static const char* parse_operator__name[] =
 
 unsigned parse_operator(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_operator_e* operator)
 {
 	parse_operator_e op;
@@ -164,7 +165,7 @@ unsigned parse_operator(
 	if ((size > 1) && !sparse_sequential(
 		src, ptr, size))
 	{
-		sparse_warning(src, ptr,
+		parse_debug_warning(debug, src, ptr,
 			"Operators shouldn't contain whitespace");
 	}
 

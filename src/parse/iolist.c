@@ -3,6 +3,7 @@
 
 static parse_ioarg_t* parse_ioarg(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len)
 {
 	parse_ioarg_t* arg
@@ -10,9 +11,11 @@ static parse_ioarg_t* parse_ioarg(
 			sizeof(parse_ioarg_t));
 	if (!arg) return NULL;
 
+	unsigned dpos = parse_debug_position(debug);
+
 	arg->is_implicit_do = false;
 	arg->expr = parse_expr(
-		src, ptr, len);
+		src, ptr, debug, len);
 
 	if (arg->expr)
 		return arg;
@@ -21,16 +24,18 @@ static parse_ioarg_t* parse_ioarg(
 	if (ptr[i] != '(')
 	{
 		free(arg);
+		parse_debug_rewind(debug, dpos);
 		return NULL;
 	}
 
 	arg->is_implicit_do = true;
 	unsigned l;
 	arg->id = parse_implicit_do(
-		src, &ptr[i], &l);
+		src, &ptr[i], debug, &l);
 	if (!arg->id)
 	{
 		free(arg);
+		parse_debug_rewind(debug, dpos);
 		return NULL;
 	}
 	i += l;
@@ -68,6 +73,7 @@ bool parse_ioarg_print(
 
 parse_iolist_t* parse_iolist(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len)
 {
 	parse_iolist_t* list
@@ -78,7 +84,8 @@ parse_iolist_t* parse_iolist(
 	list->count = 0;
 	list->arg = NULL;
 
-	unsigned i = parse_list(src, ptr, ',',
+	unsigned i = parse_list(
+		src, ptr, debug, ',',
 		&list->count, (void***)&list->arg,
 		(void*)parse_ioarg,
 		(void*)parse_ioarg_delete);

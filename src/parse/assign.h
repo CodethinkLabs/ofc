@@ -16,10 +16,12 @@ typedef struct
 
 parse_assign_t* parse_assign(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len);
 
 parse_assign_t* parse_assign_init(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len);
 
 parse_assign_t* parse_assign_copy(
@@ -34,6 +36,7 @@ bool parse_assign_print(
 
 parse_assign_list_t* parse_assign_list(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len);
 
 parse_assign_list_t* parse_assign_list_copy(

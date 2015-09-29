@@ -3,15 +3,18 @@
 
 static parse_clist_entry_t* parse_clist_entry(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len)
 {
+	unsigned dpos = parse_debug_position(debug);
+
 	parse_clist_entry_t* entry
 		= (parse_clist_entry_t*)malloc(
 			sizeof(parse_clist_entry_t));
 	if (!entry) return NULL;
 
 	unsigned i = parse_unsigned(
-		src, ptr, &entry->repeat);
+		src, ptr, debug, &entry->repeat);
 	if ((i > 0) && (ptr[i] == '*'))
 	{
 		i += 1;
@@ -20,14 +23,16 @@ static parse_clist_entry_t* parse_clist_entry(
 	{
 		entry->repeat = 0;
 		i = 0;
+		parse_debug_rewind(debug, dpos);
 	}
 
 	unsigned l;
 	entry->expr = parse_expr(
-		src, &ptr[i], &l);
+		src, &ptr[i], debug, &l);
 	if (!entry->expr)
 	{
 		free(entry);
+		parse_debug_rewind(debug, dpos);
 		return NULL;
 	}
 	i += l;
@@ -63,8 +68,11 @@ static bool parse_clist_entry_print(
 
 parse_clist_t* parse_clist(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len)
 {
+	unsigned dpos = parse_debug_position(debug);
+
 	unsigned i = 0;
 	if (ptr[i++] != '/')
 		return NULL;
@@ -77,7 +85,8 @@ parse_clist_t* parse_clist(
 	list->count = 0;
 	list->entry = NULL;
 
-	unsigned l = parse_list(src, &ptr[i], ',',
+	unsigned l = parse_list(
+		src, &ptr[i], debug, ',',
 		&list->count, (void***)&list->entry,
 		(void*)parse_clist_entry,
 		(void*)parse_clist_entry_delete);
@@ -92,6 +101,7 @@ parse_clist_t* parse_clist(
 	if (ptr[i++] != '/')
 	{
 		parse_clist_delete(list);
+		parse_debug_rewind(debug, dpos);
 		return NULL;
 	}
 
@@ -126,6 +136,7 @@ bool parse_clist_print(
 
 static parse_data_entry_t* parse_data_entry(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len)
 {
 	parse_data_entry_t* entry
@@ -133,9 +144,11 @@ static parse_data_entry_t* parse_data_entry(
 			sizeof(parse_data_entry_t));
 	if (!entry) return NULL;
 
+	unsigned dpos = parse_debug_position(debug);
+
 	unsigned i;
 	entry->nlist = parse_lhs_list(
-		src, ptr, &i);
+		src, ptr, debug, &i);
 	if (!entry->nlist)
 	{
 		free(entry);
@@ -144,11 +157,12 @@ static parse_data_entry_t* parse_data_entry(
 
 	unsigned l;
 	entry->clist = parse_clist(
-		src, &ptr[i], &l);
+		src, &ptr[i], debug, &l);
 	if (!entry->clist)
 	{
 		parse_lhs_list_delete(entry->nlist);
 		free(entry);
+		parse_debug_rewind(debug, dpos);
 		return NULL;
 	}
 	i += l;
@@ -183,6 +197,7 @@ static bool parse_data_entry_print(
 
 parse_data_list_t* parse_data_list(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len)
 {
 	parse_data_list_t* list
@@ -194,7 +209,7 @@ parse_data_list_t* parse_data_list(
 	list->entry = NULL;
 
 	unsigned i = parse_list_seperator_optional(
-		src, ptr, ',',
+		src, ptr, debug, ',',
 		&list->count, (void***)&list->entry,
 		(void*)parse_data_entry,
 		(void*)parse_data_entry_delete);

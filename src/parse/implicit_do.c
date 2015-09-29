@@ -3,6 +3,7 @@
 
 parse_implicit_do_t* parse_implicit_do(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len)
 {
 	unsigned i = 0;
@@ -20,9 +21,11 @@ parse_implicit_do_t* parse_implicit_do(
 	id->limit = NULL;
 	id->step = NULL;
 
+	unsigned dpos = parse_debug_position(debug);
+
 	unsigned l;
 	id->dlist = parse_lhs(
-		src, &ptr[i], &l);
+		src, &ptr[i], debug, &l);
 	if (!id->dlist)
 	{
 		free(id);
@@ -33,14 +36,16 @@ parse_implicit_do_t* parse_implicit_do(
 	if (ptr[i++] != ',')
 	{
 		parse_implicit_do_delete(id);
+		parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 
 	id->init = parse_assign_init(
-		src, &ptr[i], &l);
+		src, &ptr[i], debug, &l);
 	if (!id->init)
 	{
 		parse_implicit_do_delete(id);
+		parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	i += l;
@@ -48,14 +53,16 @@ parse_implicit_do_t* parse_implicit_do(
 	if (ptr[i++] != ',')
 	{
 		parse_implicit_do_delete(id);
+		parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 
 	id->limit = parse_expr(
-		src, &ptr[i], &l);
+		src, &ptr[i], debug, &l);
 	if (!id->limit)
 	{
 		parse_implicit_do_delete(id);
+		parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	i += l;
@@ -65,10 +72,11 @@ parse_implicit_do_t* parse_implicit_do(
 		i += 1;
 
 		id->step = parse_expr(
-			src, &ptr[i], &l);
+			src, &ptr[i], debug, &l);
 		if (!id->step)
 		{
 			parse_implicit_do_delete(id);
+			parse_debug_rewind(debug, dpos);
 			return 0;
 		}
 		i += l;
@@ -77,6 +85,7 @@ parse_implicit_do_t* parse_implicit_do(
 	if (ptr[i++] != ')')
 	{
 		parse_implicit_do_delete(id);
+		parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 

@@ -15,6 +15,7 @@ typedef struct
 
 parse_common_group_t* parse_common_group(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len);
 void parse_common_group_delete(
 	parse_common_group_t* group);
@@ -23,6 +24,7 @@ bool parse_common_group_print(
 
 parse_common_group_list_t* parse_common_group_list(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len);
 void parse_common_group_list_delete(
 	parse_common_group_list_t* list);

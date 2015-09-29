@@ -40,13 +40,16 @@ typedef struct
 
 unsigned parse_hollerith(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	string_t* string);
 unsigned parse_character(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	string_t* string);
 
 unsigned parse_literal(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_literal_t* literal);
 
 void parse_literal_cleanup(
@@ -60,6 +63,7 @@ bool parse_literal_print(
 
 unsigned parse_unsigned(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* value);
 
 #endif

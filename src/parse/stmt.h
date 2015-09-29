@@ -224,6 +224,7 @@ struct parse_stmt_s
 
 parse_stmt_t* parse_stmt(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len);
 void parse_stmt_delete(
 	parse_stmt_t* stmt);
@@ -236,6 +237,7 @@ bool parse_stmt_print(
 
 parse_stmt_list_t* parse_stmt_list(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len);
 void parse_stmt_list_delete(
 	parse_stmt_list_t* list);

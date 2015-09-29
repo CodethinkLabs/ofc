@@ -140,22 +140,25 @@ static bool parse_expr__term(const char* ptr)
 
 static unsigned parse_expr__at_or_below(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_expr_t* expr, unsigned level);
 
 static unsigned parse__expr(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_expr_t* expr)
 {
 	return parse_expr__at_or_below(
-		src, ptr, expr, OPERATOR_PRECEDENCE_MAX);
+		src, ptr, debug, expr, OPERATOR_PRECEDENCE_MAX);
 }
 
 static unsigned parse_expr__literal(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_expr_t* expr)
 {
 	unsigned len = parse_literal(
-		src, ptr, &expr->literal);
+		src, ptr, debug, &expr->literal);
 	if (len == 0) return 0;
 
 	expr->type = PARSE_EXPR_CONSTANT;
@@ -164,18 +167,15 @@ static unsigned parse_expr__literal(
 
 static unsigned parse_expr__primary(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_expr_t* expr)
 {
 	unsigned len = parse_expr__literal(
-		src, ptr, expr);
-	if (len > 0) return len;
-
-	len = parse_expr__literal(
-			src, ptr, expr);
+		src, ptr, debug, expr);
 	if (len > 0) return len;
 
 	expr->variable
-		= parse_lhs(src, ptr, &len);
+		= parse_lhs(src, ptr, debug, &len);
 	if (expr->variable)
 	{
 		expr->type = PARSE_EXPR_VARIABLE;
@@ -184,14 +184,16 @@ static unsigned parse_expr__primary(
 
 	if (ptr[0] == '(')
 	{
+		unsigned dpos = parse_debug_position(debug);
 		parse_expr_t expr_brackets;
 		unsigned len = parse__expr(
-			src, &ptr[1], &expr_brackets);
+			src, &ptr[1], debug, &expr_brackets);
 		if (len > 0)
 		{
 			if  (ptr[1 + len] != ')')
 			{
 				parse_expr__cleanup(expr_brackets);
+				parse_debug_rewind(debug, dpos);
 			}
 			else
 			{
@@ -200,6 +202,7 @@ static unsigned parse_expr__primary(
 				if (!expr->brackets.expr)
 				{
 					parse_expr__cleanup(expr_brackets);
+					parse_debug_rewind(debug, dpos);
 					return 0;
 				}
 				expr->type = PARSE_EXPR_BRACKETS;
@@ -213,25 +216,38 @@ static unsigned parse_expr__primary(
 
 static unsigned parse_expr__unary(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_expr_t* expr, unsigned level)
 {
 	/* TODO - Defined unary operators. */
 
+	unsigned dpos = parse_debug_position(debug);
+
 	parse_operator_e op;
 	unsigned op_len = parse_operator(
-		src, ptr, &op);
+		src, ptr, debug, &op);
 	if ((op_len == 0)
 		|| !parse_operator_unary(op))
+	{
+		parse_debug_rewind(debug, dpos);
 		return 0;
+	}
 
 	unsigned op_level = parse_operator_precedence(op);
 	if (op_level > level)
+	{
+		parse_debug_rewind(debug, dpos);
 		return 0;
+	}
 
 	parse_expr_t a;
 	unsigned a_len = parse_expr__at_or_below(
-		src, &ptr[op_len], &a, op_level);
-	if (a_len == 0) return 0;
+		src, &ptr[op_len], debug, &a, op_level);
+	if (a_len == 0)
+	{
+		parse_debug_rewind(debug, dpos);
+		return 0;
+	}
 
 	expr->type = PARSE_EXPR_UNARY;
 	expr->unary.operator = op;
@@ -240,6 +256,7 @@ static unsigned parse_expr__unary(
 	if (!expr->unary.a)
 	{
 		parse_expr__cleanup(a);
+		parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 
@@ -292,11 +309,14 @@ static void parse_expr__cull_right_ambig_point(
 
 static unsigned parse_expr__binary_at_or_below(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_expr_t* expr, unsigned level)
 {
+	unsigned dpos = parse_debug_position(debug);
+
 	parse_expr_t a;
 	unsigned a_len = parse_expr__at_or_below(
-		src, ptr, &a, (level - 1));
+		src, ptr, debug, &a, (level - 1));
 	if (a_len == 0) return 0;
 
 	/* Optimize by returning a if we see end of statement or close bracket. */
@@ -311,7 +331,8 @@ static unsigned parse_expr__binary_at_or_below(
 	if (parse_expr__has_right_ambig_point(&a))
 	{
 		parse_operator_e op;
-		unsigned op_len = parse_operator(src, &ptr[a_len - 1], &op);
+		unsigned op_len = parse_operator(
+			src, &ptr[a_len - 1], debug, &op);
 		if ((op_len > 0)
 			&& parse_operator_binary(op)
 			&& (parse_operator_precedence(op) <= level))
@@ -325,10 +346,11 @@ static unsigned parse_expr__binary_at_or_below(
 
 	parse_operator_e op;
 	unsigned op_len = parse_operator(
-		src, &ptr[a_len], &op);
+		src, &ptr[a_len], debug, &op);
 	if ((op_len == 0) || !parse_operator_binary(op))
 	{
 		parse_expr__cleanup(a);
+		parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 
@@ -337,15 +359,17 @@ static unsigned parse_expr__binary_at_or_below(
 		|| (parse_expr__level(a) >= op_level))
 	{
 		parse_expr__cleanup(a);
+		parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 
 	parse_expr_t b;
 	unsigned b_len = parse_expr__at_or_below(
-		src, &ptr[a_len + op_len], &b, op_level);
+		src, &ptr[a_len + op_len], debug, &b, op_level);
 	if (b_len == 0)
 	{
 		parse_expr__cleanup(a);
+		parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 
@@ -357,6 +381,7 @@ static unsigned parse_expr__binary_at_or_below(
 	{
 		parse_expr__cleanup(a);
 		parse_expr__cleanup(b);
+		parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 
@@ -365,6 +390,7 @@ static unsigned parse_expr__binary_at_or_below(
 	{
 		parse_expr_delete(expr->binary.a);
 		parse_expr__cleanup(b);
+		parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 
@@ -373,13 +399,14 @@ static unsigned parse_expr__binary_at_or_below(
 
 static unsigned parse_expr__binary(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_expr_t* expr, unsigned level)
 {
 	unsigned i;
 	for (i = level; i > 0; i--)
 	{
 		unsigned len = parse_expr__binary_at_or_below(
-			src, ptr, expr, i);
+			src, ptr, debug, expr, i);
 		if (len > 0) return len;
 	}
 	return 0;
@@ -387,35 +414,40 @@ static unsigned parse_expr__binary(
 
 static unsigned parse_expr__at_or_below(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_expr_t* expr, unsigned level)
 {
 	unsigned len = parse_expr__binary(
-		src, ptr, expr, level);
+		src, ptr, debug, expr, level);
 	if (len > 0) return len;
 
 	len = parse_expr__unary(
-		src, ptr, expr, level);
+		src, ptr, debug, expr, level);
 	if (len > 0) return len;
 
 	return parse_expr__primary(
-		src, ptr, expr);
+		src, ptr, debug, expr);
 }
 
 
 
 parse_expr_t* parse_expr_literal(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len)
 {
+	unsigned dpos = parse_debug_position(debug);
+
 	parse_expr_t e;
 	unsigned i = parse_expr__literal(
-		src, ptr, &e);
+		src, ptr, debug, &e);
 	if (i == 0) return NULL;
 
 	parse_expr_t* expr
 		= parse_expr__alloc(e);
 	if (!expr)
 	{
+		parse_debug_rewind(debug, dpos);
 		parse_expr__cleanup(e);
 		return NULL;
 	}
@@ -426,17 +458,21 @@ parse_expr_t* parse_expr_literal(
 
 parse_expr_t* parse_expr(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len)
 {
+	unsigned dpos = parse_debug_position(debug);
+
 	parse_expr_t e;
 	unsigned i = parse__expr(
-		src, ptr, &e);
+		src, ptr, debug, &e);
 	if (i == 0) return NULL;
 
 	parse_expr_t* expr
 		= parse_expr__alloc(e);
 	if (!expr)
 	{
+		parse_debug_rewind(debug, dpos);
 		parse_expr__cleanup(e);
 		return NULL;
 	}
@@ -519,6 +555,7 @@ parse_expr_t* parse_expr_copy(
 
 parse_expr_list_t* parse_expr_list(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len)
 {
 	parse_expr_list_t* list
@@ -529,7 +566,8 @@ parse_expr_list_t* parse_expr_list(
 	list->count = 0;
 	list->expr  = NULL;
 
-	unsigned i = parse_list(src, ptr, ',',
+	unsigned i = parse_list(
+		src, ptr, debug, ',',
 		&list->count, (void***)&list->expr,
 		(void*)parse_expr,
 		(void*)parse_expr_delete);

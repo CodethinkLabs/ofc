@@ -39,6 +39,7 @@ typedef struct
 
 parse_type_t* parse_type(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len);
 void parse_type_delete(parse_type_t* type);
 bool parse_type_print(int fd, const parse_type_t* type);

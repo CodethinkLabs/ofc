@@ -14,6 +14,7 @@ struct parse_implicit_do_s
 
 parse_implicit_do_t* parse_implicit_do(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len);
 
 parse_implicit_do_t* parse_implicit_do_copy(

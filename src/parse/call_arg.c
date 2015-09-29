@@ -3,6 +3,7 @@
 
 static parse_call_arg_t* parse__call_arg(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	bool named, bool force, unsigned* len)
 {
 	parse_call_arg_t* call_arg
@@ -10,13 +11,15 @@ static parse_call_arg_t* parse__call_arg(
 			sizeof(parse_call_arg_t));
 	if (!call_arg) return NULL;
 
+	unsigned dpos = parse_debug_position(debug);
+
 	unsigned i = 0;
 	call_arg->name = STR_REF_EMPTY;
 	if (named)
 	{
 		str_ref_t ident;
 		unsigned l = parse_ident(
-			src, &ptr[i], &ident);
+			src, &ptr[i], debug, &ident);
 		if ((l > 0) && (ptr[i + l] == '='))
 		{
 			call_arg->name = ident;
@@ -25,6 +28,7 @@ static parse_call_arg_t* parse__call_arg(
 		else if (force)
 		{
 			free(call_arg);
+			parse_debug_rewind(debug, dpos);
 			return NULL;
 		}
 	}
@@ -36,12 +40,14 @@ static parse_call_arg_t* parse__call_arg(
 		i += 1;
 
 		unsigned l = parse_label(
-			src, &ptr[i], &call_arg->label);
+			src, &ptr[i], debug,
+			&call_arg->label);
 		if (l == 0)
 		{
 			if (!was_asterisk)
 			{
 				free(call_arg);
+				parse_debug_rewind(debug, dpos);
 				return NULL;
 			}
 
@@ -56,10 +62,12 @@ static parse_call_arg_t* parse__call_arg(
 	else
 	{
 		unsigned l;
-		call_arg->expr = parse_expr(src, &ptr[i], &l);
+		call_arg->expr = parse_expr(
+			src, &ptr[i], debug, &l);
 		if (!call_arg->expr)
 		{
 			free(call_arg);
+			parse_debug_rewind(debug, dpos);
 			return NULL;
 		}
 		i += l;
@@ -72,23 +80,32 @@ static parse_call_arg_t* parse__call_arg(
 
 parse_call_arg_t* parse_call_arg_force_named(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len)
 {
-	return parse__call_arg(src, ptr, true, true, len);
+	return parse__call_arg(
+		src, ptr, debug,
+		true, true, len);
 }
 
 parse_call_arg_t* parse_call_arg_named(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len)
 {
-	return parse__call_arg(src, ptr, true, false, len);
+	return parse__call_arg(
+		src, ptr, debug,
+		true, false, len);
 }
 
 parse_call_arg_t* parse_call_arg(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len)
 {
-	return parse__call_arg(src, ptr, false, false, len);
+	return parse__call_arg(
+		src, ptr, debug,
+		false, false, len);
 }
 
 void parse_call_arg_delete(
@@ -149,6 +166,7 @@ bool parse_call_arg_print(
 
 static parse_call_arg_list_t* parse_call_arg__list(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	bool named, bool force, unsigned* len)
 {
 	parse_call_arg_list_t* list
@@ -159,7 +177,7 @@ static parse_call_arg_list_t* parse_call_arg__list(
 	list->count = 0;
 	list->call_arg = NULL;
 
-	unsigned i = parse_list(src, ptr, ',',
+	unsigned i = parse_list(src, ptr, debug, ',',
 		&list->count, (void***)&list->call_arg,
 		(named ? (force ? (void*)parse_call_arg_force_named
 				: (void*)parse_call_arg_named)
@@ -177,26 +195,29 @@ static parse_call_arg_list_t* parse_call_arg__list(
 
 parse_call_arg_list_t* parse_call_arg_list_force_named(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len)
 {
 	return parse_call_arg__list(
-		src, ptr, true, true, len);
+		src, ptr, debug, true, true, len);
 }
 
 parse_call_arg_list_t* parse_call_arg_list_named(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len)
 {
 	return parse_call_arg__list(
-		src, ptr, true, false, len);
+		src, ptr, debug, true, false, len);
 }
 
 parse_call_arg_list_t* parse_call_arg_list(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len)
 {
 	return parse_call_arg__list(
-		src, ptr, false, false, len);
+		src, ptr, debug, false, false, len);
 }
 
 parse_call_arg_list_t* parse_call_arg_list_wrap(

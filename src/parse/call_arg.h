@@ -28,12 +28,15 @@ typedef struct
 
 parse_call_arg_t* parse_call_arg_force_named(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len);
 parse_call_arg_t* parse_call_arg_named(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len);
 parse_call_arg_t* parse_call_arg(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len);
 void parse_call_arg_delete(
 	parse_call_arg_t* call_arg);
@@ -42,12 +45,15 @@ bool parse_call_arg_print(
 
 parse_call_arg_list_t* parse_call_arg_list_force_named(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len);
 parse_call_arg_list_t* parse_call_arg_list_named(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len);
 parse_call_arg_list_t* parse_call_arg_list(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len);
 parse_call_arg_list_t* parse_call_arg_list_wrap(
 	parse_call_arg_t* arg);

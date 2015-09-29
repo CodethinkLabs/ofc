@@ -3,6 +3,7 @@
 
 parse_decl_t* parse_decl(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len)
 {
 	parse_decl_t* decl
@@ -11,7 +12,7 @@ parse_decl_t* parse_decl(
 	if (!decl) return NULL;
 
 	unsigned i;
-	decl->lhs = parse_lhs(src, ptr, &i);
+	decl->lhs = parse_lhs(src, ptr, debug, &i);
 	if (!decl->lhs)
 	{
 		free(decl);
@@ -23,7 +24,7 @@ parse_decl_t* parse_decl(
 	{
 		unsigned l;
 		decl->len = parse_expr_literal(
-			src, &ptr[i + 1], &l);
+			src, &ptr[i + 1], debug, &l);
 		if (decl->len) i += (l + 1);
 	}
 
@@ -33,14 +34,14 @@ parse_decl_t* parse_decl(
 	{
 		unsigned l;
 		decl->init_expr = parse_expr(
-			src, &ptr[i + 1], &l);
+			src, &ptr[i + 1], debug, &l);
 		if (decl->init_expr) i += (l + 1);
 	}
 	else if (ptr[i] == '/')
 	{
 		unsigned l;
 		decl->init_clist = parse_clist(
-			src, &ptr[i], &l);
+			src, &ptr[i], debug, &l);
 		if (decl->init_clist) i += l;
 	}
 
@@ -97,6 +98,7 @@ bool parse_decl_print(
 
 parse_decl_list_t* parse_decl_list(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len)
 {
 	parse_decl_list_t* list
@@ -107,7 +109,8 @@ parse_decl_list_t* parse_decl_list(
 	list->count = 0;
 	list->decl = NULL;
 
-	unsigned i = parse_list(src, ptr, ',',
+	unsigned i = parse_list(
+		src, ptr, debug, ',',
 		&list->count, (void***)&list->decl,
 		(void*)parse_decl,
 		(void*)parse_decl_delete);

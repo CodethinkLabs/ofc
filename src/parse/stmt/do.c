@@ -2,25 +2,36 @@
 
 unsigned parse_stmt__do_while_block(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_stmt_t* stmt)
 {
-	unsigned i = parse_keyword(src, ptr,
+	unsigned dpos = parse_debug_position(debug);
+
+	unsigned i = parse_keyword(
+		src, ptr, debug,
 		PARSE_KEYWORD_WHILE);
 	if (i == 0) return 0;
 
 	if (ptr[i++] != '(')
+	{
+		parse_debug_rewind(debug, dpos);
 		return 0;
+	}
 
 	unsigned len;
 	stmt->do_while.cond = parse_expr(
-		src, &ptr[i], &len);
+		src, &ptr[i], debug, &len);
 	if (!stmt->do_while.cond)
+	{
+		parse_debug_rewind(debug, dpos);
 		return 0;
+	}
 	i += len;
 
 	if (ptr[i++] != ')')
 	{
 		parse_expr_delete(stmt->do_while_block.cond);
+		parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 
@@ -28,21 +39,24 @@ unsigned parse_stmt__do_while_block(
 	if (!is_end_statement(&ptr[i], &len))
 	{
 		parse_expr_delete(stmt->do_while_block.cond);
+		parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	i += len;
 
 	stmt->do_while_block.block
-		= parse_stmt_list(src, &ptr[i], &len);
+		= parse_stmt_list(src, &ptr[i], debug, &len);
 	if (stmt->do_while_block.block) i += len;
 
-	len = parse_keyword_end(src, &ptr[i],
+	len = parse_keyword_end(
+		src, &ptr[i], debug,
 		PARSE_KEYWORD_DO);
 	if (len == 0)
 	{
 		parse_stmt_list_delete(
 			stmt->do_while_block.block);
 		parse_expr_delete(stmt->do_while_block.cond);
+		parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	i += len;
@@ -53,32 +67,48 @@ unsigned parse_stmt__do_while_block(
 
 unsigned parse_stmt__do_while(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_stmt_t* stmt)
 {
+	unsigned dpos = parse_debug_position(debug);
+
 	unsigned i = parse_label(
-		src, ptr, &stmt->do_while.end_label);
+		src, ptr, debug,
+		&stmt->do_while.end_label);
 	if (i == 0) return 0;
 
 	if (ptr[i] == ',')
 		i += 1;
 
-	unsigned len = parse_keyword(src, &ptr[i],
+	unsigned len = parse_keyword(
+		src, &ptr[i], debug,
 		PARSE_KEYWORD_WHILE);
-	if (len == 0) return 0;
+	if (len == 0)
+	{
+		parse_debug_rewind(debug, dpos);
+		return 0;
+	}
 	i += len;
 
 	if (ptr[i++] != '(')
+	{
+		parse_debug_rewind(debug, dpos);
 		return 0;
+	}
 
 	stmt->do_while.cond = parse_expr(
-		src, &ptr[i], &len);
+		src, &ptr[i], debug, &len);
 	if (!stmt->do_while.cond)
+	{
+		parse_debug_rewind(debug, dpos);
 		return 0;
+	}
 	i += len;
 
 	if (ptr[i++] != ')')
 	{
 		parse_expr_delete(stmt->do_while.cond);
+		parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 
@@ -88,10 +118,14 @@ unsigned parse_stmt__do_while(
 
 unsigned parse_stmt__do(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_stmt_t* stmt)
 {
+	unsigned dpos = parse_debug_position(debug);
+
 	unsigned i = parse_label(
-		src, ptr, &stmt->do_loop.end_label);
+		src, ptr, debug,
+		&stmt->do_loop.end_label);
 	if (i == 0) return 0;
 
 	if (ptr[i] == ',')
@@ -99,9 +133,13 @@ unsigned parse_stmt__do(
 
 	unsigned len;
 	stmt->do_loop.init
-		= parse_assign_init(src, &ptr[i], &len);
+		= parse_assign_init(
+			src, &ptr[i], debug, &len);
 	if (!stmt->do_loop.init)
+	{
+		parse_debug_rewind(debug, dpos);
 		return 0;
+	}
 	i += len;
 
 	stmt->type = PARSE_STMT_DO;
@@ -111,14 +149,16 @@ unsigned parse_stmt__do(
 	if (ptr[i++] != ',')
 	{
 		parse_assign_delete(stmt->do_loop.init);
+		parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 
 	stmt->do_loop.last = parse_expr(
-		src, &ptr[i], &len);
+		src, &ptr[i], debug, &len);
 	if (!stmt->do_loop.last)
 	{
 		parse_assign_delete(stmt->do_loop.init);
+		parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	i += len;
@@ -128,11 +168,12 @@ unsigned parse_stmt__do(
 		i += 1;
 
 		stmt->do_loop.step = parse_expr(
-			src, &ptr[i], &len);
+			src, &ptr[i], debug, &len);
 		if (!stmt->do_loop.step)
 		{
 			parse_expr_delete(stmt->do_loop.last);
 			parse_assign_delete(stmt->do_loop.init);
+			parse_debug_rewind(debug, dpos);
 			return 0;
 		}
 		i += len;
@@ -143,26 +184,30 @@ unsigned parse_stmt__do(
 
 unsigned parse_stmt_do(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_stmt_t* stmt)
 {
+	unsigned dpos = parse_debug_position(debug);
+
 	unsigned i = parse_keyword(
-		src, ptr, PARSE_KEYWORD_DO);
+		src, ptr, debug, PARSE_KEYWORD_DO);
 	if (i == 0) return 0;
 
 	unsigned l;
 
 	l = parse_stmt__do_while(
-		src, &ptr[i], stmt);
+		src, &ptr[i], debug, stmt);
 	if (l > 0) return (i + l);
 
 	l = parse_stmt__do_while_block(
-		src, &ptr[i], stmt);
+		src, &ptr[i], debug, stmt);
 	if (l > 0) return (i + l);
 
 	l = parse_stmt__do(
-		src, &ptr[i], stmt);
+		src, &ptr[i], debug, stmt);
 	if (l > 0) return (i + l);
 
+	parse_debug_rewind(debug, dpos);
 	return 0;
 }
 

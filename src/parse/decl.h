@@ -19,6 +19,7 @@ typedef struct
 
 parse_decl_t* parse_decl(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len);
 void parse_decl_delete(
 	parse_decl_t* decl);
@@ -27,6 +28,7 @@ bool parse_decl_print(
 
 parse_decl_list_t* parse_decl_list(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len);
 void parse_decl_list_delete(
 	parse_decl_list_t* decl);

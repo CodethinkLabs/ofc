@@ -83,13 +83,16 @@ typedef enum
 
 unsigned parse_ident(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	str_ref_t* ident);
 
 unsigned parse_name(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	str_ref_t* name);
 str_ref_t* parse_name_alloc(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len);
 
 
@@ -98,19 +101,23 @@ const char* parse_keyword_name(
 
 unsigned parse_keyword(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_keyword_e keyword);
 
 unsigned parse_keyword_named(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_keyword_e keyword,
 	str_ref_t* name);
 
 unsigned parse_keyword_end(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_keyword_e keyword);
 
 unsigned parse_keyword_end_named(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_keyword_e keyword,
 	str_ref_t* name);
 

@@ -113,6 +113,7 @@ static bool parse_lhs__clone(
 
 static parse_lhs_t* parse_lhs__array(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_lhs_t* parent, unsigned* len)
 {
 	if (!parent)
@@ -130,10 +131,12 @@ static parse_lhs_t* parse_lhs__array(
 	if (ptr[i] != '(')
 		return 0;
 
+	unsigned dpos = parse_debug_position(debug);
+
 	parse_lhs_t lhs;
 	unsigned l = 0;
 	lhs.array.index = parse_array_index(
-		src, &ptr[i], &l);
+		src, &ptr[i], debug, &l);
 	if (!lhs.array.index)
 	{
 		if (ptr[i + 1] != ')')
@@ -150,6 +153,7 @@ static parse_lhs_t* parse_lhs__array(
 	if (!alhs)
 	{
 		parse_lhs__cleanup(lhs);
+		parse_debug_rewind(debug, dpos);
 		return NULL;
 	}
 
@@ -160,6 +164,7 @@ static parse_lhs_t* parse_lhs__array(
 
 static parse_lhs_t* parse_lhs__member(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_lhs_t* parent, unsigned* len)
 {
 	if (!parent)
@@ -177,12 +182,18 @@ static parse_lhs_t* parse_lhs__member(
 	parse_lhs_t lhs;
 	lhs.type = PARSE_LHS_MEMBER_TYPE;
 
+	unsigned dpos = parse_debug_position(debug);
+
 	unsigned i;
 	if (ptr[0] == '.')
 	{
 		i = parse_operator(
-			src, ptr, NULL);
-		if (i > 0) return NULL;
+			src, ptr, debug, NULL);
+		if (i > 0)
+		{
+			parse_debug_rewind(debug, dpos);
+			return NULL;
+		}
 		lhs.type = PARSE_LHS_MEMBER_STRUCTURE;
 	}
 	else if (ptr[0] != '%')
@@ -192,7 +203,7 @@ static parse_lhs_t* parse_lhs__member(
 	i = 1;
 
 	unsigned l = parse_name(
-		src, &ptr[i], &lhs.member.name);
+		src, &ptr[i], debug, &lhs.member.name);
 	if (l == 0) return NULL;
 	i += l;
 
@@ -203,6 +214,7 @@ static parse_lhs_t* parse_lhs__member(
 	if (!alhs)
 	{
 		parse_lhs__cleanup(lhs);
+		parse_debug_rewind(debug, dpos);
 		return NULL;
 	}
 
@@ -213,16 +225,20 @@ static parse_lhs_t* parse_lhs__member(
 
 parse_lhs_t* parse_lhs(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len)
 {
 	parse_lhs_t lhs;
 
+	unsigned dpos = parse_debug_position(debug);
+
 	lhs.type = PARSE_LHS_VARIABLE;
 	unsigned i = parse_name(
-		src, ptr, &lhs.variable);
+		src, ptr, debug, &lhs.variable);
 	if (i == 0)
 	{
-		lhs.implicit_do = parse_implicit_do(src, ptr, &i);
+		lhs.implicit_do = parse_implicit_do(
+			src, ptr, debug, &i);
 		if (!lhs.implicit_do) return NULL;
 		lhs.type = PARSE_LHS_IMPLICIT_DO;
 	}
@@ -232,6 +248,7 @@ parse_lhs_t* parse_lhs(
 	if (!alhs)
 	{
 		parse_lhs__cleanup(lhs);
+		parse_debug_rewind(debug, dpos);
 		return NULL;
 	}
 
@@ -241,7 +258,7 @@ parse_lhs_t* parse_lhs(
 		parse_lhs_t* child_lhs;
 
 		child_lhs = parse_lhs__array(
-				src, &ptr[i], alhs, &l);
+				src, &ptr[i], debug, alhs, &l);
 		if (child_lhs)
 		{
 			i += l;
@@ -250,7 +267,7 @@ parse_lhs_t* parse_lhs(
 		}
 
 		child_lhs = parse_lhs__member(
-				src, &ptr[i], alhs, &l);
+				src, &ptr[i], debug, alhs, &l);
 		if (child_lhs)
 		{
 			i += l;
@@ -350,6 +367,7 @@ bool parse_lhs_base_name(
 
 parse_lhs_list_t* parse_lhs_list(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len)
 {
 	parse_lhs_list_t* list
@@ -360,7 +378,8 @@ parse_lhs_list_t* parse_lhs_list(
 	list->count = 0;
 	list->lhs = NULL;
 
-	unsigned i = parse_list(src, ptr, ',',
+	unsigned i = parse_list(
+		src, ptr, debug, ',',
 		&list->count, (void***)&list->lhs,
 		(void*)parse_lhs,
 		(void*)parse_lhs_delete);
@@ -376,6 +395,7 @@ parse_lhs_list_t* parse_lhs_list(
 
 parse_lhs_list_t* parse_lhs_list_bracketed(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len)
 {
 	unsigned i = 0;
@@ -383,15 +403,18 @@ parse_lhs_list_t* parse_lhs_list_bracketed(
 	if (ptr[i++] != '(')
 		return NULL;
 
+	unsigned dpos = parse_debug_position(debug);
+
 	unsigned l;
 	parse_lhs_list_t* list
-		= parse_lhs_list(src, &ptr[i], &l);
+		= parse_lhs_list(src, &ptr[i], debug, &l);
 	if (!list) return NULL;
 	i += l;
 
 	if (ptr[i++] != ')')
 	{
 		parse_lhs_list_delete(list);
+		parse_debug_rewind(debug, dpos);
 		return NULL;
 	}
 

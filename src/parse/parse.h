@@ -8,6 +8,8 @@
 
 #include <stdio.h>
 
+#include "debug.h"
+
 typedef struct parse_lhs_s parse_lhs_t;
 typedef struct parse_expr_s parse_expr_t;
 typedef struct parse_stmt_s parse_stmt_t;

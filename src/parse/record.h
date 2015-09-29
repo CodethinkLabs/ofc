@@ -15,6 +15,7 @@ typedef struct
 
 parse_record_list_t* parse_record_list(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len);
 void parse_record_list_delete(
 	parse_record_list_t* list);

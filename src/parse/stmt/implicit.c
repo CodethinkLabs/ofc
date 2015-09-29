@@ -4,9 +4,11 @@
 
 unsigned parse_stmt_implicit(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_stmt_t* stmt)
 {
-	unsigned i = parse_keyword(src, ptr,
+	unsigned i = parse_keyword(
+		src, ptr, debug,
 		PARSE_KEYWORD_IMPLICIT_NONE);
 	if (i > 0)
 	{
@@ -14,14 +16,22 @@ unsigned parse_stmt_implicit(
 		return i;
 	}
 
-	i = parse_keyword(src, ptr,
+	unsigned dpos = parse_debug_position(debug);
+
+	i = parse_keyword(
+		src, ptr, debug,
 		PARSE_KEYWORD_IMPLICIT);
 	if (i == 0) return 0;
 
 	stmt->type = PARSE_STMT_IMPLICIT;
 	unsigned len;
-	stmt->implicit = parse_implicit_list(src, &ptr[i], &len);
-	if (!stmt->implicit) return 0;
+	stmt->implicit = parse_implicit_list(
+		src, &ptr[i], debug, &len);
+	if (!stmt->implicit)
+	{
+		parse_debug_rewind(debug, dpos);
+		return 0;
+	}
 	i += len;
 
 	return i;

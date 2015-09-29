@@ -3,17 +3,24 @@
 
 static unsigned parse_stmt__dimension_virtual(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_keyword_e keyword,
 	parse_stmt_t* stmt)
 {
+	unsigned dpos = parse_debug_position(debug);
+
 	unsigned i = parse_keyword(
-		src, ptr, keyword);
+		src, ptr, debug, keyword);
 	if (i == 0) return 0;
 
 	unsigned len;
 	stmt->dimension = parse_lhs_list(
-		src, &ptr[i], &len);
-	if (!stmt->dimension) return 0;
+		src, &ptr[i], debug, &len);
+	if (!stmt->dimension)
+	{
+		parse_debug_rewind(debug, dpos);
+		return 0;
+	}
 	i += len;
 
 	stmt->type = PARSE_STMT_DIMENSION;
@@ -22,19 +29,21 @@ static unsigned parse_stmt__dimension_virtual(
 
 unsigned parse_stmt_dimension(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_stmt_t* stmt)
 {
 	return parse_stmt__dimension_virtual(
-		src, ptr, PARSE_KEYWORD_DIMENSION, stmt);
+		src, ptr, debug, PARSE_KEYWORD_DIMENSION, stmt);
 }
 
 /* http://docs.oracle.com/cd/E19957-01/805-4939/6j4m0vnbo/index.html */
 unsigned parse_stmt_virtual(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_stmt_t* stmt)
 {
 	return parse_stmt__dimension_virtual(
-		src, ptr, PARSE_KEYWORD_VIRTUAL, stmt);
+		src, ptr, debug, PARSE_KEYWORD_VIRTUAL, stmt);
 }
 
 bool parse_stmt_dimension_print(

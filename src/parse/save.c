@@ -3,6 +3,7 @@
 
 parse_save_t* parse_save(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len)
 {
 	parse_save_t* save
@@ -16,7 +17,8 @@ parse_save_t* parse_save(
 		i += 1;
 
 		unsigned l = parse_name(
-			src, &ptr[i], &save->common);
+			src, &ptr[i], debug,
+			&save->common);
 		if (l == 0)
 		{
 			free(save);
@@ -34,7 +36,8 @@ parse_save_t* parse_save(
 	}
 	else
 	{
-		save->lhs = parse_lhs(src, ptr, &i);
+		save->lhs = parse_lhs(
+			src, ptr, debug, &i);
 		if (!save->lhs)
 		{
 			free(save);
@@ -76,6 +79,7 @@ bool parse_save_print(
 
 parse_save_list_t* parse_save_list(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len)
 {
 	parse_save_list_t* list
@@ -86,7 +90,8 @@ parse_save_list_t* parse_save_list(
 	list->count = 0;
 	list->save = NULL;
 
-	unsigned i = parse_list(src, ptr, ',',
+	unsigned i = parse_list(
+		src, ptr, debug, ',',
 		&list->count, (void***)&list->save,
 		(void*)parse_save,
 		(void*)parse_save_delete);

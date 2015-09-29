@@ -3,8 +3,11 @@
 
 parse_common_group_t* parse_common_group(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len)
 {
+	unsigned dpos = parse_debug_position(debug);
+
 	unsigned i = 0;
 
 	str_ref_t group = STR_REF_EMPTY;
@@ -13,25 +16,33 @@ parse_common_group_t* parse_common_group(
 		i += 1;
 
 		unsigned l = parse_name(
-			src, &ptr[i], &group);
+			src, &ptr[i], debug, &group);
 		i += l;
 
 		if (ptr[i++] != '/')
+		{
+			parse_debug_rewind(debug, dpos);
 			return NULL;
+		}
 	}
 
 	parse_common_group_t* common
 		= (parse_common_group_t*)malloc(
 			sizeof(parse_common_group_t));
-	if (!common) return NULL;
+	if (!common)
+	{
+		parse_debug_rewind(debug, dpos);
+		return NULL;
+	}
 
 	unsigned l;
 	common->names
 		= parse_lhs_list(
-			src, &ptr[i], &l);
+			src, &ptr[i], debug, &l);
 	if (!common->names)
 	{
 		free(common);
+		parse_debug_rewind(debug, dpos);
 		return NULL;
 	}
 	i += l;
@@ -73,6 +84,7 @@ bool parse_common_group_print(
 
 parse_common_group_list_t* parse_common_group_list(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len)
 {
 	parse_common_group_list_t* list
@@ -84,7 +96,7 @@ parse_common_group_list_t* parse_common_group_list(
 	list->group = NULL;
 
 	unsigned i = parse_list_seperator_optional(
-		src, ptr, ',',
+		src, ptr, debug, ',',
 		&list->count, (void***)&list->group,
 		(void*)parse_common_group,
 		(void*)parse_common_group_delete);

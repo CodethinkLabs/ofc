@@ -3,10 +3,13 @@
 
 static parse_array_range_t* parse_array__range(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len)
 {
+	unsigned dpos = parse_debug_position(debug);
+
 	unsigned i = 0;
-	parse_expr_t* first  = parse_expr(src, ptr, &i);
+	parse_expr_t* first  = parse_expr(src, ptr, debug, &i);
 	parse_expr_t* last   = NULL;
 	parse_expr_t* stride = NULL;
 
@@ -23,7 +26,7 @@ static parse_array_range_t* parse_array__range(
 		i += 1;
 
 		unsigned l;
-		last = parse_expr(src, &ptr[i], &l);
+		last = parse_expr(src, &ptr[i], debug, &l);
 		if (last)
 		{
 			i += l;
@@ -37,7 +40,7 @@ static parse_array_range_t* parse_array__range(
 		{
 			i += 1;
 
-			stride = parse_expr(src, &ptr[i], &l);
+			stride = parse_expr(src, &ptr[i], debug, &l);
 			if (stride)
 			{
 				i += l;
@@ -50,6 +53,7 @@ static parse_array_range_t* parse_array__range(
 	}
 	else if (!first)
 	{
+		parse_debug_rewind(debug, dpos);
 		return NULL;
 	}
 
@@ -61,6 +65,7 @@ static parse_array_range_t* parse_array__range(
 		parse_expr_delete(first);
 		parse_expr_delete(last);
 		parse_expr_delete(stride);
+		parse_debug_rewind(debug, dpos);
 		return NULL;
 	}
 
@@ -158,6 +163,7 @@ static bool parse_array__range_print(
 
 parse_array_index_t* parse_array_index(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len)
 {
 	unsigned i = 0;
@@ -172,7 +178,10 @@ parse_array_index_t* parse_array_index(
 	index->count = 0;
 	index->range = NULL;
 
-	unsigned l = parse_list(src, &ptr[i], ',',
+	unsigned dpos = parse_debug_position(debug);
+
+	unsigned l = parse_list(
+		src, &ptr[i], debug, ',',
 		&index->count, (void***)&index->range,
 		(void*)parse_array__range,
 		(void*)parse_array__range_delete);
@@ -188,6 +197,7 @@ parse_array_index_t* parse_array_index(
 		parse_list_delete(
 			index->count, (void**)index->range,
 			(void*)parse_array__range_delete);
+		parse_debug_rewind(debug, dpos);
 		return NULL;
 	}
 

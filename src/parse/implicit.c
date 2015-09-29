@@ -3,6 +3,7 @@
 
 static unsigned parse_implicit__mask(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	uint32_t* mask)
 {
 	if (!isalpha(ptr[0]))
@@ -22,7 +23,7 @@ static unsigned parse_implicit__mask(
 
 		if (end < start)
 		{
-			sparse_warning(src, ptr,
+			parse_debug_warning(debug, src, ptr,
 				"Implicit character rule backwards");
 
 			unsigned swap = start;
@@ -31,7 +32,7 @@ static unsigned parse_implicit__mask(
 
 		if (end == start)
 		{
-			sparse_warning(src, ptr,
+			parse_debug_warning(debug, src, ptr,
 				"Implicit rule has redundant range");
 		}
 	}
@@ -45,11 +46,14 @@ static unsigned parse_implicit__mask(
 
 static unsigned parse_implicit__mask_list(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	uint32_t* mask)
 {
 	unsigned i = 0;
 	if (ptr[i++] != '(')
 		return 0;
+
+	unsigned dpos = parse_debug_position(debug);
 
 	uint32_t m = 0;
 	bool initial;
@@ -57,17 +61,20 @@ static unsigned parse_implicit__mask_list(
 	{
 		unsigned j = i + (initial ? 0 : 1);
 		unsigned len = parse_implicit__mask(
-			src, &ptr[j], &m);
+			src, &ptr[j], debug, &m);
 		if (len == 0) break;
 		i = j + len;
 	}
 
 	if (ptr[i++] != ')')
+	{
+		parse_debug_rewind(debug, dpos);
 		return 0;
+	}
 
 	if (m == 0)
 	{
-		sparse_warning(src, ptr,
+		parse_debug_warning(debug, src, ptr,
 			"Implicit rule is empty");
 	}
 
@@ -77,19 +84,23 @@ static unsigned parse_implicit__mask_list(
 
 parse_implicit_t* parse_implicit(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len)
 {
 	parse_implicit_t implicit;
 
+	unsigned dpos = parse_debug_position(debug);
+
 	unsigned i;
-	implicit.type = parse_type(src, ptr, &i);
+	implicit.type = parse_type(src, ptr, debug, &i);
 	if (!implicit.type) return NULL;
 
 	unsigned l = parse_implicit__mask_list(
-		src, &ptr[i], &implicit.mask);
+		src, &ptr[i], debug, &implicit.mask);
 	if (l == 0)
 	{
 		parse_type_delete(implicit.type);
+		parse_debug_rewind(debug, dpos);
 		return NULL;
 	}
 	i += l;
@@ -100,6 +111,7 @@ parse_implicit_t* parse_implicit(
 	if (!aimplicit)
 	{
 		parse_type_delete(implicit.type);
+		parse_debug_rewind(debug, dpos);
 		return NULL;
 	}
 	*aimplicit = implicit;
@@ -167,6 +179,7 @@ bool parse_implicit_print(
 
 parse_implicit_list_t* parse_implicit_list(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len)
 {
 	parse_implicit_list_t* list
@@ -176,7 +189,8 @@ parse_implicit_list_t* parse_implicit_list(
 
 	list->count = 0;
 	list->rule = NULL;
-	unsigned i = parse_list(src, ptr, ',',
+	unsigned i = parse_list(
+		src, ptr, debug, ',',
 		&list->count, (void***)&list->rule,
 		(void*)parse_implicit,
 		(void*)parse_implicit_delete);

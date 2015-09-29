@@ -3,9 +3,10 @@
 
 static unsigned parse_list__seperator_optional(
 	const sparse_t* sparse, const char* ptr,
+	parse_debug_t* debug,
 	char seperator, bool optional,
 	unsigned* elem_count, void*** elem,
-	void* (*elem_parse)(const sparse_t*, const char*, unsigned*),
+	void* (*elem_parse)(const sparse_t*, const char*, parse_debug_t*, unsigned*),
 	void (*elem_delete)(void*))
 {
 	unsigned orig_count = *elem_count;
@@ -28,7 +29,8 @@ static unsigned parse_list__seperator_optional(
 		initial = false;
 
 		unsigned l;
-		void* e = elem_parse(sparse, &ptr[j], &l);
+		void* e = elem_parse(
+			sparse, &ptr[j], debug, &l);
 		if (!e) break;
 		j += l;
 
@@ -68,25 +70,25 @@ static unsigned parse_list__seperator_optional(
 
 unsigned parse_list(
 	const sparse_t* sparse, const char* ptr,
-	char seperator,
-	unsigned* elem_count, void*** elem,
-	void* (*elem_parse)(const sparse_t*, const char*, unsigned*),
+	parse_debug_t* debug,
+	char seperator, unsigned* elem_count, void*** elem,
+	void* (*elem_parse)(const sparse_t*, const char*, parse_debug_t*, unsigned*),
 	void (*elem_delete)(void*))
 {
 	return parse_list__seperator_optional(
-		sparse, ptr, seperator, false,
+		sparse, ptr, debug, seperator, false,
 		elem_count, elem, elem_parse, elem_delete);
 }
 
 unsigned parse_list_seperator_optional(
 	const sparse_t* sparse, const char* ptr,
-	char seperator,
-	unsigned* elem_count, void*** elem,
-	void* (*elem_parse)(const sparse_t*, const char*, unsigned*),
+	parse_debug_t* debug,
+	char seperator, unsigned* elem_count, void*** elem,
+	void* (*elem_parse)(const sparse_t*, const char*, parse_debug_t*, unsigned*),
 	void (*elem_delete)(void*))
 {
 	return parse_list__seperator_optional(
-		sparse, ptr, seperator, true,
+		sparse, ptr, debug, seperator, true,
 		elem_count, elem, elem_parse, elem_delete);
 }
 

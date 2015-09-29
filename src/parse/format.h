@@ -62,6 +62,7 @@ struct parse_format_desc_list_s
 
 parse_format_desc_t* parse_format_desc(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len);
 void parse_format_desc_delete(
 	parse_format_desc_t* desc);
@@ -71,6 +72,7 @@ bool parse_format_desc_print(
 
 parse_format_desc_list_t* parse_format_desc_list(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len);
 void parse_format_desc_list_delete(
 	parse_format_desc_list_t* list);

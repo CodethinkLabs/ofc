@@ -3,11 +3,14 @@
 
 parse_assign_t* parse_assign(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len)
 {
+	unsigned dpos = parse_debug_position(debug);
+
 	unsigned i;
 	parse_lhs_t* name
-		= parse_lhs(src, ptr, &i);
+		= parse_lhs(src, ptr, debug, &i);
 	if (!name) return NULL;
 
 	parse_expr_t* init = NULL;
@@ -17,10 +20,11 @@ parse_assign_t* parse_assign(
 
 		unsigned l;
 		init = parse_expr(
-			src, &ptr[i], &l);
+			src, &ptr[i], debug, &l);
 		if (!init)
 		{
 			parse_lhs_delete(name);
+			parse_debug_rewind(debug, dpos);
 			return NULL;
 		}
 		i += l;
@@ -33,6 +37,7 @@ parse_assign_t* parse_assign(
 	{
 		parse_expr_delete(init);
 		parse_lhs_delete(name);
+		parse_debug_rewind(debug, dpos);
 		return NULL;
 	}
 
@@ -46,16 +51,20 @@ parse_assign_t* parse_assign(
 /* TODO - Make this a flag to a static function for speed. */
 parse_assign_t* parse_assign_init(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len)
 {
+	unsigned dpos = parse_debug_position(debug);
+
 	unsigned i;
 	parse_assign_t* assign
-		= parse_assign(src, ptr, &i);
+		= parse_assign(src, ptr, debug, &i);
 	if (!assign) return NULL;
 
 	if (!assign->init)
 	{
 		parse_assign_delete(assign);
+		parse_debug_rewind(debug, dpos);
 		return NULL;
 	}
 
@@ -122,6 +131,7 @@ bool parse_assign_print(
 
 parse_assign_list_t* parse_assign_list(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len)
 {
 	parse_assign_list_t* list
@@ -132,7 +142,8 @@ parse_assign_list_t* parse_assign_list(
 	list->count = 0;
 	list->assign = NULL;
 
-	unsigned i = parse_list(src, ptr, ',',
+	unsigned i = parse_list(
+		src, ptr, debug, ',',
 		&list->count, (void***)&list->assign,
 		(void*)parse_assign,
 		(void*)parse_assign_delete);

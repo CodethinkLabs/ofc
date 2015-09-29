@@ -17,6 +17,7 @@ static const char* parse_type__name[] =
 
 static unsigned parse_decl_attr(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_decl_attr_t* attr)
 {
 	attr->is_static    = false;
@@ -27,13 +28,14 @@ static unsigned parse_decl_attr(
 	while (true)
 	{
 		unsigned l;
-		l = parse_keyword(src, &ptr[i],
+		l = parse_keyword(
+			src, &ptr[i], debug,
 			PARSE_KEYWORD_STATIC);
 		if (l > 0)
 		{
 			if (attr->is_static)
 			{
-				sparse_warning(src, &ptr[i],
+				parse_debug_warning(debug, src, &ptr[i],
 					"Duplicate definition of STATIC decl attribute");
 			}
 
@@ -42,13 +44,14 @@ static unsigned parse_decl_attr(
 			continue;
 		}
 
-		l = parse_keyword(src, &ptr[i],
+		l = parse_keyword(
+			src, &ptr[i], debug,
 			PARSE_KEYWORD_AUTOMATIC);
 		if (l > 0)
 		{
 			if (attr->is_automatic)
 			{
-				sparse_warning(src, &ptr[i],
+				parse_debug_warning(debug, src, &ptr[i],
 					"Duplicate definition of AUTOMATIC decl attribute");
 			}
 
@@ -57,13 +60,14 @@ static unsigned parse_decl_attr(
 			continue;
 		}
 
-		l = parse_keyword(src, &ptr[i],
+		l = parse_keyword(
+			src, &ptr[i], debug,
 			PARSE_KEYWORD_VOLATILE);
 		if (l > 0)
 		{
 			if (attr->is_volatile)
 			{
-				sparse_warning(src, &ptr[i],
+				parse_debug_warning(debug, src, &ptr[i],
 					"Duplicate definition of VOLATILE decl attribute");
 			}
 
@@ -119,16 +123,19 @@ static const parse_type__keyword_t parse_type__keyword_map[] =
 
 parse_type_t* parse_type(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len)
 {
+	unsigned dpos = parse_debug_position(debug);
+
 	parse_type_t type;
 	unsigned i = parse_decl_attr(
-		src, ptr, &type.attr);
+		src, ptr, debug, &type.attr);
 
 	unsigned j;
 	for (j = 0; parse_type__keyword_map[j].type != PARSE_TYPE_NONE; j++)
 	{
-		i = parse_keyword(src, &ptr[i],
+		i = parse_keyword(src, &ptr[i], debug,
 			parse_type__keyword_map[j].keyword);
 
 		type.type = parse_type__keyword_map[j].type;
@@ -137,7 +144,10 @@ parse_type_t* parse_type(
 	}
 
 	if (i == 0)
+	{
+		parse_debug_rewind(debug, dpos);
 		return NULL;
+	}
 
 	type.count_expr = NULL;
 	type.count_var = false;
@@ -155,7 +165,7 @@ parse_type_t* parse_type(
 
 			unsigned l;
 			type.count_expr = parse_expr(
-				src, &ptr[i], &l);
+				src, &ptr[i], debug, &l);
 			if (!type.count_expr)
 			{
 				if (ptr[i] == '*')
@@ -165,7 +175,7 @@ parse_type_t* parse_type(
 				}
 				else
 				{
-					sparse_error(src, &ptr[i],
+					parse_debug_error(debug, src, &ptr[i],
 						"Expected count expression or value for character");
 					return NULL;
 				}
@@ -175,6 +185,7 @@ parse_type_t* parse_type(
 			if (ptr[i++] != ')')
 			{
 				parse_expr_delete(type.count_expr);
+				parse_debug_rewind(debug, dpos);
 				return NULL;
 			}
 		}
@@ -182,10 +193,10 @@ parse_type_t* parse_type(
 		{
 			unsigned l;
 			type.count_expr = parse_expr_literal(
-				src, &ptr[i], &l);
+				src, &ptr[i], debug, &l);
 			if (!type.count_expr)
 			{
-				sparse_error(src, &ptr[i],
+				parse_debug_error(debug, src, &ptr[i],
 					"Expected count expression or value for character");
 				return NULL;
 			}
@@ -196,10 +207,10 @@ parse_type_t* parse_type(
 	{
 		i += 1;
 		unsigned l = parse_unsigned(
-			src, &ptr[i], &type.kind);
+			src, &ptr[i], debug, &type.kind);
 		if (l == 0)
 		{
-			sparse_error(src, &ptr[i],
+			parse_debug_error(debug, src, &ptr[i],
 				"Expected kind value after asterisk in type specifier");
 			return NULL;
 		}
@@ -207,7 +218,7 @@ parse_type_t* parse_type(
 
 		if (type.kind == 0)
 		{
-			sparse_warning(src, ptr,
+			parse_debug_warning(debug, src, &ptr[i],
 				"Kind value must be non-zero, using default");
 		}
 	}
@@ -217,7 +228,7 @@ parse_type_t* parse_type(
 	{
 		unsigned l;
 		type.params = parse_call_arg_list_force_named(
-			src, &ptr[i + 1], &l);
+			src, &ptr[i + 1], debug, &l);
 		if (type.params && (ptr[i + 1 + l] == ')'))
 		{
 			i += (l + 2);
@@ -234,6 +245,7 @@ parse_type_t* parse_type(
 	if (!atype)
 	{
 		parse_type__cleanup(type);
+		parse_debug_rewind(debug, dpos);
 		return NULL;
 	}
 

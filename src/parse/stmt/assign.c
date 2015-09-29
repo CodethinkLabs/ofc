@@ -3,25 +3,41 @@
 
 unsigned parse_stmt_assign(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_stmt_t* stmt)
 {
+	unsigned dpos = parse_debug_position(debug);
+
 	unsigned i = parse_keyword(
-		src, ptr, PARSE_KEYWORD_ASSIGN);
+		src, ptr, debug, PARSE_KEYWORD_ASSIGN);
 	if (i == 0) return 0;
 
 	unsigned len = parse_unsigned(
-		src, &ptr[i], &stmt->assign.label);
-	if (len == 0) return 0;
+		src, &ptr[i], debug, &stmt->assign.label);
+	if (len == 0)
+	{
+		parse_debug_rewind(debug, dpos);
+		return 0;
+	}
 	i += len;
 
 	len = parse_keyword(
-		src, &ptr[i], PARSE_KEYWORD_TO);
-	if (len == 0) return 0;
+		src, &ptr[i], debug, PARSE_KEYWORD_TO);
+	if (len == 0)
+	{
+		parse_debug_rewind(debug, dpos);
+		return 0;
+	}
 	i += 2;
 
-	len = parse_name(src, &ptr[i],
+	len = parse_name(
+		src, &ptr[i], debug,
 		&stmt->assign.variable);
-	if (len == 0) return 0;
+	if (len == 0)
+	{
+		parse_debug_rewind(debug, dpos);
+		return 0;
+	}
 	i += len;
 
 	stmt->type = PARSE_STMT_ASSIGN;

@@ -25,6 +25,7 @@ static bool is_base_digit(
 
 static unsigned parse_literal__base(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned base, bool quoted, uint64_t* value)
 {
 	unsigned i = 0;
@@ -42,7 +43,7 @@ static unsigned parse_literal__base(
 	{
 		if (quoted)
 		{
-			sparse_error(src, &ptr[i],
+			parse_debug_error(debug, src, &ptr[i],
 				"Valid digit expected in BOZ literal");
 		}
 		return 0;
@@ -58,7 +59,7 @@ static unsigned parse_literal__base(
 			if (((nv / base) != v)
 				|| ((nv % base) != d))
 			{
-				sparse_warning(src, ptr,
+				parse_debug_warning(debug, src, ptr,
 					"Literal value exceeds 64-bit size");
 				return 0;
 			}
@@ -68,7 +69,7 @@ static unsigned parse_literal__base(
 
 	if (quoted && (ptr[i++] != quote))
 	{
-		sparse_error(src, &ptr[i],
+		parse_debug_error(debug, src, &ptr[i],
 			"Invalid character in BOZ literal");
 		return 0;
 	}
@@ -82,13 +83,14 @@ static unsigned parse_literal__base(
 
 static unsigned parse_literal__binary(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_literal_t* literal)
 {
 	if (toupper(ptr[0]) != 'B')
 		return 0;
 
 	unsigned len = parse_literal__base(
-		src, &ptr[1], 2, true, NULL);
+		src, &ptr[1], debug, 2, true, NULL);
 	if (len == 0) return 0;
 
 	literal->number = str_ref(&ptr[1], len);
@@ -98,13 +100,14 @@ static unsigned parse_literal__binary(
 
 static unsigned parse_literal__octal(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_literal_t* literal)
 {
 	if (toupper(ptr[0]) != 'O')
 		return 0;
 
 	unsigned len = parse_literal__base(
-		src, &ptr[1], 8, true, NULL);
+		src, &ptr[1], debug, 8, true, NULL);
 	if (len == 0) return 0;
 
 	literal->number = str_ref(&ptr[1], len);
@@ -114,6 +117,7 @@ static unsigned parse_literal__octal(
 
 static unsigned parse_literal__hex(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_literal_t* literal)
 {
 	/* Accepting 'X' in a BOZ literal is an extension. */
@@ -122,7 +126,7 @@ static unsigned parse_literal__hex(
 		return 0;
 
 	unsigned len = parse_literal__base(
-		src, &ptr[1], 16, true, NULL);
+		src, &ptr[1], debug, 16, true, NULL);
 	if (len == 0) return 0;
 
 	literal->number = str_ref(&ptr[1], len);
@@ -132,11 +136,12 @@ static unsigned parse_literal__hex(
 
 unsigned parse_hollerith(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	string_t* string)
 {
 	unsigned holl_len;
 	unsigned i = parse_unsigned(
-		src, ptr, &holl_len);
+		src, ptr, debug, &holl_len);
 	if (i == 0) return 0;
 
 	if (toupper(ptr[i]) != 'H')
@@ -176,10 +181,11 @@ unsigned parse_hollerith(
 
 static unsigned parse_literal__hollerith(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_literal_t* literal)
 {
 	unsigned len = parse_hollerith(
-		src, ptr, &literal->string);
+		src, ptr, debug, &literal->string);
 	if (len == 0) return 0;
 
 	literal->type = PARSE_LITERAL_HOLLERITH;
@@ -189,6 +195,7 @@ static unsigned parse_literal__hollerith(
 
 unsigned parse_character(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	string_t* string)
 {
 	unsigned i = 0;
@@ -219,7 +226,8 @@ unsigned parse_character(
 	}
 	if (ptr[i++] != quote)
 	{
-		sparse_error(src, ptr, "Unterminated string");
+		parse_debug_error(debug, src, ptr,
+			"Unterminated string");
 		return 0;
 	}
 
@@ -232,7 +240,7 @@ unsigned parse_character(
 			|| (pptr[j] == '\n')
 			|| (pptr[j] == '\0'))
 		{
-			sparse_error(src, ptr,
+			parse_debug_error(debug, src, ptr,
 				"Unexpected end of line in character constant");
 			return 0;
 		}
@@ -314,8 +322,9 @@ unsigned parse_character(
 
 				/* '\x' where x is any other character */
 				default:
-					sparse_warning(src, ptr,
-						"Unknown escape sequence in string, ignoring");
+					parse_debug_warning(debug, src, ptr,
+						"Unknown escape sequence in string"
+						", ignoring escape character");
 					break;
 			}
 			is_escaped = false;
@@ -337,10 +346,11 @@ unsigned parse_character(
 
 static unsigned parse_literal__character(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_literal_t* literal)
 {
 	unsigned len = parse_character(
-		src, ptr, &literal->string);
+		src, ptr, debug, &literal->string);
 	if (len == 0) return 0;
 
 	literal->type = PARSE_LITERAL_CHARACTER;
@@ -350,6 +360,7 @@ static unsigned parse_literal__character(
 
 static unsigned parse_literal__logical(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_literal_t* literal)
 {
 	unsigned i = 0;
@@ -358,13 +369,13 @@ static unsigned parse_literal__logical(
 		return 0;
 
 	unsigned len = parse_keyword(
-		src, &ptr[i], PARSE_KEYWORD_TRUE);
+		src, &ptr[i], debug, PARSE_KEYWORD_TRUE);
 
 	bool v = (len > 0);
 	if (len == 0)
 	{
 		len = parse_keyword(
-			src, &ptr[i], PARSE_KEYWORD_FALSE);
+			src, &ptr[i], debug, PARSE_KEYWORD_FALSE);
 		if (len == 0) return 0;
 	}
 	i += len;
@@ -380,6 +391,7 @@ static unsigned parse_literal__logical(
 
 static unsigned parse_literal__number(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_literal_t* literal)
 {
 	unsigned i = 0;
@@ -433,7 +445,7 @@ static unsigned parse_literal__number(
 
 		unsigned ok = k;
 		unsigned len = parse_unsigned(
-			src, &ptr[i], &k);
+			src, &ptr[i], debug, &k);
 		if (len == 0) return 0;
 		i += len;
 
@@ -442,7 +454,7 @@ static unsigned parse_literal__number(
 
 	if (kind_ambiguous)
 	{
-		sparse_warning(src, ptr,
+		parse_debug_warning(debug, src, ptr,
 			"Kind is ambiguous, ignoring exponent kind");
 	}
 
@@ -453,56 +465,70 @@ static unsigned parse_literal__number(
 }
 
 static unsigned parse_literal__complex(
-		const sparse_t* src, const char* ptr,
-		parse_literal_t* literal)
+	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
+	parse_literal_t* literal)
+{
+	unsigned dpos = parse_debug_position(debug);
+
+	unsigned i = 0;
+	if (ptr[i++] != '(')
+		return 0;
+
+	parse_literal_t real;
+	unsigned len = parse_literal__number(
+		src, &ptr[i], debug, &real);
+	if (len == 0) return 0;
+	i += len;
+
+	if (ptr[i++] != ',')
 	{
-		unsigned i = 0;
-		if (ptr[i++] != '(')
-			return 0;
+		parse_debug_rewind(debug, dpos);
+		return 0;
+	}
 
-		parse_literal_t real;
-		unsigned len = parse_literal__number(
-			src, &ptr[i], &real);
-		if (len == 0) return 0;
-		i += len;
+	parse_literal_t imaginary;
+	len = parse_literal__number(
+		src,  &ptr[i], debug, &imaginary);
+	if (len == 0)
+	{
+		parse_debug_rewind(debug, dpos);
+		return 0;
+	}
+	i += len;
 
-		if (ptr[i++] != ',')
-			return 0;
+	if (ptr[i++] != ')')
+	{
+		parse_debug_rewind(debug, dpos);
+		return 0;
+	}
 
-		parse_literal_t imaginary;
-		len = parse_literal__number(
-			src,  &ptr[i], &imaginary);
-		if (len == 0) return 0;
-		i += len;
+	literal->type = PARSE_LITERAL_COMPLEX;
+	literal->complex.real      = real.number;
+	literal->complex.imaginary = imaginary.number;
 
-		if (ptr[i++] != ')')
-			return 0;
-
-		literal->type = PARSE_LITERAL_COMPLEX;
-		literal->complex.real      = real.number;
-		literal->complex.imaginary = imaginary.number;
-
-		return i;
+	return i;
 }
 
 
 
 unsigned parse_literal(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_literal_t* literal)
 {
 	parse_literal_t l;
 	l.kind = 0;
 
 	unsigned len = 0;
-	if (len == 0) len = parse_literal__character(src, ptr, &l);
-	if (len == 0) len = parse_literal__hollerith(src, ptr, &l);
-	if (len == 0) len = parse_literal__complex(src, ptr, &l);
-	if (len == 0) len = parse_literal__binary(src, ptr, &l);
-	if (len == 0) len = parse_literal__octal(src, ptr, &l);
-	if (len == 0) len = parse_literal__hex(src, ptr, &l);
-	if (len == 0) len = parse_literal__logical(src, ptr, &l);
-	if (len == 0) len = parse_literal__number(src, ptr, &l);
+	if (len == 0) len = parse_literal__character(src, ptr, debug, &l);
+	if (len == 0) len = parse_literal__hollerith(src, ptr, debug, &l);
+	if (len == 0) len = parse_literal__complex(src, ptr, debug, &l);
+	if (len == 0) len = parse_literal__binary(src, ptr, debug, &l);
+	if (len == 0) len = parse_literal__octal(src, ptr, debug, &l);
+	if (len == 0) len = parse_literal__hex(src, ptr, debug, &l);
+	if (len == 0) len = parse_literal__logical(src, ptr, debug, &l);
+	if (len == 0) len = parse_literal__number(src, ptr, debug, &l);
 
 	if (len == 0)
 		return 0;
@@ -551,16 +577,22 @@ bool parse_literal_clone(
 
 unsigned parse_unsigned(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* value)
 {
+	unsigned dpos = parse_debug_position(debug);
+
 	uint64_t u;
 	unsigned len = parse_literal__base(
-		src, ptr, 10, false, &u);
+		src, ptr, debug, 10, false, &u);
 	if (len == 0) return 0;
 
 	unsigned v = (unsigned)u;
 	if ((uint64_t)v != u)
+	{
+		parse_debug_rewind(debug, dpos);
 		return 0;
+	}
 
 	*value = v;
 	return len;

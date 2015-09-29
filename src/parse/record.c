@@ -3,6 +3,7 @@
 
 static parse_record_t* parse_record(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len)
 {
 	unsigned i = 0;
@@ -14,7 +15,10 @@ static parse_record_t* parse_record(
 			sizeof(parse_record_t));
 	if (!record) return NULL;
 
-	unsigned l = parse_name(src, &ptr[i],
+	unsigned dpos = parse_debug_position(debug);
+
+	unsigned l = parse_name(
+		src, &ptr[i], debug,
 		&record->structure);
 	if (l == 0)
 	{
@@ -26,14 +30,17 @@ static parse_record_t* parse_record(
 	if (ptr[i++] != '/')
 	{
 		free(record);
+		parse_debug_rewind(debug, dpos);
 		return NULL;
 	}
 
-	l = parse_name(src, &ptr[i],
+	l = parse_name(
+		src, &ptr[i], debug,
 		&record->name);
 	if (l == 0)
 	{
 		free(record);
+		parse_debug_rewind(debug, dpos);
 		return NULL;
 	}
 	i += l;
@@ -67,6 +74,7 @@ static bool parse_record_print(
 
 parse_record_list_t* parse_record_list(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len)
 {
 	parse_record_list_t* list
@@ -77,7 +85,8 @@ parse_record_list_t* parse_record_list(
 	list->count = 0;
 	list->record = NULL;
 
-	unsigned i = parse_list(src, ptr, ',',
+	unsigned i = parse_list(
+		src, ptr, debug, ',',
 		&list->count, (void***)&list->record,
 		(void*)parse_record,
 		(void*)parse_record_delete);

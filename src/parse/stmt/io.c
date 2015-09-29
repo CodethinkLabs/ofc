@@ -37,12 +37,15 @@ int fd, int key_val)
 
 static unsigned parse_stmt__io(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_keyword_e keyword, bool iolist,
 	bool force_brackets,
 	parse_stmt_t* stmt)
 {
+	unsigned dpos = parse_debug_position(debug);
+
 	unsigned i = parse_keyword(
-		src, ptr, keyword);
+		src, ptr, debug, keyword);
 	if (i == 0) return 0;
 
 	stmt->io.params = NULL;
@@ -52,26 +55,32 @@ static unsigned parse_stmt__io(
 
 		unsigned len;
 		stmt->io.params = parse_call_arg_list_named(
-			src, &ptr[i], &len);
+			src, &ptr[i], debug, &len);
 		if (stmt->io.params) i += len;
 
 		if (ptr[i++] != ')')
 		{
 			parse_call_arg_list_delete(
 				stmt->io.params);
+			parse_debug_rewind(debug, dpos);
 			return 0;
 		}
 	}
 	else if (force_brackets)
 	{
+		parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	else
 	{
 		unsigned len;
 		parse_call_arg_t* unit
-			= parse_call_arg(src, &ptr[i], &len);
-		if (!unit) return 0;
+			= parse_call_arg(src, &ptr[i], debug, &len);
+		if (!unit)
+		{
+			parse_debug_rewind(debug, dpos);
+			return 0;
+		}
 		i += len;
 
 		if (ptr[i] == ',')
@@ -81,6 +90,7 @@ static unsigned parse_stmt__io(
 		if (!stmt->io.params)
 		{
 			parse_call_arg_delete(unit);
+			parse_debug_rewind(debug, dpos);
 			return 0;
 		}
 	}
@@ -90,7 +100,7 @@ static unsigned parse_stmt__io(
 	{
 		unsigned len;
 		stmt->io.iolist = parse_iolist(
-			src, &ptr[i], &len);
+			src, &ptr[i], debug, &len);
 		if (stmt->io.iolist) i += len;
 	}
 
@@ -143,10 +153,11 @@ bool parse_stmt_print_print(
 
 unsigned parse_stmt_io_open(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_stmt_t* stmt)
 {
 	unsigned i = parse_stmt__io(
-		src, ptr,
+		src, ptr, debug,
 		PARSE_KEYWORD_OPEN, false, true,
 		stmt);
 	if (i == 0) return 0;
@@ -157,10 +168,11 @@ unsigned parse_stmt_io_open(
 
 unsigned parse_stmt_io_inquire(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_stmt_t* stmt)
 {
 	unsigned i = parse_stmt__io(
-		src, ptr,
+		src, ptr, debug,
 		PARSE_KEYWORD_INQUIRE, false, true,
 		stmt);
 	if (i == 0) return 0;
@@ -171,10 +183,11 @@ unsigned parse_stmt_io_inquire(
 
 unsigned parse_stmt_io_rewind(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_stmt_t* stmt)
 {
 	unsigned i = parse_stmt__io(
-		src, ptr,
+		src, ptr, debug,
 		PARSE_KEYWORD_REWIND, false, false,
 		stmt);
 	if (i == 0) return 0;
@@ -185,10 +198,11 @@ unsigned parse_stmt_io_rewind(
 
 unsigned parse_stmt_io_backspace(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_stmt_t* stmt)
 {
 	unsigned i = parse_stmt__io(
-		src, ptr,
+		src, ptr, debug,
 		PARSE_KEYWORD_BACKSPACE, false, false,
 		stmt);
 	if (i == 0) return 0;
@@ -199,10 +213,11 @@ unsigned parse_stmt_io_backspace(
 
 unsigned parse_stmt_io_read(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_stmt_t* stmt)
 {
 	unsigned i = parse_stmt__io(
-		src, ptr,
+		src, ptr, debug,
 		PARSE_KEYWORD_READ, true, false,
 		stmt);
 	if (i == 0) return 0;
@@ -213,10 +228,11 @@ unsigned parse_stmt_io_read(
 
 unsigned parse_stmt_io_write(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_stmt_t* stmt)
 {
 	unsigned i = parse_stmt__io(
-		src, ptr,
+		src, ptr, debug,
 		PARSE_KEYWORD_WRITE, true, false,
 		stmt);
 	if (i == 0) return 0;
@@ -227,10 +243,11 @@ unsigned parse_stmt_io_write(
 
 unsigned parse_stmt_io_end_file(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_stmt_t* stmt)
 {
 	unsigned i = parse_stmt__io(
-		src, ptr,
+		src, ptr, debug,
 		PARSE_KEYWORD_END_FILE, false, false,
 		stmt);
 	if (i == 0) return 0;
@@ -241,10 +258,11 @@ unsigned parse_stmt_io_end_file(
 
 unsigned parse_stmt_io_close(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_stmt_t* stmt)
 {
 	unsigned i = parse_stmt__io(
-		src, ptr,
+		src, ptr, debug,
 		PARSE_KEYWORD_CLOSE, false, true,
 		stmt);
 	if (i == 0) return 0;
@@ -255,10 +273,11 @@ unsigned parse_stmt_io_close(
 
 unsigned parse_stmt_io_encode(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_stmt_t* stmt)
 {
 	unsigned i = parse_stmt__io(
-		src, ptr,
+		src, ptr, debug,
 		PARSE_KEYWORD_ENCODE, true, true,
 		stmt);
 	if (i == 0) return 0;
@@ -269,10 +288,11 @@ unsigned parse_stmt_io_encode(
 
 unsigned parse_stmt_io_decode(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_stmt_t* stmt)
 {
 	unsigned i = parse_stmt__io(
-		src, ptr,
+		src, ptr, debug,
 		PARSE_KEYWORD_DECODE, true, true,
 		stmt);
 	if (i == 0) return 0;
@@ -283,16 +303,20 @@ unsigned parse_stmt_io_decode(
 
 static unsigned parse_stmt_io__print_type(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_keyword_e keyword,
 	parse_stmt_t* stmt)
 {
+	unsigned dpos = parse_debug_position(debug);
+
 	unsigned i = parse_keyword(
-		src, ptr, keyword);
+		src, ptr, debug, keyword);
 	if (i == 0) return 0;
 
 	stmt->io_print.format_asterisk = false;
 	unsigned len = parse_label(
-		src, &ptr[i], &stmt->io_print.format);
+		src, &ptr[i], debug,
+		&stmt->io_print.format);
 	if (len == 0)
 	{
 		if (ptr[i] == '*')
@@ -302,6 +326,7 @@ static unsigned parse_stmt_io__print_type(
 		}
 		else
 		{
+			parse_debug_rewind(debug, dpos);
 			return 0;
 		}
 	}
@@ -313,8 +338,12 @@ static unsigned parse_stmt_io__print_type(
 		i += 1;
 
 		stmt->io_print.iolist = parse_iolist(
-			src, &ptr[i], &len);
-		if (!stmt->io_print.iolist) return 0;
+			src, &ptr[i], debug, &len);
+		if (!stmt->io_print.iolist)
+		{
+			parse_debug_rewind(debug, dpos);
+			return 0;
+		}
 		i += len;
 	}
 
@@ -327,10 +356,11 @@ static unsigned parse_stmt_io__print_type(
    because the brackets disambiguate it. */
 unsigned parse_stmt_io_print_type(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	parse_stmt_t* stmt)
 {
 	return parse_stmt_io__print_type(
-		src, ptr, (ptr[0] == 'P'
+		src, ptr, debug, (ptr[0] == 'P'
 			? PARSE_KEYWORD_PRINT
 			: PARSE_KEYWORD_TYPE), stmt);
 }

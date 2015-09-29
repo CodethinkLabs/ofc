@@ -29,6 +29,7 @@ static const unsigned OPERATOR_PRECEDENCE_MAX = 11;
 
 unsigned parse_operator(
 	const sparse_t* sparse, const char* ptr,
+	parse_debug_t* debug,
 	parse_operator_e* operator);
 
 bool parse_operator_unary(

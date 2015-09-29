@@ -55,10 +55,12 @@ struct parse_expr_list_s
 /* Returns a literal wrapped in an expression type. */
 parse_expr_t* parse_expr_literal(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len);
 
 parse_expr_t* parse_expr(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len);
 
 void parse_expr_delete(
@@ -71,6 +73,7 @@ bool parse_expr_print(
 
 parse_expr_list_t* parse_expr_list(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len);
 void parse_expr_list_delete(
 	parse_expr_list_t* list);

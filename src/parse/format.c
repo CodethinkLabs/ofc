@@ -46,6 +46,7 @@ static const parse_format_desc__map_t parse_format_desc__map[] =
 
 parse_format_desc_t* parse_format_desc(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len)
 {
 	parse_format_desc_t* desc
@@ -53,8 +54,10 @@ parse_format_desc_t* parse_format_desc(
 			sizeof(parse_format_desc_t));
 	if (!desc) return NULL;
 
+	unsigned dpos = parse_debug_position(debug);
+
 	unsigned i = parse_hollerith(
-		src, ptr, &desc->string);
+		src, ptr, debug, &desc->string);
 	if (i > 0)
 	{
 		desc->neg  = false;
@@ -70,11 +73,12 @@ parse_format_desc_t* parse_format_desc(
 		i += 1;
 
 	unsigned l, n = 0;
-	l = parse_unsigned(src, &ptr[i], &n);
+	l = parse_unsigned(
+		src, &ptr[i], debug, &n);
 	i = (l > 0 ? i + l : 0);
 
 	l = parse_character(
-		src, &ptr[i], &desc->string);
+		src, &ptr[i], debug, &desc->string);
 	if (l > 0)
 	{
 		desc->neg  = negative;
@@ -91,7 +95,7 @@ parse_format_desc_t* parse_format_desc(
 
 		unsigned l;
 		desc->repeat = parse_format_desc_list(
-			src, &ptr[i], &l);
+			src, &ptr[i], debug, &l);
 		if (desc->repeat) i += l;
 
 		desc->neg = negative;
@@ -103,6 +107,7 @@ parse_format_desc_t* parse_format_desc(
 			parse_format_desc_list_delete(
 				desc->repeat);
 			free(desc);
+			parse_debug_rewind(debug, dpos);
 			return NULL;
 		}
 
@@ -123,6 +128,7 @@ parse_format_desc_t* parse_format_desc(
 	if (!map.name)
 	{
 		free(desc);
+		parse_debug_rewind(debug, dpos);
 		return NULL;
 	}
 	i += l;
@@ -131,7 +137,7 @@ parse_format_desc_t* parse_format_desc(
 	if (map.w)
 	{
 		i += parse_unsigned(
-			src, &ptr[i], &w);
+			src, &ptr[i], debug, &w);
 	}
 
 	unsigned d = 0;
@@ -139,7 +145,7 @@ parse_format_desc_t* parse_format_desc(
 	{
 		i += 1;
 		i += parse_unsigned(
-			src, &ptr[i], &d);
+			src, &ptr[i], debug, &d);
 	}
 
 	unsigned e = 0;
@@ -147,7 +153,7 @@ parse_format_desc_t* parse_format_desc(
 	{
 		i += 1;
 		i += parse_unsigned(
-			src, &ptr[i], &e);
+			src, &ptr[i], debug, &e);
 	}
 
 	desc->type = map.type;
@@ -265,6 +271,7 @@ bool parse_format_desc_print(
 
 parse_format_desc_list_t* parse_format_desc_list(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len)
 {
 	parse_format_desc_list_t* list
@@ -276,7 +283,7 @@ parse_format_desc_list_t* parse_format_desc_list(
 	list->desc  = NULL;
 
 	unsigned i = parse_list_seperator_optional(
-		src, ptr, ',',
+		src, ptr, debug, ',',
 		&list->count, (void***)&list->desc,
 		(void*)parse_format_desc,
 		(void*)parse_format_desc_delete);
