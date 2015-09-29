@@ -6,6 +6,7 @@
 #include "file.h"
 #include "prep.h"
 #include "parse/file.h"
+#include "reformat.h"
 
 void print_usage(const char* name)
 {
@@ -18,18 +19,18 @@ void print_usage(const char* name)
 	printf("  -case-sen                             selects case sensitivity, defaults to false\n");
 }
 
-const char *get_filename_ext(const char *file_name) {
-	if (!file_name)
+const char *get_file_ext(const char *path) {
+	if (!path)
 		return NULL;
 
 	const char *dot = NULL;
 	unsigned i;
-	for (i = 0; file_name[i] != '\0'; i++)
+	for (i = 0; path[i] != '\0'; i++)
 	{
-		if (file_name[i] == '/')
+		if (path[i] == '/')
 			dot = NULL;
-		else if (file_name[i] == '.')
-			dot = &file_name[i];
+		else if (path[i] == '.')
+			dot = &path[i];
 	}
   return (dot ? &dot[1] : NULL);
 }
@@ -149,7 +150,7 @@ int main(int argc, const char* argv[])
 
 	const char* path = argv[argc - 1];
 
-	const char* source_file_ext = get_filename_ext(path);
+	const char* source_file_ext = get_file_ext(path);
 
 	lang_opts_t opts = LANG_OPTS_F77;
 
@@ -219,13 +220,18 @@ int main(int argc, const char* argv[])
 		return EXIT_FAILURE;
 	}
 
+	FILE *print_f90 = tmpfile();
+
 	if (!parse_stmt_list_print(
-		STDOUT_FILENO, program, 0))
+		fileno(print_f90), program, 0))
 	{
 		fprintf(stderr, "Error: Failed to reprint program\n");
 		sparse_delete(condense);
 		return EXIT_FAILURE;
 	}
+
+	rewind(print_f90);
+	parse_reformat_print(print_f90);
 
 	parse_stmt_list_delete(program);
 	sparse_delete(condense);
