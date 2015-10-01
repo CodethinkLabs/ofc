@@ -24,7 +24,7 @@ typedef struct
 
 	union
 	{
-		string_t string;
+		string_t* string;
 
 		str_ref_t number;
 
@@ -38,14 +38,13 @@ typedef struct
 } parse_literal_t;
 
 
-unsigned parse_hollerith(
+string_t* parse_hollerith(
 	const sparse_t* src, const char* ptr,
 	parse_debug_t* debug,
-	string_t* string);
-unsigned parse_character(
+	unsigned* len);
+string_t* parse_character(
 	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	string_t* string);
+	unsigned* len);
 
 unsigned parse_literal_number(
 	const sparse_t* src, const char* ptr,

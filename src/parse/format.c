@@ -60,8 +60,10 @@ parse_format_desc_t* parse_format_desc(
 
 	unsigned dpos = parse_debug_position(debug);
 
-	unsigned i = parse_hollerith(
-		src, ptr, debug, &desc->string);
+	unsigned i = 0;
+	desc->string = parse_hollerith(
+		src, ptr, debug, &i);
+
 	if (i > 0)
 	{
 		desc->neg  = false;
@@ -81,9 +83,9 @@ parse_format_desc_t* parse_format_desc(
 		src, &ptr[i], debug, &n);
 	i = (l > 0 ? i + l : 0);
 
-	l = parse_character(
-		src, &ptr[i], debug, &desc->string);
-	if (l > 0)
+	desc->string = parse_character(
+		src, &ptr[i], debug, &l);
+	if (desc->string)
 	{
 		desc->neg  = negative;
 		desc->n    = n;

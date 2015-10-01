@@ -197,27 +197,27 @@ static unsigned parse_literal__hex(
 	return i;
 }
 
-unsigned parse_hollerith(
+string_t* parse_hollerith(
 	const sparse_t* src, const char* ptr,
 	parse_debug_t* debug,
-	string_t* string)
+	unsigned* len)
 {
 	unsigned holl_len;
 	unsigned i = parse_unsigned(
-		src, ptr, debug, &holl_len);
-	if (i == 0) return 0;
+		src, ptr, &holl_len);
+	if (i == 0) return NULL;
 
 	if (toupper(ptr[i]) != 'H')
-		return 0;
+		return NULL;
 
 	const char* pptr
 		= sparse_parent_pointer(src, &ptr[i]);
-	if (!pptr) return 0;
+	if (!pptr) return NULL;
 	i += 1;
 
-	*string = string_create(NULL, holl_len);
-	if (string_empty(*string))
-		return 0;
+	string_t* string
+		= string_create(NULL, holl_len);
+	if (!string) return NULL;
 
 	unsigned j, holl_pos;
 	for (j = 1, holl_pos = 0; holl_pos < holl_len; j++)
@@ -239,7 +239,8 @@ unsigned parse_hollerith(
 			string->base[holl_pos++] = ' ';
 	}
 
-	return i;
+	if (len) *len = i;
+	return string;
 }
 
 static unsigned parse_literal__hollerith(
@@ -247,8 +248,10 @@ static unsigned parse_literal__hollerith(
 	parse_debug_t* debug,
 	parse_literal_t* literal)
 {
-	unsigned len = parse_hollerith(
-		src, ptr, debug, &literal->string);
+	unsigned len = 0;
+	literal->string = parse_hollerith(
+		src, ptr, debug, &len);
+
 	if (len == 0) return 0;
 
 	literal->type = PARSE_LITERAL_HOLLERITH;
@@ -256,21 +259,21 @@ static unsigned parse_literal__hollerith(
 }
 
 
-unsigned parse_character(
+string_t* parse_character(
 	const sparse_t* src, const char* ptr,
 	parse_debug_t* debug,
-	string_t* string)
+	unsigned* len)
 {
 	unsigned i = 0;
 
 	char quote = ptr[i];
 	if ((quote != '\"')
 		&& (quote != '\''))
-		return 0;
+		return NULL;
 
 	const char* pptr
 		= sparse_parent_pointer(src, &ptr[i]);
-	if (!pptr) return 0;
+	if (!pptr) return NULL;
 
 	/* Skip to the end of condense string-> */
 	bool is_escaped = false;
@@ -289,9 +292,8 @@ unsigned parse_character(
 	}
 	if (ptr[i++] != quote)
 	{
-		sparse_error(src, ptr,
-			"Unterminated string");
-		return 0;
+		sparse_error(src, ptr, "Unterminated string");
+		return NULL;
 	}
 
 	unsigned str_len = 0;
@@ -305,7 +307,7 @@ unsigned parse_character(
 		{
 			sparse_error(src, ptr,
 				"Unexpected end of line in character constant");
-			return 0;
+			return NULL;
 		}
 
 		if (!is_escaped)
@@ -341,9 +343,8 @@ unsigned parse_character(
 	unsigned str_pos = 0;
 	unsigned str_end = j;
 
-	*string = string_create(NULL, str_len);
-	if ((str_len > 0) && string_empty(*string))
-		return 0;
+	string_t* string = string_create(NULL, str_len);
+	if (!string) return NULL;
 
 	for(j = 1, is_escaped = false; j < str_end; j++)
 	{
@@ -404,7 +405,8 @@ unsigned parse_character(
 		}
 	}
 
-	return i;
+	if (len) *len = i;
+	return string;
 }
 
 static unsigned parse_literal__character(
@@ -412,9 +414,10 @@ static unsigned parse_literal__character(
 	parse_debug_t* debug,
 	parse_literal_t* literal)
 {
-	unsigned len = parse_character(
-		src, ptr, debug, &literal->string);
-	if (len == 0) return 0;
+	unsigned len = 0;
+	literal->string = parse_character(
+		src, ptr, debug, &len);
+	if (!literal->string) return 0;
 
 	literal->type = PARSE_LITERAL_CHARACTER;
 	return len;

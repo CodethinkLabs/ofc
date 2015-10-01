@@ -49,7 +49,7 @@ struct parse_format_desc_s
 			unsigned w, d, e;
 		};
 
-		string_t string;
+		string_t* string;
 
 		parse_format_desc_list_t* repeat;
 	};
