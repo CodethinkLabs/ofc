@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 
 string_t string_create(const char* base, unsigned size)
@@ -62,6 +63,40 @@ bool string_equal(const string_t a, const string_t b)
 		return true;
 
 	return (memcmp(a.base, b.base, a.size) == 0);
+}
+
+bool string_printf(string_t string, const char* format, ...)
+{
+	va_list args;
+
+	while (1)
+	{
+		unsigned avalible_space = string.size - strlen(string.base);
+
+		va_start(args, format);
+		int chars_written = vsprintf(string.base, format, args);
+		va_end(args);
+
+		if (chars_written < 0) return false;
+
+		if ((unsigned)chars_written < avalible_space) return true;
+
+		unsigned new_size = string.size * 2;
+		while (new_size < (string.size + chars_written + 1))
+			new_size = new_size * 2;
+
+		char* new_base = (char *)realloc (string.base, new_size);
+
+		if (new_base)
+		{
+			string.size = new_size;
+			string.base = new_base;
+		}
+		else
+		{
+			return false;
+		}
+	}
 }
 
 bool string_print(int fd, const string_t string)
