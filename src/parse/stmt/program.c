@@ -283,7 +283,7 @@ unsigned parse_stmt_block_data(
 
 
 bool parse_stmt_program_print(
-	int fd, const parse_stmt_t* stmt, unsigned indent)
+	string_t* tree_output, const parse_stmt_t* stmt, unsigned indent)
 {
 	if (!stmt) return false;
 
@@ -300,9 +300,8 @@ bool parse_stmt_program_print(
 
 	if (stmt->program.type)
 	{
-		if (!parse_type_print(
-			fd, stmt->program.type)
-			|| !dprintf_bool(fd, " "))
+		if (!parse_type_print(tree_output, stmt->program.type)
+			|| !string_printf(tree_output, " "))
 			return false;
 	}
 
@@ -328,54 +327,54 @@ bool parse_stmt_program_print(
 			return false;
 	}
 
-	if (!dprintf_bool(fd, "%s", kwstr))
+	if (!string_printf(tree_output, "%s", kwstr))
 				return false;
 
     if (!str_ref_empty(stmt->program.name))
 	{
-		if (!dprintf_bool(fd, " ")
-			|| !str_ref_print(fd, stmt->program.name))
+		if (!string_printf(tree_output, " ")
+			|| !str_ref_print(tree_output, stmt->program.name))
 			return false;
 	}
 
 	if (has_args)
 	{
-		if (!dprintf_bool(fd, "("))
+		if (!string_printf(tree_output, "("))
 			return false;
 
 		if (stmt->program.args
 			&& !parse_call_arg_list_print(
-				fd, stmt->program.args))
+				tree_output, stmt->program.args))
 			return false;
 
-		if (!dprintf_bool(fd, ")"))
+		if (!string_printf(tree_output, ")"))
 			return false;
 	}
 
-	if (!dprintf_bool(fd, "\n"))
+	if (!string_printf(tree_output, "\n"))
 		return false;
 
 	if (stmt->program.body
 		&& !parse_stmt_list_print(
-			fd, stmt->program.body, (indent + 1)))
+			tree_output, stmt->program.body, (indent + 1)))
 		return false;
 
-	if (!dprintf_bool(fd, "      "))
+	if (!string_printf(tree_output, "      "))
 			return false;
 	unsigned i;
 	for (i = 0; i < indent; i++)
 	{
-		if (!dprintf_bool(fd, "  "))
+		if (!string_printf(tree_output, "  "))
 			return false;
 	}
 
-	if (!dprintf_bool(fd, "END %s", kwstr))
+	if (!string_printf(tree_output, "END %s", kwstr))
 				return false;
 
 	if (!str_ref_empty(stmt->program.name))
 	{
-		if (!dprintf_bool(fd, " ")
-			|| !str_ref_print(fd, stmt->program.name))
+		if (!string_printf(tree_output, " ")
+			|| !str_ref_print(tree_output, stmt->program.name))
 			return false;
 	}
 

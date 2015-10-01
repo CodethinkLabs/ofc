@@ -1,6 +1,8 @@
 #ifndef __parse_list_h__
 #define __parse_list_h__
 
+#include "../string.h"
+
 unsigned parse_list(
 	const sparse_t* sparse, const char* ptr,
 	parse_debug_t* debug,
@@ -26,8 +28,8 @@ void parse_list_delete(
 	void (*elem_delete)(void*));
 
 bool parse_list_print(
-	int fd,
+	string_t* tree_output,
 	unsigned elem_count, const void** elem,
-	bool (*elem_print)(int, const void*));
+	bool (*elem_print)(string_t*, const void*));
 
 #endif

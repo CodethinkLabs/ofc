@@ -28,7 +28,7 @@ void parse_array_index_delete(
 	parse_array_index_t* index);
 
 bool parse_array_index_print(
-	int fd, const parse_array_index_t* index);
+	string_t* tree_output, const parse_array_index_t* index);
 
 
 #endif

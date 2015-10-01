@@ -118,7 +118,7 @@ static parse_array_range_t* parse_array__range_copy(
 }
 
 static bool parse_array__range_print(
-	int fd, const parse_array_range_t* range)
+	string_t* tree_output, const parse_array_range_t* range)
 {
 	if (!range)
 		return false;
@@ -126,27 +126,27 @@ static bool parse_array__range_print(
 	if (range->first)
 	{
 		if (!parse_expr_print(
-			fd, range->first))
+			tree_output, range->first))
 			return false;
 	}
 
 	if (range->is_slice)
 	{
-		if (!dprintf_bool(fd, ":"))
+		if (!string_printf(tree_output, ":"))
 			return false;
 
 		if (range->last)
 		{
 			if (!parse_expr_print(
-				fd, range->last))
+				tree_output, range->last))
 				return false;
 		}
 
 		if (range->stride)
 		{
-			if (!dprintf_bool(fd, ":")
+			if (!string_printf(tree_output, ":")
 				|| !parse_expr_print(
-					fd, range->stride))
+					tree_output, range->stride))
 				return false;
 		}
 	}
@@ -245,26 +245,26 @@ void parse_array_index_delete(
 }
 
 bool parse_array_index_print(
-	int fd, const parse_array_index_t* index)
+	string_t* tree_output, const parse_array_index_t* index)
 {
 	if (!index)
 		return false;
 
-	if (!dprintf_bool(fd, "("))
+	if (!string_printf(tree_output, "("))
 		return false;
 
 	unsigned i;
 	for (i = 0; i < index->count; i++)
 	{
-		if ((i > 0) && !dprintf_bool(fd, ", "))
+		if ((i > 0) && !string_printf(tree_output, ", "))
 			return false;
 
 		if (!parse_array__range_print(
-			fd, index->range[i]))
+			tree_output, index->range[i]))
 			return false;
 	}
 
-	if (!dprintf_bool(fd, ")"))
+	if (!string_printf(tree_output, ")"))
 		return false;
 
 	return true;

@@ -108,19 +108,19 @@ void parse_assign_delete(
 }
 
 bool parse_assign_print(
-	int fd, const parse_assign_t* assign)
+	string_t* tree_output, const parse_assign_t* assign)
 {
 	if (!assign)
 		return false;
 
 	if (!parse_lhs_print(
-		fd, assign->name))
+		tree_output, assign->name))
 		return false;
 
 	if (assign->init)
 	{
-		if (!dprintf_bool(fd, " = ")
-			|| !parse_expr_print(fd, assign->init))
+		if (!string_printf(tree_output, " = ")
+			|| !parse_expr_print(tree_output, assign->init))
 			return false;
 	}
 
@@ -194,7 +194,7 @@ void parse_assign_list_delete(
 }
 
 bool parse_assign_list_print(
-	int fd, const parse_assign_list_t* list)
+	string_t* tree_output, const parse_assign_list_t* list)
 {
 	if (!list)
 		return false;
@@ -202,11 +202,11 @@ bool parse_assign_list_print(
 	unsigned i;
 	for (i = 0; i < list->count; i++)
 	{
-		if ((i > 0) && (!dprintf_bool(fd, ", ")))
+		if ((i > 0) && (!string_printf(tree_output, ", ")))
 			return false;
 
 		if (!parse_assign_print(
-			fd, list->assign[i]))
+			tree_output, list->assign[i]))
 			return false;
 	}
 

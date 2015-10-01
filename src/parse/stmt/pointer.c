@@ -27,9 +27,9 @@ unsigned parse_stmt_pointer(
 }
 
 bool parse_stmt_pointer_print(
-	int fd, const parse_stmt_t* stmt)
+	string_t* tree_output, const parse_stmt_t* stmt)
 {
-	return (stmt && dprintf_bool(fd, "POINTER ")
+	return (stmt && string_printf(tree_output, "POINTER ")
 		&& parse_pointer_list_print(
-			fd, stmt->pointer));
+			tree_output, stmt->pointer));
 }

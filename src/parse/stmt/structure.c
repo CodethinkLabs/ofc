@@ -139,7 +139,7 @@ unsigned parse_stmt_record(
 
 
 bool parse_stmt_structure_print(
-	int fd, const parse_stmt_t* stmt, unsigned indent)
+	string_t* tree_output, const parse_stmt_t* stmt, unsigned indent)
 {
 	if (!stmt)
 		return false;
@@ -160,43 +160,43 @@ bool parse_stmt_structure_print(
 			return false;
 	}
 
-	if (!dprintf_bool(fd, "%s", kwstr))
+	if (!string_printf(tree_output, "%s", kwstr))
 		return false;
 
 	if (!str_ref_empty(stmt->structure.name))
 	{
-		if (!dprintf_bool(fd, " /")
-			|| !str_ref_print(fd, stmt->structure.name)
-			|| !dprintf_bool(fd, "/"))
+		if (!string_printf(tree_output, " /")
+			|| !str_ref_print(tree_output, stmt->structure.name)
+			|| !string_printf(tree_output, "/"))
 			return false;
 	}
 
-	if (!dprintf_bool(fd, "\n"))
+	if (!string_printf(tree_output, "\n"))
 		return false;
 
 	if (!parse_stmt_list_print(
-		fd, stmt->structure.block, (indent + 1)))
+		tree_output, stmt->structure.block, (indent + 1)))
 		return false;
 
-	if (!dprintf_bool(fd, "      "))
+	if (!string_printf(tree_output, "      "))
 		return false;
 
 	unsigned j;
 	for (j = 0; j < indent; j++)
 	{
-		if (!dprintf_bool(fd, "  "))
+		if (!string_printf(tree_output, "  "))
 			return false;
 	}
 
-	return dprintf_bool(fd, "END %s", kwstr);
+	return string_printf(tree_output, "END %s", kwstr);
 }
 
 bool parse_stmt_record_print(
-	int fd, const parse_stmt_t* stmt)
+	string_t* tree_output, const parse_stmt_t* stmt)
 {
 	if (!stmt)
 		return false;
 
-	return (dprintf_bool(fd, "RECORD ")
-		&& parse_record_list_print(fd, stmt->record));
+	return (string_printf(tree_output, "RECORD ")
+		&& parse_record_list_print(tree_output, stmt->record));
 }

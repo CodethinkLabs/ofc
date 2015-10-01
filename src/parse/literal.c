@@ -204,20 +204,18 @@ string_t* parse_hollerith(
 {
 	unsigned holl_len;
 	unsigned i = parse_unsigned(
-		src, ptr, &holl_len);
+		src, ptr, debug, &holl_len);
 	if (i == 0) return NULL;
 
 	if (toupper(ptr[i]) != 'H')
 		return NULL;
 
+    char s[holl_len + 1];
+
 	const char* pptr
 		= sparse_parent_pointer(src, &ptr[i]);
 	if (!pptr) return NULL;
 	i += 1;
-
-	string_t* string
-		= string_create(NULL, holl_len);
-	if (!string) return NULL;
 
 	unsigned j, holl_pos;
 	for (j = 1, holl_pos = 0; holl_pos < holl_len; j++)
@@ -230,14 +228,20 @@ string_t* parse_hollerith(
 		if (ptr[i] == pptr[j])
 			i++;
 
-		string->base[holl_pos++] = pptr[j];
+		s[holl_pos++] = pptr[j];
 	}
 
 	if (holl_pos < holl_len)
 	{
 		while (holl_pos < holl_len)
-			string->base[holl_pos++] = ' ';
+			s[holl_pos++] = ' ';
 	}
+
+    s[holl_pos] = '\0';
+
+    string_t* string
+		= string_create(s, holl_len);
+	if (!string) return NULL;
 
 	if (len) *len = i;
 	return string;
@@ -667,42 +671,42 @@ unsigned parse_unsigned(
 
 
 bool parse_literal_print(
-	int fd, const parse_literal_t literal)
+	string_t* tree_output, const parse_literal_t literal)
 {
 	switch (literal.type)
 	{
 		case PARSE_LITERAL_NUMBER:
 			return str_ref_print(
-				fd, literal.number);
+				tree_output, literal.number);
 		case PARSE_LITERAL_BINARY:
-			return (dprintf_bool(fd, "B\"")
-				&& str_ref_print(fd, literal.number)
-				&& dprintf_bool(fd, "\""));
+			return (string_printf(tree_output, "B\"")
+				&& str_ref_print(tree_output, literal.number)
+				&& string_printf(tree_output, "\""));
 		case PARSE_LITERAL_OCTAL:
-			return (dprintf_bool(fd, "O\"")
-				&& str_ref_print(fd, literal.number)
-				&& dprintf_bool(fd, "\""));
+			return (string_printf(tree_output, "O\"")
+				&& str_ref_print(tree_output, literal.number)
+				&& string_printf(tree_output, "\""));
 		case PARSE_LITERAL_HEX:
-			return (dprintf_bool(fd, "Z\"")
-				&& str_ref_print(fd, literal.number)
-				&& dprintf_bool(fd, "\""));
+			return (string_printf(tree_output, "Z\"")
+				&& str_ref_print(tree_output, literal.number)
+				&& string_printf(tree_output, "\""));
 		case PARSE_LITERAL_HOLLERITH:
-			return (dprintf_bool(fd, "%uH",
+			return (string_printf(tree_output, "%uH",
 				string_length(literal.string))
-				&& string_print(fd, literal.string));
+				&& string_append(tree_output, literal.string));
 		case PARSE_LITERAL_CHARACTER:
-			return (dprintf_bool(fd, "\"")
-				&& string_print_escaped(
-					fd, literal.string)
-				&& dprintf_bool(fd, "\""));
+			return (string_printf(tree_output, "\"")
+				&& string_append_escaped(
+					tree_output, literal.string)
+				&& string_printf(tree_output, "\""));
 		case PARSE_LITERAL_COMPLEX:
-			return dprintf_bool(fd, "(%.*s, %.*s)",
+			return string_printf(tree_output, "(%.*s, %.*s)",
 				literal.complex.real.size,
 				literal.complex.real.base,
 				literal.complex.imaginary.size,
 				literal.complex.imaginary.base);
 		case PARSE_LITERAL_LOGICAL:
-			return dprintf_bool(fd, ".%s.",
+			return string_printf(tree_output, ".%s.",
 				(literal.logical
 					? "TRUE" : "FALSE"));
 		default:

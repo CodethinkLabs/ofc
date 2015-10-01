@@ -69,7 +69,7 @@ parse_expr_t* parse_expr_copy(
 	const parse_expr_t* expr);
 
 bool parse_expr_print(
-	int fd, const parse_expr_t* expr);
+	string_t* tree_output, const parse_expr_t* expr);
 
 parse_expr_list_t* parse_expr_list(
 	const sparse_t* src, const char* ptr,

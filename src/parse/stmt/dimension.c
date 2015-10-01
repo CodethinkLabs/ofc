@@ -47,11 +47,11 @@ unsigned parse_stmt_virtual(
 }
 
 bool parse_stmt_dimension_print(
-	int fd, const parse_stmt_t* stmt)
+	string_t* tree_output, const parse_stmt_t* stmt)
 {
 	if (!stmt)
 		return false;
 
-	return (dprintf_bool(fd, "DIMENSION ")
-		&& parse_lhs_list_print(fd, stmt->dimension));
+	return (string_printf(tree_output, "DIMENSION ")
+		&& parse_lhs_list_print(tree_output, stmt->dimension));
 }

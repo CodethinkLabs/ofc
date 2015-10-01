@@ -14,10 +14,11 @@ unsigned parse_stmt_include(
 		src, ptr, debug, PARSE_KEYWORD_INCLUDE);
 	if (i == 0) return 0;
 
-	string_t spath;
-	unsigned l = parse_character(
-		src, &ptr[i], debug, &spath);
-	if (l == 0)
+	unsigned l = 0;
+	string_t* spath = parse_character(
+		src, &ptr[i], debug, &l);
+
+	if (!spath)
 	{
 		parse_debug_rewind(debug, dpos);
 		return 0;
@@ -33,9 +34,9 @@ unsigned parse_stmt_include(
 	/* Don't rewind debug after this point because
 	   we know we have a valid include statement. */
 
-	char path[spath.size + 1];
-	memcpy(path, spath.base, spath.size);
-	path[spath.size] = '\0';
+	char path[spath->size + 1];
+	memcpy(path, spath->base, spath->size);
+	path[spath->size] = '\0';
 
 	const char* include_path = sparse_get_include(src);
 	char* rpath = sparse_include_path(src, path);
@@ -65,7 +66,7 @@ unsigned parse_stmt_include(
 }
 
 bool parse_stmt_include_print(
-	int fd, const parse_stmt_t* stmt)
+	string_t* tree_output, const parse_stmt_t* stmt)
 {
 	if (!stmt)
 		return false;
@@ -76,6 +77,6 @@ bool parse_stmt_include_print(
 		stmt->include.file);
 	if (!path) return false;
 
-	return dprintf_bool(
-		fd, "INCLUDE \'%s\'", path);
+	return string_printf(
+		tree_output, "INCLUDE \'%s\'", path);
 }

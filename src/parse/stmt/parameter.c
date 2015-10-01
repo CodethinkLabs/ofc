@@ -42,12 +42,12 @@ unsigned parse_stmt_parameter(
 }
 
 bool parse_stmt_parameter_print(
-	int fd, const parse_stmt_t* stmt)
+	string_t* tree_output, const parse_stmt_t* stmt)
 {
     if (!stmt)
 		return false;
 
-	return (dprintf_bool(fd, "PARAMETER ")
+	return (string_printf(tree_output, "PARAMETER ")
 		&& parse_assign_list_print(
-			fd, stmt->parameter.list));
+			tree_output, stmt->parameter.list));
 }

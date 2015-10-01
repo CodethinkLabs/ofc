@@ -21,14 +21,14 @@ static const struct entry io_stmt__keyword[] =
 };
 
 static bool parse_io__print_keyword(
-int fd, int key_val)
+string_t* tree_output, int key_val)
 {
 	int i;
 	for(i = 0; io_stmt__keyword[i].keyword != 0; i++)
 	{
 		if (io_stmt__keyword[i].key_val == key_val)
 		{
-			return dprintf_bool(fd, "%s",
+			return string_printf(tree_output, "%s",
         io_stmt__keyword[i].keyword);
 		}
 	}
@@ -108,26 +108,26 @@ static unsigned parse_stmt__io(
 }
 
 bool parse_stmt_io_print(
-	int fd, const parse_stmt_t* stmt)
+	string_t* tree_output, const parse_stmt_t* stmt)
 {
 	if (!stmt)
 		return false;
 
-	if (!parse_io__print_keyword(fd, stmt->type))
+	if (!parse_io__print_keyword(tree_output, stmt->type))
 		return false;
 
-	if (!dprintf_bool(fd, "(")
-		|| !parse_call_arg_list_print(fd, stmt->io.params)
-		|| !dprintf_bool(fd, ")"))
+	if (!string_printf(tree_output, "(")
+		|| !parse_call_arg_list_print(tree_output, stmt->io.params)
+		|| !string_printf(tree_output, ")"))
 		return false;
 
 	if (stmt->io.iolist)
-		parse_iolist_print(fd, stmt->io.iolist);
+		parse_iolist_print(tree_output, stmt->io.iolist);
 	return true;
 }
 
 bool parse_stmt_print_accept_print(
-	int fd, const parse_stmt_t* stmt)
+	string_t* tree_output, const parse_stmt_t* stmt)
 {
 	if (!stmt)
 		return false;
@@ -145,19 +145,19 @@ bool parse_stmt_print_accept_print(
 			return false;
 	}
 
-	if (!dprintf_bool(fd, "%s ", kwstr))
+	if (!string_printf(tree_output, "%s ", kwstr))
 		return false;
 
 	if (!(stmt->io_print.format_asterisk
-		? dprintf_bool(fd, "*")
-		: parse_label_print(fd, stmt->io_print.format)))
+		? string_printf(tree_output, "*")
+		: parse_label_print(tree_output, stmt->io_print.format)))
 		return false;
 
 	if (stmt->io_print.iolist)
 	{
-		if (!dprintf_bool(fd, ", ")
+		if (!string_printf(tree_output, ", ")
 			|| !parse_iolist_print(
-				fd, stmt->io_print.iolist))
+				tree_output, stmt->io_print.iolist))
 			return false;
 	}
 

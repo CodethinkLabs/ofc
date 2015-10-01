@@ -44,6 +44,7 @@ string_t* parse_hollerith(
 	unsigned* len);
 string_t* parse_character(
 	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
 	unsigned* len);
 
 unsigned parse_literal_number(
@@ -62,7 +63,7 @@ bool parse_literal_clone(
 	parse_literal_t* dst, const parse_literal_t* src);
 
 bool parse_literal_print(
-	int fd, const parse_literal_t literal);
+	string_t* tree_output, const parse_literal_t literal);
 
 unsigned parse_unsigned(
 	const sparse_t* src, const char* ptr,

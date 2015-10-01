@@ -59,15 +59,15 @@ static void parse_record_delete(
 }
 
 static bool parse_record_print(
-	int fd, const parse_record_t* record)
+	string_t* tree_output, const parse_record_t* record)
 {
 	if (!record)
 		return false;
 
-	return (dprintf_bool(fd, "/")
-		&& str_ref_print(fd, record->structure)
-		&& dprintf_bool(fd, "/ ")
-		&& parse_lhs_print(fd, record->name));
+	return (string_printf(tree_output, "/")
+		&& str_ref_print(tree_output, record->structure)
+		&& string_printf(tree_output, "/ ")
+		&& parse_lhs_print(tree_output, record->name));
 }
 
 
@@ -113,12 +113,12 @@ void parse_record_list_delete(
 }
 
 bool parse_record_list_print(
-	int fd, const parse_record_list_t* list)
+	string_t* tree_output, const parse_record_list_t* list)
 {
 	if (!list)
 		return false;
 
-	return parse_list_print(fd,
+	return parse_list_print(tree_output,
 		list->count, (const void**)list->record,
 		(void*)parse_record_print);
 }

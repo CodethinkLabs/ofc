@@ -14,10 +14,10 @@ unsigned parse_stmt_continue(
 }
 
 bool parse_stmt_continue_print(
-	int fd, const parse_stmt_t* stmt)
+	string_t* tree_output, const parse_stmt_t* stmt)
 {
 	if (!stmt)
 		return false;
 
-	return dprintf_bool(fd, "CONTINUE");
+	return string_printf(tree_output, "CONTINUE");
 }

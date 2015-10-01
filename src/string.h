@@ -7,6 +7,7 @@ typedef struct
 {
 	char*    base;
 	unsigned size;
+	unsigned max;
 } string_t;
 
 string_t* string_create(const char* base, unsigned size);
@@ -23,7 +24,7 @@ bool     string_equal(const string_t a, const string_t b);
 
 bool string_printf(string_t* string,	const char* format, ...);
 
-bool string_print(int fd, const string_t* string);
-bool string_print_escaped(int fd, const string_t* string);
+bool string_append(string_t* base_str, const string_t* append_str);
+bool string_append_escaped(string_t* base_str, const string_t* append_str);
 
 #endif

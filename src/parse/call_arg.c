@@ -120,15 +120,15 @@ void parse_call_arg_delete(
 }
 
 bool parse_call_arg_print(
-	int fd, const parse_call_arg_t* call_arg)
+	string_t* tree_output, const parse_call_arg_t* call_arg)
 {
 	if (!call_arg)
 		return false;
 
 	if (!str_ref_empty(call_arg->name))
 	{
-		if (!str_ref_print(fd, call_arg->name)
-			|| !dprintf_bool(fd, "="))
+		if (!str_ref_print(tree_output, call_arg->name)
+			|| !string_printf(tree_output, "="))
 			return false;
 	}
 
@@ -136,7 +136,7 @@ bool parse_call_arg_print(
 	{
 		case PARSE_CALL_ARG_RETURN:
 		case PARSE_CALL_ARG_ASTERISK:
-			if (!dprintf_bool(fd, "*"))
+			if (!string_printf(tree_output, "*"))
 				return false;
 			break;
 		default:
@@ -147,12 +147,12 @@ bool parse_call_arg_print(
 	{
 		case PARSE_CALL_ARG_RETURN:
 			if (!parse_label_print(
-				fd, call_arg->label))
+				tree_output, call_arg->label))
 				return false;
 			break;
 		case PARSE_CALL_ARG_EXPR:
 			if (!parse_expr_print(
-				fd, call_arg->expr))
+				tree_output, call_arg->expr))
 				return false;
 			break;
 		default:
@@ -258,9 +258,9 @@ void parse_call_arg_list_delete(
 }
 
 bool parse_call_arg_list_print(
-	int fd, const parse_call_arg_list_t* list)
+	string_t* tree_output, const parse_call_arg_list_t* list)
 {
 	return parse_list_print(
-		fd, list->count, (const void**)list->call_arg,
+		tree_output, list->count, (const void**)list->call_arg,
 		(void*)parse_call_arg_print);
 }

@@ -34,9 +34,9 @@ unsigned parse_stmt_decl(
 }
 
 bool parse_stmt_decl_print(
-	int fd, const parse_stmt_t* stmt)
+	string_t* tree_output, const parse_stmt_t* stmt)
 {
-	return (parse_type_print(fd, stmt->decl.type)
-		&& dprintf_bool(fd, " ")
-		&& parse_decl_list_print(fd, stmt->decl.decl));
+	return (parse_type_print(tree_output, stmt->decl.type)
+		&& string_printf(tree_output, " ")
+		&& parse_decl_list_print(tree_output, stmt->decl.decl));
 }

@@ -54,7 +54,7 @@ unsigned parse_stmt_namelist(
 }
 
 bool parse_stmt_common_namelist_print(
-	int fd, const parse_stmt_t* stmt)
+	string_t* tree_output, const parse_stmt_t* stmt)
 {
 	if (!stmt)
 		return false;
@@ -72,7 +72,7 @@ bool parse_stmt_common_namelist_print(
 			return false;
 	}
 
-	return (stmt && dprintf_bool(fd, "%s ", kwstr)
+	return (stmt && string_printf(tree_output, "%s  ", kwstr)
 		&& parse_common_group_list_print(
-			fd, stmt->common_namelist));
+			tree_output, stmt->common_namelist));
 }

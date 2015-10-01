@@ -20,7 +20,7 @@ parse_common_group_t* parse_common_group(
 void parse_common_group_delete(
 	parse_common_group_t* group);
 bool parse_common_group_print(
-	int fd, const parse_common_group_t* group);
+	string_t* tree_output, const parse_common_group_t* group);
 
 parse_common_group_list_t* parse_common_group_list(
 	const sparse_t* src, const char* ptr,
@@ -29,6 +29,6 @@ parse_common_group_list_t* parse_common_group_list(
 void parse_common_group_list_delete(
 	parse_common_group_list_t* list);
 bool parse_common_group_list_print(
-	int fd, const parse_common_group_list_t* list);
+	string_t* tree_output, const parse_common_group_list_t* list);
 
 #endif

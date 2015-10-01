@@ -21,7 +21,7 @@ parse_implicit_t* parse_implicit(
 void parse_implicit_delete(
 	parse_implicit_t* implicit);
 bool parse_implicit_print(
-	int fd, const parse_implicit_t* implicit);
+	string_t* tree_output, const parse_implicit_t* implicit);
 
 parse_implicit_list_t* parse_implicit_list(
 	const sparse_t* src, const char* ptr,
@@ -30,6 +30,6 @@ parse_implicit_list_t* parse_implicit_list(
 void parse_implicit_list_delete(
 	parse_implicit_list_t* list);
 bool parse_implicit_list_print(
-	int fd, const parse_implicit_list_t* list);
+	string_t* tree_output, const parse_implicit_list_t* list);
 
 #endif

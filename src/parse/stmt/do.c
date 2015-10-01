@@ -317,56 +317,56 @@ unsigned parse_stmt_do(
 
 
 bool parse_stmt__do_while_block_print(
-	int fd, const parse_stmt_t* stmt, unsigned indent)
+	string_t* tree_output, const parse_stmt_t* stmt, unsigned indent)
 {
-	if (!dprintf_bool(fd, "DO WHILE(")
-		|| !parse_expr_print(fd, stmt->do_while_block.cond)
-		|| !dprintf_bool(fd, ")\n"))
+	if (!string_printf(tree_output, "DO WHILE(")
+		|| !parse_expr_print(tree_output, stmt->do_while_block.cond)
+		|| !string_printf(tree_output, ")\n"))
 		return false;
 
 	if (stmt->do_while_block.block && !parse_stmt_list_print(
-		fd, stmt->do_while_block.block, (indent + 1)))
+		tree_output, stmt->do_while_block.block, (indent + 1)))
 		return false;
 
-	if (!dprintf_bool(fd, "      "))
+	if (!string_printf(tree_output, "      "))
 		return false;
 
 	unsigned j;
 	for (j = 0; j < indent; j++)
 	{
-		if (!dprintf_bool(fd, "  "))
+		if (!string_printf(tree_output, "  "))
 			return false;
 	}
 
-	return dprintf_bool(fd, "END DO");
+	return string_printf(tree_output, "END DO");
 }
 
 bool parse_stmt__do_while_print(
-	int fd, const parse_stmt_t* stmt)
+	string_t* tree_output, const parse_stmt_t* stmt)
 {
-	return (dprintf_bool(fd, "DO ")
-		&& parse_label_print(fd, stmt->do_while.end_label)
-		&& dprintf_bool(fd, ", WHILE(")
-		&& parse_expr_print(fd, stmt->do_while.cond)
-		&& dprintf_bool(fd, ")"));
+	return (string_printf(tree_output, "DO ")
+		&& parse_label_print(tree_output, stmt->do_while.end_label)
+		&& string_printf(tree_output, ", WHILE(")
+		&& parse_expr_print(tree_output, stmt->do_while.cond)
+		&& string_printf(tree_output, ")"));
 }
 
 bool parse_stmt__do_label_print(
-	int fd, const parse_stmt_t* stmt)
+	string_t* tree_output, const parse_stmt_t* stmt)
 {
-	if (!dprintf_bool(fd, "DO ")
-		|| !parse_label_print(fd, stmt->do_label.end_label)
-		|| !dprintf_bool(fd, ", ")
-		|| !parse_assign_print(fd, stmt->do_label.init)
-		|| !dprintf_bool(fd, ", ")
-		|| !parse_expr_print(fd, stmt->do_label.last))
+	if (!string_printf(tree_output, "DO ")
+		|| !parse_label_print(tree_output, stmt->do_label.end_label)
+		|| !string_printf(tree_output, ", ")
+		|| !parse_assign_print(tree_output, stmt->do_label.init)
+		|| !string_printf(tree_output, ", ")
+		|| !parse_expr_print(tree_output, stmt->do_label.last))
 		return false;
 
 	if (stmt->do_label.step)
 	{
-		if (!dprintf_bool(fd, ", ")
+		if (!string_printf(tree_output, ", ")
 			|| !parse_expr_print(
-				fd, stmt->do_label.step))
+				tree_output, stmt->do_label.step))
 			return false;
 	}
 
@@ -374,42 +374,42 @@ bool parse_stmt__do_label_print(
 }
 
 bool parse_stmt__do_block_print(
-	int fd, const parse_stmt_t* stmt, unsigned indent)
+	string_t* tree_output, const parse_stmt_t* stmt, unsigned indent)
 {
-	if (!dprintf_bool(fd, "DO ")
-		|| !parse_assign_print(fd, stmt->do_block.init)
-		|| !dprintf_bool(fd, ", ")
-		|| !parse_expr_print(fd, stmt->do_block.last))
+	if (!string_printf(tree_output, "DO ")
+		|| !parse_assign_print(tree_output, stmt->do_block.init)
+		|| !string_printf(tree_output, ", ")
+		|| !parse_expr_print(tree_output, stmt->do_block.last))
 		return false;
 
 	if (stmt->do_block.step)
 	{
-		if (!dprintf_bool(fd, ", ")
+		if (!string_printf(tree_output, ", ")
 			|| !parse_expr_print(
-				fd, stmt->do_block.step))
+				tree_output, stmt->do_block.step))
 			return false;
 	}
 
-	if (!dprintf_bool(fd, "\n")
+	if (!string_printf(tree_output, "\n")
 		|| !parse_stmt_list_print(
-			fd, stmt->do_block.block, (indent + 1)))
+			tree_output, stmt->do_block.block, (indent + 1)))
 		return false;
 
-	if (!dprintf_bool(fd, "      "))
+	if (!string_printf(tree_output, "      "))
 		return false;
 
 	unsigned j;
 	for (j = 0; j < indent; j++)
 	{
-		if (!dprintf_bool(fd, "  "))
+		if (!string_printf(tree_output, "  "))
 			return false;
 	}
 
-	return dprintf_bool(fd, "END DO");
+	return string_printf(tree_output, "END DO");
 }
 
 bool parse_stmt_do_print(
-	int fd, const parse_stmt_t* stmt, unsigned indent)
+	string_t* tree_output, const parse_stmt_t* stmt, unsigned indent)
 {
 	if (!stmt)
 		return false;
@@ -417,15 +417,15 @@ bool parse_stmt_do_print(
 	switch (stmt->type)
 	{
 		case PARSE_STMT_DO_LABEL:
-			return parse_stmt__do_label_print(fd, stmt);
+			return parse_stmt__do_label_print(tree_output, stmt);
 		case PARSE_STMT_DO_BLOCK:
 			return parse_stmt__do_block_print(
-				fd, stmt, indent);
+				tree_output, stmt, indent);
 		case PARSE_STMT_DO_WHILE:
-			return parse_stmt__do_while_print(fd, stmt);
+			return parse_stmt__do_while_print(tree_output, stmt);
 		case PARSE_STMT_DO_WHILE_BLOCK:
 			return parse_stmt__do_while_block_print(
-				fd, stmt, indent);
+				tree_output, stmt, indent);
 		default:
 			break;
 	}

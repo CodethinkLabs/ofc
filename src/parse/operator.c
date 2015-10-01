@@ -258,10 +258,10 @@ unsigned parse_operator_precedence(
 }
 
 bool parse_operator_print(
-	int fd, const parse_operator_e operator)
+	string_t* tree_output, const parse_operator_e operator)
 {
 	if (operator >= PARSE_OPERATOR_COUNT)
 		return false;
 
-	return dprintf_bool(fd, "%s", parse_operator__name[operator]);
+	return string_printf(tree_output, "%s", parse_operator__name[operator]);
 }

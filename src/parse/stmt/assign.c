@@ -45,11 +45,11 @@ unsigned parse_stmt_assign(
 }
 
 bool parse_stmt_assign_print(
-	int fd, const parse_stmt_t* stmt)
+	string_t* tree_output, const parse_stmt_t* stmt)
 {
 	if (!stmt)
 		return false;
 
-	return (dprintf_bool(fd, "ASSIGN %u TO ", stmt->assign.label)
-		&& str_ref_print(fd, stmt->assign.variable));
+	return (string_printf(tree_output, "ASSIGN %u TO ", stmt->assign.label)
+		&& str_ref_print(tree_output, stmt->assign.variable));
 }

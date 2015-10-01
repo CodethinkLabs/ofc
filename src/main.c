@@ -220,18 +220,15 @@ int main(int argc, const char* argv[])
 		return EXIT_FAILURE;
 	}
 
-	FILE *print_f90 = tmpfile();
+	string_t* tree_output = string_create(NULL, 0);
 
-	if (!parse_stmt_list_print(
-		fileno(print_f90), program, 0))
+	if (!parse_stmt_list_print(tree_output, program, 0)
+		|| !parse_reformat_print(tree_output))
 	{
 		fprintf(stderr, "Error: Failed to reprint program\n");
 		sparse_delete(condense);
 		return EXIT_FAILURE;
 	}
-
-	rewind(print_f90);
-	parse_reformat_print(print_f90);
 
 	parse_stmt_list_delete(program);
 	sparse_delete(condense);

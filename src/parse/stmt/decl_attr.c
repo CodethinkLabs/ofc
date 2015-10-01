@@ -99,7 +99,7 @@ unsigned parse_stmt_decl_attr_volatile(
 
 
 bool parse_stmt_decl_attr_print(
-	int fd, const parse_stmt_t* stmt)
+	string_t* tree_output, const parse_stmt_t* stmt)
 {
 	if (!stmt)
 		return false;
@@ -126,17 +126,17 @@ bool parse_stmt_decl_attr_print(
 			return false;
 	}
 
-	if (!dprintf_bool(fd, "%s", kwstr))
+	if (!string_printf(tree_output, "%s", kwstr))
 		return false;
 
 	unsigned i;
 	for (i = 0; i < stmt->decl_attr.count; i++)
 	{
-		if (!dprintf_bool(fd, "%s",
+		if (!string_printf(tree_output, "%s",
 			(i == 0 ? " " : ", ")))
 			return false;
 
-		if (!str_ref_print(fd,
+		if (!str_ref_print(tree_output,
 			*(stmt->decl_attr.name[i])))
 			return false;
 	}

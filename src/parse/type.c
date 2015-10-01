@@ -230,12 +230,12 @@ void parse_type_delete(parse_type_t* type)
 	free(type);
 }
 
-bool parse_type_print(int fd, const parse_type_t* type)
+bool parse_type_print(string_t* tree_output, const parse_type_t* type)
 {
 	if (type->type >= PARSE_TYPE_COUNT)
 		return false;
 
-	if (!dprintf_bool(fd, "%s",
+	if (!string_printf(tree_output, "%s",
 		parse_type__name[type->type]))
 		return false;
 
@@ -243,31 +243,31 @@ bool parse_type_print(int fd, const parse_type_t* type)
 		|| type->count_expr
 		|| type->count_var)
 	{
-		if (!dprintf_bool(fd, " ("))
+		if (!string_printf(tree_output, " ("))
 			return false;
 
 		if ((type->kind > 0)
-			&& !dprintf_bool(fd, "KIND=%u", type->kind))
+			&& !string_printf(tree_output, "KIND=%u", type->kind))
 			return false;
 
 		if (type->count_expr || type->count_var)
 		{
 			if ((type->kind > 0)
-				&& !dprintf_bool(fd, ", "))
+				&& !string_printf(tree_output, ", "))
 				return false;
 
-			if (!dprintf_bool(fd, "LEN="))
+			if (!string_printf(tree_output, "LEN="))
 				return false;
 
 			if (!(type->count_var
-				? dprintf_bool(fd, "*")
-				: parse_expr_print(fd, type->count_expr)))
+				? string_printf(tree_output, "*")
+				: parse_expr_print(tree_output, type->count_expr)))
 				return false;
 		}
 
-		if (!dprintf_bool(fd, ")"))
+		if (!string_printf(tree_output, ")"))
 			return false;
 	}
 
-	return dprintf_bool(fd, " ::");
+	return string_printf(tree_output, " ::");
 }

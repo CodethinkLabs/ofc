@@ -1,9 +1,9 @@
 #include "string.h"
-#include "util.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdarg.h>
 
 string_t* string_create(const char* base, unsigned size)
 {
@@ -11,7 +11,7 @@ string_t* string_create(const char* base, unsigned size)
 	if (!string)
 		return NULL;
 
-	string->base = (char*)malloc(size + 1);
+	string->base = (size == 0 ? NULL : (char*)malloc(size + 1));
 	string->size = (string->base ? size : 0);
 	if (string->base)
 	{
@@ -25,6 +25,8 @@ string_t* string_create(const char* base, unsigned size)
 			memset(string->base, '\0', (size + 1));
 		}
 	}
+	string->max = (string->size != 0 ? (string->size + 1) : 0);
+
 	return string;
 }
 
@@ -73,86 +75,110 @@ bool string_equal(const string_t a, const string_t b)
 
 bool string_printf(string_t* string, const char* format, ...)
 {
+	if (!string)
+		return false;
+
 	va_list args;
+	va_start(args, format);
 
-	while (true)
+	va_list largs;
+	va_copy(largs, args);
+	int fsize = vsnprintf(
+		NULL, 0, format, largs);
+	va_end(largs);
+
+	if (fsize <= 0)
 	{
-		unsigned avalible_space = string->size - strlen(string->base);
-
-		va_start(args, format);
-		int chars_written = vsprintf(string->base, format, args);
 		va_end(args);
+		return (fsize == 0);
+	}
 
-		if (chars_written < 0) return false;
-
-		if ((unsigned)chars_written < avalible_space) return true;
-
-		unsigned new_size = string->size * 2;
-		while (new_size < (string->size + chars_written + 1))
-			new_size = new_size * 2;
-
-		char* new_base = (char *)realloc (string->base, new_size);
-
-		if (new_base)
+	unsigned nsize = string->size + fsize;
+	if ((nsize + 1) > string->max)
+	{
+		unsigned nmax = string->max << 1;
+		if (nmax < (nsize + 1))
+			nmax = (nsize + 1);
+		char* nbase = realloc(
+			string->base, nmax);
+		if (!nbase)
 		{
-			string->size = new_size;
-			string->base = new_base;
-		}
-		else
-		{
+			va_end(args);
 			return false;
 		}
+
+		string->base = nbase;
+		string->max  = nmax;
 	}
-}
 
-bool string_print(int fd, const string_t* string)
-{
-	return dprintf_bool(fd, "%.*s",
-		string->size, string->base);
-}
-
-bool string_print_escaped(int fd, const string_t* string)
-{
-	unsigned i;
-	for (i = 0; i < string->size; i++)
+	unsigned psize = vsnprintf(
+		&string->base[string->size],
+		string->max, format, args);
+	if (psize != (unsigned)fsize)
 	{
-		const char* str = NULL;
-		switch (string->base[i])
+		string->base[string->size] = '\0';
+		va_end(args);
+		return false;
+	}
+	va_end(args);
+
+	string->size += psize;
+	return true;
+}
+
+bool string_append(string_t* base_str, const string_t* append_str)
+{
+	return string_printf(base_str, "%.*s",
+		append_str->size, append_str->base);
+}
+
+bool string_append_escaped(string_t* base_str, const string_t* append_str)
+{
+	char* escaped_str = (char*)malloc(append_str->size * 2);
+
+	unsigned i;
+	for (i = 0; i < append_str->size; i++)
+	{
+		switch (append_str->base[i])
 		{
 			case '\r':
-				str = "\\r";
+				escaped_str[i++] = '\\';
+				escaped_str[i] = 'r';
 				break;
 			case '\n':
-				str = "\\n";
+				escaped_str[i++] = '\\';
+				escaped_str[i] = 'n';
 				break;
 			case '\v':
-				str = "\\v";
+				escaped_str[i++] = '\\';
+				escaped_str[i] = 'n';
 				break;
 			case '\t':
-				str = "\\n";
+				escaped_str[i++] = '\\';
+				escaped_str[i] = 't';
 				break;
 			case '\"':
-				str = "\\\"";
+				escaped_str[i++] = '\\';
+				escaped_str[i] = '\"';
 				break;
 			case '\'':
-				str = "\\'";
+				escaped_str[i++] = '\\';
+				escaped_str[i] = '\'';
 				break;
 			case '\\':
-				str = "\\\\";
+				escaped_str[i++] = '\\';
+				escaped_str[i] = '\\';
 				break;
 
 			/* TODO - Implement all possible escape sequences. */
 
 			default:
-				if (!dprintf_bool(
-					fd, "%c", string->base[i]))
-					return false;
+				escaped_str[i] = append_str->base[i];
 				break;
 		}
-
-		if (str && !dprintf_bool(fd, "%s", str))
-			return false;
 	}
 
-	return true;
+	return string_printf(
+		base_str, "%.*s",
+		i, escaped_str);
 }

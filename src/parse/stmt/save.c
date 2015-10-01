@@ -28,12 +28,12 @@ unsigned parse_stmt_save(
 }
 
 bool parse_stmt_save_print(
-	int fd, const parse_stmt_t* stmt)
+	string_t* tree_output, const parse_stmt_t* stmt)
 {
 	if (!stmt)
 		return false;
 
-	return (dprintf_bool(fd, "SAVE ")
+	return (string_printf(tree_output, "SAVE ")
 		&& parse_save_list_print(
-			fd, stmt->save.list));
+			tree_output, stmt->save.list));
 }

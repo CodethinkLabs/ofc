@@ -37,18 +37,18 @@ unsigned parse_stmt_format(
 }
 
 bool parse_stmt_format_print(
-	int fd, const parse_stmt_t* stmt)
+	string_t* tree_output, const parse_stmt_t* stmt)
 {
 	if (!stmt)
 		return false;
 
-	if (!dprintf_bool(fd, "FORMAT("))
+	if (!string_printf(tree_output, "FORMAT("))
 		return false;
 
 	if (stmt->format
 		&& !parse_format_desc_list_print(
-			fd, stmt->format))
+			tree_output, stmt->format))
 		return false;
 
-	return dprintf_bool(fd, ")");
+	return string_printf(tree_output, ")");
 }

@@ -87,7 +87,7 @@ unsigned parse_stmt_entry(
 }
 
 bool parse_stmt_call_entry_print(
-	int fd, const parse_stmt_t* stmt)
+	string_t* tree_output, const parse_stmt_t* stmt)
 {
 	if (!stmt)
 		return false;
@@ -105,15 +105,15 @@ bool parse_stmt_call_entry_print(
 			return false;
 	}
 
-	if (!dprintf_bool(fd, "%s ", kwstr)
-		|| !str_ref_print(fd, stmt->call_entry.name)
-		|| !dprintf_bool(fd, "("))
+	if (!string_printf(tree_output, "%s ", kwstr)
+		|| !str_ref_print(tree_output, stmt->call_entry.name)
+		|| !string_printf(tree_output, "("))
 		return false;
 
 	if (stmt->call_entry.args
 		&& !parse_call_arg_list_print(
-			fd, stmt->call_entry.args))
+			tree_output, stmt->call_entry.args))
 		return false;
 
-	return dprintf_bool(fd, ")");
+	return string_printf(tree_output, ")");
 }

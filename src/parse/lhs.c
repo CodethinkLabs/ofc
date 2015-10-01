@@ -405,55 +405,55 @@ void parse_lhs_delete(
 }
 
 bool parse_lhs_print(
-	int fd, const parse_lhs_t* lhs)
+	string_t* tree_output, const parse_lhs_t* lhs)
 {
 	switch (lhs->type)
 	{
 		case PARSE_LHS_VARIABLE:
-			return str_ref_print(fd, lhs->variable);
+			return str_ref_print(tree_output, lhs->variable);
 		case PARSE_LHS_ARRAY:
 			if (!parse_lhs_print(
-				fd, lhs->parent))
+				tree_output, lhs->parent))
 				return false;
 			if (lhs->array.index)
 				return parse_array_index_print(
-					fd, lhs->array.index);
-			return dprintf_bool(fd, "()");
+					tree_output, lhs->array.index);
+			return string_printf(tree_output, "()");
 		case PARSE_LHS_STAR_LEN:
 			if (!parse_lhs_print(
-				fd, lhs->parent)
-				|| !dprintf_bool(fd, "*"))
+				tree_output, lhs->parent)
+				|| !string_printf(tree_output, "*"))
 				return false;
 			if (lhs->star_len.var)
 			{
-				return dprintf_bool(fd, "(*)");
+				return string_printf(tree_output, "(*)");
 			}
 			else if (lhs->star_len.len)
 			{
 				bool bracketed = (lhs->star_len.len->type
 					!= PARSE_EXPR_CONSTANT);
 
-				if (bracketed && !dprintf_bool(fd, "("))
+				if (bracketed && !string_printf(tree_output, "("))
 					return false;
 
 				if (!parse_expr_print(
-					fd, lhs->star_len.len))
+					tree_output, lhs->star_len.len))
 					return false;
 
-				return (!bracketed || dprintf_bool(fd, "("));
+				return (!bracketed || string_printf(tree_output, "("));
 			}
 			break;
 		case PARSE_LHS_MEMBER_TYPE:
-			return (parse_lhs_print(fd, lhs->parent)
-				&& dprintf_bool(fd, "%%")
-				&& str_ref_print(fd, lhs->member.name));
+			return (parse_lhs_print(tree_output, lhs->parent)
+				&& string_printf(tree_output, "%%")
+				&& str_ref_print(tree_output, lhs->member.name));
 		case PARSE_LHS_MEMBER_STRUCTURE:
-			return (parse_lhs_print(fd, lhs->parent)
-				&& dprintf_bool(fd, ".")
-				&& str_ref_print(fd, lhs->member.name));
+			return (parse_lhs_print(tree_output, lhs->parent)
+				&& string_printf(tree_output, ".")
+				&& str_ref_print(tree_output, lhs->member.name));
 		case PARSE_LHS_IMPLICIT_DO:
 			return parse_implicit_do_print(
-				fd, lhs->implicit_do);
+				tree_output, lhs->implicit_do);
 		default:
 			break;
 	}
@@ -550,17 +550,17 @@ void parse_lhs_list_delete(
 }
 
 bool parse_lhs_list_print(
-	int fd, const parse_lhs_list_t* list)
+	string_t* tree_output, const parse_lhs_list_t* list)
 {
-	return parse_list_print(fd,
+	return parse_list_print(tree_output,
 		list->count, (const void**)list->lhs,
 		(void*)parse_lhs_print);
 }
 
 bool parse_lhs_list_bracketed_print(
-	int fd, const parse_lhs_list_t* list)
+	string_t* tree_output, const parse_lhs_list_t* list)
 {
-	return (dprintf_bool(fd, "(")
-		&& parse_lhs_list_print(fd, list)
-		&& dprintf_bool(fd, ")"));
+	return (string_printf(tree_output, "(")
+		&& parse_lhs_list_print(tree_output, list)
+		&& string_printf(tree_output, ")"));
 }

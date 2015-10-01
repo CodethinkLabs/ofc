@@ -55,16 +55,16 @@ static parse_pointer_t* parse_pointer(
 }
 
 bool parse_pointer_print(
-	int fd, const parse_pointer_t* pointer)
+	string_t* tree_output, const parse_pointer_t* pointer)
 {
 	if (!pointer)
 		return false;
 
-	return (dprintf_bool(fd, "(")
-		&& str_ref_print(fd, pointer->name)
-		&& dprintf_bool(fd, ", ")
-		&& str_ref_print(fd, pointer->target)
-		&& dprintf_bool(fd, ")"));
+	return (string_printf(tree_output, "(")
+		&& str_ref_print(tree_output, pointer->name)
+		&& string_printf(tree_output, ", ")
+		&& str_ref_print(tree_output, pointer->target)
+		&& string_printf(tree_output, ")"));
 }
 
 
@@ -108,9 +108,9 @@ void parse_pointer_list_delete(
 }
 
 bool parse_pointer_list_print(
-	int fd, const parse_pointer_list_t* list)
+	string_t* tree_output, const parse_pointer_list_t* list)
 {
 	return parse_list_print(
-		fd, list->count, (const void**)list->pointer,
+		tree_output, list->count, (const void**)list->pointer,
 		(void*)parse_pointer_print);
 }

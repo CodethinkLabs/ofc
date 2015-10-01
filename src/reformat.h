@@ -8,6 +8,9 @@
 #include <unistd.h>
 #include <ctype.h>
 
-void parse_reformat_print(FILE *file);
+#include "string.h"
+
+bool parse_reformat_print(
+	string_t* tree_output);
 
 #endif

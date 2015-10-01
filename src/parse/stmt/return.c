@@ -58,7 +58,7 @@ unsigned parse_stmt_return(
 
 
 bool parse_stmt_stop_pause_return_print(
-	int fd, const parse_stmt_t* stmt)
+	string_t* tree_output, const parse_stmt_t* stmt)
 {
 	if (!stmt)
 		return false;
@@ -79,13 +79,13 @@ bool parse_stmt_stop_pause_return_print(
 			return false;
 	}
 
-	if (!dprintf_bool(fd, "%s", kwstr))
+	if (!string_printf(tree_output, "%s", kwstr))
 		return false;
 
 	if (stmt->stop_pause_return.value)
 	{
-		if (!dprintf_bool(fd, " ")
-			|| !parse_expr_print(fd,
+		if (!string_printf(tree_output, " ")
+			|| !parse_expr_print(tree_output,
 				stmt->stop_pause_return.value))
 			return false;
 	}

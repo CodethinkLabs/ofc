@@ -4,7 +4,6 @@
 #include "../sparse.h"
 #include "../str_ref.h"
 #include "../fctype.h"
-#include "../util.h"
 
 #include <stdio.h>
 

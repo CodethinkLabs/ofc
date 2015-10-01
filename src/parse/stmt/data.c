@@ -29,8 +29,8 @@ unsigned parse_stmt_data(
 }
 
 bool parse_stmt_data_print(
-	int fd, const parse_stmt_t* stmt)
+	string_t* tree_output, const parse_stmt_t* stmt)
 {
-	return (stmt && dprintf_bool(fd, "DATA ")
-		&& parse_data_list_print(fd, stmt->data));
+	return (stmt && string_printf(tree_output, "DATA ")
+		&& parse_data_list_print(tree_output, stmt->data));
 }

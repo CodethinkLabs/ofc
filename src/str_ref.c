@@ -1,5 +1,4 @@
 #include "str_ref.h"
-#include "util.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -31,8 +30,8 @@ bool str_ref_equal_ci(const str_ref_t a, const str_ref_t b)
 	return (strncasecmp(a.base, b.base, a.size) == 0);
 }
 
-bool str_ref_print(int fd, const str_ref_t str_ref)
+bool str_ref_print(string_t* tree_output, const str_ref_t str_ref)
 {
-	return dprintf_bool(fd, "%.*s",
+	return string_printf(tree_output, "%.*s",
 		str_ref.size, str_ref.base);
 }

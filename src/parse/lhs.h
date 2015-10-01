@@ -72,7 +72,7 @@ void parse_lhs_delete(
 	parse_lhs_t* lhs);
 
 bool parse_lhs_print(
-	 int fd, const parse_lhs_t* lhs);
+	 string_t* tree_output, const parse_lhs_t* lhs);
 
 bool parse_lhs_base_name(
 	const parse_lhs_t lhs,
@@ -89,8 +89,8 @@ parse_lhs_list_t* parse_lhs_list_bracketed(
 void parse_lhs_list_delete(
 	parse_lhs_list_t* list);
 bool parse_lhs_list_print(
-	int fd, const parse_lhs_list_t* list);
+	string_t* tree_output, const parse_lhs_list_t* list);
 bool parse_lhs_list_bracketed_print(
-	int fd, const parse_lhs_list_t* list);
+	string_t* tree_output, const parse_lhs_list_t* list);
 
 #endif

@@ -505,7 +505,7 @@ void parse_expr_delete(
 }
 
 bool parse_expr_print(
-	int fd, const parse_expr_t* expr)
+	string_t* tree_output, const parse_expr_t* expr)
 {
 	if (!expr)
 		return false;
@@ -514,32 +514,32 @@ bool parse_expr_print(
 	{
 		case PARSE_EXPR_CONSTANT:
 			if (!parse_literal_print(
-				fd, expr->literal))
+				tree_output, expr->literal))
 				return false;
 			break;
 		case PARSE_EXPR_VARIABLE:
 			if (!parse_lhs_print(
-				fd, expr->variable))
+				tree_output, expr->variable))
 				return false;
 			break;
 		case PARSE_EXPR_BRACKETS:
-			if (!dprintf_bool(fd, "(")
+			if (!string_printf(tree_output, "(")
 				|| !parse_expr_print(
-					fd, expr->brackets.expr)
-				|| !dprintf_bool(fd, ")"))
+					tree_output, expr->brackets.expr)
+				|| !string_printf(tree_output, ")"))
 				return false;
 			break;
 		case PARSE_EXPR_UNARY:
-			if (!parse_operator_print(fd, expr->unary.operator)
-				|| !parse_expr_print(fd, expr->unary.a))
+			if (!parse_operator_print(tree_output, expr->unary.operator)
+				|| !parse_expr_print(tree_output, expr->unary.a))
 				return false;
 			break;
 		case PARSE_EXPR_BINARY:
-			if (!parse_expr_print(fd, expr->binary.a)
-				|| !dprintf_bool(fd, " ")
-				|| !parse_operator_print(fd, expr->binary.operator)
-				|| !dprintf_bool(fd, " ")
-				|| !parse_expr_print(fd, expr->binary.b))
+			if (!parse_expr_print(tree_output, expr->binary.a)
+				|| !string_printf(tree_output, " ")
+				|| !parse_operator_print(tree_output, expr->binary.operator)
+				|| !string_printf(tree_output, " ")
+				|| !parse_expr_print(tree_output, expr->binary.b))
 				return false;
 			break;
 

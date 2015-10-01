@@ -28,6 +28,6 @@ unsigned parse_label(
 	parse_debug_t* debug,
 	parse_label_t* label);
 bool parse_label_print(
-	int fd, const parse_label_t label);
+	string_t* tree_output, const parse_label_t label);
 
 #endif

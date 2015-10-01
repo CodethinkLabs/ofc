@@ -225,7 +225,7 @@ const char* parse_format_desc__name[] =
 };
 
 bool parse_format_desc_print(
-	int fd, const parse_format_desc_t* desc)
+	string_t* tree_output, const parse_format_desc_t* desc)
 {
 	if (!desc)
 		return false;
@@ -233,40 +233,40 @@ bool parse_format_desc_print(
 	switch (desc->type)
 	{
 		case PARSE_FORMAT_DESC_HOLLERITH:
-			if (!dprintf_bool(fd, "%uH",
+			if (!string_printf(tree_output, "%uH",
 				string_length(desc->string))
-				|| !string_print(fd, desc->string))
+				|| !string_append(tree_output, desc->string))
 				return false;
 			break;
 		case PARSE_FORMAT_DESC_STRING:
-			if (!dprintf_bool(fd, "\"")
-				|| !string_print_escaped(
-					fd, desc->string)
-				|| !dprintf_bool(fd, "\""))
+			if (!string_printf(tree_output, "\"")
+				|| !string_append_escaped(
+					tree_output, desc->string)
+				|| !string_printf(tree_output, "\""))
 				return false;
 			break;
 		case PARSE_FORMAT_DESC_REPEAT:
-			if (!dprintf_bool(fd, "(")
+			if (!string_printf(tree_output, "(")
 				|| !parse_format_desc_list_print(
-					fd, desc->repeat)
-				|| !dprintf_bool(fd, ")"))
+					tree_output, desc->repeat)
+				|| !string_printf(tree_output, ")"))
 				return false;
 			break;
 		default:
 			if ((desc->n > 1)
-				&& !dprintf_bool(fd, "%u", desc->n))
+				&& !string_printf(tree_output, "%u", desc->n))
 				return false;
-			if (!dprintf_bool(fd, "%s",
+			if (!string_printf(tree_output, "%s",
 				parse_format_desc__name[desc->type]))
 				return false;
 			if ((desc->w > 0)
-				&& !dprintf_bool(fd, "%u", desc->w))
+				&& !string_printf(tree_output, "%u", desc->w))
 				return false;
 			if ((desc->d > 0)
-				&& !dprintf_bool(fd, ".%u", desc->d))
+				&& !string_printf(tree_output, ".%u", desc->d))
 				return false;
 			if ((desc->e > 0)
-				&& !dprintf_bool(fd, "E%u", desc->e))
+				&& !string_printf(tree_output, "E%u", desc->e))
 				return false;
 			break;
 	}
@@ -316,12 +316,12 @@ void parse_format_desc_list_delete(
 }
 
 bool parse_format_desc_list_print(
-	int fd, const parse_format_desc_list_t* list)
+	string_t* tree_output, const parse_format_desc_list_t* list)
 {
 	if (!list)
 		return false;
 
-	return parse_list_print(fd,
+	return parse_list_print(tree_output,
 		list->count, (const void**)list->desc,
 		(void*)parse_format_desc_print);
 }

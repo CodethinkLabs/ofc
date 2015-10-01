@@ -143,9 +143,9 @@ void parse_list_delete(
 
 
 bool parse_list_print(
-	int fd,
+	string_t* tree_output,
 	unsigned elem_count, const void** elem,
-	bool (*elem_print)(int, const void*))
+	bool (*elem_print)(string_t*, const void*))
 {
 	if (!elem || !elem_print)
 		return false;
@@ -153,11 +153,10 @@ bool parse_list_print(
 	unsigned i;
 	for (i = 0; i < elem_count; i++)
 	{
-		if ((i > 0) && !dprintf_bool(
-			fd, ", "))
+		if ((i > 0) && !string_printf(tree_output, ", "))
 			return false;
 
-		if (!elem_print(fd, elem[i]))
+		if (!elem_print(tree_output, elem[i]))
 			return false;
 	}
 
