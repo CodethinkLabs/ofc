@@ -8,6 +8,18 @@ bool ofc_str_ref_empty(const ofc_str_ref_t ref)
 	return (ref.size == 0);
 }
 
+uint8_t ofc_str_ref_hash(const ofc_str_ref_t ref)
+{
+	if (!ref.base)
+		return 0;
+
+	uint8_t hash;
+	unsigned i;
+	for (i = 0, hash = 0; i < ref.size; i++)
+		hash += ref.base[i];
+	return hash;
+}
+
 bool ofc_str_ref_equal(const ofc_str_ref_t a, const ofc_str_ref_t b)
 {
 	if (a.size != b.size)
