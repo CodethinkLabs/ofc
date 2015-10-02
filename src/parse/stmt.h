@@ -24,6 +24,7 @@ typedef enum
 	PARSE_STMT_DIMENSION,
 	PARSE_STMT_EQUIVALENCE,
 	PARSE_STMT_COMMON,
+	PARSE_STMT_NAMELIST,
 	PARSE_STMT_ASSIGNMENT,
 	PARSE_STMT_CONTINUE,
 	PARSE_STMT_STOP,
@@ -97,7 +98,7 @@ struct parse_stmt_s
 
 		parse_record_list_t* record;
 
-		parse_common_group_list_t* common;
+		parse_common_group_list_t* common_namelist;
 
 		parse_lhs_list_t* dimension;
 

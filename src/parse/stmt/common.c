@@ -1,36 +1,78 @@
 #include "../parse.h"
 
 
-unsigned parse_stmt_common(
+static unsigned parse_stmt__common_namelist(
 	const sparse_t* src, const char* ptr,
 	parse_debug_t* debug,
+	parse_keyword_e keyword,
 	parse_stmt_t* stmt)
 {
 	unsigned dpos = parse_debug_position(debug);
 
 	unsigned i = parse_keyword(
-		src, ptr, debug, PARSE_KEYWORD_COMMON);
+		src, ptr, debug, keyword);
 	if (i == 0) return 0;
 
 	unsigned l;
-	stmt->common
+	stmt->common_namelist
 		= parse_common_group_list(
 			src, &ptr[i], debug, &l);
-	if (!stmt->common)
+	if (!stmt->common_namelist)
 	{
 		parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	i += l;
 
+	return i;
+}
+
+unsigned parse_stmt_common(
+	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
+	parse_stmt_t* stmt)
+{
+	unsigned i = parse_stmt__common_namelist(
+		src, ptr, debug, PARSE_KEYWORD_COMMON, stmt);
+	if (i == 0) return 0;
+
 	stmt->type = PARSE_STMT_COMMON;
 	return i;
 }
 
-bool parse_stmt_common_print(
+unsigned parse_stmt_namelist(
+	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
+	parse_stmt_t* stmt)
+{
+	unsigned i = parse_stmt__common_namelist(
+		src, ptr, debug, PARSE_KEYWORD_NAMELIST, stmt);
+	if (i == 0) return 0;
+
+	stmt->type = PARSE_STMT_NAMELIST;
+	return i;
+}
+
+bool parse_stmt_common_namelist_print(
 	int fd, const parse_stmt_t* stmt)
 {
-	return (stmt && dprintf_bool(fd, "COMMON ")
+	if (!stmt)
+		return false;
+
+	const char* kwstr;
+	switch (stmt->type)
+	{
+		case PARSE_STMT_COMMON:
+			kwstr = "COMMON";
+			break;
+		case PARSE_STMT_NAMELIST:
+			kwstr = "NAMELIST";
+			break;
+		default:
+			return false;
+	}
+
+	return (stmt && dprintf_bool(fd, "%s ", kwstr)
 		&& parse_common_group_list_print(
-			fd, stmt->common));
+			fd, stmt->common_namelist));
 }

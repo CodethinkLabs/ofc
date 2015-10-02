@@ -44,6 +44,7 @@ static const char* parse_keyword__name[] =
 	"IMPLICIT NONE",
 
 	"COMMON",
+	"NAMELIST",
 	"DIMENSION",
 	"VIRTUAL",
 	"EQUIVALENCE",

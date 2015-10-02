@@ -41,6 +41,10 @@ unsigned parse_stmt_common(
 	const sparse_t* src, const char* ptr,
 	parse_debug_t* debug,
 	parse_stmt_t* stmt);
+unsigned parse_stmt_namelist(
+	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
+	parse_stmt_t* stmt);
 unsigned parse_stmt_dimension(
 	const sparse_t* src, const char* ptr,
 	parse_debug_t* debug,
@@ -229,7 +233,8 @@ static void parse_stmt__cleanup(
 			parse_decl_list_delete(stmt.decl.decl);
 			break;
 		case PARSE_STMT_COMMON:
-			parse_common_group_list_delete(stmt.common);
+		case PARSE_STMT_NAMELIST:
+			parse_common_group_list_delete(stmt.common_namelist);
 			break;
 		case PARSE_STMT_DIMENSION:
 			parse_lhs_list_delete(stmt.dimension);
@@ -431,6 +436,10 @@ parse_stmt_t* parse_stmt(
 			if (i == 0) i = parse_stmt_map(src, ptr, debug, &stmt);
 			break;
 
+		case 'N':
+			if (i == 0) i = parse_stmt_namelist(src, ptr, debug, &stmt);
+			break;
+
 		case 'O':
 			if (i == 0) i = parse_stmt_io_open(src, ptr, debug, &stmt);
 			break;
@@ -561,7 +570,7 @@ bool parse_stmt_format_print(
 	int fd, const parse_stmt_t* stmt);
 bool parse_stmt_data_print(
 	int fd, const parse_stmt_t* stmt);
-bool parse_stmt_common_print(
+bool parse_stmt_common_namelist_print(
 	int fd, const parse_stmt_t* stmt);
 bool parse_stmt_implicit_print(
 	int fd, const parse_stmt_t* stmt);
@@ -641,7 +650,8 @@ bool parse_stmt_print(
 				return false;
 			break;
 		case PARSE_STMT_COMMON:
-			if (!parse_stmt_common_print(fd, stmt))
+		case PARSE_STMT_NAMELIST:
+			if (!parse_stmt_common_namelist_print(fd, stmt))
 				return false;
 			break;
 		case PARSE_STMT_ASSIGNMENT:
