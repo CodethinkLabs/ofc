@@ -102,6 +102,10 @@ unsigned parse_stmt_assign(
 	const sparse_t* src, const char* ptr,
 	parse_debug_t* debug,
 	parse_stmt_t* stmt);
+unsigned parse_stmt_pointer(
+	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
+	parse_stmt_t* stmt);
 
 unsigned parse_stmt_decl_attr_external(
 	const sparse_t* src, const char* ptr,
@@ -241,6 +245,10 @@ static void parse_stmt__cleanup(
 				stmt.decl_attr.count,
 				(void**)stmt.decl_attr.name,
 				free);
+			break;
+		case PARSE_STMT_POINTER:
+			parse_pointer_list_delete(
+				stmt.pointer);
 			break;
 		case PARSE_STMT_GO_TO_ASSIGNED:
 			free(stmt.go_to_assign.label);
@@ -422,6 +430,7 @@ parse_stmt_t* parse_stmt(
 			if (i == 0) i = parse_stmt_program(src, ptr, debug, &stmt);
 			if (i == 0) i = parse_stmt_pause(src, ptr, debug, &stmt);
 			if (i == 0) i = parse_stmt_io_print_type(src, ptr, debug, &stmt);
+			if (i == 0) i = parse_stmt_pointer(src, ptr, debug, &stmt);
 			break;
 
 		case 'R':
@@ -560,6 +569,8 @@ bool parse_stmt_do_print(
 	int fd, const parse_stmt_t* stmt, unsigned indent);
 bool parse_stmt_decl_attr_print(
 	int fd, const parse_stmt_t* stmt);
+bool parse_stmt_pointer_print(
+	int fd, const parse_stmt_t* stmt);
 bool parse_stmt_go_to_print(
 	int fd, const parse_stmt_t* stmt);
 bool parse_stmt_structure_print(
@@ -637,6 +648,10 @@ bool parse_stmt_print(
 		case PARSE_STMT_DECL_ATTR_STATIC:
 		case PARSE_STMT_DECL_ATTR_VOLATILE:
 			if (!parse_stmt_decl_attr_print(fd, stmt))
+				return false;
+			break;
+		case PARSE_STMT_POINTER:
+			if (!parse_stmt_pointer_print(fd, stmt))
 				return false;
 			break;
 		case PARSE_STMT_GO_TO:

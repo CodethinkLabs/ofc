@@ -60,6 +60,7 @@ static const char* parse_keyword__name[] =
 	"AUTOMATIC",
 	"STATIC",
 	"VOLATILE",
+	"POINTER",
 
 	"DATA",
 	"PARAMETER",

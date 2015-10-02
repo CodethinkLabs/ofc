@@ -33,6 +33,7 @@ typedef enum
 	PARSE_STMT_DECL_ATTR_AUTOMATIC,
 	PARSE_STMT_DECL_ATTR_STATIC,
 	PARSE_STMT_DECL_ATTR_VOLATILE,
+	PARSE_STMT_POINTER,
 	PARSE_STMT_GO_TO,
 	PARSE_STMT_GO_TO_ASSIGNED,
 	PARSE_STMT_GO_TO_COMPUTED,
@@ -110,6 +111,8 @@ struct parse_stmt_s
 			unsigned    count;
 			str_ref_t** name;
 		} decl_attr;
+
+		parse_pointer_list_t* pointer;
 
 		struct
 		{

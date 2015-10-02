@@ -35,6 +35,7 @@ typedef struct parse_implicit_do_s parse_implicit_do_t;
 #include "iolist.h"
 #include "format.h"
 #include "record.h"
+#include "pointer.h"
 #include "stmt.h"
 
 #endif
