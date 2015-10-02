@@ -6,6 +6,8 @@
 
 static const char* parse_keyword__name[] =
 {
+	"INCLUDE",
+
 	"PROGRAM",
 	"SUBROUTINE",
 	"FUNCTION",

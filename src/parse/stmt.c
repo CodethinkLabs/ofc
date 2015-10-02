@@ -1,5 +1,9 @@
 #include "parse.h"
 
+unsigned parse_stmt_include(
+	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
+	parse_stmt_t* stmt);
 unsigned parse_stmt_program(
 	const sparse_t* src, const char* ptr,
 	parse_debug_t* debug,
@@ -197,6 +201,11 @@ static void parse_stmt__cleanup(
 {
 	switch (stmt.type)
 	{
+		case PARSE_STMT_INCLUDE:
+			parse_stmt_list_delete(stmt.include.include);
+			sparse_delete(stmt.include.src);
+			file_delete(stmt.include.file);
+			break;
 		case PARSE_STMT_PROGRAM:
 		case PARSE_STMT_SUBROUTINE:
 		case PARSE_STMT_FUNCTION:
@@ -415,6 +424,7 @@ parse_stmt_t* parse_stmt(
 			if (i == 0) i = parse_stmt_if(src, ptr, debug, &stmt);
 			if (i == 0) i = parse_stmt_decl_attr_intrinsic(src, ptr, debug, &stmt);
 			if (i == 0) i = parse_stmt_io_inquire(src, ptr, debug, &stmt);
+			if (i == 0) i = parse_stmt_include(src, ptr, debug, &stmt);
 			break;
 
 		case 'M':
@@ -535,6 +545,8 @@ void parse_stmt_delete(
 
 
 
+bool parse_stmt_include_print(
+	int fd, const parse_stmt_t* stmt);
 bool parse_stmt_program_print(
 	int fd, const parse_stmt_t* stmt, unsigned indent);
 bool parse_stmt_assign_print(
@@ -593,6 +605,11 @@ bool parse_stmt_print(
 
 	switch(stmt->type)
 	{
+		case PARSE_STMT_INCLUDE:
+			if (!parse_stmt_include_print(fd, stmt))
+				return false;
+			break;
+
 		case PARSE_STMT_PROGRAM:
 		case PARSE_STMT_SUBROUTINE:
 		case PARSE_STMT_FUNCTION:

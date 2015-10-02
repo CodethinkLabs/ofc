@@ -11,6 +11,7 @@ typedef struct
 typedef enum
 {
 	PARSE_STMT_EMPTY,
+	PARSE_STMT_INCLUDE,
 	PARSE_STMT_PROGRAM,
 	PARSE_STMT_SUBROUTINE,
 	PARSE_STMT_FUNCTION,
@@ -73,6 +74,13 @@ struct parse_stmt_s
 
 	union
 	{
+		struct
+		{
+			file_t*            file;
+			sparse_t*          src;
+			parse_stmt_list_t* include;
+		} include;
+
 		parse_implicit_list_t* implicit;
 
 		struct
