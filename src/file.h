@@ -8,14 +8,16 @@ typedef struct file_s file_t;
 
 /* Path must be valid for as long as the file_t* is */
 file_t* file_create(const char* path, lang_opts_t opts);
+file_t* file_create_include(const char* path, lang_opts_t opts, const char* include);
 bool    file_reference(file_t* file);
 void    file_delete(file_t* file);
 
 const char* file_get_path(const file_t* file);
+const char* file_get_include(const file_t* file);
 const char* file_get_strz(const file_t* file);
 lang_opts_t file_get_lang_opts(const file_t* file);
 
-char* file_relative_path(
+char* file_include_path(
 	const file_t* file, const char* path);
 
 bool file_get_position(

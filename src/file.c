@@ -11,6 +11,7 @@
 struct file_s
 {
 	char*       path;
+	char*       include;
 	char*       strz;
 	lang_opts_t opts;
 	unsigned    size;
@@ -61,9 +62,28 @@ file_t* file_create(const char* path, lang_opts_t opts)
 	file->strz = file__read(path, &file->size);
 	file->opts = opts;
 
+	file->include = NULL;
+
 	file->ref = 0;
 
 	if (!file->path || !file->strz)
+	{
+		file_delete(file);
+		return NULL;
+	}
+
+	return file;
+}
+
+file_t* file_create_include(
+	const char* path, lang_opts_t opts, const char* include)
+{
+	file_t* file = file_create(path, opts);
+	if (!include) return file;
+	if (!file) return NULL;
+
+	file->include = strdup(include);
+	if (!file->include)
 	{
 		file_delete(file);
 		return NULL;
@@ -97,6 +117,7 @@ void file_delete(file_t* file)
 
 	free(file->strz);
 	free(file->path);
+	free(file->include);
 	free(file);
 }
 
@@ -105,6 +126,13 @@ void file_delete(file_t* file)
 const char* file_get_path(const file_t* file)
 {
 	return (file ? file->path : NULL);
+}
+
+const char* file_get_include(const file_t* file)
+{
+	if (!file)
+		return NULL;
+	return (file->include ? file->include : file->path);
 }
 
 const char* file_get_strz(const file_t* file)
@@ -118,18 +146,18 @@ lang_opts_t file_get_lang_opts(const file_t* file)
 }
 
 
-char* file_relative_path(
-	const file_t* file, const char* path)
+static char* file__include_path(
+	const char* file, const char* path)
 {
-	if (!file || !file->path)
+	if (!file)
 		return strdup(path);
 
 	unsigned prefix_len = 0;
 
 	unsigned i;
-	for (i = 0; file->path[i] != '\0'; i++)
+	for (i = 0; file[i] != '\0'; i++)
 	{
-		if (file->path[i] == '/')
+		if (file[i] == '/')
 			prefix_len = (i + 1);
 	}
 
@@ -142,9 +170,23 @@ char* file_relative_path(
 	if (!rpath) return NULL;
 
 	sprintf(rpath, "%.*s%s",
-		prefix_len, file->path, path);
+		prefix_len, file, path);
 
 	return rpath;
+}
+
+char* file_include_path(
+	const file_t* file, const char* path)
+{
+	if (!file)
+		return strdup(path);
+
+	if (file->include)
+		return file__include_path(
+			file->include, path);
+
+	return file__include_path(
+		file->path, path);
 }
 
 

@@ -38,7 +38,9 @@ const char* sparse_file_pointer(
 
 lang_opts_t sparse_lang_opts(const sparse_t* sparse);
 
-char* sparse_relative_path(
+const char* sparse_get_include(
+	const sparse_t* sparse);
+char* sparse_include_path(
 	const sparse_t* sparse, const char* path);
 
 
