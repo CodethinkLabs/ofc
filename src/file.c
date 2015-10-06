@@ -1,6 +1,7 @@
 #include "file.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <stdint.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -9,7 +10,7 @@
 
 struct file_s
 {
-	const char* path;
+	char*       path;
 	char*       strz;
 	lang_opts_t opts;
 	unsigned    size;
@@ -56,15 +57,15 @@ file_t* file_create(const char* path, lang_opts_t opts)
 	file_t* file = (file_t*)malloc(sizeof(file_t));
 	if (!file) return NULL;
 
-	file->path = path;
+	file->path = strdup(path);
 	file->strz = file__read(path, &file->size);
 	file->opts = opts;
 
 	file->ref = 0;
 
-	if (!file->strz)
+	if (!file->path || !file->strz)
 	{
-		free(file);
+		file_delete(file);
 		return NULL;
 	}
 
@@ -95,6 +96,7 @@ void file_delete(file_t* file)
 	}
 
 	free(file->strz);
+	free(file->path);
 	free(file);
 }
 

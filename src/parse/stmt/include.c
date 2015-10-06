@@ -67,7 +67,10 @@ bool parse_stmt_include_print(
 
 	/* TODO - Print included code? */
 
+	const char* path = file_get_path(
+		stmt->include.file);
+	if (!path) return false;
+
 	return dprintf_bool(
-		fd, "INCLUDE \'%s\'",
-		file_get_path(stmt->include.file));
+		fd, "INCLUDE \'%s\'", path);
 }
