@@ -69,5 +69,5 @@ bool parse_stmt_include_print(
 
 	return dprintf_bool(
 		fd, "INCLUDE \'%s\'",
-		file_get_path);
+		file_get_path(stmt->include.file));
 }
