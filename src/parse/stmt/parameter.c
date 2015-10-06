@@ -13,11 +13,8 @@ unsigned parse_stmt_parameter(
 		PARSE_KEYWORD_PARAMETER);
 	if (i == 0) return 0;
 
-	if (ptr[i++] != '(')
-	{
-		parse_debug_rewind(debug, dpos);
-		return 0;
-	}
+	bool has_brackets = (ptr[i] == '(');
+	if (has_brackets) i += 1;
 
 	unsigned l;
 	stmt->parameter.list = parse_assign_list(
@@ -29,12 +26,15 @@ unsigned parse_stmt_parameter(
 	}
 	i += l;
 
-	if (ptr[i++] != ')')
+	if (has_brackets)
 	{
-		parse_assign_list_delete(
-			stmt->parameter.list);
-		parse_debug_rewind(debug, dpos);
-		return 0;
+		if (ptr[i++] != ')')
+		{
+			parse_assign_list_delete(
+				stmt->parameter.list);
+			parse_debug_rewind(debug, dpos);
+			return 0;
+		}
 	}
 
 	stmt->type = PARSE_STMT_PARAMETER;
