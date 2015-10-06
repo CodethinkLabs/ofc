@@ -116,7 +116,7 @@ unsigned parse_stmt__do_while(
 	return i;
 }
 
-unsigned parse_stmt__do(
+unsigned parse_stmt__do_label(
 	const sparse_t* src, const char* ptr,
 	parse_debug_t* debug,
 	parse_stmt_t* stmt)
@@ -125,39 +125,52 @@ unsigned parse_stmt__do(
 
 	unsigned i = parse_label(
 		src, ptr, debug,
-		&stmt->do_loop.end_label);
+		&stmt->do_label.end_label);
 	if (i == 0) return 0;
 
-	if (ptr[i] == ',')
+	if (ptr[i] != ',')
+	{
+		/* We only support numeric labels without a comma,
+		   because identifiers would be ambiguous. */
+		if (stmt->do_label.end_label.type
+			!= PARSE_LABEL_NUMBER)
+		{
+			parse_debug_rewind(debug, dpos);
+			return 0;
+		}
+	}
+	else
+	{
 		i += 1;
+	}
 
 	unsigned len;
-	stmt->do_loop.init
+	stmt->do_label.init
 		= parse_assign_init(
 			src, &ptr[i], debug, &len);
-	if (!stmt->do_loop.init)
+	if (!stmt->do_label.init)
 	{
 		parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	i += len;
 
-	stmt->type = PARSE_STMT_DO;
-	stmt->do_loop.last = NULL;
-	stmt->do_loop.step = NULL;
+	stmt->type = PARSE_STMT_DO_LABEL;
+	stmt->do_label.last = NULL;
+	stmt->do_label.step = NULL;
 
 	if (ptr[i++] != ',')
 	{
-		parse_assign_delete(stmt->do_loop.init);
+		parse_assign_delete(stmt->do_label.init);
 		parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 
-	stmt->do_loop.last = parse_expr(
+	stmt->do_label.last = parse_expr(
 		src, &ptr[i], debug, &len);
-	if (!stmt->do_loop.last)
+	if (!stmt->do_label.last)
 	{
-		parse_assign_delete(stmt->do_loop.init);
+		parse_assign_delete(stmt->do_label.init);
 		parse_debug_rewind(debug, dpos);
 		return 0;
 	}
@@ -167,17 +180,102 @@ unsigned parse_stmt__do(
 	{
 		i += 1;
 
-		stmt->do_loop.step = parse_expr(
+		stmt->do_label.step = parse_expr(
 			src, &ptr[i], debug, &len);
-		if (!stmt->do_loop.step)
+		if (!stmt->do_label.step)
 		{
-			parse_expr_delete(stmt->do_loop.last);
-			parse_assign_delete(stmt->do_loop.init);
+			parse_expr_delete(stmt->do_label.last);
+			parse_assign_delete(stmt->do_label.init);
 			parse_debug_rewind(debug, dpos);
 			return 0;
 		}
 		i += len;
 	}
+
+	return i;
+}
+
+unsigned parse_stmt__do_block(
+	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
+	parse_stmt_t* stmt)
+{
+	unsigned dpos = parse_debug_position(debug);
+
+	unsigned i = 0;
+	stmt->do_block.init
+		= parse_assign_init(
+			src, &ptr[i], debug, &i);
+	if (!stmt->do_block.init)
+		return 0;
+
+	stmt->type = PARSE_STMT_DO_BLOCK;
+	stmt->do_block.last = NULL;
+	stmt->do_block.step = NULL;
+
+	if (ptr[i++] != ',')
+	{
+		parse_assign_delete(stmt->do_block.init);
+		parse_debug_rewind(debug, dpos);
+		return 0;
+	}
+
+	unsigned len;
+	stmt->do_block.last = parse_expr(
+		src, &ptr[i], debug, &len);
+	if (!stmt->do_block.last)
+	{
+		parse_assign_delete(stmt->do_block.init);
+		parse_debug_rewind(debug, dpos);
+		return 0;
+	}
+	i += len;
+
+	if (ptr[i] == ',')
+	{
+		i += 1;
+
+		stmt->do_block.step = parse_expr(
+			src, &ptr[i], debug, &len);
+		if (!stmt->do_block.step)
+		{
+			parse_expr_delete(stmt->do_block.last);
+			parse_assign_delete(stmt->do_block.init);
+			parse_debug_rewind(debug, dpos);
+			return 0;
+		}
+		i += len;
+	}
+
+	/* TODO - Make optional? */
+	if (!is_end_statement(&ptr[i], &len))
+	{
+		parse_expr_delete(stmt->do_block.last);
+		parse_assign_delete(stmt->do_block.init);
+		parse_debug_rewind(debug, dpos);
+		parse_debug_rewind(debug, dpos);
+		return 0;
+	}
+	i += len;
+
+	stmt->do_block.block
+		= parse_stmt_list(src, &ptr[i], debug, &len);
+	if (stmt->do_block.block) i += len;
+
+	len = parse_keyword_end(
+		src, &ptr[i], debug,
+		PARSE_KEYWORD_DO);
+	if (len == 0)
+	{
+		parse_stmt_list_delete(
+			stmt->do_block.block);
+		parse_expr_delete(stmt->do_block.last);
+		parse_assign_delete(stmt->do_block.init);
+		parse_debug_rewind(debug, dpos);
+		parse_debug_rewind(debug, dpos);
+		return 0;
+	}
+	i += len;
 
 	return i;
 }
@@ -203,7 +301,12 @@ unsigned parse_stmt_do(
 		src, &ptr[i], debug, stmt);
 	if (l > 0) return (i + l);
 
-	l = parse_stmt__do(
+	/* This must come before do_block. */
+	l = parse_stmt__do_label(
+		src, &ptr[i], debug, stmt);
+	if (l > 0) return (i + l);
+
+	l = parse_stmt__do_block(
 		src, &ptr[i], debug, stmt);
 	if (l > 0) return (i + l);
 
@@ -246,26 +349,61 @@ bool parse_stmt__do_while_print(
 		&& dprintf_bool(fd, ")"));
 }
 
-bool parse_stmt__do_print(
+bool parse_stmt__do_label_print(
 	int fd, const parse_stmt_t* stmt)
 {
 	if (!dprintf_bool(fd, "DO ")
-		|| !parse_label_print(fd, stmt->do_loop.end_label)
+		|| !parse_label_print(fd, stmt->do_label.end_label)
 		|| !dprintf_bool(fd, ", ")
-		|| !parse_assign_print(fd, stmt->do_loop.init)
+		|| !parse_assign_print(fd, stmt->do_label.init)
 		|| !dprintf_bool(fd, ", ")
-		|| !parse_expr_print(fd, stmt->do_loop.last))
+		|| !parse_expr_print(fd, stmt->do_label.last))
 		return false;
 
-	if (stmt->do_loop.step)
+	if (stmt->do_label.step)
 	{
 		if (!dprintf_bool(fd, ", ")
 			|| !parse_expr_print(
-				fd, stmt->do_loop.step))
+				fd, stmt->do_label.step))
 			return false;
 	}
 
 	return true;
+}
+
+bool parse_stmt__do_block_print(
+	int fd, const parse_stmt_t* stmt, unsigned indent)
+{
+	if (!dprintf_bool(fd, "DO ")
+		|| !parse_assign_print(fd, stmt->do_block.init)
+		|| !dprintf_bool(fd, ", ")
+		|| !parse_expr_print(fd, stmt->do_block.last))
+		return false;
+
+	if (stmt->do_block.step)
+	{
+		if (!dprintf_bool(fd, ", ")
+			|| !parse_expr_print(
+				fd, stmt->do_block.step))
+			return false;
+	}
+
+	if (!dprintf_bool(fd, "\n")
+		|| !parse_stmt_list_print(
+			fd, stmt->do_block.block, (indent + 1)))
+		return false;
+
+	if (!dprintf_bool(fd, "      "))
+		return false;
+
+	unsigned j;
+	for (j = 0; j < indent; j++)
+	{
+		if (!dprintf_bool(fd, "  "))
+			return false;
+	}
+
+	return dprintf_bool(fd, "END DO");
 }
 
 bool parse_stmt_do_print(
@@ -276,8 +414,11 @@ bool parse_stmt_do_print(
 
 	switch (stmt->type)
 	{
-		case PARSE_STMT_DO:
-			return parse_stmt__do_print(fd, stmt);
+		case PARSE_STMT_DO_LABEL:
+			return parse_stmt__do_label_print(fd, stmt);
+		case PARSE_STMT_DO_BLOCK:
+			return parse_stmt__do_block_print(
+				fd, stmt, indent);
 		case PARSE_STMT_DO_WHILE:
 			return parse_stmt__do_while_print(fd, stmt);
 		case PARSE_STMT_DO_WHILE_BLOCK:

@@ -42,7 +42,8 @@ typedef enum
 	PARSE_STMT_IF_COMPUTED,
 	PARSE_STMT_IF_STATEMENT,
 	PARSE_STMT_IF_THEN,
-	PARSE_STMT_DO,
+	PARSE_STMT_DO_LABEL,
+	PARSE_STMT_DO_BLOCK,
 	PARSE_STMT_DO_WHILE,
 	PARSE_STMT_DO_WHILE_BLOCK,
 	PARSE_STMT_STRUCTURE,
@@ -169,7 +170,15 @@ struct parse_stmt_s
 			parse_assign_t* init;
 			parse_expr_t*   last;
 			parse_expr_t*   step;
-		} do_loop;
+		} do_label;
+
+		struct
+		{
+			parse_assign_t*    init;
+			parse_expr_t*      last;
+			parse_expr_t*      step;
+			parse_stmt_list_t* block;
+		} do_block;
 
 		struct
 		{

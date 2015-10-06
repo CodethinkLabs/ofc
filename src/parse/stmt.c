@@ -288,10 +288,16 @@ static void parse_stmt__cleanup(
 			parse_stmt_list_delete(stmt.if_then.block_then);
 			parse_stmt_list_delete(stmt.if_then.block_else);
 			break;
-		case PARSE_STMT_DO:
-			parse_assign_delete(stmt.do_loop.init);
-			parse_expr_delete(stmt.do_loop.last);
-			parse_expr_delete(stmt.do_loop.step);
+		case PARSE_STMT_DO_LABEL:
+			parse_assign_delete(stmt.do_label.init);
+			parse_expr_delete(stmt.do_label.last);
+			parse_expr_delete(stmt.do_label.step);
+			break;
+		case PARSE_STMT_DO_BLOCK:
+			parse_assign_delete(stmt.do_block.init);
+			parse_expr_delete(stmt.do_block.last);
+			parse_expr_delete(stmt.do_block.step);
+			parse_stmt_list_delete(stmt.do_block.block);
 			break;
 		case PARSE_STMT_DO_WHILE:
 			parse_expr_delete(stmt.do_while.cond);
@@ -699,7 +705,8 @@ bool parse_stmt_print(
 			if (!parse_stmt_if_print(fd, stmt, indent))
 				return false;
 			break;
-		case PARSE_STMT_DO:
+		case PARSE_STMT_DO_LABEL:
+		case PARSE_STMT_DO_BLOCK:
 		case PARSE_STMT_DO_WHILE:
 		case PARSE_STMT_DO_WHILE_BLOCK:
 			if (!parse_stmt_do_print(fd, stmt, indent))
