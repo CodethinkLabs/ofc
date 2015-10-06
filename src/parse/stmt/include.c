@@ -24,12 +24,27 @@ unsigned parse_stmt_include(
 	}
 	i += l;
 
+	if (!is_end_statement(&ptr[i], NULL))
+	{
+		parse_debug_rewind(debug, dpos);
+		return 0;
+	}
+
+	/* Don't rewind debug after this point because
+	   we know we have a valid include statement. */
+
 	char path[spath.size + 1];
 	memcpy(path, spath.base, spath.size);
 	path[spath.size] = '\0';
 
 	stmt->include.file = file_create(
 		path, sparse_lang_opts(src));
+	if (!stmt->include.file)
+	{
+		sparse_error(src, ptr, "Can't open include file '%s'", path);
+		return 0;
+	}
+
 	stmt->include.src = prep(stmt->include.file);
 	stmt->include.include = parse_file(stmt->include.src);
 	if (!stmt->include.include)
@@ -37,7 +52,6 @@ unsigned parse_stmt_include(
 		parse_stmt_list_delete(stmt->include.include);
 		sparse_delete(stmt->include.src);
 		file_delete(stmt->include.file);
-		parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 
