@@ -37,8 +37,11 @@ unsigned parse_stmt_include(
 	memcpy(path, spath.base, spath.size);
 	path[spath.size] = '\0';
 
+	char* rpath = sparse_relative_path(src, path);
 	stmt->include.file = file_create(
-		path, sparse_lang_opts(src));
+		rpath, sparse_lang_opts(src));
+	free(rpath);
+
 	if (!stmt->include.file)
 	{
 		sparse_error(src, ptr, "Can't open include file '%s'", path);

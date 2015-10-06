@@ -118,6 +118,36 @@ lang_opts_t file_get_lang_opts(const file_t* file)
 }
 
 
+char* file_relative_path(
+	const file_t* file, const char* path)
+{
+	if (!file || !file->path)
+		return strdup(path);
+
+	unsigned prefix_len = 0;
+
+	unsigned i;
+	for (i = 0; file->path[i] != '\0'; i++)
+	{
+		if (file->path[i] == '/')
+			prefix_len = (i + 1);
+	}
+
+	if (prefix_len == 0)
+		return strdup(path);
+
+	unsigned rpath_len = prefix_len + strlen(path);
+
+	char* rpath = malloc(rpath_len + 1);
+	if (!rpath) return NULL;
+
+	sprintf(rpath, "%.*s%s",
+		prefix_len, file->path, path);
+
+	return rpath;
+}
+
+
 
 bool file_get_position(
 	const file_t* file, const char* ptr,

@@ -15,6 +15,9 @@ const char* file_get_path(const file_t* file);
 const char* file_get_strz(const file_t* file);
 lang_opts_t file_get_lang_opts(const file_t* file);
 
+char* file_relative_path(
+	const file_t* file, const char* path);
+
 bool file_get_position(
 	const file_t* file, const char* ptr,
 	unsigned* row, unsigned* col);
