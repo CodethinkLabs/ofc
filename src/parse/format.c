@@ -32,8 +32,12 @@ static const parse_format_desc__map_t parse_format_desc__map[] =
 	{ "TR", PARSE_FORMAT_DESC_TR        , 1, 0, 0 },
 	{ "T" , PARSE_FORMAT_DESC_T         , 1, 0, 0 },
 	{ "/" , PARSE_FORMAT_DESC_SLASH     , 0, 0, 0 },
-	{ ":" , PARSE_FORMAT_DESC_DOLLAR    , 0, 0, 0 },
-	{ "$" , PARSE_FORMAT_DESC_COLON     , 0, 0, 0 },
+	{ ":" , PARSE_FORMAT_DESC_COLON     , 0, 0, 0 },
+
+	/* Non standard. */
+	{ "$" , PARSE_FORMAT_DESC_DOLLAR    , 0, 0, 0 },
+	{ "\\", PARSE_FORMAT_DESC_BACKSLASH , 0, 0, 0 },
+	{ "Q" , PARSE_FORMAT_DESC_Q         , 0, 0, 0 },
 
 	/* Extended descriptors. */
 	{ "B" , PARSE_FORMAT_DESC_BINARY    , 1, 1, 0 },
