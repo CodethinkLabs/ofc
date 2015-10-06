@@ -43,7 +43,7 @@ static unsigned parse_literal__base(
 	{
 		if (quoted)
 		{
-			sparse_error(src, &ptr[i],
+			parse_debug_warning(debug, src, &ptr[i],
 				"Valid digit expected in BOZ literal");
 		}
 		return 0;
@@ -69,13 +69,13 @@ static unsigned parse_literal__base(
 
 	if (quoted && (ptr[i++] != quote))
 	{
-		sparse_error(src, &ptr[i],
+		parse_debug_warning(debug, src, &ptr[i],
 			"Invalid character in BOZ literal");
 		return 0;
 	}
 
 	/* We allow spaces in BOZ literals because they're likely to be used
-       for digit grouping, like: B'0101 1100' */
+	   for digit grouping, like: B'0101 1100' */
 
 	if (value) *value = v;
 	return i;
@@ -86,14 +86,35 @@ static unsigned parse_literal__binary(
 	parse_debug_t* debug,
 	parse_literal_t* literal)
 {
-	if (toupper(ptr[0]) != 'B')
-		return 0;
+	unsigned i = 0;
 
+	unsigned dpos = parse_debug_position(debug);
+
+	/* Accepting 'X' in a BOZ literal is an extension. */
+	bool prefix =  (toupper(ptr[i]) == 'B');
+	if (prefix) i += 1;
+
+	unsigned base = i;
 	unsigned len = parse_literal__base(
-		src, &ptr[1], debug, 2, true, NULL);
-	if (len == 0) return 0;
+		src, &ptr[i], debug, 2, true, NULL);
+	if (len == 0)
+	{
+		parse_debug_rewind(debug, dpos);
+		return 0;
+	}
+	i += len;
 
-	literal->number = str_ref(&ptr[1], len);
+	if (!prefix)
+	{
+		if (toupper(ptr[i]) != 'B')
+		{
+			parse_debug_rewind(debug, dpos);
+			return 0;
+		}
+		i += 1;
+	}
+
+	literal->number = str_ref(&ptr[base + 1], (len - 2));
 	literal->type = PARSE_LITERAL_BINARY;
 	return (len + 1);
 }
@@ -103,14 +124,35 @@ static unsigned parse_literal__octal(
 	parse_debug_t* debug,
 	parse_literal_t* literal)
 {
-	if (toupper(ptr[0]) != 'O')
-		return 0;
+	unsigned i = 0;
 
+	unsigned dpos = parse_debug_position(debug);
+
+	/* Accepting 'X' in a BOZ literal is an extension. */
+	bool prefix =  (toupper(ptr[i]) == 'O');
+	if (prefix) i += 1;
+
+	unsigned base = i;
 	unsigned len = parse_literal__base(
-		src, &ptr[1], debug, 8, true, NULL);
-	if (len == 0) return 0;
+		src, &ptr[i], debug, 8, true, NULL);
+	if (len == 0)
+	{
+		parse_debug_rewind(debug, dpos);
+		return 0;
+	}
+	i += len;
 
-	literal->number = str_ref(&ptr[1], len);
+	if (!prefix)
+	{
+		if (toupper(ptr[i]) != 'O')
+		{
+			parse_debug_rewind(debug, dpos);
+			return 0;
+		}
+		i += 1;
+	}
+
+	literal->number = str_ref(&ptr[base + 1], (len - 2));
 	literal->type = PARSE_LITERAL_OCTAL;
 	return (len + 1);
 }
@@ -120,18 +162,39 @@ static unsigned parse_literal__hex(
 	parse_debug_t* debug,
 	parse_literal_t* literal)
 {
+	unsigned i = 0;
+
+	unsigned dpos = parse_debug_position(debug);
+
 	/* Accepting 'X' in a BOZ literal is an extension. */
-	if ((toupper(ptr[0]) != 'X')
-		&& (toupper(ptr[0]) != 'Z'))
-		return 0;
+	bool prefix =  ((toupper(ptr[i]) == 'X')
+		|| (toupper(ptr[i]) == 'Z'));
+	if (prefix) i += 1;
 
+	unsigned base = i;
 	unsigned len = parse_literal__base(
-		src, &ptr[1], debug, 16, true, NULL);
-	if (len == 0) return 0;
+		src, &ptr[i], debug, 16, true, NULL);
+	if (len == 0)
+	{
+		parse_debug_rewind(debug, dpos);
+		return 0;
+	}
+	i += len;
 
-	literal->number = str_ref(&ptr[1], len);
+	if (!prefix)
+	{
+		if ((toupper(ptr[i]) != 'X')
+			&& (toupper(ptr[i]) != 'Z'))
+		{
+			parse_debug_rewind(debug, dpos);
+			return 0;
+		}
+		i += 1;
+	}
+
+	literal->number = str_ref(&ptr[base + 1], (len - 2));
 	literal->type = PARSE_LITERAL_HEX;
-	return (len + 1);
+	return i;
 }
 
 unsigned parse_hollerith(
@@ -504,7 +567,7 @@ static unsigned parse_literal__complex(
 	}
 
 	literal->type = PARSE_LITERAL_COMPLEX;
-	literal->complex.real      = real.number;
+	literal->complex.real	  = real.number;
 	literal->complex.imaginary = imaginary.number;
 
 	return i;
@@ -520,13 +583,14 @@ unsigned parse_literal(
 	parse_literal_t l;
 	l.kind = 0;
 
+	/* Order is important here. */
 	unsigned len = 0;
-	if (len == 0) len = parse_literal__character(src, ptr, debug, &l);
 	if (len == 0) len = parse_literal__hollerith(src, ptr, debug, &l);
 	if (len == 0) len = parse_literal__complex(src, ptr, debug, &l);
 	if (len == 0) len = parse_literal__binary(src, ptr, debug, &l);
 	if (len == 0) len = parse_literal__octal(src, ptr, debug, &l);
 	if (len == 0) len = parse_literal__hex(src, ptr, debug, &l);
+	if (len == 0) len = parse_literal__character(src, ptr, debug, &l);
 	if (len == 0) len = parse_literal__logical(src, ptr, debug, &l);
 	if (len == 0) len = parse_literal__number(src, ptr, debug, &l);
 
