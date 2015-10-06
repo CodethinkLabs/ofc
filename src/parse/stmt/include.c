@@ -40,13 +40,13 @@ unsigned parse_stmt_include(
 	char* rpath = sparse_relative_path(src, path);
 	stmt->include.file = file_create(
 		rpath, sparse_lang_opts(src));
-	free(rpath);
-
 	if (!stmt->include.file)
 	{
-		sparse_error(src, ptr, "Can't open include file '%s'", path);
+		sparse_error(src, ptr, "Can't open include file '%s'", rpath);
+		free(rpath);
 		return 0;
 	}
+	free(rpath);
 
 	stmt->include.src = prep(stmt->include.file);
 	stmt->include.include = parse_file(stmt->include.src);
