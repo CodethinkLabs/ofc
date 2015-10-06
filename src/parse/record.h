@@ -3,8 +3,8 @@
 
 typedef struct
 {
-	str_ref_t structure;
-	str_ref_t name;
+	str_ref_t    structure;
+	parse_lhs_t* name;
 } parse_record_t;
 
 typedef struct

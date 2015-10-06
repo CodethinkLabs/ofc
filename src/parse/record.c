@@ -34,10 +34,9 @@ static parse_record_t* parse_record(
 		return NULL;
 	}
 
-	l = parse_name(
-		src, &ptr[i], debug,
-		&record->name);
-	if (l == 0)
+	record->name = parse_lhs(
+		src, &ptr[i], debug, &l);
+	if (!record->name)
 	{
 		free(record);
 		parse_debug_rewind(debug, dpos);
@@ -55,6 +54,7 @@ static void parse_record_delete(
 	if (!record)
 		return;
 
+	parse_lhs_delete(record->name);
 	free(record);
 }
 
@@ -67,7 +67,7 @@ static bool parse_record_print(
 	return (dprintf_bool(fd, "/")
 		&& str_ref_print(fd, record->structure)
 		&& dprintf_bool(fd, "/ ")
-		&& str_ref_print(fd, record->name));
+		&& parse_lhs_print(fd, record->name));
 }
 
 
