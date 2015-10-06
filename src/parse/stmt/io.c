@@ -126,13 +126,26 @@ bool parse_stmt_io_print(
 	return true;
 }
 
-bool parse_stmt_print_print(
+bool parse_stmt_print_accept_print(
 	int fd, const parse_stmt_t* stmt)
 {
 	if (!stmt)
 		return false;
 
-	if (!dprintf_bool(fd, "PRINT "))
+	const char* kwstr;
+	switch (stmt->type)
+	{
+		case PARSE_STMT_IO_PRINT:
+			kwstr = "PRINT";
+			break;
+		case PARSE_STMT_IO_ACCEPT:
+			kwstr = "ACCEPT";
+			break;
+		default:
+			return false;
+	}
+
+	if (!dprintf_bool(fd, "%s ", kwstr))
 		return false;
 
 	if (!(stmt->io_print.format_asterisk
@@ -301,7 +314,7 @@ unsigned parse_stmt_io_decode(
 	return i;
 }
 
-static unsigned parse_stmt_io__print_type(
+static unsigned parse_stmt_io__print_type_accept(
 	const sparse_t* src, const char* ptr,
 	parse_debug_t* debug,
 	parse_keyword_e keyword,
@@ -347,7 +360,6 @@ static unsigned parse_stmt_io__print_type(
 		i += len;
 	}
 
-	stmt->type = PARSE_STMT_IO_PRINT;
 	return i;
 }
 
@@ -359,8 +371,24 @@ unsigned parse_stmt_io_print_type(
 	parse_debug_t* debug,
 	parse_stmt_t* stmt)
 {
-	return parse_stmt_io__print_type(
+	unsigned i = parse_stmt_io__print_type_accept(
 		src, ptr, debug, (ptr[0] == 'P'
-			? PARSE_KEYWORD_PRINT
-			: PARSE_KEYWORD_TYPE), stmt);
+			? PARSE_KEYWORD_PRINT : PARSE_KEYWORD_TYPE), stmt);
+	if (i == 0) return 0;
+
+	stmt->type = PARSE_STMT_IO_PRINT;
+	return i;
+}
+
+unsigned parse_stmt_io_accept(
+	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
+	parse_stmt_t* stmt)
+{
+	unsigned i = parse_stmt_io__print_type_accept(
+		src, ptr, debug, PARSE_KEYWORD_ACCEPT, stmt);
+	if (i == 0) return 0;
+
+	stmt->type = PARSE_STMT_IO_ACCEPT;
+	return i;
 }

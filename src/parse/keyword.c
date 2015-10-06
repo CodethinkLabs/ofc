@@ -83,6 +83,7 @@ static const char* parse_keyword__name[] =
 	"TYPE",
 	"ENCODE",
 	"DECODE",
+	"ACCEPT",
 
 	NULL
 };

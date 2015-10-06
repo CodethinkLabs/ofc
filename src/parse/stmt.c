@@ -197,6 +197,10 @@ unsigned parse_stmt_io_decode(
 	const sparse_t* src, const char* ptr,
 	parse_debug_t* debug,
 	parse_stmt_t* stmt);
+unsigned parse_stmt_io_accept(
+	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
+	parse_stmt_t* stmt);
 
 
 
@@ -318,6 +322,7 @@ static void parse_stmt__cleanup(
 			parse_iolist_delete(stmt.io.iolist);
 			break;
 		case PARSE_STMT_IO_PRINT:
+		case PARSE_STMT_IO_ACCEPT:
 			parse_iolist_delete(stmt.io_print.iolist);
 			break;
 		case PARSE_STMT_FORMAT:
@@ -387,6 +392,7 @@ parse_stmt_t* parse_stmt(
 		case 'A':
 			if (i == 0) i = parse_stmt_assign(src, ptr, debug, &stmt);
 			if (i == 0) i = parse_stmt_decl_attr_automatic(src, ptr, debug, &stmt);
+			if (i == 0) i = parse_stmt_io_accept(src, ptr, debug, &stmt);
 			break;
 
 		case 'B':
@@ -600,7 +606,7 @@ bool parse_stmt_record_print(
 	int fd, const parse_stmt_t* stmt);
 bool parse_stmt_io_print(
 	int fd, const parse_stmt_t* stmt);
-bool parse_stmt_print_print(
+bool parse_stmt_print_accept_print(
 	int fd, const parse_stmt_t* stmt);
 
 
@@ -720,7 +726,8 @@ bool parse_stmt_print(
 			parse_stmt_io_print(fd, stmt);
 			break;
 		case PARSE_STMT_IO_PRINT:
-			parse_stmt_print_print(fd, stmt);
+		case PARSE_STMT_IO_ACCEPT:
+			parse_stmt_print_accept_print(fd, stmt);
 			break;
 		case PARSE_STMT_FORMAT:
 			if (!parse_stmt_format_print(fd, stmt))
