@@ -278,7 +278,7 @@ bool parse_stmt_if_print(
 	{
 		if (!dprintf_bool(fd, "IF (")
 			|| !parse_expr_print(fd, stmt->if_then.cond)
-			|| !dprintf_bool(fd, ") THEN"))
+			|| !dprintf_bool(fd, ") THEN\n"))
 			return false;
 
 		if (stmt->if_then.block_then
