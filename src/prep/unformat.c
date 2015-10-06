@@ -165,22 +165,6 @@ static unsigned prep_unformat__free_form_label(
 	return 0;
 }
 
-static unsigned prep_unformat__fixed_form_code(
-	unsigned* col, const char* src, lang_opts_t opts, sparse_t* sparse)
-{
-	if (!src)
-		return 0;
-
-	unsigned i;
-	for (i = 0; (*col < opts.columns) && !is_vspace(src[i]) && (src[i] != '\0'); i++)
-		*col += (src[i] == '\t' ? opts.tab_width : 1);
-
-	if (sparse && !sparse_append_strn(sparse, src, i))
-		return 0;
-
-	return i;
-}
-
 
 typedef struct
 {
@@ -200,6 +184,102 @@ static const pre_state_t PRE_STATE_DEFAULT =
 	.in_ident = false,
 	.in_number = false,
 };
+
+static unsigned prep_unformat__fixed_form_code(
+	unsigned* col, pre_state_t* state,
+	const file_t* file, const char* src, lang_opts_t opts,
+	sparse_t* sparse)
+{
+	if (!src)
+		return 0;
+
+	unsigned hollerith_size   = 0;
+	unsigned hollerith_remain = 0;
+
+	unsigned i;
+	for (i = 0; (*col < opts.columns) && !is_vspace(src[i]) && (src[i] != '\0'); i++)
+	{
+		if (state->string_delim != '\0')
+		{
+			if (!state->was_escape
+				&& (src[i] == state->string_delim))
+				state->string_delim = '\0';
+
+			state->was_escape = (src[i] == '\\');
+		}
+		else if (hollerith_remain > 0)
+		{
+			/* Ignore hollerith characters. */
+			hollerith_remain--;
+		}
+		else
+		{
+			/* Break if we see the start of a bang comment. */
+			if (src[i] == '!')
+				break;
+
+			if ((src[i] == '\"')
+				|| (src[i] == '\''))
+			{
+				state->string_delim = src[i];
+				state->in_ident = false;
+				state->in_number = false;
+			}
+			else if (state->in_ident)
+			{
+				state->in_ident = is_ident(src[i])
+					|| is_hspace(src[i]);
+			}
+			else if (state->in_number)
+			{
+				if (toupper(src[i]) == 'H')
+				{
+					hollerith_remain = hollerith_size;
+					state->in_ident = false;
+				}
+				else
+				{
+					state->in_ident = isalpha(src[i]);
+				}
+
+				state->in_number = isdigit(src[i]);
+				if (state->in_number)
+				{
+					unsigned nsize = (hollerith_size * 10) + (src[i] - '0');
+					if (((nsize / 10) != hollerith_size)
+						|| ((nsize % 10U) != (unsigned)(src[i] - '0')))
+					{
+						file_error(file, &src[i],
+							"Hollerith too long");
+						return 0;
+					}
+
+					hollerith_size = nsize;
+				}
+				else
+				{
+					hollerith_size = 0;
+				}
+			}
+			else
+			{
+				state->in_number = isdigit(src[i]);
+				state->in_ident  = isalpha(src[i]);
+
+				if (state->in_number)
+					hollerith_size = (src[i] - '0');
+			}
+		}
+
+		*col += (src[i] == '\t' ? opts.tab_width : 1);
+	}
+
+	if (sparse && !sparse_append_strn(
+		sparse, src, i))
+		return 0;
+
+	return i;
+}
 
 static unsigned prep_unformat__free_form_code(
 	unsigned* col, pre_state_t* state,
@@ -336,6 +416,7 @@ static bool prep_unformat__fixed_form(
 {
 	const char* src  = file_get_strz(file);
 	lang_opts_t opts = file_get_lang_opts(file);
+	pre_state_t state = PRE_STATE_DEFAULT;
 
 	bool first_code_line = true;
 
@@ -400,6 +481,7 @@ static bool prep_unformat__fixed_form(
 		{
 			for(; is_hspace(src[pos]); pos++)
 				col += (src[pos] == '\t' ? opts.tab_width : 1);
+			state = PRE_STATE_DEFAULT;
 		}
 
 		bool has_code = ((col < opts.columns)
@@ -423,10 +505,9 @@ static bool prep_unformat__fixed_form(
 
 			/* Append non-empty line to output. */
 			len = prep_unformat__fixed_form_code(
-				&col, &src[pos], opts, sparse);
+				&col, &state, file, &src[pos], opts, sparse);
 			pos += len;
-			if (len == 0)
-				return false;
+			if (len == 0) return false;
 
 			first_code_line = false;
 		}
