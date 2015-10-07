@@ -248,9 +248,18 @@ unsigned parse_keyword_named(
 	if ((is_number || is_ident)
 		&& sparse_sequential(src, &ptr[len - 1], 2))
 	{
-		parse_debug_warning(debug, src, &ptr[len],
-			"Expected whitespace between %s and %s", kwstr,
-			(is_number ? "number" : "identifier"));
+		if (!name && (keyword == PARSE_KEYWORD_ELSE)
+			&& (strncasecmp(&ptr[len], "IF", 2) == 0))
+		{
+			/* Treat this as a special case because of how we handle
+			   else if statements. */
+		}
+		else
+		{
+			parse_debug_warning(debug, src, &ptr[len],
+				"Expected whitespace between %s and %s", kwstr,
+				(is_number ? "number" : "identifier"));
+		}
 	}
 
 	return len;
