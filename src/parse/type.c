@@ -157,51 +157,17 @@ parse_type_t* parse_type(
 			|| (type.type == PARSE_TYPE_BYTE))
 		&& (ptr[i] == '*'))
 	{
-		i += 1;
-
-		if (ptr[i] == '(')
+		unsigned l = parse_star_len(
+			src, &ptr[i], debug,
+			&type.count_expr,
+			&type.count_var);
+		if (l == 0)
 		{
-			i += 1;
-
-			unsigned l;
-			type.count_expr = parse_expr(
-				src, &ptr[i], debug, &l);
-			if (!type.count_expr)
-			{
-				if (ptr[i] == '*')
-				{
-					type.count_var = true;
-					l = 1;
-				}
-				else
-				{
-					sparse_error(src, &ptr[i],
-						"Expected count expression or value for character");
-					return NULL;
-				}
-			}
-			i += l;
-
-			if (ptr[i++] != ')')
-			{
-				parse_expr_delete(type.count_expr);
-				parse_debug_rewind(debug, dpos);
-				return NULL;
-			}
+			sparse_error(src, &ptr[i],
+				"Expected count expression or value for character");
+			return NULL;
 		}
-		else
-		{
-			unsigned l;
-			type.count_expr = parse_expr_literal(
-				src, &ptr[i], debug, &l);
-			if (!type.count_expr)
-			{
-				sparse_error(src, &ptr[i],
-					"Expected count expression or value for character");
-				return NULL;
-			}
-			i += l;
-		}
+		i += l;
 	}
 	else if (ptr[i] == '*')
 	{
@@ -269,5 +235,39 @@ bool parse_type_print(int fd, const parse_type_t* type)
 	if (type->type >= PARSE_TYPE_COUNT)
 		return false;
 
-	return dprintf_bool(fd, "%s", parse_type__name[type->type]);
+	if (!dprintf_bool(fd, "%s",
+		parse_type__name[type->type]))
+		return false;
+
+	if ((type->kind > 0)
+		|| type->count_expr
+		|| type->count_var)
+	{
+		if (!dprintf_bool(fd, "("))
+			return false;
+
+		if ((type->kind > 0)
+			&& !dprintf_bool(fd, "KIND=%u", type->kind))
+			return false;
+
+		if (type->count_expr || type->count_var)
+		{
+			if ((type->kind > 0)
+				&& !dprintf_bool(fd, ", "))
+				return false;
+
+			if (!dprintf_bool(fd, "LEN="))
+				return false;
+
+			if (!(type->count_var
+				? dprintf_bool(fd, "*")
+				: parse_expr_print(fd, type->count_expr)))
+				return false;
+		}
+
+		if (!dprintf_bool(fd, ")"))
+			return false;
+	}
+
+	return dprintf_bool(fd, " ::");
 }

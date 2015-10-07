@@ -5,6 +5,7 @@ typedef struct
 {
 	parse_lhs_t*  lhs;
 	parse_expr_t* len;
+	bool          len_var;
 
 	parse_expr_t*  init_expr;
 	parse_clist_t* init_clist;
