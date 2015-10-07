@@ -9,6 +9,7 @@ typedef enum
 {
 	PARSE_LHS_VARIABLE,
 	PARSE_LHS_ARRAY,
+	PARSE_LHS_STAR_LEN,
 	PARSE_LHS_MEMBER_TYPE,
 	PARSE_LHS_MEMBER_STRUCTURE,
 	PARSE_LHS_IMPLICIT_DO,
@@ -38,6 +39,12 @@ struct parse_lhs_s
 				{
 					str_ref_t name;
 				} member;
+
+				struct
+				{
+					parse_expr_t* len;
+					bool          var;
+				} star_len;
 			};
 		};
 
@@ -51,6 +58,10 @@ typedef struct
 	parse_lhs_t** lhs;
 } parse_lhs_list_t;
 
+parse_lhs_t* parse_lhs_star_len(
+	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
+	unsigned* len);
 parse_lhs_t* parse_lhs(
 	const sparse_t* src, const char* ptr,
 	parse_debug_t* debug,

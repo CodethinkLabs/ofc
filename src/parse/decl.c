@@ -12,20 +12,13 @@ parse_decl_t* parse_decl(
 	if (!decl) return NULL;
 
 	unsigned i;
-	decl->lhs = parse_lhs(src, ptr, debug, &i);
+	decl->lhs = parse_lhs_star_len(
+		src, ptr, debug, &i);
 	if (!decl->lhs)
 	{
 		free(decl);
 		return NULL;
 	}
-
-	decl->len_var = false;
-	decl->len = NULL;
-
-	unsigned l = parse_star_len(
-		src, &ptr[i], debug,
-		&decl->len, &decl->len_var);
-	i += l;
 
 	decl->init_expr  = NULL;
 	decl->init_clist = NULL;
@@ -57,7 +50,6 @@ void parse_decl_delete(
 	parse_expr_delete(decl->init_expr);
 	parse_clist_delete(decl->init_clist);
 
-	parse_expr_delete(decl->len);
 	parse_lhs_delete(decl->lhs);
 	free(decl);
 }
@@ -70,18 +62,6 @@ bool parse_decl_print(
 	if (!parse_lhs_print(
 		fd, decl->lhs))
 		return false;
-
-	if (decl->len_var)
-	{
-		if (!dprintf_bool(fd, "*(*)"))
-			return false;
-	}
-	else if (decl->len)
-	{
-		if (!dprintf_bool(fd, "*")
-			|| !parse_expr_print(fd, decl->len))
-			return false;
-	}
 
 	if (decl->init_expr)
 	{

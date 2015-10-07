@@ -7,6 +7,7 @@ static void parse_lhs__cleanup(
 	switch (lhs.type)
 	{
 		case PARSE_LHS_ARRAY:
+		case PARSE_LHS_STAR_LEN:
 		case PARSE_LHS_MEMBER_STRUCTURE:
 		case PARSE_LHS_MEMBER_TYPE:
 			parse_lhs_delete(lhs.parent);
@@ -19,6 +20,9 @@ static void parse_lhs__cleanup(
 	{
 		case PARSE_LHS_ARRAY:
 			parse_array_index_delete(lhs.array.index);
+			break;
+		case PARSE_LHS_STAR_LEN:
+			parse_expr_delete(lhs.star_len.len);
 			break;
 		case PARSE_LHS_IMPLICIT_DO:
 			parse_implicit_do_delete(lhs.implicit_do);
@@ -51,6 +55,7 @@ static bool parse_lhs__clone(
 	switch (src->type)
 	{
 		case PARSE_LHS_ARRAY:
+		case PARSE_LHS_STAR_LEN:
 		case PARSE_LHS_MEMBER_STRUCTURE:
 		case PARSE_LHS_MEMBER_TYPE:
 			if (src->parent)
@@ -81,6 +86,19 @@ static bool parse_lhs__clone(
 				clone.array.index = parse_array_index_copy(
 					src->array.index);
 				if (!clone.array.index)
+				{
+					parse_lhs__cleanup(clone);
+					return false;
+				}
+			}
+			break;
+
+		case PARSE_LHS_STAR_LEN:
+			if (src->star_len.len)
+			{
+				clone.star_len.len = parse_expr_copy(
+					src->star_len.len);
+				if (!clone.star_len.len)
 				{
 					parse_lhs__cleanup(clone);
 					return false;
@@ -161,6 +179,47 @@ static parse_lhs_t* parse_lhs__array(
 	return alhs;
 }
 
+static parse_lhs_t* parse_lhs__star_len(
+	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
+	parse_lhs_t* parent, unsigned* len)
+{
+	if (!parent)
+		return NULL;
+
+	switch (parent->type)
+	{
+		case PARSE_LHS_IMPLICIT_DO:
+			return NULL;
+		default:
+			break;
+	}
+
+	parse_lhs_t lhs;
+	lhs.type   = PARSE_LHS_STAR_LEN;
+	lhs.parent = parent;
+
+	unsigned dpos = parse_debug_position(debug);
+
+	unsigned i = parse_star_len(
+		src, ptr, debug,
+		&lhs.star_len.len,
+		&lhs.star_len.var);
+	if (i == 0) return 0;
+
+	parse_lhs_t* alhs
+		= parse_lhs__alloc(lhs);
+	if (!alhs)
+	{
+		parse_lhs__cleanup(lhs);
+		parse_debug_rewind(debug, dpos);
+		return NULL;
+	}
+
+	if (len) *len = i;
+	return alhs;
+}
+
 
 static parse_lhs_t* parse_lhs__member(
 	const sparse_t* src, const char* ptr,
@@ -223,9 +282,10 @@ static parse_lhs_t* parse_lhs__member(
 }
 
 
-parse_lhs_t* parse_lhs(
+static parse_lhs_t* parse__lhs(
 	const sparse_t* src, const char* ptr,
 	parse_debug_t* debug,
+	bool star_len,
 	unsigned* len)
 {
 	parse_lhs_t lhs;
@@ -266,6 +326,18 @@ parse_lhs_t* parse_lhs(
 			continue;
 		}
 
+		if (star_len)
+		{
+			child_lhs = parse_lhs__star_len(
+					src, &ptr[i], debug, alhs, &l);
+			if (child_lhs)
+			{
+				i += l;
+				alhs = child_lhs;
+				continue;
+			}
+		}
+
 		child_lhs = parse_lhs__member(
 				src, &ptr[i], debug, alhs, &l);
 		if (child_lhs)
@@ -281,6 +353,25 @@ parse_lhs_t* parse_lhs(
 	if (len) *len = i;
 	return alhs;
 }
+
+parse_lhs_t* parse_lhs_star_len(
+	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
+	unsigned* len)
+{
+	return parse__lhs(
+		src, ptr, debug, true ,len);
+}
+
+parse_lhs_t* parse_lhs(
+	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
+	unsigned* len)
+{
+	return parse__lhs(
+		src, ptr, debug, false ,len);
+}
+
 
 parse_lhs_t* parse_lhs_copy(
 	parse_lhs_t* lhs)
@@ -328,6 +419,30 @@ bool parse_lhs_print(
 				return parse_array_index_print(
 					fd, lhs->array.index);
 			return dprintf_bool(fd, "()");
+		case PARSE_LHS_STAR_LEN:
+			if (!parse_lhs_print(
+				fd, lhs->parent)
+				|| !dprintf_bool(fd, "*"))
+				return false;
+			if (lhs->star_len.var)
+			{
+				return dprintf_bool(fd, "(*)");
+			}
+			else if (lhs->star_len.len)
+			{
+				bool bracketed = (lhs->star_len.len->type
+					!= PARSE_EXPR_CONSTANT);
+
+				if (bracketed && !dprintf_bool(fd, "("))
+					return false;
+
+				if (!parse_expr_print(
+					fd, lhs->star_len.len))
+					return false;
+
+				return (!bracketed || dprintf_bool(fd, "("));
+			}
+			break;
 		case PARSE_LHS_MEMBER_TYPE:
 			return (parse_lhs_print(fd, lhs->parent)
 				&& dprintf_bool(fd, "%%")
