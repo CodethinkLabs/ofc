@@ -19,9 +19,9 @@ unsigned parse_stmt__do_while_block(
 	}
 
 	unsigned len;
-	stmt->do_while.cond = parse_expr(
+	stmt->do_while_block.cond = parse_expr(
 		src, &ptr[i], debug, &len);
-	if (!stmt->do_while.cond)
+	if (!stmt->do_while_block.cond)
 	{
 		parse_debug_rewind(debug, dpos);
 		return 0;
@@ -321,9 +321,11 @@ bool parse_stmt__do_while_block_print(
 {
 	if (!dprintf_bool(fd, "DO WHILE(")
 		|| !parse_expr_print(fd, stmt->do_while_block.cond)
-		|| !dprintf_bool(fd, ")\n")
-		|| !parse_stmt_list_print(
-			fd, stmt->do_while_block.block, (indent + 1)))
+		|| !dprintf_bool(fd, ")\n"))
+		return false;
+
+	if (stmt->do_while_block.block && !parse_stmt_list_print(
+		fd, stmt->do_while_block.block, (indent + 1)))
 		return false;
 
 	if (!dprintf_bool(fd, "      "))
