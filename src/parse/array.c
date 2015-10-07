@@ -51,7 +51,7 @@ static parse_array_range_t* parse_array__range(
 			}
 		}
 	}
-	else if (!first)
+	else if (!first && !is_slice)
 	{
 		parse_debug_rewind(debug, dpos);
 		return NULL;
