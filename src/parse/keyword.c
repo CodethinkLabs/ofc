@@ -119,7 +119,7 @@ unsigned parse_name(
 	if (strncasecmp(ptr, "END", 3) == 0)
 	{
 		parse_debug_warning(debug, src, ptr,
-			"Using END in a keyword is incompatible with Fortran 90");
+			"Using END at the beginning of an identifier is incompatible with Fortran 90");
 	}
 
 	return parse_ident(src, ptr, debug, name);
