@@ -14,10 +14,10 @@ unsigned parse_stmt_continue(
 }
 
 bool parse_stmt_continue_print(
-	string_t* tree_output, const parse_stmt_t* stmt)
+	colstr_t* cs, const parse_stmt_t* stmt)
 {
 	if (!stmt)
 		return false;
 
-	return string_printf(tree_output, "CONTINUE");
+	return colstr_atomic_writef(cs, "CONTINUE");
 }

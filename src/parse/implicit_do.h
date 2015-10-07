@@ -24,6 +24,6 @@ void parse_implicit_do_delete(
 	parse_implicit_do_t* id);
 
 bool parse_implicit_do_print(
-	string_t* tree_output, const parse_implicit_do_t* id);
+	colstr_t* cs, const parse_implicit_do_t* id);
 
 #endif

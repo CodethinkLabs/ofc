@@ -62,17 +62,17 @@ void parse_save_delete(
 }
 
 bool parse_save_print(
-	string_t* tree_output, const parse_save_t* save)
+	colstr_t* cs, const parse_save_t* save)
 {
 	if (!save)
 		return false;
 
 	if (save->is_common)
-		return (string_printf(tree_output, "/")
-			&& str_ref_print(tree_output, save->common)
-			&& string_printf(tree_output, "/"));
+		return (colstr_atomic_writef(cs, "/")
+			&& str_ref_print(cs, save->common)
+			&& colstr_atomic_writef(cs, "/"));
 
-	return parse_lhs_print(tree_output, save->lhs);
+	return parse_lhs_print(cs, save->lhs);
 }
 
 
@@ -118,12 +118,12 @@ void parse_save_list_delete(
 }
 
 bool parse_save_list_print(
-	string_t* tree_output, const parse_save_list_t* list)
+	colstr_t* cs, const parse_save_list_t* list)
 {
 	if (!list)
 		return false;
 
-	return parse_list_print(tree_output,
+	return parse_list_print(cs,
 		list->count, (const void**)list->save,
 		(void*)parse_save_print);
 }

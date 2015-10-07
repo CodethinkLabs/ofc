@@ -45,11 +45,11 @@ unsigned parse_stmt_assign(
 }
 
 bool parse_stmt_assign_print(
-	string_t* tree_output, const parse_stmt_t* stmt)
+	colstr_t* cs, const parse_stmt_t* stmt)
 {
 	if (!stmt)
 		return false;
 
-	return (string_printf(tree_output, "ASSIGN %u TO ", stmt->assign.label)
-		&& str_ref_print(tree_output, stmt->assign.variable));
+	return (colstr_atomic_writef(cs, "ASSIGN %u TO ", stmt->assign.label)
+		&& str_ref_print(cs, stmt->assign.variable));
 }

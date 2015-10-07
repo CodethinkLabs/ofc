@@ -17,9 +17,9 @@ unsigned parse_label(
 }
 
 bool parse_label_print(
-	string_t* tree_output, const parse_label_t label)
+	colstr_t* cs, const parse_label_t label)
 {
 	if (label.type == PARSE_LABEL_NUMBER)
-		return string_printf(tree_output, "%u", label.number);
-	return str_ref_print(tree_output, label.variable);
+		return colstr_atomic_writef(cs, "%u", label.number);
+	return str_ref_print(cs, label.variable);
 }

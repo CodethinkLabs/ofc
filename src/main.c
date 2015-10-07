@@ -6,7 +6,7 @@
 #include "file.h"
 #include "prep.h"
 #include "parse/file.h"
-#include "reformat.h"
+
 
 void print_usage(const char* name)
 {
@@ -220,10 +220,10 @@ int main(int argc, const char* argv[])
 		return EXIT_FAILURE;
 	}
 
-	string_t* tree_output = string_create(NULL, 0);
+	colstr_t* cs = colstr_create(0);
 
-	if (!parse_stmt_list_print(tree_output, program, 0)
-		|| !parse_reformat_print(tree_output))
+	if (!parse_stmt_list_print(cs, program, 0)
+		|| !colstr_fdprint(cs, STDOUT_FILENO))
 	{
 		fprintf(stderr, "Error: Failed to reprint program\n");
 		sparse_delete(condense);

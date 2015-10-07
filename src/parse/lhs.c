@@ -405,55 +405,55 @@ void parse_lhs_delete(
 }
 
 bool parse_lhs_print(
-	string_t* tree_output, const parse_lhs_t* lhs)
+	colstr_t* cs, const parse_lhs_t* lhs)
 {
 	switch (lhs->type)
 	{
 		case PARSE_LHS_VARIABLE:
-			return str_ref_print(tree_output, lhs->variable);
+			return str_ref_print(cs, lhs->variable);
 		case PARSE_LHS_ARRAY:
 			if (!parse_lhs_print(
-				tree_output, lhs->parent))
+				cs, lhs->parent))
 				return false;
 			if (lhs->array.index)
 				return parse_array_index_print(
-					tree_output, lhs->array.index);
-			return string_printf(tree_output, "()");
+					cs, lhs->array.index);
+			return colstr_atomic_writef(cs, "()");
 		case PARSE_LHS_STAR_LEN:
 			if (!parse_lhs_print(
-				tree_output, lhs->parent)
-				|| !string_printf(tree_output, "*"))
+				cs, lhs->parent)
+				|| !colstr_atomic_writef(cs, "*"))
 				return false;
 			if (lhs->star_len.var)
 			{
-				return string_printf(tree_output, "(*)");
+				return colstr_atomic_writef(cs, "(*)");
 			}
 			else if (lhs->star_len.len)
 			{
 				bool bracketed = (lhs->star_len.len->type
 					!= PARSE_EXPR_CONSTANT);
 
-				if (bracketed && !string_printf(tree_output, "("))
+				if (bracketed && !colstr_atomic_writef(cs, "("))
 					return false;
 
 				if (!parse_expr_print(
-					tree_output, lhs->star_len.len))
+					cs, lhs->star_len.len))
 					return false;
 
-				return (!bracketed || string_printf(tree_output, "("));
+				return (!bracketed || colstr_atomic_writef(cs, "("));
 			}
 			break;
 		case PARSE_LHS_MEMBER_TYPE:
-			return (parse_lhs_print(tree_output, lhs->parent)
-				&& string_printf(tree_output, "%%")
-				&& str_ref_print(tree_output, lhs->member.name));
+			return (parse_lhs_print(cs, lhs->parent)
+				&& colstr_atomic_writef(cs, "%%")
+				&& str_ref_print(cs, lhs->member.name));
 		case PARSE_LHS_MEMBER_STRUCTURE:
-			return (parse_lhs_print(tree_output, lhs->parent)
-				&& string_printf(tree_output, ".")
-				&& str_ref_print(tree_output, lhs->member.name));
+			return (parse_lhs_print(cs, lhs->parent)
+				&& colstr_atomic_writef(cs, ".")
+				&& str_ref_print(cs, lhs->member.name));
 		case PARSE_LHS_IMPLICIT_DO:
 			return parse_implicit_do_print(
-				tree_output, lhs->implicit_do);
+				cs, lhs->implicit_do);
 		default:
 			break;
 	}
@@ -550,17 +550,17 @@ void parse_lhs_list_delete(
 }
 
 bool parse_lhs_list_print(
-	string_t* tree_output, const parse_lhs_list_t* list)
+	colstr_t* cs, const parse_lhs_list_t* list)
 {
-	return parse_list_print(tree_output,
+	return parse_list_print(cs,
 		list->count, (const void**)list->lhs,
 		(void*)parse_lhs_print);
 }
 
 bool parse_lhs_list_bracketed_print(
-	string_t* tree_output, const parse_lhs_list_t* list)
+	colstr_t* cs, const parse_lhs_list_t* list)
 {
-	return (string_printf(tree_output, "(")
-		&& parse_lhs_list_print(tree_output, list)
-		&& string_printf(tree_output, ")"));
+	return (colstr_atomic_writef(cs, "(")
+		&& parse_lhs_list_print(cs, list)
+		&& colstr_atomic_writef(cs, ")"));
 }

@@ -26,6 +26,6 @@ parse_iolist_t* parse_iolist(
 void parse_iolist_delete(
 	parse_iolist_t* list);
 bool parse_iolist_print(
-	string_t* tree_output, const parse_iolist_t* list);
+	colstr_t* cs, const parse_iolist_t* list);
 
 #endif

@@ -28,8 +28,8 @@ void parse_list_delete(
 	void (*elem_delete)(void*));
 
 bool parse_list_print(
-	string_t* tree_output,
+	colstr_t* cs,
 	unsigned elem_count, const void** elem,
-	bool (*elem_print)(string_t*, const void*));
+	bool (*elem_print)(colstr_t*, const void*));
 
 #endif

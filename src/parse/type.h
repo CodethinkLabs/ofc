@@ -42,6 +42,6 @@ parse_type_t* parse_type(
 	parse_debug_t* debug,
 	unsigned* len);
 void parse_type_delete(parse_type_t* type);
-bool parse_type_print(string_t* tree_output, const parse_type_t* type);
+bool parse_type_print(colstr_t* cs, const parse_type_t* type);
 
 #endif

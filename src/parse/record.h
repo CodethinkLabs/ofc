@@ -20,6 +20,6 @@ parse_record_list_t* parse_record_list(
 void parse_record_list_delete(
 	parse_record_list_t* list);
 bool parse_record_list_print(
-	string_t* tree_output, const parse_record_list_t* list);
+	colstr_t* cs, const parse_record_list_t* list);
 
 #endif

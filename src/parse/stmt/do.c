@@ -317,56 +317,56 @@ unsigned parse_stmt_do(
 
 
 bool parse_stmt__do_while_block_print(
-	string_t* tree_output, const parse_stmt_t* stmt, unsigned indent)
+	colstr_t* cs, const parse_stmt_t* stmt, unsigned indent)
 {
-	if (!string_printf(tree_output, "DO WHILE(")
-		|| !parse_expr_print(tree_output, stmt->do_while_block.cond)
-		|| !string_printf(tree_output, ")\n"))
+	if (!colstr_atomic_writef(cs, "DO WHILE(")
+		|| !parse_expr_print(cs, stmt->do_while_block.cond)
+		|| !colstr_atomic_writef(cs, ")"))
 		return false;
 
 	if (stmt->do_while_block.block && !parse_stmt_list_print(
-		tree_output, stmt->do_while_block.block, (indent + 1)))
+		cs, stmt->do_while_block.block, (indent + 1)))
 		return false;
 
-	if (!string_printf(tree_output, "      "))
+	if (!colstr_newline(cs, NULL))
 		return false;
 
 	unsigned j;
 	for (j = 0; j < indent; j++)
 	{
-		if (!string_printf(tree_output, "  "))
+		if (!colstr_atomic_writef(cs, "  "))
 			return false;
 	}
 
-	return string_printf(tree_output, "END DO");
+	return colstr_atomic_writef(cs, "END DO");
 }
 
 bool parse_stmt__do_while_print(
-	string_t* tree_output, const parse_stmt_t* stmt)
+	colstr_t* cs, const parse_stmt_t* stmt)
 {
-	return (string_printf(tree_output, "DO ")
-		&& parse_label_print(tree_output, stmt->do_while.end_label)
-		&& string_printf(tree_output, ", WHILE(")
-		&& parse_expr_print(tree_output, stmt->do_while.cond)
-		&& string_printf(tree_output, ")"));
+	return (colstr_atomic_writef(cs, "DO ")
+		&& parse_label_print(cs, stmt->do_while.end_label)
+		&& colstr_atomic_writef(cs, ", WHILE(")
+		&& parse_expr_print(cs, stmt->do_while.cond)
+		&& colstr_atomic_writef(cs, ")"));
 }
 
 bool parse_stmt__do_label_print(
-	string_t* tree_output, const parse_stmt_t* stmt)
+	colstr_t* cs, const parse_stmt_t* stmt)
 {
-	if (!string_printf(tree_output, "DO ")
-		|| !parse_label_print(tree_output, stmt->do_label.end_label)
-		|| !string_printf(tree_output, ", ")
-		|| !parse_assign_print(tree_output, stmt->do_label.init)
-		|| !string_printf(tree_output, ", ")
-		|| !parse_expr_print(tree_output, stmt->do_label.last))
+	if (!colstr_atomic_writef(cs, "DO ")
+		|| !parse_label_print(cs, stmt->do_label.end_label)
+		|| !colstr_atomic_writef(cs, ", ")
+		|| !parse_assign_print(cs, stmt->do_label.init)
+		|| !colstr_atomic_writef(cs, ", ")
+		|| !parse_expr_print(cs, stmt->do_label.last))
 		return false;
 
 	if (stmt->do_label.step)
 	{
-		if (!string_printf(tree_output, ", ")
+		if (!colstr_atomic_writef(cs, ", ")
 			|| !parse_expr_print(
-				tree_output, stmt->do_label.step))
+				cs, stmt->do_label.step))
 			return false;
 	}
 
@@ -374,42 +374,41 @@ bool parse_stmt__do_label_print(
 }
 
 bool parse_stmt__do_block_print(
-	string_t* tree_output, const parse_stmt_t* stmt, unsigned indent)
+	colstr_t* cs, const parse_stmt_t* stmt, unsigned indent)
 {
-	if (!string_printf(tree_output, "DO ")
-		|| !parse_assign_print(tree_output, stmt->do_block.init)
-		|| !string_printf(tree_output, ", ")
-		|| !parse_expr_print(tree_output, stmt->do_block.last))
+	if (!colstr_atomic_writef(cs, "DO ")
+		|| !parse_assign_print(cs, stmt->do_block.init)
+		|| !colstr_atomic_writef(cs, ", ")
+		|| !parse_expr_print(cs, stmt->do_block.last))
 		return false;
 
 	if (stmt->do_block.step)
 	{
-		if (!string_printf(tree_output, ", ")
+		if (!colstr_atomic_writef(cs, ", ")
 			|| !parse_expr_print(
-				tree_output, stmt->do_block.step))
+				cs, stmt->do_block.step))
 			return false;
 	}
 
-	if (!string_printf(tree_output, "\n")
-		|| !parse_stmt_list_print(
-			tree_output, stmt->do_block.block, (indent + 1)))
+	if (stmt->do_block.block && !parse_stmt_list_print(
+			cs, stmt->do_block.block, (indent + 1)))
 		return false;
 
-	if (!string_printf(tree_output, "      "))
+	if (!colstr_newline(cs, NULL))
 		return false;
 
 	unsigned j;
 	for (j = 0; j < indent; j++)
 	{
-		if (!string_printf(tree_output, "  "))
+		if (!colstr_atomic_writef(cs, "  "))
 			return false;
 	}
 
-	return string_printf(tree_output, "END DO");
+	return colstr_atomic_writef(cs, "END DO");
 }
 
 bool parse_stmt_do_print(
-	string_t* tree_output, const parse_stmt_t* stmt, unsigned indent)
+	colstr_t* cs, const parse_stmt_t* stmt, unsigned indent)
 {
 	if (!stmt)
 		return false;
@@ -417,15 +416,15 @@ bool parse_stmt_do_print(
 	switch (stmt->type)
 	{
 		case PARSE_STMT_DO_LABEL:
-			return parse_stmt__do_label_print(tree_output, stmt);
+			return parse_stmt__do_label_print(cs, stmt);
 		case PARSE_STMT_DO_BLOCK:
 			return parse_stmt__do_block_print(
-				tree_output, stmt, indent);
+				cs, stmt, indent);
 		case PARSE_STMT_DO_WHILE:
-			return parse_stmt__do_while_print(tree_output, stmt);
+			return parse_stmt__do_while_print(cs, stmt);
 		case PARSE_STMT_DO_WHILE_BLOCK:
 			return parse_stmt__do_while_block_print(
-				tree_output, stmt, indent);
+				cs, stmt, indent);
 		default:
 			break;
 	}

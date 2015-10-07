@@ -131,16 +131,16 @@ void parse_implicit_delete(
 }
 
 bool parse_implicit_print(
-	string_t* tree_output, const parse_implicit_t* implicit)
+	colstr_t* cs, const parse_implicit_t* implicit)
 {
 	if (!implicit)
 		return false;
 
 	if (!parse_type_print(
-		tree_output, implicit->type))
+		cs, implicit->type))
 		return false;
 
-	if (!string_printf(tree_output, " ("))
+	if (!colstr_atomic_writef(cs, " ("))
 		return false;
 
 	bool first = true;
@@ -154,26 +154,26 @@ bool parse_implicit_print(
 		if (on)
 		{
 			on = ((implicit->mask & (m << 1)) != 0);
-			if (!on && !string_printf(tree_output, "%c", ('A' + i)))
+			if (!on && !colstr_atomic_writef(cs, "%c", ('A' + i)))
 				return false;
 		}
 		else
 		{
-			if (!first && !string_printf(tree_output, ", "))
+			if (!first && !colstr_atomic_writef(cs, ", "))
 				return false;
 
-			if (!string_printf(tree_output, "%c", ('A' + i)))
+			if (!colstr_atomic_writef(cs, "%c", ('A' + i)))
 				return false;
 
 			on = ((implicit->mask & (m << 1)) != 0);
-			if (on && !string_printf(tree_output, "-"))
+			if (on && !colstr_atomic_writef(cs, "-"))
 				return false;
 		}
 
 		first = false;
 	}
 
-	return string_printf(tree_output, ")");
+	return colstr_atomic_writef(cs, ")");
 }
 
 
@@ -217,12 +217,12 @@ void parse_implicit_list_delete(
 }
 
 bool parse_implicit_list_print(
-	string_t* tree_output, const parse_implicit_list_t* list)
+	colstr_t* cs, const parse_implicit_list_t* list)
 {
 	if (!list)
 		return false;
 
-	return parse_list_print(tree_output,
+	return parse_list_print(cs,
 		list->count, (const void**)list->rule,
 		(void*)parse_implicit_print);
 }

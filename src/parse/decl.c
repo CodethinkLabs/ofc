@@ -55,24 +55,24 @@ void parse_decl_delete(
 }
 
 bool parse_decl_print(
-	string_t* tree_output, const parse_decl_t* decl)
+	colstr_t* cs, const parse_decl_t* decl)
 {
 	if (!decl) return false;
 
 	if (!parse_lhs_print(
-		tree_output, decl->lhs))
+		cs, decl->lhs))
 		return false;
 
 	if (decl->init_expr)
 	{
-		if (!string_printf(tree_output, " = ")
-			|| !parse_expr_print(tree_output, decl->init_expr))
+		if (!colstr_atomic_writef(cs, " = ")
+			|| !parse_expr_print(cs, decl->init_expr))
 			return false;
 	}
 	else if (decl->init_clist)
 	{
 		if (!parse_clist_print(
-			tree_output, decl->init_clist))
+			cs, decl->init_clist))
 			return false;
 	}
 
@@ -121,9 +121,9 @@ void parse_decl_list_delete(
 }
 
 bool parse_decl_list_print(
-	string_t* tree_output, const parse_decl_list_t* list)
+	colstr_t* cs, const parse_decl_list_t* list)
 {
 	return parse_list_print(
-		tree_output, list->count, (const void**)list->decl,
+		cs, list->count, (const void**)list->decl,
 		(void*)parse_decl_print);
 }

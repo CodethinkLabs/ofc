@@ -671,42 +671,46 @@ unsigned parse_unsigned(
 
 
 bool parse_literal_print(
-	string_t* tree_output, const parse_literal_t literal)
+	colstr_t* cs, const parse_literal_t literal)
 {
 	switch (literal.type)
 	{
 		case PARSE_LITERAL_NUMBER:
 			return str_ref_print(
-				tree_output, literal.number);
+				cs, literal.number);
 		case PARSE_LITERAL_BINARY:
-			return (string_printf(tree_output, "B\"")
-				&& str_ref_print(tree_output, literal.number)
-				&& string_printf(tree_output, "\""));
+			return (colstr_atomic_writef(cs, "B\"")
+				&& str_ref_print(cs, literal.number)
+				&& colstr_atomic_writef(cs, "\""));
 		case PARSE_LITERAL_OCTAL:
-			return (string_printf(tree_output, "O\"")
-				&& str_ref_print(tree_output, literal.number)
-				&& string_printf(tree_output, "\""));
+			return (colstr_atomic_writef(cs, "O\"")
+				&& str_ref_print(cs, literal.number)
+				&& colstr_atomic_writef(cs, "\""));
 		case PARSE_LITERAL_HEX:
-			return (string_printf(tree_output, "Z\"")
-				&& str_ref_print(tree_output, literal.number)
-				&& string_printf(tree_output, "\""));
+			return (colstr_atomic_writef(cs, "Z\"")
+				&& str_ref_print(cs, literal.number)
+				&& colstr_atomic_writef(cs, "\""));
 		case PARSE_LITERAL_HOLLERITH:
-			return (string_printf(tree_output, "%uH",
-				string_length(literal.string))
-				&& string_append(tree_output, literal.string));
+			return (colstr_atomic_writef(cs, "%uH%s",
+				string_length(literal.string),
+				string_strz(literal.string)));
 		case PARSE_LITERAL_CHARACTER:
-			return (string_printf(tree_output, "\"")
-				&& string_append_escaped(
-					tree_output, literal.string)
-				&& string_printf(tree_output, "\""));
+			if (!colstr_writef(cs, "\""))
+				return false;
+			if (!string_empty(literal.string)
+				&& !colstr_write_escaped(cs,
+					string_strz(literal.string),
+					string_length(literal.string)))
+				return false;
+			return colstr_writef(cs, "\"");
 		case PARSE_LITERAL_COMPLEX:
-			return string_printf(tree_output, "(%.*s, %.*s)",
+			return colstr_atomic_writef(cs, "(%.*s, %.*s)",
 				literal.complex.real.size,
 				literal.complex.real.base,
 				literal.complex.imaginary.size,
 				literal.complex.imaginary.base);
 		case PARSE_LITERAL_LOGICAL:
-			return string_printf(tree_output, ".%s.",
+			return colstr_atomic_writef(cs, ".%s.",
 				(literal.logical
 					? "TRUE" : "FALSE"));
 		default:

@@ -246,77 +246,77 @@ unsigned parse_stmt_if(
 }
 
 bool parse_stmt_if_print(
-	string_t* tree_output, const parse_stmt_t* stmt, unsigned indent)
+	colstr_t* cs, const parse_stmt_t* stmt, unsigned indent)
 {
 	if (!stmt)
 		return false;
 
 	if (stmt->type == PARSE_STMT_IF_COMPUTED)
 	{
-		if (!string_printf(tree_output, "IF (")
-			|| !parse_expr_print(tree_output, stmt->if_comp.cond)
-			|| !string_printf(tree_output, ")"))
+		if (!colstr_atomic_writef(cs, "IF (")
+			|| !parse_expr_print(cs, stmt->if_comp.cond)
+			|| !colstr_atomic_writef(cs, ")"))
 			return false;
 
 		unsigned i;
 		for (i = 0; i < stmt->if_comp.label_count; i++)
 		{
-			if (!string_printf(tree_output, (i > 0 ? ", " : " "))
-				|| !parse_label_print(tree_output ,stmt->if_comp.label[i]))
+			if (!colstr_atomic_writef(cs, (i > 0 ? ", " : " "))
+				|| !parse_label_print(cs ,stmt->if_comp.label[i]))
 				return false;
 		}
 	}
 	else if (stmt->type == PARSE_STMT_IF_STATEMENT)
 	{
-		if (!string_printf(tree_output, "IF (")
-			|| !parse_expr_print(tree_output, stmt->if_stmt.cond)
-			|| !string_printf(tree_output, ") ")
-			|| !parse_stmt_print(tree_output, stmt->if_stmt.stmt, indent))
+		if (!colstr_atomic_writef(cs, "IF (")
+			|| !parse_expr_print(cs, stmt->if_stmt.cond)
+			|| !colstr_atomic_writef(cs, ") ")
+			|| !parse_stmt_print(cs, stmt->if_stmt.stmt, indent))
 			return false;
 	}
 	else if (stmt->type == PARSE_STMT_IF_THEN)
 	{
-		if (!string_printf(tree_output, "IF (")
-			|| !parse_expr_print(tree_output, stmt->if_then.cond)
-			|| !string_printf(tree_output, ") THEN\n"))
+		if (!colstr_atomic_writef(cs, "IF (")
+			|| !parse_expr_print(cs, stmt->if_then.cond)
+			|| !colstr_atomic_writef(cs, ") THEN"))
 			return false;
 
 		if (stmt->if_then.block_then
 			&& !parse_stmt_list_print(
-				tree_output, stmt->if_then.block_then, (indent + 1)))
+				cs, stmt->if_then.block_then, (indent + 1)))
 			return false;
 
 		if (stmt->if_then.block_else)
 		{
-			if (!string_printf(tree_output, "      "))
+			if (!colstr_newline(cs, NULL))
 				return false;
 
 			unsigned i;
 			for (i = 0; i < indent; i++)
 			{
-				if (!string_printf(tree_output, "  "))
+				if (!colstr_atomic_writef(cs, "  "))
 					return false;
 			}
 
-			if (!string_printf(tree_output, "ELSE\n"))
+			if (!colstr_atomic_writef(cs, "ELSE"))
 				return false;
 
 			if (!parse_stmt_list_print(
-				tree_output, stmt->if_then.block_else, (indent + 1)))
+				cs, stmt->if_then.block_else, (indent + 1)))
 				return false;
 		}
 
-		if (!string_printf(tree_output, "      "))
-			return false;
+		if (!colstr_newline(cs, NULL))
+				return false;
 
 		unsigned i;
 		for (i = 0; i < indent; i++)
 		{
-			if (!string_printf(tree_output, "  "))
+			if (!colstr_atomic_writef(cs, "  "))
 				return false;
 		}
 
-		if (!string_printf(tree_output, "END IF\n"))
+		if (!colstr_atomic_writef(cs, "END IF"))
 			return false;
 	}
 	else

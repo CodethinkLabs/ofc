@@ -30,8 +30,8 @@ bool str_ref_equal_ci(const str_ref_t a, const str_ref_t b)
 	return (strncasecmp(a.base, b.base, a.size) == 0);
 }
 
-bool str_ref_print(string_t* tree_output, const str_ref_t str_ref)
+bool str_ref_print(colstr_t* cs, const str_ref_t str_ref)
 {
-	return string_printf(tree_output, "%.*s",
+	return colstr_atomic_writef(cs, "%.*s",
 		str_ref.size, str_ref.base);
 }

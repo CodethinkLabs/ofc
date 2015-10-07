@@ -283,7 +283,7 @@ unsigned parse_stmt_block_data(
 
 
 bool parse_stmt_program_print(
-	string_t* tree_output, const parse_stmt_t* stmt, unsigned indent)
+	colstr_t* cs, const parse_stmt_t* stmt, unsigned indent)
 {
 	if (!stmt) return false;
 
@@ -300,8 +300,8 @@ bool parse_stmt_program_print(
 
 	if (stmt->program.type)
 	{
-		if (!parse_type_print(tree_output, stmt->program.type)
-			|| !string_printf(tree_output, " "))
+		if (!parse_type_print(cs, stmt->program.type)
+			|| !colstr_atomic_writef(cs, " "))
 			return false;
 	}
 
@@ -327,54 +327,52 @@ bool parse_stmt_program_print(
 			return false;
 	}
 
-	if (!string_printf(tree_output, "%s", kwstr))
+	if (!colstr_atomic_writef(cs, "%s", kwstr))
 				return false;
 
     if (!str_ref_empty(stmt->program.name))
 	{
-		if (!string_printf(tree_output, " ")
-			|| !str_ref_print(tree_output, stmt->program.name))
+		if (!colstr_atomic_writef(cs, " ")
+			|| !str_ref_print(cs, stmt->program.name))
 			return false;
 	}
 
 	if (has_args)
 	{
-		if (!string_printf(tree_output, "("))
+		if (!colstr_atomic_writef(cs, "("))
 			return false;
 
 		if (stmt->program.args
 			&& !parse_call_arg_list_print(
-				tree_output, stmt->program.args))
+				cs, stmt->program.args))
 			return false;
 
-		if (!string_printf(tree_output, ")"))
+		if (!colstr_atomic_writef(cs, ")"))
 			return false;
 	}
-
-	if (!string_printf(tree_output, "\n"))
-		return false;
 
 	if (stmt->program.body
 		&& !parse_stmt_list_print(
-			tree_output, stmt->program.body, (indent + 1)))
+			cs, stmt->program.body, (indent + 1)))
 		return false;
 
-	if (!string_printf(tree_output, "      "))
-			return false;
+	if (!colstr_newline(cs, NULL))
+		return false;
+
 	unsigned i;
 	for (i = 0; i < indent; i++)
 	{
-		if (!string_printf(tree_output, "  "))
+		if (!colstr_atomic_writef(cs, "  "))
 			return false;
 	}
 
-	if (!string_printf(tree_output, "END %s", kwstr))
-				return false;
+	if (!colstr_atomic_writef(cs, "END %s", kwstr))
+		return false;
 
 	if (!str_ref_empty(stmt->program.name))
 	{
-		if (!string_printf(tree_output, " ")
-			|| !str_ref_print(tree_output, stmt->program.name))
+		if (!colstr_atomic_writef(cs, " ")
+			|| !str_ref_print(cs, stmt->program.name))
 			return false;
 	}
 

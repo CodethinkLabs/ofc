@@ -34,9 +34,9 @@ unsigned parse_stmt_decl(
 }
 
 bool parse_stmt_decl_print(
-	string_t* tree_output, const parse_stmt_t* stmt)
+	colstr_t* cs, const parse_stmt_t* stmt)
 {
-	return (parse_type_print(tree_output, stmt->decl.type)
-		&& string_printf(tree_output, " ")
-		&& parse_decl_list_print(tree_output, stmt->decl.decl));
+	return (parse_type_print(cs, stmt->decl.type)
+		&& colstr_atomic_writef(cs, " ")
+		&& parse_decl_list_print(cs, stmt->decl.decl));
 }

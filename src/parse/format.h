@@ -69,7 +69,7 @@ parse_format_desc_t* parse_format_desc(
 void parse_format_desc_delete(
 	parse_format_desc_t* desc);
 bool parse_format_desc_print(
-	string_t* tree_output, const parse_format_desc_t* desc);
+	colstr_t* cs, const parse_format_desc_t* desc);
 
 
 parse_format_desc_list_t* parse_format_desc_list(
@@ -79,6 +79,6 @@ parse_format_desc_list_t* parse_format_desc_list(
 void parse_format_desc_list_delete(
 	parse_format_desc_list_t* list);
 bool parse_format_desc_list_print(
-	string_t* tree_output, const parse_format_desc_list_t* list);
+	colstr_t* cs, const parse_format_desc_list_t* list);
 
 #endif

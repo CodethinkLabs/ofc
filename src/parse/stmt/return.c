@@ -58,7 +58,7 @@ unsigned parse_stmt_return(
 
 
 bool parse_stmt_stop_pause_return_print(
-	string_t* tree_output, const parse_stmt_t* stmt)
+	colstr_t* cs, const parse_stmt_t* stmt)
 {
 	if (!stmt)
 		return false;
@@ -79,13 +79,13 @@ bool parse_stmt_stop_pause_return_print(
 			return false;
 	}
 
-	if (!string_printf(tree_output, "%s", kwstr))
+	if (!colstr_atomic_writef(cs, "%s", kwstr))
 		return false;
 
 	if (stmt->stop_pause_return.value)
 	{
-		if (!string_printf(tree_output, " ")
-			|| !parse_expr_print(tree_output,
+		if (!colstr_atomic_writef(cs, " ")
+			|| !parse_expr_print(cs,
 				stmt->stop_pause_return.value))
 			return false;
 	}

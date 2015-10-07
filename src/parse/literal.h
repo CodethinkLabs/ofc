@@ -63,7 +63,7 @@ bool parse_literal_clone(
 	parse_literal_t* dst, const parse_literal_t* src);
 
 bool parse_literal_print(
-	string_t* tree_output, const parse_literal_t literal);
+	colstr_t* cs, const parse_literal_t literal);
 
 unsigned parse_unsigned(
 	const sparse_t* src, const char* ptr,

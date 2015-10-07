@@ -38,14 +38,14 @@ unsigned parse_stmt_implicit(
 }
 
 bool parse_stmt_implicit_print(
-	string_t* tree_output, const parse_stmt_t* stmt)
+	colstr_t* cs, const parse_stmt_t* stmt)
 {
 	if (!stmt)
 		return false;
 
 	if (stmt->type == PARSE_STMT_IMPLICIT_NONE)
-		return string_printf(tree_output, "IMPLICIT NONE");
+		return colstr_atomic_writef(cs, "IMPLICIT NONE");
 
-	return (string_printf(tree_output, "IMPLICIT ")
-		&& parse_implicit_list_print(tree_output, stmt->implicit));
+	return (colstr_atomic_writef(cs, "IMPLICIT ")
+		&& parse_implicit_list_print(cs, stmt->implicit));
 }

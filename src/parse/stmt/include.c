@@ -66,7 +66,7 @@ unsigned parse_stmt_include(
 }
 
 bool parse_stmt_include_print(
-	string_t* tree_output, const parse_stmt_t* stmt)
+	colstr_t* cs, const parse_stmt_t* stmt)
 {
 	if (!stmt)
 		return false;
@@ -77,6 +77,6 @@ bool parse_stmt_include_print(
 		stmt->include.file);
 	if (!path) return false;
 
-	return string_printf(
-		tree_output, "INCLUDE \'%s\'", path);
+	return colstr_writef(
+		cs, "INCLUDE \'%s\'", path);
 }

@@ -99,7 +99,7 @@ unsigned parse_stmt_decl_attr_volatile(
 
 
 bool parse_stmt_decl_attr_print(
-	string_t* tree_output, const parse_stmt_t* stmt)
+	colstr_t* cs, const parse_stmt_t* stmt)
 {
 	if (!stmt)
 		return false;
@@ -126,17 +126,17 @@ bool parse_stmt_decl_attr_print(
 			return false;
 	}
 
-	if (!string_printf(tree_output, "%s", kwstr))
+	if (!colstr_atomic_writef(cs, "%s", kwstr))
 		return false;
 
 	unsigned i;
 	for (i = 0; i < stmt->decl_attr.count; i++)
 	{
-		if (!string_printf(tree_output, "%s",
+		if (!colstr_atomic_writef(cs, "%s",
 			(i == 0 ? " " : ", ")))
 			return false;
 
-		if (!str_ref_print(tree_output,
+		if (!str_ref_print(cs,
 			*(stmt->decl_attr.name[i])))
 			return false;
 	}

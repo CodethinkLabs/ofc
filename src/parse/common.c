@@ -64,21 +64,21 @@ void parse_common_group_delete(
 }
 
 bool parse_common_group_print(
-	string_t* tree_output, const parse_common_group_t* group)
+	colstr_t* cs, const parse_common_group_t* group)
 {
 	if (!group)
 		return false;
 
 	if (!str_ref_empty(group->group))
 	{
-		if (!string_printf(tree_output, "/")
-			|| !str_ref_print(tree_output, group->group)
-			|| !string_printf(tree_output, "/"))
+		if (!colstr_atomic_writef(cs, "/")
+			|| !str_ref_print(cs, group->group)
+			|| !colstr_atomic_writef(cs, "/"))
 			return false;
 	}
 
 	return parse_lhs_list_print(
-		tree_output, group->names);
+		cs, group->names);
 }
 
 
@@ -123,12 +123,12 @@ void parse_common_group_list_delete(
 }
 
 bool parse_common_group_list_print(
-	string_t* tree_output, const parse_common_group_list_t* list)
+	colstr_t* cs, const parse_common_group_list_t* list)
 {
 	if (!list)
 		return false;
 
-	return parse_list_print(tree_output,
+	return parse_list_print(cs,
 		list->count, (const void**)list->group,
 		(void*)parse_common_group_print);
 }

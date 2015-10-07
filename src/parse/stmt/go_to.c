@@ -195,58 +195,58 @@ unsigned parse_stmt_go_to(
 
 
 static bool parse_stmt_go_to_assigned_print(
-	string_t* tree_output, const parse_stmt_t* stmt)
+	colstr_t* cs, const parse_stmt_t* stmt)
 {
-    if (!string_printf(tree_output, "GO TO ")
-		|| !parse_label_print(tree_output, stmt->go_to_assign.cond)
-		|| !string_printf(tree_output, ", ("))
+    if (!colstr_atomic_writef(cs, "GO TO ")
+		|| !parse_label_print(cs, stmt->go_to_assign.cond)
+		|| !colstr_atomic_writef(cs, ", ("))
 		return false;
 
 	unsigned i;
 	for (i = 0; i < stmt->go_to_assign.label_count; i++)
 	{
-		if ((i > 0) && !string_printf(tree_output, ", "))
+		if ((i > 0) && !colstr_atomic_writef(cs, ", "))
 			return false;
 
-		if (!parse_label_print(tree_output,
+		if (!parse_label_print(cs,
 			stmt->go_to_assign.label[i]))
 			return false;
 	}
 
-	return string_printf(tree_output, ")");
+	return colstr_atomic_writef(cs, ")");
 }
 
 static bool parse_stmt_go_to_computed_print(
-	string_t* tree_output, const parse_stmt_t* stmt)
+	colstr_t* cs, const parse_stmt_t* stmt)
 {
-    if (!string_printf(tree_output, "GO TO ("))
+    if (!colstr_atomic_writef(cs, "GO TO ("))
 		return false;
 
 	unsigned i;
 	for (i = 0; i < stmt->go_to_comp.label_count; i++)
 	{
-		if ((i > 0) && !string_printf(tree_output, ", "))
+		if ((i > 0) && !colstr_atomic_writef(cs, ", "))
 			return false;
 
-		if (!parse_label_print(tree_output,
+		if (!parse_label_print(cs,
 			stmt->go_to_comp.label[i]))
 			return false;
 	}
 
-	return (string_printf(tree_output, "), ")
-		&& parse_expr_print(tree_output,
+	return (colstr_atomic_writef(cs, "), ")
+		&& parse_expr_print(cs,
 			stmt->go_to_comp.cond));
 }
 
 static bool parse_stmt_go_to_unconditional_print(
-	string_t* tree_output, const parse_stmt_t* stmt)
+	colstr_t* cs, const parse_stmt_t* stmt)
 {
-	return (string_printf(tree_output, "GO TO ")
-		&& parse_label_print(tree_output, stmt->go_to.label));
+	return (colstr_atomic_writef(cs, "GO TO ")
+		&& parse_label_print(cs, stmt->go_to.label));
 }
 
 bool parse_stmt_go_to_print(
-	string_t* tree_output, const parse_stmt_t* stmt)
+	colstr_t* cs, const parse_stmt_t* stmt)
 {
 	if (!stmt)
 		return false;
@@ -254,11 +254,11 @@ bool parse_stmt_go_to_print(
 	switch (stmt->type)
 	{
 		case PARSE_STMT_GO_TO_ASSIGNED:
-			return parse_stmt_go_to_assigned_print(tree_output, stmt);
+			return parse_stmt_go_to_assigned_print(cs, stmt);
 		case PARSE_STMT_GO_TO_COMPUTED:
-			return parse_stmt_go_to_computed_print(tree_output, stmt);
+			return parse_stmt_go_to_computed_print(cs, stmt);
 		case PARSE_STMT_GO_TO:
-			return parse_stmt_go_to_unconditional_print(tree_output, stmt);
+			return parse_stmt_go_to_unconditional_print(cs, stmt);
 		default:
 			break;
 	}

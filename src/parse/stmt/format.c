@@ -37,18 +37,18 @@ unsigned parse_stmt_format(
 }
 
 bool parse_stmt_format_print(
-	string_t* tree_output, const parse_stmt_t* stmt)
+	colstr_t* cs, const parse_stmt_t* stmt)
 {
 	if (!stmt)
 		return false;
 
-	if (!string_printf(tree_output, "FORMAT("))
+	if (!colstr_atomic_writef(cs, "FORMAT("))
 		return false;
 
 	if (stmt->format
 		&& !parse_format_desc_list_print(
-			tree_output, stmt->format))
+			cs, stmt->format))
 		return false;
 
-	return string_printf(tree_output, ")");
+	return colstr_atomic_writef(cs, ")");
 }

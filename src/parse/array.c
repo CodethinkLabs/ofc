@@ -118,7 +118,7 @@ static parse_array_range_t* parse_array__range_copy(
 }
 
 static bool parse_array__range_print(
-	string_t* tree_output, const parse_array_range_t* range)
+	colstr_t* cs, const parse_array_range_t* range)
 {
 	if (!range)
 		return false;
@@ -126,27 +126,27 @@ static bool parse_array__range_print(
 	if (range->first)
 	{
 		if (!parse_expr_print(
-			tree_output, range->first))
+			cs, range->first))
 			return false;
 	}
 
 	if (range->is_slice)
 	{
-		if (!string_printf(tree_output, ":"))
+		if (!colstr_atomic_writef(cs, ":"))
 			return false;
 
 		if (range->last)
 		{
 			if (!parse_expr_print(
-				tree_output, range->last))
+				cs, range->last))
 				return false;
 		}
 
 		if (range->stride)
 		{
-			if (!string_printf(tree_output, ":")
+			if (!colstr_atomic_writef(cs, ":")
 				|| !parse_expr_print(
-					tree_output, range->stride))
+					cs, range->stride))
 				return false;
 		}
 	}
@@ -245,26 +245,27 @@ void parse_array_index_delete(
 }
 
 bool parse_array_index_print(
-	string_t* tree_output, const parse_array_index_t* index)
+	colstr_t* cs, const parse_array_index_t* index)
 {
 	if (!index)
 		return false;
 
-	if (!string_printf(tree_output, "("))
+	if (!colstr_atomic_writef(cs, "("))
 		return false;
 
 	unsigned i;
 	for (i = 0; i < index->count; i++)
 	{
-		if ((i > 0) && !string_printf(tree_output, ", "))
+		if ((i > 0) && (!colstr_atomic_writef(cs, ",")
+			|| !colstr_atomic_writef(cs, " ")))
 			return false;
 
 		if (!parse_array__range_print(
-			tree_output, index->range[i]))
+			cs, index->range[i]))
 			return false;
 	}
 
-	if (!string_printf(tree_output, ")"))
+	if (!colstr_atomic_writef(cs, ")"))
 		return false;
 
 	return true;

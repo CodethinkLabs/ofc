@@ -32,7 +32,7 @@ parse_clist_t* parse_clist(
 void parse_clist_delete(
 	parse_clist_t* clist);
 bool parse_clist_print(
-	string_t* tree_output, const parse_clist_t* list);
+	colstr_t* cs, const parse_clist_t* list);
 
 parse_data_list_t* parse_data_list(
 	const sparse_t* src, const char* ptr,
@@ -41,6 +41,6 @@ parse_data_list_t* parse_data_list(
 void parse_data_list_delete(
 	parse_data_list_t* list);
 bool parse_data_list_print(
-	string_t* tree_output, const parse_data_list_t* list);
+	colstr_t* cs, const parse_data_list_t* list);
 
 #endif

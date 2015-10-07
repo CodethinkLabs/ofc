@@ -225,7 +225,7 @@ const char* parse_format_desc__name[] =
 };
 
 bool parse_format_desc_print(
-	string_t* tree_output, const parse_format_desc_t* desc)
+	colstr_t* cs, const parse_format_desc_t* desc)
 {
 	if (!desc)
 		return false;
@@ -233,40 +233,45 @@ bool parse_format_desc_print(
 	switch (desc->type)
 	{
 		case PARSE_FORMAT_DESC_HOLLERITH:
-			if (!string_printf(tree_output, "%uH",
-				string_length(desc->string))
-				|| !string_append(tree_output, desc->string))
+			if (string_empty(desc->string))
 				return false;
+			return colstr_atomic_writef(cs, "%uH%s",
+				string_length(desc->string),
+				string_strz(desc->string));
 			break;
 		case PARSE_FORMAT_DESC_STRING:
-			if (!string_printf(tree_output, "\"")
-				|| !string_append_escaped(
-					tree_output, desc->string)
-				|| !string_printf(tree_output, "\""))
+			if (!colstr_writef(cs, "\""))
+				return false;
+			if (!string_empty(desc->string)
+				&& !colstr_write_escaped(cs,
+					string_strz(desc->string),
+					string_length(desc->string)))
+				return false;
+			if (!colstr_writef(cs, "\""))
 				return false;
 			break;
 		case PARSE_FORMAT_DESC_REPEAT:
-			if (!string_printf(tree_output, "(")
+			if (!colstr_atomic_writef(cs, "(")
 				|| !parse_format_desc_list_print(
-					tree_output, desc->repeat)
-				|| !string_printf(tree_output, ")"))
+					cs, desc->repeat)
+				|| !colstr_atomic_writef(cs, ")"))
 				return false;
 			break;
 		default:
 			if ((desc->n > 1)
-				&& !string_printf(tree_output, "%u", desc->n))
+				&& !colstr_atomic_writef(cs, "%u", desc->n))
 				return false;
-			if (!string_printf(tree_output, "%s",
+			if (!colstr_atomic_writef(cs, "%s",
 				parse_format_desc__name[desc->type]))
 				return false;
 			if ((desc->w > 0)
-				&& !string_printf(tree_output, "%u", desc->w))
+				&& !colstr_atomic_writef(cs, "%u", desc->w))
 				return false;
 			if ((desc->d > 0)
-				&& !string_printf(tree_output, ".%u", desc->d))
+				&& !colstr_atomic_writef(cs, ".%u", desc->d))
 				return false;
 			if ((desc->e > 0)
-				&& !string_printf(tree_output, "E%u", desc->e))
+				&& !colstr_atomic_writef(cs, "E%u", desc->e))
 				return false;
 			break;
 	}
@@ -316,12 +321,12 @@ void parse_format_desc_list_delete(
 }
 
 bool parse_format_desc_list_print(
-	string_t* tree_output, const parse_format_desc_list_t* list)
+	colstr_t* cs, const parse_format_desc_list_t* list)
 {
 	if (!list)
 		return false;
 
-	return parse_list_print(tree_output,
+	return parse_list_print(cs,
 		list->count, (const void**)list->desc,
 		(void*)parse_format_desc_print);
 }

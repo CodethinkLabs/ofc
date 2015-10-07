@@ -258,10 +258,10 @@ unsigned parse_operator_precedence(
 }
 
 bool parse_operator_print(
-	string_t* tree_output, const parse_operator_e operator)
+	colstr_t* cs, const parse_operator_e operator)
 {
 	if (operator >= PARSE_OPERATOR_COUNT)
 		return false;
 
-	return string_printf(tree_output, "%s", parse_operator__name[operator]);
+	return colstr_atomic_writef(cs, "%s", parse_operator__name[operator]);
 }

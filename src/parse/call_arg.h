@@ -41,7 +41,7 @@ parse_call_arg_t* parse_call_arg(
 void parse_call_arg_delete(
 	parse_call_arg_t* call_arg);
 bool parse_call_arg_print(
-	string_t* tree_output, const parse_call_arg_t* call_arg);
+	colstr_t* cs, const parse_call_arg_t* call_arg);
 
 parse_call_arg_list_t* parse_call_arg_list_force_named(
 	const sparse_t* src, const char* ptr,
@@ -60,6 +60,6 @@ parse_call_arg_list_t* parse_call_arg_list_wrap(
 void parse_call_arg_list_delete(
 	parse_call_arg_list_t* call_arg);
 bool parse_call_arg_list_print(
-	string_t* tree_output, const parse_call_arg_list_t* call_arg);
+	colstr_t* cs, const parse_call_arg_list_t* call_arg);
 
 #endif

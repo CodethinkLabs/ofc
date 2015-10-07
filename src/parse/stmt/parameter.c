@@ -42,12 +42,12 @@ unsigned parse_stmt_parameter(
 }
 
 bool parse_stmt_parameter_print(
-	string_t* tree_output, const parse_stmt_t* stmt)
+	colstr_t* cs, const parse_stmt_t* stmt)
 {
     if (!stmt)
 		return false;
 
-	return (string_printf(tree_output, "PARAMETER ")
+	return (colstr_atomic_writef(cs, "PARAMETER ")
 		&& parse_assign_list_print(
-			tree_output, stmt->parameter.list));
+			cs, stmt->parameter.list));
 }

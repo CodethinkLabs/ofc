@@ -567,57 +567,57 @@ void parse_stmt_delete(
 
 
 bool parse_stmt_include_print(
-	string_t* tree_output, const parse_stmt_t* stmt);
+	colstr_t* cs, const parse_stmt_t* stmt);
 bool parse_stmt_program_print(
-	string_t* tree_output, const parse_stmt_t* stmt, unsigned indent);
+	colstr_t* cs, const parse_stmt_t* stmt, unsigned indent);
 bool parse_stmt_assign_print(
-	string_t* tree_output, const parse_stmt_t* stmt);
+	colstr_t* cs, const parse_stmt_t* stmt);
 bool parse_stmt_decl_print(
-	string_t* tree_output, const parse_stmt_t* stmt);
+	colstr_t* cs, const parse_stmt_t* stmt);
 bool parse_stmt_if_print(
-	string_t* tree_output, const parse_stmt_t* stmt, unsigned indent);
+	colstr_t* cs, const parse_stmt_t* stmt, unsigned indent);
 bool parse_stmt_stop_pause_return_print(
-	string_t* tree_output, const parse_stmt_t* stmt);
+	colstr_t* cs, const parse_stmt_t* stmt);
 bool parse_stmt_format_print(
-	string_t* tree_output, const parse_stmt_t* stmt);
+	colstr_t* cs, const parse_stmt_t* stmt);
 bool parse_stmt_data_print(
-	string_t* tree_output, const parse_stmt_t* stmt);
+	colstr_t* cs, const parse_stmt_t* stmt);
 bool parse_stmt_common_namelist_print(
-	string_t* tree_output, const parse_stmt_t* stmt);
+	colstr_t* cs, const parse_stmt_t* stmt);
 bool parse_stmt_implicit_print(
-	string_t* tree_output, const parse_stmt_t* stmt);
+	colstr_t* cs, const parse_stmt_t* stmt);
 bool parse_stmt_save_print(
-	string_t* tree_output, const parse_stmt_t* stmt);
+	colstr_t* cs, const parse_stmt_t* stmt);
 bool parse_stmt_parameter_print(
-	string_t* tree_output, const parse_stmt_t* stmt);
+	colstr_t* cs, const parse_stmt_t* stmt);
 bool parse_stmt_continue_print(
-	string_t* tree_output, const parse_stmt_t* stmt);
+	colstr_t* cs, const parse_stmt_t* stmt);
 bool parse_stmt_dimension_print(
-	string_t* tree_output, const parse_stmt_t* stmt);
+	colstr_t* cs, const parse_stmt_t* stmt);
 bool parse_stmt_call_entry_print(
-	string_t* tree_output, const parse_stmt_t* stmt);
+	colstr_t* cs, const parse_stmt_t* stmt);
 bool parse_stmt_equivalence_print(
-	string_t* tree_output, const parse_stmt_t* stmt);
+	colstr_t* cs, const parse_stmt_t* stmt);
 bool parse_stmt_do_print(
-	string_t* tree_output, const parse_stmt_t* stmt, unsigned indent);
+	colstr_t* cs, const parse_stmt_t* stmt, unsigned indent);
 bool parse_stmt_decl_attr_print(
-	string_t* tree_output, const parse_stmt_t* stmt);
+	colstr_t* cs, const parse_stmt_t* stmt);
 bool parse_stmt_pointer_print(
-	string_t* tree_output, const parse_stmt_t* stmt);
+	colstr_t* cs, const parse_stmt_t* stmt);
 bool parse_stmt_go_to_print(
-	string_t* tree_output, const parse_stmt_t* stmt);
+	colstr_t* cs, const parse_stmt_t* stmt);
 bool parse_stmt_structure_print(
-	string_t* tree_output, const parse_stmt_t* stmt, unsigned indent);
+	colstr_t* cs, const parse_stmt_t* stmt, unsigned indent);
 bool parse_stmt_record_print(
-	string_t* tree_output, const parse_stmt_t* stmt);
+	colstr_t* cs, const parse_stmt_t* stmt);
 bool parse_stmt_io_print(
-	string_t* tree_output, const parse_stmt_t* stmt);
+	colstr_t* cs, const parse_stmt_t* stmt);
 bool parse_stmt_print_accept_print(
-	string_t* tree_output, const parse_stmt_t* stmt);
+	colstr_t* cs, const parse_stmt_t* stmt);
 
 
 bool parse_stmt_print(
-	string_t* tree_output,
+	colstr_t* cs,
 	const parse_stmt_t* stmt,
 	unsigned indent)
 {
@@ -627,7 +627,7 @@ bool parse_stmt_print(
 	switch(stmt->type)
 	{
 		case PARSE_STMT_INCLUDE:
-			if (!parse_stmt_include_print(tree_output, stmt))
+			if (!parse_stmt_include_print(cs, stmt))
 				return false;
 			break;
 
@@ -636,49 +636,49 @@ bool parse_stmt_print(
 		case PARSE_STMT_FUNCTION:
 		case PARSE_STMT_BLOCK_DATA:
 			if (!parse_stmt_program_print(
-				tree_output, stmt, indent))
+				cs, stmt, indent))
 				return false;
 			break;
 		case PARSE_STMT_IMPLICIT_NONE:
 		case PARSE_STMT_IMPLICIT:
-			if (!parse_stmt_implicit_print(tree_output, stmt))
+			if (!parse_stmt_implicit_print(cs, stmt))
 				return false;
 			break;
 		case PARSE_STMT_CALL:
 		case PARSE_STMT_ENTRY:
-			if (!parse_stmt_call_entry_print(tree_output, stmt))
+			if (!parse_stmt_call_entry_print(cs, stmt))
 				return false;
 			break;
 		case PARSE_STMT_DECL:
-			if (!parse_stmt_decl_print(tree_output, stmt))
+			if (!parse_stmt_decl_print(cs, stmt))
 				return false;
 			break;
 		case PARSE_STMT_DIMENSION:
-			if (!parse_stmt_dimension_print(tree_output, stmt))
+			if (!parse_stmt_dimension_print(cs, stmt))
 				return false;
 			break;
 		case PARSE_STMT_EQUIVALENCE:
-			if (!parse_stmt_equivalence_print(tree_output, stmt))
+			if (!parse_stmt_equivalence_print(cs, stmt))
 				return false;
 			break;
 		case PARSE_STMT_COMMON:
 		case PARSE_STMT_NAMELIST:
-			if (!parse_stmt_common_namelist_print(tree_output, stmt))
+			if (!parse_stmt_common_namelist_print(cs, stmt))
 				return false;
 			break;
 		case PARSE_STMT_ASSIGNMENT:
 			if (!parse_assign_print(
-				tree_output, stmt->assignment))
+				cs, stmt->assignment))
 				return false;
 			break;
 		case PARSE_STMT_CONTINUE:
-			if (!parse_stmt_continue_print(tree_output, stmt))
+			if (!parse_stmt_continue_print(cs, stmt))
 				return false;
 			break;
 		case PARSE_STMT_STOP:
 		case PARSE_STMT_PAUSE:
 		case PARSE_STMT_RETURN:
-			if (!parse_stmt_stop_pause_return_print(tree_output, stmt))
+			if (!parse_stmt_stop_pause_return_print(cs, stmt))
 				return false;
 			break;
 		case PARSE_STMT_DECL_ATTR_EXTERNAL:
@@ -686,40 +686,40 @@ bool parse_stmt_print(
 		case PARSE_STMT_DECL_ATTR_AUTOMATIC:
 		case PARSE_STMT_DECL_ATTR_STATIC:
 		case PARSE_STMT_DECL_ATTR_VOLATILE:
-			if (!parse_stmt_decl_attr_print(tree_output, stmt))
+			if (!parse_stmt_decl_attr_print(cs, stmt))
 				return false;
 			break;
 		case PARSE_STMT_POINTER:
-			if (!parse_stmt_pointer_print(tree_output, stmt))
+			if (!parse_stmt_pointer_print(cs, stmt))
 				return false;
 			break;
 		case PARSE_STMT_GO_TO:
 		case PARSE_STMT_GO_TO_ASSIGNED:
 		case PARSE_STMT_GO_TO_COMPUTED:
-			if (!parse_stmt_go_to_print(tree_output, stmt))
+			if (!parse_stmt_go_to_print(cs, stmt))
 				return false;
 			break;
 		case PARSE_STMT_IF_COMPUTED:
 		case PARSE_STMT_IF_STATEMENT:
 		case PARSE_STMT_IF_THEN:
-			if (!parse_stmt_if_print(tree_output, stmt, indent))
+			if (!parse_stmt_if_print(cs, stmt, indent))
 				return false;
 			break;
 		case PARSE_STMT_DO_LABEL:
 		case PARSE_STMT_DO_BLOCK:
 		case PARSE_STMT_DO_WHILE:
 		case PARSE_STMT_DO_WHILE_BLOCK:
-			if (!parse_stmt_do_print(tree_output, stmt, indent))
+			if (!parse_stmt_do_print(cs, stmt, indent))
 				return false;
 			break;
 		case PARSE_STMT_STRUCTURE:
 		case PARSE_STMT_UNION:
 		case PARSE_STMT_MAP:
-			if (!parse_stmt_structure_print(tree_output, stmt, indent))
+			if (!parse_stmt_structure_print(cs, stmt, indent))
 				return false;
 			break;
 		case PARSE_STMT_RECORD:
-			if (!parse_stmt_record_print(tree_output, stmt))
+			if (!parse_stmt_record_print(cs, stmt))
 				return false;
 			break;
 		case PARSE_STMT_IO_OPEN:
@@ -730,30 +730,30 @@ bool parse_stmt_print(
 		case PARSE_STMT_IO_WRITE:
 		case PARSE_STMT_IO_END_FILE:
 		case PARSE_STMT_IO_CLOSE:
-			parse_stmt_io_print(tree_output, stmt);
+			parse_stmt_io_print(cs, stmt);
 			break;
 		case PARSE_STMT_IO_PRINT:
 		case PARSE_STMT_IO_ACCEPT:
-			parse_stmt_print_accept_print(tree_output, stmt);
+			parse_stmt_print_accept_print(cs, stmt);
 			break;
 		case PARSE_STMT_FORMAT:
-			if (!parse_stmt_format_print(tree_output, stmt))
+			if (!parse_stmt_format_print(cs, stmt))
 				return false;
 			break;
 		case PARSE_STMT_DATA:
-			if (!parse_stmt_data_print(tree_output, stmt))
+			if (!parse_stmt_data_print(cs, stmt))
 				return false;
 			break;
 		case PARSE_STMT_SAVE:
-			if (!parse_stmt_save_print(tree_output, stmt))
+			if (!parse_stmt_save_print(cs, stmt))
 				return false;
 			break;
 		case PARSE_STMT_PARAMETER:
-			if (!parse_stmt_parameter_print(tree_output, stmt))
+			if (!parse_stmt_parameter_print(cs, stmt))
 				return false;
 			break;
 		case PARSE_STMT_ASSIGN:
-			if (!parse_stmt_assign_print(tree_output, stmt))
+			if (!parse_stmt_assign_print(cs, stmt))
 				return false;
 			break;
 		default:
@@ -806,7 +806,7 @@ void parse_stmt_list_delete(
 
 
 bool parse_stmt_list_print(
-	string_t* tree_output,
+	colstr_t* cs,
 	const parse_stmt_list_t* list,
 	unsigned indent)
 {
@@ -816,23 +816,20 @@ bool parse_stmt_list_print(
 	unsigned i;
 	for (i = 0; i < list->count; i++)
 	{
-		if (!(list->stmt[i]->label > 0
-			? string_printf(tree_output, "%5u ", list->stmt[i]->label)
-			: string_printf(tree_output, "      ")))
+		if (!colstr_newline(cs,
+			(list->stmt[i]->label > 0
+				? &list->stmt[i]->label : NULL)))
 			return false;
 
 		unsigned j;
 		for (j = 0; j < indent; j++)
 		{
-			if (!string_printf(tree_output, "  "))
+			if (!colstr_atomic_writef(cs, "  "))
 				return false;
 		}
 
 		if (!parse_stmt_print(
-			tree_output, list->stmt[i], indent))
-			return false;
-
-		if (!string_printf(tree_output, "\n"))
+			cs, list->stmt[i], indent))
 			return false;
 	}
 

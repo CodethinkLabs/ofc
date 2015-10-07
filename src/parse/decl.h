@@ -23,7 +23,7 @@ parse_decl_t* parse_decl(
 void parse_decl_delete(
 	parse_decl_t* decl);
 bool parse_decl_print(
-	string_t* tree_output, const parse_decl_t* decl);
+	colstr_t* cs, const parse_decl_t* decl);
 
 parse_decl_list_t* parse_decl_list(
 	const sparse_t* src, const char* ptr,
@@ -32,6 +32,6 @@ parse_decl_list_t* parse_decl_list(
 void parse_decl_list_delete(
 	parse_decl_list_t* decl);
 bool parse_decl_list_print(
-	string_t* tree_output, const parse_decl_list_t* list);
+	colstr_t* cs, const parse_decl_list_t* list);
 
 #endif

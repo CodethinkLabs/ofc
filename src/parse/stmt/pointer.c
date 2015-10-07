@@ -27,9 +27,9 @@ unsigned parse_stmt_pointer(
 }
 
 bool parse_stmt_pointer_print(
-	string_t* tree_output, const parse_stmt_t* stmt)
+	colstr_t* cs, const parse_stmt_t* stmt)
 {
-	return (stmt && string_printf(tree_output, "POINTER ")
+	return (stmt && colstr_atomic_writef(cs, "POINTER ")
 		&& parse_pointer_list_print(
-			tree_output, stmt->pointer));
+			cs, stmt->pointer));
 }

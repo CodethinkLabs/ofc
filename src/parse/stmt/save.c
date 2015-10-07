@@ -28,12 +28,12 @@ unsigned parse_stmt_save(
 }
 
 bool parse_stmt_save_print(
-	string_t* tree_output, const parse_stmt_t* stmt)
+	colstr_t* cs, const parse_stmt_t* stmt)
 {
 	if (!stmt)
 		return false;
 
-	return (string_printf(tree_output, "SAVE ")
+	return (colstr_atomic_writef(cs, "SAVE ")
 		&& parse_save_list_print(
-			tree_output, stmt->save.list));
+			cs, stmt->save.list));
 }

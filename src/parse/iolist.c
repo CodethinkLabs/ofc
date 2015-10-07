@@ -59,15 +59,15 @@ static void parse_ioarg_delete(
 }
 
 bool parse_ioarg_print(
-	string_t* tree_output, const parse_ioarg_t* arg)
+	colstr_t* cs, const parse_ioarg_t* arg)
 {
 	if (!arg)
 		return false;
 
 	if (arg->is_implicit_do)
-		return parse_implicit_do_print(tree_output, arg->id);
+		return parse_implicit_do_print(cs, arg->id);
 	else
-		return parse_expr_print(tree_output, arg->expr);
+		return parse_expr_print(cs, arg->expr);
 }
 
 
@@ -112,9 +112,9 @@ void parse_iolist_delete(
 }
 
 bool parse_iolist_print(
-	string_t* tree_output, const parse_iolist_t* list)
+	colstr_t* cs, const parse_iolist_t* list)
 {
 	return parse_list_print(
-		tree_output, list->count, (const void**)list->arg,
+		cs, list->count, (const void**)list->arg,
 		(void*)parse_ioarg_print);
 }

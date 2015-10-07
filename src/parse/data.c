@@ -52,16 +52,16 @@ static void parse_clist_entry_delete(
 }
 
 static bool parse_clist_entry_print(
-	string_t* tree_output, const parse_clist_entry_t* entry)
+	colstr_t* cs, const parse_clist_entry_t* entry)
 {
 	if (!entry)
 		return false;
 
 	if ((entry->repeat > 1)
-		&& !string_printf(tree_output, "%u*", entry->repeat))
+		&& !colstr_atomic_writef(cs, "%u*", entry->repeat))
 		return false;
 
-	return parse_expr_print(tree_output, entry->expr);
+	return parse_expr_print(cs, entry->expr);
 }
 
 
@@ -122,12 +122,12 @@ void parse_clist_delete(
 }
 
 bool parse_clist_print(
-	string_t* tree_output, const parse_clist_t* list)
+	colstr_t* cs, const parse_clist_t* list)
 {
 	if (!list)
 		return false;
 
-	return parse_list_print(tree_output,
+	return parse_list_print(cs,
 		list->count, (const void**)list->entry,
 		(void*)parse_clist_entry_print);
 }
@@ -183,15 +183,15 @@ static void parse_data_entry_delete(
 }
 
 static bool parse_data_entry_print(
-	string_t* tree_output, const parse_data_entry_t* entry)
+	colstr_t* cs, const parse_data_entry_t* entry)
 {
 	if (!entry)
 		return false;
 
-	return (parse_lhs_list_print(tree_output, entry->nlist)
-		&& string_printf(tree_output, "/")
-		&& parse_clist_print(tree_output, entry->clist)
-		&& string_printf(tree_output, "/"));
+	return (parse_lhs_list_print(cs, entry->nlist)
+		&& colstr_atomic_writef(cs, "/")
+		&& parse_clist_print(cs, entry->clist)
+		&& colstr_atomic_writef(cs, "/"));
 }
 
 
@@ -237,12 +237,12 @@ void parse_data_list_delete(
 }
 
 bool parse_data_list_print(
-	string_t* tree_output, const parse_data_list_t* list)
+	colstr_t* cs, const parse_data_list_t* list)
 {
 	if (!list)
 		return false;
 
-	return parse_list_print(tree_output,
+	return parse_list_print(cs,
 		list->count, (const void**)list->entry,
 		(void*)parse_data_entry_print);
 }

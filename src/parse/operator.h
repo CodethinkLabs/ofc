@@ -41,6 +41,6 @@ unsigned parse_operator_precedence(
 	parse_operator_e operator);
 
 bool parse_operator_print(
-	string_t* tree_output, const parse_operator_e operator);
+	colstr_t* cs, const parse_operator_e operator);
 
 #endif

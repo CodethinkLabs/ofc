@@ -134,22 +134,22 @@ void parse_implicit_do_delete(
 }
 
 bool parse_implicit_do_print(
-	string_t* tree_output, const parse_implicit_do_t* id)
+	colstr_t* cs, const parse_implicit_do_t* id)
 {
-	if (!string_printf(tree_output, "(")
-		|| !parse_lhs_print(tree_output, id->dlist)
-		|| !string_printf(tree_output, ", ")
-		|| !parse_assign_print(tree_output, id->init)
-		|| !string_printf(tree_output, ", ")
-		|| !parse_expr_print(tree_output, id->limit))
+	if (!colstr_atomic_writef(cs, "(")
+		|| !parse_lhs_print(cs, id->dlist)
+		|| !colstr_atomic_writef(cs, ", ")
+		|| !parse_assign_print(cs, id->init)
+		|| !colstr_atomic_writef(cs, ", ")
+		|| !parse_expr_print(cs, id->limit))
 		return false;
 
 	if (id->step)
 	{
-		if (!string_printf(tree_output, ", ")
-			|| !parse_expr_print(tree_output, id->step))
+		if (!colstr_atomic_writef(cs, ", ")
+			|| !parse_expr_print(cs, id->step))
 			return false;
 	}
 
-	return string_printf(tree_output, ")");
+	return colstr_atomic_writef(cs, ")");
 }

@@ -139,7 +139,7 @@ unsigned parse_stmt_record(
 
 
 bool parse_stmt_structure_print(
-	string_t* tree_output, const parse_stmt_t* stmt, unsigned indent)
+	colstr_t* cs, const parse_stmt_t* stmt, unsigned indent)
 {
 	if (!stmt)
 		return false;
@@ -160,43 +160,40 @@ bool parse_stmt_structure_print(
 			return false;
 	}
 
-	if (!string_printf(tree_output, "%s", kwstr))
+	if (!colstr_atomic_writef(cs, "%s", kwstr))
 		return false;
 
 	if (!str_ref_empty(stmt->structure.name))
 	{
-		if (!string_printf(tree_output, " /")
-			|| !str_ref_print(tree_output, stmt->structure.name)
-			|| !string_printf(tree_output, "/"))
+		if (!colstr_atomic_writef(cs, " /")
+			|| !str_ref_print(cs, stmt->structure.name)
+			|| !colstr_atomic_writef(cs, "/"))
 			return false;
 	}
 
-	if (!string_printf(tree_output, "\n"))
-		return false;
-
 	if (!parse_stmt_list_print(
-		tree_output, stmt->structure.block, (indent + 1)))
+		cs, stmt->structure.block, (indent + 1)))
 		return false;
 
-	if (!string_printf(tree_output, "      "))
+	if (!colstr_newline(cs, NULL))
 		return false;
 
 	unsigned j;
 	for (j = 0; j < indent; j++)
 	{
-		if (!string_printf(tree_output, "  "))
+		if (!colstr_atomic_writef(cs, "  "))
 			return false;
 	}
 
-	return string_printf(tree_output, "END %s", kwstr);
+	return colstr_atomic_writef(cs, "END %s", kwstr);
 }
 
 bool parse_stmt_record_print(
-	string_t* tree_output, const parse_stmt_t* stmt)
+	colstr_t* cs, const parse_stmt_t* stmt)
 {
 	if (!stmt)
 		return false;
 
-	return (string_printf(tree_output, "RECORD ")
-		&& parse_record_list_print(tree_output, stmt->record));
+	return (colstr_atomic_writef(cs, "RECORD ")
+		&& parse_record_list_print(cs, stmt->record));
 }

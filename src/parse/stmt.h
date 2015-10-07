@@ -252,7 +252,7 @@ void parse_stmt_delete(
 	parse_stmt_t* stmt);
 
 bool parse_stmt_print(
-	string_t* tree_output,
+	colstr_t* cs,
 	const parse_stmt_t* stmt,
 	unsigned indent);
 
@@ -265,7 +265,7 @@ void parse_stmt_list_delete(
 	parse_stmt_list_t* list);
 
 bool parse_stmt_list_print(
-	string_t* tree_output,
+	colstr_t* cs,
 	const parse_stmt_list_t* list,
 	unsigned indent);
 

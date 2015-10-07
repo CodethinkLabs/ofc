@@ -230,12 +230,12 @@ void parse_type_delete(parse_type_t* type)
 	free(type);
 }
 
-bool parse_type_print(string_t* tree_output, const parse_type_t* type)
+bool parse_type_print(colstr_t* cs, const parse_type_t* type)
 {
 	if (type->type >= PARSE_TYPE_COUNT)
 		return false;
 
-	if (!string_printf(tree_output, "%s",
+	if (!colstr_atomic_writef(cs, "%s",
 		parse_type__name[type->type]))
 		return false;
 
@@ -243,31 +243,31 @@ bool parse_type_print(string_t* tree_output, const parse_type_t* type)
 		|| type->count_expr
 		|| type->count_var)
 	{
-		if (!string_printf(tree_output, " ("))
+		if (!colstr_atomic_writef(cs, " ("))
 			return false;
 
 		if ((type->kind > 0)
-			&& !string_printf(tree_output, "KIND=%u", type->kind))
+			&& !colstr_atomic_writef(cs, "KIND=%u", type->kind))
 			return false;
 
 		if (type->count_expr || type->count_var)
 		{
 			if ((type->kind > 0)
-				&& !string_printf(tree_output, ", "))
+				&& !colstr_atomic_writef(cs, ", "))
 				return false;
 
-			if (!string_printf(tree_output, "LEN="))
+			if (!colstr_atomic_writef(cs, "LEN="))
 				return false;
 
 			if (!(type->count_var
-				? string_printf(tree_output, "*")
-				: parse_expr_print(tree_output, type->count_expr)))
+				? colstr_atomic_writef(cs, "*")
+				: parse_expr_print(cs, type->count_expr)))
 				return false;
 		}
 
-		if (!string_printf(tree_output, ")"))
+		if (!colstr_atomic_writef(cs, ")"))
 			return false;
 	}
 
-	return string_printf(tree_output, " ::");
+	return colstr_atomic_writef(cs, " ::");
 }
