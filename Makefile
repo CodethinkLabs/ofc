@@ -49,7 +49,7 @@ check: cppcheck scan scan-build
 
 tests: $(TARGETS)
 
-$(TARGETS):
+$(TARGETS): $(FRONTEND)
 	@$(realpath $(FRONTEND)) $@ > /dev/null
 
 -include $(DEB)
