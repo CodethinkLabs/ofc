@@ -167,7 +167,8 @@ unsigned parse_keyword_named(
 
 	/* TODO - Make handling spaced keywords less manual. */
 	unsigned space = 0;
-	bool space_optional = false;
+	/* Use this to make spaces in F90 keywords non-optional. */
+	bool space_optional = true;
 	switch (keyword)
 	{
 		case PARSE_KEYWORD_BLOCK_DATA:
@@ -177,7 +178,6 @@ unsigned parse_keyword_named(
 		case PARSE_KEYWORD_GO_TO:
 			kwstr = "GOTO";
 			space = 2;
-			space_optional = true;
 			break;
 		case PARSE_KEYWORD_DOUBLE_PRECISION:
 			kwstr = "DOUBLEPRECISION";
@@ -194,7 +194,6 @@ unsigned parse_keyword_named(
 		case PARSE_KEYWORD_END_FILE:
 			kwstr = "ENDFILE";
 			space = 3;
-			space_optional = true;
 			break;
 		default:
 			break;
@@ -322,9 +321,7 @@ unsigned parse_keyword_end_named(
 
 	if (warn_end_kw_space > 0)
 	{
-		parse_debug_warning(debug, src, &ptr[warn_end_kw_space],
-			"Expected space between END and %s",
-			parse_keyword__name[keyword]);
+		/* Spaces are optional between END and a keyword. */
 	}
 
 	return i;
