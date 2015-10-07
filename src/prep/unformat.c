@@ -195,6 +195,7 @@ static unsigned prep_unformat__fixed_form_code(
 
 	unsigned hollerith_size   = 0;
 	unsigned hollerith_remain = 0;
+	bool     hollerith_too_long = false;
 
 	unsigned i;
 	for (i = 0; (*col < opts.columns) && !is_vspace(src[i]) && (src[i] != '\0'); i++)
@@ -234,8 +235,16 @@ static unsigned prep_unformat__fixed_form_code(
 			{
 				if (toupper(src[i]) == 'H')
 				{
-					hollerith_remain = hollerith_size;
-					state->in_ident = false;
+					if (hollerith_too_long)
+					{
+						file_warning(file, &src[i],
+							"Hollerith too long, ignoring");
+					}
+					else
+					{
+						hollerith_remain = hollerith_size;
+						state->in_ident = false;
+					}
 				}
 				else
 				{
@@ -245,19 +254,18 @@ static unsigned prep_unformat__fixed_form_code(
 				state->in_number = isdigit(src[i]);
 				if (state->in_number)
 				{
-					unsigned nsize = (hollerith_size * 10) + (src[i] - '0');
-					if (((nsize / 10) != hollerith_size)
-						|| ((nsize % 10U) != (unsigned)(src[i] - '0')))
+					if (!hollerith_too_long)
 					{
-						file_error(file, &src[i],
-							"Hollerith too long");
-						return 0;
-					}
+						unsigned nsize = (hollerith_size * 10) + (src[i] - '0');
+						hollerith_too_long = (((nsize / 10) != hollerith_size)
+							|| ((nsize % 10U) != (unsigned)(src[i] - '0')));
 
-					hollerith_size = nsize;
+						hollerith_size = nsize;
+					}
 				}
 				else
 				{
+					hollerith_too_long = false;
 					hollerith_size = 0;
 				}
 			}
@@ -294,6 +302,7 @@ static unsigned prep_unformat__free_form_code(
 
 	unsigned hollerith_size   = 0;
 	unsigned hollerith_remain = 0;
+	bool     hollerith_too_long = false;
 
 	if (*continuation && (*src == '&'))
 	{
@@ -355,8 +364,16 @@ static unsigned prep_unformat__free_form_code(
 			{
 				if (toupper(src[i]) == 'H')
 				{
-					hollerith_remain = hollerith_size;
-					state->in_ident = false;
+					if (hollerith_too_long)
+					{
+						file_warning(file, &src[i],
+							"Hollerith too long, ignoring");
+					}
+					else
+					{
+						hollerith_remain = hollerith_size;
+						state->in_ident = false;
+					}
 				}
 				else
 				{
@@ -366,19 +383,18 @@ static unsigned prep_unformat__free_form_code(
 				state->in_number = isdigit(src[i]);
 				if (state->in_number)
 				{
-					unsigned nsize = (hollerith_size * 10) + (src[i] - '0');
-					if (((nsize / 10) != hollerith_size)
-						|| ((nsize % 10U) != (unsigned)(src[i] - '0')))
+					if (!hollerith_too_long)
 					{
-						file_error(file, &src[i],
-							"Hollerith too long");
-						return 0;
-					}
+						unsigned nsize = (hollerith_size * 10) + (src[i] - '0');
+						hollerith_too_long = (((nsize / 10) != hollerith_size)
+							|| ((nsize % 10U) != (unsigned)(src[i] - '0')));
 
-					hollerith_size = nsize;
+						hollerith_size = nsize;
+					}
 				}
 				else
 				{
+					hollerith_too_long = false;
 					hollerith_size = 0;
 				}
 			}
