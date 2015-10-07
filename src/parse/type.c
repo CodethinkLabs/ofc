@@ -243,7 +243,7 @@ bool parse_type_print(int fd, const parse_type_t* type)
 		|| type->count_expr
 		|| type->count_var)
 	{
-		if (!dprintf_bool(fd, "("))
+		if (!dprintf_bool(fd, " ("))
 			return false;
 
 		if ((type->kind > 0)
