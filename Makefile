@@ -50,7 +50,7 @@ check: cppcheck scan scan-build
 tests: $(TARGETS)
 
 $(TARGETS):
-	@$(FRONTEND) $@ > /dev/null
+	@$(realpath $(FRONTEND)) $@ > /dev/null
 
 -include $(DEB)
 
