@@ -342,7 +342,7 @@ unsigned parse_character(
 	unsigned str_end = j;
 
 	*string = string_create(NULL, str_len);
-	if (string_empty(*string))
+	if ((str_len > 0) && string_empty(*string))
 		return 0;
 
 	for(j = 1, is_escaped = false; j < str_end; j++)
