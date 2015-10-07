@@ -452,7 +452,7 @@ static unsigned parse_literal__logical(
 }
 
 
-static unsigned parse_literal__number(
+unsigned parse_literal_number(
 	const sparse_t* src, const char* ptr,
 	parse_debug_t* debug,
 	parse_literal_t* literal)
@@ -539,7 +539,7 @@ static unsigned parse_literal__complex(
 		return 0;
 
 	parse_literal_t real;
-	unsigned len = parse_literal__number(
+	unsigned len = parse_literal_number(
 		src, &ptr[i], debug, &real);
 	if (len == 0) return 0;
 	i += len;
@@ -551,7 +551,7 @@ static unsigned parse_literal__complex(
 	}
 
 	parse_literal_t imaginary;
-	len = parse_literal__number(
+	len = parse_literal_number(
 		src,  &ptr[i], debug, &imaginary);
 	if (len == 0)
 	{
@@ -592,7 +592,7 @@ unsigned parse_literal(
 	if (len == 0) len = parse_literal__hex(src, ptr, debug, &l);
 	if (len == 0) len = parse_literal__character(src, ptr, debug, &l);
 	if (len == 0) len = parse_literal__logical(src, ptr, debug, &l);
-	if (len == 0) len = parse_literal__number(src, ptr, debug, &l);
+	if (len == 0) len = parse_literal_number(src, ptr, debug, &l);
 
 	if (len == 0)
 		return 0;

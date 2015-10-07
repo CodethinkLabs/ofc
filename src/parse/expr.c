@@ -165,6 +165,19 @@ static unsigned parse_expr__literal(
 	return len;
 }
 
+static unsigned parse_expr__number(
+	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
+	parse_expr_t* expr)
+{
+	unsigned len = parse_literal_number(
+		src, ptr, debug, &expr->literal);
+	if (len == 0) return 0;
+
+	expr->type = PARSE_EXPR_CONSTANT;
+	return len;
+}
+
 static unsigned parse_expr__primary(
 	const sparse_t* src, const char* ptr,
 	parse_debug_t* debug,
@@ -431,7 +444,7 @@ static unsigned parse_expr__at_or_below(
 
 
 
-parse_expr_t* parse_expr_literal(
+parse_expr_t* parse_expr_number(
 	const sparse_t* src, const char* ptr,
 	parse_debug_t* debug,
 	unsigned* len)
@@ -439,7 +452,7 @@ parse_expr_t* parse_expr_literal(
 	unsigned dpos = parse_debug_position(debug);
 
 	parse_expr_t e;
-	unsigned i = parse_expr__literal(
+	unsigned i = parse_expr__number(
 		src, ptr, debug, &e);
 	if (i == 0) return NULL;
 
