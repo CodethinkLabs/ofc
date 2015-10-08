@@ -302,6 +302,9 @@ bool parse_format_desc_print(
 				return false;
 			break;
 		case PARSE_FORMAT_DESC_REPEAT:
+			if ((desc->n > 1)
+				&& !colstr_atomic_writef(cs, "%u", desc->n))
+				return false;
 			if (!colstr_atomic_writef(cs, "(")
 				|| !parse_format_desc_list_print(
 					cs, desc->repeat)
