@@ -222,7 +222,7 @@ int main(int argc, const char* argv[])
 
 	colstr_t* cs = colstr_create(0, 0);
 
-	if (!parse_stmt_list_print(cs, program, 0)
+	if (!parse_file_print(cs, program)
 		|| !colstr_fdprint(cs, STDOUT_FILENO))
 	{
 		fprintf(stderr, "Error: Failed to reprint program\n");

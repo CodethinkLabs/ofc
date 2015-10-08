@@ -27,3 +27,11 @@ parse_stmt_list_t* parse_file(const sparse_t* src)
 
 	return list;
 }
+
+bool parse_file_print(
+	colstr_t* cs,
+	const parse_stmt_list_t* list)
+{
+	return (parse_stmt_list_print(cs, list, 0)
+		&& colstr_writef(cs, "\n"));
+}
