@@ -534,6 +534,26 @@ unsigned parse_literal_number(
 	return i;
 }
 
+unsigned parse_literal_integer(
+	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
+	parse_literal_t* literal)
+{
+	(void)src;
+	(void)debug;
+
+	if (!isdigit(ptr[0]))
+		return 0;
+
+	unsigned i;
+	for (i = 1; isdigit(ptr[i]); i++);
+
+	literal->type = PARSE_LITERAL_NUMBER;
+	literal->kind = 0;
+	literal->number = str_ref(ptr, i);
+	return i;
+}
+
 static unsigned parse_literal__complex(
 	const sparse_t* src, const char* ptr,
 	parse_debug_t* debug,

@@ -52,8 +52,8 @@ struct parse_expr_list_s
 #define PARSE_EXPR_EMPTY (parse_expr_t){ .type = PARSE_EXPR_NONE };
 
 
-/* Returns a literal wrapped in an expression type. */
-parse_expr_t* parse_expr_number(
+/* Returns a literal unsigned integer wrapped in an expression type. */
+parse_expr_t* parse_expr_integer(
 	const sparse_t* src, const char* ptr,
 	parse_debug_t* debug,
 	unsigned* len);

@@ -38,7 +38,7 @@ unsigned parse_star_len(
 	}
 	else
 	{
-		expr = parse_expr_number(
+		expr = parse_expr_integer(
 			src, &ptr[i], debug, &l);
 		if (!expr) return 0;
 		i += l;

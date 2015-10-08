@@ -51,6 +51,10 @@ unsigned parse_literal_number(
 	const sparse_t* src, const char* ptr,
 	parse_debug_t* debug,
 	parse_literal_t* literal);
+unsigned parse_literal_integer(
+	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
+	parse_literal_t* literal);
 unsigned parse_literal(
 	const sparse_t* src, const char* ptr,
 	parse_debug_t* debug,
