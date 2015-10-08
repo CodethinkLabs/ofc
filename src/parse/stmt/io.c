@@ -373,9 +373,16 @@ unsigned parse_stmt_io_print_type(
 	parse_stmt_t* stmt)
 {
 	unsigned i = parse_stmt_io__print_type_accept(
-		src, ptr, debug, (ptr[0] == 'P'
+		src, ptr, debug, (toupper(ptr[0]) == 'P'
 			? PARSE_KEYWORD_PRINT : PARSE_KEYWORD_TYPE), stmt);
 	if (i == 0) return 0;
+
+	if (toupper(ptr[0]) != 'P')
+	{
+		sparse_warning(src, ptr,
+			"Use of TYPE as an IO statement is deprecated and ambiguous"
+			", PRINT is preferred");
+	}
 
 	stmt->type = PARSE_STMT_IO_PRINT;
 	return i;
