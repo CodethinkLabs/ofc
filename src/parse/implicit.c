@@ -136,7 +136,7 @@ bool parse_implicit_print(
 	if (!implicit)
 		return false;
 
-	if (!parse_type_print(
+	if (!parse_type_print_f77(
 		cs, implicit->type))
 		return false;
 

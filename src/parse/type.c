@@ -271,3 +271,60 @@ bool parse_type_print(colstr_t* cs, const parse_type_t* type)
 
 	return colstr_atomic_writef(cs, " ::");
 }
+
+bool parse_type_print_f77(
+	colstr_t* cs, const parse_type_t* type)
+{
+	if (type->type >= PARSE_TYPE_COUNT)
+		return false;
+
+	if (!colstr_atomic_writef(cs, "%s",
+		parse_type__name[type->type]))
+		return false;
+
+	if ((type->type == PARSE_TYPE_CHARACTER)
+		|| (type->type == PARSE_TYPE_BYTE))
+	{
+		if (type->kind > 1)
+			return false;
+
+		if (type->count_var)
+		{
+			if (!colstr_atomic_writef(cs, "*")
+				|| !colstr_atomic_writef(cs, "(")
+				|| !colstr_atomic_writef(cs, "*")
+				|| !colstr_atomic_writef(cs, ")"))
+				return false;
+		}
+		else if (type->count_expr)
+		{
+			if (!colstr_atomic_writef(cs, "*"))
+				return false;
+
+			bool brackets = (type->count_expr->type
+				!= PARSE_EXPR_CONSTANT);
+			if (brackets && !colstr_atomic_writef(cs, "("))
+				return false;
+
+			if (!parse_expr_print(cs, type->count_expr))
+				return false;
+
+			if (brackets && !colstr_atomic_writef(cs, ")"))
+				return false;
+		}
+	}
+	else
+	{
+		if (type->count_expr || type->count_var)
+			return false;
+
+		if (type->kind > 0)
+		{
+			if (!colstr_atomic_writef(cs, "*")
+				|| !colstr_atomic_writef(cs, "%u", type->kind))
+				return false;
+		}
+	}
+
+	return true;
+}
