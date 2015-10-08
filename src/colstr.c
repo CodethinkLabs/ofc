@@ -8,15 +8,20 @@ struct colstr_s
 {
 	unsigned size, max;
 	char* base;
-	unsigned col, col_max;
+	unsigned col, col_max, col_ext;
+	bool oversize;
+	unsigned oversize_off;
 };
 
 
-colstr_t* colstr_create(unsigned cols)
+colstr_t* colstr_create(
+	unsigned cols, unsigned ext)
 {
 	if (cols == 0)
 		cols = 72;
-	if (cols <= 6)
+	if (ext == 0)
+		ext = 132;
+	if ((cols <= 6) || (ext < cols))
 		return NULL;
 
 	colstr_t* cstr
@@ -24,11 +29,13 @@ colstr_t* colstr_create(unsigned cols)
 			sizeof(colstr_t));
 	if (!cstr) return NULL;
 
-	cstr->size    = 0;
-	cstr->max     = 0;
-	cstr->base    = NULL;
-	cstr->col     = 0;
-	cstr->col_max = cols;
+	cstr->size     = 0;
+	cstr->max      = 0;
+	cstr->base     = NULL;
+	cstr->col      = 0;
+	cstr->col_max  = cols;
+	cstr->col_ext  = ext;
+	cstr->oversize = false;
 
 	return cstr;
 }
@@ -100,6 +107,7 @@ bool colstr_newline(
 	cstr->size += 6;
 
 	cstr->col = 6;
+	cstr->oversize = false;
 	return true;
 }
 
@@ -175,8 +183,24 @@ bool colstr_write(
 	if (!cstr || !base || (size == 0))
 		return false;
 
-	unsigned orig_size = cstr->size;
-	unsigned orig_col  = cstr->col;
+	unsigned orig_size     = cstr->size;
+	unsigned orig_col      = cstr->col;
+	bool     orig_oversize = cstr->oversize;
+
+	if (cstr->oversize)
+	{
+		if (!colstr__enlarge(cstr, 7))
+			return false;
+
+		cstr->base[cstr->oversize_off] = '&';
+		cstr->oversize = false;
+
+		cstr->base[cstr->size++] = '\n';
+		unsigned i;
+		for (i = 0; i < 5; i++)
+			cstr->base[cstr->size++] = ' ';
+		cstr->base[cstr->size++] = '&';
+	}
 
 	unsigned remain
 		= (cstr->col_max - cstr->col);
@@ -184,11 +208,24 @@ bool colstr_write(
 	if (remain > 0)
 	{
 		if (size <= remain)
-			return colstr_atomic_write(
-				cstr, base, size);
+		{
+			if (colstr_atomic_write(
+				cstr, base, size))
+				return true;
+
+			cstr->size     = orig_size;
+			cstr->col      = orig_col;
+			cstr->oversize = orig_oversize;
+			return false;
+		}
 
 		if (!colstr__enlarge(cstr, remain))
+		{
+			cstr->size     = orig_size;
+			cstr->col      = orig_col;
+			cstr->oversize = orig_oversize;
 			return false;
+		}
 
 		memcpy(&cstr->base[cstr->size], base, remain);
 		cstr->size += remain;
@@ -204,8 +241,9 @@ bool colstr_write(
 	if (!colstr__enlarge(cstr,
 		((continuations * 8) + size)))
 	{
-		cstr->size = orig_size;
-		cstr->col  = orig_col;
+		cstr->size     = orig_size;
+		cstr->col      = orig_col;
+		cstr->oversize = orig_oversize;
 		return false;
 	}
 
@@ -260,18 +298,141 @@ bool colstr_writef(
 		cstr, buff, len);
 }
 
+static bool colstr_atomic_write__oversized(
+	colstr_t* cstr, const char* base, unsigned size)
+{
+	if (size > (cstr->col_ext - 7))
+		return false;
+
+	unsigned orig_size     = cstr->size;
+	unsigned orig_col      = cstr->col;
+	bool     orig_oversize = cstr->oversize;
+
+	if (cstr->oversize)
+	{
+		if (!colstr__enlarge(cstr, 7))
+			return false;
+
+		cstr->base[cstr->oversize_off] = '&';
+		cstr->oversize = false;
+
+		cstr->base[cstr->size++] = '\n';
+		unsigned i;
+		for (i = 0; i < 5; i++)
+			cstr->base[cstr->size++] = ' ';
+		cstr->base[cstr->size++] = '&';
+	}
+
+	unsigned remain
+		= (cstr->col_max - cstr->col);
+
+	if (!colstr__enlarge(
+		cstr, (remain + 8)))
+	{
+		cstr->size     = orig_size;
+		cstr->col      = orig_col;
+		cstr->oversize = orig_oversize;
+		return false;
+	}
+
+	for (; cstr->col < cstr->col_max; cstr->col++)
+		cstr->base[cstr->size++] = ' ';
+	cstr->base[cstr->size++] = '&';
+	cstr->base[cstr->size++] = '\n';
+
+	unsigned i;
+	for (i = 0; i < 5; i++)
+		cstr->base[cstr->size++] = ' ';
+	cstr->base[cstr->size++] = '&';
+
+	cstr->col = 6;
+
+	unsigned fixed_len = (cstr->col_max - 6);
+	unsigned bangs = ((size - 1) / fixed_len);
+
+	unsigned nsize = (size + 1) + (bangs * 7) + ((bangs - 1) * fixed_len) + (size % fixed_len);
+
+	if (!colstr__enlarge(cstr, nsize))
+	{
+		cstr->size     = orig_size;
+		cstr->col      = orig_col;
+		cstr->oversize = orig_oversize;
+		return false;
+	}
+
+	memcpy(&cstr->base[cstr->size], base, size);
+	cstr->size += size;
+	cstr->oversize = true;
+	cstr->oversize_off = cstr->size;
+
+	size -= fixed_len;
+	base += fixed_len;
+
+	/* Reserved for potential ampersand. */
+	cstr->base[cstr->size++] = ' ';
+
+
+	while (size > 0)
+	{
+		cstr->base[cstr->size++] = '\n';
+		unsigned i;
+		for (i = 0; i < 5; i++)
+			cstr->base[cstr->size++] = ' ';
+
+		/* Continuation for fixed form
+		   Comment for free form */
+		cstr->base[cstr->size++] = '!';
+
+		unsigned lsize = (size > fixed_len ? fixed_len : size);
+		memcpy(&cstr->base[cstr->size], base, lsize);
+		cstr->size += lsize;
+
+		size -= lsize;
+		base += lsize;
+
+		cstr->col = 6 + lsize;
+	}
+
+	return true;
+}
+
 bool colstr_atomic_write(
 	colstr_t* cstr, const char* base, unsigned size)
 {
 	if (!cstr || !base || (size == 0))
 		return false;
 
-	unsigned orig_size = cstr->size;
-	unsigned orig_col  = cstr->col;
+	unsigned orig_size     = cstr->size;
+	unsigned orig_col      = cstr->col;
+	bool     orig_oversize = cstr->oversize;
+
+	if (cstr->oversize)
+	{
+		if (!colstr__enlarge(cstr, 7))
+			return false;
+
+		cstr->base[cstr->oversize_off] = '&';
+		cstr->oversize = false;
+
+		cstr->base[cstr->size++] = '\n';
+		unsigned i;
+		for (i = 0; i < 5; i++)
+			cstr->base[cstr->size++] = ' ';
+		cstr->base[cstr->size++] = '&';
+	}
 
 	/* We can't atomically print wider than a line. */
 	if (size > (cstr->col_max - 6))
+	{
+		if (colstr_atomic_write__oversized(
+			cstr, base, size))
+			return true;
+
+		cstr->size     = orig_size;
+		cstr->col      = orig_col;
+		cstr->oversize = orig_oversize;
 		return false;
+	}
 
 	unsigned remain
 		= (cstr->col_max - cstr->col);
@@ -280,7 +441,12 @@ bool colstr_atomic_write(
 	{
 		if (!colstr__enlarge(
 			cstr, (remain + 8)))
+		{
+			cstr->size     = orig_size;
+			cstr->col      = orig_col;
+			cstr->oversize = orig_oversize;
 			return false;
+		}
 
 		for (; cstr->col < cstr->col_max; cstr->col++)
 			cstr->base[cstr->size++] = ' ';
@@ -297,8 +463,9 @@ bool colstr_atomic_write(
 
 	if (!colstr__enlarge(cstr, size))
 	{
-		cstr->size = orig_size;
-		cstr->col  = orig_col;
+		cstr->size     = orig_size;
+		cstr->col      = orig_col;
+		cstr->oversize = orig_oversize;
 		return false;
 	}
 

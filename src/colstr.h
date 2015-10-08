@@ -5,7 +5,8 @@
 
 typedef struct colstr_s colstr_t;
 
-colstr_t* colstr_create(unsigned cols);
+colstr_t* colstr_create(
+	unsigned cols, unsigned ext);
 void colstr_delete(colstr_t* cstr);
 
 bool colstr_newline(
