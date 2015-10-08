@@ -233,6 +233,9 @@ void parse_type_delete(parse_type_t* type)
 bool parse_type_print(
 	colstr_t* cs, const parse_type_t* type, bool colons)
 {
+	if (parse_type_print_f77(cs, type))
+		return true;
+
 	if (type->type >= PARSE_TYPE_COUNT)
 		return false;
 
