@@ -16,8 +16,8 @@ static const parse_format_desc__map_t parse_format_desc__map[] =
 {
 	{ "I" , PARSE_FORMAT_DESC_INTEGER   , 1, 1, 0 },
 	{ "F" , PARSE_FORMAT_DESC_REAL      , 1, 1, 1 },
-	{ "D" , PARSE_FORMAT_DESC_E         , 1, 1, 1 },
-	{ "E" , PARSE_FORMAT_DESC_D         , 1, 1, 1 },
+	{ "E" , PARSE_FORMAT_DESC_E         , 1, 1, 1 },
+	{ "D" , PARSE_FORMAT_DESC_D         , 1, 1, 1 },
 	{ "G" , PARSE_FORMAT_DESC_G         , 1, 1, 1 },
 	{ "A" , PARSE_FORMAT_DESC_CHARACTER , 1, 0, 0 },
 	{ "L" , PARSE_FORMAT_DESC_LOGICAL   , 1, 0, 0 },
@@ -309,6 +309,15 @@ bool parse_format_desc_print(
 				|| !parse_format_desc_list_print(
 					cs, desc->repeat)
 				|| !colstr_atomic_writef(cs, ")"))
+				return false;
+			break;
+		case PARSE_FORMAT_DESC_REAL_SCALE:
+			if (!colstr_atomic_writef(cs, "%s%uP",
+				(desc->neg ? "-" : ""), desc->n))
+				return false;
+			break;
+		case PARSE_FORMAT_DESC_X:
+			if (!colstr_atomic_writef(cs, "%uX", desc->n))
 				return false;
 			break;
 		default:
