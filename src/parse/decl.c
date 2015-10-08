@@ -71,8 +71,10 @@ bool parse_decl_print(
 	}
 	else if (decl->init_clist)
 	{
-		if (!parse_clist_print(
-			cs, decl->init_clist))
+		if (!colstr_atomic_writef(cs, "/")
+			|| !parse_clist_print(
+				cs, decl->init_clist)
+			|| !colstr_atomic_writef(cs, "/"))
 			return false;
 	}
 
