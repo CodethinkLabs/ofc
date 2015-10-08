@@ -224,6 +224,57 @@ const char* parse_format_desc__name[] =
 	"Z",
 };
 
+
+static bool parse_format_desc_print__w(
+	parse_format_desc_e type, unsigned w)
+{
+	switch (type)
+	{
+		case PARSE_FORMAT_DESC_CHARACTER:
+			return (w > 0);
+		case PARSE_FORMAT_DESC_INTEGER:
+		case PARSE_FORMAT_DESC_REAL:
+		case PARSE_FORMAT_DESC_D:
+		case PARSE_FORMAT_DESC_E:
+		case PARSE_FORMAT_DESC_G:
+		case PARSE_FORMAT_DESC_LOGICAL:
+		case PARSE_FORMAT_DESC_REAL_SCALE:
+		case PARSE_FORMAT_DESC_T:
+		case PARSE_FORMAT_DESC_TL:
+		case PARSE_FORMAT_DESC_TR:
+		case PARSE_FORMAT_DESC_BINARY:
+		case PARSE_FORMAT_DESC_OCTAL:
+		case PARSE_FORMAT_DESC_HEX:
+			return true;
+		default:
+			break;
+	}
+
+	return false;
+}
+
+static bool parse_format_desc_print__d(
+	parse_format_desc_e type, unsigned d)
+{
+	switch (type)
+	{
+		case PARSE_FORMAT_DESC_REAL:
+		case PARSE_FORMAT_DESC_D:
+		case PARSE_FORMAT_DESC_E:
+		case PARSE_FORMAT_DESC_G:
+			return true;
+		case PARSE_FORMAT_DESC_INTEGER:
+		case PARSE_FORMAT_DESC_BINARY:
+		case PARSE_FORMAT_DESC_OCTAL:
+		case PARSE_FORMAT_DESC_HEX:
+			return (d > 0);
+		default:
+			break;
+	}
+
+	return false;
+}
+
 bool parse_format_desc_print(
 	colstr_t* cs, const parse_format_desc_t* desc)
 {
@@ -264,10 +315,10 @@ bool parse_format_desc_print(
 			if (!colstr_atomic_writef(cs, "%s",
 				parse_format_desc__name[desc->type]))
 				return false;
-			if ((desc->w > 0)
+			if (parse_format_desc_print__w(desc->type, desc->w)
 				&& !colstr_atomic_writef(cs, "%u", desc->w))
 				return false;
-			if ((desc->d > 0)
+			if (parse_format_desc_print__d(desc->type, desc->d)
 				&& !colstr_atomic_writef(cs, ".%u", desc->d))
 				return false;
 			if ((desc->e > 0)
