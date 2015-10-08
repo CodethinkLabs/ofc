@@ -118,7 +118,8 @@ static parse_array_range_t* parse_array__range_copy(
 }
 
 static bool parse_array__range_print(
-	colstr_t* cs, const parse_array_range_t* range)
+	colstr_t* cs, const parse_array_range_t* range,
+	bool is_decl)
 {
 	if (!range)
 		return false;
@@ -141,7 +142,7 @@ static bool parse_array__range_print(
 				cs, range->last))
 				return false;
 		}
-		else if (range->first)
+		else if (range->first && is_decl)
 		{
 			if (!colstr_atomic_writef(cs, "*"))
 				return false;
@@ -250,7 +251,8 @@ void parse_array_index_delete(
 }
 
 bool parse_array_index_print(
-	colstr_t* cs, const parse_array_index_t* index)
+	colstr_t* cs, const parse_array_index_t* index,
+	bool is_decl)
 {
 	if (!index)
 		return false;
@@ -266,7 +268,7 @@ bool parse_array_index_print(
 			return false;
 
 		if (!parse_array__range_print(
-			cs, index->range[i]))
+			cs, index->range[i], is_decl))
 			return false;
 	}
 

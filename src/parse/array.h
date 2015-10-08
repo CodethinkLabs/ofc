@@ -28,7 +28,8 @@ void parse_array_index_delete(
 	parse_array_index_t* index);
 
 bool parse_array_index_print(
-	colstr_t* cs, const parse_array_index_t* index);
+	colstr_t* cs, const parse_array_index_t* index,
+	bool is_decl);
 
 
 #endif

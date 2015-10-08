@@ -519,7 +519,7 @@ bool parse_expr_print(
 			break;
 		case PARSE_EXPR_VARIABLE:
 			if (!parse_lhs_print(
-				cs, expr->variable))
+				cs, expr->variable, false))
 				return false;
 			break;
 		case PARSE_EXPR_BRACKETS:

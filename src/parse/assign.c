@@ -114,7 +114,7 @@ bool parse_assign_print(
 		return false;
 
 	if (!parse_lhs_print(
-		cs, assign->name))
+		cs, assign->name, false))
 		return false;
 
 	if (assign->init)

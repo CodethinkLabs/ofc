@@ -188,7 +188,7 @@ static bool parse_data_entry_print(
 	if (!entry)
 		return false;
 
-	return (parse_lhs_list_print(cs, entry->nlist)
+	return (parse_lhs_list_print(cs, entry->nlist, false)
 		&& colstr_atomic_writef(cs, "/")
 		&& parse_clist_print(cs, entry->clist)
 		&& colstr_atomic_writef(cs, "/"));

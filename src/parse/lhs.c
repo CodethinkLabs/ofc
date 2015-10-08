@@ -405,7 +405,8 @@ void parse_lhs_delete(
 }
 
 bool parse_lhs_print(
-	colstr_t* cs, const parse_lhs_t* lhs)
+	colstr_t* cs, const parse_lhs_t* lhs,
+	bool is_decl)
 {
 	switch (lhs->type)
 	{
@@ -413,15 +414,15 @@ bool parse_lhs_print(
 			return str_ref_print(cs, lhs->variable);
 		case PARSE_LHS_ARRAY:
 			if (!parse_lhs_print(
-				cs, lhs->parent))
+				cs, lhs->parent, is_decl))
 				return false;
 			if (lhs->array.index)
 				return parse_array_index_print(
-					cs, lhs->array.index);
+					cs, lhs->array.index, is_decl);
 			return colstr_atomic_writef(cs, "()");
 		case PARSE_LHS_STAR_LEN:
 			if (!parse_lhs_print(
-				cs, lhs->parent)
+				cs, lhs->parent, is_decl)
 				|| !colstr_atomic_writef(cs, "*"))
 				return false;
 			if (lhs->star_len.var)
@@ -444,11 +445,11 @@ bool parse_lhs_print(
 			}
 			break;
 		case PARSE_LHS_MEMBER_TYPE:
-			return (parse_lhs_print(cs, lhs->parent)
+			return (parse_lhs_print(cs, lhs->parent, is_decl)
 				&& colstr_atomic_writef(cs, "%%")
 				&& str_ref_print(cs, lhs->member.name));
 		case PARSE_LHS_MEMBER_STRUCTURE:
-			return (parse_lhs_print(cs, lhs->parent)
+			return (parse_lhs_print(cs, lhs->parent, is_decl)
 				&& colstr_atomic_writef(cs, ".")
 				&& str_ref_print(cs, lhs->member.name));
 		case PARSE_LHS_IMPLICIT_DO:
@@ -460,6 +461,19 @@ bool parse_lhs_print(
 
 	return false;
 }
+
+static bool parse_lhs_print__decl(
+	colstr_t* cs, const parse_lhs_t* lhs)
+{
+	return parse_lhs_print(cs, lhs, true);
+}
+
+static bool parse_lhs_print__not_decl(
+	colstr_t* cs, const parse_lhs_t* lhs)
+{
+	return parse_lhs_print(cs, lhs, false);
+}
+
 
 bool parse_lhs_base_name(
 	const parse_lhs_t lhs,
@@ -550,17 +564,21 @@ void parse_lhs_list_delete(
 }
 
 bool parse_lhs_list_print(
-	colstr_t* cs, const parse_lhs_list_t* list)
+	colstr_t* cs, const parse_lhs_list_t* list,
+	bool is_decl)
 {
 	return parse_list_print(cs,
 		list->count, (const void**)list->lhs,
-		(void*)parse_lhs_print);
+		(void*)(is_decl
+			? parse_lhs_print__decl
+			: parse_lhs_print__not_decl));
 }
 
 bool parse_lhs_list_bracketed_print(
-	colstr_t* cs, const parse_lhs_list_t* list)
+	colstr_t* cs, const parse_lhs_list_t* list,
+	bool is_decl)
 {
 	return (colstr_atomic_writef(cs, "(")
-		&& parse_lhs_list_print(cs, list)
+		&& parse_lhs_list_print(cs, list, is_decl)
 		&& colstr_atomic_writef(cs, ")"));
 }

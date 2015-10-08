@@ -53,5 +53,5 @@ bool parse_stmt_dimension_print(
 		return false;
 
 	return (colstr_atomic_writef(cs, "DIMENSION ")
-		&& parse_lhs_list_print(cs, stmt->dimension));
+		&& parse_lhs_list_print(cs, stmt->dimension, true));
 }

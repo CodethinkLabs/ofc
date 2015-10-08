@@ -72,7 +72,7 @@ bool parse_save_print(
 			&& str_ref_print(cs, save->common)
 			&& colstr_atomic_writef(cs, "/"));
 
-	return parse_lhs_print(cs, save->lhs);
+	return parse_lhs_print(cs, save->lhs, false);
 }
 
 

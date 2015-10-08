@@ -137,7 +137,7 @@ bool parse_implicit_do_print(
 	colstr_t* cs, const parse_implicit_do_t* id)
 {
 	if (!colstr_atomic_writef(cs, "(")
-		|| !parse_lhs_print(cs, id->dlist)
+		|| !parse_lhs_print(cs, id->dlist, false)
 		|| !colstr_atomic_writef(cs, ", ")
 		|| !parse_assign_print(cs, id->init)
 		|| !colstr_atomic_writef(cs, ", ")

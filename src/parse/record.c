@@ -67,7 +67,7 @@ static bool parse_record_print(
 	return (colstr_atomic_writef(cs, "/")
 		&& str_ref_print(cs, record->structure)
 		&& colstr_atomic_writef(cs, "/ ")
-		&& parse_lhs_print(cs, record->name));
+		&& parse_lhs_print(cs, record->name, true));
 }
 
 

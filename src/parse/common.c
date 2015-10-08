@@ -80,7 +80,7 @@ bool parse_common_group_print(
 		return false;
 
 	return parse_lhs_list_print(
-		cs, group->names);
+		cs, group->names, false);
 }
 
 

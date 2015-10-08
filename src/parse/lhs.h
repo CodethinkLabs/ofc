@@ -72,7 +72,8 @@ void parse_lhs_delete(
 	parse_lhs_t* lhs);
 
 bool parse_lhs_print(
-	 colstr_t* cs, const parse_lhs_t* lhs);
+	colstr_t* cs, const parse_lhs_t* lhs,
+	bool is_decl);
 
 bool parse_lhs_base_name(
 	const parse_lhs_t lhs,
@@ -89,8 +90,10 @@ parse_lhs_list_t* parse_lhs_list_bracketed(
 void parse_lhs_list_delete(
 	parse_lhs_list_t* list);
 bool parse_lhs_list_print(
-	colstr_t* cs, const parse_lhs_list_t* list);
+	colstr_t* cs, const parse_lhs_list_t* list,
+	bool is_decl);
 bool parse_lhs_list_bracketed_print(
-	colstr_t* cs, const parse_lhs_list_t* list);
+	colstr_t* cs, const parse_lhs_list_t* list,
+	bool is_decl);
 
 #endif

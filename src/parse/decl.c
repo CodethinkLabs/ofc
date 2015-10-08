@@ -60,7 +60,7 @@ bool parse_decl_print(
 	if (!decl) return false;
 
 	if (!parse_lhs_print(
-		cs, decl->lhs))
+		cs, decl->lhs, true))
 		return false;
 
 	if (decl->init_expr)
