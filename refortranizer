@@ -1,0 +1,4 @@
+#!/bin/bash
+
+./unfortranizer $1 > a.f && gfortran a.f && ./a.out
+rm a.f a.out
