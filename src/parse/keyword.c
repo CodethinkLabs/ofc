@@ -104,7 +104,7 @@ unsigned parse_ident(
 	if (!sparse_sequential(src, ptr, i))
 	{
 		parse_debug_warning(debug, src, ptr,
-			"Unexpected whitespace in ident");
+			"Unexpected whitespace within identifier");
 	}
 
 	if (ident) *ident = str_ref(ptr, i);
@@ -224,7 +224,7 @@ unsigned parse_keyword_named(
 	if (unexpected_space)
 	{
 		parse_debug_warning(debug, src, ptr,
-			"Unexpected a space in %s", kwstr);
+			"Unexpected space in %s keyword", kwstr);
 	}
 
 	if (name != NULL)
@@ -325,7 +325,7 @@ unsigned parse_keyword_end_named(
 	if (!sparse_sequential(src, ptr, 3))
 	{
 		parse_debug_warning(debug, src, ptr,
-			"Unexpected a space in END keyword");
+			"Unexpected space in END keyword");
 	}
 
 	if (warn_end_kw_space > 0)
