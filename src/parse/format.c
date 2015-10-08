@@ -286,9 +286,10 @@ bool parse_format_desc_print(
 		case PARSE_FORMAT_DESC_HOLLERITH:
 			if (string_empty(desc->string))
 				return false;
-			return colstr_atomic_writef(cs, "%uH%s",
+			if (!colstr_atomic_writef(cs, "%uH%s",
 				string_length(desc->string),
-				string_strz(desc->string));
+				string_strz(desc->string)))
+				return false;
 			break;
 		case PARSE_FORMAT_DESC_STRING:
 			if (!colstr_writef(cs, "\""))
