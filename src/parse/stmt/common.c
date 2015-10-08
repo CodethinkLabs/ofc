@@ -72,7 +72,7 @@ bool parse_stmt_common_namelist_print(
 			return false;
 	}
 
-	return (stmt && colstr_atomic_writef(cs, "%s  ", kwstr)
+	return (stmt && colstr_atomic_writef(cs, "%s ", kwstr)
 		&& parse_common_group_list_print(
 			cs, stmt->common_namelist));
 }
