@@ -210,6 +210,8 @@ const char* parse_format_desc__name[] =
 	"T",
 	"/",
 	"$",
+	"\\",
+	"Q",
 	":",
 	"BN",
 	"BZ",
