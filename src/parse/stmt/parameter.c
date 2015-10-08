@@ -47,7 +47,10 @@ bool parse_stmt_parameter_print(
     if (!stmt)
 		return false;
 
-	return (colstr_atomic_writef(cs, "PARAMETER ")
+	return (colstr_atomic_writef(cs, "PARAMETER")
+		&& colstr_atomic_writef(cs, " ")
+		&& colstr_atomic_writef(cs, "(")
 		&& parse_assign_list_print(
-			cs, stmt->parameter.list));
+			cs, stmt->parameter.list)
+		&& colstr_atomic_writef(cs, ")"));
 }
