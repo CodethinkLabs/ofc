@@ -66,6 +66,14 @@ unsigned parse_stmt_continue(
 	const sparse_t* src, const char* ptr,
 	parse_debug_t* debug,
 	parse_stmt_t* stmt);
+unsigned parse_stmt_cycle(
+	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
+	parse_stmt_t* stmt);
+unsigned parse_stmt_exit(
+	const sparse_t* src, const char* ptr,
+	parse_debug_t* debug,
+	parse_stmt_t* stmt);
 unsigned parse_stmt_stop(
 	const sparse_t* src, const char* ptr,
 	parse_debug_t* debug,
@@ -408,6 +416,7 @@ parse_stmt_t* parse_stmt(
 
 		case 'C':
 			if (i == 0) i = parse_stmt_continue(src, ptr, debug, &stmt);
+			if (i == 0) i = parse_stmt_cycle(src, ptr, debug, &stmt);
 			if (i == 0) i = parse_stmt_call(src, ptr, debug, &stmt);
 			if (i == 0) i = parse_stmt_common(src, ptr, debug, &stmt);
 			if (i == 0) i = parse_stmt_io_close(src, ptr, debug, &stmt);
@@ -422,6 +431,7 @@ parse_stmt_t* parse_stmt(
 
 		case 'E':
 			if (i == 0) i = parse_stmt_equivalence(src, ptr, debug, &stmt);
+			if (i == 0) i = parse_stmt_exit(src, ptr, debug, &stmt);
 			if (i == 0) i = parse_stmt_io_end_file(src, ptr, debug, &stmt);
 			if (i == 0) i = parse_stmt_decl_attr_external(src, ptr, debug, &stmt);
 			if (i == 0) i = parse_stmt_entry(src, ptr, debug, &stmt);
@@ -591,6 +601,10 @@ bool parse_stmt_save_print(
 bool parse_stmt_parameter_print(
 	colstr_t* cs, const parse_stmt_t* stmt);
 bool parse_stmt_continue_print(
+	colstr_t* cs, const parse_stmt_t* stmt);
+bool parse_stmt_cycle_print(
+	colstr_t* cs, const parse_stmt_t* stmt);
+bool parse_stmt_exit_print(
 	colstr_t* cs, const parse_stmt_t* stmt);
 bool parse_stmt_dimension_print(
 	colstr_t* cs, const parse_stmt_t* stmt);

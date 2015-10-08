@@ -27,6 +27,8 @@ static const char* parse_keyword__name[] =
 	"CONTINUE",
 	"STOP",
 	"PAUSE",
+	"CYCLE",
+	"EXIT",
 
 	"LOGICAL",
 	"CHARACTER",
