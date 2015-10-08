@@ -69,13 +69,15 @@ bool parse_common_group_print(
 	if (!group)
 		return false;
 
-	if (!str_ref_empty(group->group))
-	{
-		if (!colstr_atomic_writef(cs, "/")
-			|| !str_ref_print(cs, group->group)
-			|| !colstr_atomic_writef(cs, "/"))
-			return false;
-	}
+	if (!colstr_atomic_writef(cs, "/"))
+		return false;
+
+	if (!str_ref_empty(group->group)
+		&& !str_ref_print(cs, group->group))
+		return false;
+
+	if (!colstr_atomic_writef(cs, "/"))
+		return false;
 
 	return parse_lhs_list_print(
 		cs, group->names);
