@@ -118,7 +118,8 @@ bool parse_stmt_io_print(
 
 	if (!colstr_atomic_writef(cs, "(")
 		|| !parse_call_arg_list_print(cs, stmt->io.params)
-		|| !colstr_atomic_writef(cs, ")"))
+		|| !colstr_atomic_writef(cs, ")")
+		|| !colstr_atomic_writef(cs, " "))
 		return false;
 
 	if (stmt->io.iolist)
