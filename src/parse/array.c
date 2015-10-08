@@ -141,6 +141,11 @@ static bool parse_array__range_print(
 				cs, range->last))
 				return false;
 		}
+		else if (range->first)
+		{
+			if (!colstr_atomic_writef(cs, "*"))
+				return false;
+		}
 
 		if (range->stride)
 		{
