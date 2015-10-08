@@ -300,7 +300,7 @@ bool parse_stmt_program_print(
 
 	if (stmt->program.type)
 	{
-		if (!parse_type_print(cs, stmt->program.type)
+		if (!parse_type_print(cs, stmt->program.type, false)
 			|| !colstr_atomic_writef(cs, " "))
 			return false;
 	}

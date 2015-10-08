@@ -36,7 +36,7 @@ unsigned parse_stmt_decl(
 bool parse_stmt_decl_print(
 	colstr_t* cs, const parse_stmt_t* stmt)
 {
-	return (parse_type_print(cs, stmt->decl.type)
+	return (parse_type_print(cs, stmt->decl.type, true)
 		&& colstr_atomic_writef(cs, " ")
 		&& parse_decl_list_print(cs, stmt->decl.decl));
 }

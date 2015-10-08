@@ -230,7 +230,8 @@ void parse_type_delete(parse_type_t* type)
 	free(type);
 }
 
-bool parse_type_print(colstr_t* cs, const parse_type_t* type)
+bool parse_type_print(
+	colstr_t* cs, const parse_type_t* type, bool colons)
 {
 	if (type->type >= PARSE_TYPE_COUNT)
 		return false;
@@ -269,7 +270,7 @@ bool parse_type_print(colstr_t* cs, const parse_type_t* type)
 			return false;
 	}
 
-	return colstr_atomic_writef(cs, " ::");
+	return (!colons || colstr_atomic_writef(cs, " ::"));
 }
 
 bool parse_type_print_f77(

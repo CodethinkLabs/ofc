@@ -44,7 +44,7 @@ parse_type_t* parse_type(
 void parse_type_delete(parse_type_t* type);
 
 bool parse_type_print(
-	colstr_t* cs, const parse_type_t* type);
+	colstr_t* cs, const parse_type_t* type, bool colons);
 bool parse_type_print_f77(
 	colstr_t* cs, const parse_type_t* type);
 
