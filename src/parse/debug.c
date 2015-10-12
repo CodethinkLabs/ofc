@@ -1,4 +1,4 @@
-#include "debug.h"
+#include <ofc/parse/debug.h>
 #include <stdlib.h>
 #include <stdio.h>
 

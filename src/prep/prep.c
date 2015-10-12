@@ -1,4 +1,4 @@
-#include "../prep.h"
+#include <ofc/prep.h>
 #include <stdlib.h>
 
 

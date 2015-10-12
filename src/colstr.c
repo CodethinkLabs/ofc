@@ -1,4 +1,4 @@
-#include "colstr.h"
+#include <ofc/colstr.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

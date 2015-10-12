@@ -1,5 +1,6 @@
-#include "../file.h"
-#include "../../prep.h"
+#include <ofc/parse/file.h>
+#include <ofc/file.h>
+#include <ofc/prep.h>
 #include <string.h>
 
 

@@ -1,4 +1,4 @@
-#include "label_table.h"
+#include <ofc/label_table.h>
 #include <stdlib.h>
 #include <stdint.h>
 

@@ -1,5 +1,5 @@
-#include "../prep.h"
-#include "../fctype.h"
+#include <ofc/prep.h>
+#include <ofc/fctype.h>
 
 #include <stdlib.h>
 #include <stdio.h>

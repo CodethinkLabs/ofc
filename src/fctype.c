@@ -1,4 +1,4 @@
-#include "fctype.h"
+#include <ofc/fctype.h>
 
 bool ofc_is_vspace(char c)
 {

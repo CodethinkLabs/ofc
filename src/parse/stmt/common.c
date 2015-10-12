@@ -1,4 +1,4 @@
-#include "../parse.h"
+#include <ofc/parse.h>
 
 
 static unsigned ofc_parse_stmt__common_namelist(

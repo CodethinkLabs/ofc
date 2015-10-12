@@ -1,7 +1,7 @@
 #ifndef __ofc_parse_debug_h__
 #define __ofc_parse_debug_h__
 
-#include "../sparse.h"
+#include <ofc/sparse.h>
 
 typedef struct ofc_parse_debug_s ofc_parse_debug_t;
 

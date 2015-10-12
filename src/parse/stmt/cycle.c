@@ -1,4 +1,4 @@
-#include "../parse.h"
+#include <ofc/parse.h>
 
 unsigned ofc_parse_stmt_cycle(
 	const ofc_sparse_t* src, const char* ptr,

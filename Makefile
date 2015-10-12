@@ -5,7 +5,7 @@ BASE = src/
 SRC_DIR = . prep parse reformat parse/stmt
 SRC_DIR_BASE = $(addprefix $(BASE),$(SRC_DIR))
 LDFLAGS = -lm
-CFLAGS = -O3 -Wall -Wextra -MD -MP
+CFLAGS = -O3 -Wall -Wextra -MD -MP -I include
 
 SRC = $(foreach dir, $(SRC_DIR_BASE), $(wildcard $(dir)/*.c))
 OBJ = $(patsubst %.c, %.o, $(SRC))

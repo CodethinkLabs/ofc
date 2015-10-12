@@ -1,4 +1,4 @@
-#include "parse.h"
+#include <ofc/parse.h>
 
 
 ofc_parse_decl_t* ofc_parse_decl(

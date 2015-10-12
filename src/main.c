@@ -3,9 +3,9 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "file.h"
-#include "prep.h"
-#include "parse/file.h"
+#include <ofc/file.h>
+#include <ofc/prep.h>
+#include <ofc/parse/file.h>
 
 
 void print_usage(const char* name)
