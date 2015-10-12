@@ -226,11 +226,12 @@ int main(int argc, const char* argv[])
 		|| !colstr_fdprint(cs, STDOUT_FILENO))
 	{
 		fprintf(stderr, "Error: Failed to reprint program\n");
-		sparse_delete(condense);
+		colstr_delete(cs);
 		return EXIT_FAILURE;
 	}
 
-	parse_stmt_list_delete(program);
 	sparse_delete(condense);
+	parse_stmt_list_delete(program);
+	colstr_delete(cs);
 	return EXIT_SUCCESS;
 }
