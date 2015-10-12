@@ -116,7 +116,7 @@ static unsigned parse_literal__binary(
 
 	literal->number = str_ref(&ptr[base + 1], (len - 2));
 	literal->type = PARSE_LITERAL_BINARY;
-	return (len + 1);
+	return i;
 }
 
 static unsigned parse_literal__octal(
@@ -154,7 +154,7 @@ static unsigned parse_literal__octal(
 
 	literal->number = str_ref(&ptr[base + 1], (len - 2));
 	literal->type = PARSE_LITERAL_OCTAL;
-	return (len + 1);
+	return i;
 }
 
 static unsigned parse_literal__hex(
