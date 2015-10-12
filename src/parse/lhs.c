@@ -50,7 +50,8 @@ static bool parse_lhs__clone(
 	if (!src || !dst)
 		return NULL;
 
-	parse_lhs_t clone = *src;
+	parse_lhs_t clone;
+	clone.type = src->type;
 
 	switch (src->type)
 	{
@@ -58,13 +59,10 @@ static bool parse_lhs__clone(
 		case PARSE_LHS_STAR_LEN:
 		case PARSE_LHS_MEMBER_STRUCTURE:
 		case PARSE_LHS_MEMBER_TYPE:
-			if (src->parent)
-			{
-				clone.parent = parse_lhs_copy(
-					src->parent);
-				if (!clone.parent)
-					return false;
-			}
+			clone.parent = parse_lhs_copy(
+				src->parent);
+			if (src->parent && !clone.parent)
+				return false;
 			break;
 		default:
 			break;
@@ -72,43 +70,44 @@ static bool parse_lhs__clone(
 
 	switch (src->type)
 	{
+		case PARSE_LHS_VARIABLE:
+			clone.variable = src->variable;
+			break;
+
 		case PARSE_LHS_ARRAY:
-			if (src->array.index)
+			clone.array.index = parse_array_index_copy(
+				src->array.index);
+			if (src->array.index
+				&& !clone.array.index)
 			{
-				clone.array.index = parse_array_index_copy(
-					src->array.index);
-				if (!clone.array.index)
-				{
-					parse_lhs__cleanup(clone);
-					return false;
-				}
+				parse_lhs_delete(clone.parent);
+				return false;
 			}
 			break;
 
 		case PARSE_LHS_STAR_LEN:
-			if (src->star_len.len)
+			clone.star_len.var = src->star_len.var;
+			clone.star_len.len = parse_expr_copy(
+				src->star_len.len);
+			if (src->star_len.len
+				&& !clone.star_len.len)
 			{
-				clone.star_len.len = parse_expr_copy(
-					src->star_len.len);
-				if (!clone.star_len.len)
-				{
-					parse_lhs__cleanup(clone);
-					return false;
-				}
+				parse_lhs_delete(clone.parent);
+				return false;
 			}
 			break;
 
+		case PARSE_LHS_MEMBER_STRUCTURE:
+		case PARSE_LHS_MEMBER_TYPE:
+			clone.member.name = src->member.name;
+			break;
+
 		case PARSE_LHS_IMPLICIT_DO:
-			if (src->implicit_do)
-			{
-				clone.implicit_do = parse_implicit_do_copy(
-					src->implicit_do);
-				if (!clone.implicit_do)
-				{
-					parse_lhs__cleanup(clone);
-					return false;
-				}
-			}
+			clone.implicit_do = parse_implicit_do_copy(
+				src->implicit_do);
+			if (src->implicit_do
+				&& !clone.implicit_do)
+				return false;
 			break;
 
 		default:
@@ -139,7 +138,7 @@ static parse_lhs_t* parse_lhs__array(
 
 	unsigned i = 0;
 	if (ptr[i] != '(')
-		return 0;
+		return NULL;
 
 	unsigned dpos = parse_debug_position(debug);
 
@@ -199,7 +198,7 @@ static parse_lhs_t* parse_lhs__star_len(
 		src, ptr, debug,
 		&lhs.star_len.len,
 		&lhs.star_len.var);
-	if (i == 0) return 0;
+	if (i == 0) return NULL;
 
 	parse_lhs_t* alhs
 		= parse_lhs__alloc(lhs);
