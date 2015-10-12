@@ -60,18 +60,10 @@ static bool parse_lhs__clone(
 		case PARSE_LHS_MEMBER_TYPE:
 			if (src->parent)
 			{
-				parse_lhs_t parent;
-				if (!parse_lhs__clone(
-					&parent, src->parent))
-					return false;
-
-				clone.parent
-					= parse_lhs__alloc(parent);
+				clone.parent = parse_lhs_copy(
+					src->parent);
 				if (!clone.parent)
-				{
-					parse_lhs__cleanup(parent);
 					return false;
-				}
 			}
 			break;
 		default:
@@ -163,17 +155,19 @@ static parse_lhs_t* parse_lhs__array(
 	}
 	i += l;
 
-	lhs.type        = PARSE_LHS_ARRAY;
-	lhs.parent      = parent;
+	lhs.type   = PARSE_LHS_ARRAY;
+	lhs.parent = NULL;
 
 	parse_lhs_t* alhs
 		= parse_lhs__alloc(lhs);
 	if (!alhs)
 	{
-		parse_lhs__cleanup(lhs);
+		parse_array_index_delete(lhs.array.index);
 		parse_debug_rewind(debug, dpos);
 		return NULL;
 	}
+
+	alhs->parent = parent;
 
 	if (len) *len = i;
 	return alhs;
@@ -197,7 +191,7 @@ static parse_lhs_t* parse_lhs__star_len(
 
 	parse_lhs_t lhs;
 	lhs.type   = PARSE_LHS_STAR_LEN;
-	lhs.parent = parent;
+	lhs.parent = NULL;
 
 	unsigned dpos = parse_debug_position(debug);
 
@@ -211,10 +205,12 @@ static parse_lhs_t* parse_lhs__star_len(
 		= parse_lhs__alloc(lhs);
 	if (!alhs)
 	{
-		parse_lhs__cleanup(lhs);
+		parse_expr_delete(lhs.star_len.len);
 		parse_debug_rewind(debug, dpos);
 		return NULL;
 	}
+
+	alhs->parent = parent;
 
 	if (len) *len = i;
 	return alhs;
@@ -239,7 +235,8 @@ static parse_lhs_t* parse_lhs__member(
 
 
 	parse_lhs_t lhs;
-	lhs.type = PARSE_LHS_MEMBER_TYPE;
+	lhs.type   = PARSE_LHS_MEMBER_TYPE;
+	lhs.parent = NULL;
 
 	unsigned dpos = parse_debug_position(debug);
 
@@ -266,16 +263,15 @@ static parse_lhs_t* parse_lhs__member(
 	if (l == 0) return NULL;
 	i += l;
 
-	lhs.parent = parent;
-
 	parse_lhs_t* alhs
 		= parse_lhs__alloc(lhs);
 	if (!alhs)
 	{
-		parse_lhs__cleanup(lhs);
 		parse_debug_rewind(debug, dpos);
 		return NULL;
 	}
+
+	alhs->parent = parent;
 
 	if (len) *len = i;
 	return alhs;
