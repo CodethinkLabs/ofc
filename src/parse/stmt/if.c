@@ -132,7 +132,7 @@ static unsigned parse_stmt_if__then(
 
 			stmt->if_then.block_else
 				= (parse_stmt_list_t*)malloc(
-					sizeof(parse_stmt_list_t*));
+					sizeof(parse_stmt_list_t));
 			if (!stmt->if_then.block_else)
 			{
 				parse_stmt_delete(stmt_else);
