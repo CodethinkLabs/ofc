@@ -1,25 +1,25 @@
 #include "../parse.h"
 
 
-static unsigned parse_stmt__common_namelist(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_keyword_e keyword,
-	parse_stmt_t* stmt)
+static unsigned ofc_parse_stmt__common_namelist(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_keyword_e keyword,
+	ofc_parse_stmt_t* stmt)
 {
-	unsigned dpos = parse_debug_position(debug);
+	unsigned dpos = ofc_parse_debug_position(debug);
 
-	unsigned i = parse_keyword(
+	unsigned i = ofc_parse_keyword(
 		src, ptr, debug, keyword);
 	if (i == 0) return 0;
 
 	unsigned l;
 	stmt->common_namelist
-		= parse_common_group_list(
+		= ofc_parse_common_group_list(
 			src, &ptr[i], debug, &l);
 	if (!stmt->common_namelist)
 	{
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	i += l;
@@ -27,34 +27,34 @@ static unsigned parse_stmt__common_namelist(
 	return i;
 }
 
-unsigned parse_stmt_common(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_stmt_t* stmt)
+unsigned ofc_parse_stmt_common(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_stmt_t* stmt)
 {
-	unsigned i = parse_stmt__common_namelist(
-		src, ptr, debug, PARSE_KEYWORD_COMMON, stmt);
+	unsigned i = ofc_parse_stmt__common_namelist(
+		src, ptr, debug, OFC_PARSE_KEYWORD_COMMON, stmt);
 	if (i == 0) return 0;
 
-	stmt->type = PARSE_STMT_COMMON;
+	stmt->type = OFC_PARSE_STMT_COMMON;
 	return i;
 }
 
-unsigned parse_stmt_namelist(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_stmt_t* stmt)
+unsigned ofc_parse_stmt_namelist(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_stmt_t* stmt)
 {
-	unsigned i = parse_stmt__common_namelist(
-		src, ptr, debug, PARSE_KEYWORD_NAMELIST, stmt);
+	unsigned i = ofc_parse_stmt__common_namelist(
+		src, ptr, debug, OFC_PARSE_KEYWORD_NAMELIST, stmt);
 	if (i == 0) return 0;
 
-	stmt->type = PARSE_STMT_NAMELIST;
+	stmt->type = OFC_PARSE_STMT_NAMELIST;
 	return i;
 }
 
-bool parse_stmt_common_namelist_print(
-	colstr_t* cs, const parse_stmt_t* stmt)
+bool ofc_parse_stmt_common_namelist_print(
+	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt)
 {
 	if (!stmt)
 		return false;
@@ -62,17 +62,17 @@ bool parse_stmt_common_namelist_print(
 	const char* kwstr;
 	switch (stmt->type)
 	{
-		case PARSE_STMT_COMMON:
+		case OFC_PARSE_STMT_COMMON:
 			kwstr = "COMMON";
 			break;
-		case PARSE_STMT_NAMELIST:
+		case OFC_PARSE_STMT_NAMELIST:
 			kwstr = "NAMELIST";
 			break;
 		default:
 			return false;
 	}
 
-	return (stmt && colstr_atomic_writef(cs, "%s ", kwstr)
-		&& parse_common_group_list_print(
+	return (stmt && ofc_colstr_atomic_writef(cs, "%s ", kwstr)
+		&& ofc_parse_common_group_list_print(
 			cs, stmt->common_namelist));
 }

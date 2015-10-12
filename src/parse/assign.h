@@ -1,52 +1,52 @@
-#ifndef __parse_assign_h__
-#define __parse_assign_h__
+#ifndef __ofc_parse_assign_h__
+#define __ofc_parse_assign_h__
 
 typedef struct
 {
-	parse_lhs_t*  name;
-	parse_expr_t* init;
-} parse_assign_t;
+	ofc_parse_lhs_t*  name;
+	ofc_parse_expr_t* init;
+} ofc_parse_assign_t;
 
 typedef struct
 {
-	unsigned         count;
-	parse_assign_t** assign;
-} parse_assign_list_t;
+	unsigned             count;
+	ofc_parse_assign_t** assign;
+} ofc_parse_assign_list_t;
 
 
-parse_assign_t* parse_assign(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_parse_assign_t* ofc_parse_assign(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len);
 
-parse_assign_t* parse_assign_init(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_parse_assign_t* ofc_parse_assign_init(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len);
 
-parse_assign_t* parse_assign_copy(
-	const parse_assign_t* assign);
+ofc_parse_assign_t* ofc_parse_assign_copy(
+	const ofc_parse_assign_t* assign);
 
-void parse_assign_delete(
-	parse_assign_t* assign);
+void ofc_parse_assign_delete(
+	ofc_parse_assign_t* assign);
 
-bool parse_assign_print(
-	colstr_t* cs, const parse_assign_t* assign);
+bool ofc_parse_assign_print(
+	ofc_colstr_t* cs, const ofc_parse_assign_t* assign);
 
 
-parse_assign_list_t* parse_assign_list(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_parse_assign_list_t* ofc_parse_assign_list(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len);
 
-parse_assign_list_t* parse_assign_list_copy(
-	const parse_assign_list_t* list);
+ofc_parse_assign_list_t* ofc_parse_assign_list_copy(
+	const ofc_parse_assign_list_t* list);
 
-void parse_assign_list_delete(
-	parse_assign_list_t* list);
+void ofc_parse_assign_list_delete(
+	ofc_parse_assign_list_t* list);
 
-bool parse_assign_list_print(
-colstr_t* cs, const parse_assign_list_t* list);
+bool ofc_parse_assign_list_print(
+ofc_colstr_t* cs, const ofc_parse_assign_list_t* list);
 
 
 #endif

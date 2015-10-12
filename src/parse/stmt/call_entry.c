@@ -1,22 +1,22 @@
 #include "../parse.h"
 
-unsigned parse_stmt_call(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_stmt_t* stmt)
+unsigned ofc_parse_stmt_call(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_stmt_t* stmt)
 {
-	unsigned dpos = parse_debug_position(debug);
+	unsigned dpos = ofc_parse_debug_position(debug);
 
-	unsigned i = parse_keyword(
-		src, ptr, debug, PARSE_KEYWORD_CALL);
+	unsigned i = ofc_parse_keyword(
+		src, ptr, debug, OFC_PARSE_KEYWORD_CALL);
 	if (i == 0) return 0;
 
-	unsigned len = parse_name(
+	unsigned len = ofc_parse_name(
 		src, &ptr[i], debug,
 		&stmt->call_entry.name);
 	if (len == 0)
 	{
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	i += len;
@@ -26,40 +26,40 @@ unsigned parse_stmt_call(
 	{
 		i += 1;
 
-		stmt->call_entry.args = parse_call_arg_list(
+		stmt->call_entry.args = ofc_parse_call_arg_list(
 			src, &ptr[i], debug, &len);
 		if (stmt->call_entry.args) i += len;
 
 		if (ptr[i++] != ')')
 		{
-			parse_call_arg_list_delete(
+			ofc_parse_call_arg_list_delete(
 				stmt->call_entry.args);
-			parse_debug_rewind(debug, dpos);
+			ofc_parse_debug_rewind(debug, dpos);
 			return 0;
 		}
 	}
 
-	stmt->type = PARSE_STMT_CALL;
+	stmt->type = OFC_PARSE_STMT_CALL;
 	return i;
 }
 
-unsigned parse_stmt_entry(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_stmt_t* stmt)
+unsigned ofc_parse_stmt_entry(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_stmt_t* stmt)
 {
-	unsigned dpos = parse_debug_position(debug);
+	unsigned dpos = ofc_parse_debug_position(debug);
 
-	unsigned i = parse_keyword(
-		src, ptr, debug, PARSE_KEYWORD_ENTRY);
+	unsigned i = ofc_parse_keyword(
+		src, ptr, debug, OFC_PARSE_KEYWORD_ENTRY);
 	if (i == 0) return 0;
 
-	unsigned len = parse_name(
+	unsigned len = ofc_parse_name(
 		src, &ptr[i], debug,
 		&stmt->call_entry.name);
 	if (len == 0)
 	{
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	i += len;
@@ -69,25 +69,25 @@ unsigned parse_stmt_entry(
 	{
 		i += 1;
 
-		stmt->call_entry.args = parse_call_arg_list(
+		stmt->call_entry.args = ofc_parse_call_arg_list(
 			src, &ptr[i], debug, &len);
 		if (stmt->call_entry.args) i += len;
 
 		if (ptr[i++] != ')')
 		{
-			parse_call_arg_list_delete(
+			ofc_parse_call_arg_list_delete(
 				stmt->call_entry.args);
-			parse_debug_rewind(debug, dpos);
+			ofc_parse_debug_rewind(debug, dpos);
 			return 0;
 		}
 	}
 
-	stmt->type = PARSE_STMT_ENTRY;
+	stmt->type = OFC_PARSE_STMT_ENTRY;
 	return i;
 }
 
-bool parse_stmt_call_entry_print(
-	colstr_t* cs, const parse_stmt_t* stmt)
+bool ofc_parse_stmt_call_entry_print(
+	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt)
 {
 	if (!stmt)
 		return false;
@@ -95,25 +95,25 @@ bool parse_stmt_call_entry_print(
 	const char* kwstr;
 	switch (stmt->type)
 	{
-		case PARSE_STMT_CALL:
+		case OFC_PARSE_STMT_CALL:
 			kwstr = "CALL";
 			break;
-		case PARSE_STMT_ENTRY:
+		case OFC_PARSE_STMT_ENTRY:
 			kwstr = "ENTRY";
 			break;
 		default:
 			return false;
 	}
 
-	if (!colstr_atomic_writef(cs, "%s ", kwstr)
-		|| !str_ref_print(cs, stmt->call_entry.name)
-		|| !colstr_atomic_writef(cs, "("))
+	if (!ofc_colstr_atomic_writef(cs, "%s ", kwstr)
+		|| !ofc_str_ref_print(cs, stmt->call_entry.name)
+		|| !ofc_colstr_atomic_writef(cs, "("))
 		return false;
 
 	if (stmt->call_entry.args
-		&& !parse_call_arg_list_print(
+		&& !ofc_parse_call_arg_list_print(
 			cs, stmt->call_entry.args))
 		return false;
 
-	return colstr_atomic_writef(cs, ")");
+	return ofc_colstr_atomic_writef(cs, ")");
 }

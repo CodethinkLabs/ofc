@@ -1,25 +1,25 @@
-#ifndef __parse_pointer_h__
-#define __parse_pointer_h__
+#ifndef __ofc_parse_pointer_h__
+#define __ofc_parse_pointer_h__
 
 typedef struct
 {
-	str_ref_t name;
-	str_ref_t target;
-} parse_pointer_t;
+	ofc_str_ref_t name;
+	ofc_str_ref_t target;
+} ofc_parse_pointer_t;
 
 typedef struct
 {
-	unsigned          count;
-	parse_pointer_t** pointer;
-} parse_pointer_list_t;
+	unsigned              count;
+	ofc_parse_pointer_t** pointer;
+} ofc_parse_pointer_list_t;
 
-parse_pointer_list_t* parse_pointer_list(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_parse_pointer_list_t* ofc_parse_pointer_list(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len);
-void parse_pointer_list_delete(
-	parse_pointer_list_t* list);
-bool parse_pointer_list_print(
-	colstr_t* cs, const parse_pointer_list_t* list);
+void ofc_parse_pointer_list_delete(
+	ofc_parse_pointer_list_t* list);
+bool ofc_parse_pointer_list_print(
+	ofc_colstr_t* cs, const ofc_parse_pointer_list_t* list);
 
 #endif

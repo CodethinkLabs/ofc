@@ -23,9 +23,9 @@ static bool is_base_digit(
 	return true;
 }
 
-static unsigned parse_literal__base(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+static unsigned ofc_parse_literal__base(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned base, bool quoted, uint64_t* value)
 {
 	unsigned i = 0;
@@ -43,7 +43,7 @@ static unsigned parse_literal__base(
 	{
 		if (quoted)
 		{
-			parse_debug_warning(debug, src, &ptr[i],
+			ofc_parse_debug_warning(debug, src, &ptr[i],
 				"Valid digit expected in BOZ literal");
 		}
 		return 0;
@@ -59,7 +59,7 @@ static unsigned parse_literal__base(
 			if (((nv / base) != v)
 				|| ((nv % base) != d))
 			{
-				parse_debug_warning(debug, src, ptr,
+				ofc_parse_debug_warning(debug, src, ptr,
 					"Literal value exceeds 64-bit size");
 				return 0;
 			}
@@ -69,7 +69,7 @@ static unsigned parse_literal__base(
 
 	if (quoted && (ptr[i++] != quote))
 	{
-		parse_debug_warning(debug, src, &ptr[i],
+		ofc_parse_debug_warning(debug, src, &ptr[i],
 			"Invalid character in BOZ literal");
 		return 0;
 	}
@@ -81,25 +81,25 @@ static unsigned parse_literal__base(
 	return i;
 }
 
-static unsigned parse_literal__binary(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_literal_t* literal)
+static unsigned ofc_parse_literal__binary(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_literal_t* literal)
 {
 	unsigned i = 0;
 
-	unsigned dpos = parse_debug_position(debug);
+	unsigned dpos = ofc_parse_debug_position(debug);
 
 	/* Accepting 'X' in a BOZ literal is an extension. */
 	bool prefix =  (toupper(ptr[i]) == 'B');
 	if (prefix) i += 1;
 
 	unsigned base = i;
-	unsigned len = parse_literal__base(
+	unsigned len = ofc_parse_literal__base(
 		src, &ptr[i], debug, 2, true, NULL);
 	if (len == 0)
 	{
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	i += len;
@@ -108,36 +108,36 @@ static unsigned parse_literal__binary(
 	{
 		if (toupper(ptr[i]) != 'B')
 		{
-			parse_debug_rewind(debug, dpos);
+			ofc_parse_debug_rewind(debug, dpos);
 			return 0;
 		}
 		i += 1;
 	}
 
 	literal->number = str_ref(&ptr[base + 1], (len - 2));
-	literal->type = PARSE_LITERAL_BINARY;
+	literal->type = OFC_PARSE_LITERAL_BINARY;
 	return i;
 }
 
-static unsigned parse_literal__octal(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_literal_t* literal)
+static unsigned ofc_parse_literal__octal(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_literal_t* literal)
 {
 	unsigned i = 0;
 
-	unsigned dpos = parse_debug_position(debug);
+	unsigned dpos = ofc_parse_debug_position(debug);
 
 	/* Accepting 'X' in a BOZ literal is an extension. */
 	bool prefix =  (toupper(ptr[i]) == 'O');
 	if (prefix) i += 1;
 
 	unsigned base = i;
-	unsigned len = parse_literal__base(
+	unsigned len = ofc_parse_literal__base(
 		src, &ptr[i], debug, 8, true, NULL);
 	if (len == 0)
 	{
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	i += len;
@@ -146,25 +146,25 @@ static unsigned parse_literal__octal(
 	{
 		if (toupper(ptr[i]) != 'O')
 		{
-			parse_debug_rewind(debug, dpos);
+			ofc_parse_debug_rewind(debug, dpos);
 			return 0;
 		}
 		i += 1;
 	}
 
 	literal->number = str_ref(&ptr[base + 1], (len - 2));
-	literal->type = PARSE_LITERAL_OCTAL;
+	literal->type = OFC_PARSE_LITERAL_OCTAL;
 	return i;
 }
 
-static unsigned parse_literal__hex(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_literal_t* literal)
+static unsigned ofc_parse_literal__hex(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_literal_t* literal)
 {
 	unsigned i = 0;
 
-	unsigned dpos = parse_debug_position(debug);
+	unsigned dpos = ofc_parse_debug_position(debug);
 
 	/* Accepting 'X' in a BOZ literal is an extension. */
 	bool prefix =  ((toupper(ptr[i]) == 'X')
@@ -172,11 +172,11 @@ static unsigned parse_literal__hex(
 	if (prefix) i += 1;
 
 	unsigned base = i;
-	unsigned len = parse_literal__base(
+	unsigned len = ofc_parse_literal__base(
 		src, &ptr[i], debug, 16, true, NULL);
 	if (len == 0)
 	{
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	i += len;
@@ -186,24 +186,24 @@ static unsigned parse_literal__hex(
 		if ((toupper(ptr[i]) != 'X')
 			&& (toupper(ptr[i]) != 'Z'))
 		{
-			parse_debug_rewind(debug, dpos);
+			ofc_parse_debug_rewind(debug, dpos);
 			return 0;
 		}
 		i += 1;
 	}
 
 	literal->number = str_ref(&ptr[base + 1], (len - 2));
-	literal->type = PARSE_LITERAL_HEX;
+	literal->type = OFC_PARSE_LITERAL_HEX;
 	return i;
 }
 
-string_t* parse_hollerith(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_string_t* ofc_parse_hollerith(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len)
 {
 	unsigned holl_len;
-	unsigned i = parse_unsigned(
+	unsigned i = ofc_parse_unsigned(
 		src, ptr, debug, &holl_len);
 	if (i == 0) return NULL;
 
@@ -213,7 +213,7 @@ string_t* parse_hollerith(
     char s[holl_len + 1];
 
 	const char* pptr
-		= sparse_parent_pointer(src, &ptr[i]);
+		= ofc_sparse_parent_pointer(src, &ptr[i]);
 	if (!pptr) return NULL;
 	i += 1;
 
@@ -239,33 +239,33 @@ string_t* parse_hollerith(
 
     s[holl_pos] = '\0';
 
-    string_t* string
-		= string_create(s, holl_len);
+    ofc_string_t* string
+		= ofc_string_create(s, holl_len);
 	if (!string) return NULL;
 
 	if (len) *len = i;
 	return string;
 }
 
-static unsigned parse_literal__hollerith(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_literal_t* literal)
+static unsigned ofc_parse_literal__hollerith(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_literal_t* literal)
 {
 	unsigned len = 0;
-	literal->string = parse_hollerith(
+	literal->string = ofc_parse_hollerith(
 		src, ptr, debug, &len);
 
 	if (len == 0) return 0;
 
-	literal->type = PARSE_LITERAL_HOLLERITH;
+	literal->type = OFC_PARSE_LITERAL_HOLLERITH;
 	return len;
 }
 
 
-string_t* parse_character(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_string_t* ofc_parse_character(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len)
 {
 	unsigned i = 0;
@@ -276,7 +276,7 @@ string_t* parse_character(
 		return NULL;
 
 	const char* pptr
-		= sparse_parent_pointer(src, &ptr[i]);
+		= ofc_sparse_parent_pointer(src, &ptr[i]);
 	if (!pptr) return NULL;
 
 	/* Skip to the end of condense string-> */
@@ -296,7 +296,7 @@ string_t* parse_character(
 	}
 	if (ptr[i++] != quote)
 	{
-		sparse_error(src, ptr, "Unterminated string");
+		ofc_sparse_error(src, ptr, "Unterminated string");
 		return NULL;
 	}
 
@@ -309,7 +309,7 @@ string_t* parse_character(
 			|| (pptr[j] == '\n')
 			|| (pptr[j] == '\0'))
 		{
-			sparse_error(src, ptr,
+			ofc_sparse_error(src, ptr,
 				"Unexpected end of line in character constant");
 			return NULL;
 		}
@@ -319,7 +319,7 @@ string_t* parse_character(
 			if (pptr[j] == quote)
 			{
 				unsigned k;
-				for (k = 1; is_hspace(pptr[j + k]); k++);
+				for (k = 1; ofc_is_hspace(pptr[j + k]); k++);
 				if (pptr[j + k] == quote)
 				{
 					j += k;
@@ -347,7 +347,7 @@ string_t* parse_character(
 	unsigned str_pos = 0;
 	unsigned str_end = j;
 
-	string_t* string = string_create(NULL, str_len);
+	ofc_string_t* string = ofc_string_create(NULL, str_len);
 	if (!string) return NULL;
 
 	for(j = 1, is_escaped = false; j < str_end; j++)
@@ -390,7 +390,7 @@ string_t* parse_character(
 
 				/* '\x' where x is any other character */
 				default:
-					parse_debug_warning(debug, src, ptr,
+					ofc_parse_debug_warning(debug, src, ptr,
 						"Unknown escape sequence in string"
 						", ignoring escape character");
 					break;
@@ -413,39 +413,39 @@ string_t* parse_character(
 	return string;
 }
 
-static unsigned parse_literal__character(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_literal_t* literal)
+static unsigned ofc_parse_literal__character(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_literal_t* literal)
 {
 	unsigned len = 0;
-	literal->string = parse_character(
+	literal->string = ofc_parse_character(
 		src, ptr, debug, &len);
 	if (!literal->string) return 0;
 
-	literal->type = PARSE_LITERAL_CHARACTER;
+	literal->type = OFC_PARSE_LITERAL_CHARACTER;
 	return len;
 }
 
 
-static unsigned parse_literal__logical(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_literal_t* literal)
+static unsigned ofc_parse_literal__logical(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_literal_t* literal)
 {
 	unsigned i = 0;
 
 	if (ptr[i++] != '.')
 		return 0;
 
-	unsigned len = parse_keyword(
-		src, &ptr[i], debug, PARSE_KEYWORD_TRUE);
+	unsigned len = ofc_parse_keyword(
+		src, &ptr[i], debug, OFC_PARSE_KEYWORD_TRUE);
 
 	bool v = (len > 0);
 	if (len == 0)
 	{
-		len = parse_keyword(
-			src, &ptr[i], debug, PARSE_KEYWORD_FALSE);
+		len = ofc_parse_keyword(
+			src, &ptr[i], debug, OFC_PARSE_KEYWORD_FALSE);
 		if (len == 0) return 0;
 	}
 	i += len;
@@ -454,15 +454,15 @@ static unsigned parse_literal__logical(
 		return 0;
 
 	literal->logical = v;
-	literal->type = PARSE_LITERAL_LOGICAL;
+	literal->type = OFC_PARSE_LITERAL_LOGICAL;
 	return i;
 }
 
 
-unsigned parse_literal_number(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_literal_t* literal)
+unsigned ofc_parse_literal_number(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_literal_t* literal)
 {
 	unsigned i = 0;
 
@@ -514,7 +514,7 @@ unsigned parse_literal_number(
 		i += 1;
 
 		unsigned ok = k;
-		unsigned len = parse_unsigned(
+		unsigned len = ofc_parse_unsigned(
 			src, &ptr[i], debug, &k);
 		if (len == 0) return 0;
 		i += len;
@@ -524,20 +524,20 @@ unsigned parse_literal_number(
 
 	if (kind_ambiguous)
 	{
-		parse_debug_warning(debug, src, ptr,
+		ofc_parse_debug_warning(debug, src, ptr,
 			"Kind is ambiguous, ignoring exponent kind");
 	}
 
-	literal->type = PARSE_LITERAL_NUMBER;
+	literal->type = OFC_PARSE_LITERAL_NUMBER;
 	literal->kind = k;
 	literal->number = str_ref(ptr, i);
 	return i;
 }
 
-unsigned parse_literal_integer(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_literal_t* literal)
+unsigned ofc_parse_literal_integer(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_literal_t* literal)
 {
 	(void)src;
 	(void)debug;
@@ -548,52 +548,52 @@ unsigned parse_literal_integer(
 	unsigned i;
 	for (i = 1; isdigit(ptr[i]); i++);
 
-	literal->type = PARSE_LITERAL_NUMBER;
+	literal->type = OFC_PARSE_LITERAL_NUMBER;
 	literal->kind = 0;
 	literal->number = str_ref(ptr, i);
 	return i;
 }
 
-static unsigned parse_literal__complex(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_literal_t* literal)
+static unsigned ofc_parse_literal__complex(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_literal_t* literal)
 {
-	unsigned dpos = parse_debug_position(debug);
+	unsigned dpos = ofc_parse_debug_position(debug);
 
 	unsigned i = 0;
 	if (ptr[i++] != '(')
 		return 0;
 
-	parse_literal_t real;
-	unsigned len = parse_literal_number(
+	ofc_parse_literal_t real;
+	unsigned len = ofc_parse_literal_number(
 		src, &ptr[i], debug, &real);
 	if (len == 0) return 0;
 	i += len;
 
 	if (ptr[i++] != ',')
 	{
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 
-	parse_literal_t imaginary;
-	len = parse_literal_number(
+	ofc_parse_literal_t imaginary;
+	len = ofc_parse_literal_number(
 		src,  &ptr[i], debug, &imaginary);
 	if (len == 0)
 	{
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	i += len;
 
 	if (ptr[i++] != ')')
 	{
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 
-	literal->type = PARSE_LITERAL_COMPLEX;
+	literal->type = OFC_PARSE_LITERAL_COMPLEX;
 	literal->complex.real	  = real.number;
 	literal->complex.imaginary = imaginary.number;
 
@@ -602,24 +602,24 @@ static unsigned parse_literal__complex(
 
 
 
-unsigned parse_literal(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_literal_t* literal)
+unsigned ofc_parse_literal(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_literal_t* literal)
 {
-	parse_literal_t l;
+	ofc_parse_literal_t l;
 	l.kind = 0;
 
 	/* Order is important here. */
 	unsigned len = 0;
-	if (len == 0) len = parse_literal__hollerith(src, ptr, debug, &l);
-	if (len == 0) len = parse_literal__complex(src, ptr, debug, &l);
-	if (len == 0) len = parse_literal__binary(src, ptr, debug, &l);
-	if (len == 0) len = parse_literal__octal(src, ptr, debug, &l);
-	if (len == 0) len = parse_literal__hex(src, ptr, debug, &l);
-	if (len == 0) len = parse_literal__character(src, ptr, debug, &l);
-	if (len == 0) len = parse_literal__logical(src, ptr, debug, &l);
-	if (len == 0) len = parse_literal_number(src, ptr, debug, &l);
+	if (len == 0) len = ofc_parse_literal__hollerith(src, ptr, debug, &l);
+	if (len == 0) len = ofc_parse_literal__complex(src, ptr, debug, &l);
+	if (len == 0) len = ofc_parse_literal__binary(src, ptr, debug, &l);
+	if (len == 0) len = ofc_parse_literal__octal(src, ptr, debug, &l);
+	if (len == 0) len = ofc_parse_literal__hex(src, ptr, debug, &l);
+	if (len == 0) len = ofc_parse_literal__character(src, ptr, debug, &l);
+	if (len == 0) len = ofc_parse_literal__logical(src, ptr, debug, &l);
+	if (len == 0) len = ofc_parse_literal_number(src, ptr, debug, &l);
 
 	if (len == 0)
 		return 0;
@@ -628,33 +628,33 @@ unsigned parse_literal(
 	return len;
 }
 
-void parse_literal_cleanup(
-	parse_literal_t literal)
+void ofc_parse_literal_cleanup(
+	ofc_parse_literal_t literal)
 {
 	switch (literal.type)
 	{
-		case PARSE_LITERAL_CHARACTER:
-		case PARSE_LITERAL_HOLLERITH:
-			string_delete(literal.string);
+		case OFC_PARSE_LITERAL_CHARACTER:
+		case OFC_PARSE_LITERAL_HOLLERITH:
+			ofc_string_delete(literal.string);
 			break;
 		default:
 			break;
 	}
 }
 
-bool parse_literal_clone(
-	parse_literal_t* dst, const parse_literal_t* src)
+bool ofc_parse_literal_clone(
+	ofc_parse_literal_t* dst, const ofc_parse_literal_t* src)
 {
 	if (!dst || !src)
 		return false;
 
-	parse_literal_t clone = *src;
+	ofc_parse_literal_t clone = *src;
 	switch (src->type)
 	{
-		case PARSE_LITERAL_CHARACTER:
-		case PARSE_LITERAL_HOLLERITH:
-			clone.string = string_copy(src->string);
-			if (string_empty(clone.string))
+		case OFC_PARSE_LITERAL_CHARACTER:
+		case OFC_PARSE_LITERAL_HOLLERITH:
+			clone.string = ofc_string_copy(src->string);
+			if (ofc_string_empty(clone.string))
 				return false;
 			break;
 		default:
@@ -666,22 +666,22 @@ bool parse_literal_clone(
 }
 
 
-unsigned parse_unsigned(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+unsigned ofc_parse_unsigned(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* value)
 {
-	unsigned dpos = parse_debug_position(debug);
+	unsigned dpos = ofc_parse_debug_position(debug);
 
 	uint64_t u;
-	unsigned len = parse_literal__base(
+	unsigned len = ofc_parse_literal__base(
 		src, ptr, debug, 10, false, &u);
 	if (len == 0) return 0;
 
 	unsigned v = (unsigned)u;
 	if ((uint64_t)v != u)
 	{
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 
@@ -690,47 +690,47 @@ unsigned parse_unsigned(
 }
 
 
-bool parse_literal_print(
-	colstr_t* cs, const parse_literal_t literal)
+bool ofc_parse_literal_print(
+	ofc_colstr_t* cs, const ofc_parse_literal_t literal)
 {
 	switch (literal.type)
 	{
-		case PARSE_LITERAL_NUMBER:
-			return str_ref_print(
+		case OFC_PARSE_LITERAL_NUMBER:
+			return ofc_str_ref_print(
 				cs, literal.number);
-		case PARSE_LITERAL_BINARY:
-			return (colstr_atomic_writef(cs, "B\"")
-				&& str_ref_print(cs, literal.number)
-				&& colstr_atomic_writef(cs, "\""));
-		case PARSE_LITERAL_OCTAL:
-			return (colstr_atomic_writef(cs, "O\"")
-				&& str_ref_print(cs, literal.number)
-				&& colstr_atomic_writef(cs, "\""));
-		case PARSE_LITERAL_HEX:
-			return (colstr_atomic_writef(cs, "Z\"")
-				&& str_ref_print(cs, literal.number)
-				&& colstr_atomic_writef(cs, "\""));
-		case PARSE_LITERAL_HOLLERITH:
-			return (colstr_atomic_writef(cs, "%uH%s",
-				string_length(literal.string),
-				string_strz(literal.string)));
-		case PARSE_LITERAL_CHARACTER:
-			if (!colstr_writef(cs, "\""))
+		case OFC_PARSE_LITERAL_BINARY:
+			return (ofc_colstr_atomic_writef(cs, "B\"")
+				&& ofc_str_ref_print(cs, literal.number)
+				&& ofc_colstr_atomic_writef(cs, "\""));
+		case OFC_PARSE_LITERAL_OCTAL:
+			return (ofc_colstr_atomic_writef(cs, "O\"")
+				&& ofc_str_ref_print(cs, literal.number)
+				&& ofc_colstr_atomic_writef(cs, "\""));
+		case OFC_PARSE_LITERAL_HEX:
+			return (ofc_colstr_atomic_writef(cs, "Z\"")
+				&& ofc_str_ref_print(cs, literal.number)
+				&& ofc_colstr_atomic_writef(cs, "\""));
+		case OFC_PARSE_LITERAL_HOLLERITH:
+			return (ofc_colstr_atomic_writef(cs, "%uH%s",
+				ofc_string_length(literal.string),
+				ofc_string_strz(literal.string)));
+		case OFC_PARSE_LITERAL_CHARACTER:
+			if (!ofc_colstr_writef(cs, "\""))
 				return false;
-			if (!string_empty(literal.string)
-				&& !colstr_write_escaped(cs,
-					string_strz(literal.string),
-					string_length(literal.string)))
+			if (!ofc_string_empty(literal.string)
+				&& !ofc_colstr_write_escaped(cs,
+					ofc_string_strz(literal.string),
+					ofc_string_length(literal.string)))
 				return false;
-			return colstr_writef(cs, "\"");
-		case PARSE_LITERAL_COMPLEX:
-			return colstr_atomic_writef(cs, "(%.*s, %.*s)",
+			return ofc_colstr_writef(cs, "\"");
+		case OFC_PARSE_LITERAL_COMPLEX:
+			return ofc_colstr_atomic_writef(cs, "(%.*s, %.*s)",
 				literal.complex.real.size,
 				literal.complex.real.base,
 				literal.complex.imaginary.size,
 				literal.complex.imaginary.base);
-		case PARSE_LITERAL_LOGICAL:
-			return colstr_atomic_writef(cs, ".%s.",
+		case OFC_PARSE_LITERAL_LOGICAL:
+			return ofc_colstr_atomic_writef(cs, ".%s.",
 				(literal.logical
 					? "TRUE" : "FALSE"));
 		default:

@@ -3,12 +3,12 @@
 #include <stdio.h>
 
 
-bool str_ref_empty(const str_ref_t ref)
+bool ofc_str_ref_empty(const ofc_str_ref_t ref)
 {
 	return (ref.size == 0);
 }
 
-bool str_ref_equal(const str_ref_t a, const str_ref_t b)
+bool ofc_str_ref_equal(const ofc_str_ref_t a, const ofc_str_ref_t b)
 {
 	if (a.size != b.size)
 		return false;
@@ -19,7 +19,7 @@ bool str_ref_equal(const str_ref_t a, const str_ref_t b)
 	return (strncmp(a.base, b.base, a.size) == 0);
 }
 
-bool str_ref_equal_ci(const str_ref_t a, const str_ref_t b)
+bool ofc_str_ref_equal_ci(const ofc_str_ref_t a, const ofc_str_ref_t b)
 {
 	if (a.size != b.size)
 		return false;
@@ -30,8 +30,8 @@ bool str_ref_equal_ci(const str_ref_t a, const str_ref_t b)
 	return (strncasecmp(a.base, b.base, a.size) == 0);
 }
 
-bool str_ref_print(colstr_t* cs, const str_ref_t str_ref)
+bool ofc_str_ref_print(ofc_colstr_t* cs, const ofc_str_ref_t str_ref)
 {
-	return colstr_atomic_writef(cs, "%.*s",
+	return ofc_colstr_atomic_writef(cs, "%.*s",
 		str_ref.size, str_ref.base);
 }

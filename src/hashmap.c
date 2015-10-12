@@ -2,26 +2,26 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct hashmap__entry_s hashmap__entry_t;
+typedef struct ofc_hashmap__entry_s ofc_hashmap__entry_t;
 
-struct hashmap__entry_s
+struct ofc_hashmap__entry_s
 {
 	void             *item;
-	hashmap__entry_t *next;
+	ofc_hashmap__entry_t *next;
 };
 
-struct hashmap_s
+struct ofc_hashmap_s
 {
-	hashmap_hash_f        hash;
-	hashmap_key_compare_f key_compare;
-	hashmap_item_key_f    item_key;
-	hashmap_item_delete_f item_delete;
+	ofc_hashmap_hash_f        hash;
+	ofc_hashmap_key_compare_f key_compare;
+	ofc_hashmap_item_key_f    item_key;
+	ofc_hashmap_item_delete_f item_delete;
 
-	hashmap__entry_t* base[256];
+	ofc_hashmap__entry_t* base[256];
 };
 
 
-static uint8_t hashmap__hash(const char* key)
+static uint8_t ofc_hashmap__hash(const char* key)
 {
 	uint8_t h = 0;
 	unsigned i;
@@ -30,31 +30,31 @@ static uint8_t hashmap__hash(const char* key)
 	return h;
 }
 
-static bool hashmap__key_compare(const char* a, const char* b)
+static bool ofc_hashmap__key_compare(const char* a, const char* b)
 {
 	return (strcmp(a, b) == 0);
 }
 
-static const char* hashmap__item_key(const char* item)
+static const char* ofc_hashmap__item_key(const char* item)
 {
 	return item;
 }
 
 
-hashmap_t* hashmap_create(
-	hashmap_hash_f        hash,
-	hashmap_key_compare_f key_compare,
-	hashmap_item_key_f    item_key,
-	hashmap_item_delete_f item_delete)
+ofc_hashmap_t* ofc_hashmap_create(
+	ofc_hashmap_hash_f        hash,
+	ofc_hashmap_key_compare_f key_compare,
+	ofc_hashmap_item_key_f    item_key,
+	ofc_hashmap_item_delete_f item_delete)
 {
-	hashmap_t* map
-		= (hashmap_t*)malloc(
-			sizeof(hashmap_t));
+	ofc_hashmap_t* map
+		= (ofc_hashmap_t*)malloc(
+			sizeof(ofc_hashmap_t));
 	if (!map) return NULL;
 
-	map->hash        = (hash ? hash : (void*)hashmap__hash);
-	map->key_compare = (key_compare ? key_compare : (void*)hashmap__key_compare);
-	map->item_key    = (item_key ? item_key : (void*)hashmap__item_key);
+	map->hash        = (hash ? hash : (void*)ofc_hashmap__hash);
+	map->key_compare = (key_compare ? key_compare : (void*)ofc_hashmap__key_compare);
+	map->item_key    = (item_key ? item_key : (void*)ofc_hashmap__item_key);
 	map->item_delete = item_delete;
 
 	unsigned i;
@@ -64,14 +64,14 @@ hashmap_t* hashmap_create(
 	return map;
 }
 
-static void hashmap__entry_delete(
-	hashmap__entry_t* entry,
-	hashmap_item_delete_f item_delete)
+static void ofc_hashmap__entry_delete(
+	ofc_hashmap__entry_t* entry,
+	ofc_hashmap_item_delete_f item_delete)
 {
 	if (!entry)
 		return;
 
-	hashmap__entry_delete(
+	ofc_hashmap__entry_delete(
 		entry->next, item_delete);
 
 	if (item_delete)
@@ -79,21 +79,21 @@ static void hashmap__entry_delete(
 	free(entry);
 }
 
-void hashmap_delete(hashmap_t* map)
+void ofc_hashmap_delete(ofc_hashmap_t* map)
 {
 	if (!map)
 		return;
 
 	unsigned i;
 	for (i = 0; i < 256; i++)
-		hashmap__entry_delete(
+		ofc_hashmap__entry_delete(
 			map->base[i], map->item_delete);
 	free(map);
 }
 
 
 
-bool hashmap_add(hashmap_t* map, void* item)
+bool ofc_hashmap_add(ofc_hashmap_t* map, void* item)
 {
 	if (!map || !item
 		|| !map->item_key
@@ -105,9 +105,9 @@ bool hashmap_add(hashmap_t* map, void* item)
 
 	uint8_t hash = map->hash(key);
 
-	hashmap__entry_t* entry
-		= (hashmap__entry_t*)malloc(
-			sizeof(hashmap__entry_t));
+	ofc_hashmap__entry_t* entry
+		= (ofc_hashmap__entry_t*)malloc(
+			sizeof(ofc_hashmap__entry_t));
 	if (!entry) return false;
 
 	entry->item = item;
@@ -118,7 +118,7 @@ bool hashmap_add(hashmap_t* map, void* item)
 }
 
 
-void* hashmap_find_modify(hashmap_t* map, const void* key)
+void* ofc_hashmap_find_modify(ofc_hashmap_t* map, const void* key)
 {
 	if (!map || !key
 		|| !map->item_key)
@@ -126,7 +126,7 @@ void* hashmap_find_modify(hashmap_t* map, const void* key)
 
 	uint8_t hash = map->hash(key);
 
-	hashmap__entry_t* entry;
+	ofc_hashmap__entry_t* entry;
 	for (entry = map->base[hash]; entry; entry = entry->next)
 	{
 		const void* ikey = map->item_key(entry->item);
@@ -142,8 +142,8 @@ void* hashmap_find_modify(hashmap_t* map, const void* key)
 	return NULL;
 }
 
-const void* hashmap_find(const hashmap_t* map, const void* key)
+const void* ofc_hashmap_find(const ofc_hashmap_t* map, const void* key)
 {
-	return (const void*)hashmap_find_modify(
-		(hashmap_t*)map, key);
+	return (const void*)ofc_hashmap_find_modify(
+		(ofc_hashmap_t*)map, key);
 }

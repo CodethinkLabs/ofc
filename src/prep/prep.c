@@ -2,14 +2,14 @@
 #include <stdlib.h>
 
 
-sparse_t* prep(file_t* file)
+ofc_sparse_t* ofc_prep(ofc_file_t* file)
 {
-	sparse_t* unformat
-		= prep_unformat(file);
+	ofc_sparse_t* unformat
+		= ofc_prep_unformat(file);
 	if (!unformat) return NULL;
 
-	sparse_t* condense
-		= prep_condense(unformat);
-	sparse_delete(unformat);
+	ofc_sparse_t* condense
+		= ofc_prep_condense(unformat);
+	ofc_sparse_delete(unformat);
 	return condense;
 }

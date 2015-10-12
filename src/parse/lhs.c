@@ -1,16 +1,16 @@
 #include "parse.h"
 
 
-static void parse_lhs__cleanup(
-	parse_lhs_t lhs)
+static void ofc_parse_lhs__cleanup(
+	ofc_parse_lhs_t lhs)
 {
 	switch (lhs.type)
 	{
-		case PARSE_LHS_ARRAY:
-		case PARSE_LHS_STAR_LEN:
-		case PARSE_LHS_MEMBER_STRUCTURE:
-		case PARSE_LHS_MEMBER_TYPE:
-			parse_lhs_delete(lhs.parent);
+		case OFC_PARSE_LHS_ARRAY:
+		case OFC_PARSE_LHS_STAR_LEN:
+		case OFC_PARSE_LHS_MEMBER_STRUCTURE:
+		case OFC_PARSE_LHS_MEMBER_TYPE:
+			ofc_parse_lhs_delete(lhs.parent);
 			break;
 		default:
 			break;
@@ -18,48 +18,48 @@ static void parse_lhs__cleanup(
 
 	switch (lhs.type)
 	{
-		case PARSE_LHS_ARRAY:
-			parse_array_index_delete(lhs.array.index);
+		case OFC_PARSE_LHS_ARRAY:
+			ofc_parse_array_index_delete(lhs.array.index);
 			break;
-		case PARSE_LHS_STAR_LEN:
-			parse_expr_delete(lhs.star_len.len);
+		case OFC_PARSE_LHS_STAR_LEN:
+			ofc_parse_expr_delete(lhs.star_len.len);
 			break;
-		case PARSE_LHS_IMPLICIT_DO:
-			parse_implicit_do_delete(lhs.implicit_do);
+		case OFC_PARSE_LHS_IMPLICIT_DO:
+			ofc_parse_implicit_do_delete(lhs.implicit_do);
 			break;
 		default:
 			break;
 	}
 }
 
-static parse_lhs_t* parse_lhs__alloc(
-	parse_lhs_t lhs)
+static ofc_parse_lhs_t* ofc_parse_lhs__alloc(
+	ofc_parse_lhs_t lhs)
 {
-	parse_lhs_t* alhs
-		= (parse_lhs_t*)malloc(
-			sizeof(parse_lhs_t));
+	ofc_parse_lhs_t* alhs
+		= (ofc_parse_lhs_t*)malloc(
+			sizeof(ofc_parse_lhs_t));
 	if (!alhs) return NULL;
 
 	*alhs = lhs;
 	return alhs;
 }
 
-static bool parse_lhs__clone(
-	parse_lhs_t* dst, const parse_lhs_t* src)
+static bool ofc_parse_lhs__clone(
+	ofc_parse_lhs_t* dst, const ofc_parse_lhs_t* src)
 {
 	if (!src || !dst)
 		return NULL;
 
-	parse_lhs_t clone;
+	ofc_parse_lhs_t clone;
 	clone.type = src->type;
 
 	switch (src->type)
 	{
-		case PARSE_LHS_ARRAY:
-		case PARSE_LHS_STAR_LEN:
-		case PARSE_LHS_MEMBER_STRUCTURE:
-		case PARSE_LHS_MEMBER_TYPE:
-			clone.parent = parse_lhs_copy(
+		case OFC_PARSE_LHS_ARRAY:
+		case OFC_PARSE_LHS_STAR_LEN:
+		case OFC_PARSE_LHS_MEMBER_STRUCTURE:
+		case OFC_PARSE_LHS_MEMBER_TYPE:
+			clone.parent = ofc_parse_lhs_copy(
 				src->parent);
 			if (src->parent && !clone.parent)
 				return false;
@@ -70,40 +70,40 @@ static bool parse_lhs__clone(
 
 	switch (src->type)
 	{
-		case PARSE_LHS_VARIABLE:
+		case OFC_PARSE_LHS_VARIABLE:
 			clone.variable = src->variable;
 			break;
 
-		case PARSE_LHS_ARRAY:
-			clone.array.index = parse_array_index_copy(
+		case OFC_PARSE_LHS_ARRAY:
+			clone.array.index = ofc_parse_array_index_copy(
 				src->array.index);
 			if (src->array.index
 				&& !clone.array.index)
 			{
-				parse_lhs_delete(clone.parent);
+				ofc_parse_lhs_delete(clone.parent);
 				return false;
 			}
 			break;
 
-		case PARSE_LHS_STAR_LEN:
+		case OFC_PARSE_LHS_STAR_LEN:
 			clone.star_len.var = src->star_len.var;
-			clone.star_len.len = parse_expr_copy(
+			clone.star_len.len = ofc_parse_expr_copy(
 				src->star_len.len);
 			if (src->star_len.len
 				&& !clone.star_len.len)
 			{
-				parse_lhs_delete(clone.parent);
+				ofc_parse_lhs_delete(clone.parent);
 				return false;
 			}
 			break;
 
-		case PARSE_LHS_MEMBER_STRUCTURE:
-		case PARSE_LHS_MEMBER_TYPE:
+		case OFC_PARSE_LHS_MEMBER_STRUCTURE:
+		case OFC_PARSE_LHS_MEMBER_TYPE:
 			clone.member.name = src->member.name;
 			break;
 
-		case PARSE_LHS_IMPLICIT_DO:
-			clone.implicit_do = parse_implicit_do_copy(
+		case OFC_PARSE_LHS_IMPLICIT_DO:
+			clone.implicit_do = ofc_parse_implicit_do_copy(
 				src->implicit_do);
 			if (src->implicit_do
 				&& !clone.implicit_do)
@@ -120,17 +120,17 @@ static bool parse_lhs__clone(
 
 
 
-static parse_lhs_t* parse_lhs__array(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_lhs_t* parent, unsigned* len)
+static ofc_parse_lhs_t* ofc_parse_lhs__array(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_lhs_t* parent, unsigned* len)
 {
 	if (!parent)
 		return NULL;
 
 	switch (parent->type)
 	{
-		case PARSE_LHS_IMPLICIT_DO:
+		case OFC_PARSE_LHS_IMPLICIT_DO:
 			return NULL;
 		default:
 			break;
@@ -140,11 +140,11 @@ static parse_lhs_t* parse_lhs__array(
 	if (ptr[i] != '(')
 		return NULL;
 
-	unsigned dpos = parse_debug_position(debug);
+	unsigned dpos = ofc_parse_debug_position(debug);
 
-	parse_lhs_t lhs;
+	ofc_parse_lhs_t lhs;
 	unsigned l = 0;
-	lhs.array.index = parse_array_index(
+	lhs.array.index = ofc_parse_array_index(
 		src, &ptr[i], debug, &l);
 	if (!lhs.array.index)
 	{
@@ -154,15 +154,15 @@ static parse_lhs_t* parse_lhs__array(
 	}
 	i += l;
 
-	lhs.type   = PARSE_LHS_ARRAY;
+	lhs.type   = OFC_PARSE_LHS_ARRAY;
 	lhs.parent = NULL;
 
-	parse_lhs_t* alhs
-		= parse_lhs__alloc(lhs);
+	ofc_parse_lhs_t* alhs
+		= ofc_parse_lhs__alloc(lhs);
 	if (!alhs)
 	{
-		parse_array_index_delete(lhs.array.index);
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_array_index_delete(lhs.array.index);
+		ofc_parse_debug_rewind(debug, dpos);
 		return NULL;
 	}
 
@@ -172,40 +172,40 @@ static parse_lhs_t* parse_lhs__array(
 	return alhs;
 }
 
-static parse_lhs_t* parse_lhs__star_len(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_lhs_t* parent, unsigned* len)
+static ofc_parse_lhs_t* ofc_parse_lhs__star_len(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_lhs_t* parent, unsigned* len)
 {
 	if (!parent)
 		return NULL;
 
 	switch (parent->type)
 	{
-		case PARSE_LHS_IMPLICIT_DO:
+		case OFC_PARSE_LHS_IMPLICIT_DO:
 			return NULL;
 		default:
 			break;
 	}
 
-	parse_lhs_t lhs;
-	lhs.type   = PARSE_LHS_STAR_LEN;
+	ofc_parse_lhs_t lhs;
+	lhs.type   = OFC_PARSE_LHS_STAR_LEN;
 	lhs.parent = NULL;
 
-	unsigned dpos = parse_debug_position(debug);
+	unsigned dpos = ofc_parse_debug_position(debug);
 
-	unsigned i = parse_star_len(
+	unsigned i = ofc_parse_star_len(
 		src, ptr, debug,
 		&lhs.star_len.len,
 		&lhs.star_len.var);
 	if (i == 0) return NULL;
 
-	parse_lhs_t* alhs
-		= parse_lhs__alloc(lhs);
+	ofc_parse_lhs_t* alhs
+		= ofc_parse_lhs__alloc(lhs);
 	if (!alhs)
 	{
-		parse_expr_delete(lhs.star_len.len);
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_expr_delete(lhs.star_len.len);
+		ofc_parse_debug_rewind(debug, dpos);
 		return NULL;
 	}
 
@@ -216,40 +216,40 @@ static parse_lhs_t* parse_lhs__star_len(
 }
 
 
-static parse_lhs_t* parse_lhs__member(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_lhs_t* parent, unsigned* len)
+static ofc_parse_lhs_t* ofc_parse_lhs__member(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_lhs_t* parent, unsigned* len)
 {
 	if (!parent)
 		return NULL;
 
 	switch (parent->type)
 	{
-		case PARSE_LHS_IMPLICIT_DO:
+		case OFC_PARSE_LHS_IMPLICIT_DO:
 			return NULL;
 		default:
 			break;
 	}
 
 
-	parse_lhs_t lhs;
-	lhs.type   = PARSE_LHS_MEMBER_TYPE;
+	ofc_parse_lhs_t lhs;
+	lhs.type   = OFC_PARSE_LHS_MEMBER_TYPE;
 	lhs.parent = NULL;
 
-	unsigned dpos = parse_debug_position(debug);
+	unsigned dpos = ofc_parse_debug_position(debug);
 
 	unsigned i;
 	if (ptr[0] == '.')
 	{
-		i = parse_operator(
+		i = ofc_parse_operator(
 			src, ptr, debug, NULL);
 		if (i > 0)
 		{
-			parse_debug_rewind(debug, dpos);
+			ofc_parse_debug_rewind(debug, dpos);
 			return NULL;
 		}
-		lhs.type = PARSE_LHS_MEMBER_STRUCTURE;
+		lhs.type = OFC_PARSE_LHS_MEMBER_STRUCTURE;
 	}
 	else if (ptr[0] != '%')
 	{
@@ -257,16 +257,16 @@ static parse_lhs_t* parse_lhs__member(
 	}
 	i = 1;
 
-	unsigned l = parse_name(
+	unsigned l = ofc_parse_name(
 		src, &ptr[i], debug, &lhs.member.name);
 	if (l == 0) return NULL;
 	i += l;
 
-	parse_lhs_t* alhs
-		= parse_lhs__alloc(lhs);
+	ofc_parse_lhs_t* alhs
+		= ofc_parse_lhs__alloc(lhs);
 	if (!alhs)
 	{
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_debug_rewind(debug, dpos);
 		return NULL;
 	}
 
@@ -277,42 +277,42 @@ static parse_lhs_t* parse_lhs__member(
 }
 
 
-static parse_lhs_t* parse__lhs(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+static ofc_parse_lhs_t* ofc_parse__lhs(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	bool star_len,
 	unsigned* len)
 {
-	parse_lhs_t lhs;
+	ofc_parse_lhs_t lhs;
 
-	unsigned dpos = parse_debug_position(debug);
+	unsigned dpos = ofc_parse_debug_position(debug);
 
-	lhs.type = PARSE_LHS_VARIABLE;
-	unsigned i = parse_name(
+	lhs.type = OFC_PARSE_LHS_VARIABLE;
+	unsigned i = ofc_parse_name(
 		src, ptr, debug, &lhs.variable);
 	if (i == 0)
 	{
-		lhs.implicit_do = parse_implicit_do(
+		lhs.implicit_do = ofc_parse_implicit_do(
 			src, ptr, debug, &i);
 		if (!lhs.implicit_do) return NULL;
-		lhs.type = PARSE_LHS_IMPLICIT_DO;
+		lhs.type = OFC_PARSE_LHS_IMPLICIT_DO;
 	}
 
-	parse_lhs_t* alhs
-		= parse_lhs__alloc(lhs);
+	ofc_parse_lhs_t* alhs
+		= ofc_parse_lhs__alloc(lhs);
 	if (!alhs)
 	{
-		parse_lhs__cleanup(lhs);
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_lhs__cleanup(lhs);
+		ofc_parse_debug_rewind(debug, dpos);
 		return NULL;
 	}
 
 	while (true)
 	{
 		unsigned l;
-		parse_lhs_t* child_lhs;
+		ofc_parse_lhs_t* child_lhs;
 
-		child_lhs = parse_lhs__array(
+		child_lhs = ofc_parse_lhs__array(
 				src, &ptr[i], debug, alhs, &l);
 		if (child_lhs)
 		{
@@ -323,7 +323,7 @@ static parse_lhs_t* parse__lhs(
 
 		if (star_len)
 		{
-			child_lhs = parse_lhs__star_len(
+			child_lhs = ofc_parse_lhs__star_len(
 					src, &ptr[i], debug, alhs, &l);
 			if (child_lhs)
 			{
@@ -333,7 +333,7 @@ static parse_lhs_t* parse__lhs(
 			}
 		}
 
-		child_lhs = parse_lhs__member(
+		child_lhs = ofc_parse_lhs__member(
 				src, &ptr[i], debug, alhs, &l);
 		if (child_lhs)
 		{
@@ -349,106 +349,106 @@ static parse_lhs_t* parse__lhs(
 	return alhs;
 }
 
-parse_lhs_t* parse_lhs_star_len(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_parse_lhs_t* ofc_parse_lhs_star_len(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len)
 {
-	return parse__lhs(
+	return ofc_parse__lhs(
 		src, ptr, debug, true ,len);
 }
 
-parse_lhs_t* parse_lhs(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_parse_lhs_t* ofc_parse_lhs(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len)
 {
-	return parse__lhs(
+	return ofc_parse__lhs(
 		src, ptr, debug, false ,len);
 }
 
 
-parse_lhs_t* parse_lhs_copy(
-	parse_lhs_t* lhs)
+ofc_parse_lhs_t* ofc_parse_lhs_copy(
+	ofc_parse_lhs_t* lhs)
 {
 	if (!lhs)
 		return NULL;
 
-	parse_lhs_t clone;
-	if (!parse_lhs__clone(&clone, lhs))
+	ofc_parse_lhs_t clone;
+	if (!ofc_parse_lhs__clone(&clone, lhs))
 		return NULL;
 
-	parse_lhs_t* copy
-		= parse_lhs__alloc(clone);
+	ofc_parse_lhs_t* copy
+		= ofc_parse_lhs__alloc(clone);
 	if (!copy)
 	{
-		parse_lhs__cleanup(clone);
+		ofc_parse_lhs__cleanup(clone);
 		return NULL;
 	}
 
 	return copy;
 }
 
-void parse_lhs_delete(
-	parse_lhs_t* lhs)
+void ofc_parse_lhs_delete(
+	ofc_parse_lhs_t* lhs)
 {
 	if (!lhs)
 		return;
 
-	parse_lhs__cleanup(*lhs);
+	ofc_parse_lhs__cleanup(*lhs);
 	free(lhs);
 }
 
-bool parse_lhs_print(
-	colstr_t* cs, const parse_lhs_t* lhs,
+bool ofc_parse_lhs_print(
+	ofc_colstr_t* cs, const ofc_parse_lhs_t* lhs,
 	bool is_decl)
 {
 	switch (lhs->type)
 	{
-		case PARSE_LHS_VARIABLE:
-			return str_ref_print(cs, lhs->variable);
-		case PARSE_LHS_ARRAY:
-			if (!parse_lhs_print(
+		case OFC_PARSE_LHS_VARIABLE:
+			return ofc_str_ref_print(cs, lhs->variable);
+		case OFC_PARSE_LHS_ARRAY:
+			if (!ofc_parse_lhs_print(
 				cs, lhs->parent, is_decl))
 				return false;
 			if (lhs->array.index)
-				return parse_array_index_print(
+				return ofc_parse_array_index_print(
 					cs, lhs->array.index, is_decl);
-			return colstr_atomic_writef(cs, "()");
-		case PARSE_LHS_STAR_LEN:
-			if (!parse_lhs_print(
+			return ofc_colstr_atomic_writef(cs, "()");
+		case OFC_PARSE_LHS_STAR_LEN:
+			if (!ofc_parse_lhs_print(
 				cs, lhs->parent, is_decl)
-				|| !colstr_atomic_writef(cs, "*"))
+				|| !ofc_colstr_atomic_writef(cs, "*"))
 				return false;
 			if (lhs->star_len.var)
 			{
-				return colstr_atomic_writef(cs, "(*)");
+				return ofc_colstr_atomic_writef(cs, "(*)");
 			}
 			else if (lhs->star_len.len)
 			{
 				bool bracketed = (lhs->star_len.len->type
-					!= PARSE_EXPR_CONSTANT);
+					!= OFC_PARSE_EXPR_CONSTANT);
 
-				if (bracketed && !colstr_atomic_writef(cs, "("))
+				if (bracketed && !ofc_colstr_atomic_writef(cs, "("))
 					return false;
 
-				if (!parse_expr_print(
+				if (!ofc_parse_expr_print(
 					cs, lhs->star_len.len))
 					return false;
 
-				return (!bracketed || colstr_atomic_writef(cs, "("));
+				return (!bracketed || ofc_colstr_atomic_writef(cs, "("));
 			}
 			break;
-		case PARSE_LHS_MEMBER_TYPE:
-			return (parse_lhs_print(cs, lhs->parent, is_decl)
-				&& colstr_atomic_writef(cs, "%%")
-				&& str_ref_print(cs, lhs->member.name));
-		case PARSE_LHS_MEMBER_STRUCTURE:
-			return (parse_lhs_print(cs, lhs->parent, is_decl)
-				&& colstr_atomic_writef(cs, ".")
-				&& str_ref_print(cs, lhs->member.name));
-		case PARSE_LHS_IMPLICIT_DO:
-			return parse_implicit_do_print(
+		case OFC_PARSE_LHS_MEMBER_TYPE:
+			return (ofc_parse_lhs_print(cs, lhs->parent, is_decl)
+				&& ofc_colstr_atomic_writef(cs, "%%")
+				&& ofc_str_ref_print(cs, lhs->member.name));
+		case OFC_PARSE_LHS_MEMBER_STRUCTURE:
+			return (ofc_parse_lhs_print(cs, lhs->parent, is_decl)
+				&& ofc_colstr_atomic_writef(cs, ".")
+				&& ofc_str_ref_print(cs, lhs->member.name));
+		case OFC_PARSE_LHS_IMPLICIT_DO:
+			return ofc_parse_implicit_do_print(
 				cs, lhs->implicit_do);
 		default:
 			break;
@@ -457,24 +457,24 @@ bool parse_lhs_print(
 	return false;
 }
 
-static bool parse_lhs_print__decl(
-	colstr_t* cs, const parse_lhs_t* lhs)
+static bool ofc_parse_lhs_print__decl(
+	ofc_colstr_t* cs, const ofc_parse_lhs_t* lhs)
 {
-	return parse_lhs_print(cs, lhs, true);
+	return ofc_parse_lhs_print(cs, lhs, true);
 }
 
-static bool parse_lhs_print__not_decl(
-	colstr_t* cs, const parse_lhs_t* lhs)
+static bool ofc_parse_lhs_print__not_decl(
+	ofc_colstr_t* cs, const ofc_parse_lhs_t* lhs)
 {
-	return parse_lhs_print(cs, lhs, false);
+	return ofc_parse_lhs_print(cs, lhs, false);
 }
 
 
-bool parse_lhs_base_name(
-	const parse_lhs_t lhs,
-	str_ref_t* name)
+bool ofc_parse_lhs_base_name(
+	const ofc_parse_lhs_t lhs,
+	ofc_str_ref_t* name)
 {
-	if (lhs.type == PARSE_LHS_VARIABLE)
+	if (lhs.type == OFC_PARSE_LHS_VARIABLE)
 	{
 		if (name) *name = lhs.variable;
 		return true;
@@ -483,30 +483,30 @@ bool parse_lhs_base_name(
 	if (!lhs.parent)
 		return false;
 
-	return parse_lhs_base_name(
+	return ofc_parse_lhs_base_name(
 		*lhs.parent, name);
 }
 
 
 
-parse_lhs_list_t* parse_lhs_list(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_parse_lhs_list_t* ofc_parse_lhs_list(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len)
 {
-	parse_lhs_list_t* list
-		= (parse_lhs_list_t*)malloc(
-			sizeof(parse_lhs_list_t));
+	ofc_parse_lhs_list_t* list
+		= (ofc_parse_lhs_list_t*)malloc(
+			sizeof(ofc_parse_lhs_list_t));
 	if (!list) return NULL;
 
 	list->count = 0;
 	list->lhs = NULL;
 
-	unsigned i = parse_list(
+	unsigned i = ofc_parse_list(
 		src, ptr, debug, ',',
 		&list->count, (void***)&list->lhs,
-		(void*)parse_lhs,
-		(void*)parse_lhs_delete);
+		(void*)ofc_parse_lhs,
+		(void*)ofc_parse_lhs_delete);
 	if (i == 0)
 	{
 		free(list);
@@ -517,9 +517,9 @@ parse_lhs_list_t* parse_lhs_list(
 	return list;
 }
 
-parse_lhs_list_t* parse_lhs_list_bracketed(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_parse_lhs_list_t* ofc_parse_lhs_list_bracketed(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len)
 {
 	unsigned i = 0;
@@ -527,18 +527,18 @@ parse_lhs_list_t* parse_lhs_list_bracketed(
 	if (ptr[i++] != '(')
 		return NULL;
 
-	unsigned dpos = parse_debug_position(debug);
+	unsigned dpos = ofc_parse_debug_position(debug);
 
 	unsigned l;
-	parse_lhs_list_t* list
-		= parse_lhs_list(src, &ptr[i], debug, &l);
+	ofc_parse_lhs_list_t* list
+		= ofc_parse_lhs_list(src, &ptr[i], debug, &l);
 	if (!list) return NULL;
 	i += l;
 
 	if (ptr[i++] != ')')
 	{
-		parse_lhs_list_delete(list);
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_lhs_list_delete(list);
+		ofc_parse_debug_rewind(debug, dpos);
 		return NULL;
 	}
 
@@ -546,34 +546,34 @@ parse_lhs_list_t* parse_lhs_list_bracketed(
 	return list;
 }
 
-void parse_lhs_list_delete(
-	parse_lhs_list_t* list)
+void ofc_parse_lhs_list_delete(
+	ofc_parse_lhs_list_t* list)
 {
 	if (!list)
 		return;
 
-	parse_list_delete(
+	ofc_parse_list_delete(
 		list->count, (void**)list->lhs,
-		(void*)parse_lhs_delete);
+		(void*)ofc_parse_lhs_delete);
 	free(list);
 }
 
-bool parse_lhs_list_print(
-	colstr_t* cs, const parse_lhs_list_t* list,
+bool ofc_parse_lhs_list_print(
+	ofc_colstr_t* cs, const ofc_parse_lhs_list_t* list,
 	bool is_decl)
 {
-	return parse_list_print(cs,
+	return ofc_parse_list_print(cs,
 		list->count, (const void**)list->lhs,
 		(void*)(is_decl
-			? parse_lhs_print__decl
-			: parse_lhs_print__not_decl));
+			? ofc_parse_lhs_print__decl
+			: ofc_parse_lhs_print__not_decl));
 }
 
-bool parse_lhs_list_bracketed_print(
-	colstr_t* cs, const parse_lhs_list_t* list,
+bool ofc_parse_lhs_list_bracketed_print(
+	ofc_colstr_t* cs, const ofc_parse_lhs_list_t* list,
 	bool is_decl)
 {
-	return (colstr_atomic_writef(cs, "(")
-		&& parse_lhs_list_print(cs, list, is_decl)
-		&& colstr_atomic_writef(cs, ")"));
+	return (ofc_colstr_atomic_writef(cs, "(")
+		&& ofc_parse_lhs_list_print(cs, list, is_decl)
+		&& ofc_colstr_atomic_writef(cs, ")"));
 }

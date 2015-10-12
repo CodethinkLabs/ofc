@@ -1,7 +1,7 @@
 #include "parse.h"
 #include <string.h>
 
-static const char* parse_operator__name[] =
+static const char* ofc_parse_operator__name[] =
 {
 		"**",
 		"*",
@@ -23,132 +23,132 @@ static const char* parse_operator__name[] =
 };
 
 
-unsigned parse_operator(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_operator_e* operator)
+unsigned ofc_parse_operator(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_operator_e* operator)
 {
-	parse_operator_e op;
+	ofc_parse_operator_e op;
 	unsigned size = 1;
 	switch (ptr[0])
 	{
 		case '*':
 			if (ptr[1] == '*')
 			{
-				op = PARSE_OPERATOR_POWER;
+				op = OFC_PARSE_OPERATOR_POWER;
 				size = 2;
 			}
 			else
 			{
-				op = PARSE_OPERATOR_MULTIPLY;
+				op = OFC_PARSE_OPERATOR_MULTIPLY;
 			}
 			break;
 
 		case '/':
 			if (ptr[1] == '/')
 			{
-				op = PARSE_OPERATOR_CONCAT;
+				op = OFC_PARSE_OPERATOR_CONCAT;
 				size = 2;
 			}
 			else if (ptr[1] == '=')
 			{
-				op = PARSE_OPERATOR_NE;
+				op = OFC_PARSE_OPERATOR_NE;
 				size = 2;
 			}
 			else
 			{
 				/* Divide counts as a mult op. */
-				op = PARSE_OPERATOR_DIVIDE;
+				op = OFC_PARSE_OPERATOR_DIVIDE;
 			}
 			break;
 
 		case '+':
-			op = PARSE_OPERATOR_ADD;
+			op = OFC_PARSE_OPERATOR_ADD;
 			break;
 
 		case '-':
-			op = PARSE_OPERATOR_SUBTRACT;
+			op = OFC_PARSE_OPERATOR_SUBTRACT;
 			break;
 
 		case '=':
 			if (ptr[1] != '=')
 				return 0;
-			op = PARSE_OPERATOR_EQ;
+			op = OFC_PARSE_OPERATOR_EQ;
 			size = 2;
 			break;
 
 		case '>':
-			op = PARSE_OPERATOR_GT;
+			op = OFC_PARSE_OPERATOR_GT;
 			if (ptr[1] == '=')
 			{
 				size = 2;
-				op = PARSE_OPERATOR_GE;
+				op = OFC_PARSE_OPERATOR_GE;
 			}
 			break;
 
 		case '<':
-			op = PARSE_OPERATOR_LT;
+			op = OFC_PARSE_OPERATOR_LT;
 			if (ptr[1] == '=')
 			{
 				size = 2;
-				op = PARSE_OPERATOR_LE;
+				op = OFC_PARSE_OPERATOR_LE;
 			}
 			break;
 
 		case '.':
 			if (strncasecmp(ptr, ".EQ.", 4) == 0)
 			{
-				op = PARSE_OPERATOR_EQ;
+				op = OFC_PARSE_OPERATOR_EQ;
 				size = 4;
 			}
 			else if (strncasecmp(ptr, ".NE.", 4) == 0)
 			{
-				op = PARSE_OPERATOR_NE;
+				op = OFC_PARSE_OPERATOR_NE;
 				size = 4;
 			}
 			else if (strncasecmp(ptr, ".LT.", 4) == 0)
 			{
-				op = PARSE_OPERATOR_LT;
+				op = OFC_PARSE_OPERATOR_LT;
 				size = 4;
 			}
 			else if (strncasecmp(ptr, ".LE.", 4) == 0)
 			{
-				op = PARSE_OPERATOR_LE;
+				op = OFC_PARSE_OPERATOR_LE;
 				size = 4;
 			}
 			else if (strncasecmp(ptr, ".GT.", 4) == 0)
 			{
-				op = PARSE_OPERATOR_GT;
+				op = OFC_PARSE_OPERATOR_GT;
 				size = 4;
 			}
 			else if (strncasecmp(ptr, ".GE.", 4) == 0)
 			{
-				op = PARSE_OPERATOR_GE;
+				op = OFC_PARSE_OPERATOR_GE;
 				size = 4;
 			}
 			else if (strncasecmp(ptr, ".NOT.", 5) == 0)
 			{
-				op = PARSE_OPERATOR_NOT;
+				op = OFC_PARSE_OPERATOR_NOT;
 				size = 5;
 			}
 			else if (strncasecmp(ptr, ".AND.", 5) == 0)
 			{
-				op = PARSE_OPERATOR_AND;
+				op = OFC_PARSE_OPERATOR_AND;
 				size = 5;
 			}
 			else if (strncasecmp(ptr, ".OR.", 4) == 0)
 			{
-				op = PARSE_OPERATOR_OR;
+				op = OFC_PARSE_OPERATOR_OR;
 				size = 4;
 			}
 			else if (strncasecmp(ptr, ".EQV.", 5) == 0)
 			{
-				op = PARSE_OPERATOR_EQV;
+				op = OFC_PARSE_OPERATOR_EQV;
 				size = 5;
 			}
 			else if (strncasecmp(ptr, ".NEQV.", 6) == 0)
 			{
-				op = PARSE_OPERATOR_NEQV;
+				op = OFC_PARSE_OPERATOR_NEQV;
 				size = 6;
 			}
 			else
@@ -162,10 +162,10 @@ unsigned parse_operator(
 			return 0;
 	}
 
-	if ((size > 1) && !sparse_sequential(
+	if ((size > 1) && !ofc_sparse_sequential(
 		src, ptr, size))
 	{
-		parse_debug_warning(debug, src, ptr,
+		ofc_parse_debug_warning(debug, src, ptr,
 			"Operators shouldn't contain whitespace");
 	}
 
@@ -173,14 +173,14 @@ unsigned parse_operator(
 	return size;
 }
 
-bool parse_operator_unary(
-	parse_operator_e operator)
+bool ofc_parse_operator_unary(
+	ofc_parse_operator_e operator)
 {
 	switch (operator)
 	{
-		case PARSE_OPERATOR_ADD:
-		case PARSE_OPERATOR_SUBTRACT:
-		case PARSE_OPERATOR_NOT:
+		case OFC_PARSE_OPERATOR_ADD:
+		case OFC_PARSE_OPERATOR_SUBTRACT:
+		case OFC_PARSE_OPERATOR_NOT:
 			return true;
 		default:
 			break;
@@ -190,27 +190,27 @@ bool parse_operator_unary(
 	return false;
 }
 
-bool parse_operator_binary(
-	parse_operator_e operator)
+bool ofc_parse_operator_binary(
+	ofc_parse_operator_e operator)
 {
 	switch (operator)
 	{
-		case PARSE_OPERATOR_POWER:
-		case PARSE_OPERATOR_MULTIPLY:
-		case PARSE_OPERATOR_DIVIDE:
-		case PARSE_OPERATOR_ADD:
-		case PARSE_OPERATOR_SUBTRACT:
-		case PARSE_OPERATOR_CONCAT:
-		case PARSE_OPERATOR_EQ:
-		case PARSE_OPERATOR_NE:
-		case PARSE_OPERATOR_LT:
-		case PARSE_OPERATOR_LE:
-		case PARSE_OPERATOR_GT:
-		case PARSE_OPERATOR_GE:
-		case PARSE_OPERATOR_AND:
-		case PARSE_OPERATOR_OR:
-		case PARSE_OPERATOR_EQV:
-		case PARSE_OPERATOR_NEQV:
+		case OFC_PARSE_OPERATOR_POWER:
+		case OFC_PARSE_OPERATOR_MULTIPLY:
+		case OFC_PARSE_OPERATOR_DIVIDE:
+		case OFC_PARSE_OPERATOR_ADD:
+		case OFC_PARSE_OPERATOR_SUBTRACT:
+		case OFC_PARSE_OPERATOR_CONCAT:
+		case OFC_PARSE_OPERATOR_EQ:
+		case OFC_PARSE_OPERATOR_NE:
+		case OFC_PARSE_OPERATOR_LT:
+		case OFC_PARSE_OPERATOR_LE:
+		case OFC_PARSE_OPERATOR_GT:
+		case OFC_PARSE_OPERATOR_GE:
+		case OFC_PARSE_OPERATOR_AND:
+		case OFC_PARSE_OPERATOR_OR:
+		case OFC_PARSE_OPERATOR_EQV:
+		case OFC_PARSE_OPERATOR_NEQV:
 			return true;
 		default:
 			break;
@@ -219,36 +219,36 @@ bool parse_operator_binary(
 	return false;
 }
 
-unsigned parse_operator_precedence(
-	parse_operator_e operator)
+unsigned ofc_parse_operator_precedence(
+	ofc_parse_operator_e operator)
 {
 	switch (operator)
 	{
-		case PARSE_OPERATOR_POWER:
+		case OFC_PARSE_OPERATOR_POWER:
 			return 2;
-		case PARSE_OPERATOR_MULTIPLY:
-		case PARSE_OPERATOR_DIVIDE:
+		case OFC_PARSE_OPERATOR_MULTIPLY:
+		case OFC_PARSE_OPERATOR_DIVIDE:
 			return 3;
-		case PARSE_OPERATOR_ADD:
-		case PARSE_OPERATOR_SUBTRACT:
+		case OFC_PARSE_OPERATOR_ADD:
+		case OFC_PARSE_OPERATOR_SUBTRACT:
 			return 4;
-		case PARSE_OPERATOR_CONCAT:
+		case OFC_PARSE_OPERATOR_CONCAT:
 			return 5;
-		case PARSE_OPERATOR_EQ:
-		case PARSE_OPERATOR_NE:
-		case PARSE_OPERATOR_LT:
-		case PARSE_OPERATOR_LE:
-		case PARSE_OPERATOR_GT:
-		case PARSE_OPERATOR_GE:
+		case OFC_PARSE_OPERATOR_EQ:
+		case OFC_PARSE_OPERATOR_NE:
+		case OFC_PARSE_OPERATOR_LT:
+		case OFC_PARSE_OPERATOR_LE:
+		case OFC_PARSE_OPERATOR_GT:
+		case OFC_PARSE_OPERATOR_GE:
 			return 6;
-		case PARSE_OPERATOR_NOT:
+		case OFC_PARSE_OPERATOR_NOT:
 			return 7;
-		case PARSE_OPERATOR_AND:
+		case OFC_PARSE_OPERATOR_AND:
 			return 8;
-		case PARSE_OPERATOR_OR:
+		case OFC_PARSE_OPERATOR_OR:
 			return 9;
-		case PARSE_OPERATOR_EQV:
-		case PARSE_OPERATOR_NEQV:
+		case OFC_PARSE_OPERATOR_EQV:
+		case OFC_PARSE_OPERATOR_NEQV:
 		default:
 			break;
 
@@ -257,11 +257,11 @@ unsigned parse_operator_precedence(
 	return 10;
 }
 
-bool parse_operator_print(
-	colstr_t* cs, const parse_operator_e operator)
+bool ofc_parse_operator_print(
+	ofc_colstr_t* cs, const ofc_parse_operator_e operator)
 {
-	if (operator >= PARSE_OPERATOR_COUNT)
+	if (operator >= OFC_PARSE_OPERATOR_COUNT)
 		return false;
 
-	return colstr_atomic_writef(cs, "%s", parse_operator__name[operator]);
+	return ofc_colstr_atomic_writef(cs, "%s", ofc_parse_operator__name[operator]);
 }

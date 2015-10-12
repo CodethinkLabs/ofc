@@ -152,11 +152,11 @@ int main(int argc, const char* argv[])
 
 	const char* source_file_ext = get_file_ext(path);
 
-	lang_opts_t opts = LANG_OPTS_F77;
+	ofc_lang_opts_t opts = OFC_LANG_OPTS_F77;
 
 	if (source_file_ext
 		&& (strcasecmp(source_file_ext, "F90") == 0))
-		opts = LANG_OPTS_F90;
+		opts = OFC_LANG_OPTS_F90;
 
 	int i;
 	for (i = 1; i < (argc - 1); i++)
@@ -169,13 +169,13 @@ int main(int argc, const char* argv[])
 		switch(name)
 		{
 			case FIXED_FORM:
-				opts.form = LANG_FORM_FIXED;
+				opts.form = OFC_LANG_FORM_FIXED;
 				break;
 			case FREE_FORM:
-				opts.form = LANG_FORM_FREE;
+				opts.form = OFC_LANG_FORM_FREE;
 				break;
 			case TAB_FORM:
-				opts.form = LANG_FORM_TAB;
+				opts.form = OFC_LANG_FORM_TAB;
 				break;
 			case TAB_WIDTH:
 				opts.tab_width = num;
@@ -195,43 +195,43 @@ int main(int argc, const char* argv[])
 		}
 	}
 
-	file_t* file = file_create(path, opts);
+	ofc_file_t* file = ofc_file_create(path, opts);
 	if (!file)
 	{
 		fprintf(stderr, "Error: Failed read source file '%s'\n", path);
 		return EXIT_FAILURE;
 	}
 
-	sparse_t* condense = prep(file);
-	file_delete(file);
+	ofc_sparse_t* condense = ofc_prep(file);
+	ofc_file_delete(file);
 	if (!condense)
 	{
 		fprintf(stderr, "Error: Failed preprocess source file '%s'\n", path);
 		return EXIT_FAILURE;
 	}
 
-	parse_stmt_list_t* program
-		= parse_file(condense);
+	ofc_parse_stmt_list_t* program
+		= ofc_parse_file(condense);
 
 	if (!program)
 	{
 		fprintf(stderr, "Error: Failed to parse program\n");
-		sparse_delete(condense);
+		ofc_sparse_delete(condense);
 		return EXIT_FAILURE;
 	}
 
-	colstr_t* cs = colstr_create(0, 0);
+	ofc_colstr_t* cs = ofc_colstr_create(0, 0);
 
-	if (!parse_file_print(cs, program)
-		|| !colstr_fdprint(cs, STDOUT_FILENO))
+	if (!ofc_parse_file_print(cs, program)
+		|| !ofc_colstr_fdprint(cs, STDOUT_FILENO))
 	{
 		fprintf(stderr, "Error: Failed to reprint program\n");
-		colstr_delete(cs);
+		ofc_colstr_delete(cs);
 		return EXIT_FAILURE;
 	}
 
-	sparse_delete(condense);
-	parse_stmt_list_delete(program);
-	colstr_delete(cs);
+	ofc_sparse_delete(condense);
+	ofc_parse_stmt_list_delete(program);
+	ofc_colstr_delete(cs);
 	return EXIT_SUCCESS;
 }

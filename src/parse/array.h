@@ -1,34 +1,34 @@
-#ifndef __parse_array_h__
-#define __parse_array_h__
+#ifndef __ofc_parse_array_h__
+#define __ofc_parse_array_h__
 
 typedef struct
 {
-	bool          is_slice;
-	parse_expr_t* first;
-	parse_expr_t* last;
-	parse_expr_t* stride;
-} parse_array_range_t;
+	bool              is_slice;
+	ofc_parse_expr_t* first;
+	ofc_parse_expr_t* last;
+	ofc_parse_expr_t* stride;
+} ofc_parse_array_range_t;
 
 typedef struct
 {
 	unsigned              count;
-	parse_array_range_t** range;
-} parse_array_index_t;
+	ofc_parse_array_range_t** range;
+} ofc_parse_array_index_t;
 
 
-parse_array_index_t* parse_array_index(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_parse_array_index_t* ofc_parse_array_index(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len);
 
-parse_array_index_t* parse_array_index_copy(
-	const parse_array_index_t* index);
+ofc_parse_array_index_t* ofc_parse_array_index_copy(
+	const ofc_parse_array_index_t* index);
 
-void parse_array_index_delete(
-	parse_array_index_t* index);
+void ofc_parse_array_index_delete(
+	ofc_parse_array_index_t* index);
 
-bool parse_array_index_print(
-	colstr_t* cs, const parse_array_index_t* index,
+bool ofc_parse_array_index_print(
+	ofc_colstr_t* cs, const ofc_parse_array_index_t* index,
 	bool is_decl);
 
 

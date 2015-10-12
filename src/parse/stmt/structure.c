@@ -1,38 +1,38 @@
 #include "../parse.h"
 
 
-static unsigned parse_stmt__structure(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_keyword_e keyword,
-	parse_stmt_t* stmt)
+static unsigned ofc_parse_stmt__structure(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_keyword_e keyword,
+	ofc_parse_stmt_t* stmt)
 {
-	unsigned dpos = parse_debug_position(debug);
+	unsigned dpos = ofc_parse_debug_position(debug);
 
-	unsigned i = parse_keyword(
+	unsigned i = ofc_parse_keyword(
 		src, ptr, debug, keyword);
 	if (i == 0) return 0;
 
-	stmt->structure.name = STR_REF_EMPTY;
+	stmt->structure.name = OFC_STR_REF_EMPTY;
 
-	if (keyword == PARSE_KEYWORD_STRUCTURE)
+	if (keyword == OFC_PARSE_KEYWORD_STRUCTURE)
 	{
 		if (ptr[i] == '/')
 		{
 			i += 1;
 
-			unsigned len = parse_name(
+			unsigned len = ofc_parse_name(
 				src, &ptr[i], debug, &stmt->structure.name);
 			if (len == 0)
 			{
-				parse_debug_rewind(debug, dpos);
+				ofc_parse_debug_rewind(debug, dpos);
 				return 0;
 			}
 			i += len;
 
 			if (ptr[i++] != '/')
 			{
-				parse_debug_rewind(debug, dpos);
+				ofc_parse_debug_rewind(debug, dpos);
 				return 0;
 			}
 		}
@@ -41,105 +41,105 @@ static unsigned parse_stmt__structure(
 	}
 
 	unsigned len;
-	if (!is_end_statement(&ptr[i], &len))
+	if (!ofc_is_end_statement(&ptr[i], &len))
 	{
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	i += len;
 
-	stmt->structure.block = parse_stmt_list(
+	stmt->structure.block = ofc_parse_stmt_list(
 		src, &ptr[i], debug, &len);
 	if (stmt->structure.block) i += len;
 
-	len = parse_keyword_end(
+	len = ofc_parse_keyword_end(
 		src, &ptr[i], debug, keyword);
 	if (len == 0)
 	{
-		parse_stmt_list_delete(
+		ofc_parse_stmt_list_delete(
 			stmt->structure.block);
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	i += len;
 
-	stmt->type = PARSE_STMT_STRUCTURE;
+	stmt->type = OFC_PARSE_STMT_STRUCTURE;
 	return i;
 }
 
 
-unsigned parse_stmt_structure(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_stmt_t* stmt)
+unsigned ofc_parse_stmt_structure(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_stmt_t* stmt)
 {
-	unsigned i = parse_stmt__structure(
+	unsigned i = ofc_parse_stmt__structure(
 		src, ptr, debug,
-		PARSE_KEYWORD_STRUCTURE, stmt);
+		OFC_PARSE_KEYWORD_STRUCTURE, stmt);
 	if (i == 0) return 0;
 
-	stmt->type = PARSE_STMT_STRUCTURE;
+	stmt->type = OFC_PARSE_STMT_STRUCTURE;
 	return i;
 }
 
-unsigned parse_stmt_union(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_stmt_t* stmt)
+unsigned ofc_parse_stmt_union(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_stmt_t* stmt)
 {
-	unsigned i = parse_stmt__structure(
+	unsigned i = ofc_parse_stmt__structure(
 		src, ptr, debug,
-		PARSE_KEYWORD_UNION, stmt);
+		OFC_PARSE_KEYWORD_UNION, stmt);
 	if (i == 0) return 0;
 
-	stmt->type = PARSE_STMT_UNION;
+	stmt->type = OFC_PARSE_STMT_UNION;
 	return i;
 }
 
-unsigned parse_stmt_map(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_stmt_t* stmt)
+unsigned ofc_parse_stmt_map(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_stmt_t* stmt)
 {
-	unsigned i = parse_stmt__structure(
+	unsigned i = ofc_parse_stmt__structure(
 		src, ptr, debug,
-		PARSE_KEYWORD_MAP, stmt);
+		OFC_PARSE_KEYWORD_MAP, stmt);
 	if (i == 0) return 0;
 
-	stmt->type = PARSE_STMT_MAP;
+	stmt->type = OFC_PARSE_STMT_MAP;
 	return i;
 }
 
-unsigned parse_stmt_record(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_stmt_t* stmt)
+unsigned ofc_parse_stmt_record(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_stmt_t* stmt)
 {
-	unsigned dpos = parse_debug_position(debug);
+	unsigned dpos = ofc_parse_debug_position(debug);
 
-	unsigned i = parse_keyword(
-		src, ptr, debug, PARSE_KEYWORD_RECORD);
+	unsigned i = ofc_parse_keyword(
+		src, ptr, debug, OFC_PARSE_KEYWORD_RECORD);
 	if (i == 0) return 0;
 
 	unsigned l;
-	stmt->record = parse_record_list(
+	stmt->record = ofc_parse_record_list(
 		src, &ptr[i], debug, &l);
 	if (l == 0)
 	{
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	i += l;
 
-	stmt->type = PARSE_STMT_RECORD;
+	stmt->type = OFC_PARSE_STMT_RECORD;
 	return i;
 }
 
 
 
 
-bool parse_stmt_structure_print(
-	colstr_t* cs, const parse_stmt_t* stmt, unsigned indent)
+bool ofc_parse_stmt_structure_print(
+	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt, unsigned indent)
 {
 	if (!stmt)
 		return false;
@@ -147,53 +147,53 @@ bool parse_stmt_structure_print(
 	const char* kwstr;
 	switch (stmt->type)
 	{
-		case PARSE_STMT_STRUCTURE:
+		case OFC_PARSE_STMT_STRUCTURE:
 			kwstr = "STRUCTURE";
 			break;
-		case PARSE_STMT_UNION:
+		case OFC_PARSE_STMT_UNION:
 			kwstr = "UNION";
 			break;
-		case PARSE_STMT_MAP:
+		case OFC_PARSE_STMT_MAP:
 			kwstr = "MAP";
 			break;
 		default:
 			return false;
 	}
 
-	if (!colstr_atomic_writef(cs, "%s", kwstr))
+	if (!ofc_colstr_atomic_writef(cs, "%s", kwstr))
 		return false;
 
-	if (!str_ref_empty(stmt->structure.name))
+	if (!ofc_str_ref_empty(stmt->structure.name))
 	{
-		if (!colstr_atomic_writef(cs, " /")
-			|| !str_ref_print(cs, stmt->structure.name)
-			|| !colstr_atomic_writef(cs, "/"))
+		if (!ofc_colstr_atomic_writef(cs, " /")
+			|| !ofc_str_ref_print(cs, stmt->structure.name)
+			|| !ofc_colstr_atomic_writef(cs, "/"))
 			return false;
 	}
 
-	if (!parse_stmt_list_print(
+	if (!ofc_parse_stmt_list_print(
 		cs, stmt->structure.block, (indent + 1)))
 		return false;
 
-	if (!colstr_newline(cs, NULL))
+	if (!ofc_colstr_newline(cs, NULL))
 		return false;
 
 	unsigned j;
 	for (j = 0; j < indent; j++)
 	{
-		if (!colstr_atomic_writef(cs, "  "))
+		if (!ofc_colstr_atomic_writef(cs, "  "))
 			return false;
 	}
 
-	return colstr_atomic_writef(cs, "END %s", kwstr);
+	return ofc_colstr_atomic_writef(cs, "END %s", kwstr);
 }
 
-bool parse_stmt_record_print(
-	colstr_t* cs, const parse_stmt_t* stmt)
+bool ofc_parse_stmt_record_print(
+	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt)
 {
 	if (!stmt)
 		return false;
 
-	return (colstr_atomic_writef(cs, "RECORD ")
-		&& parse_record_list_print(cs, stmt->record));
+	return (ofc_colstr_atomic_writef(cs, "RECORD ")
+		&& ofc_parse_record_list_print(cs, stmt->record));
 }

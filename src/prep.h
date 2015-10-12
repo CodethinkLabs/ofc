@@ -1,11 +1,11 @@
-#ifndef __prep_h__
-#define __prep_h__
+#ifndef __ofc_prep_h__
+#define __ofc_prep_h__
 
 #include "file.h"
 #include "sparse.h"
 
-sparse_t* prep_unformat(file_t* file);
-sparse_t* prep_condense(sparse_t* unformat);
-sparse_t* prep(file_t* file);
+ofc_sparse_t* ofc_prep_unformat(ofc_file_t* file);
+ofc_sparse_t* ofc_prep_condense(ofc_sparse_t* unformat);
+ofc_sparse_t* ofc_prep(ofc_file_t* file);
 
 #endif

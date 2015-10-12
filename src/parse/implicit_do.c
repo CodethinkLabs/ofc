@@ -1,9 +1,9 @@
 #include "parse.h"
 
 
-parse_implicit_do_t* parse_implicit_do(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_parse_implicit_do_t* ofc_parse_implicit_do(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len)
 {
 	unsigned i = 0;
@@ -11,9 +11,9 @@ parse_implicit_do_t* parse_implicit_do(
 	if (ptr[i++] != '(')
 		return 0;
 
-	parse_implicit_do_t* id
-		= (parse_implicit_do_t*)malloc(
-			sizeof(parse_implicit_do_t));
+	ofc_parse_implicit_do_t* id
+		= (ofc_parse_implicit_do_t*)malloc(
+			sizeof(ofc_parse_implicit_do_t));
 	if (!id) return 0;
 
 	id->dlist = NULL;
@@ -21,10 +21,10 @@ parse_implicit_do_t* parse_implicit_do(
 	id->limit = NULL;
 	id->step = NULL;
 
-	unsigned dpos = parse_debug_position(debug);
+	unsigned dpos = ofc_parse_debug_position(debug);
 
 	unsigned l;
-	id->dlist = parse_lhs(
+	id->dlist = ofc_parse_lhs(
 		src, &ptr[i], debug, &l);
 	if (!id->dlist)
 	{
@@ -35,34 +35,34 @@ parse_implicit_do_t* parse_implicit_do(
 
 	if (ptr[i++] != ',')
 	{
-		parse_implicit_do_delete(id);
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_implicit_do_delete(id);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 
-	id->init = parse_assign_init(
+	id->init = ofc_parse_assign_init(
 		src, &ptr[i], debug, &l);
 	if (!id->init)
 	{
-		parse_implicit_do_delete(id);
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_implicit_do_delete(id);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	i += l;
 
 	if (ptr[i++] != ',')
 	{
-		parse_implicit_do_delete(id);
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_implicit_do_delete(id);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 
-	id->limit = parse_expr(
+	id->limit = ofc_parse_expr(
 		src, &ptr[i], debug, &l);
 	if (!id->limit)
 	{
-		parse_implicit_do_delete(id);
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_implicit_do_delete(id);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	i += l;
@@ -71,12 +71,12 @@ parse_implicit_do_t* parse_implicit_do(
 	{
 		i += 1;
 
-		id->step = parse_expr(
+		id->step = ofc_parse_expr(
 			src, &ptr[i], debug, &l);
 		if (!id->step)
 		{
-			parse_implicit_do_delete(id);
-			parse_debug_rewind(debug, dpos);
+			ofc_parse_implicit_do_delete(id);
+			ofc_parse_debug_rewind(debug, dpos);
 			return 0;
 		}
 		i += l;
@@ -84,8 +84,8 @@ parse_implicit_do_t* parse_implicit_do(
 
 	if (ptr[i++] != ')')
 	{
-		parse_implicit_do_delete(id);
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_implicit_do_delete(id);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 
@@ -93,63 +93,63 @@ parse_implicit_do_t* parse_implicit_do(
 	return id;
 }
 
-parse_implicit_do_t* parse_implicit_do_copy(
-	parse_implicit_do_t* id)
+ofc_parse_implicit_do_t* ofc_parse_implicit_do_copy(
+	ofc_parse_implicit_do_t* id)
 {
 	if (!id)
 		return NULL;
 
-	parse_implicit_do_t* copy
-		= (parse_implicit_do_t*)malloc(
-			sizeof(parse_implicit_do_t));
+	ofc_parse_implicit_do_t* copy
+		= (ofc_parse_implicit_do_t*)malloc(
+			sizeof(ofc_parse_implicit_do_t));
 	if (!copy) return NULL;
 
-	copy->dlist = parse_lhs_copy(id->dlist);
-	copy->init  = parse_assign_copy(id->init);
-	copy->limit = parse_expr_copy(id->limit);
-	copy->step  = parse_expr_copy(id->step);
+	copy->dlist = ofc_parse_lhs_copy(id->dlist);
+	copy->init  = ofc_parse_assign_copy(id->init);
+	copy->limit = ofc_parse_expr_copy(id->limit);
+	copy->step  = ofc_parse_expr_copy(id->step);
 
 	if (!copy->dlist
 		|| !copy->init || !copy->limit
 		|| (id->step && !copy->step))
 	{
-		parse_implicit_do_delete(copy);
+		ofc_parse_implicit_do_delete(copy);
 		return NULL;
 	}
 
 	return copy;
 }
 
-void parse_implicit_do_delete(
-	parse_implicit_do_t* id)
+void ofc_parse_implicit_do_delete(
+	ofc_parse_implicit_do_t* id)
 {
 	if (!id)
 		return;
 
-	parse_lhs_delete(id->dlist);
-	parse_assign_delete(id->init);
-	parse_expr_delete(id->limit);
-	parse_expr_delete(id->step);
+	ofc_parse_lhs_delete(id->dlist);
+	ofc_parse_assign_delete(id->init);
+	ofc_parse_expr_delete(id->limit);
+	ofc_parse_expr_delete(id->step);
 	free(id);
 }
 
-bool parse_implicit_do_print(
-	colstr_t* cs, const parse_implicit_do_t* id)
+bool ofc_parse_implicit_do_print(
+	ofc_colstr_t* cs, const ofc_parse_implicit_do_t* id)
 {
-	if (!colstr_atomic_writef(cs, "(")
-		|| !parse_lhs_print(cs, id->dlist, false)
-		|| !colstr_atomic_writef(cs, ", ")
-		|| !parse_assign_print(cs, id->init)
-		|| !colstr_atomic_writef(cs, ", ")
-		|| !parse_expr_print(cs, id->limit))
+	if (!ofc_colstr_atomic_writef(cs, "(")
+		|| !ofc_parse_lhs_print(cs, id->dlist, false)
+		|| !ofc_colstr_atomic_writef(cs, ", ")
+		|| !ofc_parse_assign_print(cs, id->init)
+		|| !ofc_colstr_atomic_writef(cs, ", ")
+		|| !ofc_parse_expr_print(cs, id->limit))
 		return false;
 
 	if (id->step)
 	{
-		if (!colstr_atomic_writef(cs, ", ")
-			|| !parse_expr_print(cs, id->step))
+		if (!ofc_colstr_atomic_writef(cs, ", ")
+			|| !ofc_parse_expr_print(cs, id->step))
 			return false;
 	}
 
-	return colstr_atomic_writef(cs, ")");
+	return ofc_colstr_atomic_writef(cs, ")");
 }

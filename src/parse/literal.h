@@ -1,5 +1,5 @@
-#ifndef __parse_literal_h__
-#define __parse_literal_h__
+#ifndef __ofc_parse_literal_h__
+#define __ofc_parse_literal_h__
 
 #include <stdint.h>
 #include "../string.h"
@@ -7,71 +7,71 @@
 
 typedef enum
 {
-	PARSE_LITERAL_BINARY,
-	PARSE_LITERAL_OCTAL,
-	PARSE_LITERAL_HEX,
-	PARSE_LITERAL_HOLLERITH,
-	PARSE_LITERAL_CHARACTER,
-	PARSE_LITERAL_NUMBER,
-	PARSE_LITERAL_COMPLEX,
-	PARSE_LITERAL_LOGICAL,
-} parse_literal_e;
+	OFC_PARSE_LITERAL_BINARY,
+	OFC_PARSE_LITERAL_OCTAL,
+	OFC_PARSE_LITERAL_HEX,
+	OFC_PARSE_LITERAL_HOLLERITH,
+	OFC_PARSE_LITERAL_CHARACTER,
+	OFC_PARSE_LITERAL_NUMBER,
+	OFC_PARSE_LITERAL_COMPLEX,
+	OFC_PARSE_LITERAL_LOGICAL,
+} ofc_parse_literal_e;
 
 typedef struct
 {
-	parse_literal_e type;
+	ofc_parse_literal_e type;
 	unsigned        kind;
 
 	union
 	{
-		string_t* string;
+		ofc_string_t* string;
 
-		str_ref_t number;
+		ofc_str_ref_t number;
 
 		struct
 		{
-			str_ref_t real, imaginary;
+			ofc_str_ref_t real, imaginary;
 		} complex;
 
 		bool logical;
 	};
-} parse_literal_t;
+} ofc_parse_literal_t;
 
 
-string_t* parse_hollerith(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_string_t* ofc_parse_hollerith(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len);
-string_t* parse_character(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_string_t* ofc_parse_character(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len);
 
-unsigned parse_literal_number(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_literal_t* literal);
-unsigned parse_literal_integer(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_literal_t* literal);
-unsigned parse_literal(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_literal_t* literal);
+unsigned ofc_parse_literal_number(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_literal_t* literal);
+unsigned ofc_parse_literal_integer(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_literal_t* literal);
+unsigned ofc_parse_literal(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_literal_t* literal);
 
-void parse_literal_cleanup(
-	parse_literal_t literal);
+void ofc_parse_literal_cleanup(
+	ofc_parse_literal_t literal);
 
-bool parse_literal_clone(
-	parse_literal_t* dst, const parse_literal_t* src);
+bool ofc_parse_literal_clone(
+	ofc_parse_literal_t* dst, const ofc_parse_literal_t* src);
 
-bool parse_literal_print(
-	colstr_t* cs, const parse_literal_t literal);
+bool ofc_parse_literal_print(
+	ofc_colstr_t* cs, const ofc_parse_literal_t literal);
 
-unsigned parse_unsigned(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+unsigned ofc_parse_unsigned(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* value);
 
 #endif

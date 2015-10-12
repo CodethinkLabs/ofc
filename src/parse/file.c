@@ -1,37 +1,37 @@
 #include "parse.h"
 
 
-parse_stmt_list_t* parse_file(const sparse_t* src)
+ofc_parse_stmt_list_t* ofc_parse_file(const ofc_sparse_t* src)
 {
-	const char* ptr = sparse_strz(src);
+	const char* ptr = ofc_sparse_strz(src);
 
-	parse_debug_t* debug
-		= parse_debug_create();
+	ofc_parse_debug_t* debug
+		= ofc_parse_debug_create();
 	if (!debug) return NULL;
 
 	unsigned len;
-	parse_stmt_list_t* list
-		= parse_stmt_list(src, ptr, debug, &len);
+	ofc_parse_stmt_list_t* list
+		= ofc_parse_stmt_list(src, ptr, debug, &len);
 	if (!list) return NULL;
 
-	parse_debug_print(debug);
-	parse_debug_delete(debug);
+	ofc_parse_debug_print(debug);
+	ofc_parse_debug_delete(debug);
 
 	if (ptr[len] != '\0')
 	{
-		sparse_error(src, &ptr[len],
+		ofc_sparse_error(src, &ptr[len],
 			"Expected end of input");
-		parse_stmt_list_delete(list);
+		ofc_parse_stmt_list_delete(list);
 		return NULL;
 	}
 
 	return list;
 }
 
-bool parse_file_print(
-	colstr_t* cs,
-	const parse_stmt_list_t* list)
+bool ofc_parse_file_print(
+	ofc_colstr_t* cs,
+	const ofc_parse_stmt_list_t* list)
 {
-	return (parse_stmt_list_print(cs, list, 0)
-		&& colstr_writef(cs, "\n"));
+	return (ofc_parse_stmt_list_print(cs, list, 0)
+		&& ofc_colstr_writef(cs, "\n"));
 }

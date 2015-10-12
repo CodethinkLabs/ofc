@@ -1,44 +1,44 @@
-#ifndef __file_h__
-#define __file_h__
+#ifndef __ofc_file_h__
+#define __ofc_file_h__
 
 #include <stdbool.h>
 #include "lang_opts.h"
 
-typedef struct file_s file_t;
+typedef struct ofc_file_s ofc_file_t;
 
-/* Path must be valid for as long as the file_t* is */
-file_t* file_create(const char* path, lang_opts_t opts);
-file_t* file_create_include(const char* path, lang_opts_t opts, const char* include);
-bool    file_reference(file_t* file);
-void    file_delete(file_t* file);
+/* Path must be valid for as long as the ofc_file_t* is */
+ofc_file_t* ofc_file_create(const char* path, ofc_lang_opts_t opts);
+ofc_file_t* ofc_file_create_include(const char* path, ofc_lang_opts_t opts, const char* include);
+bool        ofc_file_reference(ofc_file_t* file);
+void        ofc_file_delete(ofc_file_t* file);
 
-const char* file_get_path(const file_t* file);
-const char* file_get_include(const file_t* file);
-const char* file_get_strz(const file_t* file);
-lang_opts_t file_get_lang_opts(const file_t* file);
+const char*     ofc_file_get_path(const ofc_file_t* file);
+const char*     ofc_file_get_include(const ofc_file_t* file);
+const char*     ofc_file_get_strz(const ofc_file_t* file);
+ofc_lang_opts_t ofc_file_get_lang_opts(const ofc_file_t* file);
 
-char* file_include_path(
-	const file_t* file, const char* path);
+char* ofc_file_include_path(
+	const ofc_file_t* file, const char* path);
 
-bool file_get_position(
-	const file_t* file, const char* ptr,
+bool ofc_file_get_position(
+	const ofc_file_t* file, const char* ptr,
 	unsigned* row, unsigned* col);
 
 
 #include <stdarg.h>
 
-void file_error(
-	const file_t* file, const char* ptr,
+void ofc_file_error(
+	const ofc_file_t* file, const char* ptr,
 	const char* format, ...);
-void file_warning(
-	const file_t* file, const char* ptr,
+void ofc_file_warning(
+	const ofc_file_t* file, const char* ptr,
 	const char* format, ...);
 
-void file_error_va(
-	const file_t* file, const char* ptr,
+void ofc_file_error_va(
+	const ofc_file_t* file, const char* ptr,
 	const char* format, va_list args);
-void file_warning_va(
-	const file_t* file, const char* ptr,
+void ofc_file_warning_va(
+	const ofc_file_t* file, const char* ptr,
 	const char* format, va_list args);
 
 #endif

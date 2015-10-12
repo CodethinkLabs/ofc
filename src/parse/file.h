@@ -1,12 +1,12 @@
-#ifndef __parse_file_h__
-#define __parse_file_h__
+#ifndef __ofc_parse_file_h__
+#define __ofc_parse_file_h__
 
 #include "parse.h"
 
-parse_stmt_list_t* parse_file(const sparse_t* src);
+ofc_parse_stmt_list_t* ofc_parse_file(const ofc_sparse_t* src);
 
-bool parse_file_print(
-	colstr_t* cs,
-	const parse_stmt_list_t* list);
+bool ofc_parse_file_print(
+	ofc_colstr_t* cs,
+	const ofc_parse_stmt_list_t* list);
 
 #endif

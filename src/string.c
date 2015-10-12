@@ -5,9 +5,11 @@
 #include <stdbool.h>
 #include <stdarg.h>
 
-string_t* string_create(const char* base, unsigned size)
+ofc_string_t* ofc_string_create(const char* base, unsigned size)
 {
-	string_t* string = (string_t*)malloc(sizeof(string_t));
+	ofc_string_t* string
+		= (ofc_string_t*)malloc(
+			sizeof(ofc_string_t));
 	if (!string)
 		return NULL;
 
@@ -29,13 +31,13 @@ string_t* string_create(const char* base, unsigned size)
 	return string;
 }
 
-string_t* string_copy(const string_t* src)
+ofc_string_t* ofc_string_copy(const ofc_string_t* src)
 {
-	return string_create(
+	return ofc_string_create(
 		src->base, src->size);
 }
 
-void string_delete(string_t* string)
+void ofc_string_delete(ofc_string_t* string)
 {
 	if (!string)
 		return;
@@ -45,25 +47,25 @@ void string_delete(string_t* string)
 }
 
 
-bool string_empty(const string_t* string)
+bool ofc_string_empty(const ofc_string_t* string)
 {
 	return (!string->base || (string->size == 0));
 }
 
 
-const char* string_strz(const string_t* string)
+const char* ofc_string_strz(const ofc_string_t* string)
 {
 	if (!string)
 		return NULL;
 	return string->base;
 }
 
-unsigned string_length(const string_t* string)
+unsigned ofc_string_length(const ofc_string_t* string)
 {
 	return (string->base ? string->size : 0);
 }
 
-bool string_equal(const string_t a, const string_t b)
+bool ofc_string_equal(const ofc_string_t a, const ofc_string_t b)
 {
 	if (a.size != b.size)
 		return false;

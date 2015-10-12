@@ -1,25 +1,25 @@
 #include "parse.h"
 
 
-unsigned parse_star_len(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_expr_t** count, bool* is_variable)
+unsigned ofc_parse_star_len(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_expr_t** count, bool* is_variable)
 {
 	unsigned i = 0;
 
 	if (ptr[i++] != '*')
 		return 0;
 
-	unsigned dpos = parse_debug_position(debug);
+	unsigned dpos = ofc_parse_debug_position(debug);
 
 	unsigned l;
-	parse_expr_t* expr;
+	ofc_parse_expr_t* expr;
 	if (ptr[i] == '(')
 	{
 		i += 1;
 
-		expr = parse_expr(
+		expr = ofc_parse_expr(
 			src, &ptr[i], debug, &l);
 		if (!expr)
 		{
@@ -31,14 +31,14 @@ unsigned parse_star_len(
 
 		if (ptr[i++] != ')')
 		{
-			parse_expr_delete(expr);
-			parse_debug_rewind(debug, dpos);
+			ofc_parse_expr_delete(expr);
+			ofc_parse_debug_rewind(debug, dpos);
 			return 0;
 		}
 	}
 	else
 	{
-		expr = parse_expr_integer(
+		expr = ofc_parse_expr_integer(
 			src, &ptr[i], debug, &l);
 		if (!expr) return 0;
 		i += l;

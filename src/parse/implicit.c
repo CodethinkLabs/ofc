@@ -1,9 +1,9 @@
 #include "parse.h"
 
 
-static unsigned parse_implicit__mask(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+static unsigned ofc_parse_implicit__mask(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	uint32_t* mask)
 {
 	if (!isalpha(ptr[0]))
@@ -23,7 +23,7 @@ static unsigned parse_implicit__mask(
 
 		if (end < start)
 		{
-			parse_debug_warning(debug, src, ptr,
+			ofc_parse_debug_warning(debug, src, ptr,
 				"Implicit character rule backwards");
 
 			unsigned swap = start;
@@ -32,7 +32,7 @@ static unsigned parse_implicit__mask(
 
 		if (end == start)
 		{
-			parse_debug_warning(debug, src, ptr,
+			ofc_parse_debug_warning(debug, src, ptr,
 				"Implicit rule has redundant range");
 		}
 	}
@@ -44,23 +44,23 @@ static unsigned parse_implicit__mask(
 	return len;
 }
 
-static unsigned parse_implicit__mask_list(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+static unsigned ofc_parse_implicit__mask_list(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	uint32_t* mask)
 {
 	unsigned i = 0;
 	if (ptr[i++] != '(')
 		return 0;
 
-	unsigned dpos = parse_debug_position(debug);
+	unsigned dpos = ofc_parse_debug_position(debug);
 
 	uint32_t m = 0;
 	bool initial;
 	for (initial = true; initial || (ptr[i] == ','); initial = false)
 	{
 		unsigned j = i + (initial ? 0 : 1);
-		unsigned len = parse_implicit__mask(
+		unsigned len = ofc_parse_implicit__mask(
 			src, &ptr[j], debug, &m);
 		if (len == 0) break;
 		i = j + len;
@@ -68,13 +68,13 @@ static unsigned parse_implicit__mask_list(
 
 	if (ptr[i++] != ')')
 	{
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 
 	if (m == 0)
 	{
-		parse_debug_warning(debug, src, ptr,
+		ofc_parse_debug_warning(debug, src, ptr,
 			"Implicit rule is empty");
 	}
 
@@ -82,36 +82,36 @@ static unsigned parse_implicit__mask_list(
 	return i;
 }
 
-parse_implicit_t* parse_implicit(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_parse_implicit_t* ofc_parse_implicit(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len)
 {
-	parse_implicit_t implicit;
+	ofc_parse_implicit_t implicit;
 
-	unsigned dpos = parse_debug_position(debug);
+	unsigned dpos = ofc_parse_debug_position(debug);
 
 	unsigned i;
-	implicit.type = parse_type(src, ptr, debug, &i);
+	implicit.type = ofc_parse_type(src, ptr, debug, &i);
 	if (!implicit.type) return NULL;
 
-	unsigned l = parse_implicit__mask_list(
+	unsigned l = ofc_parse_implicit__mask_list(
 		src, &ptr[i], debug, &implicit.mask);
 	if (l == 0)
 	{
-		parse_type_delete(implicit.type);
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_type_delete(implicit.type);
+		ofc_parse_debug_rewind(debug, dpos);
 		return NULL;
 	}
 	i += l;
 
-	parse_implicit_t* aimplicit
-		= (parse_implicit_t*)malloc(
-			sizeof(parse_implicit_t));
+	ofc_parse_implicit_t* aimplicit
+		= (ofc_parse_implicit_t*)malloc(
+			sizeof(ofc_parse_implicit_t));
 	if (!aimplicit)
 	{
-		parse_type_delete(implicit.type);
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_type_delete(implicit.type);
+		ofc_parse_debug_rewind(debug, dpos);
 		return NULL;
 	}
 	*aimplicit = implicit;
@@ -120,27 +120,27 @@ parse_implicit_t* parse_implicit(
 	return aimplicit;
 }
 
-void parse_implicit_delete(
-	parse_implicit_t* implicit)
+void ofc_parse_implicit_delete(
+	ofc_parse_implicit_t* implicit)
 {
 	if (!implicit)
 		return;
 
-	parse_type_delete(implicit->type);
+	ofc_parse_type_delete(implicit->type);
 	free(implicit);
 }
 
-bool parse_implicit_print(
-	colstr_t* cs, const parse_implicit_t* implicit)
+bool ofc_parse_implicit_print(
+	ofc_colstr_t* cs, const ofc_parse_implicit_t* implicit)
 {
 	if (!implicit)
 		return false;
 
-	if (!parse_type_print_f77(
+	if (!ofc_parse_type_print_f77(
 		cs, implicit->type))
 		return false;
 
-	if (!colstr_atomic_writef(cs, " ("))
+	if (!ofc_colstr_atomic_writef(cs, " ("))
 		return false;
 
 	bool first = true;
@@ -154,46 +154,46 @@ bool parse_implicit_print(
 		if (on)
 		{
 			on = ((implicit->mask & (m << 1)) != 0);
-			if (!on && !colstr_atomic_writef(cs, "%c", ('A' + i)))
+			if (!on && !ofc_colstr_atomic_writef(cs, "%c", ('A' + i)))
 				return false;
 		}
 		else
 		{
-			if (!first && !colstr_atomic_writef(cs, ", "))
+			if (!first && !ofc_colstr_atomic_writef(cs, ", "))
 				return false;
 
-			if (!colstr_atomic_writef(cs, "%c", ('A' + i)))
+			if (!ofc_colstr_atomic_writef(cs, "%c", ('A' + i)))
 				return false;
 
 			on = ((implicit->mask & (m << 1)) != 0);
-			if (on && !colstr_atomic_writef(cs, "-"))
+			if (on && !ofc_colstr_atomic_writef(cs, "-"))
 				return false;
 		}
 
 		first = false;
 	}
 
-	return colstr_atomic_writef(cs, ")");
+	return ofc_colstr_atomic_writef(cs, ")");
 }
 
 
-parse_implicit_list_t* parse_implicit_list(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_parse_implicit_list_t* ofc_parse_implicit_list(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len)
 {
-	parse_implicit_list_t* list
-		= (parse_implicit_list_t*)malloc(
-			sizeof(parse_implicit_list_t));
+	ofc_parse_implicit_list_t* list
+		= (ofc_parse_implicit_list_t*)malloc(
+			sizeof(ofc_parse_implicit_list_t));
 	if (!list) return NULL;
 
 	list->count = 0;
 	list->rule = NULL;
-	unsigned i = parse_list(
+	unsigned i = ofc_parse_list(
 		src, ptr, debug, ',',
 		&list->count, (void***)&list->rule,
-		(void*)parse_implicit,
-		(void*)parse_implicit_delete);
+		(void*)ofc_parse_implicit,
+		(void*)ofc_parse_implicit_delete);
 	if (i == 0)
 	{
 		free(list);
@@ -204,25 +204,25 @@ parse_implicit_list_t* parse_implicit_list(
 	return list;
 }
 
-void parse_implicit_list_delete(
-	parse_implicit_list_t* list)
+void ofc_parse_implicit_list_delete(
+	ofc_parse_implicit_list_t* list)
 {
 	if (!list)
 		return;
 
-	parse_list_delete(
+	ofc_parse_list_delete(
 		list->count, (void**)list->rule,
-		(void*)parse_implicit_delete);
+		(void*)ofc_parse_implicit_delete);
 	free(list);
 }
 
-bool parse_implicit_list_print(
-	colstr_t* cs, const parse_implicit_list_t* list)
+bool ofc_parse_implicit_list_print(
+	ofc_colstr_t* cs, const ofc_parse_implicit_list_t* list)
 {
 	if (!list)
 		return false;
 
-	return parse_list_print(cs,
+	return ofc_parse_list_print(cs,
 		list->count, (const void**)list->rule,
-		(void*)parse_implicit_print);
+		(void*)ofc_parse_implicit_print);
 }

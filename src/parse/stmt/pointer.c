@@ -1,35 +1,35 @@
 #include "../parse.h"
 
 
-unsigned parse_stmt_pointer(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_stmt_t* stmt)
+unsigned ofc_parse_stmt_pointer(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_stmt_t* stmt)
 {
-	unsigned dpos = parse_debug_position(debug);
+	unsigned dpos = ofc_parse_debug_position(debug);
 
-	unsigned i = parse_keyword(
-		src, ptr, debug, PARSE_KEYWORD_POINTER);
+	unsigned i = ofc_parse_keyword(
+		src, ptr, debug, OFC_PARSE_KEYWORD_POINTER);
 	if (i == 0) return 0;
 
 	unsigned l;
-	stmt->pointer = parse_pointer_list(
+	stmt->pointer = ofc_parse_pointer_list(
 		src, &ptr[i], debug, &l);
 	if (!stmt->pointer)
 	{
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	i += l;
 
-	stmt->type = PARSE_STMT_POINTER;
+	stmt->type = OFC_PARSE_STMT_POINTER;
 	return i;
 }
 
-bool parse_stmt_pointer_print(
-	colstr_t* cs, const parse_stmt_t* stmt)
+bool ofc_parse_stmt_pointer_print(
+	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt)
 {
-	return (stmt && colstr_atomic_writef(cs, "POINTER ")
-		&& parse_pointer_list_print(
+	return (stmt && ofc_colstr_atomic_writef(cs, "POINTER ")
+		&& ofc_parse_pointer_list_print(
 			cs, stmt->pointer));
 }

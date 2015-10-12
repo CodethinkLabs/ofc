@@ -12,17 +12,17 @@ struct label_s
 	label_t* next;
 };
 
-struct label_table_s
+struct ofc_label_table_s
 {
 	label_t* base[256];
 };
 
 
-label_table_t* label_table_create(void)
+ofc_label_table_t* ofc_label_table_create(void)
 {
-	label_table_t* table
-		= (label_table_t*)malloc(
-			sizeof(label_table_t));
+	ofc_label_table_t* table
+		= (ofc_label_table_t*)malloc(
+			sizeof(ofc_label_table_t));
 	if (!table) return NULL;
 
 	unsigned i;
@@ -39,7 +39,7 @@ static void label__delete(label_t* label)
 	free(label);
 }
 
-void label_table_delete(label_table_t* table)
+void ofc_label_table_delete(ofc_label_table_t* table)
 {
 	if (!table)
 		return;
@@ -51,7 +51,7 @@ void label_table_delete(label_table_t* table)
 }
 
 
-static uint8_t label_table__offset_hash(unsigned offset)
+static uint8_t ofc_label_table__offset_hash(unsigned offset)
 {
 	uint32_t h = (offset & 0xFFFFFFFFU);
 	h = (h & 0x0000FFFF) ^ (h >> 16U);
@@ -59,17 +59,17 @@ static uint8_t label_table__offset_hash(unsigned offset)
 	return h;
 }
 
-bool label_table_add(
-	label_table_t* table, unsigned offset, unsigned number)
+bool ofc_label_table_add(
+	ofc_label_table_t* table, unsigned offset, unsigned number)
 {
 	if (!table)
 		return false;
 
 	/* Don't allow duplicate labels at the same position. */
-	if (label_table_find(table, offset, NULL))
+	if (ofc_label_table_find(table, offset, NULL))
 		return false;
 
-	uint8_t hash = label_table__offset_hash(offset);
+	uint8_t hash = ofc_label_table__offset_hash(offset);
 
 	label_t* label = (label_t*)malloc(sizeof(label_t));
 	if (!label) return false;
@@ -83,13 +83,13 @@ bool label_table_add(
 	return true;
 }
 
-bool label_table_find(
-	const label_table_t* table, unsigned offset, unsigned* number)
+bool ofc_label_table_find(
+	const ofc_label_table_t* table, unsigned offset, unsigned* number)
 {
 	if (!table)
 		return false;
 
-	uint8_t hash = label_table__offset_hash(offset);
+	uint8_t hash = ofc_label_table__offset_hash(offset);
 
 	label_t* label;
 	for (label = table->base[hash]; label; label = label->next)

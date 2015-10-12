@@ -1,9 +1,9 @@
-#ifndef __star_len_h__
-#define __star_len_h__
+#ifndef __ofc_parse_star_len_h__
+#define __ofc_parse_star_len_h__
 
-unsigned parse_star_len(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_expr_t** count, bool* is_variable);
+unsigned ofc_parse_star_len(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_expr_t** count, bool* is_variable);
 
 #endif

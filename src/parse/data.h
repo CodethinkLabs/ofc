@@ -1,46 +1,46 @@
-#ifndef __parse_data_h__
-#define __parse_data_h__
+#ifndef __ofc_parse_data_h__
+#define __ofc_parse_data_h__
 
 typedef struct
 {
-	unsigned      repeat;
-	parse_expr_t* expr;
-} parse_clist_entry_t;
+	unsigned          repeat;
+	ofc_parse_expr_t* expr;
+} ofc_parse_clist_entry_t;
 
 typedef struct
 {
-	unsigned              count;
-	parse_clist_entry_t** entry;
-} parse_clist_t;
+	unsigned                  count;
+	ofc_parse_clist_entry_t** entry;
+} ofc_parse_clist_t;
 
 typedef struct
 {
-	parse_lhs_list_t* nlist;
-	parse_clist_t*    clist;
-} parse_data_entry_t;
+	ofc_parse_lhs_list_t* nlist;
+	ofc_parse_clist_t*    clist;
+} ofc_parse_data_entry_t;
 
 typedef struct
 {
-	unsigned             count;
-	parse_data_entry_t** entry;
-} parse_data_list_t;
+	unsigned                 count;
+	ofc_parse_data_entry_t** entry;
+} ofc_parse_data_list_t;
 
-parse_clist_t* parse_clist(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_parse_clist_t* ofc_parse_clist(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len);
-void parse_clist_delete(
-	parse_clist_t* clist);
-bool parse_clist_print(
-	colstr_t* cs, const parse_clist_t* list);
+void ofc_parse_clist_delete(
+	ofc_parse_clist_t* clist);
+bool ofc_parse_clist_print(
+	ofc_colstr_t* cs, const ofc_parse_clist_t* list);
 
-parse_data_list_t* parse_data_list(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_parse_data_list_t* ofc_parse_data_list(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len);
-void parse_data_list_delete(
-	parse_data_list_t* list);
-bool parse_data_list_print(
-	colstr_t* cs, const parse_data_list_t* list);
+void ofc_parse_data_list_delete(
+	ofc_parse_data_list_t* list);
+bool ofc_parse_data_list_print(
+	ofc_colstr_t* cs, const ofc_parse_data_list_t* list);
 
 #endif

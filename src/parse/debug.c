@@ -4,25 +4,25 @@
 
 typedef struct
 {
-	const sparse_t* src;
+	const ofc_sparse_t* src;
 	const char*     ptr;
 
 	char* message;
-} parse_debug_msg_t;
+} ofc_parse_debug_msg_t;
 
-struct parse_debug_s
+struct ofc_parse_debug_s
 {
 	unsigned            count, max;
-	parse_debug_msg_t** message;
+	ofc_parse_debug_msg_t** message;
 };
 
 
 
-parse_debug_t* parse_debug_create(void)
+ofc_parse_debug_t* ofc_parse_debug_create(void)
 {
-	parse_debug_t* stack
-		= (parse_debug_t*)malloc(
-			sizeof(parse_debug_t));
+	ofc_parse_debug_t* stack
+		= (ofc_parse_debug_t*)malloc(
+			sizeof(ofc_parse_debug_t));
 	if (!stack) return NULL;
 
 	stack->count   = 0;
@@ -32,7 +32,7 @@ parse_debug_t* parse_debug_create(void)
 	return stack;
 }
 
-void parse_debug_delete(parse_debug_t* stack)
+void ofc_parse_debug_delete(ofc_parse_debug_t* stack)
 {
 	if (!stack)
 		return;
@@ -50,13 +50,13 @@ void parse_debug_delete(parse_debug_t* stack)
 }
 
 
-unsigned parse_debug_position(const parse_debug_t* stack)
+unsigned ofc_parse_debug_position(const ofc_parse_debug_t* stack)
 {
 	return (stack ? stack->count : 0);
 }
 
-void parse_debug_rewind(
-	parse_debug_t* stack, unsigned position)
+void ofc_parse_debug_rewind(
+	ofc_parse_debug_t* stack, unsigned position)
 {
     if (!stack)
 		return;
@@ -75,7 +75,7 @@ void parse_debug_rewind(
 	stack->count = position;
 }
 
-void parse_debug_print(const parse_debug_t* stack)
+void ofc_parse_debug_print(const ofc_parse_debug_t* stack)
 {
 	if (!stack)
 		return;
@@ -83,11 +83,11 @@ void parse_debug_print(const parse_debug_t* stack)
 	unsigned i;
 	for (i = 0; i < stack->count; i++)
 	{
-		parse_debug_msg_t* message
+		ofc_parse_debug_msg_t* message
 			= stack->message[i];
 		if (!message) continue;
 
-		sparse_warning(message->src, message->ptr,
+		ofc_sparse_warning(message->src, message->ptr,
 			"%s", message->message);
 	}
 }
@@ -95,9 +95,9 @@ void parse_debug_print(const parse_debug_t* stack)
 
 #include <stdarg.h>
 
-static void parse_debug_message(
-	parse_debug_t* stack,
-	const sparse_t* src, const char* ptr,
+static void ofc_parse_debug_message(
+	ofc_parse_debug_t* stack,
+	const ofc_sparse_t* src, const char* ptr,
 	const char* format, va_list args)
 {
 	/* Error reporting is critical, if it fails we just abort. */
@@ -105,9 +105,9 @@ static void parse_debug_message(
 	if (!stack)
 		abort();
 
-	parse_debug_msg_t* message
-		= (parse_debug_msg_t*)malloc(
-			sizeof(parse_debug_msg_t));
+	ofc_parse_debug_msg_t* message
+		= (ofc_parse_debug_msg_t*)malloc(
+			sizeof(ofc_parse_debug_msg_t));
 	if (!message) abort();
 
 	message->src = src;
@@ -128,9 +128,9 @@ static void parse_debug_message(
 	{
 		unsigned nmax = (stack->max << 1);
 		if (nmax == 0) nmax = 16;
-		parse_debug_msg_t** nstack
-			= (parse_debug_msg_t**)realloc(stack->message,
-				sizeof(parse_debug_msg_t*) * nmax);
+		ofc_parse_debug_msg_t** nstack
+			= (ofc_parse_debug_msg_t**)realloc(stack->message,
+				sizeof(ofc_parse_debug_msg_t*) * nmax);
 		if (!nstack) abort();
 		stack->message = nstack;
 		stack->max = nmax;
@@ -139,14 +139,14 @@ static void parse_debug_message(
 	stack->message[stack->count++] = message;
 }
 
-void parse_debug_warning(
-	parse_debug_t* stack,
-	const sparse_t* src, const char* ptr,
+void ofc_parse_debug_warning(
+	ofc_parse_debug_t* stack,
+	const ofc_sparse_t* src, const char* ptr,
 	const char* format, ...)
 {
 	va_list args;
 	va_start(args, format);
-	parse_debug_message(
+	ofc_parse_debug_message(
 		stack, src, ptr,
 		format, args);
 	va_end(args);

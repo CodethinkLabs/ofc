@@ -1,43 +1,43 @@
 #include "parse.h"
 
 
-parse_assign_t* parse_assign(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_parse_assign_t* ofc_parse_assign(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len)
 {
-	unsigned dpos = parse_debug_position(debug);
+	unsigned dpos = ofc_parse_debug_position(debug);
 
 	unsigned i;
-	parse_lhs_t* name
-		= parse_lhs(src, ptr, debug, &i);
+	ofc_parse_lhs_t* name
+		= ofc_parse_lhs(src, ptr, debug, &i);
 	if (!name) return NULL;
 
-	parse_expr_t* init = NULL;
+	ofc_parse_expr_t* init = NULL;
 	if (ptr[i] == '=')
 	{
 		i += 1;
 
 		unsigned l;
-		init = parse_expr(
+		init = ofc_parse_expr(
 			src, &ptr[i], debug, &l);
 		if (!init)
 		{
-			parse_lhs_delete(name);
-			parse_debug_rewind(debug, dpos);
+			ofc_parse_lhs_delete(name);
+			ofc_parse_debug_rewind(debug, dpos);
 			return NULL;
 		}
 		i += l;
 	}
 
-	parse_assign_t* assign
-		= (parse_assign_t*)malloc(
-			sizeof(parse_assign_t));
+	ofc_parse_assign_t* assign
+		= (ofc_parse_assign_t*)malloc(
+			sizeof(ofc_parse_assign_t));
 	if (!assign)
 	{
-		parse_expr_delete(init);
-		parse_lhs_delete(name);
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_expr_delete(init);
+		ofc_parse_lhs_delete(name);
+		ofc_parse_debug_rewind(debug, dpos);
 		return NULL;
 	}
 
@@ -49,22 +49,22 @@ parse_assign_t* parse_assign(
 }
 
 /* TODO - Make this a flag to a static function for speed. */
-parse_assign_t* parse_assign_init(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_parse_assign_t* ofc_parse_assign_init(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len)
 {
-	unsigned dpos = parse_debug_position(debug);
+	unsigned dpos = ofc_parse_debug_position(debug);
 
 	unsigned i;
-	parse_assign_t* assign
-		= parse_assign(src, ptr, debug, &i);
+	ofc_parse_assign_t* assign
+		= ofc_parse_assign(src, ptr, debug, &i);
 	if (!assign) return NULL;
 
 	if (!assign->init)
 	{
-		parse_assign_delete(assign);
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_assign_delete(assign);
+		ofc_parse_debug_rewind(debug, dpos);
 		return NULL;
 	}
 
@@ -72,55 +72,55 @@ parse_assign_t* parse_assign_init(
 	return assign;
 }
 
-parse_assign_t* parse_assign_copy(
-	const parse_assign_t* assign)
+ofc_parse_assign_t* ofc_parse_assign_copy(
+	const ofc_parse_assign_t* assign)
 {
 	if (!assign)
 		return NULL;
 
-	parse_assign_t* copy
-		= (parse_assign_t*)malloc(
-			sizeof(parse_assign_t));
+	ofc_parse_assign_t* copy
+		= (ofc_parse_assign_t*)malloc(
+			sizeof(ofc_parse_assign_t));
 	if (!copy) return NULL;
 
-	copy->name = parse_lhs_copy(assign->name);
-	copy->init = parse_expr_copy(assign->init);
+	copy->name = ofc_parse_lhs_copy(assign->name);
+	copy->init = ofc_parse_expr_copy(assign->init);
 
 	if (!copy->name
 		|| (assign->init && !copy->init))
 	{
-		parse_assign_delete(copy);
+		ofc_parse_assign_delete(copy);
 		return NULL;
 	}
 
 	return copy;
 }
 
-void parse_assign_delete(
-	parse_assign_t* assign)
+void ofc_parse_assign_delete(
+	ofc_parse_assign_t* assign)
 {
 	if (!assign)
 		return;
 
-	parse_expr_delete(assign->init);
-	parse_lhs_delete(assign->name);
+	ofc_parse_expr_delete(assign->init);
+	ofc_parse_lhs_delete(assign->name);
 	free(assign);
 }
 
-bool parse_assign_print(
-	colstr_t* cs, const parse_assign_t* assign)
+bool ofc_parse_assign_print(
+	ofc_colstr_t* cs, const ofc_parse_assign_t* assign)
 {
 	if (!assign)
 		return false;
 
-	if (!parse_lhs_print(
+	if (!ofc_parse_lhs_print(
 		cs, assign->name, false))
 		return false;
 
 	if (assign->init)
 	{
-		if (!colstr_atomic_writef(cs, " = ")
-			|| !parse_expr_print(cs, assign->init))
+		if (!ofc_colstr_atomic_writef(cs, " = ")
+			|| !ofc_parse_expr_print(cs, assign->init))
 			return false;
 	}
 
@@ -129,49 +129,49 @@ bool parse_assign_print(
 
 
 
-parse_assign_list_t* parse_assign_list(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_parse_assign_list_t* ofc_parse_assign_list(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len)
 {
-	parse_assign_list_t* list
-		= (parse_assign_list_t*)malloc(
-			sizeof(parse_assign_list_t));
+	ofc_parse_assign_list_t* list
+		= (ofc_parse_assign_list_t*)malloc(
+			sizeof(ofc_parse_assign_list_t));
 	if (!list) return NULL;
 
 	list->count = 0;
 	list->assign = NULL;
 
-	unsigned i = parse_list(
+	unsigned i = ofc_parse_list(
 		src, ptr, debug, ',',
 		&list->count, (void***)&list->assign,
-		(void*)parse_assign,
-		(void*)parse_assign_delete);
+		(void*)ofc_parse_assign,
+		(void*)ofc_parse_assign_delete);
 	if (i == 0) return NULL;
 
 	if (len) *len = i;
 	return list;
 }
 
-parse_assign_list_t* parse_assign_list_copy(
-	const parse_assign_list_t* list)
+ofc_parse_assign_list_t* ofc_parse_assign_list_copy(
+	const ofc_parse_assign_list_t* list)
 {
 	if (!list)
 		return NULL;
 
-	parse_assign_list_t* copy
-		= (parse_assign_list_t*)malloc(
-			sizeof(parse_assign_list_t));
+	ofc_parse_assign_list_t* copy
+		= (ofc_parse_assign_list_t*)malloc(
+			sizeof(ofc_parse_assign_list_t));
 	if (!copy) return NULL;
 
 	copy->count = 0;
 	copy->assign = NULL;
 
-	if (!parse_list_copy(
+	if (!ofc_parse_list_copy(
 		&copy->count, (void***)&copy->assign,
 		list->count, (const void**)list->assign,
-		(void*)parse_assign_copy,
-		(void*)parse_assign_delete))
+		(void*)ofc_parse_assign_copy,
+		(void*)ofc_parse_assign_delete))
 	{
 		free(copy);
 		return NULL;
@@ -180,21 +180,21 @@ parse_assign_list_t* parse_assign_list_copy(
 	return copy;
 }
 
-void parse_assign_list_delete(
-	parse_assign_list_t* list)
+void ofc_parse_assign_list_delete(
+	ofc_parse_assign_list_t* list)
 {
 	if (!list)
 		return;
 
-	parse_list_delete(
+	ofc_parse_list_delete(
 		list->count, (void**)list->assign,
-		(void*)parse_assign_delete);
+		(void*)ofc_parse_assign_delete);
 
 	free(list);
 }
 
-bool parse_assign_list_print(
-	colstr_t* cs, const parse_assign_list_t* list)
+bool ofc_parse_assign_list_print(
+	ofc_colstr_t* cs, const ofc_parse_assign_list_t* list)
 {
 	if (!list)
 		return false;
@@ -202,10 +202,10 @@ bool parse_assign_list_print(
 	unsigned i;
 	for (i = 0; i < list->count; i++)
 	{
-		if ((i > 0) && (!colstr_atomic_writef(cs, ", ")))
+		if ((i > 0) && (!ofc_colstr_atomic_writef(cs, ", ")))
 			return false;
 
-		if (!parse_assign_print(
+		if (!ofc_parse_assign_print(
 			cs, list->assign[i]))
 			return false;
 	}

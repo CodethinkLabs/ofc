@@ -1,31 +1,31 @@
 #include "../parse.h"
 
-static unsigned parse_stmt_go_to_unconditional(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_stmt_t* stmt)
+static unsigned ofc_parse_stmt_go_to_unconditional(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_stmt_t* stmt)
 {
 	unsigned i = 0;
 
-	unsigned len = parse_label(
+	unsigned len = ofc_parse_label(
 		src, &ptr[i], debug, &stmt->go_to.label);
 	if (len == 0)
 		return 0;
 
-	stmt->type = PARSE_STMT_GO_TO;
+	stmt->type = OFC_PARSE_STMT_GO_TO;
 	return (i + len);
 }
 
-static unsigned parse_stmt_go_to_assigned(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_stmt_t* stmt)
+static unsigned ofc_parse_stmt_go_to_assigned(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_stmt_t* stmt)
 {
-	unsigned dpos = parse_debug_position(debug);
+	unsigned dpos = ofc_parse_debug_position(debug);
 
 	unsigned i = 0;
 
-	unsigned len = parse_label(
+	unsigned len = ofc_parse_label(
 		src, &ptr[i], debug,
 		&stmt->go_to_assign.cond);
 	if (len == 0) return 0;
@@ -36,28 +36,28 @@ static unsigned parse_stmt_go_to_assigned(
 
 	if (ptr[i++] != '(')
 	{
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 
-	parse_label_t label;
-	len = parse_label(
+	ofc_parse_label_t label;
+	len = ofc_parse_label(
 		src, &ptr[i], debug, &label);
 	if (len == 0)
 	{
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	i += len;
 
-	stmt->type = PARSE_STMT_GO_TO_ASSIGNED;
+	stmt->type = OFC_PARSE_STMT_GO_TO_ASSIGNED;
 
 	stmt->go_to_assign.label_count = 1;
-	stmt->go_to_assign.label = (parse_label_t*)malloc(
-		sizeof(parse_label_t) * stmt->go_to_assign.label_count);
+	stmt->go_to_assign.label = (ofc_parse_label_t*)malloc(
+		sizeof(ofc_parse_label_t) * stmt->go_to_assign.label_count);
 	if (!stmt->go_to_assign.label)
 	{
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	stmt->go_to_assign.label[0] = label;
@@ -65,16 +65,16 @@ static unsigned parse_stmt_go_to_assigned(
 	while (ptr[i] == ',')
 	{
 		unsigned j = (i + 1);
-		len = parse_label(
+		len = ofc_parse_label(
 			src, &ptr[j], debug, &label);
 		if (len == 0) break;
 
-		parse_label_t* nlabel = (parse_label_t*)realloc(stmt->go_to_assign.label,
-			sizeof(parse_label_t) * (stmt->go_to_assign.label_count + 1));
+		ofc_parse_label_t* nlabel = (ofc_parse_label_t*)realloc(stmt->go_to_assign.label,
+			sizeof(ofc_parse_label_t) * (stmt->go_to_assign.label_count + 1));
 		if (!nlabel)
 		{
 			free(stmt->go_to_assign.label);
-			parse_debug_rewind(debug, dpos);
+			ofc_parse_debug_rewind(debug, dpos);
 			return 0;
 		}
 		stmt->go_to_assign.label = nlabel;
@@ -85,40 +85,40 @@ static unsigned parse_stmt_go_to_assigned(
 	if (ptr[i++] != ')')
 	{
 		free(stmt->go_to_assign.label);
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 
 	return i;
 }
 
-static unsigned parse_stmt_go_to_computed(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_stmt_t* stmt)
+static unsigned ofc_parse_stmt_go_to_computed(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_stmt_t* stmt)
 {
 	unsigned i = 0;
 
 	if (ptr[i++] != '(')
 		return 0;
 
-	unsigned dpos = parse_debug_position(debug);
+	unsigned dpos = ofc_parse_debug_position(debug);
 
-	parse_label_t label;
-	unsigned len = parse_label(
+	ofc_parse_label_t label;
+	unsigned len = ofc_parse_label(
 		src, &ptr[i], debug, &label);
 	if (len == 0)
 		return 0;
 	i += len;
 
-	stmt->type = PARSE_STMT_GO_TO_COMPUTED;
+	stmt->type = OFC_PARSE_STMT_GO_TO_COMPUTED;
 
 	stmt->go_to_comp.label_count = 1;
-	stmt->go_to_comp.label = (parse_label_t*)malloc(
-		sizeof(parse_label_t) * stmt->go_to_comp.label_count);
+	stmt->go_to_comp.label = (ofc_parse_label_t*)malloc(
+		sizeof(ofc_parse_label_t) * stmt->go_to_comp.label_count);
 	if (!stmt->go_to_comp.label)
 	{
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	stmt->go_to_comp.label[0] = label;
@@ -126,16 +126,16 @@ static unsigned parse_stmt_go_to_computed(
 	while (ptr[i] == ',')
 	{
 		unsigned j = (i + 1);
-		len = parse_label(
+		len = ofc_parse_label(
 			src, &ptr[j], debug, &label);
 		if (len == 0) break;
 
-		parse_label_t* nlabel = (parse_label_t*)realloc(stmt->go_to_comp.label,
-			sizeof(parse_label_t) * (stmt->go_to_comp.label_count + 1));
+		ofc_parse_label_t* nlabel = (ofc_parse_label_t*)realloc(stmt->go_to_comp.label,
+			sizeof(ofc_parse_label_t) * (stmt->go_to_comp.label_count + 1));
 		if (!nlabel)
 		{
 			free(stmt->go_to_comp.label);
-			parse_debug_rewind(debug, dpos);
+			ofc_parse_debug_rewind(debug, dpos);
 			return 0;
 		}
 		stmt->go_to_comp.label = nlabel;
@@ -146,19 +146,19 @@ static unsigned parse_stmt_go_to_computed(
 	if (ptr[i++] != ')')
 	{
 		free(stmt->go_to_comp.label);
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 
 	if (ptr[i] == ',')
 		i += 1;
 
-	stmt->go_to_comp.cond = parse_expr(
+	stmt->go_to_comp.cond = ofc_parse_expr(
 		src, &ptr[i], debug, &len);
 	if (!stmt->go_to_comp.cond)
 	{
 		free(stmt->go_to_comp.label);
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	i += len;
@@ -166,25 +166,25 @@ static unsigned parse_stmt_go_to_computed(
 	return i;
 }
 
-unsigned parse_stmt_go_to(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_stmt_t* stmt)
+unsigned ofc_parse_stmt_go_to(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_stmt_t* stmt)
 {
-	unsigned dpos = parse_debug_position(debug);
+	unsigned dpos = ofc_parse_debug_position(debug);
 
-	unsigned i = parse_keyword(
-		src, ptr, debug, PARSE_KEYWORD_GO_TO);
+	unsigned i = ofc_parse_keyword(
+		src, ptr, debug, OFC_PARSE_KEYWORD_GO_TO);
 	if (i == 0) return 0;
 
 	unsigned len = 0;
-	if (len == 0) len = parse_stmt_go_to_assigned(src, &ptr[i], debug, stmt);
-	if (len == 0) len = parse_stmt_go_to_computed(src, &ptr[i], debug, stmt);
-	if (len == 0) len = parse_stmt_go_to_unconditional(src, &ptr[i], debug, stmt);
+	if (len == 0) len = ofc_parse_stmt_go_to_assigned(src, &ptr[i], debug, stmt);
+	if (len == 0) len = ofc_parse_stmt_go_to_computed(src, &ptr[i], debug, stmt);
+	if (len == 0) len = ofc_parse_stmt_go_to_unconditional(src, &ptr[i], debug, stmt);
 
 	if (len == 0)
 	{
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	i += len;
@@ -194,71 +194,71 @@ unsigned parse_stmt_go_to(
 
 
 
-static bool parse_stmt_go_to_assigned_print(
-	colstr_t* cs, const parse_stmt_t* stmt)
+static bool ofc_parse_stmt_go_to_assigned_print(
+	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt)
 {
-    if (!colstr_atomic_writef(cs, "GO TO ")
-		|| !parse_label_print(cs, stmt->go_to_assign.cond)
-		|| !colstr_atomic_writef(cs, ", ("))
+    if (!ofc_colstr_atomic_writef(cs, "GO TO ")
+		|| !ofc_parse_label_print(cs, stmt->go_to_assign.cond)
+		|| !ofc_colstr_atomic_writef(cs, ", ("))
 		return false;
 
 	unsigned i;
 	for (i = 0; i < stmt->go_to_assign.label_count; i++)
 	{
-		if ((i > 0) && !colstr_atomic_writef(cs, ", "))
+		if ((i > 0) && !ofc_colstr_atomic_writef(cs, ", "))
 			return false;
 
-		if (!parse_label_print(cs,
+		if (!ofc_parse_label_print(cs,
 			stmt->go_to_assign.label[i]))
 			return false;
 	}
 
-	return colstr_atomic_writef(cs, ")");
+	return ofc_colstr_atomic_writef(cs, ")");
 }
 
-static bool parse_stmt_go_to_computed_print(
-	colstr_t* cs, const parse_stmt_t* stmt)
+static bool ofc_parse_stmt_go_to_computed_print(
+	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt)
 {
-    if (!colstr_atomic_writef(cs, "GO TO ("))
+    if (!ofc_colstr_atomic_writef(cs, "GO TO ("))
 		return false;
 
 	unsigned i;
 	for (i = 0; i < stmt->go_to_comp.label_count; i++)
 	{
-		if ((i > 0) && !colstr_atomic_writef(cs, ", "))
+		if ((i > 0) && !ofc_colstr_atomic_writef(cs, ", "))
 			return false;
 
-		if (!parse_label_print(cs,
+		if (!ofc_parse_label_print(cs,
 			stmt->go_to_comp.label[i]))
 			return false;
 	}
 
-	return (colstr_atomic_writef(cs, "), ")
-		&& parse_expr_print(cs,
+	return (ofc_colstr_atomic_writef(cs, "), ")
+		&& ofc_parse_expr_print(cs,
 			stmt->go_to_comp.cond));
 }
 
-static bool parse_stmt_go_to_unconditional_print(
-	colstr_t* cs, const parse_stmt_t* stmt)
+static bool ofc_parse_stmt_go_to_unconditional_print(
+	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt)
 {
-	return (colstr_atomic_writef(cs, "GO TO ")
-		&& parse_label_print(cs, stmt->go_to.label));
+	return (ofc_colstr_atomic_writef(cs, "GO TO ")
+		&& ofc_parse_label_print(cs, stmt->go_to.label));
 }
 
-bool parse_stmt_go_to_print(
-	colstr_t* cs, const parse_stmt_t* stmt)
+bool ofc_parse_stmt_go_to_print(
+	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt)
 {
 	if (!stmt)
 		return false;
 
 	switch (stmt->type)
 	{
-		case PARSE_STMT_GO_TO_ASSIGNED:
-			return parse_stmt_go_to_assigned_print(cs, stmt);
-		case PARSE_STMT_GO_TO_COMPUTED:
-			return parse_stmt_go_to_computed_print(cs, stmt);
-		case PARSE_STMT_GO_TO:
-			return parse_stmt_go_to_unconditional_print(cs, stmt);
+		case OFC_PARSE_STMT_GO_TO_ASSIGNED:
+			return ofc_parse_stmt_go_to_assigned_print(cs, stmt);
+		case OFC_PARSE_STMT_GO_TO_COMPUTED:
+			return ofc_parse_stmt_go_to_computed_print(cs, stmt);
+		case OFC_PARSE_STMT_GO_TO:
+			return ofc_parse_stmt_go_to_unconditional_print(cs, stmt);
 		default:
 			break;
 	}

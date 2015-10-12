@@ -4,7 +4,7 @@
 
 
 
-static const char* parse_keyword__name[] =
+static const char* ofc_parse_keyword__name[] =
 {
 	"INCLUDE",
 
@@ -92,10 +92,10 @@ static const char* parse_keyword__name[] =
 
 
 
-unsigned parse_ident(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	str_ref_t* ident)
+unsigned ofc_parse_ident(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_str_ref_t* ident)
 {
 	if (!isalpha(ptr[0]))
 		return 0;
@@ -103,9 +103,9 @@ unsigned parse_ident(
 	unsigned i;
 	for (i = 1; isalnum(ptr[i]) || (ptr[i] == '_'); i++);
 
-	if (!sparse_sequential(src, ptr, i))
+	if (!ofc_sparse_sequential(src, ptr, i))
 	{
-		parse_debug_warning(debug, src, ptr,
+		ofc_parse_debug_warning(debug, src, ptr,
 			"Unexpected whitespace within identifier");
 	}
 
@@ -113,33 +113,33 @@ unsigned parse_ident(
 	return i;
 }
 
-unsigned parse_name(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	str_ref_t* name)
+unsigned ofc_parse_name(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_str_ref_t* name)
 {
 	if (strncasecmp(ptr, "END", 3) == 0)
 	{
-		parse_debug_warning(debug, src, ptr,
+		ofc_parse_debug_warning(debug, src, ptr,
 			"Using END at the beginning of an identifier is incompatible with Fortran 90");
 	}
 
-	return parse_ident(src, ptr, debug, name);
+	return ofc_parse_ident(src, ptr, debug, name);
 }
 
-str_ref_t* parse_name_alloc(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_str_ref_t* ofc_parse_name_alloc(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len)
 {
-	str_ref_t name;
-	unsigned i = parse_name(
+	ofc_str_ref_t name;
+	unsigned i = ofc_parse_name(
 		src, ptr, debug, &name);
 	if (i == 0) return NULL;
 
-	str_ref_t* aname
-		= (str_ref_t*)malloc(
-			sizeof(str_ref_t));
+	ofc_str_ref_t* aname
+		= (ofc_str_ref_t*)malloc(
+			sizeof(ofc_str_ref_t));
 	if (!aname) return NULL;
 	*aname = name;
 
@@ -148,24 +148,24 @@ str_ref_t* parse_name_alloc(
 }
 
 
-const char* parse_keyword_name(
-	parse_keyword_e keyword)
+const char* ofc_parse_keyword_name(
+	ofc_parse_keyword_e keyword)
 {
-	if (keyword >= PARSE_KEYWORD_COUNT)
+	if (keyword >= OFC_PARSE_KEYWORD_COUNT)
 		return NULL;
-	return parse_keyword__name[keyword];
+	return ofc_parse_keyword__name[keyword];
 }
 
-unsigned parse_keyword_named(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_keyword_e keyword,
-	str_ref_t* name)
+unsigned ofc_parse_keyword_named(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_keyword_e keyword,
+	ofc_str_ref_t* name)
 {
-	if (keyword >= PARSE_KEYWORD_COUNT)
+	if (keyword >= OFC_PARSE_KEYWORD_COUNT)
 		return 0;
 
-	const char* kwstr = parse_keyword__name[keyword];
+	const char* kwstr = ofc_parse_keyword__name[keyword];
 
 	/* TODO - Make handling spaced keywords less manual. */
 	unsigned space = 0;
@@ -173,27 +173,27 @@ unsigned parse_keyword_named(
 	bool space_optional = true;
 	switch (keyword)
 	{
-		case PARSE_KEYWORD_BLOCK_DATA:
+		case OFC_PARSE_KEYWORD_BLOCK_DATA:
 			kwstr = "BLOCKDATA";
 			space = 5;
 			break;
-		case PARSE_KEYWORD_GO_TO:
+		case OFC_PARSE_KEYWORD_GO_TO:
 			kwstr = "GOTO";
 			space = 2;
 			break;
-		case PARSE_KEYWORD_DOUBLE_PRECISION:
+		case OFC_PARSE_KEYWORD_DOUBLE_PRECISION:
 			kwstr = "DOUBLEPRECISION";
 			space = 6;
 			break;
-		case PARSE_KEYWORD_DOUBLE_COMPLEX:
+		case OFC_PARSE_KEYWORD_DOUBLE_COMPLEX:
 			kwstr = "DOUBLECOMPLEX";
 			space = 6;
 			break;
-		case PARSE_KEYWORD_IMPLICIT_NONE:
+		case OFC_PARSE_KEYWORD_IMPLICIT_NONE:
 			kwstr = "IMPLICITNONE";
 			space = 8;
 			break;
-		case PARSE_KEYWORD_END_FILE:
+		case OFC_PARSE_KEYWORD_END_FILE:
 			kwstr = "ENDFILE";
 			space = 3;
 			break;
@@ -206,18 +206,18 @@ unsigned parse_keyword_named(
 		return 0;
 
 	bool entirely_sequential
-		= sparse_sequential(src, ptr, len);
+		= ofc_sparse_sequential(src, ptr, len);
 
 	bool unexpected_space = !entirely_sequential;
 	if (space > 0)
 	{
 		unsigned remain = (len - space);
-		unexpected_space = (!sparse_sequential(src, ptr, space)
-			|| !sparse_sequential(src, &ptr[space], remain));
+		unexpected_space = (!ofc_sparse_sequential(src, ptr, space)
+			|| !ofc_sparse_sequential(src, &ptr[space], remain));
 
 		if (entirely_sequential && !space_optional)
 		{
-			parse_debug_warning(debug, src, ptr,
+			ofc_parse_debug_warning(debug, src, ptr,
 				"Expected a space between keywords '%.*s' and '%.*s'",
 				space, ptr, remain, &ptr[space]);
 		}
@@ -225,19 +225,19 @@ unsigned parse_keyword_named(
 
 	if (unexpected_space)
 	{
-		parse_debug_warning(debug, src, ptr,
+		ofc_parse_debug_warning(debug, src, ptr,
 			"Unexpected space in %s keyword", kwstr);
 	}
 
 	if (name != NULL)
 	{
-		unsigned nlen = parse_name(
+		unsigned nlen = ofc_parse_name(
 			src, &ptr[len], debug, name);
 
-		if ((nlen > 0) && sparse_sequential(
+		if ((nlen > 0) && ofc_sparse_sequential(
 			src, &ptr[len - 1], 2))
 		{
-			parse_debug_warning(debug, src, &ptr[len],
+			ofc_parse_debug_warning(debug, src, &ptr[len],
 				"Expected whitespace between %s and name", kwstr);
 		}
 
@@ -245,12 +245,12 @@ unsigned parse_keyword_named(
 	}
 
 	bool is_number = isdigit(ptr[len]);
-	bool is_ident  = (isalpha(ptr[len]) || (ptr[len] == '_'));
+	bool ofc_is_ident  = (isalpha(ptr[len]) || (ptr[len] == '_'));
 
-	if ((is_number || is_ident)
-		&& sparse_sequential(src, &ptr[len - 1], 2))
+	if ((is_number || ofc_is_ident)
+		&& ofc_sparse_sequential(src, &ptr[len - 1], 2))
 	{
-		if (!name && (keyword == PARSE_KEYWORD_ELSE)
+		if (!name && (keyword == OFC_PARSE_KEYWORD_ELSE)
 			&& (strncasecmp(&ptr[len], "IF", 2) == 0))
 		{
 			/* Treat this as a special case because of how we handle
@@ -258,7 +258,7 @@ unsigned parse_keyword_named(
 		}
 		else
 		{
-			parse_debug_warning(debug, src, &ptr[len],
+			ofc_parse_debug_warning(debug, src, &ptr[len],
 				"Expected whitespace between %s and %s", kwstr,
 				(is_number ? "number" : "identifier"));
 		}
@@ -267,23 +267,23 @@ unsigned parse_keyword_named(
 	return len;
 }
 
-unsigned parse_keyword(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_keyword_e keyword)
+unsigned ofc_parse_keyword(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_keyword_e keyword)
 {
-	return parse_keyword_named(
+	return ofc_parse_keyword_named(
 		src, ptr, debug, keyword, NULL);
 }
 
 
-unsigned parse_keyword_end_named(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_keyword_e keyword,
-	str_ref_t* name)
+unsigned ofc_parse_keyword_end_named(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_keyword_e keyword,
+	ofc_str_ref_t* name)
 {
-	if (keyword >= PARSE_KEYWORD_COUNT)
+	if (keyword >= OFC_PARSE_KEYWORD_COUNT)
 		return 0;
 
 	unsigned i = 0;
@@ -293,40 +293,40 @@ unsigned parse_keyword_end_named(
 
 	unsigned warn_end_kw_space = 0;
 
-	str_ref_t kname = STR_REF_EMPTY;
-	unsigned len = parse_keyword_named(
+	ofc_str_ref_t kname = OFC_STR_REF_EMPTY;
+	unsigned len = ofc_parse_keyword_named(
 		src, &ptr[i], debug, keyword,
 		(name ? &kname : NULL));
 	if (len > 0)
 	{
-		if (sparse_sequential(src, &ptr[i - 1], 2))
+		if (ofc_sparse_sequential(src, &ptr[i - 1], 2))
 			warn_end_kw_space = i;
 	}
 	else if (name)
 	{
-		len = parse_name(
+		len = ofc_parse_name(
 			src, &ptr[i], debug, &kname);
 	}
 	i += len;
 
 	/* Expect but don't consume statement end. */
-	if (!is_end_statement(&ptr[i], &len))
+	if (!ofc_is_end_statement(&ptr[i], &len))
 		return 0;
 
-	if (name && !str_ref_empty(kname)
-		&& !str_ref_equal(*name, kname))
+	if (name && !ofc_str_ref_empty(kname)
+		&& !ofc_str_ref_equal(*name, kname))
 	{
-		parse_debug_warning(debug, src, &ptr[i],
+		ofc_parse_debug_warning(debug, src, &ptr[i],
 			"END %s name '%.*s' doesn't match %s name '%.*s'",
-			parse_keyword__name[keyword],
+			ofc_parse_keyword__name[keyword],
 			kname.size, kname.base,
-			parse_keyword__name[keyword],
+			ofc_parse_keyword__name[keyword],
 			name->size, name->base);
 	}
 
-	if (!sparse_sequential(src, ptr, 3))
+	if (!ofc_sparse_sequential(src, ptr, 3))
 	{
-		parse_debug_warning(debug, src, ptr,
+		ofc_parse_debug_warning(debug, src, ptr,
 			"Unexpected space in END keyword");
 	}
 
@@ -338,11 +338,11 @@ unsigned parse_keyword_end_named(
 	return i;
 }
 
-unsigned parse_keyword_end(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_keyword_e keyword)
+unsigned ofc_parse_keyword_end(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_keyword_e keyword)
 {
-	return parse_keyword_end_named(
+	return ofc_parse_keyword_end_named(
 		src, ptr, debug, keyword, NULL);
 }

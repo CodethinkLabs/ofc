@@ -1,11 +1,11 @@
 #include "fctype.h"
 
-bool is_vspace(char c)
+bool ofc_is_vspace(char c)
 {
 	return ((c == '\r') || (c == '\n'));
 }
 
-bool is_hspace(char c)
+bool ofc_is_hspace(char c)
 {
 	switch (c)
 	{
@@ -20,14 +20,14 @@ bool is_hspace(char c)
 	return false;
 }
 
-bool is_ident(char c)
+bool ofc_is_ident(char c)
 {
 	return (isalnum(c) || (c == '_'));
 }
 
-bool is_end_statement(const char* c, unsigned* len)
+bool ofc_is_end_statement(const char* c, unsigned* len)
 {
-	if (is_vspace(c[0]) || (c[0] == ';'))
+	if (ofc_is_vspace(c[0]) || (c[0] == ';'))
 	{
 		if (len) *len = 1;
 		return true;

@@ -1,12 +1,12 @@
 #include "parse.h"
 
 
-static unsigned parse_list__seperator_optional(
-	const sparse_t* sparse, const char* ptr,
-	parse_debug_t* debug,
+static unsigned ofc_parse_list__seperator_optional(
+	const ofc_sparse_t* sparse, const char* ptr,
+	ofc_parse_debug_t* debug,
 	char seperator, bool optional,
 	unsigned* elem_count, void*** elem,
-	void* (*elem_parse)(const sparse_t*, const char*, parse_debug_t*, unsigned*),
+	void* (*elem_parse)(const ofc_sparse_t*, const char*, ofc_parse_debug_t*, unsigned*),
 	void (*elem_delete)(void*))
 {
 	unsigned orig_count = *elem_count;
@@ -68,32 +68,32 @@ static unsigned parse_list__seperator_optional(
 	return i;
 }
 
-unsigned parse_list(
-	const sparse_t* sparse, const char* ptr,
-	parse_debug_t* debug,
+unsigned ofc_parse_list(
+	const ofc_sparse_t* sparse, const char* ptr,
+	ofc_parse_debug_t* debug,
 	char seperator, unsigned* elem_count, void*** elem,
-	void* (*elem_parse)(const sparse_t*, const char*, parse_debug_t*, unsigned*),
+	void* (*elem_parse)(const ofc_sparse_t*, const char*, ofc_parse_debug_t*, unsigned*),
 	void (*elem_delete)(void*))
 {
-	return parse_list__seperator_optional(
+	return ofc_parse_list__seperator_optional(
 		sparse, ptr, debug, seperator, false,
 		elem_count, elem, elem_parse, elem_delete);
 }
 
-unsigned parse_list_seperator_optional(
-	const sparse_t* sparse, const char* ptr,
-	parse_debug_t* debug,
+unsigned ofc_parse_list_seperator_optional(
+	const ofc_sparse_t* sparse, const char* ptr,
+	ofc_parse_debug_t* debug,
 	char seperator, unsigned* elem_count, void*** elem,
-	void* (*elem_parse)(const sparse_t*, const char*, parse_debug_t*, unsigned*),
+	void* (*elem_parse)(const ofc_sparse_t*, const char*, ofc_parse_debug_t*, unsigned*),
 	void (*elem_delete)(void*))
 {
-	return parse_list__seperator_optional(
+	return ofc_parse_list__seperator_optional(
 		sparse, ptr, debug, seperator, true,
 		elem_count, elem, elem_parse, elem_delete);
 }
 
 
-bool parse_list_copy(
+bool ofc_parse_list_copy(
 	unsigned* dst_count, void*** dst,
 	unsigned  src_count, const void** src,
 	void* (*elem_copy)(const void*),
@@ -128,7 +128,7 @@ bool parse_list_copy(
 	return true;
 }
 
-void parse_list_delete(
+void ofc_parse_list_delete(
 	unsigned elem_count, void** elem,
 	void (*elem_delete)(void*))
 {
@@ -142,10 +142,10 @@ void parse_list_delete(
 }
 
 
-bool parse_list_print(
-	colstr_t* cs,
+bool ofc_parse_list_print(
+	ofc_colstr_t* cs,
 	unsigned elem_count, const void** elem,
-	bool (*elem_print)(colstr_t*, const void*))
+	bool (*elem_print)(ofc_colstr_t*, const void*))
 {
 	if (!elem || !elem_print)
 		return false;
@@ -153,7 +153,7 @@ bool parse_list_print(
 	unsigned i;
 	for (i = 0; i < elem_count; i++)
 	{
-		if ((i > 0) && !colstr_atomic_writef(cs, ", "))
+		if ((i > 0) && !ofc_colstr_atomic_writef(cs, ", "))
 			return false;
 
 		if (!elem_print(cs, elem[i]))

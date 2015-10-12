@@ -9,35 +9,35 @@ typedef struct
 	const char* ptr;
 	unsigned    len;
 	unsigned    off;
-} sparse_entry_t;
+} ofc_sparse_entry_t;
 
-struct sparse_s
+struct ofc_sparse_s
 {
-	file_t*   file;
-	sparse_t* parent;
+	ofc_file_t*   file;
+	ofc_sparse_t* parent;
 
 	unsigned len, count, max_count;
-	sparse_entry_t* entry;
+	ofc_sparse_entry_t* entry;
 
 	char* strz;
 
-	label_table_t* labels;
+	ofc_label_table_t* labels;
 
 	unsigned ref;
 };
 
 
 
-sparse_t* sparse__create(
-	file_t* file, sparse_t* parent)
+ofc_sparse_t* ofc_sparse__create(
+	ofc_file_t* file, ofc_sparse_t* parent)
 {
-	sparse_t* sparse
-		= (sparse_t*)malloc(
-			sizeof(sparse_t));
+	ofc_sparse_t* sparse
+		= (ofc_sparse_t*)malloc(
+			sizeof(ofc_sparse_t));
 	if (!sparse) return NULL;
 
 	sparse->labels
-		= label_table_create();
+		= ofc_label_table_create();
 	if (!sparse->labels)
 	{
 		free(sparse);
@@ -59,36 +59,36 @@ sparse_t* sparse__create(
 	return sparse;
 }
 
-sparse_t* sparse_create_file(file_t* file)
+ofc_sparse_t* ofc_sparse_create_file(ofc_file_t* file)
 {
-	if (!file_reference(file))
+	if (!ofc_file_reference(file))
 		return NULL;
-	sparse_t* sparse
-		= sparse__create(file, NULL);
-	if (!sparse) file_delete(file);
+	ofc_sparse_t* sparse
+		= ofc_sparse__create(file, NULL);
+	if (!sparse) ofc_file_delete(file);
 	return sparse;
 }
 
-sparse_t* sparse_create_child(sparse_t* parent)
+ofc_sparse_t* ofc_sparse_create_child(ofc_sparse_t* parent)
 {
-	if (!sparse_reference(parent))
+	if (!ofc_sparse_reference(parent))
 		return NULL;
 
-	sparse_t* sparse
-		= sparse__create(NULL, parent);
+	ofc_sparse_t* sparse
+		= ofc_sparse__create(NULL, parent);
 	if (!sparse)
 	{
-		sparse_delete(parent);
+		ofc_sparse_delete(parent);
 		return NULL;
 	}
 
 	/* Lock parent so it can't be modified. */
-	sparse_lock(parent);
+	ofc_sparse_lock(parent);
 
 	return sparse;
 }
 
-bool sparse_reference(sparse_t* sparse)
+bool ofc_sparse_reference(ofc_sparse_t* sparse)
 {
 	if (!sparse)
 		return false;
@@ -100,7 +100,7 @@ bool sparse_reference(sparse_t* sparse)
 	return true;
 }
 
-void sparse_delete(sparse_t* sparse)
+void ofc_sparse_delete(ofc_sparse_t* sparse)
 {
 	if (!sparse)
 		return;
@@ -111,10 +111,10 @@ void sparse_delete(sparse_t* sparse)
 		return;
 	}
 
-	sparse_delete(sparse->parent);
-	file_delete(sparse->file);
+	ofc_sparse_delete(sparse->parent);
+	ofc_file_delete(sparse->file);
 
-	label_table_delete(sparse->labels);
+	ofc_label_table_delete(sparse->labels);
 
 	free(sparse->strz);
 	free(sparse->entry);
@@ -123,15 +123,15 @@ void sparse_delete(sparse_t* sparse)
 
 
 
-unsigned sparse_len(const sparse_t* sparse)
+unsigned ofc_sparse_len(const ofc_sparse_t* sparse)
 {
 	return (sparse ? sparse->len : 0);
 }
 
 
 
-bool sparse_append_strn(
-	sparse_t* sparse,
+bool ofc_sparse_append_strn(
+	ofc_sparse_t* sparse,
 	const char* src, unsigned len)
 {
 	if (!sparse)
@@ -150,8 +150,8 @@ bool sparse_append_strn(
 		unsigned ncount = (sparse->max_count << 1);
 		if (ncount == 0) ncount = 16;
 
-		sparse_entry_t* nentry = (sparse_entry_t*)realloc(sparse->entry,
-				(sizeof(sparse_entry_t) * ncount));
+		ofc_sparse_entry_t* nentry = (ofc_sparse_entry_t*)realloc(sparse->entry,
+				(sizeof(ofc_sparse_entry_t) * ncount));
 		if (!nentry) return false;
 		sparse->entry = nentry;
 		sparse->max_count = ncount;
@@ -166,7 +166,7 @@ bool sparse_append_strn(
 	return true;
 }
 
-void sparse_lock(sparse_t* sparse)
+void ofc_sparse_lock(ofc_sparse_t* sparse)
 {
 	if (!sparse || sparse->strz)
 		return;
@@ -180,16 +180,16 @@ void sparse_lock(sparse_t* sparse)
 	sparse->strz[j] = '\0';
 }
 
-const char* sparse_strz(const sparse_t* sparse)
+const char* ofc_sparse_strz(const ofc_sparse_t* sparse)
 {
 	return (sparse ? sparse->strz : NULL);
 }
 
 
-static bool sparse__ptr(
-	const sparse_t* sparse, const char* ptr,
-	sparse_entry_t* entry, unsigned* offset,
-	sparse_entry_t** prev)
+static bool ofc_sparse__ptr(
+	const ofc_sparse_t* sparse, const char* ptr,
+	ofc_sparse_entry_t* entry, unsigned* offset,
+	ofc_sparse_entry_t** prev)
 {
 	if (!sparse || !sparse->strz || !ptr)
 		return false;
@@ -223,8 +223,8 @@ static bool sparse__ptr(
 	return true;
 }
 
-static const file_t* sparse__file(
-	const sparse_t* sparse)
+static const ofc_file_t* ofc_sparse__file(
+	const ofc_sparse_t* sparse)
 {
 	if (!sparse)
 		return NULL;
@@ -232,63 +232,63 @@ static const file_t* sparse__file(
 	if (sparse->file)
 		return sparse->file;
 
-	return sparse__file(
+	return ofc_sparse__file(
 		sparse->parent);
 }
 
 
-bool sparse_label_add(
-	sparse_t* sparse, unsigned number)
+bool ofc_sparse_label_add(
+	ofc_sparse_t* sparse, unsigned number)
 {
 	if (!sparse || sparse->strz)
 		return false;
-	return label_table_add(
+	return ofc_label_table_add(
 		sparse->labels, sparse->len, number);
 }
 
-bool sparse_label_find(
-	const sparse_t* sparse, const char* ptr, unsigned* number)
+bool ofc_sparse_label_find(
+	const ofc_sparse_t* sparse, const char* ptr, unsigned* number)
 {
 	if (!sparse || !sparse->strz)
 		return false;
 
 	unsigned offset = ((uintptr_t)ptr - (uintptr_t)sparse->strz);
 
-	if (label_table_find(
+	if (ofc_label_table_find(
 		sparse->labels, offset, number))
 		return true;
 
 	if (!sparse->parent)
 		return false;
 
-	sparse_entry_t entry;
-	sparse_entry_t* prev = NULL;
+	ofc_sparse_entry_t entry;
+	ofc_sparse_entry_t* prev = NULL;
 
-	if (!sparse__ptr(sparse, ptr,
+	if (!ofc_sparse__ptr(sparse, ptr,
 		&entry, &offset, &prev))
 		return false;
 
 	/* If we're at an the start of an entry, ensure there's no label attached
 	   to the end of the previous entry. */
-	if (prev && sparse_label_find(
+	if (prev && ofc_sparse_label_find(
 		sparse->parent, &prev->ptr[prev->len], number))
 		return true;
 
-	return sparse_label_find(
+	return ofc_sparse_label_find(
 		sparse->parent, &entry.ptr[offset], number);
 }
 
 
-bool sparse_sequential(
-	const sparse_t* sparse, const char* ptr, unsigned size)
+bool ofc_sparse_sequential(
+	const ofc_sparse_t* sparse, const char* ptr, unsigned size)
 {
 	if (!sparse || !ptr)
 		return false;
 
-	sparse_entry_t entry;
+	ofc_sparse_entry_t entry;
 	unsigned offset;
 
-	if (!sparse__ptr(
+	if (!ofc_sparse__ptr(
 		sparse, ptr,
 		&entry, &offset, NULL))
 		return NULL;
@@ -296,16 +296,16 @@ bool sparse_sequential(
 	return ((offset + size) <= entry.len);
 }
 
-const char* sparse_parent_pointer(
-	const sparse_t* sparse, const char* ptr)
+const char* ofc_sparse_parent_pointer(
+	const ofc_sparse_t* sparse, const char* ptr)
 {
 	if (!sparse || !ptr)
 		return NULL;
 
-	sparse_entry_t entry;
+	ofc_sparse_entry_t entry;
 	unsigned offset;
 
-	if (!sparse__ptr(
+	if (!ofc_sparse__ptr(
 		sparse, ptr,
 		&entry, &offset, NULL))
 		return NULL;
@@ -313,13 +313,13 @@ const char* sparse_parent_pointer(
 	return &entry.ptr[offset];
 }
 
-const char* sparse_file_pointer(
-	const sparse_t* sparse, const char* ptr)
+const char* ofc_sparse_file_pointer(
+	const ofc_sparse_t* sparse, const char* ptr)
 {
-	sparse_entry_t entry;
+	ofc_sparse_entry_t entry;
 	unsigned offset;
 
-	if (!sparse__ptr(
+	if (!ofc_sparse__ptr(
 		sparse, ptr,
 		&entry, &offset, NULL))
 		return NULL;
@@ -327,64 +327,64 @@ const char* sparse_file_pointer(
 	const char* pptr = &entry.ptr[offset];
 
 	if (sparse->parent)
-		return sparse_file_pointer(sparse->parent, pptr);
+		return ofc_sparse_file_pointer(sparse->parent, pptr);
 
 	/* A sparse with no file or parent, can't have a file pointer. */
 	return (sparse->file ? pptr : NULL);
 }
 
 
-lang_opts_t sparse_lang_opts(const sparse_t* sparse)
+ofc_lang_opts_t ofc_sparse_lang_opts(const ofc_sparse_t* sparse)
 {
 	if (!sparse)
-		return LANG_OPTS_F77;
+		return OFC_LANG_OPTS_F77;
 	if (sparse->file)
-		return file_get_lang_opts(sparse->file);
-	return sparse_lang_opts(sparse->parent);
+		return ofc_file_get_lang_opts(sparse->file);
+	return ofc_sparse_lang_opts(sparse->parent);
 }
 
 
-const char* sparse_get_include(
-	const sparse_t* sparse)
+const char* ofc_sparse_get_include(
+	const ofc_sparse_t* sparse)
 {
-	return file_get_include(
-		sparse__file(sparse));
+	return ofc_file_get_include(
+		ofc_sparse__file(sparse));
 }
 
-char* sparse_include_path(
-	const sparse_t* sparse, const char* path)
+char* ofc_sparse_include_path(
+	const ofc_sparse_t* sparse, const char* path)
 {
 	if (!sparse)
 		return strdup(path);
 
-	return file_include_path(
-		sparse__file(sparse), path);
+	return ofc_file_include_path(
+		ofc_sparse__file(sparse), path);
 }
 
 
 
-void sparse_error(
-	const sparse_t* sparse, const char* ptr,
+void ofc_sparse_error(
+	const ofc_sparse_t* sparse, const char* ptr,
 	const char* format, ...)
 {
-	const file_t* file = sparse__file(sparse);
-	const char*   fptr = sparse_file_pointer(sparse, ptr);
+	const ofc_file_t* file = ofc_sparse__file(sparse);
+	const char*   fptr = ofc_sparse_file_pointer(sparse, ptr);
 
 	va_list args;
 	va_start(args, format);
-	file_error_va(file, fptr, format, args);
+	ofc_file_error_va(file, fptr, format, args);
 	va_end(args);
 }
 
-void sparse_warning(
-	const sparse_t* sparse, const char* ptr,
+void ofc_sparse_warning(
+	const ofc_sparse_t* sparse, const char* ptr,
 	const char* format, ...)
 {
-	const file_t* file = sparse__file(sparse);
-	const char*   fptr = sparse_file_pointer(sparse, ptr);
+	const ofc_file_t* file = ofc_sparse__file(sparse);
+	const char*   fptr = ofc_sparse_file_pointer(sparse, ptr);
 
 	va_list args;
 	va_start(args, format);
-	file_warning_va(file, fptr, format, args);
+	ofc_file_warning_va(file, fptr, format, args);
 	va_end(args);
 }

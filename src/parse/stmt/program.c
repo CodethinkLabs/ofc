@@ -1,110 +1,110 @@
 #include "../parse.h"
 
 
-unsigned parse_stmt_program__body(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_keyword_e keyword,
-	parse_stmt_t* stmt)
+unsigned ofc_parse_stmt_program__body(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_keyword_e keyword,
+	ofc_parse_stmt_t* stmt)
 {
 	unsigned i = 0;
-	stmt->program.body = parse_stmt_list(src, ptr, debug, &i);
+	stmt->program.body = ofc_parse_stmt_list(src, ptr, debug, &i);
 
-	unsigned len = parse_keyword_end_named(
+	unsigned len = ofc_parse_keyword_end_named(
 		src, &ptr[i], debug,
-		PARSE_KEYWORD_PROGRAM,
+		OFC_PARSE_KEYWORD_PROGRAM,
 		&stmt->program.name);
 	if (len == 0)
 	{
-		sparse_error(src, &ptr[i],
+		ofc_sparse_error(src, &ptr[i],
 			"Invalid statement in %s body",
-			parse_keyword_name(keyword));
-		parse_stmt_list_delete(stmt->program.body);
+			ofc_parse_keyword_name(keyword));
+		ofc_parse_stmt_list_delete(stmt->program.body);
 		return 0;
 	}
 	i += len;
 
 	if (!stmt->program.body)
 	{
-		parse_debug_warning(debug, src, &ptr[i],
-			"Empty %s body", parse_keyword_name(keyword));
+		ofc_parse_debug_warning(debug, src, &ptr[i],
+			"Empty %s body", ofc_parse_keyword_name(keyword));
 	}
 
 	return i;
 }
 
 /* This is hacky, but it means we can suppress redeclarations of the same program. */
-static str_ref_t parse_stmt_program__current = STR_REF_EMPTY;
+static ofc_str_ref_t ofc_parse_stmt_program__current = OFC_STR_REF_EMPTY;
 
-unsigned parse_stmt_program(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_stmt_t* stmt)
+unsigned ofc_parse_stmt_program(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_stmt_t* stmt)
 {
-	unsigned dpos = parse_debug_position(debug);
+	unsigned dpos = ofc_parse_debug_position(debug);
 
-	stmt->program.name = STR_REF_EMPTY;
-	unsigned i = parse_keyword_named(
+	stmt->program.name = OFC_STR_REF_EMPTY;
+	unsigned i = ofc_parse_keyword_named(
 		src, ptr, debug,
-		PARSE_KEYWORD_PROGRAM,
+		OFC_PARSE_KEYWORD_PROGRAM,
 		&stmt->program.name);
 	if (i == 0) return 0;
 
-	if (!str_ref_empty(stmt->program.name))
+	if (!ofc_str_ref_empty(stmt->program.name))
 	{
-		lang_opts_t opts = sparse_lang_opts(src);
+		ofc_lang_opts_t opts = ofc_sparse_lang_opts(src);
 		if (opts.case_sensitive
-			? str_ref_equal(stmt->program.name, parse_stmt_program__current)
-			: str_ref_equal_ci(stmt->program.name, parse_stmt_program__current))
+			? ofc_str_ref_equal(stmt->program.name, ofc_parse_stmt_program__current)
+			: ofc_str_ref_equal_ci(stmt->program.name, ofc_parse_stmt_program__current))
 		{
-			stmt->type = PARSE_STMT_EMPTY;
+			stmt->type = OFC_PARSE_STMT_EMPTY;
 			return i;
 		}
 	}
 
 	unsigned len;
-	if (!is_end_statement(&ptr[i], &len))
+	if (!ofc_is_end_statement(&ptr[i], &len))
 	{
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	i += len;
 
-	str_ref_t prev_program_name = parse_stmt_program__current;
-	parse_stmt_program__current = stmt->program.name;
+	ofc_str_ref_t prev_program_name = ofc_parse_stmt_program__current;
+	ofc_parse_stmt_program__current = stmt->program.name;
 
-	len = parse_stmt_program__body(
+	len = ofc_parse_stmt_program__body(
 		src, &ptr[i], debug,
-		PARSE_KEYWORD_PROGRAM, stmt);
+		OFC_PARSE_KEYWORD_PROGRAM, stmt);
 	if (len == 0)
 	{
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	i += len;
 
-	parse_stmt_program__current = prev_program_name;
+	ofc_parse_stmt_program__current = prev_program_name;
 
 	stmt->program.type = NULL;
 	stmt->program.args = NULL;
 
-	stmt->type = PARSE_STMT_PROGRAM;
+	stmt->type = OFC_PARSE_STMT_PROGRAM;
 
 	return i;
 }
 
 
-unsigned parse_stmt_subroutine(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_stmt_t* stmt)
+unsigned ofc_parse_stmt_subroutine(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_stmt_t* stmt)
 {
-	unsigned dpos = parse_debug_position(debug);
+	unsigned dpos = ofc_parse_debug_position(debug);
 
-	stmt->program.name = STR_REF_EMPTY;
-	unsigned i = parse_keyword_named(
+	stmt->program.name = OFC_STR_REF_EMPTY;
+	unsigned i = ofc_parse_keyword_named(
 		src, ptr, debug,
-		PARSE_KEYWORD_SUBROUTINE,
+		OFC_PARSE_KEYWORD_SUBROUTINE,
 		&stmt->program.name);
 	if (i == 0) return 0;
 
@@ -114,64 +114,64 @@ unsigned parse_stmt_subroutine(
 		i += 1;
 
 		unsigned len;
-		stmt->program.args = parse_call_arg_list(
+		stmt->program.args = ofc_parse_call_arg_list(
 			src, &ptr[i], debug, &len);
 		if (stmt->program.args) i += len;
 
 		if (ptr[i++] != ')')
 		{
-			parse_call_arg_list_delete(stmt->program.args);
-			parse_debug_rewind(debug, dpos);
+			ofc_parse_call_arg_list_delete(stmt->program.args);
+			ofc_parse_debug_rewind(debug, dpos);
 			return 0;
 		}
 	}
 
 	unsigned len;
-	if (!is_end_statement(&ptr[i], &len))
+	if (!ofc_is_end_statement(&ptr[i], &len))
 	{
-		parse_call_arg_list_delete(stmt->program.args);
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_call_arg_list_delete(stmt->program.args);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	i += len;
 
-	len = parse_stmt_program__body(
+	len = ofc_parse_stmt_program__body(
 		src, &ptr[i], debug,
-		PARSE_KEYWORD_SUBROUTINE, stmt);
+		OFC_PARSE_KEYWORD_SUBROUTINE, stmt);
 	if (len == 0)
 	{
-		parse_call_arg_list_delete(stmt->program.args);
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_call_arg_list_delete(stmt->program.args);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	i += len;
 
 	stmt->program.type = NULL;
 
-	stmt->type = PARSE_STMT_SUBROUTINE;
+	stmt->type = OFC_PARSE_STMT_SUBROUTINE;
 	return i;
 }
 
 
-unsigned parse_stmt_function(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_stmt_t* stmt)
+unsigned ofc_parse_stmt_function(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_stmt_t* stmt)
 {
-	unsigned dpos = parse_debug_position(debug);
+	unsigned dpos = ofc_parse_debug_position(debug);
 
 	unsigned i = 0;
-	stmt->program.type = parse_type(
+	stmt->program.type = ofc_parse_type(
 		src, ptr, debug, &i);
 
-	stmt->program.name = STR_REF_EMPTY;
-	unsigned len = parse_keyword_named(
-		src, &ptr[i], debug, PARSE_KEYWORD_FUNCTION,
+	stmt->program.name = OFC_STR_REF_EMPTY;
+	unsigned len = ofc_parse_keyword_named(
+		src, &ptr[i], debug, OFC_PARSE_KEYWORD_FUNCTION,
 		&stmt->program.name);
 	if (len == 0)
 	{
-		parse_type_delete(stmt->program.type);
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_type_delete(stmt->program.type);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	i += len;
@@ -182,117 +182,117 @@ unsigned parse_stmt_function(
 		i += 1;
 
 		unsigned len;
-		stmt->program.args = parse_call_arg_list(
+		stmt->program.args = ofc_parse_call_arg_list(
 			src, &ptr[i], debug, &len);
 		if (stmt->program.args) i += len;
 
 		if (ptr[i++] != ')')
 		{
-			parse_call_arg_list_delete(stmt->program.args);
-			parse_debug_rewind(debug, dpos);
+			ofc_parse_call_arg_list_delete(stmt->program.args);
+			ofc_parse_debug_rewind(debug, dpos);
 			return 0;
 		}
 	}
 
-	if (!is_end_statement(&ptr[i], &len))
+	if (!ofc_is_end_statement(&ptr[i], &len))
 	{
-		parse_type_delete(stmt->program.type);
-		parse_call_arg_list_delete(stmt->program.args);
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_type_delete(stmt->program.type);
+		ofc_parse_call_arg_list_delete(stmt->program.args);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	i += len;
 
-	len = parse_stmt_program__body(
+	len = ofc_parse_stmt_program__body(
 		src, &ptr[i], debug,
-		PARSE_KEYWORD_FUNCTION, stmt);
+		OFC_PARSE_KEYWORD_FUNCTION, stmt);
 	if (len == 0)
 	{
-		parse_type_delete(stmt->program.type);
-		parse_call_arg_list_delete(stmt->program.args);
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_type_delete(stmt->program.type);
+		ofc_parse_call_arg_list_delete(stmt->program.args);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	i += len;
 
-	stmt->type = PARSE_STMT_FUNCTION;
+	stmt->type = OFC_PARSE_STMT_FUNCTION;
 	return i;
 }
 
 
 /* This is hacky, but it means we can suppress redeclarations of the same block_data. */
-static str_ref_t parse_stmt_block_data__current = STR_REF_EMPTY;
+static ofc_str_ref_t ofc_parse_stmt_block_data__current = OFC_STR_REF_EMPTY;
 
-unsigned parse_stmt_block_data(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_stmt_t* stmt)
+unsigned ofc_parse_stmt_block_data(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_stmt_t* stmt)
 {
-	unsigned dpos = parse_debug_position(debug);
+	unsigned dpos = ofc_parse_debug_position(debug);
 
-	stmt->program.name = STR_REF_EMPTY;
-	unsigned i = parse_keyword_named(
+	stmt->program.name = OFC_STR_REF_EMPTY;
+	unsigned i = ofc_parse_keyword_named(
 		src, ptr, debug,
-		PARSE_KEYWORD_BLOCK_DATA,
+		OFC_PARSE_KEYWORD_BLOCK_DATA,
 		&stmt->program.name);
 	if (i == 0) return 0;
 
-	if (!str_ref_empty(stmt->program.name))
+	if (!ofc_str_ref_empty(stmt->program.name))
 	{
-		lang_opts_t opts = sparse_lang_opts(src);
+		ofc_lang_opts_t opts = ofc_sparse_lang_opts(src);
 		if (opts.case_sensitive
-			? str_ref_equal(stmt->program.name, parse_stmt_block_data__current)
-			: str_ref_equal_ci(stmt->program.name, parse_stmt_block_data__current))
+			? ofc_str_ref_equal(stmt->program.name, ofc_parse_stmt_block_data__current)
+			: ofc_str_ref_equal_ci(stmt->program.name, ofc_parse_stmt_block_data__current))
 		{
-			stmt->type = PARSE_STMT_EMPTY;
+			stmt->type = OFC_PARSE_STMT_EMPTY;
 			return i;
 		}
 	}
 
 	unsigned len;
-	if (!is_end_statement(&ptr[i], &len))
+	if (!ofc_is_end_statement(&ptr[i], &len))
 	{
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	i += len;
 
-	str_ref_t prev_block_data_name = parse_stmt_block_data__current;
-	parse_stmt_block_data__current = stmt->program.name;
+	ofc_str_ref_t prev_block_data_name = ofc_parse_stmt_block_data__current;
+	ofc_parse_stmt_block_data__current = stmt->program.name;
 
-	len = parse_stmt_program__body(
+	len = ofc_parse_stmt_program__body(
 		src, &ptr[i], debug,
-		PARSE_KEYWORD_BLOCK_DATA, stmt);
+		OFC_PARSE_KEYWORD_BLOCK_DATA, stmt);
 	if (len == 0)
 	{
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	i += len;
 
-	parse_stmt_block_data__current = prev_block_data_name;
+	ofc_parse_stmt_block_data__current = prev_block_data_name;
 
 	stmt->program.type = NULL;
 	stmt->program.args = NULL;
 
-	stmt->type = PARSE_STMT_BLOCK_DATA;
+	stmt->type = OFC_PARSE_STMT_BLOCK_DATA;
 
 	return i;
 }
 
 
 
-bool parse_stmt_program_print(
-	colstr_t* cs, const parse_stmt_t* stmt, unsigned indent)
+bool ofc_parse_stmt_program_print(
+	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt, unsigned indent)
 {
 	if (!stmt) return false;
 
 	switch (stmt->type)
 	{
-		case PARSE_STMT_PROGRAM:
-		case PARSE_STMT_SUBROUTINE:
-		case PARSE_STMT_FUNCTION:
-		case PARSE_STMT_BLOCK_DATA:
+		case OFC_PARSE_STMT_PROGRAM:
+		case OFC_PARSE_STMT_SUBROUTINE:
+		case OFC_PARSE_STMT_FUNCTION:
+		case OFC_PARSE_STMT_BLOCK_DATA:
 			break;
 		default:
 			return false;
@@ -300,8 +300,8 @@ bool parse_stmt_program_print(
 
 	if (stmt->program.type)
 	{
-		if (!parse_type_print(cs, stmt->program.type, false)
-			|| !colstr_atomic_writef(cs, " "))
+		if (!ofc_parse_type_print(cs, stmt->program.type, false)
+			|| !ofc_colstr_atomic_writef(cs, " "))
 			return false;
 	}
 
@@ -309,70 +309,70 @@ bool parse_stmt_program_print(
 	bool has_args = false;
 	switch (stmt->type)
 	{
-		case PARSE_STMT_PROGRAM:
+		case OFC_PARSE_STMT_PROGRAM:
 			kwstr = "PROGRAM";
 			break;
-		case PARSE_STMT_SUBROUTINE:
+		case OFC_PARSE_STMT_SUBROUTINE:
 			kwstr = "SUBROUTINE";
 			has_args = true;
 			break;
-		case PARSE_STMT_FUNCTION:
+		case OFC_PARSE_STMT_FUNCTION:
 			kwstr = "FUNCTION";
 			has_args = true;
 			break;
-		case PARSE_STMT_BLOCK_DATA:
+		case OFC_PARSE_STMT_BLOCK_DATA:
 			kwstr = "BLOCK DATA";
 			break;
 		default:
 			return false;
 	}
 
-	if (!colstr_atomic_writef(cs, "%s", kwstr))
+	if (!ofc_colstr_atomic_writef(cs, "%s", kwstr))
 				return false;
 
-    if (!str_ref_empty(stmt->program.name))
+    if (!ofc_str_ref_empty(stmt->program.name))
 	{
-		if (!colstr_atomic_writef(cs, " ")
-			|| !str_ref_print(cs, stmt->program.name))
+		if (!ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_str_ref_print(cs, stmt->program.name))
 			return false;
 	}
 
 	if (has_args)
 	{
-		if (!colstr_atomic_writef(cs, "("))
+		if (!ofc_colstr_atomic_writef(cs, "("))
 			return false;
 
 		if (stmt->program.args
-			&& !parse_call_arg_list_print(
+			&& !ofc_parse_call_arg_list_print(
 				cs, stmt->program.args))
 			return false;
 
-		if (!colstr_atomic_writef(cs, ")"))
+		if (!ofc_colstr_atomic_writef(cs, ")"))
 			return false;
 	}
 
 	if (stmt->program.body
-		&& !parse_stmt_list_print(
+		&& !ofc_parse_stmt_list_print(
 			cs, stmt->program.body, (indent + 1)))
 		return false;
 
-	if (!colstr_newline(cs, NULL))
+	if (!ofc_colstr_newline(cs, NULL))
 		return false;
 
 	unsigned i;
 	for (i = 0; i < indent; i++)
 	{
-		if (!colstr_atomic_writef(cs, "  "))
+		if (!ofc_colstr_atomic_writef(cs, "  "))
 			return false;
 	}
 
-	if (!colstr_atomic_writef(cs, "END %s", kwstr))
+	if (!ofc_colstr_atomic_writef(cs, "END %s", kwstr))
 		return false;
 
-	if (!str_ref_empty(stmt->program.name))
+	if (!ofc_str_ref_empty(stmt->program.name))
 	{
-		if (!colstr_atomic_writef(cs, " ")
-			|| !str_ref_print(cs, stmt->program.name))
+		if (!ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_str_ref_print(cs, stmt->program.name))
 			return false;
 	}
 

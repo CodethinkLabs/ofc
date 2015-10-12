@@ -1,65 +1,65 @@
-#ifndef __parse_call_arg_h__
-#define __parse_call_arg_h__
+#ifndef __ofc_parse_call_arg_h__
+#define __ofc_parse_call_arg_h__
 
 typedef enum
 {
-	PARSE_CALL_ARG_EXPR,
-	PARSE_CALL_ARG_RETURN,
-	PARSE_CALL_ARG_ASTERISK,
-} parse_call_arg_e;
+	OFC_PARSE_CALL_ARG_EXPR,
+	OFC_PARSE_CALL_ARG_RETURN,
+	OFC_PARSE_CALL_ARG_ASTERISK,
+} ofc_parse_call_arg_e;
 
 typedef struct
 {
-	parse_call_arg_e type;
-	str_ref_t        name;
+	ofc_parse_call_arg_e type;
+	ofc_str_ref_t        name;
 	union
 	{
-		parse_expr_t* expr;
-		parse_label_t label;
+		ofc_parse_expr_t* expr;
+		ofc_parse_label_t label;
 	};
-} parse_call_arg_t;
+} ofc_parse_call_arg_t;
 
 typedef struct
 {
 	unsigned           count;
-	parse_call_arg_t** call_arg;
-} parse_call_arg_list_t;
+	ofc_parse_call_arg_t** call_arg;
+} ofc_parse_call_arg_list_t;
 
 
-parse_call_arg_t* parse_call_arg_force_named(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_parse_call_arg_t* ofc_parse_call_arg_force_named(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len);
-parse_call_arg_t* parse_call_arg_named(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_parse_call_arg_t* ofc_parse_call_arg_named(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len);
-parse_call_arg_t* parse_call_arg(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_parse_call_arg_t* ofc_parse_call_arg(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len);
-void parse_call_arg_delete(
-	parse_call_arg_t* call_arg);
-bool parse_call_arg_print(
-	colstr_t* cs, const parse_call_arg_t* call_arg);
+void ofc_parse_call_arg_delete(
+	ofc_parse_call_arg_t* call_arg);
+bool ofc_parse_call_arg_print(
+	ofc_colstr_t* cs, const ofc_parse_call_arg_t* call_arg);
 
-parse_call_arg_list_t* parse_call_arg_list_force_named(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_parse_call_arg_list_t* ofc_parse_call_arg_list_force_named(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len);
-parse_call_arg_list_t* parse_call_arg_list_named(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_parse_call_arg_list_t* ofc_parse_call_arg_list_named(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len);
-parse_call_arg_list_t* parse_call_arg_list(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_parse_call_arg_list_t* ofc_parse_call_arg_list(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len);
-parse_call_arg_list_t* parse_call_arg_list_wrap(
-	parse_call_arg_t* arg);
-void parse_call_arg_list_delete(
-	parse_call_arg_list_t* call_arg);
-bool parse_call_arg_list_print(
-	colstr_t* cs, const parse_call_arg_list_t* call_arg);
+ofc_parse_call_arg_list_t* ofc_parse_call_arg_list_wrap(
+	ofc_parse_call_arg_t* arg);
+void ofc_parse_call_arg_list_delete(
+	ofc_parse_call_arg_list_t* call_arg);
+bool ofc_parse_call_arg_list_print(
+	ofc_colstr_t* cs, const ofc_parse_call_arg_list_t* call_arg);
 
 #endif

@@ -1,81 +1,81 @@
-#ifndef __parse_expr_h__
-#define __parse_expr_h__
+#ifndef __ofc_parse_expr_h__
+#define __ofc_parse_expr_h__
 
 typedef enum
 {
-	PARSE_EXPR_CONSTANT,
-	PARSE_EXPR_VARIABLE,
-	PARSE_EXPR_BRACKETS,
-	PARSE_EXPR_UNARY,
-	PARSE_EXPR_BINARY,
-} parse_expr_e;
+	OFC_PARSE_EXPR_CONSTANT,
+	OFC_PARSE_EXPR_VARIABLE,
+	OFC_PARSE_EXPR_BRACKETS,
+	OFC_PARSE_EXPR_UNARY,
+	OFC_PARSE_EXPR_BINARY,
+} ofc_parse_expr_e;
 
 
-typedef struct parse_expr_list_s parse_expr_list_t;
+typedef struct ofc_parse_expr_list_s ofc_parse_expr_list_t;
 
-struct parse_expr_s
+struct ofc_parse_expr_s
 {
-	parse_expr_e type;
+	ofc_parse_expr_e type;
 
 	union
 	{
-		parse_literal_t literal;
-		parse_lhs_t*    variable;
+		ofc_parse_literal_t literal;
+		ofc_parse_lhs_t*    variable;
 
 		struct
 		{
-			parse_expr_t* expr;
+			ofc_parse_expr_t* expr;
 		} brackets;
 
 		struct
 		{
-			parse_expr_t*    a;
-			parse_operator_e operator;
+			ofc_parse_expr_t*    a;
+			ofc_parse_operator_e operator;
 		} unary;
 
 		struct
 		{
-			parse_expr_t*    a;
-			parse_expr_t*    b;
-			parse_operator_e operator;
+			ofc_parse_expr_t*    a;
+			ofc_parse_expr_t*    b;
+			ofc_parse_operator_e operator;
 		} binary;
 	};
 };
 
-struct parse_expr_list_s
+struct ofc_parse_expr_list_s
 {
-	unsigned       count;
-	parse_expr_t** expr;
+	unsigned           count;
+	ofc_parse_expr_t** expr;
 };
 
 
-#define PARSE_EXPR_EMPTY (parse_expr_t){ .type = PARSE_EXPR_NONE };
+#define OFC_PARSE_EXPR_EMPTY (ofc_parse_expr_t){ .type = OFC_PARSE_EXPR_NONE };
 
 
 /* Returns a literal unsigned integer wrapped in an expression type. */
-parse_expr_t* parse_expr_integer(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_parse_expr_t* ofc_parse_expr_integer(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len);
 
-parse_expr_t* parse_expr(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_parse_expr_t* ofc_parse_expr(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len);
 
-void parse_expr_delete(
-	parse_expr_t* expr);
-parse_expr_t* parse_expr_copy(
-	const parse_expr_t* expr);
+void ofc_parse_expr_delete(
+	ofc_parse_expr_t* expr);
+ofc_parse_expr_t* ofc_parse_expr_copy(
+	const ofc_parse_expr_t* expr);
 
-bool parse_expr_print(
-	colstr_t* cs, const parse_expr_t* expr);
+bool ofc_parse_expr_print(
+	ofc_colstr_t* cs, const ofc_parse_expr_t* expr);
 
-parse_expr_list_t* parse_expr_list(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_parse_expr_list_t* ofc_parse_expr_list(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len);
-void parse_expr_list_delete(
-	parse_expr_list_t* list);
+void ofc_parse_expr_list_delete(
+	ofc_parse_expr_list_t* list);
 
 #endif

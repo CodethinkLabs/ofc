@@ -1,44 +1,44 @@
-#ifndef __parse_format_h__
-#define __parse_format_h__
+#ifndef __ofc_parse_format_h__
+#define __ofc_parse_format_h__
 
 typedef enum
 {
-	PARSE_FORMAT_DESC_INTEGER,
-	PARSE_FORMAT_DESC_REAL,
-	PARSE_FORMAT_DESC_D,
-	PARSE_FORMAT_DESC_E,
-	PARSE_FORMAT_DESC_G,
-	PARSE_FORMAT_DESC_CHARACTER,
-	PARSE_FORMAT_DESC_LOGICAL,
-	PARSE_FORMAT_DESC_HOLLERITH,
-	PARSE_FORMAT_DESC_S,
-	PARSE_FORMAT_DESC_REAL_SCALE,
-	PARSE_FORMAT_DESC_X,
-	PARSE_FORMAT_DESC_T,
-	PARSE_FORMAT_DESC_SLASH,
-	PARSE_FORMAT_DESC_DOLLAR,
-	PARSE_FORMAT_DESC_BACKSLASH,
-	PARSE_FORMAT_DESC_Q,
-	PARSE_FORMAT_DESC_COLON,
-	PARSE_FORMAT_DESC_BN,
-	PARSE_FORMAT_DESC_BZ,
-	PARSE_FORMAT_DESC_SP,
-	PARSE_FORMAT_DESC_SS,
-	PARSE_FORMAT_DESC_TL,
-	PARSE_FORMAT_DESC_TR,
-	PARSE_FORMAT_DESC_STRING,
-	PARSE_FORMAT_DESC_REPEAT,
-	PARSE_FORMAT_DESC_BINARY,
-	PARSE_FORMAT_DESC_OCTAL,
-	PARSE_FORMAT_DESC_HEX,
-} parse_format_desc_e;
+	OFC_PARSE_FORMAT_DESC_INTEGER,
+	OFC_PARSE_FORMAT_DESC_REAL,
+	OFC_PARSE_FORMAT_DESC_D,
+	OFC_PARSE_FORMAT_DESC_E,
+	OFC_PARSE_FORMAT_DESC_G,
+	OFC_PARSE_FORMAT_DESC_CHARACTER,
+	OFC_PARSE_FORMAT_DESC_LOGICAL,
+	OFC_PARSE_FORMAT_DESC_HOLLERITH,
+	OFC_PARSE_FORMAT_DESC_S,
+	OFC_PARSE_FORMAT_DESC_REAL_SCALE,
+	OFC_PARSE_FORMAT_DESC_X,
+	OFC_PARSE_FORMAT_DESC_T,
+	OFC_PARSE_FORMAT_DESC_SLASH,
+	OFC_PARSE_FORMAT_DESC_DOLLAR,
+	OFC_PARSE_FORMAT_DESC_BACKSLASH,
+	OFC_PARSE_FORMAT_DESC_Q,
+	OFC_PARSE_FORMAT_DESC_COLON,
+	OFC_PARSE_FORMAT_DESC_BN,
+	OFC_PARSE_FORMAT_DESC_BZ,
+	OFC_PARSE_FORMAT_DESC_SP,
+	OFC_PARSE_FORMAT_DESC_SS,
+	OFC_PARSE_FORMAT_DESC_TL,
+	OFC_PARSE_FORMAT_DESC_TR,
+	OFC_PARSE_FORMAT_DESC_STRING,
+	OFC_PARSE_FORMAT_DESC_REPEAT,
+	OFC_PARSE_FORMAT_DESC_BINARY,
+	OFC_PARSE_FORMAT_DESC_OCTAL,
+	OFC_PARSE_FORMAT_DESC_HEX,
+} ofc_parse_format_desc_e;
 
-typedef struct parse_format_desc_s parse_format_desc_t;
-typedef struct parse_format_desc_list_s parse_format_desc_list_t;
+typedef struct ofc_parse_format_desc_s ofc_parse_format_desc_t;
+typedef struct ofc_parse_format_desc_list_s ofc_parse_format_desc_list_t;
 
-struct parse_format_desc_s
+struct ofc_parse_format_desc_s
 {
-	parse_format_desc_e type;
+	ofc_parse_format_desc_e type;
 
 	bool neg;
 	unsigned n;
@@ -49,36 +49,36 @@ struct parse_format_desc_s
 			unsigned w, d, e;
 		};
 
-		string_t* string;
+		ofc_string_t* string;
 
-		parse_format_desc_list_t* repeat;
+		ofc_parse_format_desc_list_t* repeat;
 	};
 };
 
-struct parse_format_desc_list_s
+struct ofc_parse_format_desc_list_s
 {
-	unsigned              count;
-	parse_format_desc_t** desc;
+	unsigned                  count;
+	ofc_parse_format_desc_t** desc;
 };
 
 
-parse_format_desc_t* parse_format_desc(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_parse_format_desc_t* ofc_parse_format_desc(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len);
-void parse_format_desc_delete(
-	parse_format_desc_t* desc);
-bool parse_format_desc_print(
-	colstr_t* cs, const parse_format_desc_t* desc);
+void ofc_parse_format_desc_delete(
+	ofc_parse_format_desc_t* desc);
+bool ofc_parse_format_desc_print(
+	ofc_colstr_t* cs, const ofc_parse_format_desc_t* desc);
 
 
-parse_format_desc_list_t* parse_format_desc_list(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_parse_format_desc_list_t* ofc_parse_format_desc_list(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len);
-void parse_format_desc_list_delete(
-	parse_format_desc_list_t* list);
-bool parse_format_desc_list_print(
-	colstr_t* cs, const parse_format_desc_list_t* list);
+void ofc_parse_format_desc_list_delete(
+	ofc_parse_format_desc_list_t* list);
+bool ofc_parse_format_desc_list_print(
+	ofc_colstr_t* cs, const ofc_parse_format_desc_list_t* list);
 
 #endif

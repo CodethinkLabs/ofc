@@ -1,39 +1,39 @@
 #include "../parse.h"
 
 
-unsigned parse_stmt_save(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
-	parse_stmt_t* stmt)
+unsigned ofc_parse_stmt_save(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_stmt_t* stmt)
 {
-	unsigned dpos = parse_debug_position(debug);
+	unsigned dpos = ofc_parse_debug_position(debug);
 
-	unsigned i = parse_keyword(
+	unsigned i = ofc_parse_keyword(
 		src, ptr, debug,
-		PARSE_KEYWORD_SAVE);
+		OFC_PARSE_KEYWORD_SAVE);
 	if (i == 0) return 0;
 
 	unsigned l;
-	stmt->save.list = parse_save_list(
+	stmt->save.list = ofc_parse_save_list(
 		src, &ptr[i], debug, &l);
 	if (!stmt->save.list)
 	{
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	i += l;
 
-	stmt->type = PARSE_STMT_SAVE;
+	stmt->type = OFC_PARSE_STMT_SAVE;
 	return i;
 }
 
-bool parse_stmt_save_print(
-	colstr_t* cs, const parse_stmt_t* stmt)
+bool ofc_parse_stmt_save_print(
+	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt)
 {
 	if (!stmt)
 		return false;
 
-	return (colstr_atomic_writef(cs, "SAVE ")
-		&& parse_save_list_print(
+	return (ofc_colstr_atomic_writef(cs, "SAVE ")
+		&& ofc_parse_save_list_print(
 			cs, stmt->save.list));
 }

@@ -1,36 +1,36 @@
-#ifndef __colstr_h__
-#define __colstr_h__
+#ifndef __ofc_colstr_h__
+#define __ofc_colstr_h__
 
 #include <stdbool.h>
 
-typedef struct colstr_s colstr_t;
+typedef struct ofc_colstr_s ofc_colstr_t;
 
-colstr_t* colstr_create(
+ofc_colstr_t* ofc_colstr_create(
 	unsigned cols, unsigned ext);
-void colstr_delete(colstr_t* cstr);
+void ofc_colstr_delete(ofc_colstr_t* cstr);
 
-bool colstr_newline(
-	colstr_t* cstr, unsigned* label);
+bool ofc_colstr_newline(
+	ofc_colstr_t* cstr, unsigned* label);
 
 #include <stdarg.h>
 
-bool colstr_write_escaped(
-	colstr_t* cstr, const char* base, unsigned size);
+bool ofc_colstr_write_escaped(
+	ofc_colstr_t* cstr, const char* base, unsigned size);
 
-bool colstr_write(
-	colstr_t* cstr, const char* base, unsigned size);
+bool ofc_colstr_write(
+	ofc_colstr_t* cstr, const char* base, unsigned size);
 
-bool colstr_writef(
-	colstr_t* cstr,
+bool ofc_colstr_writef(
+	ofc_colstr_t* cstr,
 	const char* format, ...);
 
-bool colstr_atomic_write(
-	colstr_t* cstr, const char* base, unsigned size);
+bool ofc_colstr_atomic_write(
+	ofc_colstr_t* cstr, const char* base, unsigned size);
 
-bool colstr_atomic_writef(
-	colstr_t* cstr,
+bool ofc_colstr_atomic_writef(
+	ofc_colstr_t* cstr,
 	const char* format, ...);
 
-bool colstr_fdprint(colstr_t* cstr, int fd);
+bool ofc_colstr_fdprint(ofc_colstr_t* cstr, int fd);
 
 #endif

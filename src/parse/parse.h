@@ -1,5 +1,5 @@
-#ifndef __parse_h__
-#define __parse_h__
+#ifndef __ofc_parse_h__
+#define __ofc_parse_h__
 
 #include "../sparse.h"
 #include "../str_ref.h"
@@ -9,10 +9,10 @@
 
 #include "debug.h"
 
-typedef struct parse_lhs_s parse_lhs_t;
-typedef struct parse_expr_s parse_expr_t;
-typedef struct parse_stmt_s parse_stmt_t;
-typedef struct parse_implicit_do_s parse_implicit_do_t;
+typedef struct ofc_parse_lhs_s ofc_parse_lhs_t;
+typedef struct ofc_parse_expr_s ofc_parse_expr_t;
+typedef struct ofc_parse_stmt_s ofc_parse_stmt_t;
+typedef struct ofc_parse_implicit_do_s ofc_parse_implicit_do_t;
 
 #include "list.h"
 #include "keyword.h"

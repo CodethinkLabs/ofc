@@ -8,18 +8,18 @@
 #include <sys/stat.h>
 
 
-struct file_s
+struct ofc_file_s
 {
-	char*       path;
-	char*       include;
-	char*       strz;
-	lang_opts_t opts;
-	unsigned    size;
-	unsigned    ref;
+	char*           path;
+	char*           include;
+	char*           strz;
+	ofc_lang_opts_t opts;
+	unsigned        size;
+	unsigned        ref;
 };
 
 
-static char* file__read(const char* path, unsigned* size)
+static char* ofc_file__read(const char* path, unsigned* size)
 {
 	int fd = open(path, O_RDONLY);
 	if (fd < 0 ) return NULL;
@@ -53,13 +53,13 @@ static char* file__read(const char* path, unsigned* size)
 	return buff;
 }
 
-file_t* file_create(const char* path, lang_opts_t opts)
+ofc_file_t* ofc_file_create(const char* path, ofc_lang_opts_t opts)
 {
-	file_t* file = (file_t*)malloc(sizeof(file_t));
+	ofc_file_t* file = (ofc_file_t*)malloc(sizeof(ofc_file_t));
 	if (!file) return NULL;
 
 	file->path = strdup(path);
-	file->strz = file__read(path, &file->size);
+	file->strz = ofc_file__read(path, &file->size);
 	file->opts = opts;
 
 	file->include = NULL;
@@ -68,31 +68,31 @@ file_t* file_create(const char* path, lang_opts_t opts)
 
 	if (!file->path || !file->strz)
 	{
-		file_delete(file);
+		ofc_file_delete(file);
 		return NULL;
 	}
 
 	return file;
 }
 
-file_t* file_create_include(
-	const char* path, lang_opts_t opts, const char* include)
+ofc_file_t* ofc_file_create_include(
+	const char* path, ofc_lang_opts_t opts, const char* include)
 {
-	file_t* file = file_create(path, opts);
+	ofc_file_t* file = ofc_file_create(path, opts);
 	if (!include) return file;
 	if (!file) return NULL;
 
 	file->include = strdup(include);
 	if (!file->include)
 	{
-		file_delete(file);
+		ofc_file_delete(file);
 		return NULL;
 	}
 
 	return file;
 }
 
-bool file_reference(file_t* file)
+bool ofc_file_reference(ofc_file_t* file)
 {
 	if (!file)
 		return false;
@@ -104,7 +104,7 @@ bool file_reference(file_t* file)
 	return true;
 }
 
-void file_delete(file_t* file)
+void ofc_file_delete(ofc_file_t* file)
 {
 	if (!file)
 		return;
@@ -123,30 +123,30 @@ void file_delete(file_t* file)
 
 
 
-const char* file_get_path(const file_t* file)
+const char* ofc_file_get_path(const ofc_file_t* file)
 {
 	return (file ? file->path : NULL);
 }
 
-const char* file_get_include(const file_t* file)
+const char* ofc_file_get_include(const ofc_file_t* file)
 {
 	if (!file)
 		return NULL;
 	return (file->include ? file->include : file->path);
 }
 
-const char* file_get_strz(const file_t* file)
+const char* ofc_file_get_strz(const ofc_file_t* file)
 {
 	return (file ? file->strz : NULL);
 }
 
-lang_opts_t file_get_lang_opts(const file_t* file)
+ofc_lang_opts_t ofc_file_get_lang_opts(const ofc_file_t* file)
 {
-	return (file ? file->opts : LANG_OPTS_F77);
+	return (file ? file->opts : OFC_LANG_OPTS_F77);
 }
 
 
-static char* file__include_path(
+static char* ofc_file__include_path(
 	const char* file, const char* path)
 {
 	if (!file)
@@ -175,24 +175,24 @@ static char* file__include_path(
 	return rpath;
 }
 
-char* file_include_path(
-	const file_t* file, const char* path)
+char* ofc_file_include_path(
+	const ofc_file_t* file, const char* path)
 {
 	if (!file)
 		return strdup(path);
 
 	if (file->include)
-		return file__include_path(
+		return ofc_file__include_path(
 			file->include, path);
 
-	return file__include_path(
+	return ofc_file__include_path(
 		file->path, path);
 }
 
 
 
-bool file_get_position(
-	const file_t* file, const char* ptr,
+bool ofc_file_get_position(
+	const ofc_file_t* file, const char* ptr,
 	unsigned* row, unsigned* col)
 {
 	if (!file || !file->strz || !ptr)
@@ -226,14 +226,14 @@ bool file_get_position(
 
 
 
-static void file__debug_va(
-	const file_t* file, const char* ptr,
+static void ofc_file__debug_va(
+	const ofc_file_t* file, const char* ptr,
 	const char* type, const char* format, va_list args)
 {
 	fprintf(stderr, "%s:", type);
 
 	unsigned row, col;
-	if (file_get_position(
+	if (ofc_file_get_position(
 		file, ptr, &row, &col))
 		fprintf(stderr, "%s:%u,%u:",
 			file->path, (row + 1), col);
@@ -243,40 +243,40 @@ static void file__debug_va(
 	fprintf(stderr, "\n");
 }
 
-void file_error_va(
-	const file_t* file, const char* ptr,
+void ofc_file_error_va(
+	const ofc_file_t* file, const char* ptr,
 	const char* format, va_list args)
 {
-	file__debug_va(
+	ofc_file__debug_va(
 		file, ptr, "Error", format, args);
 }
 
-void file_warning_va(
-	const file_t* file, const char* ptr,
+void ofc_file_warning_va(
+	const ofc_file_t* file, const char* ptr,
 	const char* format, va_list args)
 {
-	file__debug_va(
+	ofc_file__debug_va(
 		file, ptr, "Warning", format, args);
 }
 
 
 
-void file_error(
-	const file_t* file, const char* ptr,
+void ofc_file_error(
+	const ofc_file_t* file, const char* ptr,
 	const char* format, ...)
 {
 	va_list args;
 	va_start(args, format);
-	file_warning_va(file, ptr, format, args);
+	ofc_file_warning_va(file, ptr, format, args);
 	va_end(args);
 }
 
-void file_warning(
-	const file_t* file, const char* ptr,
+void ofc_file_warning(
+	const ofc_file_t* file, const char* ptr,
 	const char* format, ...)
 {
 	va_list args;
 	va_start(args, format);
-	file_error_va(file, ptr, format, args);
+	ofc_file_error_va(file, ptr, format, args);
 	va_end(args);
 }

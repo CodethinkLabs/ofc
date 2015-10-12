@@ -1,4 +1,4 @@
-FRONTEND = unfortranizer
+FRONTEND = ofc
 
 BASE = src/
 

@@ -1,23 +1,23 @@
 #include "parse.h"
 
 
-static parse_pointer_t* parse_pointer(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+static ofc_parse_pointer_t* ofc_parse_pointer(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len)
 {
 	unsigned i = 0;
 	if (ptr[i++] != '(')
 		return NULL;
 
-	parse_pointer_t* pointer
-		= (parse_pointer_t*)malloc(
-			sizeof(parse_pointer_t));
+	ofc_parse_pointer_t* pointer
+		= (ofc_parse_pointer_t*)malloc(
+			sizeof(ofc_parse_pointer_t));
 	if (!pointer) return NULL;
 
-	unsigned dpos = parse_debug_position(debug);
+	unsigned dpos = ofc_parse_debug_position(debug);
 
-	unsigned l = parse_name(
+	unsigned l = ofc_parse_name(
 		src, &ptr[i], debug, &pointer->name);
 	if (l == 0)
 	{
@@ -29,16 +29,16 @@ static parse_pointer_t* parse_pointer(
 	if (ptr[i++] != ',')
 	{
 		free(pointer);
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_debug_rewind(debug, dpos);
 		return NULL;
 	}
 
-	l = parse_name(
+	l = ofc_parse_name(
 		src, &ptr[i], debug, &pointer->target);
 	if (l == 0)
 	{
 		free(pointer);
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_debug_rewind(debug, dpos);
 		return NULL;
 	}
 	i += l;
@@ -46,7 +46,7 @@ static parse_pointer_t* parse_pointer(
 	if (ptr[i++] != ')')
 	{
 		free(pointer);
-		parse_debug_rewind(debug, dpos);
+		ofc_parse_debug_rewind(debug, dpos);
 		return NULL;
 	}
 
@@ -54,37 +54,37 @@ static parse_pointer_t* parse_pointer(
 	return pointer;
 }
 
-bool parse_pointer_print(
-	colstr_t* cs, const parse_pointer_t* pointer)
+bool ofc_parse_pointer_print(
+	ofc_colstr_t* cs, const ofc_parse_pointer_t* pointer)
 {
 	if (!pointer)
 		return false;
 
-	return (colstr_atomic_writef(cs, "(")
-		&& str_ref_print(cs, pointer->name)
-		&& colstr_atomic_writef(cs, ", ")
-		&& str_ref_print(cs, pointer->target)
-		&& colstr_atomic_writef(cs, ")"));
+	return (ofc_colstr_atomic_writef(cs, "(")
+		&& ofc_str_ref_print(cs, pointer->name)
+		&& ofc_colstr_atomic_writef(cs, ", ")
+		&& ofc_str_ref_print(cs, pointer->target)
+		&& ofc_colstr_atomic_writef(cs, ")"));
 }
 
 
-parse_pointer_list_t* parse_pointer_list(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_parse_pointer_list_t* ofc_parse_pointer_list(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len)
 {
-	parse_pointer_list_t* list
-		= (parse_pointer_list_t*)malloc(
-			sizeof(parse_pointer_list_t));
+	ofc_parse_pointer_list_t* list
+		= (ofc_parse_pointer_list_t*)malloc(
+			sizeof(ofc_parse_pointer_list_t));
 	if (!list) return NULL;
 
 	list->count = 0;
 	list->pointer = NULL;
 
-	unsigned i = parse_list(
+	unsigned i = ofc_parse_list(
 		src, ptr, debug, ',',
 		&list->count, (void***)&list->pointer,
-		(void*)parse_pointer, free);
+		(void*)ofc_parse_pointer, free);
 	if (i == 0)
 	{
 		free(list);
@@ -95,22 +95,22 @@ parse_pointer_list_t* parse_pointer_list(
 	return list;
 }
 
-void parse_pointer_list_delete(
-	parse_pointer_list_t* list)
+void ofc_parse_pointer_list_delete(
+	ofc_parse_pointer_list_t* list)
 {
 	if (!list)
 		return;
 
-	parse_list_delete(
+	ofc_parse_list_delete(
 		list->count, (void**)list->pointer,
 		free);
 	free(list);
 }
 
-bool parse_pointer_list_print(
-	colstr_t* cs, const parse_pointer_list_t* list)
+bool ofc_parse_pointer_list_print(
+	ofc_colstr_t* cs, const ofc_parse_pointer_list_t* list)
 {
-	return parse_list_print(
+	return ofc_parse_list_print(
 		cs, list->count, (const void**)list->pointer,
-		(void*)parse_pointer_print);
+		(void*)ofc_parse_pointer_print);
 }

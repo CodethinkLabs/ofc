@@ -4,7 +4,7 @@
 #include <string.h>
 
 
-struct colstr_s
+struct ofc_colstr_s
 {
 	unsigned size, max;
 	char* base;
@@ -14,7 +14,7 @@ struct colstr_s
 };
 
 
-colstr_t* colstr_create(
+ofc_colstr_t* ofc_colstr_create(
 	unsigned cols, unsigned ext)
 {
 	if (cols == 0)
@@ -24,9 +24,9 @@ colstr_t* colstr_create(
 	if ((cols <= 6) || (ext < cols))
 		return NULL;
 
-	colstr_t* cstr
-		= (colstr_t*)malloc(
-			sizeof(colstr_t));
+	ofc_colstr_t* cstr
+		= (ofc_colstr_t*)malloc(
+			sizeof(ofc_colstr_t));
 	if (!cstr) return NULL;
 
 	cstr->size     = 0;
@@ -40,7 +40,7 @@ colstr_t* colstr_create(
 	return cstr;
 }
 
-void colstr_delete(colstr_t* cstr)
+void ofc_colstr_delete(ofc_colstr_t* cstr)
 {
 	if (!cstr)
 		return;
@@ -50,8 +50,8 @@ void colstr_delete(colstr_t* cstr)
 }
 
 
-static bool colstr__enlarge(
-	colstr_t* cstr, unsigned size)
+static bool ofc_colstr__enlarge(
+	ofc_colstr_t* cstr, unsigned size)
 {
 	if (!cstr)
 		return false;
@@ -78,12 +78,12 @@ static bool colstr__enlarge(
 }
 
 
-bool colstr_newline(
-	colstr_t* cstr, unsigned* label)
+bool ofc_colstr_newline(
+	ofc_colstr_t* cstr, unsigned* label)
 {
 	bool first = (cstr->size == 0);
 
-	if (!colstr__enlarge(cstr, (first ? 6 : 7)))
+	if (!ofc_colstr__enlarge(cstr, (first ? 6 : 7)))
 		return false;
 
 	if (!first)
@@ -139,8 +139,8 @@ static const char* is_escape(char c)
 	return NULL;
 }
 
-bool colstr_write_escaped(
-	colstr_t* cstr, const char* base, unsigned size)
+bool ofc_colstr_write_escaped(
+	ofc_colstr_t* cstr, const char* base, unsigned size)
 {
 	if (!base || (size == 0))
 		return false;
@@ -172,13 +172,13 @@ bool colstr_write_escaped(
 		}
 	}
 
-	return colstr_write(
+	return ofc_colstr_write(
 		cstr, estr, esize);
 }
 
 
-bool colstr_write(
-	colstr_t* cstr, const char* base, unsigned size)
+bool ofc_colstr_write(
+	ofc_colstr_t* cstr, const char* base, unsigned size)
 {
 	if (!cstr || !base || (size == 0))
 		return false;
@@ -189,7 +189,7 @@ bool colstr_write(
 
 	if (cstr->oversize)
 	{
-		if (!colstr__enlarge(cstr, 7))
+		if (!ofc_colstr__enlarge(cstr, 7))
 			return false;
 
 		cstr->base[cstr->oversize_off] = '&';
@@ -209,7 +209,7 @@ bool colstr_write(
 	{
 		if (size <= remain)
 		{
-			if (colstr_atomic_write(
+			if (ofc_colstr_atomic_write(
 				cstr, base, size))
 				return true;
 
@@ -219,7 +219,7 @@ bool colstr_write(
 			return false;
 		}
 
-		if (!colstr__enlarge(cstr, remain))
+		if (!ofc_colstr__enlarge(cstr, remain))
 		{
 			cstr->size     = orig_size;
 			cstr->col      = orig_col;
@@ -238,7 +238,7 @@ bool colstr_write(
 	unsigned continuations
 		= ((size + (code_len - 1)) / code_len);
 
-	if (!colstr__enlarge(cstr,
+	if (!ofc_colstr__enlarge(cstr,
 		((continuations * 8) + size)))
 	{
 		cstr->size     = orig_size;
@@ -269,8 +269,8 @@ bool colstr_write(
 	return true;
 }
 
-bool colstr_writef(
-	colstr_t* cstr,
+bool ofc_colstr_writef(
+	ofc_colstr_t* cstr,
 	const char* format, ...)
 {
 	va_list args;
@@ -294,12 +294,12 @@ bool colstr_writef(
 	if (len != plen)
 		return false;
 
-	return colstr_write(
+	return ofc_colstr_write(
 		cstr, buff, len);
 }
 
-static bool colstr_atomic_write__oversized(
-	colstr_t* cstr, const char* base, unsigned size)
+static bool ofc_colstr_atomic_write__oversized(
+	ofc_colstr_t* cstr, const char* base, unsigned size)
 {
 	if (size > (cstr->col_ext - 7))
 		return false;
@@ -310,7 +310,7 @@ static bool colstr_atomic_write__oversized(
 
 	if (cstr->oversize)
 	{
-		if (!colstr__enlarge(cstr, 7))
+		if (!ofc_colstr__enlarge(cstr, 7))
 			return false;
 
 		cstr->base[cstr->oversize_off] = '&';
@@ -326,7 +326,7 @@ static bool colstr_atomic_write__oversized(
 	unsigned remain
 		= (cstr->col_max - cstr->col);
 
-	if (!colstr__enlarge(
+	if (!ofc_colstr__enlarge(
 		cstr, (remain + 8)))
 	{
 		cstr->size     = orig_size;
@@ -352,7 +352,7 @@ static bool colstr_atomic_write__oversized(
 
 	unsigned nsize = (size + 1) + (bangs * 7) + ((bangs - 1) * fixed_len) + (size % fixed_len);
 
-	if (!colstr__enlarge(cstr, nsize))
+	if (!ofc_colstr__enlarge(cstr, nsize))
 	{
 		cstr->size     = orig_size;
 		cstr->col      = orig_col;
@@ -396,8 +396,8 @@ static bool colstr_atomic_write__oversized(
 	return true;
 }
 
-bool colstr_atomic_write(
-	colstr_t* cstr, const char* base, unsigned size)
+bool ofc_colstr_atomic_write(
+	ofc_colstr_t* cstr, const char* base, unsigned size)
 {
 	if (!cstr || !base || (size == 0))
 		return false;
@@ -408,7 +408,7 @@ bool colstr_atomic_write(
 
 	if (cstr->oversize)
 	{
-		if (!colstr__enlarge(cstr, 7))
+		if (!ofc_colstr__enlarge(cstr, 7))
 			return false;
 
 		cstr->base[cstr->oversize_off] = '&';
@@ -424,7 +424,7 @@ bool colstr_atomic_write(
 	/* We can't atomically print wider than a line. */
 	if (size > (cstr->col_max - 6))
 	{
-		if (colstr_atomic_write__oversized(
+		if (ofc_colstr_atomic_write__oversized(
 			cstr, base, size))
 			return true;
 
@@ -439,7 +439,7 @@ bool colstr_atomic_write(
 
 	if (remain < size)
 	{
-		if (!colstr__enlarge(
+		if (!ofc_colstr__enlarge(
 			cstr, (remain + 8)))
 		{
 			cstr->size     = orig_size;
@@ -461,7 +461,7 @@ bool colstr_atomic_write(
 		cstr->col = 6;
 	}
 
-	if (!colstr__enlarge(cstr, size))
+	if (!ofc_colstr__enlarge(cstr, size))
 	{
 		cstr->size     = orig_size;
 		cstr->col      = orig_col;
@@ -475,8 +475,8 @@ bool colstr_atomic_write(
 	return true;
 }
 
-bool colstr_atomic_writef(
-	colstr_t* cstr,
+bool ofc_colstr_atomic_writef(
+	ofc_colstr_t* cstr,
 	const char* format, ...)
 {
 	va_list args;
@@ -500,11 +500,11 @@ bool colstr_atomic_writef(
 	if (len != plen)
 		return false;
 
-	return colstr_atomic_write(
+	return ofc_colstr_atomic_write(
 		cstr, buff, len);
 }
 
-bool colstr_fdprint(colstr_t* cstr, int fd)
+bool ofc_colstr_fdprint(ofc_colstr_t* cstr, int fd)
 {
 	if (!cstr || !cstr->base)
 		return false;

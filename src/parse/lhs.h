@@ -1,5 +1,5 @@
-#ifndef __parse_lhs_h__
-#define __parse_lhs_h__
+#ifndef __ofc_parse_lhs_h__
+#define __ofc_parse_lhs_h__
 
 #include <stdint.h>
 #include "../str_ref.h"
@@ -7,93 +7,93 @@
 
 typedef enum
 {
-	PARSE_LHS_VARIABLE,
-	PARSE_LHS_ARRAY,
-	PARSE_LHS_STAR_LEN,
-	PARSE_LHS_MEMBER_TYPE,
-	PARSE_LHS_MEMBER_STRUCTURE,
-	PARSE_LHS_IMPLICIT_DO,
-} parse_lhs_e;
+	OFC_PARSE_LHS_VARIABLE,
+	OFC_PARSE_LHS_ARRAY,
+	OFC_PARSE_LHS_STAR_LEN,
+	OFC_PARSE_LHS_MEMBER_TYPE,
+	OFC_PARSE_LHS_MEMBER_STRUCTURE,
+	OFC_PARSE_LHS_IMPLICIT_DO,
+} ofc_parse_lhs_e;
 
 
-struct parse_lhs_s
+struct ofc_parse_lhs_s
 {
-	parse_lhs_e type;
+	ofc_parse_lhs_e type;
 
 	union
 	{
-		str_ref_t variable;
+		ofc_str_ref_t variable;
 
 		struct
 		{
-			parse_lhs_t* parent;
+			ofc_parse_lhs_t* parent;
 
 			union
 			{
 				struct
 				{
-					parse_array_index_t* index;
+					ofc_parse_array_index_t* index;
 				} array;
 
 				struct
 				{
-					str_ref_t name;
+					ofc_str_ref_t name;
 				} member;
 
 				struct
 				{
-					parse_expr_t* len;
-					bool          var;
+					ofc_parse_expr_t* len;
+					bool              var;
 				} star_len;
 			};
 		};
 
-		parse_implicit_do_t* implicit_do;
+		ofc_parse_implicit_do_t* implicit_do;
 	};
 };
 
 typedef struct
 {
 	unsigned      count;
-	parse_lhs_t** lhs;
-} parse_lhs_list_t;
+	ofc_parse_lhs_t** lhs;
+} ofc_parse_lhs_list_t;
 
-parse_lhs_t* parse_lhs_star_len(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_parse_lhs_t* ofc_parse_lhs_star_len(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len);
-parse_lhs_t* parse_lhs(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_parse_lhs_t* ofc_parse_lhs(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len);
-parse_lhs_t* parse_lhs_copy(
-	parse_lhs_t* lhs);
-void parse_lhs_delete(
-	parse_lhs_t* lhs);
+ofc_parse_lhs_t* ofc_parse_lhs_copy(
+	ofc_parse_lhs_t* lhs);
+void ofc_parse_lhs_delete(
+	ofc_parse_lhs_t* lhs);
 
-bool parse_lhs_print(
-	colstr_t* cs, const parse_lhs_t* lhs,
+bool ofc_parse_lhs_print(
+	ofc_colstr_t* cs, const ofc_parse_lhs_t* lhs,
 	bool is_decl);
 
-bool parse_lhs_base_name(
-	const parse_lhs_t lhs,
-	str_ref_t* name);
+bool ofc_parse_lhs_base_name(
+	const ofc_parse_lhs_t lhs,
+	ofc_str_ref_t* name);
 
-parse_lhs_list_t* parse_lhs_list(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_parse_lhs_list_t* ofc_parse_lhs_list(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len);
-parse_lhs_list_t* parse_lhs_list_bracketed(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_parse_lhs_list_t* ofc_parse_lhs_list_bracketed(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len);
-void parse_lhs_list_delete(
-	parse_lhs_list_t* list);
-bool parse_lhs_list_print(
-	colstr_t* cs, const parse_lhs_list_t* list,
+void ofc_parse_lhs_list_delete(
+	ofc_parse_lhs_list_t* list);
+bool ofc_parse_lhs_list_print(
+	ofc_colstr_t* cs, const ofc_parse_lhs_list_t* list,
 	bool is_decl);
-bool parse_lhs_list_bracketed_print(
-	colstr_t* cs, const parse_lhs_list_t* list,
+bool ofc_parse_lhs_list_bracketed_print(
+	ofc_colstr_t* cs, const ofc_parse_lhs_list_t* list,
 	bool is_decl);
 
 #endif

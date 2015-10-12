@@ -1,39 +1,39 @@
-#ifndef __parse_save_h__
-#define __parse_save_h__
+#ifndef __ofc_parse_save_h__
+#define __ofc_parse_save_h__
 
 typedef struct
 {
 	bool is_common;
 	union
 	{
-		parse_lhs_t* lhs;
-		str_ref_t    common;
+		ofc_parse_lhs_t* lhs;
+		ofc_str_ref_t    common;
 	};
-} parse_save_t;
+} ofc_parse_save_t;
 
 typedef struct
 {
-	unsigned       count;
-	parse_save_t** save;
-} parse_save_list_t;
+	unsigned           count;
+	ofc_parse_save_t** save;
+} ofc_parse_save_list_t;
 
 
-parse_save_t* parse_save(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_parse_save_t* ofc_parse_save(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len);
-void parse_save_delete(
-	parse_save_t* save);
-bool parse_save_print(
-	colstr_t* cs, const parse_save_t* save);
+void ofc_parse_save_delete(
+	ofc_parse_save_t* save);
+bool ofc_parse_save_print(
+	ofc_colstr_t* cs, const ofc_parse_save_t* save);
 
-parse_save_list_t* parse_save_list(
-	const sparse_t* src, const char* ptr,
-	parse_debug_t* debug,
+ofc_parse_save_list_t* ofc_parse_save_list(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
 	unsigned* len);
-void parse_save_list_delete(
-	parse_save_list_t* save);
-bool parse_save_list_print(
-	colstr_t* cs, const parse_save_list_t* list);
+void ofc_parse_save_list_delete(
+	ofc_parse_save_list_t* save);
+bool ofc_parse_save_list_print(
+	ofc_colstr_t* cs, const ofc_parse_save_list_t* list);
 
 #endif
