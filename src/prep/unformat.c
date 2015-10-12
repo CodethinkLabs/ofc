@@ -20,27 +20,44 @@ static unsigned ofc_prep_unformat__blank_or_comment(
 		&& (opts.form != OFC_LANG_FORM_TAB))
 		is_comment = false;
 
-	if (is_comment || (src[0] == '!'))
-	{
-		unsigned i;
-		for (i = 1; (src[i] != '\0') && !ofc_is_vspace(src[i]); i++);
-		if (ofc_is_vspace(src[i])) i++;
-		return i;
-	}
-	else
-	{
-		unsigned i;
-		for (i = 0; (i < opts.columns) && (src[i] !='\0')
-			&& !ofc_is_vspace(src[i]) && ofc_is_hspace(src[i]); i++);
-		if ((i >= opts.columns) || (src[i] == '!'))
-			for (; (src[i] != '\0') && !ofc_is_vspace(src[i]); i++);
-		else if ((src[i] != '\0') && !ofc_is_vspace(src[i]))
-			return 0;
+	if (src[0] == '!')
+		is_comment = true;
 
-		return (ofc_is_vspace(src[i]) ? (i + 1) : i);
+	unsigned i = 0, t = 0;
+
+	if (!is_comment)
+	{
+		for (; (i < opts.columns) && (src[i] !='\0')
+			&& !ofc_is_vspace(src[i]) && ofc_is_hspace(src[i]); i++)
+		{
+			if (src[i] == '\t')
+				t += 1;
+		}
 	}
 
-	return 0;
+	bool ignore = is_comment || (i >= opts.columns);
+	if (!ignore)
+	{
+		switch (opts.form)
+		{
+			case OFC_LANG_FORM_FIXED:
+				ignore = ((i != 5) && (src[i] == '!'));
+				break;
+			case OFC_LANG_FORM_TAB:
+				ignore = ((t == 1) && (src[i] == '!'));
+				break;
+			default:
+				ignore = (src[i] == '!');
+				break;
+		}
+	}
+
+	if (ignore)
+		for (; (src[i] != '\0') && !ofc_is_vspace(src[i]); i++);
+	else if ((src[i] != '\0') && !ofc_is_vspace(src[i]))
+		return 0;
+
+	return (ofc_is_vspace(src[i]) ? (i + 1) : i);
 }
 
 static unsigned ofc_prep_unformat__fixed_form_label(
