@@ -287,7 +287,9 @@ ofc_string_t* ofc_parse_character(
 		{
 			if (ptr[i + 1] != quote)
 				break;
-			is_escaped = true;
+			is_escaped = ofc_sparse_sequential(src, &ptr[i], 2);
+			if (!is_escaped)
+				i += 1;
 		}
 		else
 		{
@@ -318,12 +320,18 @@ ofc_string_t* ofc_parse_character(
 		{
 			if (pptr[j] == quote)
 			{
+				is_escaped = (pptr[j + 1] == quote);
+				if (is_escaped)
+				{
+					j++;
+					continue;
+				}
+
 				unsigned k;
 				for (k = 1; ofc_is_hspace(pptr[j + k]); k++);
 				if (pptr[j + k] == quote)
 				{
-					j += k;
-					is_escaped = true;
+					j += (k + 1);
 					continue;
 				}
 				else
@@ -398,10 +406,15 @@ ofc_string_t* ofc_parse_character(
 			is_escaped = false;
 			string->base[str_pos++] = c;
 		}
-		else if ((pptr[j] == '\\')
-			|| (pptr[j] == quote))
+		else if (pptr[j] == '\\')
 		{
 			is_escaped = true;
+		}
+		else if (pptr[j] == quote)
+		{
+			is_escaped = (pptr[j + 1] == quote);
+			if (!is_escaped)
+				for (j++; (j < str_end) && (pptr[j] != quote); j++);
 		}
 		else
 		{

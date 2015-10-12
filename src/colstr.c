@@ -126,8 +126,6 @@ static const char* is_escape(char c)
 			return "t";
 		case '\0':
 			return "0";
-		case '\'':
-			return "\'";
 		case '\"':
 			return "\"";
 		case '\\':
@@ -147,7 +145,7 @@ bool ofc_colstr_write_escaped(
 
 	unsigned esize = size;
 	unsigned i;
-	for (i = 0; i < (size - 1); i++)
+	for (i = 0; i < size; i++)
 	{
 		const char* e = is_escape(base[i]);
 		if (e) esize += strlen(e);
