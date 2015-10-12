@@ -689,6 +689,14 @@ bool parse_stmt_print(
 			if (!parse_stmt_continue_print(cs, stmt))
 				return false;
 			break;
+		case PARSE_STMT_CYCLE:
+			if (!parse_stmt_cycle_print(cs, stmt))
+				return false;
+			break;
+		case PARSE_STMT_EXIT:
+			if (!parse_stmt_exit_print(cs, stmt))
+				return false;
+			break;
 		case PARSE_STMT_STOP:
 		case PARSE_STMT_PAUSE:
 		case PARSE_STMT_RETURN:
