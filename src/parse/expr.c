@@ -39,7 +39,9 @@ static bool parse_expr__clone(
 	if (!src || !dst)
 		return false;
 
-	parse_expr_t clone = *src;
+	parse_expr_t clone;
+	clone.type = src->type;
+
 	switch (clone.type)
 	{
 		case PARSE_EXPR_CONSTANT:
@@ -62,6 +64,8 @@ static bool parse_expr__clone(
 			break;
 
 		case PARSE_EXPR_UNARY:
+			clone.unary.operator = src->unary.operator;
+
 			clone.unary.a
 				= parse_expr_copy(src->unary.a);
 			if (!clone.unary.a)
@@ -69,6 +73,8 @@ static bool parse_expr__clone(
 			break;
 
 		case PARSE_EXPR_BINARY:
+			clone.binary.operator = src->binary.operator;
+
 			clone.binary.a
 				= parse_expr_copy(src->binary.a);
 			if (!clone.binary.a)
