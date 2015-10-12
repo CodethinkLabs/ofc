@@ -45,6 +45,7 @@ void parse_debug_delete(parse_debug_t* stack)
 		free(stack->message[i]->message);
 		free(stack->message[i]);
 	}
+	free(stack->message);
 	free(stack);
 }
 
