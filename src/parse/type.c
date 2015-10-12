@@ -132,18 +132,20 @@ parse_type_t* parse_type(
 	unsigned i = parse_decl_attr(
 		src, ptr, debug, &type.attr);
 
+	type.type = PARSE_TYPE_NONE;
 	unsigned j;
 	for (j = 0; parse_type__keyword_map[j].type != PARSE_TYPE_NONE; j++)
 	{
-		i = parse_keyword(src, &ptr[i], debug,
+		unsigned len = parse_keyword(src, &ptr[i], debug,
 			parse_type__keyword_map[j].keyword);
+		if (len == 0) continue;
 
 		type.type = parse_type__keyword_map[j].type;
-
-		if (i > 0) break;
+		i += len;
+		break;
 	}
 
-	if (i == 0)
+	if (type.type == PARSE_TYPE_NONE)
 	{
 		parse_debug_rewind(debug, dpos);
 		return NULL;
