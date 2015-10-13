@@ -195,24 +195,32 @@ static bool ofc_sparse__ptr(
 		return false;
 
 	uintptr_t off = ((uintptr_t)ptr - (uintptr_t)sparse->strz);
-	if (off >= sparse->len)
+	if (off > sparse->len)
 		return false;
 
-	unsigned hi  = (sparse->count - 1);
-	unsigned lo  = 0;
 	unsigned mid;
-
-	for (mid = lo + ((hi - lo) / 2); hi != lo; mid = lo + ((hi - lo) / 2))
+	if (off == sparse->len)
 	{
-		unsigned start = sparse->entry[mid].off;
-		unsigned end   = start + sparse->entry[mid].len;
+		/* Pointing at end of sparse. */
+		mid = (sparse->count - 1);
+	}
+	else
+	{
+		unsigned hi  = (sparse->count - 1);
+		unsigned lo  = 0;
 
-		if (off < start)
-			hi = (mid - 1);
-		else if (off >= end)
-			lo = (mid + 1);
-		else
-			break;
+		for (mid = lo + ((hi - lo) / 2); hi != lo; mid = lo + ((hi - lo) / 2))
+		{
+			unsigned start = sparse->entry[mid].off;
+			unsigned end   = start + sparse->entry[mid].len;
+
+			if (off < start)
+				hi = (mid - 1);
+			else if (off >= end)
+				lo = (mid + 1);
+			else
+				break;
+		}
 	}
 
 	off -= sparse->entry[mid].off;
