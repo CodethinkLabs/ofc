@@ -176,7 +176,7 @@ static unsigned ofc_parse_stmt_if__then(
 	{
 		len = ofc_parse_keyword_end(
 			src, &ptr[i], debug,
-			OFC_PARSE_KEYWORD_IF);
+			OFC_PARSE_KEYWORD_IF, false);
 		if (len == 0)
 		{
 			ofc_parse_stmt_list_delete(

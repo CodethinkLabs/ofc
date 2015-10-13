@@ -50,7 +50,7 @@ unsigned ofc_parse_stmt__do_while_block(
 
 	len = ofc_parse_keyword_end(
 		src, &ptr[i], debug,
-		OFC_PARSE_KEYWORD_DO);
+		OFC_PARSE_KEYWORD_DO, false);
 	if (len == 0)
 	{
 		ofc_parse_stmt_list_delete(
@@ -264,7 +264,7 @@ unsigned ofc_parse_stmt__do_block(
 
 	len = ofc_parse_keyword_end(
 		src, &ptr[i], debug,
-		OFC_PARSE_KEYWORD_DO);
+		OFC_PARSE_KEYWORD_DO, false);
 	if (len == 0)
 	{
 		ofc_parse_stmt_list_delete(

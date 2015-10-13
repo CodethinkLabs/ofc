@@ -4,40 +4,51 @@
 static unsigned ofc_parse_stmt__structure(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
-	ofc_parse_keyword_e keyword,
+	ofc_parse_keyword_e keyword, bool slash,
 	ofc_parse_stmt_t* stmt)
 {
 	unsigned dpos = ofc_parse_debug_position(debug);
 
-	unsigned i = ofc_parse_keyword(
-		src, ptr, debug, keyword);
-	if (i == 0) return 0;
-
-	stmt->structure.name = OFC_STR_REF_EMPTY;
-
-	if (keyword == OFC_PARSE_KEYWORD_STRUCTURE)
+	unsigned i;
+	if (slash)
 	{
-		if (ptr[i] == '/')
+		i = ofc_parse_keyword(
+			src, ptr, debug, keyword);
+		if (i == 0) return 0;
+
+		stmt->structure.name = OFC_STR_REF_EMPTY;
+
+		if (keyword == OFC_PARSE_KEYWORD_STRUCTURE)
 		{
-			i += 1;
-
-			unsigned len = ofc_parse_name(
-				src, &ptr[i], debug, &stmt->structure.name);
-			if (len == 0)
+			if (ptr[i] == '/')
 			{
-				ofc_parse_debug_rewind(debug, dpos);
-				return 0;
-			}
-			i += len;
+				i += 1;
 
-			if (ptr[i++] != '/')
-			{
-				ofc_parse_debug_rewind(debug, dpos);
-				return 0;
+				unsigned len = ofc_parse_name(
+					src, &ptr[i], debug, &stmt->structure.name);
+				if (len == 0)
+				{
+					ofc_parse_debug_rewind(debug, dpos);
+					return 0;
+				}
+				i += len;
+
+				if (ptr[i++] != '/')
+				{
+					ofc_parse_debug_rewind(debug, dpos);
+					return 0;
+				}
 			}
+
+			/* TODO - Parse field list. */
 		}
-
-		/* TODO - Parse field list. */
+	}
+	else
+	{
+		i = ofc_parse_keyword_named(
+			src, ptr, debug, keyword,
+			&stmt->structure.name);
+		if (i == 0) return 0;
 	}
 
 	unsigned len;
@@ -52,8 +63,19 @@ static unsigned ofc_parse_stmt__structure(
 		src, &ptr[i], debug, &len);
 	if (stmt->structure.block) i += len;
 
-	len = ofc_parse_keyword_end(
-		src, &ptr[i], debug, keyword);
+	if (slash)
+	{
+		/* TODO - Handle the following?
+		   END STRUCTURE /name/ */
+		len = ofc_parse_keyword_end(
+			src, &ptr[i], debug, keyword, false);
+	}
+	else
+	{
+		len = ofc_parse_keyword_end_named(
+			src, &ptr[i], debug, keyword, true,
+			&stmt->structure.name);
+	}
 	if (len == 0)
 	{
 		ofc_parse_stmt_list_delete(
@@ -63,10 +85,44 @@ static unsigned ofc_parse_stmt__structure(
 	}
 	i += len;
 
+	/* Make sure TYPE (struct) doesn't contain TYPE (print) statement. */
+	if (stmt->structure.block)
+	{
+		unsigned j;
+		for (j = 0; j < stmt->structure.block->count; j++)
+		{
+			ofc_parse_stmt_t* s
+				= stmt->structure.block->stmt[j];
+			if (!s) continue;
+
+			if (s->type == OFC_PARSE_STMT_IO_PRINT)
+			{
+				ofc_parse_stmt_list_delete(
+					stmt->structure.block);
+				ofc_parse_debug_rewind(debug, dpos);
+				return 0;
+			}
+		}
+	}
+
 	stmt->type = OFC_PARSE_STMT_STRUCTURE;
 	return i;
 }
 
+
+unsigned ofc_parse_stmt_type(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_stmt_t* stmt)
+{
+	unsigned i = ofc_parse_stmt__structure(
+		src, ptr, debug,
+		OFC_PARSE_KEYWORD_TYPE, false, stmt);
+	if (i == 0) return 0;
+
+	stmt->type = OFC_PARSE_STMT_TYPE;
+	return i;
+}
 
 unsigned ofc_parse_stmt_structure(
 	const ofc_sparse_t* src, const char* ptr,
@@ -75,7 +131,7 @@ unsigned ofc_parse_stmt_structure(
 {
 	unsigned i = ofc_parse_stmt__structure(
 		src, ptr, debug,
-		OFC_PARSE_KEYWORD_STRUCTURE, stmt);
+		OFC_PARSE_KEYWORD_STRUCTURE, true, stmt);
 	if (i == 0) return 0;
 
 	stmt->type = OFC_PARSE_STMT_STRUCTURE;
@@ -89,7 +145,7 @@ unsigned ofc_parse_stmt_union(
 {
 	unsigned i = ofc_parse_stmt__structure(
 		src, ptr, debug,
-		OFC_PARSE_KEYWORD_UNION, stmt);
+		OFC_PARSE_KEYWORD_UNION, true, stmt);
 	if (i == 0) return 0;
 
 	stmt->type = OFC_PARSE_STMT_UNION;
@@ -103,7 +159,7 @@ unsigned ofc_parse_stmt_map(
 {
 	unsigned i = ofc_parse_stmt__structure(
 		src, ptr, debug,
-		OFC_PARSE_KEYWORD_MAP, stmt);
+		OFC_PARSE_KEYWORD_MAP, true, stmt);
 	if (i == 0) return 0;
 
 	stmt->type = OFC_PARSE_STMT_MAP;
@@ -145,8 +201,13 @@ bool ofc_parse_stmt_structure_print(
 		return false;
 
 	const char* kwstr;
+	bool slash = true;
 	switch (stmt->type)
 	{
+		case OFC_PARSE_STMT_TYPE:
+			kwstr = "TYPE";
+			slash = false;
+			break;
 		case OFC_PARSE_STMT_STRUCTURE:
 			kwstr = "STRUCTURE";
 			break;
@@ -165,9 +226,10 @@ bool ofc_parse_stmt_structure_print(
 
 	if (!ofc_str_ref_empty(stmt->structure.name))
 	{
-		if (!ofc_colstr_atomic_writef(cs, " /")
+		if (!ofc_colstr_atomic_writef(cs, " ")
+			|| (slash && !ofc_colstr_atomic_writef(cs, "/"))
 			|| !ofc_str_ref_print(cs, stmt->structure.name)
-			|| !ofc_colstr_atomic_writef(cs, "/"))
+			|| (slash && !ofc_colstr_atomic_writef(cs, "/")))
 			return false;
 	}
 

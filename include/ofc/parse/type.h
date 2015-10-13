@@ -14,6 +14,7 @@ typedef enum
 	OFC_PARSE_TYPE_COMPLEX,
 	OFC_PARSE_TYPE_DOUBLE_COMPLEX,
 	OFC_PARSE_TYPE_BYTE,
+	OFC_PARSE_TYPE_TYPE,
 
 	OFC_PARSE_TYPE_COUNT,
 } ofc_parse_type_e;
@@ -28,6 +29,7 @@ typedef struct
 typedef struct
 {
 	ofc_parse_type_e           type;
+	ofc_str_ref_t              type_name;
 	ofc_parse_decl_attr_t      attr;
 	unsigned                   kind;
 	ofc_parse_expr_t*          count_expr;

@@ -379,7 +379,7 @@ unsigned ofc_parse_stmt_io_print_type(
 
 	if (toupper(ptr[0]) != 'P')
 	{
-		ofc_sparse_warning(src, ptr,
+		ofc_parse_debug_warning(debug, src, ptr,
 			"Use of TYPE as an IO statement is deprecated and ambiguous"
 			", PRINT is preferred");
 	}

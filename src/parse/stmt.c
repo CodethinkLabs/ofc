@@ -144,6 +144,10 @@ unsigned ofc_parse_stmt_decl_attr_volatile(
 	ofc_parse_debug_t* debug,
 	ofc_parse_stmt_t* stmt);
 
+unsigned ofc_parse_stmt_type(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_stmt_t* stmt);
 unsigned ofc_parse_stmt_structure(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
@@ -314,6 +318,7 @@ static void ofc_parse_stmt__cleanup(
 			ofc_parse_expr_delete(stmt.do_while_block.cond);
 			ofc_parse_stmt_list_delete(stmt.do_while_block.block);
 			break;
+		case OFC_PARSE_STMT_TYPE:
 		case OFC_PARSE_STMT_STRUCTURE:
 		case OFC_PARSE_STMT_UNION:
 		case OFC_PARSE_STMT_MAP:
@@ -490,6 +495,7 @@ ofc_parse_stmt_t* ofc_parse_stmt(
 			break;
 
 		case 'T':
+			if (i == 0) i = ofc_parse_stmt_type(src, ptr, debug, &stmt);
 			if (i == 0) i = ofc_parse_stmt_io_print_type(src, ptr, debug, &stmt);
 			break;
 
@@ -734,6 +740,7 @@ bool ofc_parse_stmt_print(
 			if (!ofc_parse_stmt_do_print(cs, stmt, indent))
 				return false;
 			break;
+		case OFC_PARSE_STMT_TYPE:
 		case OFC_PARSE_STMT_STRUCTURE:
 		case OFC_PARSE_STMT_UNION:
 		case OFC_PARSE_STMT_MAP:

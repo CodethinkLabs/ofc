@@ -13,6 +13,7 @@ static const char* ofc_parse_type__name[] =
 	"COMPLEX",
 	"DOUBLE COMPLEX",
 	"BYTE",
+	"TYPE",
 };
 
 static unsigned ofc_parse_decl_attr(
@@ -118,6 +119,7 @@ static const ofc_parse_type__keyword_t ofc_parse_type__keyword_map[] =
 	{ OFC_PARSE_TYPE_BYTE            , OFC_PARSE_KEYWORD_BYTE             },
 	{ OFC_PARSE_TYPE_DOUBLE_PRECISION, OFC_PARSE_KEYWORD_DOUBLE_PRECISION },
 	{ OFC_PARSE_TYPE_DOUBLE_COMPLEX  , OFC_PARSE_KEYWORD_DOUBLE_COMPLEX   },
+	{ OFC_PARSE_TYPE_TYPE            , OFC_PARSE_KEYWORD_TYPE             },
 	{ OFC_PARSE_TYPE_NONE            , 0 },
 };
 
@@ -151,11 +153,36 @@ ofc_parse_type_t* ofc_parse_type(
 		return NULL;
 	}
 
+	type.type_name  = OFC_STR_REF_EMPTY;
 	type.count_expr = NULL;
-	type.count_var = false;
-	type.kind = 0;
+	type.count_var  = false;
+	type.kind       = 0;
 
-	if (((type.type == OFC_PARSE_TYPE_CHARACTER)
+	if (type.type == OFC_PARSE_TYPE_TYPE)
+	{
+		if (ptr[i++] != '(')
+		{
+			ofc_parse_debug_rewind(debug, dpos);
+			return 0;
+		}
+
+		unsigned l = ofc_parse_name(
+			src, &ptr[i], debug,
+			&type.type_name);
+		if (l == 0)
+		{
+			ofc_parse_debug_rewind(debug, dpos);
+			return 0;
+		}
+		i += l;
+
+		if (ptr[i++] != ')')
+		{
+			ofc_parse_debug_rewind(debug, dpos);
+			return 0;
+		}
+	}
+	else if (((type.type == OFC_PARSE_TYPE_CHARACTER)
 			|| (type.type == OFC_PARSE_TYPE_BYTE))
 		&& (ptr[i] == '*'))
 	{
@@ -245,6 +272,15 @@ bool ofc_parse_type_print(
 		ofc_parse_type__name[type->type]))
 		return false;
 
+	if (type->type == OFC_PARSE_TYPE_TYPE)
+	{
+		if (!ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_colstr_atomic_writef(cs, "(")
+			|| !ofc_str_ref_print(cs, type->type_name)
+			|| !ofc_colstr_atomic_writef(cs, ")"))
+			return false;
+	}
+
 	if ((type->kind > 0)
 		|| type->count_expr
 		|| type->count_var)
@@ -287,6 +323,15 @@ bool ofc_parse_type_print_f77(
 	if (!ofc_colstr_atomic_writef(cs, "%s",
 		ofc_parse_type__name[type->type]))
 		return false;
+
+	if (type->type == OFC_PARSE_TYPE_TYPE)
+	{
+		if (!ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_colstr_atomic_writef(cs, "(")
+			|| !ofc_str_ref_print(cs, type->type_name)
+			|| !ofc_colstr_atomic_writef(cs, ")"))
+			return false;
+	}
 
 	if ((type->type == OFC_PARSE_TYPE_CHARACTER)
 		|| (type->type == OFC_PARSE_TYPE_BYTE))

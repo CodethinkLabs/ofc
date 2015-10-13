@@ -12,7 +12,7 @@ unsigned ofc_parse_stmt_program__body(
 
 	unsigned len = ofc_parse_keyword_end_named(
 		src, &ptr[i], debug,
-		OFC_PARSE_KEYWORD_PROGRAM,
+		OFC_PARSE_KEYWORD_PROGRAM, false,
 		&stmt->program.name);
 	if (len == 0)
 	{

@@ -280,7 +280,7 @@ unsigned ofc_parse_keyword(
 unsigned ofc_parse_keyword_end_named(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
-	ofc_parse_keyword_e keyword,
+	ofc_parse_keyword_e keyword, bool force,
 	ofc_str_ref_t* name)
 {
 	if (keyword >= OFC_PARSE_KEYWORD_COUNT)
@@ -301,6 +301,10 @@ unsigned ofc_parse_keyword_end_named(
 	{
 		if (ofc_sparse_sequential(src, &ptr[i - 1], 2))
 			warn_end_kw_space = i;
+	}
+	else if (force)
+	{
+		return 0;
 	}
 	else if (name)
 	{
@@ -341,8 +345,8 @@ unsigned ofc_parse_keyword_end_named(
 unsigned ofc_parse_keyword_end(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
-	ofc_parse_keyword_e keyword)
+	ofc_parse_keyword_e keyword, bool force)
 {
 	return ofc_parse_keyword_end_named(
-		src, ptr, debug, keyword, NULL);
+		src, ptr, debug, keyword, force, NULL);
 }

@@ -120,12 +120,12 @@ unsigned ofc_parse_keyword_named(
 unsigned ofc_parse_keyword_end(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
-	ofc_parse_keyword_e keyword);
+	ofc_parse_keyword_e keyword, bool force);
 
 unsigned ofc_parse_keyword_end_named(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
-	ofc_parse_keyword_e keyword,
+	ofc_parse_keyword_e keyword, bool force,
 	ofc_str_ref_t* name);
 
 #endif
