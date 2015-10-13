@@ -1,4 +1,5 @@
 #include <ofc/file.h>
+#include <ofc/fctype.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -226,37 +227,98 @@ bool ofc_file_get_position(
 
 
 
+static bool line_empty(const char* ptr, unsigned len)
+{
+	if (!ptr || (len == 0))
+		return true;
+
+	unsigned i;
+	for (i = 0; i < len; i++)
+	{
+		if (isspace(ptr[i]))
+			continue;
+
+		if (isprint(ptr[i]))
+			return false;
+	}
+
+	return true;
+}
+
 static void ofc_file__debug_va(
-	const ofc_file_t* file, const char* ptr,
+	const ofc_file_t* file,
+	const char* sol, const char* ptr,
 	const char* type, const char* format, va_list args)
 {
+	unsigned row, col;
+	bool positional = ofc_file_get_position(
+		file, ptr, &row, &col);
+
 	fprintf(stderr, "%s:", type);
 
-	unsigned row, col;
-	if (ofc_file_get_position(
-		file, ptr, &row, &col))
+	if (positional)
 		fprintf(stderr, "%s:%u,%u:",
 			file->path, (row + 1), col);
 
 	fprintf(stderr, " ");
 	vfprintf(stderr, format, args);
 	fprintf(stderr, "\n");
+
+	if (positional)
+	{
+		if (!sol)
+			sol = ptr;
+
+		const char* s = file->strz;
+		const char* p;
+		for (p = file->strz; p < sol; p++)
+		{
+			if (ofc_is_vspace(*p))
+				s = &p[1];
+		}
+
+		unsigned len = ((uintptr_t)ptr - (uintptr_t)s);
+		for (; !ofc_is_vspace(s[len]) && (s[len] != '\0'); len++);
+
+		/* Print line(s) above if line is empty. */
+		while (line_empty(s, len)
+			&& (s != file->strz))
+		{
+			const char* ns = file->strz;
+			for (p = file->strz; p < s; p++)
+			{
+				if (ofc_is_vspace(*p))
+					ns = &p[1];
+			}
+			len += ((uintptr_t)s - (uintptr_t)ns);
+			s = ns;
+		}
+
+		fprintf(stderr, "%.*s\n", len, s);
+
+		unsigned i;
+		for (i = 0; i < col; i++)
+			fprintf(stderr, " ");
+		fprintf(stderr, "^\n");
+	}
 }
 
 void ofc_file_error_va(
-	const ofc_file_t* file, const char* ptr,
+	const ofc_file_t* file,
+	const char* sol, const char* ptr,
 	const char* format, va_list args)
 {
 	ofc_file__debug_va(
-		file, ptr, "Error", format, args);
+		file, sol, ptr, "Error", format, args);
 }
 
 void ofc_file_warning_va(
-	const ofc_file_t* file, const char* ptr,
+	const ofc_file_t* file,
+	const char* sol, const char* ptr,
 	const char* format, va_list args)
 {
 	ofc_file__debug_va(
-		file, ptr, "Warning", format, args);
+		file, sol, ptr, "Warning", format, args);
 }
 
 
@@ -267,7 +329,7 @@ void ofc_file_error(
 {
 	va_list args;
 	va_start(args, format);
-	ofc_file_warning_va(file, ptr, format, args);
+	ofc_file_warning_va(file, NULL, ptr, format, args);
 	va_end(args);
 }
 
@@ -277,6 +339,6 @@ void ofc_file_warning(
 {
 	va_list args;
 	va_start(args, format);
-	ofc_file_error_va(file, ptr, format, args);
+	ofc_file_error_va(file, NULL, ptr, format, args);
 	va_end(args);
 }

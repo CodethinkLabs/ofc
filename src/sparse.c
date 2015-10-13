@@ -1,4 +1,5 @@
 #include <ofc/sparse.h>
+#include <ofc/fctype.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
@@ -321,26 +322,6 @@ const char* ofc_sparse_parent_pointer(
 	return &entry.ptr[offset];
 }
 
-const char* ofc_sparse_file_pointer(
-	const ofc_sparse_t* sparse, const char* ptr)
-{
-	ofc_sparse_entry_t entry;
-	unsigned offset;
-
-	if (!ofc_sparse__ptr(
-		sparse, ptr,
-		&entry, &offset, NULL))
-		return NULL;
-
-	const char* pptr = &entry.ptr[offset];
-
-	if (sparse->parent)
-		return ofc_sparse_file_pointer(sparse->parent, pptr);
-
-	/* A sparse with no file or parent, can't have a file pointer. */
-	return (sparse->file ? pptr : NULL);
-}
-
 
 ofc_lang_opts_t ofc_sparse_lang_opts(const ofc_sparse_t* sparse)
 {
@@ -371,16 +352,61 @@ char* ofc_sparse_include_path(
 
 
 
+static const char* ofc_sparse__file_pointer(
+	const ofc_sparse_t* sparse, const char* ptr,
+	const char** sol)
+{
+	ofc_sparse_entry_t entry;
+	unsigned offset;
+
+	if (!ofc_sparse__ptr(
+		sparse, ptr,
+		&entry, &offset, NULL))
+		return NULL;
+
+	const char* pptr = &entry.ptr[offset];
+
+	if (sparse->parent)
+	{
+		return ofc_sparse__file_pointer(
+			sparse->parent, pptr, sol);
+	}
+
+	/* A sparse with no file or parent, can't have a file pointer. */
+	if (!sparse->file)
+		return NULL;
+
+	if (sol)
+	{
+		const char* s = sparse->strz;
+		const char* p;
+		for (p = sparse->strz; p < ptr; p++)
+		{
+			if (ofc_is_vspace(*p))
+				s = &p[1];
+		}
+
+		ofc_sparse_entry_t sol_entry;
+		if (ofc_sparse__ptr(
+			sparse, s,
+			&sol_entry, &offset, NULL))
+			*sol = &sol_entry.ptr[offset];
+	}
+
+	return pptr;
+}
+
 void ofc_sparse_error(
 	const ofc_sparse_t* sparse, const char* ptr,
 	const char* format, ...)
 {
 	const ofc_file_t* file = ofc_sparse__file(sparse);
-	const char*   fptr = ofc_sparse_file_pointer(sparse, ptr);
+	const char*       fsol = NULL;
+	const char*       fptr = ofc_sparse__file_pointer(sparse, ptr, &fsol);
 
 	va_list args;
 	va_start(args, format);
-	ofc_file_error_va(file, fptr, format, args);
+	ofc_file_error_va(file, fsol, fptr, format, args);
 	va_end(args);
 }
 
@@ -389,10 +415,11 @@ void ofc_sparse_warning(
 	const char* format, ...)
 {
 	const ofc_file_t* file = ofc_sparse__file(sparse);
-	const char*   fptr = ofc_sparse_file_pointer(sparse, ptr);
+	const char*       fsol = NULL;
+	const char*       fptr = ofc_sparse__file_pointer(sparse, ptr, &fsol);
 
 	va_list args;
 	va_start(args, format);
-	ofc_file_warning_va(file, fptr, format, args);
+	ofc_file_warning_va(file, fsol, fptr, format, args);
 	va_end(args);
 }

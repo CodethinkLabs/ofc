@@ -33,9 +33,6 @@ bool ofc_sparse_sequential(
 const char* ofc_sparse_parent_pointer(
 	const ofc_sparse_t* sparse, const char* ptr);
 
-const char* ofc_sparse_file_pointer(
-	const ofc_sparse_t* sparse, const char* ptr);
-
 ofc_lang_opts_t ofc_sparse_lang_opts(const ofc_sparse_t* sparse);
 
 const char* ofc_sparse_get_include(

@@ -35,10 +35,12 @@ void ofc_file_warning(
 	const char* format, ...);
 
 void ofc_file_error_va(
-	const ofc_file_t* file, const char* ptr,
+	const ofc_file_t* file,
+	const char* sol, const char* ptr,
 	const char* format, va_list args);
 void ofc_file_warning_va(
-	const ofc_file_t* file, const char* ptr,
+	const ofc_file_t* file,
+	const char* sol, const char* ptr,
 	const char* format, va_list args);
 
 #endif
