@@ -106,7 +106,8 @@ unsigned ofc_parse_ident(
 	if (!ofc_sparse_sequential(src, ptr, i))
 	{
 		ofc_parse_debug_warning(debug, src, ptr,
-			"Unexpected whitespace within identifier");
+			"Unexpected whitespace within identifier '%.*s'",
+			i, ptr);
 	}
 
 	if (ident) *ident = str_ref(ptr, i);
