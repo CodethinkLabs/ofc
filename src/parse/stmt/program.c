@@ -7,8 +7,16 @@ unsigned ofc_parse_stmt_program__body(
 	ofc_parse_keyword_e keyword,
 	ofc_parse_stmt_t* stmt)
 {
+	unsigned dpos = ofc_parse_debug_position(debug);
+
 	unsigned i = 0;
 	stmt->program.body = ofc_parse_stmt_list(src, ptr, debug, &i);
+
+	if (!stmt->program.body)
+	{
+		ofc_parse_debug_warning(debug, src, &ptr[i],
+			"Empty %s body", ofc_parse_keyword_name(keyword));
+	}
 
 	unsigned len = ofc_parse_keyword_end_named(
 		src, &ptr[i], debug,
@@ -20,15 +28,10 @@ unsigned ofc_parse_stmt_program__body(
 			"Invalid statement in %s body",
 			ofc_parse_keyword_name(keyword));
 		ofc_parse_stmt_list_delete(stmt->program.body);
+		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
 	i += len;
-
-	if (!stmt->program.body)
-	{
-		ofc_parse_debug_warning(debug, src, &ptr[i],
-			"Empty %s body", ofc_parse_keyword_name(keyword));
-	}
 
 	return i;
 }
