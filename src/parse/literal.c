@@ -499,7 +499,8 @@ unsigned ofc_parse_literal_number(
 	unsigned k = 0;
 
 	if ((toupper(ptr[i]) == 'E')
-		|| (toupper(ptr[i]) == 'D'))
+		|| (toupper(ptr[i]) == 'D')
+		|| (toupper(ptr[i]) == 'Q'))
 	{
 		unsigned j = (i + 1);
 
@@ -513,6 +514,8 @@ unsigned ofc_parse_literal_number(
 
 			if (ptr[j] == 'D')
 				k = 8;
+			else if (ptr[j] == 'Q')
+				k = 16;
 
 			i = j;
 		}
