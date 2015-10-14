@@ -11,6 +11,7 @@ typedef struct
 typedef enum
 {
 	OFC_PARSE_STMT_EMPTY,
+	OFC_PARSE_STMT_ERROR,
 	OFC_PARSE_STMT_INCLUDE,
 	OFC_PARSE_STMT_PROGRAM,
 	OFC_PARSE_STMT_SUBROUTINE,
@@ -62,6 +63,7 @@ typedef enum
 	OFC_PARSE_STMT_IO_END_FILE,
 	OFC_PARSE_STMT_IO_CLOSE,
 	OFC_PARSE_STMT_IO_PRINT,
+	OFC_PARSE_STMT_IO_TYPE,
 	OFC_PARSE_STMT_IO_ENCODE,
 	OFC_PARSE_STMT_IO_DECODE,
 	OFC_PARSE_STMT_IO_ACCEPT,
@@ -271,5 +273,8 @@ bool ofc_parse_stmt_list_print(
 	ofc_colstr_t* cs,
 	const ofc_parse_stmt_list_t* list,
 	unsigned indent);
+
+bool ofc_parse_stmt_list_contains_error(
+	const ofc_parse_stmt_list_t* list);
 
 #endif

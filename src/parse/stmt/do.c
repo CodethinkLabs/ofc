@@ -46,18 +46,35 @@ unsigned ofc_parse_stmt__do_while_block(
 
 	stmt->do_while_block.block
 		= ofc_parse_stmt_list(src, &ptr[i], debug, &len);
-	if (stmt->do_while_block.block) i += len;
+	if (stmt->do_while_block.block)
+	{
+		if (ofc_parse_stmt_list_contains_error(
+			stmt->do_while_block.block))
+		{
+			/* Don't rewind cause we want to report the error. */
+			ofc_parse_stmt_list_delete(
+				stmt->do_while_block.block);
+			ofc_parse_expr_delete(stmt->do_while_block.cond);
+			return 0;
+		}
+
+		i += len;
+	}
 
 	len = ofc_parse_keyword_end(
 		src, &ptr[i], debug,
 		OFC_PARSE_KEYWORD_DO, false);
 	if (len == 0)
 	{
+		ofc_sparse_error(src, &ptr[i],
+			"Invalid statement in DO WHILE body");
+
 		ofc_parse_stmt_list_delete(
 			stmt->do_while_block.block);
 		ofc_parse_expr_delete(stmt->do_while_block.cond);
-		ofc_parse_debug_rewind(debug, dpos);
-		return 0;
+
+		stmt->type = OFC_PARSE_STMT_ERROR;
+		return i;
 	}
 	i += len;
 
@@ -260,20 +277,37 @@ unsigned ofc_parse_stmt__do_block(
 
 	stmt->do_block.block
 		= ofc_parse_stmt_list(src, &ptr[i], debug, &len);
-	if (stmt->do_block.block) i += len;
+	if (stmt->do_block.block)
+	{
+		if (ofc_parse_stmt_list_contains_error(
+			stmt->do_block.block))
+		{
+			/* Don't rewind cause we want to report the error. */
+			ofc_parse_stmt_list_delete(
+				stmt->do_block.block);
+			ofc_parse_expr_delete(stmt->do_block.last);
+			ofc_parse_assign_delete(stmt->do_block.init);
+			return 0;
+		}
+
+		i += len;
+	}
 
 	len = ofc_parse_keyword_end(
 		src, &ptr[i], debug,
 		OFC_PARSE_KEYWORD_DO, false);
 	if (len == 0)
 	{
+		ofc_sparse_error(src, &ptr[i],
+			"Invalid statement in DO body");
+
 		ofc_parse_stmt_list_delete(
 			stmt->do_block.block);
 		ofc_parse_expr_delete(stmt->do_block.last);
 		ofc_parse_assign_delete(stmt->do_block.init);
-		ofc_parse_debug_rewind(debug, dpos);
-		ofc_parse_debug_rewind(debug, dpos);
-		return 0;
+
+		stmt->type = OFC_PARSE_STMT_ERROR;
+		return i;
 	}
 	i += len;
 

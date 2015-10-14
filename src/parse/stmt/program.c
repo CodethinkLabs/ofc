@@ -11,8 +11,18 @@ unsigned ofc_parse_stmt_program__body(
 
 	unsigned i = 0;
 	stmt->program.body = ofc_parse_stmt_list(src, ptr, debug, &i);
-
-	if (!stmt->program.body)
+	if (stmt->program.body)
+	{
+		if (ofc_parse_stmt_list_contains_error(
+			stmt->program.body))
+		{
+			/* Don't rewind cause we want to report the error. */
+			ofc_parse_stmt_list_delete(
+				stmt->program.body);
+			return 0;
+		}
+	}
+	else
 	{
 		ofc_parse_debug_warning(debug, src, &ptr[i],
 			"Empty %s body", ofc_parse_keyword_name(keyword));

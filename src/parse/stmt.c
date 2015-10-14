@@ -341,6 +341,7 @@ static void ofc_parse_stmt__cleanup(
 			ofc_parse_iolist_delete(stmt.io.iolist);
 			break;
 		case OFC_PARSE_STMT_IO_PRINT:
+		case OFC_PARSE_STMT_IO_TYPE:
 		case OFC_PARSE_STMT_IO_ACCEPT:
 			ofc_parse_iolist_delete(stmt.io_print.iolist);
 			break;
@@ -398,7 +399,7 @@ ofc_parse_stmt_t* ofc_parse_stmt(
 	if (i == 0) i = ofc_parse_stmt_decl(src, ptr, debug, &stmt);
 
 	/* Drop incomplete statements. */
-	if ((i > 0)
+	if ((i > 0) && (stmt.type != OFC_PARSE_STMT_ERROR)
 		&& !ofc_is_end_statement(&ptr[i], NULL))
 	{
 		ofc_parse_stmt__cleanup(stmt);
@@ -517,7 +518,7 @@ ofc_parse_stmt_t* ofc_parse_stmt(
 	}
 
 	/* Drop incomplete statements, they may be an assignment. */
-	if ((i > 0)
+	if ((i > 0) && (stmt.type != OFC_PARSE_STMT_ERROR)
 		&& !ofc_is_end_statement(&ptr[i], NULL))
 	{
 		ofc_parse_stmt__cleanup(stmt);
@@ -543,7 +544,8 @@ ofc_parse_stmt_t* ofc_parse_stmt(
 	}
 
 	unsigned l = 0;
-	if (!ofc_is_end_statement(&ptr[i], &l))
+	if ((stmt.type != OFC_PARSE_STMT_ERROR)
+		&& !ofc_is_end_statement(&ptr[i], &l))
 	{
 		if (i == 0)
 		{
@@ -551,7 +553,8 @@ ofc_parse_stmt_t* ofc_parse_stmt(
 			return NULL;
 		}
 
-		ofc_sparse_error(src, &ptr[i],
+		ofc_parse_debug_warning(
+			debug, src, &ptr[i],
 			"Expected newline or semicolon after statement");
 		ofc_parse_stmt__cleanup(stmt);
 		return NULL;
@@ -762,6 +765,7 @@ bool ofc_parse_stmt_print(
 			ofc_parse_stmt_io_print(cs, stmt);
 			break;
 		case OFC_PARSE_STMT_IO_PRINT:
+		case OFC_PARSE_STMT_IO_TYPE:
 		case OFC_PARSE_STMT_IO_ACCEPT:
 			ofc_parse_stmt_print_accept_print(cs, stmt);
 			break;
@@ -814,6 +818,30 @@ ofc_parse_stmt_list_t* ofc_parse_stmt_list(
 		(void*)ofc_parse_stmt_delete);
 	if (i == 0) return NULL;
 
+	unsigned j;
+	for (j = 0; j < (list->count - 1); j++)
+	{
+		if (!list->stmt[j])
+			continue;
+
+		if (list->stmt[j]->type
+			== OFC_PARSE_STMT_ERROR)
+		{
+			unsigned k;
+			for (k = (j + 1); k < list->count; k++)
+			{
+				ofc_parse_stmt_delete(list->stmt[k]);
+				list->stmt[k] = NULL;
+			}
+			list->count = (j + 1);
+
+			ofc_parse_stmt_t** nstmt
+				= (ofc_parse_stmt_t**)realloc(list->stmt,
+					(sizeof(ofc_parse_stmt_t*) * list->count));
+			if (nstmt) list->stmt = nstmt;
+		}
+	}
+
 	if (len) *len = i;
 	return list;
 }
@@ -863,4 +891,18 @@ bool ofc_parse_stmt_list_print(
 	}
 
 	return true;
+}
+
+
+bool ofc_parse_stmt_list_contains_error(
+	const ofc_parse_stmt_list_t* list)
+{
+	if (!list || (list->count == 0)
+		|| !list->stmt[list->count - 1])
+		return false;
+
+	return (list->stmt[list->count - 1]->type
+		== OFC_PARSE_STMT_ERROR);
+
+	return false;
 }

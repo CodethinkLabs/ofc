@@ -100,7 +100,19 @@ static unsigned ofc_parse_stmt_if__then(
 
 	stmt->if_then.block_then
 		= ofc_parse_stmt_list(src, &ptr[i], debug, &len);
-	if (stmt->if_then.block_then) i += len;
+	if (stmt->if_then.block_then)
+	{
+		if (ofc_parse_stmt_list_contains_error(
+			stmt->if_then.block_then))
+		{
+			/* Don't rewind cause we want to report the error. */
+			ofc_parse_stmt_list_delete(
+				stmt->if_then.block_then);
+			return 0;
+		}
+
+		i += len;
+	}
 
 	bool expect_end = true;
 
@@ -108,7 +120,8 @@ static unsigned ofc_parse_stmt_if__then(
 	len = ofc_parse_keyword(
 		src, &ptr[i], debug,
 		OFC_PARSE_KEYWORD_ELSE);
-	if (len > 0)
+	bool has_else = (len > 0);
+	if (has_else)
 	{
 		i += len;
 
@@ -168,7 +181,21 @@ static unsigned ofc_parse_stmt_if__then(
 
 			stmt->if_then.block_else
 				= ofc_parse_stmt_list(src, &ptr[i], debug, &len);
-			if (stmt->if_then.block_else) i += len;
+			if (stmt->if_then.block_else)
+			{
+				if (ofc_parse_stmt_list_contains_error(
+					stmt->if_then.block_else))
+				{
+					/* Don't rewind cause we want to report the error. */
+					ofc_parse_stmt_list_delete(
+						stmt->if_then.block_else);
+					ofc_parse_stmt_list_delete(
+						stmt->if_then.block_then);
+					return 0;
+				}
+
+				i += len;
+			}
 		}
 	}
 
@@ -179,10 +206,17 @@ static unsigned ofc_parse_stmt_if__then(
 			OFC_PARSE_KEYWORD_IF, false);
 		if (len == 0)
 		{
+			ofc_sparse_error(src, &ptr[i],
+				"Invalid statement in %s body",
+				(has_else ? "ELSE" : "IF THEN"));
+
+			ofc_parse_stmt_list_delete(
+				stmt->if_then.block_else);
 			ofc_parse_stmt_list_delete(
 				stmt->if_then.block_then);
-			ofc_parse_debug_rewind(debug, dpos);
-			return 0;
+
+			stmt->type = OFC_PARSE_STMT_ERROR;
+			return i;
 		}
 		i += len;
 	}
@@ -239,6 +273,10 @@ unsigned ofc_parse_stmt_if(
 		ofc_parse_expr_delete(cond);
 		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
+	}
+	else if (stmt->type == OFC_PARSE_STMT_ERROR)
+	{
+		ofc_parse_expr_delete(cond);
 	}
 	i += len;
 

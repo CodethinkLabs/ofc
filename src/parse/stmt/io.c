@@ -139,6 +139,9 @@ bool ofc_parse_stmt_print_accept_print(
 		case OFC_PARSE_STMT_IO_PRINT:
 			kwstr = "PRINT";
 			break;
+		case OFC_PARSE_STMT_IO_TYPE:
+			kwstr = "TYPE";
+			break;
 		case OFC_PARSE_STMT_IO_ACCEPT:
 			kwstr = "ACCEPT";
 			break;
@@ -382,9 +385,13 @@ unsigned ofc_parse_stmt_io_print_type(
 		ofc_parse_debug_warning(debug, src, ptr,
 			"Use of TYPE as an IO statement is deprecated and ambiguous"
 			", PRINT is preferred");
+		stmt->type = OFC_PARSE_STMT_IO_TYPE;
+	}
+	else
+	{
+		stmt->type = OFC_PARSE_STMT_IO_PRINT;
 	}
 
-	stmt->type = OFC_PARSE_STMT_IO_PRINT;
 	return i;
 }
 

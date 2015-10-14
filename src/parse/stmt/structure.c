@@ -61,7 +61,19 @@ static unsigned ofc_parse_stmt__structure(
 
 	stmt->structure.block = ofc_parse_stmt_list(
 		src, &ptr[i], debug, &len);
-	if (stmt->structure.block) i += len;
+	if (stmt->structure.block)
+	{
+		if (ofc_parse_stmt_list_contains_error(
+			stmt->structure.block))
+		{
+			/* Don't rewind cause we want to report the error. */
+			ofc_parse_stmt_list_delete(
+				stmt->structure.block);
+			return 0;
+		}
+
+		i += len;
+	}
 
 	if (slash)
 	{
@@ -69,24 +81,36 @@ static unsigned ofc_parse_stmt__structure(
 		   END STRUCTURE /name/ */
 		len = ofc_parse_keyword_end(
 			src, &ptr[i], debug, keyword, false);
+		if (len == 0)
+		{
+			ofc_sparse_error(src, &ptr[i],
+				"Invalid statement in %s body",
+				ofc_parse_keyword_name(keyword));
+
+			ofc_parse_stmt_list_delete(
+				stmt->structure.block);
+
+			stmt->type = OFC_PARSE_STMT_ERROR;
+			return i;
+		}
 	}
 	else
 	{
 		len = ofc_parse_keyword_end_named(
 			src, &ptr[i], debug, keyword, true,
 			&stmt->structure.name);
-	}
-	if (len == 0)
-	{
-		ofc_parse_stmt_list_delete(
+		if (len == 0)
+		{
+			ofc_parse_stmt_list_delete(
 			stmt->structure.block);
-		ofc_parse_debug_rewind(debug, dpos);
-		return 0;
+			return 0;
+		}
 	}
 	i += len;
 
 	/* Make sure TYPE (struct) doesn't contain TYPE (print) statement. */
-	if (stmt->structure.block)
+	if ((keyword == OFC_PARSE_KEYWORD_TYPE)
+		&& stmt->structure.block)
 	{
 		unsigned j;
 		for (j = 0; j < stmt->structure.block->count; j++)
@@ -95,17 +119,15 @@ static unsigned ofc_parse_stmt__structure(
 				= stmt->structure.block->stmt[j];
 			if (!s) continue;
 
-			if (s->type == OFC_PARSE_STMT_IO_PRINT)
+			if (s->type == OFC_PARSE_STMT_IO_TYPE)
 			{
 				ofc_parse_stmt_list_delete(
 					stmt->structure.block);
-				ofc_parse_debug_rewind(debug, dpos);
 				return 0;
 			}
 		}
 	}
 
-	stmt->type = OFC_PARSE_STMT_STRUCTURE;
 	return i;
 }
 
@@ -115,12 +137,12 @@ unsigned ofc_parse_stmt_type(
 	ofc_parse_debug_t* debug,
 	ofc_parse_stmt_t* stmt)
 {
+	stmt->type = OFC_PARSE_STMT_TYPE;
 	unsigned i = ofc_parse_stmt__structure(
 		src, ptr, debug,
 		OFC_PARSE_KEYWORD_TYPE, false, stmt);
 	if (i == 0) return 0;
 
-	stmt->type = OFC_PARSE_STMT_TYPE;
 	return i;
 }
 
@@ -129,12 +151,12 @@ unsigned ofc_parse_stmt_structure(
 	ofc_parse_debug_t* debug,
 	ofc_parse_stmt_t* stmt)
 {
+	stmt->type = OFC_PARSE_STMT_STRUCTURE;
 	unsigned i = ofc_parse_stmt__structure(
 		src, ptr, debug,
 		OFC_PARSE_KEYWORD_STRUCTURE, true, stmt);
 	if (i == 0) return 0;
 
-	stmt->type = OFC_PARSE_STMT_STRUCTURE;
 	return i;
 }
 
@@ -143,12 +165,12 @@ unsigned ofc_parse_stmt_union(
 	ofc_parse_debug_t* debug,
 	ofc_parse_stmt_t* stmt)
 {
+	stmt->type = OFC_PARSE_STMT_UNION;
 	unsigned i = ofc_parse_stmt__structure(
 		src, ptr, debug,
 		OFC_PARSE_KEYWORD_UNION, true, stmt);
 	if (i == 0) return 0;
 
-	stmt->type = OFC_PARSE_STMT_UNION;
 	return i;
 }
 
@@ -157,12 +179,12 @@ unsigned ofc_parse_stmt_map(
 	ofc_parse_debug_t* debug,
 	ofc_parse_stmt_t* stmt)
 {
+	stmt->type = OFC_PARSE_STMT_MAP;
 	unsigned i = ofc_parse_stmt__structure(
 		src, ptr, debug,
 		OFC_PARSE_KEYWORD_MAP, true, stmt);
 	if (i == 0) return 0;
 
-	stmt->type = OFC_PARSE_STMT_MAP;
 	return i;
 }
 

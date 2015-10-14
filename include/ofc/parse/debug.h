@@ -15,11 +15,6 @@ void ofc_parse_debug_print(const ofc_parse_debug_t* stack);
 
 #include <stdarg.h>
 
-void ofc_parse_debug_error(
-	ofc_parse_debug_t* stack,
-	const ofc_sparse_t* src, const char* ptr,
-	const char* format, ...);
-
 void ofc_parse_debug_warning(
 	ofc_parse_debug_t* stack,
 	const ofc_sparse_t* src, const char* ptr,
