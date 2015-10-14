@@ -130,7 +130,7 @@ args_e get_options(char* arg, int* num)
 	else if ((count == 2) && (strcmp(option[0], "case") == 0)
 		&& (strcmp(option[1], "sen") == 0))
 	{
-		printf("Select case sentivity\n");
+		printf("Select case sensitivity\n");
 		return CASE_SEN;
 	}
 	else
