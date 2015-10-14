@@ -22,7 +22,9 @@ bool ofc_is_hspace(char c)
 
 bool ofc_is_ident(char c)
 {
-	return (isalnum(c) || (c == '_'));
+	return (isalnum(c)
+		|| (c == '_')
+		|| (c == '$'));
 }
 
 bool ofc_is_end_statement(const char* c, unsigned* len)

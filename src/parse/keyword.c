@@ -97,11 +97,12 @@ unsigned ofc_parse_ident(
 	ofc_parse_debug_t* debug,
 	ofc_str_ref_t* ident)
 {
-	if (!isalpha(ptr[0]))
+	if (!isalpha(ptr[0])
+		&& (ptr[0] != '_'))
 		return 0;
 
 	unsigned i;
-	for (i = 1; isalnum(ptr[i]) || (ptr[i] == '_'); i++);
+	for (i = 1; ofc_is_ident(ptr[i]); i++);
 
 	if (!ofc_sparse_sequential(src, ptr, i))
 	{
@@ -110,7 +111,7 @@ unsigned ofc_parse_ident(
 			i, ptr);
 	}
 
-	if (ident) *ident = str_ref(ptr, i);
+	if (ident) *ident = ofc_str_ref(ptr, i);
 	return i;
 }
 

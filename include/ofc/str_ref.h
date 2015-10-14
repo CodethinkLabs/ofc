@@ -13,7 +13,7 @@ typedef struct
 
 #define OFC_STR_REF_EMPTY (ofc_str_ref_t){ .base = NULL, .size = 0 }
 
-static inline ofc_str_ref_t str_ref(const char* base, unsigned size)
+static inline ofc_str_ref_t ofc_str_ref(const char* base, unsigned size)
 	{ return (ofc_str_ref_t){ base, size }; }
 
 bool ofc_str_ref_empty(const ofc_str_ref_t ref);

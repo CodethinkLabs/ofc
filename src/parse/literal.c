@@ -114,7 +114,7 @@ static unsigned ofc_parse_literal__binary(
 		i += 1;
 	}
 
-	literal->number = str_ref(&ptr[base + 1], (len - 2));
+	literal->number = ofc_str_ref(&ptr[base + 1], (len - 2));
 	literal->type = OFC_PARSE_LITERAL_BINARY;
 	return i;
 }
@@ -152,7 +152,7 @@ static unsigned ofc_parse_literal__octal(
 		i += 1;
 	}
 
-	literal->number = str_ref(&ptr[base + 1], (len - 2));
+	literal->number = ofc_str_ref(&ptr[base + 1], (len - 2));
 	literal->type = OFC_PARSE_LITERAL_OCTAL;
 	return i;
 }
@@ -192,7 +192,7 @@ static unsigned ofc_parse_literal__hex(
 		i += 1;
 	}
 
-	literal->number = str_ref(&ptr[base + 1], (len - 2));
+	literal->number = ofc_str_ref(&ptr[base + 1], (len - 2));
 	literal->type = OFC_PARSE_LITERAL_HEX;
 	return i;
 }
@@ -546,7 +546,7 @@ unsigned ofc_parse_literal_number(
 
 	literal->type = OFC_PARSE_LITERAL_NUMBER;
 	literal->kind = k;
-	literal->number = str_ref(ptr, i);
+	literal->number = ofc_str_ref(ptr, i);
 	return i;
 }
 
@@ -566,7 +566,7 @@ unsigned ofc_parse_literal_integer(
 
 	literal->type = OFC_PARSE_LITERAL_NUMBER;
 	literal->kind = 0;
-	literal->number = str_ref(ptr, i);
+	literal->number = ofc_str_ref(ptr, i);
 	return i;
 }
 
