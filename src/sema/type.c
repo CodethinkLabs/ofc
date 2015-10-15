@@ -210,6 +210,114 @@ const ofc_sema_type_t* ofc_sema_type_create_array(
 }
 
 
+
+const ofc_sema_type_t* ofc_sema_type_create(
+	const ofc_parse_type_t* ptype)
+{
+	if (!ptype)
+		return NULL;
+
+
+	unsigned kind = 0;
+
+	unsigned i;
+	for (i = 0; i < ptype->params->count; i++)
+	{
+		/* TODO - Handle unnamed kind */
+		if ((strncasecmp(ptype->params[i]->name, "KIND", 4) == 0)
+			&& (ptype->params[i]->type == OFC_PARSE_CALL_ARG_EXPR))
+		{
+			/* TODO - Expression evaluation to get kind */
+
+			if (kind == 0)
+			{
+				/* TODO - Print error. */
+				return false;
+			}
+		}
+	}
+
+	if (ptype->kind)
+	{
+		if (ptype->kind == 0)
+		{
+			/* TODO - Print error. */
+			return NULL;
+		}
+
+		if (kind > 0)
+		{
+			if (ptype->kind == kind)
+			{
+				/* TODO - Print warning. */
+			}
+			else
+			{
+				/* TODO - Print error. */
+				return NULL;
+			}
+		}
+
+		kind = ptype->kind;
+	}
+	else
+	{
+		/* TODO - If KIND is not set, get default from lang_opts. */
+		kind = 4;
+	}
+
+	switch (ptype->type)
+	{
+		case OFC_PARSE_TYPE_DOUBLE_PRECISION:
+			kind *= 2;
+			break;
+		case OFC_PARSE_TYPE_DOUBLE_COMPLEX:
+			kind *= 2;
+			break;
+		default:
+			break;
+	}
+
+	ofc_sema_type_t* stype = NULL;
+
+	switch (ptype->type)
+	{
+		case OFC_PARSE_TYPE_LOGICAL:
+			stype = ofc_sema_type__create(OFC_SEMA_TYPE_LOGICAL, kind, NULL, NULL, NULL);
+			break;
+		case OFC_PARSE_TYPE_CHARACTER:
+			stype = ofc_sema_type__create(OFC_SEMA_TYPE_CHARACTER, kind, NULL, NULL, NULL);
+			break;
+		case OFC_PARSE_TYPE_INTEGER:
+			stype = ofc_sema_type__create(OFC_SEMA_TYPE_INTEGER, kind, NULL, NULL, NULL);
+			break;
+		case OFC_PARSE_TYPE_REAL:
+			stype = ofc_sema_type__create(OFC_SEMA_TYPE_REAL, kind, NULL, NULL, NULL);
+			break;
+		case OFC_PARSE_TYPE_DOUBLE_PRECISION:
+			stype = ofc_sema_type__create(OFC_SEMA_TYPE_REAL, kind, NULL, NULL, NULL);
+			break;
+		case OFC_PARSE_TYPE_COMPLEX:
+			stype = ofc_sema_type__create(OFC_SEMA_TYPE_COMPLEX, kind, NULL, NULL, NULL);
+			break;
+		case OFC_PARSE_TYPE_DOUBLE_COMPLEX:
+			stype = ofc_sema_type__create(OFC_SEMA_TYPE_COMPLEX, kind, NULL, NULL, NULL);
+			break;
+		case OFC_PARSE_TYPE_BYTE:
+			stype = ofc_sema_type__create(OFC_SEMA_TYPE_BYTE, kind, NULL, NULL, NULL);
+			break;
+		case OFC_PARSE_TYPE_TYPE:
+			break;
+
+		default:
+			return NULL;
+	}
+
+	/* TODO - Array from count or (LEN=?). */
+
+	/* TODO - How do we handle type attributes? */
+}
+
 bool ofc_sema_type_compare(
 	const ofc_sema_type_t* a,
 	const ofc_sema_type_t* b)
