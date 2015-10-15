@@ -1,5 +1,6 @@
 #include <ofc/str_ref.h>
 #include <string.h>
+#include <ctype.h>
 #include <stdio.h>
 
 
@@ -17,6 +18,18 @@ uint8_t ofc_str_ref_hash(const ofc_str_ref_t ref)
 	unsigned i;
 	for (i = 0, hash = 0; i < ref.size; i++)
 		hash += ref.base[i];
+	return hash;
+}
+
+uint8_t ofc_str_ref_hash_ci(const ofc_str_ref_t ref)
+{
+	if (!ref.base)
+		return 0;
+
+	uint8_t hash;
+	unsigned i;
+	for (i = 0, hash = 0; i < ref.size; i++)
+		hash += toupper(ref.base[i]);
 	return hash;
 }
 

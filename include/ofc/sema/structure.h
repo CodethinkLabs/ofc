@@ -3,6 +3,7 @@
 
 typedef struct
 {
+	bool is_vax;
 	bool is_union;
 
 	struct
@@ -15,7 +16,7 @@ typedef struct
 	bool locked;
 } ofc_sema_structure_t;
 
-ofc_sema_structure_t* ofc_sema_structure_create(void);
+ofc_sema_structure_t* ofc_sema_structure_create(bool is_vax);
 ofc_sema_structure_t* ofc_sema_structure_create_union(void);
 
 bool ofc_sema_structure_append(

@@ -20,13 +20,14 @@ void ofc_sema_structure_delete(
 }
 
 
-ofc_sema_structure_t* ofc_sema_structure_create(void)
+ofc_sema_structure_t* ofc_sema_structure_create(bool is_vax)
 {
 	ofc_sema_structure_t* structure
 		= (ofc_sema_structure_t*)malloc(
 			sizeof(ofc_sema_structure_t));
 	if (!structure) return NULL;
 
+	structure->is_vax   = is_vax;
 	structure->is_union = false;
 
 	structure->member.count = 0;
@@ -41,7 +42,7 @@ ofc_sema_structure_t* ofc_sema_structure_create(void)
 ofc_sema_structure_t* ofc_sema_structure_create_union(void)
 {
 	ofc_sema_structure_t* structure
-		= ofc_sema_structure_create();
+		= ofc_sema_structure_create(true);
 	if (!structure) return NULL;
 
 	structure->is_union = true;
@@ -121,7 +122,8 @@ uint8_t ofc_sema_structure_hash(
 	if (!structure)
 		return 0;
 
-	uint8_t hash = structure->is_union;
+	uint8_t hash = (structure->is_vax
+		+ structure->is_union);
 
 	unsigned i;
 	for (i = 0; i < structure->member.count; i++)
@@ -143,7 +145,8 @@ bool ofc_sema_structure_compare(
 	if (a == b)
 		return true;
 
-	if ((a->is_union != b->is_union)
+	if ((a->is_vax != b->is_vax)
+		|| (a->is_union != b->is_union)
 		|| (a->member.count != b->member.count))
 		return false;
 
