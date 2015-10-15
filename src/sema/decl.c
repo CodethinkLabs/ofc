@@ -36,6 +36,7 @@ ofc_sema_decl_t* ofc_sema_decl(
 
 	decl->equiv = NULL;
 
+	/* TODO - Initialize these to types attributes. */
 	decl->is_static    = false;
 	decl->is_volatile  = false;
 	decl->is_automatic = false;

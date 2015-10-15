@@ -17,6 +17,10 @@ struct ofc_sema_type_s
 {
 	ofc_sema_type_e type;
 
+    bool is_static;
+	bool is_volatile;
+	bool is_automatic;
+
 	union
 	{
 		struct
@@ -31,11 +35,20 @@ struct ofc_sema_type_s
 	};
 };
 
-const ofc_sema_type_t* ofc_sema_type_create_primitive(ofc_sema_type_e type, unsigned kind);
-const ofc_sema_type_t* ofc_sema_type_create_byte(void);
-const ofc_sema_type_t* ofc_sema_type_create_structure(const ofc_sema_structure_t* structure);
-const ofc_sema_type_t* ofc_sema_type_create_pointer(ofc_sema_type_t* target);
-const ofc_sema_type_t* ofc_sema_type_create_array(ofc_sema_type_t* type, ofc_sema_array_t* array);
+const ofc_sema_type_t* ofc_sema_type_create_primitive(
+	ofc_sema_type_e type, unsigned kind,
+	bool is_static, bool is_automatic, bool is_volatile);
+const ofc_sema_type_t* ofc_sema_type_create_byte(
+	bool is_static, bool is_automatic, bool is_volatile);
+const ofc_sema_type_t* ofc_sema_type_create_structure(
+	const ofc_sema_structure_t* structure,
+	bool is_static, bool is_automatic, bool is_volatile);
+const ofc_sema_type_t* ofc_sema_type_create_pointer(
+	ofc_sema_type_t* target,
+	bool is_static, bool is_automatic, bool is_volatile);
+const ofc_sema_type_t* ofc_sema_type_create_array(
+	ofc_sema_type_t* type, ofc_sema_array_t* array,
+	bool is_static, bool is_automatic, bool is_volatile);
 
 uint8_t ofc_sema_type_hash(
 	const ofc_sema_type_t* type);

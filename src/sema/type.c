@@ -30,6 +30,10 @@ uint8_t ofc_sema_type_hash(
 
 	uint8_t hash = type->type;
 
+	if (type->is_static   ) hash +=  8;
+	if (type->is_automatic) hash += 16;
+	if (type->is_volatile ) hash += 32;
+
 	switch (type->type)
 	{
 		case OFC_SEMA_TYPE_STRUCTURE:
@@ -69,7 +73,10 @@ static const ofc_sema_type_t* ofc_sema_type__create(
 	unsigned kind,
 	ofc_sema_array_t* array,
 	ofc_sema_type_t* subtype,
-	const ofc_sema_structure_t* structure)
+	const ofc_sema_structure_t* structure,
+	bool is_static,
+	bool is_automatic,
+	bool is_volatile)
 {
 	if (!ofc_sema_type__map)
 	{
@@ -82,7 +89,14 @@ static const ofc_sema_type_t* ofc_sema_type__create(
 			return NULL;
 	}
 
-	ofc_sema_type_t stype = { .type = type };
+	ofc_sema_type_t stype =
+		{
+			.type         = type,
+			.is_static    = is_static,
+			.is_automatic = is_automatic,
+			.is_volatile  = is_volatile,
+		};
+
 	switch (type)
 	{
 		case OFC_SEMA_TYPE_POINTER:
@@ -122,7 +136,11 @@ static const ofc_sema_type_t* ofc_sema_type__create(
 }
 
 const ofc_sema_type_t* ofc_sema_type_create_primitive(
-	ofc_sema_type_e type, unsigned kind)
+	ofc_sema_type_e type,
+	unsigned kind,
+	bool is_static,
+	bool is_automatic,
+	bool is_volatile)
 {
 	switch (type)
 	{
@@ -141,37 +159,54 @@ const ofc_sema_type_t* ofc_sema_type_create_primitive(
 
 	return ofc_sema_type__create(
 		type, kind,
-		NULL, NULL, NULL);
+		NULL, NULL, NULL,
+		is_static, is_automatic, is_volatile);
 }
 
-const ofc_sema_type_t* ofc_sema_type_create_byte(void)
+const ofc_sema_type_t* ofc_sema_type_create_byte(
+	bool is_static,
+	bool is_automatic,
+	bool is_volatile)
 {
 	return ofc_sema_type_create_primitive(
-		OFC_SEMA_TYPE_BYTE, 0);
+		OFC_SEMA_TYPE_BYTE, 0,
+		is_static, is_automatic, is_volatile);
 }
 
 const ofc_sema_type_t* ofc_sema_type_create_structure(
-	const ofc_sema_structure_t* structure)
+	const ofc_sema_structure_t* structure,
+	bool is_static,
+	bool is_automatic,
+	bool is_volatile)
 {
 	return ofc_sema_type__create(
 		OFC_SEMA_TYPE_STRUCTURE, 0,
-		NULL, NULL, structure);
+		NULL, NULL, structure,
+		is_static, is_automatic, is_volatile);
 }
 
 const ofc_sema_type_t* ofc_sema_type_create_pointer(
-	ofc_sema_type_t* target)
+	ofc_sema_type_t* target,
+	bool is_static,
+	bool is_automatic,
+	bool is_volatile)
 {
 	return ofc_sema_type__create(
 		OFC_SEMA_TYPE_POINTER, 0,
-		NULL, target, NULL);
+		NULL, target, NULL,
+		is_static, is_automatic, is_volatile);
 }
 
 const ofc_sema_type_t* ofc_sema_type_create_array(
-	ofc_sema_type_t* type, ofc_sema_array_t* array)
+	ofc_sema_type_t* type, ofc_sema_array_t* array,
+	bool is_static,
+	bool is_automatic,
+	bool is_volatile)
 {
 	return ofc_sema_type__create(
 		OFC_SEMA_TYPE_ARRAY, 0,
-		array, type, NULL);
+		array, type, NULL,
+		is_static, is_automatic, is_volatile);
 }
 
 

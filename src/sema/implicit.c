@@ -6,10 +6,10 @@ ofc_sema_implicit_t* ofc_sema_implicit_create(void)
 {
 	const ofc_sema_type_t* real
 		= ofc_sema_type_create_primitive(
-			OFC_SEMA_TYPE_REAL, 0);
+			OFC_SEMA_TYPE_REAL, 0, false, false, false);
 	const ofc_sema_type_t* integer
 		= ofc_sema_type_create_primitive(
-			OFC_SEMA_TYPE_INTEGER, 0);
+			OFC_SEMA_TYPE_INTEGER, 0, false, false, false);
 
 	if (!real || !integer)
 		return NULL;
