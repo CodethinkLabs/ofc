@@ -12,6 +12,8 @@ typedef enum
 	OFC_SEMA_TYPE_STRUCTURE,
 	OFC_SEMA_TYPE_POINTER,
 	OFC_SEMA_TYPE_ARRAY,
+
+	OFC_SEMA_TYPE_COUNT
 } ofc_sema_type_e;
 
 struct ofc_sema_type_s
@@ -62,5 +64,11 @@ unsigned ofc_sema_type_size(const ofc_sema_type_t* type);
 
 bool ofc_sema_type_is_integer(const ofc_sema_type_t* type);
 bool ofc_sema_type_is_logical(const ofc_sema_type_t* type);
+
+bool ofc_sema_type_cast_value(
+	const ofc_sema_type_t* itype,
+	const void* ivalue,
+	const ofc_sema_type_t* otype,
+	void* ovalue);
 
 #endif
