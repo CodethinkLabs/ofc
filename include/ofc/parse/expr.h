@@ -49,8 +49,6 @@ struct ofc_parse_expr_list_s
 };
 
 
-#define OFC_PARSE_EXPR_EMPTY (ofc_parse_expr_t){ .type = OFC_PARSE_EXPR_NONE };
-
 
 /* Returns a literal unsigned integer wrapped in an expression type. */
 ofc_parse_expr_t* ofc_parse_expr_integer(

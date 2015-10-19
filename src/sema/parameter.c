@@ -145,7 +145,11 @@ bool ofc_sema_parameter_int32(
 		if (!integer) return false;
 	}
 
-	return ofc_sema_typeval_get(
+	bool lossy = false;
+	bool success = ofc_sema_typeval_get(
 		parameter->typeval,
-		integer, value);
+		integer, value, &lossy);
+
+	/* TODO - Allow lossy conversions on parameter read? */
+	return (success && !lossy);
 }
