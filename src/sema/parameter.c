@@ -38,7 +38,7 @@ static ofc_sema_parameter_t* ofc_sema_parameter__assign(
 	}
 
 	ofc_sema_expr_t* expr
-		= ofc_sema_expr(assign->init);
+		= ofc_sema_expr(assign->init, NULL, map);
 	if (!expr)
 	{
 		/* TODO - Error: Invalid PARAMETER expression. */
@@ -126,6 +126,13 @@ void ofc_sema_parameter_delete(
 
 	ofc_sema_typeval_delete(parameter->typeval);
 	free(parameter);
+}
+
+
+const ofc_sema_typeval_t* ofc_sema_parameter_get(
+	const ofc_sema_parameter_t* parameter)
+{
+	return (parameter ? parameter->typeval : NULL);
 }
 
 

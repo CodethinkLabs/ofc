@@ -16,6 +16,9 @@ bool ofc_sema_parameter_decl(
 void ofc_sema_parameter_delete(
 	ofc_sema_parameter_t* parameter);
 
+const ofc_sema_typeval_t* ofc_sema_parameter_get(
+	const ofc_sema_parameter_t* parameter);
+
 bool ofc_sema_parameter_int32(
 	const ofc_sema_parameter_t* parameter,
 	int32_t* value);

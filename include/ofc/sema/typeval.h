@@ -28,6 +28,12 @@ ofc_sema_typeval_t* ofc_sema_typeval_literal(
 void ofc_sema_typeval_delete(
 	ofc_sema_typeval_t* typeval);
 
+ofc_sema_typeval_t* ofc_sema_typeval_copy(
+	const ofc_sema_typeval_t* typeval);
+
+unsigned ofc_sema_typeval_size(
+	const ofc_sema_typeval_t* typeval);
+
 bool ofc_sema_typeval_get(
 	const ofc_sema_typeval_t* typeval,
 	const ofc_sema_type_t* type,
