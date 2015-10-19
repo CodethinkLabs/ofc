@@ -6,14 +6,15 @@ static bool ofc_sema_type_cast_value__int_int(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
-	void* ovalue)
+	void* ovalue,
+	bool* lossy)
 {
 	uintptr_t i;
 	for (i = okind; i < ikind; i++)
 	{
 		if (((const uint8_t*)ivalue)[i] != 0x00)
 		{
-			/* TODO - Warn about lossy truncation. */
+			*lossy = true;
 			break;
 		}
 	}
@@ -32,20 +33,24 @@ static bool ofc_sema_type_cast_value__int_byte(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
-	void* ovalue)
+	void* ovalue,
+	bool* lossy)
 {
 	if (okind != 1)
 		return false;
 	return ofc_sema_type_cast_value__int_int(
-		ikind, ivalue, 1, ovalue);
+		ikind, ivalue, 1, ovalue, lossy);
 }
 
 static bool ofc_sema_type_cast_value__int_logical(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
-	void* ovalue)
+	void* ovalue,
+	bool* lossy)
 {
+	(void)lossy;
+
 	bool v = false;
 
 	uintptr_t i;
@@ -71,7 +76,8 @@ static bool ofc_sema_type_cast_value__int_real(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
-	void* ovalue)
+	void* ovalue,
+	bool* lossy)
 {
 	if (ikind > 8)
 		return false;
@@ -85,7 +91,7 @@ static bool ofc_sema_type_cast_value__int_real(
 
 		if ((int64_t)ov != v)
 		{
-			/* TODO - Warn that conversion was lossy. */
+			*lossy = true;
 		}
 
 		if (ovalue)
@@ -97,7 +103,7 @@ static bool ofc_sema_type_cast_value__int_real(
 
 		if ((int64_t)ov != v)
 		{
-			/* TODO - Warn that conversion was lossy. */
+			*lossy = true;
 		}
 
 		if (ovalue)
@@ -107,7 +113,7 @@ static bool ofc_sema_type_cast_value__int_real(
 	{
 		long double ov = (long double)v;
 
-		/* int64 to long double should never be lossy. */
+		*lossy = true;
 
 		if (ovalue)
 			memcpy(ovalue, &ov, okind);
@@ -124,81 +130,88 @@ static bool ofc_sema_type_cast_value__real_complex(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
-	void* ovalue);
+	void* ovalue,
+	bool* lossy);
 
 static bool ofc_sema_type_cast_value__int_complex(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
-	void* ovalue)
+	void* ovalue,
+	bool* lossy)
 {
 	uint8_t v[okind];
 	if(!ofc_sema_type_cast_value__int_real(
-		ikind, ivalue, okind, v))
+		ikind, ivalue, okind, v, lossy))
 		return false;
 
 	return ofc_sema_type_cast_value__real_complex(
-		okind, &v, okind, ovalue);
+		okind, &v, okind, ovalue, lossy);
 }
 
 static bool ofc_sema_type_cast_value__byte_int(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
-	void* ovalue)
+	void* ovalue,
+	bool* lossy)
 {
 	if (ikind != 1)
 		return false;
 	return ofc_sema_type_cast_value__int_int(
-		ikind, ivalue, okind, ovalue);
+		ikind, ivalue, okind, ovalue, lossy);
 }
 
 static bool ofc_sema_type_cast_value__byte_byte(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
-	void* ovalue)
+	void* ovalue,
+	bool* lossy)
 {
 	if (ikind != 1)
 		return false;
 	return ofc_sema_type_cast_value__int_byte(
-		ikind, ivalue, okind, ovalue);
+		ikind, ivalue, okind, ovalue, lossy);
 }
 
 static bool ofc_sema_type_cast_value__byte_logical(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
-	void* ovalue)
+	void* ovalue,
+	bool* lossy)
 {
 	if (ikind != 1)
 		return false;
 	return ofc_sema_type_cast_value__int_logical(
-		ikind, ivalue, okind, ovalue);
+		ikind, ivalue, okind, ovalue, lossy);
 }
 
 static bool ofc_sema_type_cast_value__byte_real(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
-	void* ovalue)
+	void* ovalue,
+	bool* lossy)
 {
 	if (ikind != 1)
 		return false;
 	return ofc_sema_type_cast_value__int_real(
-		ikind, ivalue, okind, ovalue);
+		ikind, ivalue, okind, ovalue, lossy);
 }
 
 static bool ofc_sema_type_cast_value__byte_complex(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
-	void* ovalue)
+	void* ovalue,
+	bool* lossy)
 {
 	if (ikind != 1)
 		return false;
 	return ofc_sema_type_cast_value__int_complex(
-		ikind, ivalue, okind, ovalue);
+		ikind, ivalue, okind, ovalue, lossy);
 }
 
 
@@ -206,68 +219,74 @@ static bool ofc_sema_type_cast_value__logical_int(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
-	void* ovalue)
+	void* ovalue,
+	bool* lossy)
 {
 	return ofc_sema_type_cast_value__int_logical(
-		ikind, ivalue, okind, ovalue);
+		ikind, ivalue, okind, ovalue, lossy);
 }
 
 static bool ofc_sema_type_cast_value__logical_byte(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
-	void* ovalue)
+	void* ovalue,
+	bool* lossy)
 {
 	if (okind != 1)
 		return false;
 	return ofc_sema_type_cast_value__logical_int(
-		ikind, ivalue, 1, ovalue);
+		ikind, ivalue, 1, ovalue, lossy);
 }
 
 static bool ofc_sema_type_cast_value__logical_logical(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
-	void* ovalue)
+	void* ovalue,
+	bool* lossy)
 {
 	return ofc_sema_type_cast_value__logical_int(
-		ikind, ivalue, okind, ovalue);
+		ikind, ivalue, okind, ovalue, lossy);
 }
 
 static bool ofc_sema_type_cast_value__logical_real(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
-	void* ovalue)
+	void* ovalue,
+	bool* lossy)
 {
 	int64_t v;
 	if (!ofc_sema_type_cast_value__logical_int(
-		ikind, ivalue, 8, &v))
+		ikind, ivalue, 8, &v, lossy))
 		return false;
 
 	return ofc_sema_type_cast_value__int_real(
-		8, &v, okind, ovalue);
+		8, &v, okind, ovalue, lossy);
 }
 
 static bool ofc_sema_type_cast_value__logical_complex(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
-	void* ovalue)
+	void* ovalue,
+	bool* lossy)
 {
 	uint8_t v[okind];
 	if(!ofc_sema_type_cast_value__logical_real(
-		ikind, ivalue, okind, v))
+		ikind, ivalue, okind, v, lossy))
 		return false;
 
 	return ofc_sema_type_cast_value__real_complex(
-		okind, &v, okind, ovalue);
+		okind, &v, okind, ovalue, lossy);
 }
 
 static bool ofc_sema_type_cast_value__real_int64(
 	unsigned ikind,
 	const void* ivalue,
-	int64_t* ovalue)
+	int64_t* ovalue,
+	bool* lossy)
 {
 	long double iv;
 	switch (ikind)
@@ -288,7 +307,7 @@ static bool ofc_sema_type_cast_value__real_int64(
 	int64_t ov = (int64_t)iv;
 	if ((long double)ov != iv)
 	{
-		/* TODO - Warn about lossy conversion. */
+		*lossy = true;
 	}
 
 	if (ovalue) *ovalue = ov;
@@ -299,52 +318,56 @@ static bool ofc_sema_type_cast_value__real_int(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
-	void* ovalue)
+	void* ovalue,
+	bool* lossy)
 {
 	if (okind > 8)
 		return false;
 
 	int64_t v;
 	if (!ofc_sema_type_cast_value__real_int64(
-		ikind, ivalue, &v))
+		ikind, ivalue, &v, lossy))
 		return false;
 
 	return ofc_sema_type_cast_value__int_int(
-		8, &v, okind, ovalue);
+		8, &v, okind, ovalue, lossy);
 }
 
 static bool ofc_sema_type_cast_value__real_byte(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
-	void* ovalue)
+	void* ovalue,
+	bool* lossy)
 {
 	if (okind != 1)
 		return false;
 	return ofc_sema_type_cast_value__real_int(
-		ikind, ivalue, 1, ovalue);
+		ikind, ivalue, 1, ovalue, lossy);
 }
 
 static bool ofc_sema_type_cast_value__real_logical(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
-	void* ovalue)
+	void* ovalue,
+	bool* lossy)
 {
 	uint8_t v[okind];
 	if (!ofc_sema_type_cast_value__real_int(
-		ikind, ivalue, okind, &v))
+		ikind, ivalue, okind, &v, lossy))
 		return false;
 
 	return ofc_sema_type_cast_value__int_logical(
-		okind, v, okind, ovalue);
+		okind, v, okind, ovalue, lossy);
 }
 
 static bool ofc_sema_type_cast_value__real_real(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
-	void* ovalue)
+	void* ovalue,
+	bool* lossy)
 {
 	long double iv;
 
@@ -363,7 +386,7 @@ static bool ofc_sema_type_cast_value__real_real(
 			return false;
 	}
 
-	/* TODO - Warn about lossy conversion? */
+	*lossy = false;
 
 	if (okind == 4)
 	{
@@ -395,12 +418,13 @@ static bool ofc_sema_type_cast_value__real_complex(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
-	void* ovalue)
+	void* ovalue,
+	bool* lossy)
 {
 	uint8_t v[okind * 2];
 	memset(v, 0x00, (okind * 2));
 	if (!ofc_sema_type_cast_value__real_real(
-		ikind, ivalue, okind, &v))
+		ikind, ivalue, okind, &v, lossy))
 		return false;
 
 	if (ovalue)
@@ -412,54 +436,59 @@ static bool ofc_sema_type_cast_value__complex_int(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
-	void* ovalue)
+	void* ovalue,
+	bool* lossy)
 {
 	return ofc_sema_type_cast_value__real_int(
-		ikind, ivalue, okind, ovalue);
+		ikind, ivalue, okind, ovalue, lossy);
 }
 
 static bool ofc_sema_type_cast_value__complex_byte(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
-	void* ovalue)
+	void* ovalue,
+	bool* lossy)
 {
 	if (okind != 1)
 		return false;
 	return ofc_sema_type_cast_value__complex_int(
-		ikind, ivalue, 1, ovalue);
+		ikind, ivalue, 1, ovalue, lossy);
 }
 
 static bool ofc_sema_type_cast_value__complex_logical(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
-	void* ovalue)
+	void* ovalue,
+	bool* lossy)
 {
 	uint8_t v[okind];
 	if (!ofc_sema_type_cast_value__complex_int(
-		ikind, ivalue, okind, v))
+		ikind, ivalue, okind, v, lossy))
 		return false;
 
 	return ofc_sema_type_cast_value__int_logical(
-		okind, v, okind, ovalue);
+		okind, v, okind, ovalue, lossy);
 }
 
 static bool ofc_sema_type_cast_value__complex_real(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
-	void* ovalue)
+	void* ovalue,
+	bool* lossy)
 {
 	return ofc_sema_type_cast_value__real_real(
-		ikind, ivalue, okind, ovalue);
+		ikind, ivalue, okind, ovalue, lossy);
 }
 
 static bool ofc_sema_type_cast_value__complex_complex(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
-	void* ovalue)
+	void* ovalue,
+	bool* lossy)
 {
 	uint8_t v[okind][2];
 
@@ -467,9 +496,9 @@ static bool ofc_sema_type_cast_value__complex_complex(
 	const void* iimag = (const void*)((uintptr_t)ivalue + ikind);
 
 	if (!ofc_sema_type_cast_value__real_real(
-		ikind, ireal, okind, v[0])
+		ikind, ireal, okind, v[0], lossy)
 		|| !ofc_sema_type_cast_value__real_real(
-			ikind, iimag, okind, v[1]))
+			ikind, iimag, okind, v[1], lossy))
 		return false;
 
 	if (ovalue)
@@ -481,7 +510,8 @@ static bool ofc_sema_type_cast_value__character_character(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
-	void* ovalue)
+	void* ovalue,
+	bool* lossy)
 {
 	/* TODO - Implement character truncation and (space) padding */
 	return false;
@@ -491,7 +521,8 @@ bool ofc_sema_type_cast_value(
 	const ofc_sema_type_t* itype,
 	const void* ivalue,
 	const ofc_sema_type_t* otype,
-	void* ovalue)
+	void* ovalue,
+	bool* lossy)
 {
 	if (!itype || !ivalue || !otype)
 		return false;
@@ -501,7 +532,7 @@ bool ofc_sema_type_cast_value(
 		return false;
 
 	/* This has to match the members of ofc_sema_type_e */
-	static bool (*ft[OFC_SEMA_TYPE_COUNT][OFC_SEMA_TYPE_COUNT])(unsigned, const void*, unsigned, void*) =
+	static bool (*ft[OFC_SEMA_TYPE_COUNT][OFC_SEMA_TYPE_COUNT])(unsigned, const void*, unsigned, void*, bool*) =
 	{
 		/* OFC_SEMA_TYPE_LOGICAL */
 		{
@@ -579,11 +610,12 @@ bool ofc_sema_type_cast_value(
 		{ NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
 	};
 
-	bool (*f)(unsigned, const void*, unsigned, void*)
+	bool (*f)(unsigned, const void*, unsigned, void*, bool*)
 		= ft[itype->type][otype->type];
 	if (!f) return NULL;
 
 	return f(
 		itype->kind, ivalue,
-		otype->kind, ovalue);
+		otype->kind, ovalue,
+		lossy);
 }

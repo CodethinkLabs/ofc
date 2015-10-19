@@ -69,6 +69,7 @@ bool ofc_sema_type_cast_value(
 	const ofc_sema_type_t* itype,
 	const void* ivalue,
 	const ofc_sema_type_t* otype,
-	void* ovalue);
+	void* ovalue,
+	bool* lossy);
 
 #endif

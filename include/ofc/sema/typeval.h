@@ -31,6 +31,6 @@ void ofc_sema_typeval_delete(
 bool ofc_sema_typeval_get(
 	const ofc_sema_typeval_t* typeval,
 	const ofc_sema_type_t* type,
-	void* value);
+	void* value, bool* lossy);
 
 #endif
