@@ -1,6 +1,8 @@
 #include <ofc/sema.h>
+#include <string.h>
 
-static void ofc_sema_type_cast_value__int_int(
+
+static bool ofc_sema_type_cast_value__int_int(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
@@ -22,9 +24,11 @@ static void ofc_sema_type_cast_value__int_int(
 			memset(ovalue, 0x00, okind);
 		memcpy(ovalue, ivalue, ikind);
 	}
+
+	return true;
 }
 
-static void ofc_sema_type_cast_value__int_byte(
+static bool ofc_sema_type_cast_value__int_byte(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
@@ -36,7 +40,7 @@ static void ofc_sema_type_cast_value__int_byte(
 		ikind, ivalue, 1, ovalue);
 }
 
-static void ofc_sema_type_cast_value__int_logical(
+static bool ofc_sema_type_cast_value__int_logical(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
@@ -59,6 +63,8 @@ static void ofc_sema_type_cast_value__int_logical(
 		memset(ovalue, 0x00, okind);
 		((uint8_t*)ovalue)[0] = v;
 	}
+
+	return true;
 }
 
 static bool ofc_sema_type_cast_value__int_real(
@@ -83,7 +89,7 @@ static bool ofc_sema_type_cast_value__int_real(
 		}
 
 		if (ovalue)
-			memcpy(ovalue, ov, okind);
+			memcpy(ovalue, &ov, okind);
 	}
 	else if (okind == 8)
 	{
@@ -95,7 +101,7 @@ static bool ofc_sema_type_cast_value__int_real(
 		}
 
 		if (ovalue)
-			memcpy(ovalue, ov, okind);
+			memcpy(ovalue, &ov, okind);
 	}
 	else if (okind == 10)
 	{
@@ -104,7 +110,7 @@ static bool ofc_sema_type_cast_value__int_real(
 		/* int64 to long double should never be lossy. */
 
 		if (ovalue)
-			memcpy(ovalue, ov, okind);
+			memcpy(ovalue, &ov, okind);
 	}
 	else
 	{
@@ -113,6 +119,12 @@ static bool ofc_sema_type_cast_value__int_real(
 
 	return true;
 }
+
+static bool ofc_sema_type_cast_value__real_complex(
+	unsigned ikind,
+	const void* ivalue,
+	unsigned okind,
+	void* ovalue);
 
 static bool ofc_sema_type_cast_value__int_complex(
 	unsigned ikind,
@@ -129,7 +141,7 @@ static bool ofc_sema_type_cast_value__int_complex(
 		okind, &v, okind, ovalue);
 }
 
-static void ofc_sema_type_cast_value__byte_int(
+static bool ofc_sema_type_cast_value__byte_int(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
@@ -141,7 +153,7 @@ static void ofc_sema_type_cast_value__byte_int(
 		ikind, ivalue, okind, ovalue);
 }
 
-static void ofc_sema_type_cast_value__byte_byte(
+static bool ofc_sema_type_cast_value__byte_byte(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
@@ -153,7 +165,7 @@ static void ofc_sema_type_cast_value__byte_byte(
 		ikind, ivalue, okind, ovalue);
 }
 
-static void ofc_sema_type_cast_value__byte_logical(
+static bool ofc_sema_type_cast_value__byte_logical(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
@@ -190,7 +202,7 @@ static bool ofc_sema_type_cast_value__byte_complex(
 }
 
 
-static void ofc_sema_type_cast_value__logical_int(
+static bool ofc_sema_type_cast_value__logical_int(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
@@ -200,7 +212,7 @@ static void ofc_sema_type_cast_value__logical_int(
 		ikind, ivalue, okind, ovalue);
 }
 
-static void ofc_sema_type_cast_value__logical_byte(
+static bool ofc_sema_type_cast_value__logical_byte(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
@@ -212,7 +224,7 @@ static void ofc_sema_type_cast_value__logical_byte(
 		ikind, ivalue, 1, ovalue);
 }
 
-static void ofc_sema_type_cast_value__logical_logical(
+static bool ofc_sema_type_cast_value__logical_logical(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
@@ -222,14 +234,14 @@ static void ofc_sema_type_cast_value__logical_logical(
 		ikind, ivalue, okind, ovalue);
 }
 
-static void ofc_sema_type_cast_value__logical_real(
+static bool ofc_sema_type_cast_value__logical_real(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
 	void* ovalue)
 {
 	int64_t v;
-	if(!ofc_sema_type_cast_value__logical_int(
+	if (!ofc_sema_type_cast_value__logical_int(
 		ikind, ivalue, 8, &v))
 		return false;
 
@@ -237,7 +249,7 @@ static void ofc_sema_type_cast_value__logical_real(
 		8, &v, okind, ovalue);
 }
 
-static void ofc_sema_type_cast_value__logical_complex(
+static bool ofc_sema_type_cast_value__logical_complex(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
@@ -301,7 +313,7 @@ static bool ofc_sema_type_cast_value__real_int(
 		8, &v, okind, ovalue);
 }
 
-static void ofc_sema_type_cast_value__real_byte(
+static bool ofc_sema_type_cast_value__real_byte(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
@@ -319,7 +331,7 @@ static bool ofc_sema_type_cast_value__real_logical(
 	unsigned okind,
 	void* ovalue)
 {
-	uint8_t v[okind]
+	uint8_t v[okind];
 	if (!ofc_sema_type_cast_value__real_int(
 		ikind, ivalue, okind, &v))
 		return false;
@@ -357,19 +369,19 @@ static bool ofc_sema_type_cast_value__real_real(
 	{
 		float ov = (float)iv;
 		if (ovalue)
-			memcpy(ovalue, ov, okind);
+			memcpy(ovalue, &ov, okind);
 	}
 	else if (okind == 8)
 	{
 		double ov = (double)iv;
 		if (ovalue)
-			memcpy(ovalue, ov, okind);
+			memcpy(ovalue, &ov, okind);
 	}
 	else if (okind == 10)
 	{
 		long double ov = (long double)iv;
 		if (ovalue)
-			memcpy(ovalue, ov, okind);
+			memcpy(ovalue, &ov, okind);
 	}
 	else
 	{
@@ -385,7 +397,8 @@ static bool ofc_sema_type_cast_value__real_complex(
 	unsigned okind,
 	void* ovalue)
 {
-	uint8_t v[okind * 2] = {0};
+	uint8_t v[okind * 2];
+	memset(v, 0x00, (okind * 2));
 	if (!ofc_sema_type_cast_value__real_real(
 		ikind, ivalue, okind, &v))
 		return false;
@@ -405,7 +418,7 @@ static bool ofc_sema_type_cast_value__complex_int(
 		ikind, ivalue, okind, ovalue);
 }
 
-static void ofc_sema_type_cast_value__complex_byte(
+static bool ofc_sema_type_cast_value__complex_byte(
 	unsigned ikind,
 	const void* ivalue,
 	unsigned okind,
@@ -454,9 +467,9 @@ static bool ofc_sema_type_cast_value__complex_complex(
 	const void* iimag = (const void*)((uintptr_t)ivalue + ikind);
 
 	if (!ofc_sema_type_cast_value__real_real(
-		ireal, ivalue, okind, v[0])
+		ikind, ireal, okind, v[0])
 		|| !ofc_sema_type_cast_value__real_real(
-			iimag, ivalue, okind, v[1]))
+			ikind, iimag, okind, v[1]))
 		return false;
 
 	if (ovalue)
@@ -488,7 +501,7 @@ bool ofc_sema_type_cast_value(
 		return false;
 
 	/* This has to match the members of ofc_sema_type_e */
-	static bool (*ft)(unsigned, void*, unsigned, void*)[OFC_SEMA_TYPE_COUNT][OFC_SEMA_TYPE_COUNT] =
+	static bool (*ft[OFC_SEMA_TYPE_COUNT][OFC_SEMA_TYPE_COUNT])(unsigned, const void*, unsigned, void*) =
 	{
 		/* OFC_SEMA_TYPE_LOGICAL */
 		{
@@ -552,7 +565,7 @@ bool ofc_sema_type_cast_value(
 			NULL,
 			NULL,
 			NULL,
-			sema_type_cast_value__character_character,
+			ofc_sema_type_cast_value__character_character,
 			NULL, NULL, NULL
 		},
 
@@ -566,9 +579,9 @@ bool ofc_sema_type_cast_value(
 		{ NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
 	};
 
-	bool (*f)(unsigned, void*, unsigned, void*)
+	bool (*f)(unsigned, const void*, unsigned, void*)
 		= ft[itype->type][otype->type];
-	if (!ft) return NULL;
+	if (!f) return NULL;
 
 	return f(
 		itype->kind, ivalue,

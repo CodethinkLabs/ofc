@@ -14,6 +14,7 @@ typedef struct
 	/* type_list_map */
 	/* label_list_map */
 	/* namelist_list_map */
+	/* parameter_map */
 
 	/* stmt_list */
 } ofc_sema_program_t;

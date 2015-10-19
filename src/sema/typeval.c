@@ -3,7 +3,7 @@
 
 ofc_sema_typeval_t* ofc_sema_typeval_literal(
 	const ofc_parse_literal_t* literal,
-	const ofc_type_t* type)
+	const ofc_sema_type_t* type)
 {
 	/* TODO - Implement. */
 

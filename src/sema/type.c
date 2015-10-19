@@ -1,5 +1,5 @@
 #include <ofc/sema.h>
-#include <ofc/hashmap.h>
+#include <string.h>
 
 
 static ofc_hashmap_t* ofc_sema_type__map = NULL;
@@ -224,8 +224,8 @@ const ofc_sema_type_t* ofc_sema_type_create(
 	for (i = 0; i < ptype->params->count; i++)
 	{
 		/* TODO - Handle unnamed kind */
-		if ((strncasecmp(ptype->params[i]->name, "KIND", 4) == 0)
-			&& (ptype->params[i]->type == OFC_PARSE_CALL_ARG_EXPR))
+		if (ofc_str_ref_equal_strz_ci(ptype->params->call_arg[i]->name, "KIND")
+			&& (ptype->params->call_arg[i]->type == OFC_PARSE_CALL_ARG_EXPR))
 		{
 			/* TODO - Expression evaluation to get kind */
 
@@ -278,33 +278,72 @@ const ofc_sema_type_t* ofc_sema_type_create(
 			break;
 	}
 
-	ofc_sema_type_t* stype = NULL;
-
+	const ofc_sema_type_t* stype = NULL;
 	switch (ptype->type)
 	{
 		case OFC_PARSE_TYPE_LOGICAL:
-			stype = ofc_sema_type__create(OFC_SEMA_TYPE_LOGICAL, kind, NULL, NULL, NULL);
+			stype = ofc_sema_type__create(
+				OFC_SEMA_TYPE_LOGICAL, kind,
+				NULL, NULL, NULL,
+				ptype->attr.is_static,
+				ptype->attr.is_automatic,
+				ptype->attr.is_volatile);
 			break;
 		case OFC_PARSE_TYPE_CHARACTER:
-			stype = ofc_sema_type__create(OFC_SEMA_TYPE_CHARACTER, kind, NULL, NULL, NULL);
+			stype = ofc_sema_type__create(
+				OFC_SEMA_TYPE_CHARACTER, kind,
+				NULL, NULL, NULL,
+				ptype->attr.is_static,
+				ptype->attr.is_automatic,
+				ptype->attr.is_volatile);
 			break;
 		case OFC_PARSE_TYPE_INTEGER:
-			stype = ofc_sema_type__create(OFC_SEMA_TYPE_INTEGER, kind, NULL, NULL, NULL);
+			stype = ofc_sema_type__create(
+				OFC_SEMA_TYPE_INTEGER, kind,
+				NULL, NULL, NULL,
+				ptype->attr.is_static,
+				ptype->attr.is_automatic,
+				ptype->attr.is_volatile);
 			break;
 		case OFC_PARSE_TYPE_REAL:
-			stype = ofc_sema_type__create(OFC_SEMA_TYPE_REAL, kind, NULL, NULL, NULL);
+			stype = ofc_sema_type__create(
+				OFC_SEMA_TYPE_REAL, kind,
+				NULL, NULL, NULL,
+				ptype->attr.is_static,
+				ptype->attr.is_automatic,
+				ptype->attr.is_volatile);
 			break;
 		case OFC_PARSE_TYPE_DOUBLE_PRECISION:
-			stype = ofc_sema_type__create(OFC_SEMA_TYPE_REAL, kind, NULL, NULL, NULL);
+			stype = ofc_sema_type__create(
+				OFC_SEMA_TYPE_REAL, kind,
+				NULL, NULL, NULL,
+				ptype->attr.is_static,
+				ptype->attr.is_automatic,
+				ptype->attr.is_volatile);
 			break;
 		case OFC_PARSE_TYPE_COMPLEX:
-			stype = ofc_sema_type__create(OFC_SEMA_TYPE_COMPLEX, kind, NULL, NULL, NULL);
+			stype = ofc_sema_type__create(
+				OFC_SEMA_TYPE_COMPLEX, kind,
+				NULL, NULL, NULL,
+				ptype->attr.is_static,
+				ptype->attr.is_automatic,
+				ptype->attr.is_volatile);
 			break;
 		case OFC_PARSE_TYPE_DOUBLE_COMPLEX:
-			stype = ofc_sema_type__create(OFC_SEMA_TYPE_COMPLEX, kind, NULL, NULL, NULL);
+			stype = ofc_sema_type__create(
+				OFC_SEMA_TYPE_COMPLEX, kind,
+				NULL, NULL, NULL,
+				ptype->attr.is_static,
+				ptype->attr.is_automatic,
+				ptype->attr.is_volatile);
 			break;
 		case OFC_PARSE_TYPE_BYTE:
-			stype = ofc_sema_type__create(OFC_SEMA_TYPE_BYTE, kind, NULL, NULL, NULL);
+			stype = ofc_sema_type__create(
+				OFC_SEMA_TYPE_BYTE, kind,
+				NULL, NULL, NULL,
+				ptype->attr.is_static,
+				ptype->attr.is_automatic,
+				ptype->attr.is_volatile);
 			break;
 		case OFC_PARSE_TYPE_TYPE:
 			break;
@@ -316,6 +355,8 @@ const ofc_sema_type_t* ofc_sema_type_create(
 	/* TODO - Array from count or (LEN=?). */
 
 	/* TODO - How do we handle type attributes? */
+
+	return stype;
 }
 
 bool ofc_sema_type_compare(

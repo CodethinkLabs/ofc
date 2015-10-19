@@ -55,6 +55,22 @@ bool ofc_str_ref_equal_ci(const ofc_str_ref_t a, const ofc_str_ref_t b)
 	return (strncasecmp(a.base, b.base, a.size) == 0);
 }
 
+bool ofc_str_ref_equal_strz(
+	const ofc_str_ref_t a,
+	const char* b)
+{
+	return ofc_str_ref_equal(
+		a, ofc_str_ref_from_strz(b));
+}
+
+bool ofc_str_ref_equal_strz_ci(
+	const ofc_str_ref_t a,
+	const char* b)
+{
+	return ofc_str_ref_equal_ci(
+		a, ofc_str_ref_from_strz(b));
+}
+
 bool ofc_str_ref_print(ofc_colstr_t* cs, const ofc_str_ref_t str_ref)
 {
 	return ofc_colstr_atomic_writef(cs, "%.*s",
