@@ -15,7 +15,7 @@ typedef struct
 		struct
 		{
 			long double real;
-			long double imag;
+			long double imaginary;
 		} complex;
 
 		char* character;
@@ -31,12 +31,20 @@ void ofc_sema_typeval_delete(
 ofc_sema_typeval_t* ofc_sema_typeval_copy(
 	const ofc_sema_typeval_t* typeval);
 
-unsigned ofc_sema_typeval_size(
-	const ofc_sema_typeval_t* typeval);
-
-bool ofc_sema_typeval_get(
+bool ofc_sema_typeval_get_logical(
 	const ofc_sema_typeval_t* typeval,
-	const ofc_sema_type_t* type,
-	void* value, bool* lossy);
+	bool* logical);
+bool ofc_sema_typeval_get_integer(
+	const ofc_sema_typeval_t* typeval,
+	int64_t* integer);
+bool ofc_sema_typeval_get_real(
+	const ofc_sema_typeval_t* typeval,
+	long double* real);
+bool ofc_sema_typeval_get_complex(
+	const ofc_sema_typeval_t* typeval,
+	long double* real, long double* imag);
+bool ofc_sema_typeval_get_character(
+	const ofc_sema_typeval_t* typeval,
+	const char** character);
 
 #endif

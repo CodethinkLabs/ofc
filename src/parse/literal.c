@@ -55,7 +55,7 @@ static unsigned ofc_parse_literal__base(
 	{
 		if (value)
 		{
-			uint64_t nv = (v * 10) + d;
+			uint64_t nv = (v * base) + d;
 			if (((nv / base) != v)
 				|| ((nv % base) != d))
 			{
@@ -90,8 +90,7 @@ static unsigned ofc_parse_literal__binary(
 
 	unsigned dpos = ofc_parse_debug_position(debug);
 
-	/* Accepting 'X' in a BOZ literal is an extension. */
-	bool prefix =  (toupper(ptr[i]) == 'B');
+	bool prefix = (toupper(ptr[i]) == 'B');
 	if (prefix) i += 1;
 
 	unsigned base = i;
@@ -128,8 +127,7 @@ static unsigned ofc_parse_literal__octal(
 
 	unsigned dpos = ofc_parse_debug_position(debug);
 
-	/* Accepting 'X' in a BOZ literal is an extension. */
-	bool prefix =  (toupper(ptr[i]) == 'O');
+	bool prefix = (toupper(ptr[i]) == 'O');
 	if (prefix) i += 1;
 
 	unsigned base = i;
@@ -167,7 +165,7 @@ static unsigned ofc_parse_literal__hex(
 	unsigned dpos = ofc_parse_debug_position(debug);
 
 	/* Accepting 'X' in a BOZ literal is an extension. */
-	bool prefix =  ((toupper(ptr[i]) == 'X')
+	bool prefix = ((toupper(ptr[i]) == 'X')
 		|| (toupper(ptr[i]) == 'Z'));
 	if (prefix) i += 1;
 

@@ -114,6 +114,11 @@ static const ofc_sema_type_t* ofc_sema_type__create(
 			break;
 	}
 
+	/* A LOGICAL*1 is a synonym of BYTE. */
+	if ((stype.type == OFC_SEMA_TYPE_LOGICAL)
+		&& (stype.kind == 1))
+		stype.type = OFC_SEMA_TYPE_BYTE;
+
 	const ofc_sema_type_t* gtype
 		= ofc_hashmap_find(
 			ofc_sema_type__map, &stype);

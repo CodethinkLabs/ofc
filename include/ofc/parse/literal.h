@@ -20,7 +20,7 @@ typedef enum
 typedef struct
 {
 	ofc_parse_literal_e type;
-	unsigned        kind;
+	unsigned            kind;
 
 	union
 	{
