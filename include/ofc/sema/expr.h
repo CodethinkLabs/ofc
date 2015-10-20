@@ -50,9 +50,8 @@ struct ofc_sema_expr_s
 };
 
 ofc_sema_expr_t* ofc_sema_expr(
-	const ofc_parse_expr_t* expr,
-	const ofc_hashmap_t* param_map,
-	const ofc_hashmap_t* decl_map);
+	const ofc_sema_scope_t* scope,
+	const ofc_parse_expr_t* expr);
 void ofc_sema_expr_delete(
 	ofc_sema_expr_t* expr);
 

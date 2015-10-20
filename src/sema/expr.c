@@ -55,15 +55,14 @@ static ofc_sema_expr_t* ofc_sema_expr__literal(
 }
 
 static ofc_sema_expr_t* ofc_sema_expr__parameter(
-	const ofc_parse_lhs_t* name,
-	const ofc_hashmap_t* param_map)
+	const ofc_sema_scope_t* scope,
+	const ofc_parse_lhs_t* name)
 {
 	if (!name || (name->type != OFC_PARSE_LHS_VARIABLE))
 		return false;
 
 	const ofc_sema_parameter_t* param
-		= ofc_hashmap_find(param_map,
-			&name->variable);
+		= ofc_hashmap_find(scope->parameter, &name->variable);
 	if (!param) return NULL;
 
 	ofc_sema_expr_t* expr
@@ -76,8 +75,8 @@ static ofc_sema_expr_t* ofc_sema_expr__parameter(
 }
 
 static ofc_sema_expr_t* ofc_sema_expr__decl(
-	const ofc_parse_lhs_t* name,
-	const ofc_hashmap_t* decl_map)
+	const ofc_sema_scope_t* scope,
+	const ofc_parse_lhs_t* name)
 {
 	if (!name)
 		return false;
@@ -88,9 +87,9 @@ static ofc_sema_expr_t* ofc_sema_expr__decl(
 		return false;
 	}
 
-	const ofc_sema_decl_t* decl
-		= ofc_hashmap_find(decl_map,
-			&name->variable);
+	const ofc_sema_decl_t* decl = NULL;
+	if (scope->decl)
+		decl = ofc_hashmap_find(scope->decl->map, &name->variable);
 	if (!decl) return NULL;
 
 	ofc_sema_expr_t* expr
@@ -103,22 +102,18 @@ static ofc_sema_expr_t* ofc_sema_expr__decl(
 }
 
 static ofc_sema_expr_t* ofc_sema_expr__variable(
-	const ofc_parse_lhs_t* name,
-	const ofc_hashmap_t* param_map,
-	const ofc_hashmap_t* decl_map)
+	const ofc_sema_scope_t* scope,
+	const ofc_parse_lhs_t* name)
 {
 	ofc_sema_expr_t* expr
-		= ofc_sema_expr__parameter(
-			name, param_map);
-	return (expr ? expr : ofc_sema_expr__decl(
-		name, decl_map));
+		= ofc_sema_expr__parameter(scope, name);
+	return (expr ? expr : ofc_sema_expr__decl(scope, name));
 }
 
 
 ofc_sema_expr_t* ofc_sema_expr(
-	const ofc_parse_expr_t* expr,
-	const ofc_hashmap_t* param_map,
-	const ofc_hashmap_t* decl_map)
+	const ofc_sema_scope_t* scope,
+	const ofc_parse_expr_t* expr)
 {
 	if (!expr)
 		return NULL;
@@ -130,11 +125,10 @@ ofc_sema_expr_t* ofc_sema_expr(
 				&expr->literal);
 		case OFC_PARSE_EXPR_VARIABLE:
 			return ofc_sema_expr__variable(
-				expr->variable, param_map, decl_map);
+				scope, expr->variable);
 		case OFC_PARSE_EXPR_BRACKETS:
 			return ofc_sema_expr(
-				expr->brackets.expr,
-				param_map, decl_map);
+				scope, expr->brackets.expr);
 		case OFC_PARSE_EXPR_UNARY:
 			/* TODO - Resolve unary operations. */
 			return NULL;

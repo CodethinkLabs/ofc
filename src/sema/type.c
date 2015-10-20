@@ -211,7 +211,7 @@ const ofc_sema_type_t* ofc_sema_type_create_array(
 
 
 
-const ofc_sema_type_t* ofc_sema_type_create(
+const ofc_sema_type_t* ofc_sema_type(
 	const ofc_parse_type_t* ptype)
 {
 	if (!ptype)
@@ -220,47 +220,50 @@ const ofc_sema_type_t* ofc_sema_type_create(
 
 	unsigned kind = 0;
 
-	unsigned i;
-	for (i = 0; i < ptype->params->count; i++)
+	if (ptype->params)
 	{
-		/* TODO - Handle unnamed kind */
-		if (ofc_str_ref_equal_strz_ci(ptype->params->call_arg[i]->name, "KIND")
-			&& (ptype->params->call_arg[i]->type == OFC_PARSE_CALL_ARG_EXPR))
+		unsigned i;
+		for (i = 0; i < ptype->params->count; i++)
 		{
-			/* TODO - Expression evaluation to get kind */
-
-			if (kind == 0)
+			/* TODO - Handle unnamed kind */
+			if (ofc_str_ref_equal_strz_ci(ptype->params->call_arg[i]->name, "KIND")
+				&& (ptype->params->call_arg[i]->type == OFC_PARSE_CALL_ARG_EXPR))
 			{
-				/* TODO - Print error. */
+				/* TODO - Expression evaluation to get kind */
+				return false;
+
+				if (kind == 0)
+				{
+					/* TODO - Error: KIND must not be specified as zero. */
+					return false;
+				}
+			}
+			else
+			{
+				/* TODO - Error: Unknown parameter in type. */
 				return false;
 			}
 		}
 	}
 
-	if (ptype->kind)
+	if (ptype->kind > 0)
 	{
-		if (ptype->kind == 0)
-		{
-			/* TODO - Print error. */
-			return NULL;
-		}
-
 		if (kind > 0)
 		{
 			if (ptype->kind == kind)
 			{
-				/* TODO - Print warning. */
+				/* TODO - Warning: KIND specified multiple times in type. */
 			}
 			else
 			{
-				/* TODO - Print error. */
+				/* TODO - Error: KIND specified differently in multiple places. */
 				return NULL;
 			}
 		}
 
 		kind = ptype->kind;
 	}
-	else
+	else if (kind == 0)
 	{
 		/* TODO - If KIND is not set, get default from lang_opts. */
 		kind = 4;

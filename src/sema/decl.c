@@ -15,34 +15,116 @@ ofc_sema_decl_t* ofc_sema_decl_implicit_lhs(
 	return NULL;
 }
 
-ofc_sema_decl_t* ofc_sema_decl(
-	const ofc_parse_stmt_t* stmt)
+static ofc_sema_decl_t* ofc_sema_decl__decl(
+	const ofc_sema_scope_t* scope,
+	const ofc_sema_type_t*  type,
+	const ofc_parse_decl_t* decl)
 {
-	if (!stmt || (stmt->type != OFC_PARSE_STMT_DECL))
+	if (!decl || !type)
 		return NULL;
 
-	if (!stmt->decl.type
-		|| !stmt->decl.decl)
+	/* TODO - Support ARRAY declarations. */
+	if (decl->lhs->type
+		!= OFC_PARSE_LHS_VARIABLE)
 		return NULL;
 
-	ofc_sema_decl_t* decl
+	ofc_sema_decl_t* sdecl
 		= (ofc_sema_decl_t*)malloc(
 			sizeof(ofc_sema_decl_t));
-	if (!decl) return NULL;
+	if (!sdecl) return NULL;
 
-	decl->type = NULL;
-	decl->name = OFC_STR_REF_EMPTY;
-	decl->init = NULL;
+	sdecl->type = type;
+	sdecl->name = decl->lhs->variable;
 
-	decl->equiv = NULL;
+	sdecl->init = NULL;
+	if (decl->init_expr)
+	{
+		ofc_sema_expr_t* init_expr
+			= ofc_sema_expr(scope, decl->init_expr);
+		if (!init_expr)
+		{
+			free(sdecl);
+			return NULL;
+		}
 
-	/* TODO - Initialize these to types attributes. */
-	decl->is_static    = false;
-	decl->is_volatile  = false;
-	decl->is_automatic = false;
-	decl->is_target    = false;
+		sdecl->init = ofc_sema_expr_resolve(init_expr);
+		ofc_sema_expr_delete(init_expr);
+		if (!sdecl->init)
+		{
+			free(sdecl);
+			return NULL;
+		}
+	}
+	else if (decl->init_clist)
+	{
+		/* TODO - CList initializer resolution. */
+		free(sdecl);
+		return NULL;
+	}
 
-	return decl;
+	sdecl->equiv = NULL;
+
+	sdecl->is_static    = type->is_static;
+	sdecl->is_volatile  = type->is_volatile;
+	sdecl->is_automatic = type->is_automatic;
+	sdecl->is_target    = false;
+
+	return sdecl;
+}
+
+bool ofc_sema_decl(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt)
+{
+	if (!stmt || !scope || !scope->decl
+		|| !stmt->decl.type || !stmt->decl.decl
+		|| (stmt->type != OFC_PARSE_STMT_DECL))
+		return false;
+
+	const ofc_sema_type_t* type = ofc_sema_type(
+		stmt->decl.type);
+	if (!type) return false;
+
+	unsigned count = stmt->decl.decl->count;
+	if (count == 0) return false;
+
+	ofc_sema_decl_t* decl[count];
+
+	unsigned i;
+	for (i = 0; i < count; i++)
+	{
+		decl[i] = ofc_sema_decl__decl(
+			scope, type, stmt->decl.decl->decl[i]);
+
+		if (decl[i] && ofc_sema_decl_list_find(
+			scope->decl, decl[i]->name))
+		{
+			/* TODO - Allow redeclaration as long as it matches original. */
+			ofc_sema_decl_delete(decl[i]);
+			decl[i] = NULL;
+		}
+
+		if (!decl[i])
+		{
+			unsigned j;
+			for (j = 0; j < i; j++)
+				ofc_sema_decl_delete(decl[j]);
+			return false;
+		}
+	}
+
+	for (i = 0; i < count; i++)
+	{
+		if (!ofc_sema_decl_list_add(
+			scope->decl, decl[i]))
+		{
+			/* This should never happen. */
+			abort();
+			return false;
+		}
+	}
+
+	return true;
 }
 
 void ofc_sema_decl_delete(
@@ -199,11 +281,11 @@ ofc_sema_decl_list_t* ofc_sema_decl_list_create(bool ignore_case)
 
 	list->map = ofc_hashmap_create(
 		(void*)(list->ignore_case
-			? ofc_str_ref_hash_ci
-			: ofc_str_ref_hash),
+			? ofc_str_ref_ptr_hash_ci
+			: ofc_str_ref_ptr_hash),
 		(void*)(list->ignore_case
-			? ofc_str_ref_equal_ci
-			: ofc_str_ref_equal),
+			? ofc_str_ref_ptr_equal_ci
+			: ofc_str_ref_ptr_equal),
 		(void*)ofc_sema_decl__key, NULL);
 	if (!list->map)
 	{
@@ -267,4 +349,10 @@ ofc_sema_decl_t* ofc_sema_decl_list_find(
 
 	return ofc_hashmap_find_modify(
 		list->map, &name);
+}
+
+const ofc_hashmap_t* ofc_decl_list_map(
+	const ofc_sema_decl_list_t* list)
+{
+	return (list ? list->map : NULL);
 }

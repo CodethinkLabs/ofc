@@ -6,6 +6,7 @@
 #include <ofc/file.h>
 #include <ofc/prep.h>
 #include <ofc/parse/file.h>
+#include <ofc/sema.h>
 
 
 void print_usage(const char* name)
@@ -220,18 +221,18 @@ int main(int argc, const char* argv[])
 		return EXIT_FAILURE;
 	}
 
-	ofc_colstr_t* cs = ofc_colstr_create(0, 0);
-
-	if (!ofc_parse_file_print(cs, program)
-		|| !ofc_colstr_fdprint(cs, STDOUT_FILENO))
+	ofc_sema_scope_t* sema = ofc_sema_scope_global(
+		&opts, program);
+	if (!sema)
 	{
-		fprintf(stderr, "Error: Failed to reprint program\n");
-		ofc_colstr_delete(cs);
+		fprintf(stderr, "Error: Program failed semantic analysis\n");
+		ofc_parse_stmt_list_delete(program);
+		ofc_sparse_delete(condense);
 		return EXIT_FAILURE;
 	}
 
-	ofc_sparse_delete(condense);
+	ofc_sema_scope_delete(sema);
 	ofc_parse_stmt_list_delete(program);
-	ofc_colstr_delete(cs);
+	ofc_sparse_delete(condense);
 	return EXIT_SUCCESS;
 }

@@ -7,14 +7,20 @@ typedef struct
 	ofc_sema_typeval_t* typeval;
 } ofc_sema_parameter_t;
 
+ofc_hashmap_t* ofc_sema_parameter_map_create(
+	bool case_sensitive);
+
 bool ofc_sema_parameter(
-	const ofc_parse_stmt_t* stmt,
-	ofc_hashmap_t* map);
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt);
 bool ofc_sema_parameter_decl(
-	const ofc_parse_stmt_t* stmt,
-	ofc_hashmap_t* map);
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt);
 void ofc_sema_parameter_delete(
 	ofc_sema_parameter_t* parameter);
+
+const ofc_str_ref_t* ofc_sema_parameter_name(
+	const ofc_sema_parameter_t* parameter);
 
 const ofc_sema_typeval_t* ofc_sema_parameter_get(
 	const ofc_sema_parameter_t* parameter);

@@ -38,6 +38,9 @@ struct ofc_sema_type_s
 	};
 };
 
+const ofc_sema_type_t* ofc_sema_type(
+	const ofc_parse_type_t* ptype);
+
 const ofc_sema_type_t* ofc_sema_type_create_primitive(
 	ofc_sema_type_e type, unsigned kind,
 	bool is_static, bool is_automatic, bool is_volatile);

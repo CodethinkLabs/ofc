@@ -29,4 +29,13 @@ bool    ofc_str_ref_equal_strz(const ofc_str_ref_t a, const char* b);
 bool    ofc_str_ref_equal_strz_ci(const ofc_str_ref_t a, const char* b);
 bool    ofc_str_ref_print(ofc_colstr_t* cs, const ofc_str_ref_t str_ref);
 
+static inline uint8_t ofc_str_ref_ptr_hash(const ofc_str_ref_t* ref)
+	{ return (ref ? ofc_str_ref_hash(*ref) : 0); }
+static inline uint8_t ofc_str_ref_ptr_hash_ci(const ofc_str_ref_t* ref)
+	{ return (ref ? ofc_str_ref_hash_ci(*ref) : 0); }
+static inline bool ofc_str_ref_ptr_equal(const ofc_str_ref_t* a, const ofc_str_ref_t* b)
+	{ if (!a || !b) return false; return ofc_str_ref_equal(*a, *b); }
+static inline bool ofc_str_ref_ptr_equal_ci(const ofc_str_ref_t* a, const ofc_str_ref_t* b)
+	{ if (!a || !b) return false; return ofc_str_ref_equal_ci(*a, *b); }
+
 #endif

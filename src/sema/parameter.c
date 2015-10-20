@@ -1,5 +1,21 @@
 #include <ofc/sema.h>
 
+
+ofc_hashmap_t* ofc_sema_parameter_map_create(
+	bool case_sensitive)
+{
+	return ofc_hashmap_create(
+		(void*)(case_sensitive
+			? ofc_str_ref_hash
+			: ofc_str_ref_hash_ci),
+		(void*)(case_sensitive
+			? ofc_str_ref_equal
+			: ofc_str_ref_equal_ci),
+		(void*)ofc_sema_parameter_name,
+		(void*)ofc_sema_parameter_delete);
+}
+
+
 static ofc_sema_parameter_t* ofc_sema_parameter__create(
 	ofc_str_ref_t name,
 	ofc_sema_typeval_t* typeval)
@@ -15,8 +31,8 @@ static ofc_sema_parameter_t* ofc_sema_parameter__create(
 }
 
 static ofc_sema_parameter_t* ofc_sema_parameter__assign(
-	const ofc_parse_assign_t* assign,
-	const ofc_hashmap_t* map)
+	const ofc_sema_scope_t* scope,
+	const ofc_parse_assign_t* assign)
 {
 	if (!assign
 		|| !assign->name)
@@ -30,7 +46,8 @@ static ofc_sema_parameter_t* ofc_sema_parameter__assign(
 	}
 
 	const ofc_sema_parameter_t* exists
-		= ofc_hashmap_find(map, &assign->name->variable);
+		= ofc_hashmap_find(scope->parameter,
+			&assign->name->variable);
 	if (exists)
 	{
 		/* TODO - Error: Duplicate PARAMETER definition. */
@@ -38,7 +55,7 @@ static ofc_sema_parameter_t* ofc_sema_parameter__assign(
 	}
 
 	ofc_sema_expr_t* expr
-		= ofc_sema_expr(assign->init, NULL, map);
+		= ofc_sema_expr(scope, assign->init);
 	if (!expr)
 	{
 		/* TODO - Error: Invalid PARAMETER expression. */
@@ -67,10 +84,10 @@ static ofc_sema_parameter_t* ofc_sema_parameter__assign(
 }
 
 bool ofc_sema_parameter(
-	const ofc_parse_stmt_t* stmt,
-	ofc_hashmap_t* map)
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt)
 {
-	if (!stmt || !map
+	if (!stmt || !scope || !scope->parameter
 		|| (stmt->type != OFC_PARSE_STMT_PARAMETER))
 		return false;
 
@@ -84,7 +101,7 @@ bool ofc_sema_parameter(
 	for (i = 0; i < count; i++)
 	{
 		param[i] = ofc_sema_parameter__assign(
-			stmt->parameter.list->assign[i], map);
+			scope, stmt->parameter.list->assign[i]);
 		if (!param[i])
 		{
 			unsigned j;
@@ -96,7 +113,7 @@ bool ofc_sema_parameter(
 
 	for (i = 0; i < count; i++)
 	{
-		if (!ofc_hashmap_add(map, param[i]))
+		if (!ofc_hashmap_add(scope->parameter, param[i]))
 		{
 			/* This should never happen. */
 			abort();
@@ -107,10 +124,10 @@ bool ofc_sema_parameter(
 }
 
 bool ofc_sema_parameter_decl(
-	const ofc_parse_stmt_t* stmt,
-	ofc_hashmap_t* map)
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt)
 {
-	if (!stmt || !map
+	if (!stmt || !scope || !scope->parameter
 		|| (stmt->type != OFC_PARSE_STMT_DECL))
 		return false;
 
@@ -126,6 +143,13 @@ void ofc_sema_parameter_delete(
 
 	ofc_sema_typeval_delete(parameter->typeval);
 	free(parameter);
+}
+
+
+const ofc_str_ref_t* ofc_sema_parameter_name(
+	const ofc_sema_parameter_t* parameter)
+{
+	return (parameter ? &parameter->name : NULL);
 }
 
 

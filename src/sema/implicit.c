@@ -74,6 +74,5 @@ const ofc_sema_type_t* ofc_sema_implicit_get(
 void ofc_sema_implicit_delete(
 	ofc_sema_implicit_t* implicit)
 {
-	ofc_sema_implicit_none(implicit);
 	free(implicit);
 }
