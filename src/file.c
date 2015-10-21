@@ -329,7 +329,7 @@ void ofc_file_error(
 {
 	va_list args;
 	va_start(args, format);
-	ofc_file_warning_va(file, NULL, ptr, format, args);
+	ofc_file_error_va(file, NULL, ptr, format, args);
 	va_end(args);
 }
 
@@ -339,6 +339,6 @@ void ofc_file_warning(
 {
 	va_list args;
 	va_start(args, format);
-	ofc_file_error_va(file, NULL, ptr, format, args);
+	ofc_file_warning_va(file, NULL, ptr, format, args);
 	va_end(args);
 }
