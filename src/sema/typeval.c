@@ -797,7 +797,7 @@ bool ofc_sema_typeval_get_character(
 		== OFC_SEMA_TYPE_BYTE)
 	{
 		if (character)
-			*character = &typeval->integer;
+			*character = (const char*)&typeval->integer;
 		return true;
 	}
 
@@ -808,6 +808,6 @@ bool ofc_sema_typeval_get_character(
 		return false;
 
 	if (character)
-		*character = &typeval->character;
+		*character = typeval->character;
 	return true;
 }

@@ -251,9 +251,14 @@ const ofc_sema_type_t* ofc_sema_type(
 				ofc_sema_expr_delete(expr);
 				if (!tv) return false;
 
-				bool success = ofc_sema_typeval_get_integer(tv, &kind);
+				int64_t kind64;
+				bool success = ofc_sema_typeval_get_integer(tv, &kind64);
 				ofc_sema_typeval_delete(tv);
 				if (!success) return false;
+
+				kind = kind64;
+				if (kind != kind64)
+					return false;
 
 				if (kind == 0)
 				{
