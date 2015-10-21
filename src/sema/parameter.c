@@ -6,11 +6,11 @@ ofc_hashmap_t* ofc_sema_parameter_map_create(
 {
 	return ofc_hashmap_create(
 		(void*)(case_sensitive
-			? ofc_str_ref_hash
-			: ofc_str_ref_hash_ci),
+			? ofc_str_ref_ptr_hash
+			: ofc_str_ref_ptr_hash_ci),
 		(void*)(case_sensitive
-			? ofc_str_ref_equal
-			: ofc_str_ref_equal_ci),
+			? ofc_str_ref_ptr_equal
+			: ofc_str_ref_ptr_equal_ci),
 		(void*)ofc_sema_parameter_name,
 		(void*)ofc_sema_parameter_delete);
 }
