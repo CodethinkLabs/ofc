@@ -355,9 +355,12 @@ const ofc_sema_type_t* ofc_sema_type(
 			return NULL;
 	}
 
-	/* TODO - Array from count or (LEN=?). */
-
-	/* TODO - How do we handle type attributes? */
+	if (ptype->count_expr
+		|| ptype->count_var)
+	{
+		/* TODO - Array from count or (LEN=?). */
+		return false;
+	}
 
 	return stype;
 }
