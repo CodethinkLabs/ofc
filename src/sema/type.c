@@ -217,6 +217,7 @@ const ofc_sema_type_t* ofc_sema_type_create_array(
 
 
 const ofc_sema_type_t* ofc_sema_type(
+	const ofc_sema_scope_t* scope,
 	const ofc_parse_type_t* ptype)
 {
 	if (!ptype)
@@ -231,11 +232,23 @@ const ofc_sema_type_t* ofc_sema_type(
 		for (i = 0; i < ptype->params->count; i++)
 		{
 			/* TODO - Handle unnamed kind */
-			if (ofc_str_ref_equal_strz_ci(ptype->params->call_arg[i]->name, "KIND")
-				&& (ptype->params->call_arg[i]->type == OFC_PARSE_CALL_ARG_EXPR))
+			if (ofc_str_ref_equal_strz_ci(ptype->params->call_arg[i]->name, "KIND"))
 			{
-				/* TODO - Expression evaluation to get kind */
-				return false;
+				if (ptype->params->call_arg[i]->type
+					!= OFC_PARSE_CALL_ARG_EXPR)
+					return false;
+
+				ofc_sema_expr_t* expr = ofc_sema_expr(
+					scope, ptype->params->call_arg[i]->expr);
+				if (!expr) return false;
+
+				ofc_sema_typeval_t* tv = ofc_sema_expr_resolve(expr);
+				ofc_sema_expr_delete(expr);
+				if (!tv) return false;
+
+				bool success = ofc_sema_typeval_get_integer(tv, &kind);
+				ofc_sema_typeval_delete(tv);
+				if (!success) return false;
 
 				if (kind == 0)
 				{

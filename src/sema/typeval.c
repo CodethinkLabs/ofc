@@ -719,15 +719,95 @@ ofc_sema_typeval_t* ofc_sema_typeval_copy(
 }
 
 
-bool ofc_sema_typeval_get(
+bool ofc_sema_typeval_get_logical(
 	const ofc_sema_typeval_t* typeval,
-	const ofc_sema_type_t* type,
-	void* value, bool* lossy)
+	bool* logical)
 {
-	if (!typeval)
+	if (!typeval || !typeval->type
+		|| !ofc_sema_type_is_logical(typeval->type))
 		return false;
 
-	return ofc_sema_type_cast_value(
-		typeval->type, &typeval->logical, type,
-		value, lossy);
+	/* TODO - Casting. */
+
+	if (logical)
+	{
+		if (typeval->type->type
+			== OFC_SEMA_TYPE_BYTE)
+			*logical = (typeval->integer != 0);
+		else
+			*logical = typeval->logical;
+	}
+
+	return true;
+}
+
+bool ofc_sema_typeval_get_integer(
+	const ofc_sema_typeval_t* typeval,
+	int64_t* integer)
+{
+	if (!typeval || !typeval->type
+		|| !ofc_sema_type_is_integer(typeval->type))
+		return false;
+
+	/* TODO - Casting. */
+
+	if (integer)
+		*integer = typeval->integer;
+	return true;
+}
+
+bool ofc_sema_typeval_get_real(
+	const ofc_sema_typeval_t* typeval,
+	long double* real)
+{
+	if (!typeval || !typeval->type
+		|| (typeval->type->type != OFC_SEMA_TYPE_REAL))
+		return false;
+
+	if (real)
+		*real = typeval->real;
+	return true;
+}
+
+bool ofc_sema_typeval_get_complex(
+	const ofc_sema_typeval_t* typeval,
+	long double* real, long double* imaginary)
+{
+	if (!typeval || !typeval->type
+		|| (typeval->type->type != OFC_SEMA_TYPE_COMPLEX))
+		return false;
+
+	/* TODO - Casting. */
+
+	if (real)
+		*real = typeval->complex.real;
+	if (imaginary)
+		*real = typeval->complex.imaginary;
+	return true;
+}
+
+bool ofc_sema_typeval_get_character(
+	const ofc_sema_typeval_t* typeval,
+	const char** character)
+{
+	if (!typeval || !typeval->type)
+		return false;
+
+	if (typeval->type->type
+		== OFC_SEMA_TYPE_BYTE)
+	{
+		if (character)
+			*character = &typeval->integer;
+		return true;
+	}
+
+	/* TODO - Casting. */
+
+	if (typeval->type->type
+		!= OFC_SEMA_TYPE_CHARACTER)
+		return false;
+
+	if (character)
+		*character = &typeval->character;
+	return true;
 }

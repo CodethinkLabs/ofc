@@ -39,6 +39,7 @@ struct ofc_sema_type_s
 };
 
 const ofc_sema_type_t* ofc_sema_type(
+	const ofc_sema_scope_t* scope,
 	const ofc_parse_type_t* ptype);
 
 const ofc_sema_type_t* ofc_sema_type_create_primitive(

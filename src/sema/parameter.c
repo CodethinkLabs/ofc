@@ -160,27 +160,13 @@ const ofc_sema_typeval_t* ofc_sema_parameter_get(
 }
 
 
-bool ofc_sema_parameter_int32(
+bool ofc_sema_parameter_integer(
 	const ofc_sema_parameter_t* parameter,
-	int32_t* value)
+	int64_t* value)
 {
 	if (!parameter)
 		return false;
 
-
-	static const ofc_sema_type_t* integer = NULL;
-	if (!integer)
-	{
-		integer = ofc_sema_type_create_primitive(
-			OFC_SEMA_TYPE_INTEGER, 4, false, false, false);
-		if (!integer) return false;
-	}
-
-	bool lossy = false;
-	bool success = ofc_sema_typeval_get(
-		parameter->typeval,
-		integer, value, &lossy);
-
-	/* TODO - Allow lossy conversions on parameter read? */
-	return (success && !lossy);
+	return ofc_sema_typeval_get_integer(
+		parameter->typeval, value);
 }

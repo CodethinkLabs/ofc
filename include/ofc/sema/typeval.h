@@ -6,7 +6,6 @@ typedef struct
     const ofc_sema_type_t* type;
 
 	union
-	__attribute__((__packed__))
 	{
 		bool        logical;
 		int64_t     integer;
@@ -42,7 +41,7 @@ bool ofc_sema_typeval_get_real(
 	long double* real);
 bool ofc_sema_typeval_get_complex(
 	const ofc_sema_typeval_t* typeval,
-	long double* real, long double* imag);
+	long double* real, long double* imaginary);
 bool ofc_sema_typeval_get_character(
 	const ofc_sema_typeval_t* typeval,
 	const char** character);

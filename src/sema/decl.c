@@ -82,7 +82,7 @@ bool ofc_sema_decl(
 		return false;
 
 	const ofc_sema_type_t* type = ofc_sema_type(
-		stmt->decl.type);
+		scope, stmt->decl.type);
 	if (!type) return false;
 
 	unsigned count = stmt->decl.decl->count;
