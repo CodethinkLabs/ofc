@@ -46,20 +46,20 @@ struct ofc_sema_scope_list_s
 
 ofc_sema_scope_t* ofc_sema_scope_global(
 	const ofc_lang_opts_t* lang_opts,
-	ofc_parse_stmt_list_t* list);
+	const ofc_parse_stmt_list_t* list);
 
 ofc_sema_scope_t* ofc_sema_scope_program(
 	ofc_sema_scope_t* scope,
-	ofc_parse_stmt_t* stmt);
+	const ofc_parse_stmt_t* stmt);
 ofc_sema_scope_t* ofc_sema_scope_subroutine(
 	ofc_sema_scope_t* scope,
-	ofc_parse_stmt_t* stmt);
+	const ofc_parse_stmt_t* stmt);
 ofc_sema_scope_t* ofc_sema_scope_function(
 	ofc_sema_scope_t* scope,
-	ofc_parse_stmt_t* stmt);
+	const ofc_parse_stmt_t* stmt);
 ofc_sema_scope_t* ofc_sema_scope_block_data(
 	ofc_sema_scope_t* scope,
-	ofc_parse_stmt_t* stmt);
+	const ofc_parse_stmt_t* stmt);
 
 void ofc_sema_scope_delete(
 	ofc_sema_scope_t* scope);

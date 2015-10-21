@@ -103,7 +103,7 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 
 static bool ofc_sema_scope__body(
 	ofc_sema_scope_t* scope,
-	ofc_parse_stmt_list_t* body)
+	const ofc_parse_stmt_list_t* body)
 {
 	if (!scope)
 		return false;
@@ -160,7 +160,7 @@ static bool ofc_sema_scope__body(
 
 ofc_sema_scope_t* ofc_sema_scope_global(
 	const ofc_lang_opts_t* lang_opts,
-	ofc_parse_stmt_list_t* list)
+	const ofc_parse_stmt_list_t* list)
 {
 	if (!list)
 		return NULL;
@@ -183,7 +183,7 @@ ofc_sema_scope_t* ofc_sema_scope_global(
 
 ofc_sema_scope_t* ofc_sema_scope_program(
 	ofc_sema_scope_t* scope,
-	ofc_parse_stmt_t* stmt)
+	const ofc_parse_stmt_t* stmt)
 {
 	if (!stmt || !scope
 		|| (stmt->type != OFC_PARSE_STMT_PROGRAM))
@@ -213,7 +213,7 @@ ofc_sema_scope_t* ofc_sema_scope_program(
 
 ofc_sema_scope_t* ofc_sema_scope_subroutine(
 	ofc_sema_scope_t* scope,
-	ofc_parse_stmt_t* stmt)
+	const ofc_parse_stmt_t* stmt)
 {
 	/* TODO - Implement. */
 	return NULL;
@@ -221,7 +221,7 @@ ofc_sema_scope_t* ofc_sema_scope_subroutine(
 
 ofc_sema_scope_t* ofc_sema_scope_function(
 	ofc_sema_scope_t* scope,
-	ofc_parse_stmt_t* stmt)
+	const ofc_parse_stmt_t* stmt)
 {
 	/* TODO - Implement. */
 	return NULL;
@@ -229,7 +229,7 @@ ofc_sema_scope_t* ofc_sema_scope_function(
 
 ofc_sema_scope_t* ofc_sema_scope_block_data(
 	ofc_sema_scope_t* scope,
-	ofc_parse_stmt_t* stmt)
+	const ofc_parse_stmt_t* stmt)
 {
 	/* TODO - Implement. */
 	return NULL;
