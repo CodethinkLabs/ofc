@@ -110,6 +110,11 @@ static const ofc_sema_type_t* ofc_sema_type__create(
 			stype.structure = structure;
 			break;
 		default:
+			if (kind == 0)
+			{
+				/* TODO - Work this out per-kind from lang_opts. */
+				kind = 4;
+			}
 			stype.kind = kind;
 			break;
 	}
@@ -327,13 +332,6 @@ const ofc_sema_type_t* ofc_sema_type(
 				ptype->attr.is_volatile);
 			break;
 		case OFC_PARSE_TYPE_REAL:
-			stype = ofc_sema_type__create(
-				OFC_SEMA_TYPE_REAL, kind,
-				NULL, NULL, NULL,
-				ptype->attr.is_static,
-				ptype->attr.is_automatic,
-				ptype->attr.is_volatile);
-			break;
 		case OFC_PARSE_TYPE_DOUBLE_PRECISION:
 			stype = ofc_sema_type__create(
 				OFC_SEMA_TYPE_REAL, kind,
@@ -343,13 +341,6 @@ const ofc_sema_type_t* ofc_sema_type(
 				ptype->attr.is_volatile);
 			break;
 		case OFC_PARSE_TYPE_COMPLEX:
-			stype = ofc_sema_type__create(
-				OFC_SEMA_TYPE_COMPLEX, kind,
-				NULL, NULL, NULL,
-				ptype->attr.is_static,
-				ptype->attr.is_automatic,
-				ptype->attr.is_volatile);
-			break;
 		case OFC_PARSE_TYPE_DOUBLE_COMPLEX:
 			stype = ofc_sema_type__create(
 				OFC_SEMA_TYPE_COMPLEX, kind,
@@ -430,15 +421,9 @@ unsigned ofc_sema_type_size(const ofc_sema_type_t* type)
 		case OFC_SEMA_TYPE_LOGICAL:
 		case OFC_SEMA_TYPE_INTEGER:
 		case OFC_SEMA_TYPE_REAL:
-			/* TODO - Do this based on lang_opts. */
-			if (type->kind == 0)
-				return sizeof(int);
 			return type->kind;
 
 		case OFC_SEMA_TYPE_COMPLEX:
-			/* TODO - Do this based on lang_opts. */
-			if (type->kind == 0)
-				return (sizeof(int) * 2);
 			return (type->kind * 2);
 
 		case OFC_SEMA_TYPE_BYTE:
