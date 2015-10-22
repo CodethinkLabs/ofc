@@ -729,6 +729,13 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 
 	/* TODO - Report lossy casts. */
 
+	if ((type->type == OFC_SEMA_TYPE_CHARACTER)
+		&& (typeval->type->type == OFC_SEMA_TYPE_CHARACTER))
+	{
+		/* TODO - Truncate or pad string. */
+		return NULL;
+	}
+
 	bool invalid_cast = false;
 	bool large_literal = false;
 
@@ -959,4 +966,599 @@ bool ofc_sema_typeval_get_character(
 	if (character)
 		*character = typeval->character;
 	return true;
+}
+
+
+
+ofc_sema_typeval_t* ofc_sema_typeval_power(
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b)
+{
+	if (!a || !a->type
+		|| !b || !b->type
+		|| !ofc_sema_type_compare(
+			a->type, b->type))
+		return NULL;
+
+	ofc_sema_typeval_t tv;
+	tv.type = a->type;
+
+	switch (a->type->type)
+	{
+		case OFC_SEMA_TYPE_REAL:
+			tv.real = powl(a->real, b->real);
+			break;
+		case OFC_SEMA_TYPE_COMPLEX:
+			/* TODO - COMPLEX power. */
+			return NULL;
+		case OFC_SEMA_TYPE_INTEGER:
+		case OFC_SEMA_TYPE_BYTE:
+			{
+				long double r = powl(
+					a->integer, b->integer);
+				tv.integer = (int64_t)r;
+				if ((long double)tv.integer != r)
+					return NULL;
+			}
+			break;
+		default:
+			return NULL;
+	}
+
+	return ofc_sema_typeval__alloc(tv);
+}
+
+ofc_sema_typeval_t* ofc_sema_typeval_multiply(
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b)
+{
+	if (!a || !a->type
+		|| !b || !b->type
+		|| !ofc_sema_type_compare(
+			a->type, b->type))
+		return NULL;
+
+	ofc_sema_typeval_t tv;
+	tv.type = a->type;
+
+	switch (a->type->type)
+	{
+		case OFC_SEMA_TYPE_REAL:
+			tv.real = a->real * b->real;
+			break;
+		case OFC_SEMA_TYPE_COMPLEX:
+			/* TODO - COMPLEX multiply. */
+			return NULL;
+		case OFC_SEMA_TYPE_INTEGER:
+		case OFC_SEMA_TYPE_BYTE:
+			{
+				int64_t r = a->integer * b->integer;
+				if ((r / b->integer)
+					!= a->integer)
+					return NULL;
+				tv.integer = r;
+			}
+			break;
+		default:
+			return NULL;
+	}
+
+	return ofc_sema_typeval__alloc(tv);
+}
+
+ofc_sema_typeval_t* ofc_sema_typeval_concat(
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b)
+{
+	if (!a || !a->type
+		|| !b || !b->type
+		|| (a->type->type != OFC_SEMA_TYPE_CHARACTER)
+		|| (b->type->type != OFC_SEMA_TYPE_CHARACTER))
+		return NULL;
+
+	if (a->type->kind == 0)
+		return ofc_sema_typeval_copy(b);
+	if (b->type->kind == 0)
+		return ofc_sema_typeval_copy(a);
+
+	unsigned len = (a->type->kind + b->type->kind);
+
+	ofc_sema_typeval_t tv;
+	tv.type = ofc_sema_type_create_primitive(
+		OFC_SEMA_TYPE_CHARACTER, len,
+		false, false, false);
+	if (!tv.type) return NULL;
+
+	tv.character = (char*)malloc(sizeof(char) * len);
+	if (!tv.character) return NULL;
+
+	memcpy(tv.character, a->character, a->type->kind);
+	memcpy(&tv.character[a->type->kind], b->character, b->type->kind);
+
+	ofc_sema_typeval_t* ret
+		= ofc_sema_typeval__alloc(tv);
+	if (!ret) free(tv.character);
+	return ret;
+}
+
+ofc_sema_typeval_t* ofc_sema_typeval_divide(
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b)
+{
+	if (!a || !a->type
+		|| !b || !b->type
+		|| !ofc_sema_type_compare(
+			a->type, b->type))
+		return NULL;
+
+	ofc_sema_typeval_t tv;
+	tv.type = a->type;
+
+	switch (a->type->type)
+	{
+		case OFC_SEMA_TYPE_REAL:
+			tv.real = a->real / b->real;
+			break;
+		case OFC_SEMA_TYPE_COMPLEX:
+			/* TODO - COMPLEX divide. */
+			return NULL;
+		case OFC_SEMA_TYPE_INTEGER:
+		case OFC_SEMA_TYPE_BYTE:
+			if (b->integer == 0)
+			{
+				/* TODO - Error: Divide by zero. */
+				return NULL;
+			}
+			tv.integer = a->integer / b->integer;
+			break;
+		default:
+			return NULL;
+	}
+
+	return ofc_sema_typeval__alloc(tv);
+}
+
+ofc_sema_typeval_t* ofc_sema_typeval_add(
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b)
+{
+	if (!a || !a->type
+		|| !b || !b->type
+		|| !ofc_sema_type_compare(
+			a->type, b->type))
+		return NULL;
+
+	ofc_sema_typeval_t tv;
+	tv.type = a->type;
+
+	switch (a->type->type)
+	{
+		case OFC_SEMA_TYPE_REAL:
+			tv.real = a->real + b->real;
+			break;
+		case OFC_SEMA_TYPE_COMPLEX:
+			/* TODO - COMPLEX addition. */
+			return NULL;
+		case OFC_SEMA_TYPE_INTEGER:
+		case OFC_SEMA_TYPE_BYTE:
+			/* TODO - Detect overflow. */
+			tv.integer = a->integer + b->integer;
+			break;
+		default:
+			return NULL;
+	}
+
+	return ofc_sema_typeval__alloc(tv);
+}
+
+ofc_sema_typeval_t* ofc_sema_typeval_subtract(
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b)
+{
+	if (!a || !a->type
+		|| !b || !b->type
+		|| !ofc_sema_type_compare(
+			a->type, b->type))
+		return NULL;
+
+	ofc_sema_typeval_t tv;
+	tv.type = a->type;
+
+	switch (a->type->type)
+	{
+		case OFC_SEMA_TYPE_REAL:
+			tv.real = a->real - b->real;
+			break;
+		case OFC_SEMA_TYPE_COMPLEX:
+			/* TODO - COMPLEX addition. */
+			return NULL;
+		case OFC_SEMA_TYPE_INTEGER:
+		case OFC_SEMA_TYPE_BYTE:
+			/* TODO - Detect overflow. */
+			tv.integer = a->integer - b->integer;
+			break;
+		default:
+			return NULL;
+	}
+
+	return ofc_sema_typeval__alloc(tv);
+}
+
+ofc_sema_typeval_t* ofc_sema_typeval_negate(
+	const ofc_sema_typeval_t* a)
+{
+	if (!a || !a->type)
+		return NULL;
+
+	ofc_sema_typeval_t tv;
+	tv.type = a->type;
+
+	switch (a->type->type)
+	{
+		case OFC_SEMA_TYPE_REAL:
+			tv.real = -a->real;
+			break;
+		case OFC_SEMA_TYPE_COMPLEX:
+			/* TODO - COMPLEX negation. */
+			return NULL;
+		case OFC_SEMA_TYPE_INTEGER:
+		case OFC_SEMA_TYPE_BYTE:
+			tv.integer = -a->integer;
+			if (-tv.integer != a->integer)
+			{
+				/* TODO - Error: Overflow in constant negate. */
+				return NULL;
+			}
+			break;
+		default:
+			return NULL;
+	}
+
+	return ofc_sema_typeval__alloc(tv);
+}
+
+ofc_sema_typeval_t* ofc_sema_typeval_eq(
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b)
+{
+	if (!a || !a->type
+		|| !b || !b->type
+		|| !ofc_sema_type_compare(
+			a->type, b->type))
+		return NULL;
+
+	ofc_sema_typeval_t tv;
+	tv.type = ofc_sema_type_create_primitive(
+		OFC_SEMA_TYPE_LOGICAL, 0,
+		false, false, false);
+
+	switch (a->type->type)
+	{
+		case OFC_SEMA_TYPE_REAL:
+			tv.logical = (a->real == b->real);
+			break;
+		case OFC_SEMA_TYPE_COMPLEX:
+			/* TODO - COMPLEX equality. */
+			return NULL;
+		case OFC_SEMA_TYPE_INTEGER:
+		case OFC_SEMA_TYPE_BYTE:
+			tv.logical = (a->integer == b->integer);
+			break;
+		default:
+			return NULL;
+	}
+
+	return ofc_sema_typeval__alloc(tv);
+}
+
+ofc_sema_typeval_t* ofc_sema_typeval_ne(
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b)
+{
+	if (!a || !a->type
+		|| !b || !b->type
+		|| !ofc_sema_type_compare(
+			a->type, b->type))
+		return NULL;
+
+	ofc_sema_typeval_t tv;
+	tv.type = ofc_sema_type_create_primitive(
+		OFC_SEMA_TYPE_LOGICAL, 0,
+		false, false, false);
+
+	switch (a->type->type)
+	{
+		case OFC_SEMA_TYPE_REAL:
+			tv.logical = (a->real != b->real);
+			break;
+		case OFC_SEMA_TYPE_COMPLEX:
+			/* TODO - COMPLEX inequality. */
+			return NULL;
+		case OFC_SEMA_TYPE_INTEGER:
+		case OFC_SEMA_TYPE_BYTE:
+			tv.logical = (a->integer != b->integer);
+			break;
+		default:
+			return NULL;
+	}
+
+	return ofc_sema_typeval__alloc(tv);
+}
+
+ofc_sema_typeval_t* ofc_sema_typeval_lt(
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b)
+{
+	if (!a || !a->type
+		|| !b || !b->type
+		|| !ofc_sema_type_compare(
+			a->type, b->type))
+		return NULL;
+
+	ofc_sema_typeval_t tv;
+	tv.type = ofc_sema_type_create_primitive(
+		OFC_SEMA_TYPE_LOGICAL, 0,
+		false, false, false);
+
+	switch (a->type->type)
+	{
+		case OFC_SEMA_TYPE_REAL:
+			tv.logical = (a->real < b->real);
+			break;
+		case OFC_SEMA_TYPE_COMPLEX:
+			/* TODO - COMPLEX lower than. */
+			return NULL;
+		case OFC_SEMA_TYPE_INTEGER:
+		case OFC_SEMA_TYPE_BYTE:
+			tv.logical = (a->integer < b->integer);
+			break;
+		default:
+			return NULL;
+	}
+
+	return ofc_sema_typeval__alloc(tv);
+}
+
+ofc_sema_typeval_t* ofc_sema_typeval_le(
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b)
+{
+	if (!a || !a->type
+		|| !b || !b->type
+		|| !ofc_sema_type_compare(
+			a->type, b->type))
+		return NULL;
+
+	ofc_sema_typeval_t tv;
+	tv.type = ofc_sema_type_create_primitive(
+		OFC_SEMA_TYPE_LOGICAL, 0,
+		false, false, false);
+
+	switch (a->type->type)
+	{
+		case OFC_SEMA_TYPE_REAL:
+			tv.logical = (a->real <= b->real);
+			break;
+		case OFC_SEMA_TYPE_COMPLEX:
+			/* TODO - COMPLEX lower than or equal. */
+			return NULL;
+		case OFC_SEMA_TYPE_INTEGER:
+		case OFC_SEMA_TYPE_BYTE:
+			tv.logical = (a->integer <= b->integer);
+			break;
+		default:
+			return NULL;
+	}
+
+	return ofc_sema_typeval__alloc(tv);
+}
+
+ofc_sema_typeval_t* ofc_sema_typeval_gt(
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b)
+{
+	if (!a || !a->type
+		|| !b || !b->type
+		|| !ofc_sema_type_compare(
+			a->type, b->type))
+		return NULL;
+
+	ofc_sema_typeval_t tv;
+	tv.type = ofc_sema_type_create_primitive(
+		OFC_SEMA_TYPE_LOGICAL, 0,
+		false, false, false);
+
+	switch (a->type->type)
+	{
+		case OFC_SEMA_TYPE_REAL:
+			tv.logical = (a->real > b->real);
+			break;
+		case OFC_SEMA_TYPE_COMPLEX:
+			/* TODO - COMPLEX greater than. */
+			return NULL;
+		case OFC_SEMA_TYPE_INTEGER:
+		case OFC_SEMA_TYPE_BYTE:
+			tv.logical = (a->integer > b->integer);
+			break;
+		default:
+			return NULL;
+	}
+
+	return ofc_sema_typeval__alloc(tv);
+}
+
+ofc_sema_typeval_t* ofc_sema_typeval_ge(
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b)
+{
+	if (!a || !a->type
+		|| !b || !b->type
+		|| !ofc_sema_type_compare(
+			a->type, b->type))
+		return NULL;
+
+	ofc_sema_typeval_t tv;
+	tv.type = ofc_sema_type_create_primitive(
+		OFC_SEMA_TYPE_LOGICAL, 0,
+		false, false, false);
+
+	switch (a->type->type)
+	{
+		case OFC_SEMA_TYPE_REAL:
+			tv.logical = (a->real >= b->real);
+			break;
+		case OFC_SEMA_TYPE_COMPLEX:
+			/* TODO - COMPLEX greater or equal. */
+			return NULL;
+		case OFC_SEMA_TYPE_INTEGER:
+		case OFC_SEMA_TYPE_BYTE:
+			tv.logical = (a->integer >= b->integer);
+			break;
+		default:
+			return NULL;
+	}
+
+	return ofc_sema_typeval__alloc(tv);
+}
+
+ofc_sema_typeval_t* ofc_sema_typeval_not(
+	const ofc_sema_typeval_t* a)
+{
+	if (!a || !a->type)
+		return NULL;
+
+	ofc_sema_typeval_t tv;
+	tv.type = a->type;
+
+	switch (a->type->type)
+	{
+		case OFC_SEMA_TYPE_LOGICAL:
+			tv.logical = !a->logical;
+			break;
+		case OFC_SEMA_TYPE_INTEGER:
+			tv.integer = ~a->integer;
+			break;
+		default:
+			return NULL;
+	}
+
+	return ofc_sema_typeval__alloc(tv);
+}
+
+ofc_sema_typeval_t* ofc_sema_typeval_and(
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b)
+{
+	if (!a || !a->type
+		|| !b || !b->type
+		|| !ofc_sema_type_compare(
+			a->type, b->type))
+		return NULL;
+
+	ofc_sema_typeval_t tv;
+	tv.type = a->type;
+
+	switch (a->type->type)
+	{
+		case OFC_SEMA_TYPE_LOGICAL:
+			tv.logical = (a->logical && b->logical);
+			break;
+		case OFC_SEMA_TYPE_INTEGER:
+		case OFC_SEMA_TYPE_BYTE:
+			tv.integer = a->integer & b->integer;
+			break;
+		default:
+			return NULL;
+	}
+
+	return ofc_sema_typeval__alloc(tv);
+}
+
+ofc_sema_typeval_t* ofc_sema_typeval_or(
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b)
+{
+	if (!a || !a->type
+		|| !b || !b->type
+		|| !ofc_sema_type_compare(
+			a->type, b->type))
+		return NULL;
+
+	ofc_sema_typeval_t tv;
+	tv.type = a->type;
+
+	switch (a->type->type)
+	{
+		case OFC_SEMA_TYPE_LOGICAL:
+			tv.logical = (a->logical || b->logical);
+			break;
+		case OFC_SEMA_TYPE_INTEGER:
+		case OFC_SEMA_TYPE_BYTE:
+			tv.integer = a->integer | b->integer;
+			break;
+		default:
+			return NULL;
+	}
+
+	return ofc_sema_typeval__alloc(tv);
+}
+
+ofc_sema_typeval_t* ofc_sema_typeval_eqv(
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b)
+{
+	if (!a || !a->type
+		|| !b || !b->type
+		|| !ofc_sema_type_compare(
+			a->type, b->type))
+		return NULL;
+
+	ofc_sema_typeval_t tv;
+	tv.type = ofc_sema_type_create_primitive(
+		OFC_SEMA_TYPE_LOGICAL, 0,
+		false, false, false);
+
+	switch (a->type->type)
+	{
+		case OFC_SEMA_TYPE_LOGICAL:
+			tv.logical = (a->logical == b->logical);
+			break;
+		case OFC_SEMA_TYPE_BYTE:
+			tv.logical = (a->integer == b->integer);
+			break;
+		default:
+			return NULL;
+	}
+
+	return ofc_sema_typeval__alloc(tv);
+}
+
+ofc_sema_typeval_t* ofc_sema_typeval_neqv(
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b)
+{
+	if (!a || !a->type
+		|| !b || !b->type
+		|| !ofc_sema_type_compare(
+			a->type, b->type))
+		return NULL;
+
+	ofc_sema_typeval_t tv;
+	tv.type = ofc_sema_type_create_primitive(
+		OFC_SEMA_TYPE_LOGICAL, 0,
+		false, false, false);
+
+	switch (a->type->type)
+	{
+		case OFC_SEMA_TYPE_LOGICAL:
+			tv.logical = (a->logical != b->logical);
+			break;
+		case OFC_SEMA_TYPE_BYTE:
+			tv.logical = (a->integer != b->integer);
+			break;
+		default:
+			return NULL;
+	}
+
+	return ofc_sema_typeval__alloc(tv);
 }

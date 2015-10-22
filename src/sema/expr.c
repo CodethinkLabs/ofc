@@ -484,6 +484,52 @@ const ofc_sema_type_t* ofc_sema_expr_type(
 	return ofc_sema_expr_type(expr->a);
 }
 
+
+static ofc_sema_typeval_t* ofc_sema_typeval_negate__faux_binary(
+	const ofc_sema_typeval_t* a, const ofc_sema_typeval_t* b)
+{
+	(void)b;
+	return ofc_sema_typeval_negate(a);
+}
+
+static ofc_sema_typeval_t* ofc_sema_typeval_not__faux_binary(
+	const ofc_sema_typeval_t* a, const ofc_sema_typeval_t* b)
+{
+	(void)b;
+	return ofc_sema_typeval_not(a);
+}
+
+static ofc_sema_typeval_t* (*ofc_sema_expr__resolve[])(
+	const ofc_sema_typeval_t*, const ofc_sema_typeval_t*) =
+{
+	NULL, /* LITERAL */
+	NULL, /* PARAMETER */
+	NULL, /* DECL */
+	NULL, /* CAST */
+
+	ofc_sema_typeval_power,
+	ofc_sema_typeval_multiply,
+	ofc_sema_typeval_concat,
+	ofc_sema_typeval_divide,
+	ofc_sema_typeval_add,
+	ofc_sema_typeval_subtract,
+	ofc_sema_typeval_negate__faux_binary,
+
+	ofc_sema_typeval_eq,
+	ofc_sema_typeval_ne,
+	ofc_sema_typeval_lt,
+	ofc_sema_typeval_le,
+	ofc_sema_typeval_gt,
+	ofc_sema_typeval_ge,
+
+	ofc_sema_typeval_not__faux_binary,
+	ofc_sema_typeval_and,
+	ofc_sema_typeval_or,
+
+	ofc_sema_typeval_eqv,
+	ofc_sema_typeval_neqv,
+};
+
 ofc_sema_typeval_t* ofc_sema_expr_resolve(
 	const ofc_sema_expr_t* expr)
 {
@@ -502,9 +548,17 @@ ofc_sema_typeval_t* ofc_sema_expr_resolve(
 					expr->parameter));
 
 		case OFC_SEMA_EXPR_CAST:
-			return ofc_sema_typeval_cast(
-				ofc_sema_expr_resolve(expr->cast.expr),
-				expr->cast.type);
+			{
+				ofc_sema_typeval_t* tv
+					= ofc_sema_expr_resolve(expr->cast.expr);
+				ofc_sema_typeval_t* ret
+					= ofc_sema_typeval_cast(
+						ofc_sema_expr_resolve(
+							expr->cast.expr),
+						expr->cast.type);
+				ofc_sema_typeval_delete(tv);
+				return ret;
+			}
 
 		/* We can't/shouldn't resolve declarations at compile time. */
 		case OFC_SEMA_EXPR_DECL:
@@ -514,6 +568,26 @@ ofc_sema_typeval_t* ofc_sema_expr_resolve(
 			break;
 	}
 
-	/* TODO - Handle operators. */
-	return NULL;
+	if ((expr->type > OFC_SEMA_EXPR_COUNT)
+		|| !ofc_sema_expr__resolve[expr->type])
+		return NULL;
+
+	ofc_sema_typeval_t* av
+		= ofc_sema_expr_resolve(expr->a);
+	if (!av) return NULL;
+
+	ofc_sema_typeval_t* bv
+		= ofc_sema_expr_resolve(expr->b);
+	if (expr->b && !bv)
+	{
+		ofc_sema_typeval_delete(av);
+		return NULL;
+	}
+
+	ofc_sema_typeval_t* ret
+		= ofc_sema_expr__resolve[expr->type](av, bv);
+	ofc_sema_typeval_delete(bv);
+	ofc_sema_typeval_delete(av);
+
+	return ret;
 }

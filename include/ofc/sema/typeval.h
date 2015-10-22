@@ -49,4 +49,58 @@ bool ofc_sema_typeval_get_character(
 	const ofc_sema_typeval_t* typeval,
 	const char** character);
 
+
+ofc_sema_typeval_t* ofc_sema_typeval_power(
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b);
+ofc_sema_typeval_t* ofc_sema_typeval_multiply(
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b);
+ofc_sema_typeval_t* ofc_sema_typeval_concat(
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b);
+ofc_sema_typeval_t* ofc_sema_typeval_divide(
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b);
+ofc_sema_typeval_t* ofc_sema_typeval_add(
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b);
+ofc_sema_typeval_t* ofc_sema_typeval_subtract(
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b);
+ofc_sema_typeval_t* ofc_sema_typeval_negate(
+	const ofc_sema_typeval_t* a);
+ofc_sema_typeval_t* ofc_sema_typeval_eq(
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b);
+ofc_sema_typeval_t* ofc_sema_typeval_ne(
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b);
+ofc_sema_typeval_t* ofc_sema_typeval_lt(
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b);
+ofc_sema_typeval_t* ofc_sema_typeval_le(
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b);
+ofc_sema_typeval_t* ofc_sema_typeval_gt(
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b);
+ofc_sema_typeval_t* ofc_sema_typeval_ge(
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b);
+ofc_sema_typeval_t* ofc_sema_typeval_not(
+	const ofc_sema_typeval_t* a);
+ofc_sema_typeval_t* ofc_sema_typeval_and(
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b);
+ofc_sema_typeval_t* ofc_sema_typeval_or(
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b);
+ofc_sema_typeval_t* ofc_sema_typeval_eqv(
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b);
+ofc_sema_typeval_t* ofc_sema_typeval_neqv(
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b);
+
 #endif
