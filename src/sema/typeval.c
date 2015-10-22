@@ -120,10 +120,6 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 	if (negate || (ptr[i] == '+'))
 		i += 1;
 
-	/* TODO - Check could be improved, maybe limit to valid hex alphas and x. */
-	if ((i < size) && !isalnum(ptr[i]))
-			return NULL;
-
 	ofc_sema_typeval_t typeval
 		= { .type = type, .integer = 0 };
 
@@ -235,9 +231,6 @@ static bool ofc_sema_typeval__real(
 	bool negate = (ptr[i] == '-');
 	if (negate || (ptr[i] == '+'))
 		i += 1;
-
-	if ((i < size) && !isdigit(ptr[i]))
-		return false;
 
 	*value = 0.0;
 	for (; (i < size) && isdigit(ptr[i]); i++)
