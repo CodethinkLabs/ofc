@@ -2,7 +2,7 @@ FRONTEND = ofc
 
 BASE = src/
 
-SRC_DIR = . prep parse sema reformat parse/stmt
+SRC_DIR = . prep parse sema reformat parse/stmt sema/stmt
 SRC_DIR_BASE = $(addprefix $(BASE),$(SRC_DIR))
 LDFLAGS = -lm
 CFLAGS = -O3 -Wall -Wextra -MD -MP -I include
