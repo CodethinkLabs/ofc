@@ -184,6 +184,23 @@ static unsigned ofc_parse_expr__integer(
 	return len;
 }
 
+static unsigned ofc_parse_expr__integer_variable(
+       const ofc_sparse_t* src, const char* ptr,
+       ofc_parse_debug_t* debug,
+       ofc_parse_expr_t* expr)
+{
+	unsigned len = ofc_parse_expr__integer(
+		src, ptr, debug, expr);
+	if (len > 0) return len;
+
+	expr->variable = ofc_parse_lhs_variable(
+		   src, ptr, debug, &len);
+	if (!expr->variable) return 0;
+
+	expr->type = OFC_PARSE_EXPR_VARIABLE;
+	return len;
+}
+
 static unsigned ofc_parse_expr__primary(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
@@ -474,6 +491,31 @@ ofc_parse_expr_t* ofc_parse_expr_integer(
 	if (len) *len = i;
 	return expr;
 }
+
+ofc_parse_expr_t* ofc_parse_expr_integer_variable(
+       const ofc_sparse_t* src, const char* ptr,
+       ofc_parse_debug_t* debug, unsigned* len)
+{
+       unsigned dpos = ofc_parse_debug_position(debug);
+
+       ofc_parse_expr_t e;
+       unsigned i = ofc_parse_expr__integer_variable(
+               src, ptr, debug, &e);
+       if (i == 0) return NULL;
+
+       ofc_parse_expr_t* expr
+               = ofc_parse_expr__alloc(e);
+       if (!expr)
+       {
+               ofc_parse_debug_rewind(debug, dpos);
+               ofc_parse_expr__cleanup(e);
+               return NULL;
+       }
+
+       if (len) *len = i;
+       return expr;
+}
+
 
 ofc_parse_expr_t* ofc_parse_expr(
 	const ofc_sparse_t* src, const char* ptr,

@@ -279,7 +279,7 @@ static ofc_parse_lhs_t* ofc_parse_lhs__member(
 
 static ofc_parse_lhs_t* ofc_parse__lhs(
 	const ofc_sparse_t* src, const char* ptr,
-	ofc_parse_debug_t* debug,
+	ofc_parse_debug_t* debug, bool allow_array,
 	bool star_len,
 	unsigned* len)
 {
@@ -312,13 +312,16 @@ static ofc_parse_lhs_t* ofc_parse__lhs(
 		unsigned l;
 		ofc_parse_lhs_t* child_lhs;
 
-		child_lhs = ofc_parse_lhs__array(
-				src, &ptr[i], debug, alhs, &l);
-		if (child_lhs)
+		if(allow_array)
 		{
-			i += l;
-			alhs = child_lhs;
-			continue;
+			child_lhs = ofc_parse_lhs__array(
+					src, &ptr[i], debug, alhs, &l);
+			if (child_lhs)
+			{
+				i += l;
+				alhs = child_lhs;
+				continue;
+			}
 		}
 
 		if (star_len)
@@ -355,7 +358,16 @@ ofc_parse_lhs_t* ofc_parse_lhs_star_len(
 	unsigned* len)
 {
 	return ofc_parse__lhs(
-		src, ptr, debug, true ,len);
+		src, ptr, debug, true , true, len);
+}
+
+ofc_parse_lhs_t* ofc_parse_lhs_variable(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	unsigned* len)
+{
+	return ofc_parse__lhs(
+		src, ptr, debug, false, false ,len);
 }
 
 ofc_parse_lhs_t* ofc_parse_lhs(
@@ -364,7 +376,7 @@ ofc_parse_lhs_t* ofc_parse_lhs(
 	unsigned* len)
 {
 	return ofc_parse__lhs(
-		src, ptr, debug, false ,len);
+		src, ptr, debug, true, false ,len);
 }
 
 

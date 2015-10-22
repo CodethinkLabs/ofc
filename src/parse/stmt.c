@@ -213,6 +213,10 @@ unsigned ofc_parse_stmt_io_accept(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
 	ofc_parse_stmt_t* stmt);
+unsigned ofc_parse_stmt_io_define_file(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_stmt_t* stmt);
 
 
 
@@ -345,6 +349,9 @@ static void ofc_parse_stmt__cleanup(
 		case OFC_PARSE_STMT_IO_ACCEPT:
 			ofc_parse_iolist_delete(stmt.io_print.iolist);
 			break;
+		case OFC_PARSE_STMT_IO_DEFINE_FILE:
+			ofc_parse_define_file_arg_list_delete(stmt.io_define_file.args);
+			break;
 		case OFC_PARSE_STMT_FORMAT:
 			ofc_parse_format_desc_list_delete(stmt.format);
 			break;
@@ -433,6 +440,7 @@ ofc_parse_stmt_t* ofc_parse_stmt(
 			if (i == 0) i = ofc_parse_stmt_data(src, ptr, debug, &stmt);
 			if (i == 0) i = ofc_parse_stmt_dimension(src, ptr, debug, &stmt);
 			if (i == 0) i = ofc_parse_stmt_io_decode(src, ptr, debug, &stmt);
+			if (i == 0) i = ofc_parse_stmt_io_define_file(src, ptr, debug, &stmt);
 			break;
 
 		case 'E':
@@ -639,6 +647,8 @@ bool ofc_parse_stmt_io_print(
 	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt);
 bool ofc_parse_stmt_print_accept_print(
 	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt);
+bool ofc_parse_stmt_define_file_print(
+	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt);
 
 
 bool ofc_parse_stmt_print(
@@ -770,6 +780,9 @@ bool ofc_parse_stmt_print(
 		case OFC_PARSE_STMT_IO_TYPE:
 		case OFC_PARSE_STMT_IO_ACCEPT:
 			ofc_parse_stmt_print_accept_print(cs, stmt);
+			break;
+		case OFC_PARSE_STMT_IO_DEFINE_FILE:
+			ofc_parse_stmt_define_file_print(cs, stmt);
 			break;
 		case OFC_PARSE_STMT_FORMAT:
 			if (!ofc_parse_stmt_format_print(cs, stmt))

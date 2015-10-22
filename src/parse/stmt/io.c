@@ -168,6 +168,18 @@ bool ofc_parse_stmt_print_accept_print(
 	return true;
 }
 
+bool ofc_parse_stmt_define_file_print(
+	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt)
+{
+	if (!stmt)
+		return false;
+
+	if (!ofc_colstr_atomic_writef(cs, "DEFINE FILE ")
+		&& !ofc_parse_define_file_arg_list_print(
+			cs, stmt->io_define_file.args))
+		return false;
+}
+
 unsigned ofc_parse_stmt_io_open(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
@@ -405,5 +417,33 @@ unsigned ofc_parse_stmt_io_accept(
 	if (i == 0) return 0;
 
 	stmt->type = OFC_PARSE_STMT_IO_ACCEPT;
+	return i;
+}
+
+unsigned ofc_parse_stmt_io_define_file(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_stmt_t* stmt)
+{
+	unsigned dpos = ofc_parse_debug_position(debug);
+
+	unsigned i = ofc_parse_keyword(
+		src, ptr, debug, OFC_PARSE_KEYWORD_DEFINE_FILE);
+	if (i == 0) return 0;
+
+	unsigned len;
+	stmt->io_define_file.args = NULL;
+
+	stmt->io_define_file.args = ofc_parse_define_file_arg_list(
+		src, &ptr[i], debug, &len);
+	if (!stmt->io_define_file.args)
+	{
+		ofc_parse_debug_rewind(debug, dpos);
+		return 0;
+	}
+	i += len;
+
+	stmt->type = OFC_PARSE_STMT_IO_DEFINE_FILE;
+
 	return i;
 }

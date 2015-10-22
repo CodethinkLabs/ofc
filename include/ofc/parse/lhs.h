@@ -62,6 +62,10 @@ ofc_parse_lhs_t* ofc_parse_lhs_star_len(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
 	unsigned* len);
+ofc_parse_lhs_t* ofc_parse_lhs_variable(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	unsigned* len);
 ofc_parse_lhs_t* ofc_parse_lhs(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,

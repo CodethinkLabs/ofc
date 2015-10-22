@@ -24,6 +24,7 @@ typedef struct ofc_parse_implicit_do_s ofc_parse_implicit_do_t;
 #include <ofc/parse/expr.h>
 #include <ofc/parse/assign.h>
 #include <ofc/parse/call_arg.h>
+#include <ofc/parse/define_file_arg.h>
 #include <ofc/parse/implicit_do.h>
 #include <ofc/parse/star_len.h>
 #include <ofc/parse/type.h>

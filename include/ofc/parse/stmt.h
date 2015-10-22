@@ -67,6 +67,7 @@ typedef enum
 	OFC_PARSE_STMT_IO_ENCODE,
 	OFC_PARSE_STMT_IO_DECODE,
 	OFC_PARSE_STMT_IO_ACCEPT,
+	OFC_PARSE_STMT_IO_DEFINE_FILE,
 	OFC_PARSE_STMT_FORMAT,
 	OFC_PARSE_STMT_DATA,
 	OFC_PARSE_STMT_SAVE,
@@ -217,6 +218,11 @@ struct ofc_parse_stmt_s
 			bool                format_asterisk;
 			ofc_parse_iolist_t* iolist;
 		} io_print;
+
+		struct
+		{
+			ofc_parse_define_file_arg_list_t* args;
+		} io_define_file;
 
 		ofc_parse_format_desc_list_t* format;
 

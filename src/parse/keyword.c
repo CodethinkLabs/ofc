@@ -86,6 +86,7 @@ static const char* ofc_parse_keyword__name[] =
 	"ENCODE",
 	"DECODE",
 	"ACCEPT",
+	"DEFINE FILE",
 
 	NULL
 };
@@ -199,6 +200,11 @@ unsigned ofc_parse_keyword_named(
 			kwstr = "ENDFILE";
 			space = 3;
 			break;
+		case OFC_PARSE_KEYWORD_DEFINE_FILE:
+			kwstr = "DEFINEFILE";
+			space = 6;
+			break;
+
 		default:
 			break;
 	}
