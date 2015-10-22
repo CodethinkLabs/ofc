@@ -1001,8 +1001,26 @@ ofc_sema_typeval_t* ofc_sema_typeval_power(
 			tv.real = powl(a->real, b->real);
 			break;
 		case OFC_SEMA_TYPE_COMPLEX:
-			/* TODO - COMPLEX power. */
-			return NULL;
+			{
+				long double abs = hypotl(a->complex.real, a->complex.imaginary);
+				if (abs == 0.0)
+				{
+					tv.complex.real      = 0.0;
+					tv.complex.imaginary = 0.0;
+					break;
+				}
+				long double arg = atan2l(a->complex.imaginary, a->complex.real);
+				long double radio = powl(abs, b->complex.real);
+				long double ang = arg * b->complex.real;
+				if (b->complex.imaginary)
+				{
+					radio = radio * exp(-b->complex.imaginary * arg);
+					ang = ang + (b->complex.imaginary * log(abs));
+				}
+				tv.complex.real = radio * cos(ang);
+				tv.complex.imaginary = radio * sin(ang);
+			}
+			break;
 		case OFC_SEMA_TYPE_INTEGER:
 		case OFC_SEMA_TYPE_BYTE:
 			{
@@ -1039,8 +1057,11 @@ ofc_sema_typeval_t* ofc_sema_typeval_multiply(
 			tv.real = a->real * b->real;
 			break;
 		case OFC_SEMA_TYPE_COMPLEX:
-			/* TODO - COMPLEX multiply. */
-			return NULL;
+			tv.complex.real = (a->complex.real * b->complex.real)
+				- (a->complex.imaginary * b->complex.imaginary);
+			tv.complex.imaginary = (a->complex.real * b->complex.imaginary)
+				+ (b->complex.real * a->complex.imaginary);
+			break;
 		case OFC_SEMA_TYPE_INTEGER:
 		case OFC_SEMA_TYPE_BYTE:
 			{
@@ -1112,8 +1133,17 @@ ofc_sema_typeval_t* ofc_sema_typeval_divide(
 			tv.real = a->real / b->real;
 			break;
 		case OFC_SEMA_TYPE_COMPLEX:
-			/* TODO - COMPLEX divide. */
-			return NULL;
+			{
+				long double div = powl(b->complex.real, 2.0)
+					+ powl(b->complex.imaginary, 2.0);
+				tv.complex.real
+					= ((a->complex.real * b->complex.real)
+						+ (a->complex.imaginary * b->complex.imaginary)) / div;
+				tv.complex.imaginary
+					= ((a->complex.imaginary * b->complex.real)
+						- (a->complex.real * b->complex.imaginary)) / div;
+			}
+			break;
 		case OFC_SEMA_TYPE_INTEGER:
 		case OFC_SEMA_TYPE_BYTE:
 			if (b->integer == 0)
@@ -1149,8 +1179,10 @@ ofc_sema_typeval_t* ofc_sema_typeval_add(
 			tv.real = a->real + b->real;
 			break;
 		case OFC_SEMA_TYPE_COMPLEX:
-			/* TODO - COMPLEX addition. */
-			return NULL;
+			tv.complex.real = a->complex.real + b->complex.real;
+			tv.complex.imaginary
+				= a->complex.imaginary + b->complex.imaginary;
+				break;
 		case OFC_SEMA_TYPE_INTEGER:
 		case OFC_SEMA_TYPE_BYTE:
 			/* TODO - Detect overflow. */
@@ -1182,8 +1214,10 @@ ofc_sema_typeval_t* ofc_sema_typeval_subtract(
 			tv.real = a->real - b->real;
 			break;
 		case OFC_SEMA_TYPE_COMPLEX:
-			/* TODO - COMPLEX addition. */
-			return NULL;
+			tv.complex.real = a->complex.real - b->complex.real;
+			tv.complex.imaginary
+				= a->complex.imaginary - b->complex.imaginary;
+			break;
 		case OFC_SEMA_TYPE_INTEGER:
 		case OFC_SEMA_TYPE_BYTE:
 			/* TODO - Detect overflow. */
@@ -1211,8 +1245,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_negate(
 			tv.real = -a->real;
 			break;
 		case OFC_SEMA_TYPE_COMPLEX:
-			/* TODO - COMPLEX negation. */
-			return NULL;
+			tv.complex.real = -a->complex.real;
+			tv.complex.imaginary = -a->complex.imaginary;
+			break;
 		case OFC_SEMA_TYPE_INTEGER:
 		case OFC_SEMA_TYPE_BYTE:
 			tv.integer = -a->integer;
@@ -1250,8 +1285,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_eq(
 			tv.logical = (a->real == b->real);
 			break;
 		case OFC_SEMA_TYPE_COMPLEX:
-			/* TODO - COMPLEX equality. */
-			return NULL;
+			tv.logical = ((a->complex.real == b->complex.real)
+				&& (a->complex.imaginary == b->complex.imaginary));
+			break;
 		case OFC_SEMA_TYPE_INTEGER:
 		case OFC_SEMA_TYPE_BYTE:
 			tv.logical = (a->integer == b->integer);
@@ -1284,8 +1320,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_ne(
 			tv.logical = (a->real != b->real);
 			break;
 		case OFC_SEMA_TYPE_COMPLEX:
-			/* TODO - COMPLEX inequality. */
-			return NULL;
+			tv.logical = ((a->complex.real != b->complex.real)
+							|| (a->complex.imaginary != b->complex.imaginary));
+			break;
 		case OFC_SEMA_TYPE_INTEGER:
 		case OFC_SEMA_TYPE_BYTE:
 			tv.logical = (a->integer != b->integer);
@@ -1317,9 +1354,6 @@ ofc_sema_typeval_t* ofc_sema_typeval_lt(
 		case OFC_SEMA_TYPE_REAL:
 			tv.logical = (a->real < b->real);
 			break;
-		case OFC_SEMA_TYPE_COMPLEX:
-			/* TODO - COMPLEX lower than. */
-			return NULL;
 		case OFC_SEMA_TYPE_INTEGER:
 		case OFC_SEMA_TYPE_BYTE:
 			tv.logical = (a->integer < b->integer);
@@ -1351,9 +1385,6 @@ ofc_sema_typeval_t* ofc_sema_typeval_le(
 		case OFC_SEMA_TYPE_REAL:
 			tv.logical = (a->real <= b->real);
 			break;
-		case OFC_SEMA_TYPE_COMPLEX:
-			/* TODO - COMPLEX lower than or equal. */
-			return NULL;
 		case OFC_SEMA_TYPE_INTEGER:
 		case OFC_SEMA_TYPE_BYTE:
 			tv.logical = (a->integer <= b->integer);
@@ -1385,9 +1416,6 @@ ofc_sema_typeval_t* ofc_sema_typeval_gt(
 		case OFC_SEMA_TYPE_REAL:
 			tv.logical = (a->real > b->real);
 			break;
-		case OFC_SEMA_TYPE_COMPLEX:
-			/* TODO - COMPLEX greater than. */
-			return NULL;
 		case OFC_SEMA_TYPE_INTEGER:
 		case OFC_SEMA_TYPE_BYTE:
 			tv.logical = (a->integer > b->integer);
@@ -1419,9 +1447,6 @@ ofc_sema_typeval_t* ofc_sema_typeval_ge(
 		case OFC_SEMA_TYPE_REAL:
 			tv.logical = (a->real >= b->real);
 			break;
-		case OFC_SEMA_TYPE_COMPLEX:
-			/* TODO - COMPLEX greater or equal. */
-			return NULL;
 		case OFC_SEMA_TYPE_INTEGER:
 		case OFC_SEMA_TYPE_BYTE:
 			tv.logical = (a->integer >= b->integer);
