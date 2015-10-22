@@ -34,7 +34,7 @@ struct ofc_sema_scope_s
 	/* label_list_map */
 	/* namelist_list_map */
 
-	/* exec_stmt_list */
+	ofc_sema_stmt_list_t* stmt;
 };
 
 struct ofc_sema_scope_list_s

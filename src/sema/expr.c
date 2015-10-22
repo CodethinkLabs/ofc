@@ -153,9 +153,9 @@ static ofc_sema_expr_e ofc_sema_expr__binary_map[] =
 	OFC_SEMA_EXPR_NEQV,
 };
 
-static ofc_sema_expr_t* ofc_sema_expr__cast(
-	const ofc_sema_type_t* type,
-	ofc_sema_expr_t* expr)
+ofc_sema_expr_t* ofc_sema_expr_cast(
+	ofc_sema_expr_t* expr,
+	const ofc_sema_type_t* type)
 {
 	if (!type || !expr)
 		return NULL;
@@ -228,7 +228,7 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 		if (!ofc_sema_type_compare(at, ptype))
 		{
 			ofc_sema_expr_t* cast
-				= ofc_sema_expr__cast(ptype, as);
+				= ofc_sema_expr_cast(as, ptype);
 			if (!cast)
 			{
 				ofc_sema_expr_delete(bs);
@@ -241,7 +241,7 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 		if (!ofc_sema_type_compare(bt, ptype))
 		{
 			ofc_sema_expr_t* cast
-				= ofc_sema_expr__cast(ptype, bs);
+				= ofc_sema_expr_cast(bs, ptype);
 			if (!cast)
 			{
 				ofc_sema_expr_delete(bs);
@@ -357,7 +357,7 @@ static ofc_sema_expr_t* ofc_sema_expr__decl(
 	if (!name)
 		return false;
 
-	if (name != OFC_PARSE_LHS_VARIABLE)
+	if (name->type != OFC_PARSE_LHS_VARIABLE)
 	{
 		/* TODO - Handle array indices, struct members, etc. */
 		return false;

@@ -59,6 +59,9 @@ struct ofc_sema_expr_s
 ofc_sema_expr_t* ofc_sema_expr(
 	const ofc_sema_scope_t* scope,
 	const ofc_parse_expr_t* expr);
+ofc_sema_expr_t* ofc_sema_expr_cast(
+	ofc_sema_expr_t* expr,
+	const ofc_sema_type_t* type);
 void ofc_sema_expr_delete(
 	ofc_sema_expr_t* expr);
 
