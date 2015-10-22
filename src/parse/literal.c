@@ -510,9 +510,9 @@ unsigned ofc_parse_literal_number(
 		{
 			for (; isdigit(ptr[j]); j++);
 
-			if (ptr[j] == 'D')
+			if (toupper(ptr[j]) == 'D')
 				k = 8;
-			else if (ptr[j] == 'Q')
+			else if (toupper(ptr[j]) == 'Q')
 				k = 16;
 
 			i = j;
