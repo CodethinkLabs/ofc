@@ -152,6 +152,13 @@ const ofc_str_ref_t* ofc_sema_parameter_name(
 	return (parameter ? &parameter->name : NULL);
 }
 
+const ofc_sema_type_t* ofc_sema_parameter_type(
+	const ofc_sema_parameter_t* parameter)
+{
+	if (!parameter || !parameter->typeval)
+		return NULL;
+	return parameter->typeval->type;
+}
 
 const ofc_sema_typeval_t* ofc_sema_parameter_get(
 	const ofc_sema_parameter_t* parameter)

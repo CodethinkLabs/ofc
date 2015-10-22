@@ -486,3 +486,64 @@ bool ofc_sema_type_is_logical(const ofc_sema_type_t* type)
 
 	return false;
 }
+
+
+
+static unsigned umax(unsigned a, unsigned b)
+	{ return (a > b ? a : b); }
+
+const ofc_sema_type_t* ofc_sema_type_promote(
+	const ofc_sema_type_t* a,
+	const ofc_sema_type_t* b)
+{
+	if (!a) return b;
+	if (!b) return a;
+
+	if (ofc_sema_type_compare(a, b))
+		return a;
+
+	if (a->type == b->type)
+		return (a->kind > b->kind ? a : b);
+
+	/* BYTE is always promoted. */
+	if (a->type == OFC_SEMA_TYPE_BYTE)
+		return b;
+	if (b->type == OFC_SEMA_TYPE_BYTE)
+		return a;
+
+	bool logical = ((a->type == OFC_SEMA_TYPE_LOGICAL)
+		|| (b->type == OFC_SEMA_TYPE_LOGICAL));
+	bool integer = ((a->type == OFC_SEMA_TYPE_INTEGER)
+		|| (b->type == OFC_SEMA_TYPE_INTEGER));
+	bool real = ((a->type == OFC_SEMA_TYPE_REAL)
+		|| (b->type == OFC_SEMA_TYPE_REAL));
+	bool complex = ((a->type == OFC_SEMA_TYPE_COMPLEX)
+		|| (b->type == OFC_SEMA_TYPE_COMPLEX));
+
+	unsigned kind = umax(a->kind, b->kind);
+
+	/* Promoted types ignore decl attributes. */
+
+	if (logical && integer)
+	{
+		return ofc_sema_type_create_primitive(
+			OFC_SEMA_TYPE_INTEGER, kind,
+			false, false, false);
+	}
+	else if (real && (logical || integer))
+	{
+		return ofc_sema_type_create_primitive(
+			OFC_SEMA_TYPE_REAL, kind,
+			false, false, false);
+	}
+	else if (complex && (real || logical || integer))
+	{
+		return ofc_sema_type_create_primitive(
+			OFC_SEMA_TYPE_COMPLEX, kind,
+			false, false, false);
+	}
+
+	/* We can't promote characters, arrays, structures or pointers. */
+
+	return NULL;
+}

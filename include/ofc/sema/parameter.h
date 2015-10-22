@@ -22,6 +22,9 @@ void ofc_sema_parameter_delete(
 const ofc_str_ref_t* ofc_sema_parameter_name(
 	const ofc_sema_parameter_t* parameter);
 
+const ofc_sema_type_t* ofc_sema_parameter_type(
+	const ofc_sema_parameter_t* parameter);
+
 const ofc_sema_typeval_t* ofc_sema_parameter_get(
 	const ofc_sema_parameter_t* parameter);
 

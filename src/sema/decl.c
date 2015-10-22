@@ -159,6 +159,13 @@ unsigned ofc_sema_decl_size(
 		decl->type);
 }
 
+const ofc_sema_type_t* ofc_sema_decl_type(
+	const ofc_sema_decl_t* decl)
+{
+	return (decl ? decl->type : NULL);
+}
+
+
 bool ofc_sema_decl_equiv(
 	ofc_sema_decl_t* a,
 	ofc_sema_decl_t* b)

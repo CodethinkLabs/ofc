@@ -6,6 +6,7 @@ typedef enum
 	OFC_SEMA_EXPR_LITERAL = 0,
 	OFC_SEMA_EXPR_PARAMETER,
 	OFC_SEMA_EXPR_DECL,
+	OFC_SEMA_EXPR_CAST,
 
 	OFC_SEMA_EXPR_POWER,
 	OFC_SEMA_EXPR_MULTIPLY,
@@ -43,8 +44,14 @@ struct ofc_sema_expr_s
 
 		struct
 		{
-			ofc_sema_expr_t* a;
-			ofc_sema_expr_t* b;
+			const ofc_sema_type_t* type;
+			ofc_sema_expr_t*       expr;
+		} cast;
+
+		struct
+		{
+			ofc_sema_expr_t*   a;
+			ofc_sema_expr_t*   b;
 		};
 	};
 };
@@ -54,6 +61,9 @@ ofc_sema_expr_t* ofc_sema_expr(
 	const ofc_parse_expr_t* expr);
 void ofc_sema_expr_delete(
 	ofc_sema_expr_t* expr);
+
+const ofc_sema_type_t* ofc_sema_expr_type(
+	const ofc_sema_expr_t* expr);
 
 ofc_sema_typeval_t* ofc_sema_expr_resolve(
 	const ofc_sema_expr_t* expr);

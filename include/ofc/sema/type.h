@@ -76,4 +76,8 @@ bool ofc_sema_type_cast_value(
 	void* ovalue,
 	bool* lossy);
 
+const ofc_sema_type_t* ofc_sema_type_promote(
+	const ofc_sema_type_t* a,
+	const ofc_sema_type_t* b);
+
 #endif
