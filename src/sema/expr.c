@@ -502,9 +502,11 @@ ofc_sema_typeval_t* ofc_sema_expr_resolve(
 					expr->parameter));
 
 		case OFC_SEMA_EXPR_CAST:
-			/* TODO - Implement typeval cast. */
-			return NULL;
+			return ofc_sema_typeval_cast(
+				ofc_sema_expr_resolve(expr->cast.expr),
+				expr->cast.type);
 
+		/* We can't/shouldn't resolve declarations at compile time. */
 		case OFC_SEMA_EXPR_DECL:
 			return NULL;
 

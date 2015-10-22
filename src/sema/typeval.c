@@ -718,6 +718,155 @@ ofc_sema_typeval_t* ofc_sema_typeval_copy(
 	return copy;
 }
 
+ofc_sema_typeval_t* ofc_sema_typeval_cast(
+	const ofc_sema_typeval_t* typeval,
+	const ofc_sema_type_t* type)
+{
+	if (!typeval || !typeval->type)
+		return NULL;
+	if (!type || ofc_sema_type_compare(type, typeval->type))
+		return ofc_sema_typeval_copy(typeval);
+
+	/* TODO - Report lossy casts. */
+
+	bool invalid_cast = false;
+	bool large_literal = false;
+
+	switch (type->type)
+	{
+		case OFC_SEMA_TYPE_LOGICAL:
+		case OFC_SEMA_TYPE_BYTE:
+			break;
+		case OFC_SEMA_TYPE_INTEGER:
+			large_literal = (type->kind > 8);
+			break;
+		case OFC_SEMA_TYPE_REAL:
+		case OFC_SEMA_TYPE_COMPLEX:
+			large_literal = (type->kind > 10);
+			break;
+		default:
+			invalid_cast = true;
+			break;
+	}
+
+	if (large_literal)
+	{
+		/* TODO - Error: Literal too large for compiler. */
+		return NULL;
+	}
+
+	if (type->type == typeval->type->type)
+		return ofc_sema_typeval_copy(typeval);
+
+	ofc_sema_typeval_t tv;
+	tv.type = type;
+
+	switch (type->type)
+	{
+		case OFC_SEMA_TYPE_LOGICAL:
+			switch (typeval->type->type)
+			{
+				case OFC_SEMA_TYPE_INTEGER:
+				case OFC_SEMA_TYPE_BYTE:
+					tv.logical = (typeval->integer != 0);
+					break;
+				default:
+					invalid_cast = true;
+					break;
+			}
+			break;
+
+		case OFC_SEMA_TYPE_INTEGER:
+			switch (typeval->type->type)
+			{
+				case OFC_SEMA_TYPE_LOGICAL:
+					tv.integer = (typeval->logical ? 1 : 0);
+					break;
+				case OFC_SEMA_TYPE_REAL:
+					tv.integer = (int64_t)typeval->real;
+					break;
+				case OFC_SEMA_TYPE_COMPLEX:
+					tv.integer = (int64_t)typeval->complex.real;
+					break;
+				case OFC_SEMA_TYPE_BYTE:
+					tv.integer = typeval->integer;
+					break;
+				default:
+					invalid_cast = true;
+					break;
+			}
+			/* TODO - Clamp to target type. */
+			break;
+
+		case OFC_SEMA_TYPE_REAL:
+			switch (typeval->type->type)
+			{
+				case OFC_SEMA_TYPE_INTEGER:
+				case OFC_SEMA_TYPE_BYTE:
+					tv.real = (long double)typeval->integer;
+					break;
+				case OFC_SEMA_TYPE_COMPLEX:
+					tv.real = typeval->complex.real;
+					break;
+				default:
+					invalid_cast = true;
+					break;
+			}
+			break;
+
+		case OFC_SEMA_TYPE_COMPLEX:
+			switch (typeval->type->type)
+			{
+				case OFC_SEMA_TYPE_INTEGER:
+				case OFC_SEMA_TYPE_BYTE:
+					tv.complex.real = (long double)typeval->integer;
+					break;
+				case OFC_SEMA_TYPE_REAL:
+					tv.complex.real = typeval->real;
+					break;
+				default:
+					invalid_cast = true;
+					break;
+			}
+			tv.complex.imaginary = 0.0;
+			break;
+
+		case OFC_SEMA_TYPE_BYTE:
+			switch (typeval->type->type)
+			{
+				case OFC_SEMA_TYPE_LOGICAL:
+					tv.integer = (typeval->logical ? 1 : 0);
+					break;
+				case OFC_SEMA_TYPE_REAL:
+					tv.integer = (int64_t)typeval->real;
+					break;
+				case OFC_SEMA_TYPE_COMPLEX:
+					tv.integer = (int64_t)typeval->complex.real;
+					break;
+				case OFC_SEMA_TYPE_BYTE:
+					tv.integer = typeval->integer;
+					break;
+				default:
+					invalid_cast = true;
+					break;
+			}
+			/* TODO - Modulo to -128..127 */
+			break;
+
+		default:
+			invalid_cast = true;
+			break;
+	}
+
+	if (invalid_cast)
+	{
+		/* TODO - Error: Can't cast TYPE to TYPE. */
+		return NULL;
+	}
+
+	return ofc_sema_typeval__alloc(tv);
+}
+
 
 bool ofc_sema_typeval_get_logical(
 	const ofc_sema_typeval_t* typeval,

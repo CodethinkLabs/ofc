@@ -29,6 +29,9 @@ void ofc_sema_typeval_delete(
 
 ofc_sema_typeval_t* ofc_sema_typeval_copy(
 	const ofc_sema_typeval_t* typeval);
+ofc_sema_typeval_t* ofc_sema_typeval_cast(
+	const ofc_sema_typeval_t* typeval,
+	const ofc_sema_type_t* type);
 
 bool ofc_sema_typeval_get_logical(
 	const ofc_sema_typeval_t* typeval,
