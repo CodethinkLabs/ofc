@@ -1,6 +1,5 @@
 #include <ofc/sema.h>
 
-
 void ofc_sema_scope_delete(
 	ofc_sema_scope_t* scope)
 {
@@ -64,9 +63,10 @@ static bool ofc_sema_scope__add_child(
 }
 
 static ofc_sema_scope_t* ofc_sema_scope__create(
-	ofc_sema_scope_t* parent,
+	ofc_sema_scope_t*      parent,
 	const ofc_lang_opts_t* lang_opts,
-	ofc_sema_scope_e  type)
+	const ofc_sparse_t*    src,
+	ofc_sema_scope_e       type)
 {
 	ofc_sema_scope_t* scope
 		= (ofc_sema_scope_t*)malloc(
@@ -79,6 +79,10 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 	scope->lang_opts = lang_opts;
 	if (!scope->lang_opts && parent)
 		scope->lang_opts = parent->lang_opts;
+
+	scope->src = src;
+	if (!scope->src && parent)
+		scope->src = parent->src;
 
 	ofc_lang_opts_t opts = ofc_sema_scope_get_lang_opts(scope);
 
@@ -163,6 +167,7 @@ static bool ofc_sema_scope__body(
 
 ofc_sema_scope_t* ofc_sema_scope_global(
 	const ofc_lang_opts_t* lang_opts,
+	const ofc_sparse_t* src,
 	const ofc_parse_stmt_list_t* list)
 {
 	if (!list)
@@ -170,7 +175,7 @@ ofc_sema_scope_t* ofc_sema_scope_global(
 
 	ofc_sema_scope_t* scope
 		= ofc_sema_scope__create(
-			NULL, lang_opts, OFC_SEMA_SCOPE_GLOBAL);
+			NULL, lang_opts, src, OFC_SEMA_SCOPE_GLOBAL);
 	if (!scope) return NULL;
 
 	scope->lang_opts = lang_opts;
@@ -194,7 +199,7 @@ ofc_sema_scope_t* ofc_sema_scope_program(
 
 	ofc_sema_scope_t* program
 		= ofc_sema_scope__create(
-			scope, NULL, OFC_SEMA_SCOPE_PROGRAM);
+			scope, NULL, NULL, OFC_SEMA_SCOPE_PROGRAM);
 	if (!program) return NULL;
 
 	program->name = stmt->program.name;
@@ -249,4 +254,24 @@ ofc_lang_opts_t ofc_sema_scope_get_lang_opts(
 		return *scope->lang_opts;
 
 	return ofc_sema_scope_get_lang_opts(scope->parent);
+}
+
+void ofc_sema_scope_error(
+	const ofc_sparse_t* sparse, ofc_str_ref_t pos,
+	const char* format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	ofc_sparse_error(sparse, pos.base, format, args);
+	va_end(args);
+}
+
+void ofc_sema_scope_warning(
+	const ofc_sparse_t* sparse, ofc_str_ref_t pos,
+	const char* format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	ofc_sparse_warning(sparse, pos.base, format, args);
+	va_end(args);
 }

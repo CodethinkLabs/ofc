@@ -22,6 +22,8 @@ struct ofc_sema_scope_s
 
 	const ofc_lang_opts_t* lang_opts;
 
+	const ofc_sparse_t* src;
+
 	ofc_sema_scope_e       type;
 	ofc_str_ref_t          name;
 	const ofc_sema_type_t* return_type;
@@ -43,9 +45,9 @@ struct ofc_sema_scope_list_s
     ofc_sema_scope_t** scope;
 };
 
-
 ofc_sema_scope_t* ofc_sema_scope_global(
 	const ofc_lang_opts_t* lang_opts,
+	const ofc_sparse_t*    src,
 	const ofc_parse_stmt_list_t* list);
 
 ofc_sema_scope_t* ofc_sema_scope_program(
@@ -66,5 +68,12 @@ void ofc_sema_scope_delete(
 
 ofc_lang_opts_t ofc_sema_scope_get_lang_opts(
 	const ofc_sema_scope_t* scope);
+
+void ofc_sema_scope_error(
+	const ofc_sparse_t* sparse, ofc_str_ref_t pos,
+	const char* format, ...);
+void ofc_sema_scope_warning(
+	const ofc_sparse_t* sparse, ofc_str_ref_t pos,
+	const char* format, ...);
 
 #endif

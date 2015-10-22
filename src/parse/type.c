@@ -235,6 +235,8 @@ ofc_parse_type_t* ofc_parse_type(
 		}
 	}
 
+	type.src = ofc_str_ref(ptr, i);
+
 	ofc_parse_type_t* atype
 		= ofc_parse_type__alloc(type);
 	if (!atype)

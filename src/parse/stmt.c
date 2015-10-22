@@ -561,6 +561,8 @@ ofc_parse_stmt_t* ofc_parse_stmt(
 	}
 	i += l;
 
+	stmt.src = ofc_str_ref(ptr, i);
+
 	ofc_parse_stmt_t* astmt
 		= ofc_parse_stmt__alloc(stmt);
 	if (!astmt)

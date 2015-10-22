@@ -222,7 +222,7 @@ int main(int argc, const char* argv[])
 	}
 
 	ofc_sema_scope_t* sema = ofc_sema_scope_global(
-		&opts, program);
+		&opts, condense, program);
 	if (!sema)
 	{
 		fprintf(stderr, "Error: Program failed semantic analysis\n");

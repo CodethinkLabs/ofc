@@ -68,6 +68,7 @@ static bool is_base_digit(
 }
 
 static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
+	const ofc_sema_scope_t* scope,
 	const ofc_parse_literal_t* literal,
 	const ofc_sema_type_t* type)
 {
@@ -133,7 +134,8 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 		if (((nvalue / base) != typeval.integer)
 			|| ((nvalue % base) != digit))
 		{
-			/* TODO - Error: Out of range for compiler */
+			ofc_sema_scope_error(scope->src, literal->src,
+				"Out of range for compiler");
 			return NULL;
 		}
 
@@ -161,7 +163,8 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 			unsigned nkind = (kind * 10) + digit;
 			if ((nkind / 10) != kind)
 			{
-				/* TODO - Error: Kind out of range. */
+				ofc_sema_scope_error(scope->src, literal->src,
+					"Kind out of range");
 				return NULL;
 			}
 
@@ -170,7 +173,8 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 
 		if (type && (ofc_sema_type_size(type) != kind))
 		{
-			/* TODO - Error: Expected kind doesn't match literal kind. */
+			ofc_sema_scope_error(scope->src, literal->src,
+				"Expected kind doesn't match literal kind");
 			return NULL;
 		}
 	}
@@ -184,7 +188,8 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 
 	if (is_byte && (kind > 1))
 	{
-		/* TODO - Error: Byte can never have a KIND above 1. */
+		ofc_sema_scope_error(scope->src, literal->src,
+			"Byte can never have a KIND above 1");
 		return NULL;
 	}
 
@@ -202,7 +207,8 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 
 	if (!ofc_sema_typeval__in_range(&typeval))
 	{
-		/* TODO - Error: Out of range for type */
+		ofc_sema_scope_error(scope->src, literal->src,
+			"Out of range for type");
 		return NULL;
 	}
 
@@ -211,6 +217,8 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 
 
 static bool ofc_sema_typeval__real(
+	const ofc_sema_scope_t* scope,
+	const ofc_parse_literal_t* literal,
 	ofc_str_ref_t number, unsigned  ikind,
 	long double*  value , unsigned* okind)
 {
@@ -316,7 +324,8 @@ static bool ofc_sema_typeval__real(
 			unsigned nkind = (ukind * 10) + digit;
 			if ((nkind / 10) != ukind)
 			{
-				/* TODO - Error: Kind out of range. */
+				ofc_sema_scope_error(scope->src, literal->src,
+					"Kind out of range");
 				return false;
 			}
 
@@ -326,7 +335,8 @@ static bool ofc_sema_typeval__real(
 		if ((kind != 0)
 			&& (kind != ukind))
 		{
-			/* TODO - Error: Kinds specified in exponent and F90 style don't agree. */
+			ofc_sema_scope_error(scope->src, literal->src,
+				"Kinds specified in exponent and F90 style don't agree");
 			return false;
 		}
 
@@ -335,14 +345,16 @@ static bool ofc_sema_typeval__real(
 
 	if ((ikind != 0) && (ikind != kind))
 	{
-		/* TODO - Error: Expected kind doesn't match literal kind. */
+		ofc_sema_scope_error(scope->src, literal->src,
+			"Expected kind doesn't match literal kind");
 		return false;
 	}
 	kind = (kind > 0 ? kind : ikind);
 
 	if (kind > sizeof(*value))
 	{
-		/* TODO - Error: REAL kind too large for us to handle. */
+		ofc_sema_scope_error(scope->src, literal->src,
+			"REAL kind too large for us to handle");
 		return false;
 	}
 
@@ -358,6 +370,7 @@ static bool ofc_sema_typeval__real(
 }
 
 static ofc_sema_typeval_t* ofc_sema_typeval__real_literal(
+	const ofc_sema_scope_t* scope,
 	const ofc_parse_literal_t* literal,
 	const ofc_sema_type_t* type)
 {
@@ -378,7 +391,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__real_literal(
 
 	unsigned kind = 0;
 	if (!ofc_sema_typeval__real(
-		literal->number, tkind,
+		scope, literal, literal->number, tkind,
 		&typeval.real, &kind))
 		return NULL;
 
@@ -398,6 +411,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__real_literal(
 }
 
 static ofc_sema_typeval_t* ofc_sema_typeval__complex_literal(
+	const ofc_sema_scope_t* scope,
 	const ofc_parse_literal_t* literal,
 	const ofc_sema_type_t* type)
 {
@@ -419,10 +433,10 @@ static ofc_sema_typeval_t* ofc_sema_typeval__complex_literal(
 	unsigned ikind = 0;
 
 	if (!ofc_sema_typeval__real(
-		literal->complex.real, tkind,
+		scope, literal, literal->complex.real, tkind,
 		&typeval.complex.real, &rkind)
 		|| !ofc_sema_typeval__real(
-			literal->complex.imaginary, tkind,
+			scope, literal, literal->complex.imaginary, tkind,
 			&typeval.complex.imaginary, &ikind))
 		return NULL;
 
@@ -444,6 +458,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__complex_literal(
 }
 
 static ofc_sema_typeval_t* ofc_sema_typeval__character_literal(
+	const ofc_sema_scope_t* scope,
 	const ofc_parse_literal_t* literal,
 	const ofc_sema_type_t* type)
 {
@@ -483,7 +498,8 @@ static ofc_sema_typeval_t* ofc_sema_typeval__character_literal(
 	{
 		if (type->kind > 1)
 		{
-			/* TODO - Error: Wide strings not supported. */
+			ofc_sema_scope_error(scope->src, literal->src,
+				"Wide strings not supported");
 			return NULL;
 		}
 
@@ -522,8 +538,8 @@ static ofc_sema_typeval_t* ofc_sema_typeval__character_literal(
 			memcpy(
 				typeval.character,
 				literal->string->base, size);
-
-			/* TODO - Warning: String truncated. */
+			ofc_sema_scope_warning(scope->src, literal->src,
+				"String truncated");
 		}
 		else
 		{
@@ -538,7 +554,8 @@ static ofc_sema_typeval_t* ofc_sema_typeval__character_literal(
 				unsigned ssize = (size - offset);
 				memset(&typeval.character[offset], ' ', ssize);
 
-				/* TODO - Warning: String padded. */
+				ofc_sema_scope_warning(scope->src, literal->src,
+					"String padded");
 			}
 		}
 	}
@@ -595,6 +612,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__logical_literal(
 }
 
 static ofc_sema_typeval_t* ofc_sema_typeval__byte_literal(
+	const ofc_sema_scope_t* scope,
 	const ofc_parse_literal_t* literal,
 	const ofc_sema_type_t* type)
 {
@@ -612,13 +630,13 @@ static ofc_sema_typeval_t* ofc_sema_typeval__byte_literal(
 		case OFC_PARSE_LITERAL_OCTAL:
 		case OFC_PARSE_LITERAL_HEX:
 			return ofc_sema_typeval__integer_literal(
-				literal, type);
+				scope, literal, type);
 		case OFC_PARSE_LITERAL_LOGICAL:
 			return ofc_sema_typeval__logical_literal(
 				literal, type);
 		case OFC_PARSE_LITERAL_CHARACTER:
 			return ofc_sema_typeval__character_literal(
-				literal, type);
+				scope, literal, type);
 			return NULL;
 		default:
 			break;
@@ -630,6 +648,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__byte_literal(
 
 
 ofc_sema_typeval_t* ofc_sema_typeval_literal(
+	const ofc_sema_scope_t* scope,
 	const ofc_parse_literal_t* literal,
 	const ofc_sema_type_t* type)
 {
@@ -638,12 +657,12 @@ ofc_sema_typeval_t* ofc_sema_typeval_literal(
 	if (!type)
 	{
 		ofc_sema_typeval_t* typeval = NULL;
-		if (!typeval) typeval = ofc_sema_typeval__integer_literal(literal, type);
-		if (!typeval) typeval = ofc_sema_typeval__real_literal(literal, type);
+		if (!typeval) typeval = ofc_sema_typeval__integer_literal(scope, literal, type);
+		if (!typeval) typeval = ofc_sema_typeval__real_literal(scope, literal, type);
 		if (!typeval) typeval = ofc_sema_typeval__logical_literal(literal, type);
-		if (!typeval) typeval = ofc_sema_typeval__complex_literal(literal, type);
+		if (!typeval) typeval = ofc_sema_typeval__complex_literal(scope, literal, type);
 		/* Byte can never be auto-detected. */
-		if (!typeval) typeval = ofc_sema_typeval__character_literal(literal, type);
+		if (!typeval) typeval = ofc_sema_typeval__character_literal(scope, literal, type);
 
 		return typeval;
 	}
@@ -653,15 +672,15 @@ ofc_sema_typeval_t* ofc_sema_typeval_literal(
 		case OFC_SEMA_TYPE_LOGICAL:
 			return ofc_sema_typeval__logical_literal(literal, type);
 		case OFC_SEMA_TYPE_INTEGER:
-			return ofc_sema_typeval__integer_literal(literal, type);
+			return ofc_sema_typeval__integer_literal(scope, literal, type);
 		case OFC_SEMA_TYPE_REAL:
-			return ofc_sema_typeval__real_literal(literal, type);
+			return ofc_sema_typeval__real_literal(scope, literal, type);
 		case OFC_SEMA_TYPE_COMPLEX:
-			return ofc_sema_typeval__complex_literal(literal, type);
+			return ofc_sema_typeval__complex_literal(scope, literal, type);
 		case OFC_SEMA_TYPE_BYTE:
-			return ofc_sema_typeval__byte_literal(literal, type);
+			return ofc_sema_typeval__byte_literal(scope, literal, type);
 		case OFC_SEMA_TYPE_CHARACTER:
-			return ofc_sema_typeval__character_literal(literal, type);
+			return ofc_sema_typeval__character_literal(scope, literal, type);
 
 		default:
 			return NULL;

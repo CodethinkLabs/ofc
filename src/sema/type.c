@@ -262,13 +262,15 @@ const ofc_sema_type_t* ofc_sema_type(
 
 				if (kind == 0)
 				{
-					/* TODO - Error: KIND must not be specified as zero. */
+					ofc_sema_scope_error(scope->src, ptype->src,
+						"KIND must not be specified as zero");
 					return false;
 				}
 			}
 			else
 			{
-				/* TODO - Error: Unknown parameter in type. */
+				ofc_sema_scope_error(scope->src, ptype->src,
+					"Unknown parameter in type");
 				return false;
 			}
 		}
@@ -280,11 +282,13 @@ const ofc_sema_type_t* ofc_sema_type(
 		{
 			if (ptype->kind == kind)
 			{
-				/* TODO - Warning: KIND specified multiple times in type. */
+				ofc_sema_scope_warning(scope->src, ptype->src,
+					"KIND specified multiple times in type");
 			}
 			else
 			{
-				/* TODO - Error: KIND specified differently in multiple places. */
+				ofc_sema_scope_error(scope->src, ptype->src,
+					"KIND specified differently in multiple places");
 				return NULL;
 			}
 		}

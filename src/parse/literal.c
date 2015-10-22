@@ -638,6 +638,8 @@ unsigned ofc_parse_literal(
 	if (len == 0)
 		return 0;
 
+	l.src = ofc_str_ref(ptr, len);
+
 	*literal = l;
 	return len;
 }

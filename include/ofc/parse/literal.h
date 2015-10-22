@@ -22,6 +22,8 @@ typedef struct
 	ofc_parse_literal_e type;
 	unsigned            kind;
 
+	ofc_str_ref_t src;
+
 	union
 	{
 		ofc_string_t* string;

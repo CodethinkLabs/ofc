@@ -17,6 +17,8 @@ struct ofc_parse_expr_s
 {
 	ofc_parse_expr_e type;
 
+	ofc_str_ref_t src;
+
 	union
 	{
 		ofc_parse_literal_t literal;

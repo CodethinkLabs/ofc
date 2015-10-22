@@ -22,6 +22,7 @@ typedef struct
 } ofc_sema_typeval_t;
 
 ofc_sema_typeval_t* ofc_sema_typeval_literal(
+	const ofc_sema_scope_t* scope,
 	const ofc_parse_literal_t* literal,
 	const ofc_sema_type_t* type);
 void ofc_sema_typeval_delete(

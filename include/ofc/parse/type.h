@@ -28,6 +28,8 @@ typedef struct
 
 typedef struct
 {
+	ofc_str_ref_t              src;
+
 	ofc_parse_type_e           type;
 	ofc_str_ref_t              type_name;
 	ofc_parse_decl_attr_t      attr;

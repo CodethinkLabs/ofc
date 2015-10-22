@@ -310,11 +310,12 @@ static ofc_sema_expr_t* ofc_sema_expr__unary(
 }
 
 static ofc_sema_expr_t* ofc_sema_expr__literal(
+	const ofc_sema_scope_t* scope,
 	const ofc_parse_literal_t* literal)
 {
 	ofc_sema_typeval_t* tv
 		= ofc_sema_typeval_literal(
-			literal, NULL);
+			scope, literal, NULL);
 	if (!tv) return NULL;
 
 	ofc_sema_expr_t* expr
@@ -398,7 +399,7 @@ ofc_sema_expr_t* ofc_sema_expr(
 	{
 		case OFC_PARSE_EXPR_CONSTANT:
 			return ofc_sema_expr__literal(
-				&expr->literal);
+				scope, &expr->literal);
 		case OFC_PARSE_EXPR_VARIABLE:
 			return ofc_sema_expr__variable(
 				scope, expr->variable);

@@ -497,6 +497,9 @@ ofc_parse_expr_t* ofc_parse_expr(
 	}
 
 	if (len) *len = i;
+
+	expr->src = ofc_str_ref(ptr, i);
+
 	return expr;
 }
 
