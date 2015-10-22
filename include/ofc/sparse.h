@@ -45,9 +45,11 @@ char* ofc_sparse_include_path(
 
 void ofc_sparse_error(
 	const ofc_sparse_t* sparse, const char* ptr,
-	const char* format, ...);
+	const char* format, ...)
+	__attribute__ ((format (printf, 3, 4)));
 void ofc_sparse_warning(
 	const ofc_sparse_t* sparse, const char* ptr,
-	const char* format, ...);
+	const char* format, ...)
+	__attribute__ ((format (printf, 3, 4)));
 
 #endif

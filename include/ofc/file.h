@@ -29,10 +29,12 @@ bool ofc_file_get_position(
 
 void ofc_file_error(
 	const ofc_file_t* file, const char* ptr,
-	const char* format, ...);
+	const char* format, ...)
+	__attribute__ ((format (printf, 3, 4)));
 void ofc_file_warning(
 	const ofc_file_t* file, const char* ptr,
-	const char* format, ...);
+	const char* format, ...)
+	__attribute__ ((format (printf, 3, 4)));
 
 void ofc_file_error_va(
 	const ofc_file_t* file,
