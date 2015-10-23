@@ -22,6 +22,15 @@ static const char* ofc_parse_operator__name[] =
 		".NEQV.",
 };
 
+char* ofc_parse_operator_str_rep(
+	const ofc_parse_operator_e operator)
+{
+	if (operator >= OFC_PARSE_OPERATOR_COUNT)
+		return NULL;
+
+	return ofc_parse_operator__name[operator];
+}
+
 
 unsigned ofc_parse_operator(
 	const ofc_sparse_t* src, const char* ptr,
@@ -263,5 +272,6 @@ bool ofc_parse_operator_print(
 	if (operator >= OFC_PARSE_OPERATOR_COUNT)
 		return false;
 
-	return ofc_colstr_atomic_writef(cs, "%s", ofc_parse_operator__name[operator]);
+	return ofc_colstr_atomic_writef(cs, "%s",
+		ofc_parse_operator_str_rep(operator));
 }

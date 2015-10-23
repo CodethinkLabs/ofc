@@ -39,7 +39,8 @@ typedef struct
 	ofc_parse_call_arg_list_t* params;
 } ofc_parse_type_t;
 
-
+char* ofc_parse_type_str_rep(
+	const ofc_parse_type_e type);
 
 ofc_parse_type_t* ofc_parse_type(
 	const ofc_sparse_t* src, const char* ptr,

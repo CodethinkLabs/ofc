@@ -27,6 +27,9 @@ typedef enum
 
 static const unsigned OPERATOR_PRECEDENCE_MAX = 11;
 
+char* ofc_parse_operator_str_rep(
+	const ofc_parse_operator_e operator);
+
 unsigned ofc_parse_operator(
 	const ofc_sparse_t* sparse, const char* ptr,
 	ofc_parse_debug_t* debug,

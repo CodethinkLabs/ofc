@@ -188,7 +188,9 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 	if (!ofc_sema_expr_type_allowed(
 		type, ofc_sema_expr_type(as)))
 	{
-		/* TODO - Error: Can't use type TYPE in operator OPERATOR. */
+		ofc_sema_scope_error(scope->src, a->src,
+			"Can't use type TYPE in operator %s",
+			ofc_parse_operator_str_rep(op));
 		ofc_sema_expr_delete(as);
 		return NULL;
 	}
@@ -203,7 +205,9 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 	if (!ofc_sema_expr_type_allowed(
 		type, ofc_sema_expr_type(bs)))
 	{
-		/* TODO - Error: Can't use type TYPE in operator OPERATOR. */
+		ofc_sema_scope_error(scope->src, b->src,
+			"Can't use type TYPE in operator %s",
+			ofc_parse_operator_str_rep(op));
 		ofc_sema_expr_delete(bs);
 		ofc_sema_expr_delete(as);
 		return NULL;
@@ -217,7 +221,11 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 			= ofc_sema_type_promote(at, bt);
 		if (!ptype)
 		{
-			/* TODO - Error: Incompatible types (A, B) in operator OPERATOR. */
+			ofc_sema_scope_error(scope->src, a->src,
+				"Incompatible types (%s, %s) in operator %s",
+				ofc_parse_type_str_rep(at->type),
+				ofc_parse_type_str_rep(bt->type),
+				ofc_parse_operator_str_rep(op));
 			ofc_sema_expr_delete(bs);
 			ofc_sema_expr_delete(as);
 			return NULL;
@@ -292,7 +300,10 @@ static ofc_sema_expr_t* ofc_sema_expr__unary(
 	if (!ofc_sema_expr_type_allowed(
 		type, ofc_sema_expr_type(as)))
 	{
-		/* TODO - Error: Can't use type TYPE in operator OPERATOR. */
+		ofc_sema_scope_error(scope->src, a->src,
+			"Can't use type %s in operator %s",
+			ofc_parse_type_str_rep(a->type),
+			ofc_parse_operator_str_rep(op));
 		ofc_sema_expr_delete(as);
 		return NULL;
 	}

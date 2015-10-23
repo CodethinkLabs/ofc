@@ -16,6 +16,15 @@ static const char* ofc_parse_type__name[] =
 	"TYPE",
 };
 
+char* ofc_parse_type_str_rep(
+	const ofc_parse_type_e type)
+{
+	if (type >= OFC_PARSE_TYPE_COUNT)
+		return NULL;
+
+	return ofc_parse_type__name[type];
+}
+
 static unsigned ofc_parse_decl_attr(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
@@ -271,7 +280,7 @@ bool ofc_parse_type_print(
 		return false;
 
 	if (!ofc_colstr_atomic_writef(cs, "%s",
-		ofc_parse_type__name[type->type]))
+		ofc_parse_type_str_rep(type->type)))
 		return false;
 
 	if (type->type == OFC_PARSE_TYPE_TYPE)
