@@ -22,7 +22,7 @@ static const char* ofc_parse_operator__name[] =
 		".NEQV.",
 };
 
-char* ofc_parse_operator_str_rep(
+const char* ofc_parse_operator_str_rep(
 	const ofc_parse_operator_e operator)
 {
 	if (operator >= OFC_PARSE_OPERATOR_COUNT)

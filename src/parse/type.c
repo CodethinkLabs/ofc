@@ -16,7 +16,7 @@ static const char* ofc_parse_type__name[] =
 	"TYPE",
 };
 
-char* ofc_parse_type_str_rep(
+const char* ofc_parse_type_str_rep(
 	const ofc_parse_type_e type)
 {
 	if (type >= OFC_PARSE_TYPE_COUNT)
