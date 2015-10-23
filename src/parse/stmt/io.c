@@ -174,10 +174,9 @@ bool ofc_parse_stmt_define_file_print(
 	if (!stmt)
 		return false;
 
-	if (!ofc_colstr_atomic_writef(cs, "DEFINE FILE ")
-		&& !ofc_parse_define_file_arg_list_print(
-			cs, stmt->io_define_file.args))
-		return false;
+	return (ofc_colstr_atomic_writef(cs, "DEFINE FILE ")
+		&& ofc_parse_define_file_arg_list_print(
+			cs, stmt->io_define_file.args));
 }
 
 unsigned ofc_parse_stmt_io_open(
