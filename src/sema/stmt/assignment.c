@@ -28,7 +28,10 @@ ofc_sema_stmt_t* ofc_sema_stmt_assignment(
 			scope, stmt->assignment->name);
 		if (!idecl)
 		{
-			/* TODO - Error: No declaration for NAME and no valid IMPLICIT rule. */
+			ofc_str_ref_t n = stmt->assignment->name->variable;
+			ofc_sema_scope_error(scope, stmt->src,
+				"No declaration for '%.*s' and no valid IMPLICIT rule.",
+				n.size, n.base);
 			return NULL;
 		}
 		s.assignment.dest = idecl;
@@ -52,7 +55,12 @@ ofc_sema_stmt_t* ofc_sema_stmt_assignment(
 				s.assignment.expr, dtype);
 		if (!cast)
 		{
-			/* TODO - Error: Expression type TYPE doesn't match lhs type TYPE. */
+			const ofc_sema_type_t* expr_type =
+				ofc_sema_expr_type(s.assignment.expr);
+			ofc_sema_scope_error(scope, stmt->src,
+				"Expression type %s doesn't match lhs type %s",
+				ofc_sema_type_str_rep(expr_type->type),
+				ofc_sema_type_str_rep(dtype->type));
 			ofc_sema_expr_delete(s.assignment.expr);
 			ofc_sema_decl_delete(idecl);
 			return NULL;

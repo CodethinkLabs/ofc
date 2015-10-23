@@ -33,6 +33,23 @@ uint8_t ofc_str_ref_hash_ci(const ofc_str_ref_t ref)
 	return hash;
 }
 
+bool ofc_str_ref_bridge(
+	ofc_str_ref_t start, ofc_str_ref_t end,
+	ofc_str_ref_t* ret)
+{
+	if (end.base > start.base)
+		return false;
+
+    ofc_str_ref_t result =
+	{
+		.base = start.base,
+		.size = (end.base - start.base) + end.size
+	};
+
+	*ret = result;
+	return true;
+}
+
 bool ofc_str_ref_equal(const ofc_str_ref_t a, const ofc_str_ref_t b)
 {
 	if (a.size != b.size)

@@ -208,6 +208,8 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 		return NULL;
 	}
 
+	typeval.src = literal->src;
+
 	return ofc_sema_typeval__alloc(typeval);
 }
 
@@ -400,6 +402,8 @@ static ofc_sema_typeval_t* ofc_sema_typeval__real_literal(
 		}
 	}
 
+	typeval.src = literal->src;
+
 	return ofc_sema_typeval__alloc(typeval);
 }
 
@@ -446,6 +450,8 @@ static ofc_sema_typeval_t* ofc_sema_typeval__complex_literal(
 			return NULL;
 		}
 	}
+
+	typeval.src = literal->src;
 
 	return ofc_sema_typeval__alloc(typeval);
 }
@@ -553,6 +559,8 @@ static ofc_sema_typeval_t* ofc_sema_typeval__character_literal(
 		}
 	}
 
+	typeval.src = literal->src;
+
 	return ofc_sema_typeval__alloc(typeval);
 }
 
@@ -600,6 +608,8 @@ static ofc_sema_typeval_t* ofc_sema_typeval__logical_literal(
 		typeval.integer = literal->logical;
 	else
 		typeval.logical = literal->logical;
+
+	typeval.src = literal->src;
 
 	return ofc_sema_typeval__alloc(typeval);
 }
@@ -731,6 +741,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_copy(
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_cast(
+	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* typeval,
 	const ofc_sema_type_t* type)
 {
@@ -770,7 +781,8 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 
 	if (large_literal)
 	{
-		/* TODO - Error: Literal too large for compiler. */
+		ofc_sema_scope_error(scope, typeval->src,
+			"Literal too large for compiler");
 		return NULL;
 	}
 
@@ -879,7 +891,10 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 
 	if (invalid_cast)
 	{
-		/* TODO - Error: Can't cast TYPE to TYPE. */
+		ofc_sema_scope_error(scope, typeval->src,
+			"Can't cast %s to %s",
+			ofc_sema_type_str_rep(typeval->type->type),
+			ofc_sema_type_str_rep(type->type));
 		return NULL;
 	}
 
@@ -983,9 +998,12 @@ bool ofc_sema_typeval_get_character(
 
 
 ofc_sema_typeval_t* ofc_sema_typeval_power(
+	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b)
 {
+	(void)scope;
+
 	if (!a || !a->type
 		|| !b || !b->type
 		|| !ofc_sema_type_compare(
@@ -1039,9 +1057,12 @@ ofc_sema_typeval_t* ofc_sema_typeval_power(
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_multiply(
+	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b)
 {
+	(void)scope;
+
 	if (!a || !a->type
 		|| !b || !b->type
 		|| !ofc_sema_type_compare(
@@ -1080,9 +1101,12 @@ ofc_sema_typeval_t* ofc_sema_typeval_multiply(
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_concat(
+	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b)
 {
+	(void)scope;
+
 	if (!a || !a->type
 		|| !b || !b->type
 		|| (a->type->type != OFC_SEMA_TYPE_CHARACTER)
@@ -1115,6 +1139,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_concat(
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_divide(
+	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b)
 {
@@ -1148,7 +1173,8 @@ ofc_sema_typeval_t* ofc_sema_typeval_divide(
 		case OFC_SEMA_TYPE_BYTE:
 			if (b->integer == 0)
 			{
-				/* TODO - Error: Divide by zero. */
+				ofc_sema_scope_error(scope, a->src,
+					"Divide by zero");
 				return NULL;
 			}
 			tv.integer = a->integer / b->integer;
@@ -1161,9 +1187,12 @@ ofc_sema_typeval_t* ofc_sema_typeval_divide(
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_add(
+	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b)
 {
+	(void)scope;
+
 	if (!a || !a->type
 		|| !b || !b->type
 		|| !ofc_sema_type_compare(
@@ -1196,9 +1225,12 @@ ofc_sema_typeval_t* ofc_sema_typeval_add(
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_subtract(
+	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b)
 {
+	(void)scope;
+
 	if (!a || !a->type
 		|| !b || !b->type
 		|| !ofc_sema_type_compare(
@@ -1231,6 +1263,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_subtract(
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_negate(
+	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a)
 {
 	if (!a || !a->type)
@@ -1253,7 +1286,8 @@ ofc_sema_typeval_t* ofc_sema_typeval_negate(
 			tv.integer = -a->integer;
 			if (-tv.integer != a->integer)
 			{
-				/* TODO - Error: Overflow in constant negate. */
+				ofc_sema_scope_error(scope, a->src,
+					"Overflow in constant negate");
 				return NULL;
 			}
 			break;
@@ -1265,9 +1299,12 @@ ofc_sema_typeval_t* ofc_sema_typeval_negate(
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_eq(
+	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b)
 {
+	(void)scope;
+
 	if (!a || !a->type
 		|| !b || !b->type
 		|| !ofc_sema_type_compare(
@@ -1300,9 +1337,12 @@ ofc_sema_typeval_t* ofc_sema_typeval_eq(
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_ne(
+	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b)
 {
+	(void)scope;
+
 	if (!a || !a->type
 		|| !b || !b->type
 		|| !ofc_sema_type_compare(
@@ -1335,9 +1375,11 @@ ofc_sema_typeval_t* ofc_sema_typeval_ne(
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_lt(
+	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b)
 {
+	(void)scope;
 	if (!a || !a->type
 		|| !b || !b->type
 		|| !ofc_sema_type_compare(
@@ -1366,9 +1408,12 @@ ofc_sema_typeval_t* ofc_sema_typeval_lt(
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_le(
+	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b)
 {
+	(void)scope;
+
 	if (!a || !a->type
 		|| !b || !b->type
 		|| !ofc_sema_type_compare(
@@ -1397,9 +1442,12 @@ ofc_sema_typeval_t* ofc_sema_typeval_le(
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_gt(
+	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b)
 {
+	(void)scope;
+
 	if (!a || !a->type
 		|| !b || !b->type
 		|| !ofc_sema_type_compare(
@@ -1428,9 +1476,12 @@ ofc_sema_typeval_t* ofc_sema_typeval_gt(
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_ge(
+	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b)
 {
+	(void)scope;
+
 	if (!a || !a->type
 		|| !b || !b->type
 		|| !ofc_sema_type_compare(
@@ -1459,8 +1510,11 @@ ofc_sema_typeval_t* ofc_sema_typeval_ge(
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_not(
+	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a)
 {
+	(void)scope;
+
 	if (!a || !a->type)
 		return NULL;
 
@@ -1483,9 +1537,12 @@ ofc_sema_typeval_t* ofc_sema_typeval_not(
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_and(
+	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b)
 {
+	(void)scope;
+
 	if (!a || !a->type
 		|| !b || !b->type
 		|| !ofc_sema_type_compare(
@@ -1512,9 +1569,12 @@ ofc_sema_typeval_t* ofc_sema_typeval_and(
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_or(
+	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b)
 {
+	(void)scope;
+
 	if (!a || !a->type
 		|| !b || !b->type
 		|| !ofc_sema_type_compare(
@@ -1541,9 +1601,11 @@ ofc_sema_typeval_t* ofc_sema_typeval_or(
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_eqv(
+	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b)
 {
+	(void)scope;
 	if (!a || !a->type
 		|| !b || !b->type
 		|| !ofc_sema_type_compare(
@@ -1571,9 +1633,12 @@ ofc_sema_typeval_t* ofc_sema_typeval_eqv(
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_neqv(
+	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b)
 {
+	(void)scope;
+
 	if (!a || !a->type
 		|| !b || !b->type
 		|| !ofc_sema_type_compare(

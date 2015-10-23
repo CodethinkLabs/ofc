@@ -1,9 +1,29 @@
 #include <ofc/sema.h>
 #include <string.h>
 
-
 static ofc_hashmap_t* ofc_sema_type__map = NULL;
 
+static const char* ofc_sema_type__name[] =
+{
+	"LOGICAL",
+	"INTEGER",
+	"REAL",
+	"COMPLEX",
+	"BYTE",
+	"CHARACTER",
+	"STRCCTURE",
+	"POINTER",
+	"ARRAY",
+};
+
+const char* ofc_sema_type_str_rep(
+	const ofc_sema_type_e type)
+{
+	if (type >= OFC_SEMA_TYPE_COUNT)
+		return NULL;
+
+	return ofc_sema_type__name[type];
+}
 
 static void ofc_sema_type__delete(ofc_sema_type_t* type)
 {
@@ -247,7 +267,7 @@ const ofc_sema_type_t* ofc_sema_type(
 					scope, ptype->params->call_arg[i]->expr);
 				if (!expr) return false;
 
-				ofc_sema_typeval_t* tv = ofc_sema_expr_resolve(expr);
+				ofc_sema_typeval_t* tv = ofc_sema_expr_resolve(scope, expr);
 				ofc_sema_expr_delete(expr);
 				if (!tv) return false;
 

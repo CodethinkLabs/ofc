@@ -42,6 +42,9 @@ const ofc_sema_type_t* ofc_sema_type(
 	const ofc_sema_scope_t* scope,
 	const ofc_parse_type_t* ptype);
 
+const char* ofc_sema_type_str_rep(
+	const ofc_sema_type_e type);
+
 const ofc_sema_type_t* ofc_sema_type_create_primitive(
 	ofc_sema_type_e type, unsigned kind,
 	bool is_static, bool is_automatic, bool is_volatile);

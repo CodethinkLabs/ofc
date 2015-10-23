@@ -167,6 +167,7 @@ static ofc_parse_lhs_t* ofc_parse_lhs__array(
 	}
 
 	alhs->parent = parent;
+	alhs->src = ofc_str_ref(ptr, i);
 
 	if (len) *len = i;
 	return alhs;
@@ -210,6 +211,8 @@ static ofc_parse_lhs_t* ofc_parse_lhs__star_len(
 	}
 
 	alhs->parent = parent;
+
+	alhs->src = ofc_str_ref(ptr, i);
 
 	if (len) *len = i;
 	return alhs;
@@ -271,6 +274,8 @@ static ofc_parse_lhs_t* ofc_parse_lhs__member(
 	}
 
 	alhs->parent = parent;
+
+	alhs->src = ofc_str_ref(ptr, i);
 
 	if (len) *len = i;
 	return alhs;
@@ -347,7 +352,6 @@ static ofc_parse_lhs_t* ofc_parse__lhs(
 
 		break;
 	}
-
 	if (len) *len = i;
 	return alhs;
 }

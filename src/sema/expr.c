@@ -275,6 +275,8 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 
 	expr->a = as;
 	expr->b = bs;
+	/* TODO - print full expression on error by passing length in buffer */
+	expr->src = a->src;
 	return expr;
 }
 
@@ -321,6 +323,7 @@ static ofc_sema_expr_t* ofc_sema_expr__unary(
 	}
 
 	expr->a = as;
+	expr->src = a->src;
 	return expr;
 }
 
@@ -343,6 +346,7 @@ static ofc_sema_expr_t* ofc_sema_expr__literal(
 	}
 
 	expr->literal = tv;
+	expr->src = literal->src;
 	return expr;
 }
 
@@ -363,6 +367,7 @@ static ofc_sema_expr_t* ofc_sema_expr__parameter(
 	if (!expr) return NULL;
 
 	expr->parameter = param;
+	expr->src = name->src;
 	return expr;
 }
 
@@ -390,6 +395,7 @@ static ofc_sema_expr_t* ofc_sema_expr__decl(
 	if (!expr) return NULL;
 
 	expr->decl = decl;
+	expr->src = name->src;
 	return expr;
 }
 
@@ -514,21 +520,28 @@ const ofc_sema_type_t* ofc_sema_expr_type(
 
 
 static ofc_sema_typeval_t* ofc_sema_typeval_negate__faux_binary(
-	const ofc_sema_typeval_t* a, const ofc_sema_typeval_t* b)
+	const ofc_sema_scope_t* scope,
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b)
 {
 	(void)b;
-	return ofc_sema_typeval_negate(a);
+	return ofc_sema_typeval_negate(scope, a);
 }
 
 static ofc_sema_typeval_t* ofc_sema_typeval_not__faux_binary(
-	const ofc_sema_typeval_t* a, const ofc_sema_typeval_t* b)
+	const ofc_sema_scope_t* scope,
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b)
 {
+	(void)scope;
 	(void)b;
-	return ofc_sema_typeval_not(a);
+	return ofc_sema_typeval_not(scope, a);
 }
 
 static ofc_sema_typeval_t* (*ofc_sema_expr__resolve[])(
-	const ofc_sema_typeval_t*, const ofc_sema_typeval_t*) =
+	const ofc_sema_scope_t*,
+	const ofc_sema_typeval_t*,
+	const ofc_sema_typeval_t*) =
 {
 	NULL, /* LITERAL */
 	NULL, /* PARAMETER */
@@ -560,6 +573,7 @@ static ofc_sema_typeval_t* (*ofc_sema_expr__resolve[])(
 };
 
 ofc_sema_typeval_t* ofc_sema_expr_resolve(
+	const ofc_sema_scope_t* scope,
 	const ofc_sema_expr_t* expr)
 {
 	if (!expr)
@@ -579,10 +593,10 @@ ofc_sema_typeval_t* ofc_sema_expr_resolve(
 		case OFC_SEMA_EXPR_CAST:
 			{
 				ofc_sema_typeval_t* tv
-					= ofc_sema_expr_resolve(expr->cast.expr);
+					= ofc_sema_expr_resolve(scope, expr->cast.expr);
 				ofc_sema_typeval_t* ret
-					= ofc_sema_typeval_cast(
-						ofc_sema_expr_resolve(
+					= ofc_sema_typeval_cast(scope,
+						ofc_sema_expr_resolve(scope,
 							expr->cast.expr),
 						expr->cast.type);
 				ofc_sema_typeval_delete(tv);
@@ -606,11 +620,11 @@ ofc_sema_typeval_t* ofc_sema_expr_resolve(
 		return NULL;
 
 	ofc_sema_typeval_t* av
-		= ofc_sema_expr_resolve(expr->a);
+		= ofc_sema_expr_resolve(scope, expr->a);
 	if (!av) return NULL;
 
 	ofc_sema_typeval_t* bv
-		= ofc_sema_expr_resolve(expr->b);
+		= ofc_sema_expr_resolve(scope, expr->b);
 	if (expr->b && !bv)
 	{
 		ofc_sema_typeval_delete(av);
@@ -618,7 +632,7 @@ ofc_sema_typeval_t* ofc_sema_expr_resolve(
 	}
 
 	ofc_sema_typeval_t* ret
-		= ofc_sema_expr__resolve[expr->type](av, bv);
+		= ofc_sema_expr__resolve[expr->type](scope, av, bv);
 	ofc_sema_typeval_delete(bv);
 	ofc_sema_typeval_delete(av);
 

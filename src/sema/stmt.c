@@ -37,7 +37,8 @@ bool ofc_sema_stmt(
 		if (ofc_sema_label_map_find(
 			scope->label, stmt->label))
 		{
-			/* TODO - Error: Duplicate label definition. */
+			ofc_sema_scope_error(scope, stmt->src,
+				"Duplicate label definition");
 			return false;
 		}
 	}
@@ -55,7 +56,8 @@ bool ofc_sema_stmt(
 			break;
 
 		default:
-			/* TODO - Error: Unsuported statement. */
+			ofc_sema_scope_error(scope, stmt->src,
+				"Unsuported statement");
 			return false;
 	}
 
@@ -66,7 +68,8 @@ bool ofc_sema_stmt(
 	if ((s->type == OFC_SEMA_STMT_CONTINUE)
 		&& (stmt->label == 0))
 	{
-		/* TODO - Warning: Unlabelled CONTINUE statement has no effect. */
+		ofc_sema_scope_warning(scope, stmt->src,
+			"Unlabelled CONTINUE statement has no effect");
 		ofc_sema_stmt_delete(s);
 		return true;
 	}
@@ -84,7 +87,7 @@ bool ofc_sema_stmt(
 
 	if (stmt->label != 0)
 	{
-		if (!ofc_sema_label_map_add_stmt(
+		if (!ofc_sema_label_map_add_stmt(scope, stmt,
 			scope->label, stmt->label, offset))
 		{
 			/* This should never happen. */

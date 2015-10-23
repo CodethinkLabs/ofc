@@ -35,6 +35,8 @@ struct ofc_sema_expr_s
 {
 	ofc_sema_expr_e type;
 
+	ofc_str_ref_t src;
+
 	union
 	{
 		const ofc_sema_parameter_t* parameter;
@@ -70,6 +72,7 @@ const ofc_sema_type_t* ofc_sema_expr_type(
 	const ofc_sema_expr_t* expr);
 
 ofc_sema_typeval_t* ofc_sema_expr_resolve(
+	const ofc_sema_scope_t* scope,
 	const ofc_sema_expr_t* expr);
 
 #endif

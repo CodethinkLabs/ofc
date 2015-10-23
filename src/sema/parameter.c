@@ -66,7 +66,7 @@ static ofc_sema_parameter_t* ofc_sema_parameter__assign(
 	}
 
 	ofc_sema_typeval_t* typeval
-		= ofc_sema_expr_resolve(expr);
+		= ofc_sema_expr_resolve(scope, expr);
 	ofc_sema_expr_delete(expr);
 	if (!typeval)
 	{

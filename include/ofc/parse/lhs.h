@@ -20,6 +20,8 @@ struct ofc_parse_lhs_s
 {
 	ofc_parse_lhs_e type;
 
+	ofc_str_ref_t src;
+
 	union
 	{
 		ofc_str_ref_t variable;

@@ -23,8 +23,10 @@ typedef struct
 
 ofc_hashmap_t* ofc_sema_label_map_create(void);
 bool ofc_sema_label_map_add_stmt(
+	const ofc_sema_scope_t* scope, const ofc_parse_stmt_t* stmt,
 	ofc_hashmap_t* map, unsigned label, unsigned offset);
 bool ofc_sema_label_map_add_format(
+	const ofc_sema_scope_t* scope, const ofc_parse_stmt_t* stmt,
 	ofc_hashmap_t* map, unsigned label, const void* format);
 const ofc_sema_label_t* ofc_sema_label_map_find(
 	const ofc_hashmap_t* map, unsigned label);

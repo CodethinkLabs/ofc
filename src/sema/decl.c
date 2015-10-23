@@ -89,7 +89,7 @@ static ofc_sema_decl_t* ofc_sema_decl__decl(
 			return NULL;
 		}
 
-		sdecl->init = ofc_sema_expr_resolve(init_expr);
+		sdecl->init = ofc_sema_expr_resolve(scope, init_expr);
 		ofc_sema_expr_delete(init_expr);
 		if (!sdecl->init)
 		{
