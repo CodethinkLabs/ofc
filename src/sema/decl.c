@@ -1,18 +1,65 @@
 #include <ofc/sema.h>
 
 
-ofc_sema_decl_t* ofc_sema_decl_implicit_name(
-	const ofc_sema_implicit_t* implicit,
-	ofc_str_ref_t* name)
+static ofc_sema_decl_t* ofc_sema_decl__type_name(
+	const ofc_sema_type_t* type,
+	ofc_str_ref_t name)
 {
-	return NULL;
+	if (!type)
+		return NULL;
+
+	ofc_sema_decl_t* decl
+		= (ofc_sema_decl_t*)malloc(
+			sizeof(ofc_sema_decl_t));
+	if (!decl) return NULL;
+
+	decl->type = type;
+	decl->name = name;
+
+	decl->init = NULL;
+
+	decl->equiv = NULL;
+
+	decl->is_static    = type->is_static;
+	decl->is_volatile  = type->is_volatile;
+	decl->is_automatic = type->is_automatic;
+	decl->is_target    = false;
+
+	return decl;
+}
+
+static ofc_sema_decl_t* ofc_sema_decl_implicit__name(
+	const ofc_sema_implicit_t* implicit,
+	ofc_str_ref_t name)
+{
+	if (!implicit)
+		return NULL;
+
+	if (ofc_str_ref_empty(name))
+		return NULL;
+
+	const ofc_sema_type_t* type
+		= ofc_sema_implicit_get(
+			implicit, name.base[0]);
+
+	return ofc_sema_decl__type_name(
+		type, name);
 }
 
 ofc_sema_decl_t* ofc_sema_decl_implicit_lhs(
-	const ofc_sema_implicit_t* implicit,
+	const ofc_sema_scope_t* scope,
 	const ofc_parse_lhs_t* lhs)
 {
-	return NULL;
+	if (!scope || !lhs)
+		return NULL;
+
+	/* Can't implicitly declare an array or struct. */
+	if (lhs->type
+		!= OFC_PARSE_LHS_VARIABLE)
+		return NULL;
+
+	return ofc_sema_decl_implicit__name(
+		scope->implicit, lhs->variable);
 }
 
 static ofc_sema_decl_t* ofc_sema_decl__decl(
@@ -29,21 +76,16 @@ static ofc_sema_decl_t* ofc_sema_decl__decl(
 		return NULL;
 
 	ofc_sema_decl_t* sdecl
-		= (ofc_sema_decl_t*)malloc(
-			sizeof(ofc_sema_decl_t));
-	if (!sdecl) return NULL;
+		= ofc_sema_decl__type_name(
+			type, decl->lhs->variable);
 
-	sdecl->type = type;
-	sdecl->name = decl->lhs->variable;
-
-	sdecl->init = NULL;
 	if (decl->init_expr)
 	{
 		ofc_sema_expr_t* init_expr
 			= ofc_sema_expr(scope, decl->init_expr);
 		if (!init_expr)
 		{
-			free(sdecl);
+			ofc_sema_decl_delete(sdecl);
 			return NULL;
 		}
 
@@ -51,23 +93,16 @@ static ofc_sema_decl_t* ofc_sema_decl__decl(
 		ofc_sema_expr_delete(init_expr);
 		if (!sdecl->init)
 		{
-			free(sdecl);
+			ofc_sema_decl_delete(sdecl);
 			return NULL;
 		}
 	}
 	else if (decl->init_clist)
 	{
 		/* TODO - CList initializer resolution. */
-		free(sdecl);
+		ofc_sema_decl_delete(sdecl);
 		return NULL;
 	}
-
-	sdecl->equiv = NULL;
-
-	sdecl->is_static    = type->is_static;
-	sdecl->is_volatile  = type->is_volatile;
-	sdecl->is_automatic = type->is_automatic;
-	sdecl->is_target    = false;
 
 	return sdecl;
 }

@@ -152,13 +152,21 @@ static bool ofc_sema_scope__body(
 					return false;
 				break;
 
+			case OFC_PARSE_STMT_IMPLICIT_NONE:
+			case OFC_PARSE_STMT_IMPLICIT:
+				if (!ofc_sema_implicit(scope, stmt))
+					return false;
+				break;
+
 			case OFC_PARSE_STMT_DECL:
 				if (!ofc_sema_decl(scope, stmt))
 					return false;
 				break;
 
 			default:
-				return ofc_sema_stmt(scope, stmt);
+				if (!ofc_sema_stmt(scope, stmt))
+					return false;
+				break;
 		}
 	}
 

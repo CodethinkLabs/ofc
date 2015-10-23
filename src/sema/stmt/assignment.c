@@ -24,8 +24,14 @@ ofc_sema_stmt_t* ofc_sema_stmt_assignment(
 	ofc_sema_decl_t* idecl = NULL;
 	if (!s.assignment.dest)
 	{
-		/* TODO - Handle implicit declarations. */
-		return NULL;
+		idecl = ofc_sema_decl_implicit_lhs(
+			scope, stmt->assignment->name);
+		if (!idecl)
+		{
+			/* TODO - Error: No declaration for NAME and no valid IMPLICIT rule. */
+			return NULL;
+		}
+		s.assignment.dest = idecl;
 	}
 
 	s.assignment.expr = ofc_sema_expr(

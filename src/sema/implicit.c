@@ -49,7 +49,6 @@ bool ofc_sema_implicit_none(ofc_sema_implicit_t* implicit)
 	return true;
 }
 
-
 bool ofc_sema_implicit_set(
 	ofc_sema_implicit_t* implicit,
 	const ofc_sema_type_t* type, char c)
@@ -75,4 +74,47 @@ void ofc_sema_implicit_delete(
 	ofc_sema_implicit_t* implicit)
 {
 	free(implicit);
+}
+
+
+bool ofc_sema_implicit(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt)
+{
+	if (!scope || !stmt)
+		return false;
+
+	ofc_sema_implicit_t* implicit
+		= scope->implicit;
+
+	if (stmt->type
+		== OFC_PARSE_STMT_IMPLICIT_NONE)
+		return ofc_sema_implicit_none(implicit);
+
+	if ((stmt->type
+		!= OFC_PARSE_STMT_IMPLICIT)
+		|| !stmt->implicit)
+		return false;
+
+	unsigned i;
+	for (i = 0; i < stmt->implicit->count; i++)
+	{
+		const ofc_parse_implicit_t* rule
+			= stmt->implicit->rule[i];
+
+        const ofc_sema_type_t* type
+			= ofc_sema_type(scope, rule->type);
+		if (!type) return false;
+
+		unsigned c, m;
+		for (c = 'A', m = 1; c <= 'Z'; c++, m <<= 1)
+		{
+			if ((rule->mask & m)
+				&& !ofc_sema_implicit_set(
+					implicit, type, c))
+				return false;
+		}
+	}
+
+	return true;
 }

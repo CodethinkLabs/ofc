@@ -12,4 +12,8 @@ bool                   ofc_sema_implicit_set(ofc_sema_implicit_t* implicit, cons
 const ofc_sema_type_t* ofc_sema_implicit_get(const ofc_sema_implicit_t* implicit, char c);
 void                   ofc_sema_implicit_delete(ofc_sema_implicit_t* implicit);
 
+bool ofc_sema_implicit(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt);
+
 #endif
