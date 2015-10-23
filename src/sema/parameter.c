@@ -41,7 +41,7 @@ static ofc_sema_parameter_t* ofc_sema_parameter__assign(
 	if (assign->name->type
 		!= OFC_PARSE_LHS_VARIABLE)
 	{
-		ofc_sema_scope_error(scope->src, assign->src,
+		ofc_sema_scope_error(scope, assign->src,
 			"Expected parameter name");
 		return NULL;
 	}
@@ -51,7 +51,7 @@ static ofc_sema_parameter_t* ofc_sema_parameter__assign(
 			&assign->name->variable);
 	if (exists)
 	{
-		ofc_sema_scope_error(scope->src, assign->src,
+		ofc_sema_scope_error(scope, assign->src,
 			"Duplicate PARAMETER definition");
 		return NULL;
 	}
@@ -60,7 +60,7 @@ static ofc_sema_parameter_t* ofc_sema_parameter__assign(
 		= ofc_sema_expr(scope, assign->init);
 	if (!expr)
 	{
-		ofc_sema_scope_error(scope->src, assign->src,
+		ofc_sema_scope_error(scope, assign->src,
 			"Invalid PARAMETER expression");
 		return NULL;
 	}
@@ -70,7 +70,7 @@ static ofc_sema_parameter_t* ofc_sema_parameter__assign(
 	ofc_sema_expr_delete(expr);
 	if (!typeval)
 	{
-		ofc_sema_scope_error(scope->src, assign->src,
+		ofc_sema_scope_error(scope, assign->src,
 			"Failed to resolve PARAMETER value");
 		return NULL;
 	}

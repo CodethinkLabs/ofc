@@ -70,11 +70,11 @@ ofc_lang_opts_t ofc_sema_scope_get_lang_opts(
 	const ofc_sema_scope_t* scope);
 
 void ofc_sema_scope_error(
-	const ofc_sparse_t* sparse, ofc_str_ref_t pos,
+	const ofc_sema_scope_t* scope, ofc_str_ref_t pos,
 	const char* format, ...)
 	__attribute__ ((format (printf, 3, 4)));
 void ofc_sema_scope_warning(
-	const ofc_sparse_t* sparse, ofc_str_ref_t pos,
+	const ofc_sema_scope_t* scope, ofc_str_ref_t pos,
 	const char* format, ...)
 	__attribute__ ((format (printf, 3, 4)));
 

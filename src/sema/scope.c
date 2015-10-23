@@ -257,21 +257,21 @@ ofc_lang_opts_t ofc_sema_scope_get_lang_opts(
 }
 
 void ofc_sema_scope_error(
-	const ofc_sparse_t* sparse, ofc_str_ref_t pos,
+	const ofc_sema_scope_t* scope, ofc_str_ref_t pos,
 	const char* format, ...)
 {
 	va_list args;
 	va_start(args, format);
-	ofc_sparse_error(sparse, pos.base, format, args);
+	ofc_sparse_error(scope->src, pos.base, format, args);
 	va_end(args);
 }
 
 void ofc_sema_scope_warning(
-	const ofc_sparse_t* sparse, ofc_str_ref_t pos,
+	const ofc_sema_scope_t* scope, ofc_str_ref_t pos,
 	const char* format, ...)
 {
 	va_list args;
 	va_start(args, format);
-	ofc_sparse_warning(sparse, pos.base, format, args);
+	ofc_sparse_warning(scope->src, pos.base, format, args);
 	va_end(args);
 }

@@ -130,7 +130,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 		if (((nvalue / base) != typeval.integer)
 			|| ((nvalue % base) != digit))
 		{
-			ofc_sema_scope_error(scope->src, literal->src,
+			ofc_sema_scope_error(scope, literal->src,
 				"Out of range for compiler");
 			return NULL;
 		}
@@ -159,7 +159,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 			unsigned nkind = (kind * 10) + digit;
 			if ((nkind / 10) != kind)
 			{
-				ofc_sema_scope_error(scope->src, literal->src,
+				ofc_sema_scope_error(scope, literal->src,
 					"Kind out of range");
 				return NULL;
 			}
@@ -169,7 +169,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 
 		if (type && (ofc_sema_type_size(type) != kind))
 		{
-			ofc_sema_scope_error(scope->src, literal->src,
+			ofc_sema_scope_error(scope, literal->src,
 				"Expected kind doesn't match literal kind");
 			return NULL;
 		}
@@ -184,7 +184,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 
 	if (is_byte && (kind > 1))
 	{
-		ofc_sema_scope_error(scope->src, literal->src,
+		ofc_sema_scope_error(scope, literal->src,
 			"Byte can never have a KIND above 1");
 		return NULL;
 	}
@@ -203,7 +203,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 
 	if (!ofc_sema_typeval__in_range(&typeval))
 	{
-		ofc_sema_scope_error(scope->src, literal->src,
+		ofc_sema_scope_error(scope, literal->src,
 			"Out of range for type");
 		return NULL;
 	}
@@ -317,7 +317,7 @@ static bool ofc_sema_typeval__real(
 			unsigned nkind = (ukind * 10) + digit;
 			if ((nkind / 10) != ukind)
 			{
-				ofc_sema_scope_error(scope->src, literal->src,
+				ofc_sema_scope_error(scope, literal->src,
 					"Kind out of range");
 				return false;
 			}
@@ -328,7 +328,7 @@ static bool ofc_sema_typeval__real(
 		if ((kind != 0)
 			&& (kind != ukind))
 		{
-			ofc_sema_scope_error(scope->src, literal->src,
+			ofc_sema_scope_error(scope, literal->src,
 				"Kinds specified in exponent and F90 style don't agree");
 			return false;
 		}
@@ -338,7 +338,7 @@ static bool ofc_sema_typeval__real(
 
 	if ((ikind != 0) && (ikind != kind))
 	{
-		ofc_sema_scope_error(scope->src, literal->src,
+		ofc_sema_scope_error(scope, literal->src,
 			"Expected kind doesn't match literal kind");
 		return false;
 	}
@@ -346,7 +346,7 @@ static bool ofc_sema_typeval__real(
 
 	if (kind > sizeof(*value))
 	{
-		ofc_sema_scope_error(scope->src, literal->src,
+		ofc_sema_scope_error(scope, literal->src,
 			"REAL kind too large for us to handle");
 		return false;
 	}
@@ -491,7 +491,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__character_literal(
 	{
 		if (type->kind > 1)
 		{
-			ofc_sema_scope_error(scope->src, literal->src,
+			ofc_sema_scope_error(scope, literal->src,
 				"Wide strings not supported");
 			return NULL;
 		}
@@ -531,7 +531,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__character_literal(
 			memcpy(
 				typeval.character,
 				literal->string->base, size);
-			ofc_sema_scope_warning(scope->src, literal->src,
+			ofc_sema_scope_warning(scope, literal->src,
 				"String truncated");
 		}
 		else
@@ -547,7 +547,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__character_literal(
 				unsigned ssize = (size - offset);
 				memset(&typeval.character[offset], ' ', ssize);
 
-				ofc_sema_scope_warning(scope->src, literal->src,
+				ofc_sema_scope_warning(scope, literal->src,
 					"String padded");
 			}
 		}
