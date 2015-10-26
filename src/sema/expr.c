@@ -32,6 +32,7 @@ static ofc_sema_expr__rule_t ofc_sema_expr__rule[] =
 	{ NULL, 0, 0, 0, 0, 0 }, /* PARAMETER */
 	{ NULL, 0, 0, 0, 0, 0 }, /* DECL */
 	{ NULL, 0, 0, 0, 0, 0 }, /* CAST */
+	{ NULL, 0, 0, 0, 0, 0 }, /* INTRINSIC */
 
 	{ NULL, 0, 1, 1, 1, 0 }, /* POWER */
 	{ NULL, 0, 1, 1, 1, 0 }, /* MULTIPLY */
@@ -120,6 +121,9 @@ static ofc_sema_expr_t* ofc_sema_expr__create(
 		case OFC_SEMA_EXPR_CAST:
 			expr->cast.type = NULL;
 			expr->cast.expr = NULL;
+			break;
+		case OFC_SEMA_EXPR_INTRINSIC:
+			/* TODO - Implement. */
 			break;
 		default:
 			expr->a = NULL;
@@ -395,7 +399,13 @@ static ofc_sema_expr_t* ofc_sema_expr__variable(
 {
 	ofc_sema_expr_t* expr
 		= ofc_sema_expr__parameter(scope, name);
-	return (expr ? expr : ofc_sema_expr__decl(scope, name));
+	if (!expr) expr = ofc_sema_expr__decl(scope, name);
+
+	/* TODO - Intrinsics */
+
+	/* TODO - Functions */
+
+	return expr;
 }
 
 
@@ -451,6 +461,9 @@ void ofc_sema_expr_delete(
 		case OFC_SEMA_EXPR_CAST:
 			ofc_sema_expr_delete(expr->cast.expr);
 			break;
+		case OFC_SEMA_EXPR_INTRINSIC:
+			/* TODO - Implement. */
+			break;
 		default:
 			ofc_sema_expr_delete(expr->b);
 			ofc_sema_expr_delete(expr->a);
@@ -478,6 +491,9 @@ const ofc_sema_type_t* ofc_sema_expr_type(
 				expr->decl);
 		case OFC_SEMA_EXPR_CAST:
 			return expr->cast.type;
+		case OFC_SEMA_EXPR_INTRINSIC:
+			/* TODO - Implement. */
+			return NULL;
 		default:
 			break;
 	}
@@ -518,6 +534,7 @@ static ofc_sema_typeval_t* (*ofc_sema_expr__resolve[])(
 	NULL, /* PARAMETER */
 	NULL, /* DECL */
 	NULL, /* CAST */
+	NULL, /* INTRINSIC */
 
 	ofc_sema_typeval_power,
 	ofc_sema_typeval_multiply,
@@ -571,6 +588,10 @@ ofc_sema_typeval_t* ofc_sema_expr_resolve(
 				ofc_sema_typeval_delete(tv);
 				return ret;
 			}
+
+		case OFC_SEMA_EXPR_INTRINSIC:
+			/* TODO - Implement. */
+			return NULL;
 
 		/* We can't/shouldn't resolve declarations at compile time. */
 		case OFC_SEMA_EXPR_DECL:
