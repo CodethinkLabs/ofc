@@ -1,6 +1,30 @@
 #include <ofc/sema.h>
 
 
+static ofc_sema_stmt_t* ofc_sema_stmt_simple(
+	ofc_parse_stmt_e type)
+{
+	ofc_sema_stmt_e st;
+	switch (type)
+	{
+		case OFC_PARSE_STMT_CONTINUE:
+			st = OFC_SEMA_STMT_CONTINUE;
+			break;
+
+		default:
+			return NULL;
+	}
+
+	ofc_sema_stmt_t* stmt
+		= (ofc_sema_stmt_t*)malloc(
+			sizeof(ofc_sema_stmt_t));
+	if (!stmt) return NULL;
+
+	stmt->type = st;
+	return stmt;
+}
+
+
 bool ofc_sema_stmt(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt)
@@ -24,6 +48,10 @@ bool ofc_sema_stmt(
 		case OFC_PARSE_STMT_ASSIGNMENT:
 			s = ofc_sema_stmt_assignment(
 				scope, stmt);
+			break;
+
+		case OFC_PARSE_STMT_CONTINUE:
+			s = ofc_sema_stmt_simple(stmt->type);
 			break;
 
 		default:

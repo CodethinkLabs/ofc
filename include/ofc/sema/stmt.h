@@ -4,6 +4,7 @@
 typedef enum
 {
 	OFC_SEMA_STMT_ASSIGNMENT = 0,
+	OFC_SEMA_STMT_CONTINUE,
 } ofc_sema_stmt_e;
 
 struct ofc_sema_stmt_s
