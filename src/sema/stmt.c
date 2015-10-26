@@ -8,6 +8,16 @@ bool ofc_sema_stmt(
 	if (!stmt)
 		return false;
 
+	if (stmt->label != 0)
+	{
+		if (ofc_sema_label_map_find(
+			scope->label, stmt->label))
+		{
+			/* TODO - Error: Duplicate label definition. */
+			return false;
+		}
+	}
+
 	ofc_sema_stmt_t* s = NULL;
 	switch (stmt->type)
 	{
@@ -25,11 +35,25 @@ bool ofc_sema_stmt(
 	   should already have printed an error. */
 	if (!s) return false;
 
+	unsigned offset
+		= ofc_sema_stmt_list_count(
+			scope->stmt);
+
 	if (!ofc_sema_stmt_list_add(
 		scope->stmt, s))
 	{
 		ofc_sema_stmt_delete(s);
 		return false;
+	}
+
+	if (stmt->label != 0)
+	{
+		if (!ofc_sema_label_map_add_stmt(
+			scope->label, stmt->label, offset))
+		{
+			/* This should never happen. */
+			abort();
+		}
 	}
 
 	return true;
@@ -109,4 +133,10 @@ bool ofc_sema_stmt_list_add(
 	list->stmt = nstmt;
 	list->stmt[list->count++] = stmt;
 	return true;
+}
+
+unsigned ofc_sema_stmt_list_count(
+	const ofc_sema_stmt_list_t* list)
+{
+	return (list ? list->count : 0);
 }

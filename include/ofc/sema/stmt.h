@@ -52,4 +52,7 @@ bool ofc_sema_stmt_list_add(
 	ofc_sema_stmt_list_t* list,
 	ofc_sema_stmt_t* stmt);
 
+unsigned ofc_sema_stmt_list_count(
+	const ofc_sema_stmt_list_t* list);
+
 #endif

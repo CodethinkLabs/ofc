@@ -25,6 +25,8 @@ void ofc_sema_scope_delete(
 		scope->decl);
 	ofc_hashmap_delete(
 		scope->parameter);
+	ofc_hashmap_delete(
+		scope->label);
 	ofc_sema_stmt_list_delete(
 		scope->stmt);
 
@@ -95,6 +97,7 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 
 	scope->decl = ofc_sema_decl_list_create(opts.case_sensitive);
 	scope->parameter = ofc_sema_parameter_map_create(opts.case_sensitive);
+	scope->label = ofc_sema_label_map_create();
 	scope->stmt = ofc_sema_stmt_list_create();
 
 	if (!scope->implicit

@@ -33,7 +33,7 @@ struct ofc_sema_scope_s
 
 	ofc_sema_decl_list_t* decl;
 	ofc_hashmap_t*        parameter;
-	/* label_list_map */
+	ofc_hashmap_t*        label;
 	/* namelist_list_map */
 
 	ofc_sema_stmt_list_t* stmt;

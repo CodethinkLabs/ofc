@@ -16,6 +16,7 @@ typedef struct ofc_sema_expr_s      ofc_sema_expr_t;
 #include <ofc/sema/parameter.h>
 #include <ofc/sema/implicit.h>
 #include <ofc/sema/decl.h>
+#include <ofc/sema/label.h>
 
 #include <ofc/sema/stmt.h>
 #include <ofc/sema/scope.h>
