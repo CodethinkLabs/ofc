@@ -63,6 +63,14 @@ bool ofc_sema_stmt(
 	   should already have printed an error. */
 	if (!s) return false;
 
+	if ((s->type == OFC_SEMA_STMT_CONTINUE)
+		&& (stmt->label == 0))
+	{
+		/* TODO - Warning: Unlabelled CONTINUE statement has no effect. */
+		ofc_sema_stmt_delete(s);
+		return true;
+	}
+
 	unsigned offset
 		= ofc_sema_stmt_list_count(
 			scope->stmt);
