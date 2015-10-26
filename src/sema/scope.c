@@ -234,6 +234,9 @@ ofc_sema_scope_t* ofc_sema_scope_subroutine(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt)
 {
+	if (!scope || !stmt)
+		return NULL;
+
 	/* TODO - Implement. */
 	return NULL;
 }
@@ -242,6 +245,9 @@ ofc_sema_scope_t* ofc_sema_scope_function(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt)
 {
+	if (!scope || !stmt)
+		return NULL;
+
 	/* TODO - Implement. */
 	return NULL;
 }
@@ -250,6 +256,9 @@ ofc_sema_scope_t* ofc_sema_scope_block_data(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt)
 {
+	if (!scope || !stmt)
+		return NULL;
+
 	/* TODO - Implement. */
 	return NULL;
 }
