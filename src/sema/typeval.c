@@ -750,8 +750,6 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 	if (!type || ofc_sema_type_compare(type, typeval->type))
 		return ofc_sema_typeval_copy(typeval);
 
-	/* TODO - Report lossy casts. */
-
 	if ((type->type == OFC_SEMA_TYPE_CHARACTER)
 		&& (typeval->type->type == OFC_SEMA_TYPE_CHARACTER))
 	{
@@ -761,6 +759,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 
 	bool invalid_cast = false;
 	bool large_literal = false;
+	bool lossy_cast = false;
 
 	switch (type->type)
 	{
@@ -818,6 +817,8 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 					break;
 				case OFC_SEMA_TYPE_COMPLEX:
 					tv.integer = (int64_t)typeval->complex.real;
+					if (typeval->complex.imaginary != 0.0)
+						lossy_cast = true;
 					break;
 				case OFC_SEMA_TYPE_BYTE:
 					tv.integer = typeval->integer;
@@ -826,7 +827,23 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 					invalid_cast = true;
 					break;
 			}
-			/* TODO - Clamp to target type. */
+
+			if (type->kind < 8)
+			{
+				int64_t imax = 1LL << ((type->kind * 8) - 1);
+				if ((tv.integer < -imax)
+					|| (tv.integer >= imax))
+				{
+					lossy_cast = true;
+
+					int64_t sign_mask = -1LL;
+					sign_mask ^= (imax - 1);
+
+					tv.integer = (tv.integer < 0
+						? (tv.integer | sign_mask)
+						: (tv.integer & (imax - 1)));
+				}
+			}
 			break;
 
 		case OFC_SEMA_TYPE_REAL:
@@ -838,6 +855,8 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 					break;
 				case OFC_SEMA_TYPE_COMPLEX:
 					tv.real = typeval->complex.real;
+					if (typeval->complex.imaginary != 0.0)
+						lossy_cast = true;
 					break;
 				default:
 					invalid_cast = true;
@@ -873,6 +892,8 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 					break;
 				case OFC_SEMA_TYPE_COMPLEX:
 					tv.integer = (int64_t)typeval->complex.real;
+					if (typeval->complex.imaginary != 0.0)
+						lossy_cast = true;
 					break;
 				case OFC_SEMA_TYPE_BYTE:
 					tv.integer = typeval->integer;
@@ -881,7 +902,14 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 					invalid_cast = true;
 					break;
 			}
-			/* TODO - Modulo to -128..127 */
+			if ((tv.integer < -128)
+				|| (tv.integer >= 128))
+			{
+				lossy_cast = true;
+				tv.integer = (tv.integer < 0
+					? (tv.integer | 0xFFFFFFFFFFFFFF00LL)
+					: (tv.integer & 0xFF));
+			}
 			break;
 
 		default:
@@ -896,6 +924,14 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 			ofc_sema_type_str_rep(typeval->type->type),
 			ofc_sema_type_str_rep(type->type));
 		return NULL;
+	}
+
+	if (lossy_cast)
+	{
+		ofc_sema_scope_warning(scope, typeval->src,
+			"Cast from %s to %s was lossy",
+			ofc_sema_type_str_rep(typeval->type->type),
+			ofc_sema_type_str_rep(type->type));
 	}
 
 	return ofc_sema_typeval__alloc(tv);
