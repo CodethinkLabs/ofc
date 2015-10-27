@@ -590,6 +590,49 @@ ofc_sema_expr_t* ofc_sema_expr(
 	return NULL;
 }
 
+ofc_sema_expr_t* ofc_sema_expr_label(
+	const ofc_sema_scope_t* scope,
+	const ofc_parse_label_t* label)
+{
+	if (!label)
+		return NULL;
+
+	if (label->type == OFC_PARSE_LABEL_VARIABLE)
+	{
+		const ofc_sema_decl_t* decl = NULL;
+		if (scope->decl)
+			decl = ofc_hashmap_find(
+				scope->decl->map, &label->variable);
+		if (!decl) return NULL;
+
+		ofc_sema_expr_t* expr
+			= ofc_sema_expr__create(
+				OFC_SEMA_EXPR_DECL);
+		if (!expr) return NULL;
+
+		expr->decl = decl;
+		expr->src = label->variable;
+		return expr;
+	}
+
+	ofc_sema_expr_t* expr
+		= ofc_sema_expr__create(
+			OFC_SEMA_EXPR_CONSTANT);
+	if (!expr) return NULL;
+
+	expr->constant = ofc_sema_typeval_unsigned(
+		label->number, OFC_STR_REF_EMPTY);
+	if (!expr->constant)
+	{
+		ofc_sema_expr_delete(expr);
+		return NULL;
+	}
+
+	/* TODO - Get position from label number. */
+	expr->src = OFC_STR_REF_EMPTY;
+	return expr;
+}
+
 void ofc_sema_expr_delete(
 	ofc_sema_expr_t* expr)
 {
@@ -618,6 +661,55 @@ void ofc_sema_expr_delete(
 	}
 
 	free(expr);
+}
+
+ofc_sema_expr_list_t* ofc_sema_expr_list_create(void)
+{
+	ofc_sema_expr_list_t* list
+		= (ofc_sema_expr_list_t*)malloc(
+			sizeof(ofc_sema_expr_list_t));
+	if (!list) return NULL;
+
+	list->count = 0;
+	list->expr  = NULL;
+	return list;
+}
+
+void ofc_sema_expr_list_delete(
+	ofc_sema_expr_list_t* list)
+{
+	if (!list)
+		return;
+
+	unsigned i;
+	for (i = 0; i < list->count; i++)
+		ofc_sema_expr_delete(list->expr[i]);
+	free(list->expr);
+
+	free(list);
+}
+
+bool ofc_sema_expr_list_add(
+	ofc_sema_expr_list_t* list,
+	ofc_sema_expr_t* expr)
+{
+	if (!list || !expr)
+		return false;
+
+	ofc_sema_expr_t** nexpr
+		= (ofc_sema_expr_t**)realloc(list->expr,
+			(sizeof(ofc_sema_expr_t*) * (list->count + 1)));
+	if (!nexpr) return NULL;
+
+	list->expr = nexpr;
+	list->expr[list->count++] = expr;
+	return true;
+}
+
+unsigned ofc_sema_expr_list_count(
+	const ofc_sema_expr_list_t* list)
+{
+	return (list ? list->count : 0);
 }
 
 const ofc_sema_type_t* ofc_sema_expr_type(

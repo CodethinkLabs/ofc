@@ -5,6 +5,7 @@ typedef enum
 {
 	OFC_SEMA_STMT_ASSIGNMENT = 0,
 	OFC_SEMA_STMT_CONTINUE,
+	OFC_SEMA_STMT_IF_COMPUTED,
 } ofc_sema_stmt_e;
 
 struct ofc_sema_stmt_s
@@ -18,6 +19,12 @@ struct ofc_sema_stmt_s
 			const ofc_sema_decl_t* dest;
 			ofc_sema_expr_t*       expr;
 		} assignment;
+
+		struct
+		{
+			ofc_sema_expr_t*       cond;
+			ofc_sema_expr_list_t*  label;
+		} if_comp;
 
 		struct
 		{
@@ -52,7 +59,9 @@ ofc_sema_stmt_t* ofc_sema_stmt_assignment(
 ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
-
+ofc_sema_stmt_t* ofc_sema_stmt_if(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt);
 
 
 struct ofc_sema_stmt_list_s

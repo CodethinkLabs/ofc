@@ -268,12 +268,13 @@ const ofc_sema_type_t* ofc_sema_type(
 				if (!expr) return false;
 
 				const ofc_sema_typeval_t* ctv
-					= ofc_sema_expr_constant(expr);
+						= ofc_sema_expr_constant(expr);
 				if (!ctv)
 				{
 					ofc_sema_expr_delete(expr);
 					return false;
 				}
+
 
 				int64_t kind64;
 				bool success = ofc_sema_typeval_get_integer(ctv, &kind64);
@@ -488,6 +489,24 @@ bool ofc_sema_type_is_integer(const ofc_sema_type_t* type)
 
 	switch (type->type)
 	{
+		case OFC_SEMA_TYPE_INTEGER:
+		case OFC_SEMA_TYPE_BYTE:
+			return true;
+		default:
+			break;
+	}
+
+	return false;
+}
+
+bool ofc_sema_type_is_scalar(const ofc_sema_type_t* type)
+{
+	if (!type)
+		return false;
+
+	switch (type->type)
+	{
+		case OFC_SEMA_TYPE_REAL:
 		case OFC_SEMA_TYPE_INTEGER:
 		case OFC_SEMA_TYPE_BYTE:
 			return true;

@@ -70,6 +70,7 @@ bool ofc_sema_type_compare(
 unsigned ofc_sema_type_size(const ofc_sema_type_t* type);
 
 bool ofc_sema_type_is_integer(const ofc_sema_type_t* type);
+bool ofc_sema_type_is_scalar(const ofc_sema_type_t* type);
 bool ofc_sema_type_is_logical(const ofc_sema_type_t* type);
 
 bool ofc_sema_type_cast_value(

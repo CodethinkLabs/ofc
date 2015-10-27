@@ -56,6 +56,12 @@ struct ofc_sema_expr_s
 	};
 };
 
+struct ofc_sema_expr_list_s
+{
+	unsigned           count;
+	ofc_sema_expr_t** expr;
+};
+
 ofc_sema_expr_t* ofc_sema_expr(
 	const ofc_sema_scope_t* scope,
 	const ofc_parse_expr_t* expr);
@@ -73,6 +79,10 @@ ofc_sema_typeval_t* ofc_sema_expr_resolve(
 	const ofc_sema_scope_t* scope,
 	const ofc_sema_expr_t* expr);
 
+ofc_sema_expr_t* ofc_sema_expr_label(
+	const ofc_sema_scope_t* scope,
+	const ofc_parse_label_t* label);
+
 const ofc_sema_typeval_t* ofc_sema_expr_constant(
 	const ofc_sema_expr_t* expr);
 bool ofc_sema_expr_is_constant(
@@ -80,5 +90,14 @@ bool ofc_sema_expr_is_constant(
 
 bool ofc_sema_expr_validate_uint(
 	const ofc_sema_expr_t* expr);
+
+ofc_sema_expr_list_t* ofc_sema_expr_list_create(void);
+void ofc_sema_expr_list_delete(
+	ofc_sema_expr_list_t* list);
+bool ofc_sema_expr_list_add(
+	ofc_sema_expr_list_t* list,
+	ofc_sema_expr_t* expr);
+unsigned ofc_sema_expr_list_count(
+	const ofc_sema_expr_list_t* list);
 
 #endif

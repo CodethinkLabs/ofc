@@ -9,6 +9,7 @@ typedef struct ofc_sema_stmt_list_s ofc_sema_stmt_list_t;
 typedef struct ofc_sema_scope_s     ofc_sema_scope_t;
 typedef struct ofc_sema_type_s      ofc_sema_type_t;
 typedef struct ofc_sema_expr_s      ofc_sema_expr_t;
+typedef struct ofc_sema_expr_list_s ofc_sema_expr_list_t;
 
 #include <ofc/sema/array.h>
 #include <ofc/sema/structure.h>

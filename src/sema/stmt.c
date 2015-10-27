@@ -60,6 +60,10 @@ bool ofc_sema_stmt(
 				scope, stmt);
 			break;
 
+		case OFC_PARSE_STMT_IF_COMPUTED:
+			s = ofc_sema_stmt_if(scope, stmt);
+			break;
+
 		default:
 			ofc_sema_scope_error(scope, stmt->src,
 				"Unsuported statement");
