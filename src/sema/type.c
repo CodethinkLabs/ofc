@@ -267,13 +267,17 @@ const ofc_sema_type_t* ofc_sema_type(
 					scope, ptype->params->call_arg[i]->expr);
 				if (!expr) return false;
 
-				ofc_sema_typeval_t* tv = ofc_sema_expr_resolve(scope, expr);
-				ofc_sema_expr_delete(expr);
-				if (!tv) return false;
+				const ofc_sema_typeval_t* ctv
+					= ofc_sema_expr_constant(expr);
+				if (!ctv)
+				{
+					ofc_sema_expr_delete(expr);
+					return false;
+				}
 
 				int64_t kind64;
-				bool success = ofc_sema_typeval_get_integer(tv, &kind64);
-				ofc_sema_typeval_delete(tv);
+				bool success = ofc_sema_typeval_get_integer(ctv, &kind64);
+				ofc_sema_expr_delete(expr);
 				if (!success) return false;
 
 				kind = kind64;

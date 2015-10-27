@@ -1,6 +1,20 @@
 #include <ofc/sema.h>
 
 
+const ofc_sema_typeval_t* ofc_sema_expr_constant(
+	const ofc_sema_expr_t* expr)
+{
+	return (expr && (expr->type == OFC_SEMA_EXPR_CONSTANT)
+		? expr->constant : NULL);
+}
+
+bool ofc_sema_expr_is_constant(
+	const ofc_sema_expr_t* expr)
+{
+	return (ofc_sema_expr_constant(expr) != NULL);
+}
+
+
 static const ofc_sema_type_t* OFC_SEMA_EXPR__LOGICAL_RETURN(
 	const ofc_sema_type_t* a,
 	const ofc_sema_type_t* b)
@@ -28,8 +42,7 @@ typedef struct
 
 static ofc_sema_expr__rule_t ofc_sema_expr__rule[] =
 {
-	{ NULL, 0, 0, 0, 0, 0 }, /* LITERAL */
-	{ NULL, 0, 0, 0, 0, 0 }, /* PARAMETER */
+	{ NULL, 0, 0, 0, 0, 0 }, /* CONSTANT */
 	{ NULL, 0, 0, 0, 0, 0 }, /* DECL */
 	{ NULL, 0, 0, 0, 0, 0 }, /* CAST */
 	{ NULL, 0, 0, 0, 0, 0 }, /* INTRINSIC */
@@ -94,6 +107,59 @@ static bool ofc_sema_expr_type_allowed(
 }
 
 
+static ofc_sema_typeval_t* ofc_sema_typeval_negate__faux_binary(
+	const ofc_sema_scope_t* scope,
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b)
+{
+	(void)b;
+	return ofc_sema_typeval_negate(scope, a);
+}
+
+static ofc_sema_typeval_t* ofc_sema_typeval_not__faux_binary(
+	const ofc_sema_scope_t* scope,
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b)
+{
+	(void)scope;
+	(void)b;
+	return ofc_sema_typeval_not(scope, a);
+}
+
+static ofc_sema_typeval_t* (*ofc_sema_expr__resolve[])(
+	const ofc_sema_scope_t*,
+	const ofc_sema_typeval_t*,
+	const ofc_sema_typeval_t*) =
+{
+	NULL, /* CONSTANT */
+	NULL, /* DECL */
+	NULL, /* CAST */
+	NULL, /* INTRINSIC */
+
+	ofc_sema_typeval_power,
+	ofc_sema_typeval_multiply,
+	ofc_sema_typeval_concat,
+	ofc_sema_typeval_divide,
+	ofc_sema_typeval_add,
+	ofc_sema_typeval_subtract,
+	ofc_sema_typeval_negate__faux_binary,
+
+	ofc_sema_typeval_eq,
+	ofc_sema_typeval_ne,
+	ofc_sema_typeval_lt,
+	ofc_sema_typeval_le,
+	ofc_sema_typeval_gt,
+	ofc_sema_typeval_ge,
+
+	ofc_sema_typeval_not__faux_binary,
+	ofc_sema_typeval_and,
+	ofc_sema_typeval_or,
+
+	ofc_sema_typeval_eqv,
+	ofc_sema_typeval_neqv,
+};
+
+
 static ofc_sema_expr_t* ofc_sema_expr__create(
 	ofc_sema_expr_e type)
 {
@@ -109,11 +175,8 @@ static ofc_sema_expr_t* ofc_sema_expr__create(
 
 	switch (type)
 	{
-		case OFC_SEMA_EXPR_LITERAL:
-			expr->literal = NULL;
-			break;
-		case OFC_SEMA_EXPR_PARAMETER:
-			expr->parameter = NULL;
+		case OFC_SEMA_EXPR_CONSTANT:
+			expr->constant = NULL;
 			break;
 		case OFC_SEMA_EXPR_DECL:
 			expr->decl = NULL;
@@ -158,11 +221,31 @@ static ofc_sema_expr_e ofc_sema_expr__binary_map[] =
 };
 
 ofc_sema_expr_t* ofc_sema_expr_cast(
+	const ofc_sema_scope_t* scope,
 	ofc_sema_expr_t* expr,
 	const ofc_sema_type_t* type)
 {
 	if (!type || !expr)
 		return NULL;
+
+	if (ofc_sema_expr_is_constant(expr))
+	{
+		ofc_sema_expr_t* cast
+			= ofc_sema_expr__create(
+				OFC_SEMA_EXPR_CONSTANT);
+		if (!cast) return NULL;
+
+		cast->constant = ofc_sema_typeval_cast(
+			scope, expr->constant, type);
+		if (!cast->constant)
+		{
+			ofc_sema_expr_delete(cast);
+			return NULL;
+		}
+
+		ofc_sema_expr_delete(expr);
+		return cast;
+	}
 
 	ofc_sema_expr_t* cast
 		= ofc_sema_expr__create(
@@ -240,7 +323,8 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 		if (!ofc_sema_type_compare(at, ptype))
 		{
 			ofc_sema_expr_t* cast
-				= ofc_sema_expr_cast(as, ptype);
+				= ofc_sema_expr_cast(
+					scope, as, ptype);
 			if (!cast)
 			{
 				ofc_sema_expr_delete(bs);
@@ -253,7 +337,8 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 		if (!ofc_sema_type_compare(bt, ptype))
 		{
 			ofc_sema_expr_t* cast
-				= ofc_sema_expr_cast(bs, ptype);
+				= ofc_sema_expr_cast(
+					scope, bs, ptype);
 			if (!cast)
 			{
 				ofc_sema_expr_delete(bs);
@@ -262,6 +347,30 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 			}
 			bs = cast;
 		}
+	}
+
+	if (ofc_sema_expr_is_constant(as)
+		&& ofc_sema_expr_is_constant(bs)
+		&& ofc_sema_expr__resolve[type])
+	{
+		ofc_sema_typeval_t* tv
+			= ofc_sema_expr__resolve[type](scope,
+				as->constant, bs->constant);
+		ofc_sema_expr_delete(bs);
+		ofc_sema_expr_delete(as);
+		if (!tv) return NULL;
+
+		ofc_sema_expr_t* expr
+			= ofc_sema_expr__create(
+				OFC_SEMA_EXPR_CONSTANT);
+		if (!expr)
+		{
+			ofc_sema_typeval_delete(tv);
+			return NULL;
+		}
+
+		expr->constant = tv;
+		return expr;
 	}
 
 	ofc_sema_expr_t* expr
@@ -314,6 +423,28 @@ static ofc_sema_expr_t* ofc_sema_expr__unary(
 		return NULL;
 	}
 
+	if (ofc_sema_expr_is_constant(as)
+		&& ofc_sema_expr__resolve[type])
+	{
+		ofc_sema_typeval_t* tv
+			= ofc_sema_expr__resolve[type](scope,
+				as->constant, NULL);
+		ofc_sema_expr_delete(as);
+		if (!tv) return NULL;
+
+		ofc_sema_expr_t* expr
+			= ofc_sema_expr__create(
+				OFC_SEMA_EXPR_CONSTANT);
+		if (!expr)
+		{
+			ofc_sema_typeval_delete(tv);
+			return NULL;
+		}
+
+		expr->constant = tv;
+		return expr;
+	}
+
 	ofc_sema_expr_t* expr
 		= ofc_sema_expr__create(type);
 	if (!expr)
@@ -338,14 +469,14 @@ static ofc_sema_expr_t* ofc_sema_expr__literal(
 
 	ofc_sema_expr_t* expr
 		= ofc_sema_expr__create(
-			OFC_SEMA_EXPR_LITERAL);
+			OFC_SEMA_EXPR_CONSTANT);
 	if (!expr)
 	{
 		ofc_sema_typeval_delete(tv);
 		return NULL;
 	}
 
-	expr->literal = tv;
+	expr->constant = tv;
 	expr->src = literal->src;
 	return expr;
 }
@@ -361,12 +492,23 @@ static ofc_sema_expr_t* ofc_sema_expr__parameter(
 		= ofc_hashmap_find(scope->parameter, &name->variable);
 	if (!param) return NULL;
 
+	const ofc_sema_typeval_t* ctv
+		= ofc_sema_parameter_get(param);
+	if (!ctv) return NULL;
+
 	ofc_sema_expr_t* expr
 		= ofc_sema_expr__create(
-			OFC_SEMA_EXPR_PARAMETER);
+			OFC_SEMA_EXPR_CONSTANT);
 	if (!expr) return NULL;
 
-	expr->parameter = param;
+	expr->constant
+		= ofc_sema_typeval_copy(ctv);
+	if (!expr->constant)
+	{
+		ofc_sema_expr_delete(expr);
+		return NULL;
+	}
+
 	expr->src = name->src;
 	return expr;
 }
@@ -455,14 +597,12 @@ void ofc_sema_expr_delete(
 
 	switch (expr->type)
 	{
-		case OFC_SEMA_EXPR_LITERAL:
+		case OFC_SEMA_EXPR_CONSTANT:
 			ofc_sema_typeval_delete(
-				expr->literal);
+				expr->constant);
 			break;
-		case OFC_SEMA_EXPR_PARAMETER:
 		case OFC_SEMA_EXPR_DECL:
-			/* Don't delete decl or parameter,
-			   since we're referencing them. */
+			/* Don't delete decl since we're referencing it. */
 			break;
 		case OFC_SEMA_EXPR_CAST:
 			ofc_sema_expr_delete(expr->cast.expr);
@@ -487,11 +627,8 @@ const ofc_sema_type_t* ofc_sema_expr_type(
 
 	switch (expr->type)
 	{
-		case OFC_SEMA_EXPR_LITERAL:
-			return expr->literal->type;
-		case OFC_SEMA_EXPR_PARAMETER:
-			return ofc_sema_parameter_type(
-				expr->parameter);
+		case OFC_SEMA_EXPR_CONSTANT:
+			return expr->constant->type;
 		case OFC_SEMA_EXPR_DECL:
 			return ofc_sema_decl_type(
 				expr->decl);
@@ -519,122 +656,26 @@ const ofc_sema_type_t* ofc_sema_expr_type(
 }
 
 
-static ofc_sema_typeval_t* ofc_sema_typeval_negate__faux_binary(
-	const ofc_sema_scope_t* scope,
-	const ofc_sema_typeval_t* a,
-	const ofc_sema_typeval_t* b)
-{
-	(void)b;
-	return ofc_sema_typeval_negate(scope, a);
-}
 
-static ofc_sema_typeval_t* ofc_sema_typeval_not__faux_binary(
-	const ofc_sema_scope_t* scope,
-	const ofc_sema_typeval_t* a,
-	const ofc_sema_typeval_t* b)
-{
-	(void)scope;
-	(void)b;
-	return ofc_sema_typeval_not(scope, a);
-}
-
-static ofc_sema_typeval_t* (*ofc_sema_expr__resolve[])(
-	const ofc_sema_scope_t*,
-	const ofc_sema_typeval_t*,
-	const ofc_sema_typeval_t*) =
-{
-	NULL, /* LITERAL */
-	NULL, /* PARAMETER */
-	NULL, /* DECL */
-	NULL, /* CAST */
-	NULL, /* INTRINSIC */
-
-	ofc_sema_typeval_power,
-	ofc_sema_typeval_multiply,
-	ofc_sema_typeval_concat,
-	ofc_sema_typeval_divide,
-	ofc_sema_typeval_add,
-	ofc_sema_typeval_subtract,
-	ofc_sema_typeval_negate__faux_binary,
-
-	ofc_sema_typeval_eq,
-	ofc_sema_typeval_ne,
-	ofc_sema_typeval_lt,
-	ofc_sema_typeval_le,
-	ofc_sema_typeval_gt,
-	ofc_sema_typeval_ge,
-
-	ofc_sema_typeval_not__faux_binary,
-	ofc_sema_typeval_and,
-	ofc_sema_typeval_or,
-
-	ofc_sema_typeval_eqv,
-	ofc_sema_typeval_neqv,
-};
-
-ofc_sema_typeval_t* ofc_sema_expr_resolve(
-	const ofc_sema_scope_t* scope,
+bool ofc_sema_expr_validate_uint(
 	const ofc_sema_expr_t* expr)
 {
 	if (!expr)
-		return NULL;
+		return false;
 
-	switch (expr->type)
+	const ofc_sema_type_t* type
+		= ofc_sema_expr_type(expr);
+	if (!type || (type->type != OFC_SEMA_TYPE_INTEGER))
+		return false;
+
+	const ofc_sema_typeval_t* tv
+		= ofc_sema_expr_constant(expr);
+    if (tv)
 	{
-		case OFC_SEMA_EXPR_LITERAL:
-			return ofc_sema_typeval_copy(
-				expr->literal);
-
-		case OFC_SEMA_EXPR_PARAMETER:
-			return ofc_sema_typeval_copy(
-				ofc_sema_parameter_get(
-					expr->parameter));
-
-		case OFC_SEMA_EXPR_CAST:
-			{
-				ofc_sema_typeval_t* tv
-					= ofc_sema_expr_resolve(scope, expr->cast.expr);
-				ofc_sema_typeval_t* ret
-					= ofc_sema_typeval_cast(scope,
-						ofc_sema_expr_resolve(scope,
-							expr->cast.expr),
-						expr->cast.type);
-				ofc_sema_typeval_delete(tv);
-				return ret;
-			}
-
-		case OFC_SEMA_EXPR_INTRINSIC:
-			/* TODO - Implement. */
-			return NULL;
-
-		/* We can't/shouldn't resolve declarations at compile time. */
-		case OFC_SEMA_EXPR_DECL:
-			return NULL;
-
-		default:
-			break;
+		int64_t v;
+		bool has_val = ofc_sema_typeval_get_integer(tv, &v);
+		if (has_val && (v < 0)) return false;
 	}
 
-	if ((expr->type > OFC_SEMA_EXPR_COUNT)
-		|| !ofc_sema_expr__resolve[expr->type])
-		return NULL;
-
-	ofc_sema_typeval_t* av
-		= ofc_sema_expr_resolve(scope, expr->a);
-	if (!av) return NULL;
-
-	ofc_sema_typeval_t* bv
-		= ofc_sema_expr_resolve(scope, expr->b);
-	if (expr->b && !bv)
-	{
-		ofc_sema_typeval_delete(av);
-		return NULL;
-	}
-
-	ofc_sema_typeval_t* ret
-		= ofc_sema_expr__resolve[expr->type](scope, av, bv);
-	ofc_sema_typeval_delete(bv);
-	ofc_sema_typeval_delete(av);
-
-	return ret;
+	return true;
 }

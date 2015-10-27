@@ -151,14 +151,13 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 			return NULL;
 		}
 
-		ofc_sema_typeval_t* evalue
-			= ofc_sema_expr_resolve(scope, s.io_write.unit);
+		const ofc_sema_typeval_t* evalue
+			= ofc_sema_expr_constant(s.io_write.unit);
 		if (evalue)
 		{
 			int64_t evalue64;
 			bool success = ofc_sema_typeval_get_integer(
 				evalue, &evalue64);
-			ofc_sema_typeval_delete(evalue);
 
 			if (success)
 			{
@@ -205,14 +204,13 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 
 		if (etype->type == OFC_SEMA_TYPE_INTEGER)
 		{
-			ofc_sema_typeval_t* format_label
-				= ofc_sema_expr_resolve(scope, s.io_write.format_expr);
+			const ofc_sema_typeval_t* format_label
+				= ofc_sema_expr_constant(s.io_write.format_expr);
 			if (!format_label)
 			{
 				ofc_sema_scope_error(scope, stmt->src,
 					"Format (FMT) label expression must be resolvable"
 					" at compile time in WRITE");
-				ofc_sema_typeval_delete(format_label);
 				ofc_sema_expr_delete(s.io_write.format_expr);
 				ofc_sema_expr_delete(s.io_write.unit);
 				return NULL;
@@ -220,7 +218,6 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 
 			int64_t fl64 = 0;
 			ofc_sema_typeval_get_integer(format_label, &fl64);
-			ofc_sema_typeval_delete(format_label);
 
 			if (fl64 < 0)
 			{

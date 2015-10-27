@@ -52,7 +52,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_assignment(
 	{
 		ofc_sema_expr_t* cast
 			= ofc_sema_expr_cast(
-				s.assignment.expr, dtype);
+				scope, s.assignment.expr, dtype);
 		if (!cast)
 		{
 			const ofc_sema_type_t* expr_type =

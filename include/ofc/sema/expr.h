@@ -3,8 +3,7 @@
 
 typedef enum
 {
-	OFC_SEMA_EXPR_LITERAL = 0,
-	OFC_SEMA_EXPR_PARAMETER,
+	OFC_SEMA_EXPR_CONSTANT = 0,
 	OFC_SEMA_EXPR_DECL,
 	OFC_SEMA_EXPR_CAST,
 	OFC_SEMA_EXPR_INTRINSIC,
@@ -39,9 +38,7 @@ struct ofc_sema_expr_s
 
 	union
 	{
-		const ofc_sema_parameter_t* parameter;
-
-		ofc_sema_typeval_t* literal;
+		ofc_sema_typeval_t* constant;
 
 		const ofc_sema_decl_t* decl;
 
@@ -63,6 +60,7 @@ ofc_sema_expr_t* ofc_sema_expr(
 	const ofc_sema_scope_t* scope,
 	const ofc_parse_expr_t* expr);
 ofc_sema_expr_t* ofc_sema_expr_cast(
+	const ofc_sema_scope_t* scope,
 	ofc_sema_expr_t* expr,
 	const ofc_sema_type_t* type);
 void ofc_sema_expr_delete(
@@ -73,6 +71,14 @@ const ofc_sema_type_t* ofc_sema_expr_type(
 
 ofc_sema_typeval_t* ofc_sema_expr_resolve(
 	const ofc_sema_scope_t* scope,
+	const ofc_sema_expr_t* expr);
+
+const ofc_sema_typeval_t* ofc_sema_expr_constant(
+	const ofc_sema_expr_t* expr);
+bool ofc_sema_expr_is_constant(
+	const ofc_sema_expr_t* expr);
+
+bool ofc_sema_expr_validate_uint(
 	const ofc_sema_expr_t* expr);
 
 #endif

@@ -89,7 +89,10 @@ static ofc_sema_decl_t* ofc_sema_decl__decl(
 			return NULL;
 		}
 
-		sdecl->init = ofc_sema_expr_resolve(scope, init_expr);
+		const ofc_sema_typeval_t* ctv
+			= ofc_sema_expr_constant(init_expr);
+
+		sdecl->init = ofc_sema_typeval_copy(ctv);
 		ofc_sema_expr_delete(init_expr);
 		if (!sdecl->init)
 		{
