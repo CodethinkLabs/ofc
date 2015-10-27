@@ -43,6 +43,13 @@ char* ofc_sparse_include_path(
 
 #include <stdarg.h>
 
+void ofc_sparse_error_va(
+	const ofc_sparse_t* sparse, const char* ptr,
+	const char* format, va_list args);
+void ofc_sparse_warning_va(
+	const ofc_sparse_t* sparse, const char* ptr,
+	const char* format, va_list args);
+
 void ofc_sparse_error(
 	const ofc_sparse_t* sparse, const char* ptr,
 	const char* format, ...)

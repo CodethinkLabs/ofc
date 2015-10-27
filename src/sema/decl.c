@@ -91,8 +91,8 @@ static ofc_sema_decl_t* ofc_sema_decl__decl(
 
 		const ofc_sema_typeval_t* ctv
 			= ofc_sema_expr_constant(init_expr);
-
-		sdecl->init = ofc_sema_typeval_copy(ctv);
+		sdecl->init = ofc_sema_typeval_cast(
+			scope, ctv, type);
 		ofc_sema_expr_delete(init_expr);
 		if (!sdecl->init)
 		{

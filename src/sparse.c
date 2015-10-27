@@ -396,17 +396,35 @@ static const char* ofc_sparse__file_pointer(
 	return pptr;
 }
 
-void ofc_sparse_error(
+void ofc_sparse_error_va(
 	const ofc_sparse_t* sparse, const char* ptr,
-	const char* format, ...)
+	const char* format, va_list args)
 {
 	const ofc_file_t* file = ofc_sparse__file(sparse);
 	const char*       fsol = NULL;
 	const char*       fptr = ofc_sparse__file_pointer(sparse, ptr, &fsol);
 
+	ofc_file_error_va(file, fsol, fptr, format, args);
+}
+
+void ofc_sparse_warning_va(
+	const ofc_sparse_t* sparse, const char* ptr,
+	const char* format, va_list args)
+{
+	const ofc_file_t* file = ofc_sparse__file(sparse);
+	const char*       fsol = NULL;
+	const char*       fptr = ofc_sparse__file_pointer(sparse, ptr, &fsol);
+
+	ofc_file_warning_va(file, fsol, fptr, format, args);
+}
+
+void ofc_sparse_error(
+	const ofc_sparse_t* sparse, const char* ptr,
+	const char* format, ...)
+{
 	va_list args;
 	va_start(args, format);
-	ofc_file_error_va(file, fsol, fptr, format, args);
+	ofc_sparse_error_va(sparse, ptr, format, args);
 	va_end(args);
 }
 
@@ -414,12 +432,8 @@ void ofc_sparse_warning(
 	const ofc_sparse_t* sparse, const char* ptr,
 	const char* format, ...)
 {
-	const ofc_file_t* file = ofc_sparse__file(sparse);
-	const char*       fsol = NULL;
-	const char*       fptr = ofc_sparse__file_pointer(sparse, ptr, &fsol);
-
 	va_list args;
 	va_start(args, format);
-	ofc_file_warning_va(file, fsol, fptr, format, args);
+	ofc_sparse_warning_va(sparse, ptr, format, args);
 	va_end(args);
 }

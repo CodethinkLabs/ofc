@@ -287,7 +287,7 @@ void ofc_sema_scope_error(
 {
 	va_list args;
 	va_start(args, format);
-	ofc_sparse_error(scope->src, pos.base, format, args);
+	ofc_sparse_error_va(scope->src, pos.base, format, args);
 	va_end(args);
 }
 
@@ -297,6 +297,6 @@ void ofc_sema_scope_warning(
 {
 	va_list args;
 	va_start(args, format);
-	ofc_sparse_warning(scope->src, pos.base, format, args);
+	ofc_sparse_warning_va(scope->src, pos.base, format, args);
 	va_end(args);
 }
