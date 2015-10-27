@@ -384,8 +384,9 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 
 	expr->a = as;
 	expr->b = bs;
-	/* TODO - print full expression on error by passing length in buffer */
-	expr->src = a->src;
+
+	ofc_str_ref_bridge(as->src, bs->src, &expr->src);
+
 	return expr;
 }
 

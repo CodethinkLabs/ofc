@@ -23,6 +23,7 @@ static inline ofc_str_ref_t ofc_str_ref_from_strz(const char* strz)
 bool    ofc_str_ref_empty(const ofc_str_ref_t ref);
 uint8_t ofc_str_ref_hash(const ofc_str_ref_t ref);
 uint8_t ofc_str_ref_hash_ci(const ofc_str_ref_t ref);
+bool    ofc_str_ref_bridge(ofc_str_ref_t start, ofc_str_ref_t end, ofc_str_ref_t* ret);
 bool    ofc_str_ref_equal(const ofc_str_ref_t a, const ofc_str_ref_t b);
 bool    ofc_str_ref_equal_ci(const ofc_str_ref_t a, const ofc_str_ref_t b);
 bool    ofc_str_ref_equal_strz(const ofc_str_ref_t a, const char* b);
