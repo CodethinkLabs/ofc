@@ -37,8 +37,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 		{
 			if (i >= 2)
 			{
-				/* TODO - Get actual position of call arg. */
-				ofc_sema_scope_error(scope, stmt->src,
+				ofc_sema_scope_error(scope, param->src,
 					"Un-named parameter %u has no meaning in WRITE.", i);
 				return NULL;
 			}
@@ -51,8 +50,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 			{
 				if (!ca_unit)
 				{
-					/* TODO - Get actual position of call arg. */
-					ofc_sema_scope_error(scope, stmt->src,
+					ofc_sema_scope_error(scope, param->src,
 						"Un-named format parameter only valid after UNIT in WRITE.");
 					return NULL;
 				}
@@ -64,8 +62,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 		{
 			if (ca_unit)
 			{
-				/* TODO - Get actual position of call arg. */
-				ofc_sema_scope_error(scope, stmt->src,
+				ofc_sema_scope_error(scope, param->src,
 					"Re-definition of UNIT in WRITE.");
 				return NULL;
 			}
@@ -76,8 +73,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 		{
 			if (ca_format)
 			{
-				/* TODO - Get actual position of call arg. */
-				ofc_sema_scope_error(scope, stmt->src,
+				ofc_sema_scope_error(scope, param->src,
 					"Re-definition of FMT in WRITE.");
 				return NULL;
 			}
@@ -88,8 +84,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 		{
 			if (ca_iostat)
 			{
-				/* TODO - Get actual position of call arg. */
-				ofc_sema_scope_error(scope, stmt->src,
+				ofc_sema_scope_error(scope, param->src,
 					"Re-definition of IOSTAT in WRITE.");
 				return NULL;
 			}
@@ -100,8 +95,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 		{
 			if (ca_rec)
 			{
-				/* TODO - Get actual position of call arg. */
-				ofc_sema_scope_error(scope, stmt->src,
+				ofc_sema_scope_error(scope, param->src,
 					"Re-definition of REC in WRITE.");
 				return NULL;
 			}
@@ -112,8 +106,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 		{
 			if (ca_err)
 			{
-				/* TODO - Get actual position of call arg. */
-				ofc_sema_scope_error(scope, stmt->src,
+				ofc_sema_scope_error(scope, param->src,
 					"Re-definition of ERR in WRITE.");
 				return NULL;
 			}
@@ -122,8 +115,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 		}
 		else
 		{
-			/* TODO - Get actual position of call arg. */
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sema_scope_error(scope, param->src,
 				"Unrecognized paramater %u name '%.*s' in WRITE.",
 				i, param->name.size, param->name.base);
 			return NULL;

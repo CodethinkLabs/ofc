@@ -74,6 +74,8 @@ static ofc_parse_call_arg_t* ofc_parse__call_arg(
 		call_arg->type = OFC_PARSE_CALL_ARG_EXPR;
 	}
 
+	call_arg->src = ofc_str_ref(ptr, i);
+
 	if (len) *len = i;
 	return call_arg;
 }
