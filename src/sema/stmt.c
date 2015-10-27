@@ -55,6 +55,11 @@ bool ofc_sema_stmt(
 			s = ofc_sema_stmt_simple(stmt->type);
 			break;
 
+		case OFC_PARSE_STMT_IO_WRITE:
+			s = ofc_sema_stmt_io_write(
+				scope, stmt);
+			break;
+
 		default:
 			ofc_sema_scope_error(scope, stmt->src,
 				"Unsuported statement");
