@@ -6,6 +6,9 @@ static void ofc_sema_label__delete(
 	if (!label)
 		return;
 
+	if (label->type == OFC_SEMA_LABEL_FORMAT)
+		ofc_sema_format_delete(label->format);
+
 	free(label);
 }
 
@@ -20,6 +23,24 @@ static ofc_sema_label_t* ofc_sema_label__stmt(
 	label->type   = OFC_SEMA_LABEL_STMT;
 	label->number = number;
 	label->offset = offset;
+
+	return label;
+}
+
+static ofc_sema_label_t* ofc_sema_label__format(
+	unsigned number, ofc_sema_format_t* format)
+{
+	if (!format)
+		return NULL;
+
+	ofc_sema_label_t* label
+		= (ofc_sema_label_t*)malloc(
+			sizeof(label));
+	if (!label) return NULL;
+
+	label->type   = OFC_SEMA_LABEL_FORMAT;
+	label->number = number;
+	label->format = format;
 
 	return label;
 }
@@ -96,7 +117,7 @@ bool ofc_sema_label_map_add_stmt(
 
 bool ofc_sema_label_map_add_format(
 	const ofc_sema_scope_t* scope, const ofc_parse_stmt_t* stmt,
-	ofc_hashmap_t* map, unsigned label, const void* format)
+	ofc_hashmap_t* map, unsigned label, ofc_sema_format_t* format)
 {
 	if (!map || !format)
 		return false;
@@ -116,8 +137,19 @@ bool ofc_sema_label_map_add_format(
 			"Label zero isn't supported in standard Fortran");
 	}
 
-	/* TODO - Implement. */
-	return false;
+	ofc_sema_label_t* l
+		= ofc_sema_label__format(
+			label, format);
+	if (!l) return false;
+
+	if (!ofc_hashmap_add(map, l))
+	{
+		/* Don't delete because we don't yet own format. */
+		free(l);
+		return false;
+	}
+
+	return true;
 }
 
 const ofc_sema_label_t* ofc_sema_label_map_find(

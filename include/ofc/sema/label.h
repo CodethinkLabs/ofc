@@ -16,8 +16,8 @@ typedef struct
 
 	union
 	{
-		unsigned    offset;
-		const void* format;
+		unsigned offset;
+		ofc_sema_format_t* format;
 	};
 } ofc_sema_label_t;
 
@@ -27,7 +27,7 @@ bool ofc_sema_label_map_add_stmt(
 	ofc_hashmap_t* map, unsigned label, unsigned offset);
 bool ofc_sema_label_map_add_format(
 	const ofc_sema_scope_t* scope, const ofc_parse_stmt_t* stmt,
-	ofc_hashmap_t* map, unsigned label, const void* format);
+	ofc_hashmap_t* map, unsigned label, ofc_sema_format_t* format);
 const ofc_sema_label_t* ofc_sema_label_map_find(
 	const ofc_hashmap_t* map, unsigned label);
 
