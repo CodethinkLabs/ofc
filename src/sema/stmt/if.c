@@ -52,21 +52,33 @@ ofc_sema_stmt_t* ofc_sema_stmt_if__computed(
 	{
 		ofc_sema_expr_t* label = ofc_sema_expr(
 			scope, stmt->if_comp.label->expr[i]);
+
+		if (!ofc_sema_expr_validate_uint(label))
+		{
+			ofc_sema_scope_error(scope, label->src,
+				"Target label must be a positive INTEGER.");
+
+			ofc_sema_expr_delete(label);
+			ofc_sema_expr_list_delete(s.if_comp.label);
+			ofc_sema_expr_delete(s.if_comp.cond);
+			return NULL;
+		}
+
 		if (!ofc_sema_expr_list_add(
 			s.if_comp.label, label))
 		{
 			ofc_sema_expr_delete(label);
+			ofc_sema_expr_list_delete(s.if_comp.label);
 			ofc_sema_expr_delete(s.if_comp.cond);
 			return NULL;
 		}
 	}
 
-	ofc_sema_stmt_t* as
-		= ofc_sema_stmt_alloc(s);
+	ofc_sema_stmt_t* as = ofc_sema_stmt_alloc(s);
 	if (!as)
 	{
-		ofc_sema_expr_delete(s.if_comp.cond);
 		ofc_sema_expr_list_delete(s.if_comp.label);
+		ofc_sema_expr_delete(s.if_comp.cond);
 		return NULL;
 	}
 
