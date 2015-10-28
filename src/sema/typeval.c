@@ -919,6 +919,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 					if (typeval->complex.imaginary != 0.0)
 						lossy_cast = true;
 					break;
+				case OFC_SEMA_TYPE_INTEGER:
 				case OFC_SEMA_TYPE_BYTE:
 					tv.integer = typeval->integer;
 					break;
