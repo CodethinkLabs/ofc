@@ -33,16 +33,16 @@ static ofc_parse_call_arg_t* ofc_parse__call_arg(
 		}
 	}
 
+	call_arg->expr = NULL;
 	bool was_asterisk = (ptr[i] == '*');
-	if (was_asterisk
-		|| (ptr[i] == '&'))
+	if (was_asterisk || (ptr[i] == '&'))
 	{
 		i += 1;
 
-		unsigned l = ofc_parse_label(
-			src, &ptr[i], debug,
-			&call_arg->label);
-		if (l == 0)
+		unsigned l;
+		call_arg->expr = ofc_parse_expr_integer_variable(
+			src, &ptr[i], debug, &l);
+		if (!call_arg->expr)
 		{
 			if (!was_asterisk)
 			{
@@ -116,8 +116,7 @@ void ofc_parse_call_arg_delete(
 	if (!call_arg)
 		return;
 
-	if (call_arg->type == OFC_PARSE_CALL_ARG_EXPR)
-		ofc_parse_expr_delete(call_arg->expr);
+	ofc_parse_expr_delete(call_arg->expr);
 	free(call_arg);
 }
 
@@ -148,10 +147,6 @@ bool ofc_parse_call_arg_print(
 	switch (call_arg->type)
 	{
 		case OFC_PARSE_CALL_ARG_RETURN:
-			if (!ofc_parse_label_print(
-				cs, call_arg->label))
-				return false;
-			break;
 		case OFC_PARSE_CALL_ARG_EXPR:
 			if (!ofc_parse_expr_print(
 				cs, call_arg->expr))

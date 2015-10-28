@@ -14,12 +14,7 @@ typedef struct
 
 	ofc_parse_call_arg_e type;
 	ofc_str_ref_t        name;
-
-	union
-	{
-		ofc_parse_expr_t* expr;
-		ofc_parse_label_t label;
-	};
+	ofc_parse_expr_t*    expr;
 } ofc_parse_call_arg_t;
 
 typedef struct
