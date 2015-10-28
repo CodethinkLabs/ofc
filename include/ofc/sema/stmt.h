@@ -7,6 +7,7 @@ typedef enum
 	OFC_SEMA_STMT_WRITE,
 	OFC_SEMA_STMT_CONTINUE,
 	OFC_SEMA_STMT_IF_COMPUTED,
+	OFC_SEMA_STMT_IF_STATEMENT,
 	OFC_SEMA_STMT_STOP,
 	OFC_SEMA_STMT_PAUSE,
 	OFC_SEMA_STMT_GO_TO,
@@ -29,6 +30,12 @@ struct ofc_sema_stmt_s
 			ofc_sema_expr_t*       cond;
 			ofc_sema_expr_list_t*  label;
 		} if_comp;
+
+		struct
+		{
+			ofc_sema_expr_t* cond;
+			ofc_sema_stmt_t* stmt;
+		} if_stmt;
 
 		struct
 		{

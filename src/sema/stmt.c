@@ -46,6 +46,7 @@ ofc_sema_stmt_t* ofc_sema_stmt(
 				scope, stmt);
 			break;
 
+		case OFC_PARSE_STMT_IF_STATEMENT:
 		case OFC_PARSE_STMT_IF_COMPUTED:
 			s = ofc_sema_stmt_if(scope, stmt);
 			break;
