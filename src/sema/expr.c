@@ -729,3 +729,24 @@ bool ofc_sema_expr_validate_uint(
 
 	return true;
 }
+
+bool ofc_sema_expr_resolve_uint(
+	const ofc_sema_expr_t* expr,
+	unsigned* value)
+{
+	const ofc_sema_typeval_t* tv
+		= ofc_sema_expr_constant(expr);
+	if (!tv) return false;
+
+	int64_t i;
+	if (!ofc_sema_typeval_get_integer(tv, &i))
+		return false;
+	if (i < 0) return false;
+
+	unsigned u = i;
+	if (i != u)
+		return false;
+
+	if (value) *value = u;
+	return true;
+}

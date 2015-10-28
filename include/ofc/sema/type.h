@@ -32,7 +32,11 @@ struct ofc_sema_type_s
 			const ofc_sema_type_t* subtype;
 		};
 
-		unsigned kind;
+		struct
+		{
+			unsigned kind;
+			unsigned len;
+		};
 
 		const ofc_sema_structure_t* structure;
 	};

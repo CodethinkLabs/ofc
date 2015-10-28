@@ -87,6 +87,10 @@ bool ofc_sema_expr_is_constant(
 bool ofc_sema_expr_validate_uint(
 	const ofc_sema_expr_t* expr);
 
+bool ofc_sema_expr_resolve_uint(
+	const ofc_sema_expr_t* expr,
+	unsigned* value);
+
 ofc_sema_expr_list_t* ofc_sema_expr_list_create(void);
 void ofc_sema_expr_list_delete(
 	ofc_sema_expr_list_t* list);
