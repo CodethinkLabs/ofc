@@ -142,8 +142,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_if__then(
 {
 	if (!stmt
 		|| (stmt->type != OFC_PARSE_STMT_IF_THEN)
-		|| !stmt->if_then.cond
-		|| !stmt->if_then.block_then)
+		|| !stmt->if_then.cond)
 		return NULL;
 
 	ofc_sema_stmt_t s;
