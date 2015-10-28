@@ -119,12 +119,69 @@ ofc_sema_stmt_t* ofc_sema_stmt_if__statement(
 		return NULL;
 	}
 
-	ofc_sema_stmt_t* as
-		= ofc_sema_stmt_alloc(s);
+	ofc_sema_stmt_t* as = ofc_sema_stmt_alloc(s);
 	if (!as)
 	{
 		ofc_sema_expr_delete(s.if_stmt.cond);
 		ofc_sema_stmt_delete(s.if_stmt.stmt);
+		return NULL;
+	}
+
+	return as;
+}
+
+ofc_sema_stmt_t* ofc_sema_stmt_if__then(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt)
+{
+	if (!stmt
+		|| (stmt->type != OFC_PARSE_STMT_IF_THEN)
+		|| !stmt->if_then.cond
+		|| !stmt->if_then.block_then)
+		return NULL;
+
+	ofc_sema_stmt_t s;
+	s.type = OFC_SEMA_STMT_IF_THEN;
+
+	s.if_then.cond = ofc_sema_expr(
+		scope, stmt->if_then.cond);
+	if (!s.if_then.cond)
+		return NULL;
+
+	const ofc_sema_type_t* type
+		= ofc_sema_expr_type(s.if_then.cond);
+	if (!ofc_sema_type_is_logical(type))
+	{
+		ofc_sema_expr_delete(s.if_then.cond);
+		return NULL;
+	}
+
+	s.if_then.scope_then = ofc_sema_scope_if(
+		scope, stmt, stmt->if_then.block_then);
+	if (!s.if_then.scope_then)
+	{
+		ofc_sema_expr_delete(s.if_then.cond);
+		return NULL;
+	}
+
+	if (stmt->if_then.block_else)
+	{
+		s.if_then.scope_else = ofc_sema_scope_if(
+			scope, stmt, stmt->if_then.block_else);
+		if (!s.if_then.scope_else)
+		{
+			ofc_sema_expr_delete(s.if_then.cond);
+			ofc_sema_scope_delete(s.if_then.scope_then);
+			return NULL;
+		}
+	}
+
+	ofc_sema_stmt_t* as = ofc_sema_stmt_alloc(s);
+	if (!as)
+	{
+		ofc_sema_expr_delete(s.if_then.cond);
+		ofc_sema_scope_delete(s.if_then.scope_then);
+		ofc_sema_scope_delete(s.if_then.scope_else);
 		return NULL;
 	}
 
@@ -144,6 +201,8 @@ ofc_sema_stmt_t* ofc_sema_stmt_if(
 			return ofc_sema_stmt_if__computed(scope, stmt);
 		case OFC_PARSE_STMT_IF_STATEMENT:
 			return ofc_sema_stmt_if__statement(scope, stmt);
+		case OFC_PARSE_STMT_IF_THEN:
+			return ofc_sema_stmt_if__then(scope, stmt);
 		default:
 			break;
 	}

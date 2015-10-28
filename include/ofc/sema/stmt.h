@@ -8,6 +8,7 @@ typedef enum
 	OFC_SEMA_STMT_CONTINUE,
 	OFC_SEMA_STMT_IF_COMPUTED,
 	OFC_SEMA_STMT_IF_STATEMENT,
+	OFC_SEMA_STMT_IF_THEN,
 	OFC_SEMA_STMT_STOP,
 	OFC_SEMA_STMT_PAUSE,
 	OFC_SEMA_STMT_GO_TO,
@@ -36,6 +37,13 @@ struct ofc_sema_stmt_s
 			ofc_sema_expr_t* cond;
 			ofc_sema_stmt_t* stmt;
 		} if_stmt;
+
+		struct
+		{
+			ofc_sema_expr_t* cond;
+			ofc_sema_scope_t* scope_then;
+			ofc_sema_scope_t* scope_else;
+		} if_then;
 
 		struct
 		{

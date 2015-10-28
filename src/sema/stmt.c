@@ -46,6 +46,7 @@ ofc_sema_stmt_t* ofc_sema_stmt(
 				scope, stmt);
 			break;
 
+		case OFC_PARSE_STMT_IF_THEN:
 		case OFC_PARSE_STMT_IF_STATEMENT:
 		case OFC_PARSE_STMT_IF_COMPUTED:
 			s = ofc_sema_stmt_if(scope, stmt);
@@ -158,6 +159,12 @@ void ofc_sema_stmt_delete(
 				stmt->if_comp.cond);
 			ofc_sema_expr_list_delete(
 				stmt->if_comp.label);
+			break;
+		case OFC_SEMA_STMT_IF_THEN:
+			ofc_sema_expr_delete(
+				stmt->if_then.cond);
+			ofc_sema_scope_delete(
+				stmt->if_then.scope_then);
 			break;
 		case OFC_SEMA_STMT_STOP:
 		case OFC_SEMA_STMT_PAUSE:

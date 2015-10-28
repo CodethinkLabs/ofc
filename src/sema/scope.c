@@ -258,6 +258,29 @@ ofc_sema_scope_t* ofc_sema_scope_function(
 	return NULL;
 }
 
+ofc_sema_scope_t* ofc_sema_scope_if(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt,
+	const ofc_parse_stmt_list_t* block)
+{
+	if (!stmt || !scope
+		|| (stmt->type != OFC_PARSE_STMT_IF_THEN))
+		return NULL;
+
+	ofc_sema_scope_t* if_scope
+		= ofc_sema_scope__create(
+			scope, NULL, NULL, OFC_SEMA_SCOPE_IF);
+	if (!if_scope) return NULL;
+
+	if (!ofc_sema_scope__body(scope, block))
+	{
+		ofc_sema_scope_delete(if_scope);
+		return NULL;
+	}
+
+	return if_scope;
+}
+
 ofc_sema_scope_t* ofc_sema_scope_block_data(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt)

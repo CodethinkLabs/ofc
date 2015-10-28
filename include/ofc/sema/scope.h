@@ -9,6 +9,7 @@ typedef enum
 	OFC_SEMA_SCOPE_SUBROUTINE,
 	OFC_SEMA_SCOPE_FUNCTION,
 	OFC_SEMA_SCOPE_BLOCK_DATA,
+	OFC_SEMA_SCOPE_IF,
 
 	OFC_SEMA_SCOPE_COUNT
 } ofc_sema_scope_e;
@@ -62,6 +63,10 @@ ofc_sema_scope_t* ofc_sema_scope_function(
 ofc_sema_scope_t* ofc_sema_scope_block_data(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
+ofc_sema_scope_t* ofc_sema_scope_if(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt,
+	const ofc_parse_stmt_list_t* block);
 
 void ofc_sema_scope_delete(
 	ofc_sema_scope_t* scope);
