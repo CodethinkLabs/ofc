@@ -590,49 +590,6 @@ ofc_sema_expr_t* ofc_sema_expr(
 	return NULL;
 }
 
-ofc_sema_expr_t* ofc_sema_expr_label(
-	const ofc_sema_scope_t* scope,
-	const ofc_parse_label_t* label)
-{
-	if (!label)
-		return NULL;
-
-	if (label->type == OFC_PARSE_LABEL_VARIABLE)
-	{
-		const ofc_sema_decl_t* decl = NULL;
-		if (scope->decl)
-			decl = ofc_hashmap_find(
-				scope->decl->map, &label->variable);
-		if (!decl) return NULL;
-
-		ofc_sema_expr_t* expr
-			= ofc_sema_expr__create(
-				OFC_SEMA_EXPR_DECL);
-		if (!expr) return NULL;
-
-		expr->decl = decl;
-		expr->src = label->variable;
-		return expr;
-	}
-
-	ofc_sema_expr_t* expr
-		= ofc_sema_expr__create(
-			OFC_SEMA_EXPR_CONSTANT);
-	if (!expr) return NULL;
-
-	expr->constant = ofc_sema_typeval_unsigned(
-		label->number, OFC_STR_REF_EMPTY);
-	if (!expr->constant)
-	{
-		ofc_sema_expr_delete(expr);
-		return NULL;
-	}
-
-	/* TODO - Get position from label number. */
-	expr->src = OFC_STR_REF_EMPTY;
-	return expr;
-}
-
 void ofc_sema_expr_delete(
 	ofc_sema_expr_t* expr)
 {

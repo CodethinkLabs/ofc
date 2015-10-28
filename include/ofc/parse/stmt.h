@@ -146,9 +146,8 @@ struct ofc_parse_stmt_s
 
 		struct
 		{
-			ofc_parse_expr_t*  cond;
-			unsigned           label_count;
-			ofc_parse_label_t* label;
+			ofc_parse_expr_t*      cond;
+			ofc_parse_expr_list_t* label;
 		} if_comp;
 
 		struct

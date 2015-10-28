@@ -294,7 +294,7 @@ static void ofc_parse_stmt__cleanup(
 			break;
 		case OFC_PARSE_STMT_IF_COMPUTED:
 			ofc_parse_expr_delete(stmt.if_comp.cond);
-			free(stmt.if_comp.label);
+			ofc_parse_expr_list_delete(stmt.if_comp.label);
 			break;
 		case OFC_PARSE_STMT_IF_STATEMENT:
 			ofc_parse_expr_delete(stmt.if_stmt.cond);

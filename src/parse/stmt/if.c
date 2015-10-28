@@ -6,50 +6,13 @@ static unsigned ofc_parse_stmt_if__computed(
 	ofc_parse_expr_t* cond,
 	ofc_parse_stmt_t* stmt)
 {
-	unsigned dpos = ofc_parse_debug_position(debug);
-
-	ofc_parse_label_t label;
-	unsigned i = ofc_parse_label(
-		src, ptr, debug, &label);
-	if (i == 0) return 0;
+	unsigned i;
+	stmt->if_comp.label
+		= ofc_parse_expr_list(src, ptr, debug, &i);
+	if (!stmt->if_comp.label) return 0;
 
 	stmt->type = OFC_PARSE_STMT_IF_COMPUTED;
 	stmt->if_comp.cond = cond;
-
-	stmt->if_comp.label_count = 1;
-	stmt->if_comp.label = (ofc_parse_label_t*)malloc(
-		sizeof(ofc_parse_label_t) * stmt->if_comp.label_count);
-	if (!stmt->if_comp.label)
-	{
-		ofc_parse_expr_delete(
-			stmt->if_comp.cond);
-		ofc_parse_debug_rewind(debug, dpos);
-		return 0;
-	}
-	stmt->if_comp.label[0] = label;
-
-	while (ptr[i] == ',')
-	{
-		unsigned j = (i + 1);
-		unsigned len = ofc_parse_label(
-			src, &ptr[j], debug, &label);
-		if (len == 0) break;
-
-		ofc_parse_label_t* nlabel = (ofc_parse_label_t*)realloc(stmt->if_comp.label,
-			sizeof(ofc_parse_label_t) * (stmt->if_comp.label_count + 1));
-		if (!nlabel)
-		{
-			free(stmt->if_comp.label);
-			ofc_parse_expr_delete(
-				stmt->if_comp.cond);
-			ofc_parse_debug_rewind(debug, dpos);
-			return 0;
-		}
-		stmt->if_comp.label = nlabel;
-		stmt->if_comp.label[stmt->if_comp.label_count++] = label;
-		i = (j + len);
-	}
-
 	return i;
 }
 
@@ -293,16 +256,9 @@ bool ofc_parse_stmt_if_print(
 	{
 		if (!ofc_colstr_atomic_writef(cs, "IF (")
 			|| !ofc_parse_expr_print(cs, stmt->if_comp.cond)
-			|| !ofc_colstr_atomic_writef(cs, ")"))
+			|| !ofc_colstr_atomic_writef(cs, ") ")
+			|| !ofc_parse_expr_list_print(cs, stmt->if_comp.label))
 			return false;
-
-		unsigned i;
-		for (i = 0; i < stmt->if_comp.label_count; i++)
-		{
-			if (!ofc_colstr_atomic_writef(cs, (i > 0 ? ", " : " "))
-				|| !ofc_parse_label_print(cs ,stmt->if_comp.label[i]))
-				return false;
-		}
 	}
 	else if (stmt->type == OFC_PARSE_STMT_IF_STATEMENT)
 	{

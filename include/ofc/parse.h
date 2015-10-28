@@ -17,7 +17,6 @@ typedef struct ofc_parse_implicit_do_s ofc_parse_implicit_do_t;
 #include <ofc/parse/list.h>
 #include <ofc/parse/keyword.h>
 #include <ofc/parse/literal.h>
-#include <ofc/parse/label.h>
 #include <ofc/parse/operator.h>
 #include <ofc/parse/array.h>
 #include <ofc/parse/lhs.h>

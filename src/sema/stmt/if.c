@@ -8,7 +8,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_if__computed(
 		|| (stmt->type != OFC_PARSE_STMT_IF_COMPUTED)
 		|| !stmt->if_comp.cond
 		|| !stmt->if_comp.label
-		|| (stmt->if_comp.label_count != 3))
+		|| (stmt->if_comp.label->count != 3))
 		return NULL;
 
 	ofc_sema_stmt_t s;
@@ -36,11 +36,10 @@ ofc_sema_stmt_t* ofc_sema_stmt_if__computed(
 	}
 
 	unsigned i;
-	for (i = 0; i < stmt->if_comp.label_count; i++)
+	for (i = 0; i < stmt->if_comp.label->count; i++)
 	{
-		ofc_sema_expr_t* label
-			= ofc_sema_expr_label(
-				scope, &stmt->if_comp.label[i]);
+		ofc_sema_expr_t* label = ofc_sema_expr(
+			scope, stmt->if_comp.label->expr[i]);
 		if (!ofc_sema_expr_list_add(
 			s.if_comp.label, label))
 		{
