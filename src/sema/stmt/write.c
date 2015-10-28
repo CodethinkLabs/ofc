@@ -11,6 +11,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 		return NULL;
 
 	ofc_sema_stmt_t s;
+	s.type = OFC_SEMA_STMT_WRITE;
 	s.io_write.unit        = NULL;
 	s.io_write.stdout      = false;
 	s.io_write.format_expr = NULL;

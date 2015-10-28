@@ -128,6 +128,20 @@ void ofc_sema_stmt_delete(
 			ofc_sema_expr_delete(
 				stmt->assignment.expr);
 			break;
+		case OFC_SEMA_STMT_WRITE:
+			ofc_sema_expr_delete(
+				stmt->io_write.unit);
+			ofc_sema_expr_delete(
+				stmt->io_write.format_expr);
+			ofc_sema_format_delete(
+				stmt->io_write.format);
+			ofc_sema_expr_delete(
+				stmt->io_write.iostat);
+			ofc_sema_expr_delete(
+				stmt->io_write.rec);
+			ofc_sema_expr_delete(
+				stmt->io_write.err);
+			break;
 		case OFC_SEMA_STMT_IF_COMPUTED:
 			ofc_sema_expr_delete(
 				stmt->if_comp.cond);

@@ -12,7 +12,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_if__computed(
 		return NULL;
 
 	ofc_sema_stmt_t s;
-
+	s.type = OFC_SEMA_STMT_IF_COMPUTED;
 	s.if_comp.cond = ofc_sema_expr(
 		scope, stmt->if_comp.cond);
 
