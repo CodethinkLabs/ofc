@@ -6,10 +6,22 @@ ofc_sema_stmt_t* ofc_sema_stmt_if__computed(
 {
 	if (!stmt
 		|| (stmt->type != OFC_PARSE_STMT_IF_COMPUTED)
-		|| !stmt->if_comp.cond
-		|| !stmt->if_comp.label
-		|| (stmt->if_comp.label->count != 3))
+		|| !stmt->if_comp.cond)
 		return NULL;
+
+	if (!stmt->if_comp.label
+		|| (stmt->if_comp.label->count < 3))
+	{
+		ofc_sema_scope_error(scope, stmt->src,
+			"Not enough targets in arithmetic IF statement.");
+		return NULL;
+	}
+	else if (stmt->if_comp.label->count > 3)
+	{
+		ofc_sema_scope_error(scope, stmt->src,
+			"Too many targets in arithmetic IF statement.");
+		return NULL;
+	}
 
 	ofc_sema_stmt_t s;
 	s.type = OFC_SEMA_STMT_IF_COMPUTED;
