@@ -6,6 +6,8 @@ typedef enum
 	OFC_SEMA_STMT_ASSIGNMENT = 0,
 	OFC_SEMA_STMT_CONTINUE,
 	OFC_SEMA_STMT_IF_COMPUTED,
+	OFC_SEMA_STMT_STOP,
+	OFC_SEMA_STMT_PAUSE,
 } ofc_sema_stmt_e;
 
 struct ofc_sema_stmt_s
@@ -40,6 +42,11 @@ struct ofc_sema_stmt_s
 			ofc_sema_expr_t* rec;
 			ofc_sema_expr_t* err;
 		} io_write;
+
+		struct
+		{
+			ofc_sema_expr_t* str;
+		} stop_pause;
 	};
 };
 
@@ -60,6 +67,9 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
 ofc_sema_stmt_t* ofc_sema_stmt_if(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt);
+ofc_sema_stmt_t* ofc_sema_stmt_stop_pause(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
 
