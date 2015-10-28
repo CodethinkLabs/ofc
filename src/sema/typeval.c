@@ -123,25 +123,40 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 	ofc_sema_typeval_t typeval
 		= { .type = type, .integer = 0 };
 
+	bool out_of_range = false;
+	uint64_t uvalue = 0;
 	unsigned digit;
 	for (; (i < size) && is_base_digit(ptr[i], base, &digit); i++)
 	{
-		int64_t nvalue = (typeval.integer * base) + digit;
-		if (((nvalue / base) != typeval.integer)
+		uint64_t nvalue = (uvalue * base) + digit;
+		if (((nvalue / base) != uvalue)
 			|| ((nvalue % base) != digit))
-		{
-			ofc_sema_scope_error(scope, literal->src,
-				"Out of range for compiler");
-			return NULL;
-		}
+			out_of_range = true;
 
-		typeval.integer = nvalue;
+		uvalue = nvalue;
 
-		if (negate)
-		{
-			typeval.integer = -typeval.integer;
-			negate = false;
-		}
+	}
+
+	uint64_t smax = (1LL << ((sizeof(typeval.integer) * 8) - 1));
+
+	if (negate)
+	{
+		if (uvalue > smax)
+			out_of_range = true;
+		typeval.integer = -uvalue;
+	}
+	else
+	{
+		if (uvalue >= smax)
+			out_of_range = true;
+		typeval.integer = uvalue;
+	}
+
+	if (out_of_range)
+	{
+		ofc_sema_scope_error(scope, literal->src,
+			"Out of range for compiler");
+		return NULL;
 	}
 
 	unsigned kind = 0;
