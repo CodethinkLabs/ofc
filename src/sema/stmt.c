@@ -128,6 +128,21 @@ void ofc_sema_stmt_delete(
 			ofc_sema_expr_delete(
 				stmt->assignment.expr);
 			break;
+		case OFC_SEMA_STMT_IF_COMPUTED:
+			ofc_sema_expr_delete(
+				stmt->if_comp.cond);
+			ofc_sema_expr_list_delete(
+				stmt->if_comp.label);
+			break;
+		case OFC_SEMA_STMT_STOP:
+		case OFC_SEMA_STMT_PAUSE:
+			ofc_sema_expr_delete(
+				stmt->stop_pause.str);
+			break;
+		case OFC_SEMA_STMT_GO_TO:
+			ofc_sema_expr_delete(
+				stmt->go_to.label);
+			break;
 		default:
 			break;
 	}
