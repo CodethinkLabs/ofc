@@ -166,7 +166,7 @@ struct ofc_parse_stmt_s
 
 		struct
 		{
-			ofc_parse_label_t   end_label;
+			ofc_parse_expr_t*   end_label;
 			ofc_parse_assign_t* init;
 			ofc_parse_expr_t*   last;
 			ofc_parse_expr_t*   step;
@@ -182,7 +182,7 @@ struct ofc_parse_stmt_s
 
 		struct
 		{
-			ofc_parse_label_t end_label;
+			ofc_parse_expr_t* end_label;
 			ofc_parse_expr_t* cond;
 		} do_while;
 

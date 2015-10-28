@@ -306,6 +306,7 @@ static void ofc_parse_stmt__cleanup(
 			ofc_parse_stmt_list_delete(stmt.if_then.block_else);
 			break;
 		case OFC_PARSE_STMT_DO_LABEL:
+			ofc_parse_expr_delete(stmt.do_label.end_label);
 			ofc_parse_assign_delete(stmt.do_label.init);
 			ofc_parse_expr_delete(stmt.do_label.last);
 			ofc_parse_expr_delete(stmt.do_label.step);
@@ -317,6 +318,7 @@ static void ofc_parse_stmt__cleanup(
 			ofc_parse_stmt_list_delete(stmt.do_block.block);
 			break;
 		case OFC_PARSE_STMT_DO_WHILE:
+			ofc_parse_expr_delete(stmt.do_label.end_label);
 			ofc_parse_expr_delete(stmt.do_while.cond);
 			break;
 		case OFC_PARSE_STMT_DO_WHILE_BLOCK:

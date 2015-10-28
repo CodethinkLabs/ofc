@@ -89,10 +89,12 @@ unsigned ofc_parse_stmt__do_while(
 {
 	unsigned dpos = ofc_parse_debug_position(debug);
 
-	unsigned i = ofc_parse_label(
-		src, ptr, debug,
-		&stmt->do_while.end_label);
-	if (i == 0) return 0;
+	unsigned i;
+	stmt->do_while.end_label
+		= ofc_parse_expr_integer_variable(
+			src, ptr, debug, &i);
+	if (!stmt->do_while.end_label)
+		return 0;
 
 	if (ptr[i] == ',')
 		i += 1;
@@ -140,17 +142,19 @@ unsigned ofc_parse_stmt__do_label(
 {
 	unsigned dpos = ofc_parse_debug_position(debug);
 
-	unsigned i = ofc_parse_label(
-		src, ptr, debug,
-		&stmt->do_label.end_label);
-	if (i == 0) return 0;
+	unsigned i;
+	stmt->do_label.end_label
+		= ofc_parse_expr_integer_variable(
+			src, ptr, debug, &i);
+	if (!stmt->do_label.end_label)
+		return 0;
 
 	if (ptr[i] != ',')
 	{
 		/* We only support numeric labels without a comma,
 		   because identifiers would be ambiguous. */
-		if (stmt->do_label.end_label.type
-			!= OFC_PARSE_LABEL_NUMBER)
+		if (stmt->do_label.end_label->type
+			!= OFC_PARSE_EXPR_CONSTANT)
 		{
 			ofc_parse_debug_rewind(debug, dpos);
 			return 0;
@@ -379,7 +383,7 @@ bool ofc_parse_stmt__do_while_print(
 	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt)
 {
 	return (ofc_colstr_atomic_writef(cs, "DO ")
-		&& ofc_parse_label_print(cs, stmt->do_while.end_label)
+		&& ofc_parse_expr_print(cs, stmt->do_while.end_label)
 		&& ofc_colstr_atomic_writef(cs, ", WHILE(")
 		&& ofc_parse_expr_print(cs, stmt->do_while.cond)
 		&& ofc_colstr_atomic_writef(cs, ")"));
@@ -389,7 +393,7 @@ bool ofc_parse_stmt__do_label_print(
 	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt)
 {
 	if (!ofc_colstr_atomic_writef(cs, "DO ")
-		|| !ofc_parse_label_print(cs, stmt->do_label.end_label)
+		|| !ofc_parse_expr_print(cs, stmt->do_label.end_label)
 		|| !ofc_colstr_atomic_writef(cs, ", ")
 		|| !ofc_parse_assign_print(cs, stmt->do_label.init)
 		|| !ofc_colstr_atomic_writef(cs, ", ")
