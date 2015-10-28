@@ -165,14 +165,19 @@ ofc_sema_stmt_t* ofc_sema_stmt_if__then(
 		return NULL;
 	}
 
-	s.if_then.scope_then = ofc_sema_scope_if(
-		scope, stmt, stmt->if_then.block_then);
-	if (!s.if_then.scope_then)
+	s.if_then.scope_then = NULL;
+	if (stmt->if_then.block_then)
 	{
-		ofc_sema_expr_delete(s.if_then.cond);
-		return NULL;
+		s.if_then.scope_then = ofc_sema_scope_if(
+			scope, stmt, stmt->if_then.block_then);
+		if (!s.if_then.scope_then)
+		{
+			ofc_sema_expr_delete(s.if_then.cond);
+			return NULL;
+		}
 	}
 
+	s.if_then.scope_else = NULL;
 	if (stmt->if_then.block_else)
 	{
 		s.if_then.scope_else = ofc_sema_scope_if(
