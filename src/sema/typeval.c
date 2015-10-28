@@ -1195,7 +1195,10 @@ ofc_sema_typeval_t* ofc_sema_typeval_concat(
 	if (b->type->len == 0)
 		return ofc_sema_typeval_copy(a);
 
-	unsigned len = (a->type->len + b->type->len);
+	unsigned len_a = a->type->len * a->type->kind;
+	unsigned len_b = b->type->len * b->type->kind;
+
+	unsigned len = len_a + len_b;
 
 	ofc_sema_typeval_t tv;
 	tv.type = ofc_sema_type_create_primitive(
@@ -1206,8 +1209,8 @@ ofc_sema_typeval_t* ofc_sema_typeval_concat(
 	tv.character = (char*)malloc(sizeof(char) * len);
 	if (!tv.character) return NULL;
 
-	memcpy(tv.character, a->character, a->type->len);
-	memcpy(&tv.character[a->type->len], b->character, b->type->len);
+	memcpy(tv.character, a->character, len_a);
+	memcpy(&tv.character[len_a], b->character, len_b);
 
 	ofc_sema_typeval_t* ret
 		= ofc_sema_typeval__alloc(tv);
