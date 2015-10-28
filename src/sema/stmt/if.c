@@ -176,6 +176,11 @@ ofc_sema_stmt_t* ofc_sema_stmt_if__then(
 			return NULL;
 		}
 	}
+	else
+	{
+		ofc_sema_scope_warning(scope, stmt->src,
+			"Empty IF THEN block");
+	}
 
 	s.if_then.scope_else = NULL;
 	if (stmt->if_then.block_else)
