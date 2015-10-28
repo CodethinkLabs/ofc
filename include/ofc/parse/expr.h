@@ -84,4 +84,7 @@ ofc_parse_expr_list_t* ofc_parse_expr_list(
 void ofc_parse_expr_list_delete(
 	ofc_parse_expr_list_t* list);
 
+bool ofc_parse_expr_list_print(
+	ofc_colstr_t* cs, const ofc_parse_expr_list_t* expr);
+
 #endif

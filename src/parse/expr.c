@@ -615,3 +615,53 @@ ofc_parse_expr_t* ofc_parse_expr_copy(
 		ofc_parse_expr__cleanup(copy);
 	return acopy;
 }
+
+
+
+ofc_parse_expr_list_t* ofc_parse_expr_list(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	unsigned* len)
+{
+	ofc_parse_expr_list_t* list
+		= (ofc_parse_expr_list_t*)malloc(
+			sizeof(ofc_parse_expr_list_t));
+	if (!list) return NULL;
+
+	unsigned l = ofc_parse_list(
+		src, ptr, debug,
+		',', &list->count, (void***)&list->expr,
+		(void*)ofc_parse_expr,
+		(void*)ofc_parse_expr_delete);
+	if (l == 0)
+	{
+		free(list);
+		return NULL;
+	}
+
+	if (len) *len = l;
+	return list;
+}
+
+void ofc_parse_expr_list_delete(
+	ofc_parse_expr_list_t* list)
+{
+	if (!list)
+		return;
+
+	ofc_parse_list_delete(
+		list->count, (void**)list->expr,
+		(void*)ofc_parse_expr_delete);
+	free(list);
+}
+
+bool ofc_parse_expr_list_print(
+	ofc_colstr_t* cs, const ofc_parse_expr_list_t* list)
+{
+	if (!list)
+		return false;
+
+	return ofc_parse_list_print(
+		cs, list->count, (const void**)list->expr,
+		(void*)ofc_parse_expr_print);
+}

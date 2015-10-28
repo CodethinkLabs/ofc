@@ -285,7 +285,8 @@ static void ofc_parse_stmt__cleanup(
 				stmt.pointer);
 			break;
 		case OFC_PARSE_STMT_GO_TO_ASSIGNED:
-			free(stmt.go_to_assign.label);
+			ofc_parse_expr_delete(stmt.go_to_assign.cond);
+			ofc_parse_expr_list_delete(stmt.go_to_assign.label);
 			break;
 		case OFC_PARSE_STMT_GO_TO_COMPUTED:
 			free(stmt.go_to_comp.label);
