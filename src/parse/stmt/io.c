@@ -154,7 +154,7 @@ bool ofc_parse_stmt_print_accept_print(
 
 	if (!(stmt->io_print.format_asterisk
 		? ofc_colstr_atomic_writef(cs, "*")
-		: ofc_parse_label_print(cs, stmt->io_print.format)))
+		: ofc_parse_expr_print(cs, stmt->io_print.format)))
 		return false;
 
 	if (stmt->io_print.iolist)
@@ -342,10 +342,12 @@ static unsigned ofc_parse_stmt_io__print_type_accept(
 	if (i == 0) return 0;
 
 	stmt->io_print.format_asterisk = false;
-	unsigned len = ofc_parse_label(
-		src, &ptr[i], debug,
-		&stmt->io_print.format);
-	if (len == 0)
+
+	unsigned len;
+	stmt->io_print.format
+		= ofc_parse_expr_integer_variable(
+			src, &ptr[i], debug, &len);
+	if (!stmt->io_print.format)
 	{
 		if (ptr[i] == '*')
 		{
@@ -369,6 +371,7 @@ static unsigned ofc_parse_stmt_io__print_type_accept(
 			src, &ptr[i], debug, &len);
 		if (!stmt->io_print.iolist)
 		{
+			ofc_parse_expr_delete(stmt->io_print.format);
 			ofc_parse_debug_rewind(debug, dpos);
 			return 0;
 		}

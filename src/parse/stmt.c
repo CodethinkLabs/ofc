@@ -350,6 +350,7 @@ static void ofc_parse_stmt__cleanup(
 		case OFC_PARSE_STMT_IO_PRINT:
 		case OFC_PARSE_STMT_IO_TYPE:
 		case OFC_PARSE_STMT_IO_ACCEPT:
+			ofc_parse_expr_delete(stmt.io_print.format);
 			ofc_parse_iolist_delete(stmt.io_print.iolist);
 			break;
 		case OFC_PARSE_STMT_IO_DEFINE_FILE:

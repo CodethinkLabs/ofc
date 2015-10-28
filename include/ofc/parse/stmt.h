@@ -206,7 +206,7 @@ struct ofc_parse_stmt_s
 
 		struct
 		{
-			ofc_parse_label_t   format;
+			ofc_parse_expr_t*   format;
 			bool                format_asterisk;
 			ofc_parse_iolist_t* iolist;
 		} io_print;

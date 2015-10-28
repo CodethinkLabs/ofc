@@ -104,6 +104,7 @@ unsigned ofc_parse_stmt__do_while(
 		OFC_PARSE_KEYWORD_WHILE);
 	if (len == 0)
 	{
+		ofc_parse_expr_delete(stmt->do_while.end_label);
 		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
@@ -111,6 +112,7 @@ unsigned ofc_parse_stmt__do_while(
 
 	if (ptr[i++] != '(')
 	{
+		ofc_parse_expr_delete(stmt->do_while.end_label);
 		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
@@ -119,6 +121,7 @@ unsigned ofc_parse_stmt__do_while(
 		src, &ptr[i], debug, &len);
 	if (!stmt->do_while.cond)
 	{
+		ofc_parse_expr_delete(stmt->do_while.end_label);
 		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
@@ -127,6 +130,7 @@ unsigned ofc_parse_stmt__do_while(
 	if (ptr[i++] != ')')
 	{
 		ofc_parse_expr_delete(stmt->do_while.cond);
+		ofc_parse_expr_delete(stmt->do_while.end_label);
 		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
@@ -156,6 +160,7 @@ unsigned ofc_parse_stmt__do_label(
 		if (stmt->do_label.end_label->type
 			!= OFC_PARSE_EXPR_CONSTANT)
 		{
+			ofc_parse_expr_delete(stmt->do_label.end_label);
 			ofc_parse_debug_rewind(debug, dpos);
 			return 0;
 		}
@@ -171,6 +176,7 @@ unsigned ofc_parse_stmt__do_label(
 			src, &ptr[i], debug, &len);
 	if (!stmt->do_label.init)
 	{
+		ofc_parse_expr_delete(stmt->do_label.end_label);
 		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
@@ -183,6 +189,7 @@ unsigned ofc_parse_stmt__do_label(
 	if (ptr[i++] != ',')
 	{
 		ofc_parse_assign_delete(stmt->do_label.init);
+		ofc_parse_expr_delete(stmt->do_label.end_label);
 		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
@@ -192,6 +199,7 @@ unsigned ofc_parse_stmt__do_label(
 	if (!stmt->do_label.last)
 	{
 		ofc_parse_assign_delete(stmt->do_label.init);
+		ofc_parse_expr_delete(stmt->do_label.end_label);
 		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
@@ -207,6 +215,7 @@ unsigned ofc_parse_stmt__do_label(
 		{
 			ofc_parse_expr_delete(stmt->do_label.last);
 			ofc_parse_assign_delete(stmt->do_label.init);
+			ofc_parse_expr_delete(stmt->do_label.end_label);
 			ofc_parse_debug_rewind(debug, dpos);
 			return 0;
 		}
