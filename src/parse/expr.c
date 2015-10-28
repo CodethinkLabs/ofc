@@ -628,6 +628,9 @@ ofc_parse_expr_list_t* ofc_parse_expr_list(
 			sizeof(ofc_parse_expr_list_t));
 	if (!list) return NULL;
 
+	list->count = 0;
+	list->expr = NULL;
+
 	unsigned l = ofc_parse_list(
 		src, ptr, debug,
 		',', &list->count, (void***)&list->expr,
