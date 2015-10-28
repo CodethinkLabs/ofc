@@ -172,7 +172,8 @@ static bool ofc_sema_scope__body(
 				break;
 
 			default:
-				if (!ofc_sema_stmt(scope, stmt))
+				if (!ofc_sema_stmt_scoped(
+					scope, stmt))
 					return false;
 				break;
 		}

@@ -25,24 +25,10 @@ static ofc_sema_stmt_t* ofc_sema_stmt_simple(
 }
 
 
-bool ofc_sema_stmt(
+ofc_sema_stmt_t* ofc_sema_stmt(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt)
 {
-	if (!stmt)
-		return false;
-
-	if (stmt->label != 0)
-	{
-		if (ofc_sema_label_map_find(
-			scope->label, stmt->label))
-		{
-			ofc_sema_scope_error(scope, stmt->src,
-				"Duplicate label definition");
-			return false;
-		}
-	}
-
 	ofc_sema_stmt_t* s = NULL;
 	switch (stmt->type)
 	{
@@ -76,8 +62,32 @@ bool ofc_sema_stmt(
 		default:
 			ofc_sema_scope_error(scope, stmt->src,
 				"Unsuported statement");
-			return false;
+			break;
 	}
+
+	return s;
+}
+
+bool ofc_sema_stmt_scoped(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt)
+{
+	if (!stmt)
+		return false;
+
+	if (stmt->label != 0)
+	{
+		if (ofc_sema_label_map_find(
+			scope->label, stmt->label))
+		{
+			ofc_sema_scope_error(scope, stmt->src,
+				"Duplicate label definition");
+			return false;
+		}
+	}
+
+	ofc_sema_stmt_t* s
+		= ofc_sema_stmt(scope, stmt);
 
 	/* Statement analysis failed,
 	   should already have printed an error. */
