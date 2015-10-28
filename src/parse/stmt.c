@@ -284,13 +284,13 @@ static void ofc_parse_stmt__cleanup(
 			ofc_parse_pointer_list_delete(
 				stmt.pointer);
 			break;
-		case OFC_PARSE_STMT_GO_TO_ASSIGNED:
-			ofc_parse_expr_delete(stmt.go_to_assign.cond);
-			ofc_parse_expr_list_delete(stmt.go_to_assign.label);
+		case OFC_PARSE_STMT_GO_TO:
+			ofc_parse_expr_delete(stmt.go_to.label);
 			break;
+		case OFC_PARSE_STMT_GO_TO_ASSIGNED:
 		case OFC_PARSE_STMT_GO_TO_COMPUTED:
-			free(stmt.go_to_comp.label);
-			ofc_parse_expr_delete(stmt.go_to_comp.cond);
+			ofc_parse_expr_delete(stmt.go_to_list.cond);
+			ofc_parse_expr_list_delete(stmt.go_to_list.label);
 			break;
 		case OFC_PARSE_STMT_IF_COMPUTED:
 			ofc_parse_expr_delete(stmt.if_comp.cond);

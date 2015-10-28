@@ -11,8 +11,8 @@ ofc_sema_stmt_t* ofc_sema_stmt_go_to(
 
 	ofc_sema_stmt_t s;
 	s.type = OFC_SEMA_STMT_GO_TO;
-	s.go_to.label = ofc_sema_expr_label(
-		scope, &stmt->go_to.label);
+	s.go_to.label = ofc_sema_expr(
+		scope, stmt->go_to.label);
 	if (!s.go_to.label) return NULL;
 
 	if (!ofc_sema_expr_validate_uint(s.go_to.label))

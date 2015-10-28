@@ -135,20 +135,13 @@ struct ofc_parse_stmt_s
 
 		struct
 		{
-			ofc_parse_expr_t*  cond;
-			unsigned           label_count;
-			ofc_parse_label_t* label;
-		} go_to_comp;
-
-		struct
-		{
 			ofc_parse_expr_t*      cond;
 			ofc_parse_expr_list_t* label;
-		} go_to_assign;
+		} go_to_list;
 
 		struct
 		{
-			ofc_parse_label_t label;
+			ofc_parse_expr_t* label;
 		} go_to;
 
 		struct
