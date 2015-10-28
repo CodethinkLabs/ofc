@@ -8,6 +8,7 @@ typedef enum
 	OFC_SEMA_STMT_IF_COMPUTED,
 	OFC_SEMA_STMT_STOP,
 	OFC_SEMA_STMT_PAUSE,
+	OFC_SEMA_STMT_GO_TO,
 } ofc_sema_stmt_e;
 
 struct ofc_sema_stmt_s
@@ -47,6 +48,11 @@ struct ofc_sema_stmt_s
 		{
 			ofc_sema_expr_t* str;
 		} stop_pause;
+
+		struct
+		{
+			ofc_sema_expr_t* label;
+		} go_to;
 	};
 };
 
@@ -70,6 +76,9 @@ ofc_sema_stmt_t* ofc_sema_stmt_if(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
 ofc_sema_stmt_t* ofc_sema_stmt_stop_pause(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt);
+ofc_sema_stmt_t* ofc_sema_stmt_go_to(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
 

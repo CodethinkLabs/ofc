@@ -69,6 +69,10 @@ bool ofc_sema_stmt(
 			s = ofc_sema_stmt_stop_pause(scope, stmt);
 			break;
 
+		case OFC_PARSE_STMT_GO_TO:
+			s = ofc_sema_stmt_go_to(scope, stmt);
+			break;
+
 		default:
 			ofc_sema_scope_error(scope, stmt->src,
 				"Unsuported statement");
