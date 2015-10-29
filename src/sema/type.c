@@ -91,6 +91,10 @@ static const ofc_sema_type_t* ofc_sema_type__key(
 	return type;
 }
 
+static void ofc_sema_type__map_cleanup(void)
+{
+	ofc_hashmap_delete(ofc_sema_type__map);
+}
 
 static const ofc_sema_type_t* ofc_sema_type__create(
 	ofc_sema_type_e type,
@@ -111,6 +115,8 @@ static const ofc_sema_type_t* ofc_sema_type__create(
 			(void*)ofc_sema_type__delete);
 		if (!ofc_sema_type__map)
 			return NULL;
+
+		atexit(ofc_sema_type__map_cleanup);
 	}
 
 	ofc_sema_type_t stype =
