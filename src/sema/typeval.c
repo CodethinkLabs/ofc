@@ -803,6 +803,8 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 		}
 		else if (typeval->type->kind < type->kind)
 		{
+			ofc_sema_scope_error(scope, typeval->src,
+				"Casting CHARACTER to a larger kind not yet supported.");
 			/* TODO - Support casting to a bigger kind. */
 			return NULL;
 		}
@@ -823,14 +825,14 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 			memcpy(tv.character, typeval->character,
 				(len_tval * kind));
 
-			unsigned pad_char, pad_byte;
+			unsigned pad_char;
 			for (pad_char = len_tval; pad_char < len_type; pad_char += kind)
 			{
 				tv.character[pad_char] = ' ';
+
+				unsigned pad_byte;
 				for(pad_byte = 1; pad_byte < kind; pad_byte++)
-				{
 					tv.character[pad_char + pad_byte] = '\0';
-				}
 			}
 		}
 
