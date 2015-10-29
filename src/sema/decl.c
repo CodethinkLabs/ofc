@@ -183,7 +183,7 @@ void ofc_sema_decl_delete(
 			free(decl->equiv);
 	}
 
-	free(decl->init);
+	ofc_sema_typeval_delete(decl->init);
 	free(decl);
 }
 
