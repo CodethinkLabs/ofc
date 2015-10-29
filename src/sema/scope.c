@@ -165,6 +165,33 @@ static bool ofc_sema_scope__body(
 					return false;
 				break;
 
+			case OFC_PARSE_STMT_DATA:
+				if (!ofc_sema_stmt_data(scope, stmt))
+					return false;
+				break;
+
+			case OFC_PARSE_STMT_ENTRY:
+			case OFC_PARSE_STMT_DIMENSION:
+			case OFC_PARSE_STMT_EQUIVALENCE:
+			case OFC_PARSE_STMT_COMMON:
+			case OFC_PARSE_STMT_NAMELIST:
+			case OFC_PARSE_STMT_DECL_ATTR_EXTERNAL:
+			case OFC_PARSE_STMT_DECL_ATTR_INTRINSIC:
+			case OFC_PARSE_STMT_DECL_ATTR_AUTOMATIC:
+			case OFC_PARSE_STMT_DECL_ATTR_STATIC:
+			case OFC_PARSE_STMT_DECL_ATTR_VOLATILE:
+			case OFC_PARSE_STMT_POINTER:
+			case OFC_PARSE_STMT_TYPE:
+			case OFC_PARSE_STMT_STRUCTURE:
+			case OFC_PARSE_STMT_UNION:
+			case OFC_PARSE_STMT_MAP:
+			case OFC_PARSE_STMT_RECORD:
+			case OFC_PARSE_STMT_SAVE:
+				ofc_sema_scope_error(scope, stmt->src,
+					"Unsuported statement");
+				/* TODO - Support these statements. */
+				return false;
+
 			default:
 				has_exec_stmt = true;
 				if (!ofc_sema_stmt_scoped_decl(
@@ -206,6 +233,24 @@ static bool ofc_sema_scope__body(
 				case OFC_PARSE_STMT_IMPLICIT:
 				case OFC_PARSE_STMT_DECL:
 				case OFC_PARSE_STMT_FORMAT:
+				case OFC_PARSE_STMT_DATA:
+				case OFC_PARSE_STMT_ENTRY:
+				case OFC_PARSE_STMT_DIMENSION:
+				case OFC_PARSE_STMT_EQUIVALENCE:
+				case OFC_PARSE_STMT_COMMON:
+				case OFC_PARSE_STMT_NAMELIST:
+				case OFC_PARSE_STMT_DECL_ATTR_EXTERNAL:
+				case OFC_PARSE_STMT_DECL_ATTR_INTRINSIC:
+				case OFC_PARSE_STMT_DECL_ATTR_AUTOMATIC:
+				case OFC_PARSE_STMT_DECL_ATTR_STATIC:
+				case OFC_PARSE_STMT_DECL_ATTR_VOLATILE:
+				case OFC_PARSE_STMT_POINTER:
+				case OFC_PARSE_STMT_TYPE:
+				case OFC_PARSE_STMT_STRUCTURE:
+				case OFC_PARSE_STMT_UNION:
+				case OFC_PARSE_STMT_MAP:
+				case OFC_PARSE_STMT_RECORD:
+				case OFC_PARSE_STMT_SAVE:
 					/* These are already handled. */
 					break;
 				default:

@@ -643,6 +643,37 @@ unsigned ofc_sema_type_size(const ofc_sema_type_t* type)
 	return 0;
 }
 
+unsigned ofc_sema_type_elem_count(const ofc_sema_type_t* type)
+{
+	if (!type)
+		return 0;
+
+	switch (type->type)
+	{
+		case OFC_SEMA_TYPE_LOGICAL:
+		case OFC_SEMA_TYPE_INTEGER:
+		case OFC_SEMA_TYPE_REAL:
+		case OFC_SEMA_TYPE_COMPLEX:
+		case OFC_SEMA_TYPE_BYTE:
+		case OFC_SEMA_TYPE_CHARACTER:
+		case OFC_SEMA_TYPE_POINTER:
+			return 1;
+
+		case OFC_SEMA_TYPE_STRUCTURE:
+			return ofc_sema_structure_elem_count(
+				type->structure);
+
+		case OFC_SEMA_TYPE_ARRAY:
+			return (ofc_sema_type_elem_count(type->subtype)
+				* ofc_sema_array_total(type->array));
+
+		default:
+			break;
+	}
+
+	return 0;
+}
+
 bool ofc_sema_type_is_integer(const ofc_sema_type_t* type)
 {
 	if (!type)

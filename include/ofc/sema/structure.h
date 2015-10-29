@@ -32,6 +32,9 @@ bool ofc_sema_structure_compare(
 	const ofc_sema_structure_t* a,
 	const ofc_sema_structure_t* b);
 
-unsigned ofc_sema_structure_size(const ofc_sema_structure_t* structure);
+unsigned ofc_sema_structure_size(
+	const ofc_sema_structure_t* structure);
+unsigned ofc_sema_structure_elem_count(
+	const ofc_sema_structure_t* structure);
 
 #endif

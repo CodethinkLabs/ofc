@@ -47,6 +47,8 @@ void ofc_sema_decl_delete(
 
 unsigned ofc_sema_decl_size(
 	const ofc_sema_decl_t* decl);
+unsigned ofc_sema_decl_elem_count(
+	const ofc_sema_decl_t* decl);
 
 const ofc_sema_type_t* ofc_sema_decl_type(
 	const ofc_sema_decl_t* decl);

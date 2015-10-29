@@ -88,10 +88,15 @@ ofc_sema_stmt_t* ofc_sema_stmt_alloc(
 void ofc_sema_stmt_delete(
 	ofc_sema_stmt_t* stmt);
 
+/* Declaration statement analysis. */
 bool ofc_sema_stmt_assignment_decl(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
+bool ofc_sema_stmt_data(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt);
 
+/* Execution statement analysis. */
 ofc_sema_stmt_t* ofc_sema_stmt_assignment(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);

@@ -197,6 +197,15 @@ unsigned ofc_sema_decl_size(
 		decl->type);
 }
 
+unsigned ofc_sema_decl_elem_count(
+	const ofc_sema_decl_t* decl)
+{
+	if (!decl)
+		return 0;
+	return ofc_sema_type_elem_count(
+		decl->type);
+}
+
 const ofc_sema_type_t* ofc_sema_decl_type(
 	const ofc_sema_decl_t* decl)
 {

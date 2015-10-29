@@ -169,7 +169,8 @@ bool ofc_sema_structure_compare(
 }
 
 
-unsigned ofc_sema_structure_size(const ofc_sema_structure_t* structure)
+unsigned ofc_sema_structure_size(
+	const ofc_sema_structure_t* structure)
 {
 	if (!structure
 		|| (structure->member.count == 0))
@@ -185,6 +186,29 @@ unsigned ofc_sema_structure_size(const ofc_sema_structure_t* structure)
 
 		if (msize > max)
 			max = msize;
+	}
+
+	return (structure->is_union
+		? max : total);
+}
+
+unsigned ofc_sema_structure_elem_count(
+	const ofc_sema_structure_t* structure)
+{
+	if (!structure
+		|| (structure->member.count == 0))
+		return 0;
+
+    unsigned total = 0, max = 0;
+	unsigned i;
+	for (i = 0; i < structure->member.count; i++)
+	{
+		unsigned melem = ofc_sema_type_elem_count(
+			structure->member.type[i]);
+		total += melem;
+
+		if (melem > max)
+			max = melem;
 	}
 
 	return (structure->is_union
