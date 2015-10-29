@@ -17,7 +17,7 @@ static ofc_sema_label_t* ofc_sema_label__stmt(
 {
 	ofc_sema_label_t* label
 		= (ofc_sema_label_t*)malloc(
-			sizeof(label));
+			sizeof(ofc_sema_label_t));
 	if (!label) return NULL;
 
 	label->type   = OFC_SEMA_LABEL_STMT;
@@ -35,7 +35,7 @@ static ofc_sema_label_t* ofc_sema_label__format(
 
 	ofc_sema_label_t* label
 		= (ofc_sema_label_t*)malloc(
-			sizeof(label));
+			sizeof(ofc_sema_label_t));
 	if (!label) return NULL;
 
 	label->type   = OFC_SEMA_LABEL_FORMAT;
