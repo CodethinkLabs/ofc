@@ -6,14 +6,7 @@ void ofc_sema_scope_delete(
 	if (!scope)
 		return;
 
-	if (scope->child)
-	{
-		unsigned i;
-		for (i = 0; i < scope->child->count; i++)
-			ofc_sema_scope_delete(scope->child->scope[i]);
-		free(scope->child->scope);
-		free(scope->child);
-	}
+	ofc_hashmap_delete(scope->child);
 
 	ofc_sema_decl_list_delete(
 		scope->args);
@@ -46,22 +39,21 @@ static bool ofc_sema_scope__add_child(
 
 	if (!scope->child)
 	{
-		scope->child = (ofc_sema_scope_list_t*)malloc(
-			sizeof(ofc_sema_scope_list_t));
-		if (!scope->child) return false;
+		bool cs = (scope->lang_opts
+			&& scope->lang_opts->case_sensitive);
 
-		scope->child->count = 0;
-		scope->child->scope = NULL;
+		scope->child = ofc_hashmap_create(
+			(void*)(cs ? ofc_str_ref_ptr_hash
+				: ofc_str_ref_ptr_hash_ci),
+			(void*)(cs ? ofc_str_ref_ptr_equal
+				: ofc_str_ref_ptr_equal_ci),
+			(void*)ofc_sema_scope_get_name,
+			(void*)ofc_sema_scope_delete);
+		if (!scope->child) return false;
 	}
 
-	ofc_sema_scope_t** nlist
-		= (ofc_sema_scope_t**)realloc(scope->child->scope,
-			(sizeof(ofc_sema_scope_t*) * (scope->child->count + 1)));
-	if (!nlist) return false;
-	scope->child->scope = nlist;
-
-	scope->child->scope[scope->child->count++] = child;
-	return true;
+	return ofc_hashmap_add(
+		scope->child, child);
 }
 
 static ofc_sema_scope_t* ofc_sema_scope__create(
@@ -292,6 +284,12 @@ ofc_sema_scope_t* ofc_sema_scope_block_data(
 	return NULL;
 }
 
+
+const ofc_str_ref_t* ofc_sema_scope_get_name(
+	const ofc_sema_scope_t* scope)
+{
+	return (!scope ? NULL : &scope->name);
+}
 
 ofc_lang_opts_t ofc_sema_scope_get_lang_opts(
 	const ofc_sema_scope_t* scope)
