@@ -789,10 +789,51 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 	if (!type || ofc_sema_type_compare(type, typeval->type))
 		return ofc_sema_typeval_copy(typeval);
 
+	ofc_sema_typeval_t tv;
+	tv.type = type;
+
 	if ((type->type == OFC_SEMA_TYPE_CHARACTER)
 		&& (typeval->type->type == OFC_SEMA_TYPE_CHARACTER))
 	{
-		/* TODO - Truncate or pad string. */
+		if (typeval->type->kind > type->kind)
+		{
+			ofc_sema_scope_error(scope, typeval->src,
+				"Can't cast CHARACTER to a smaller kind.");
+			return NULL;
+		}
+		else if (typeval->type->kind < type->kind)
+		{
+			/* TODO - Support casting to a bigger kind. */
+			return NULL;
+		}
+
+		unsigned kind = type->kind;
+		unsigned len_tval = typeval->type->len;
+		unsigned len_type = type->len;
+
+		if (len_tval >= len_type)
+		{
+			tv.character = (char*)malloc(len_type * kind);
+			memcpy(tv.character, typeval->character,
+				(len_type * kind));
+		}
+		else if (len_tval < len_type)
+		{
+			tv.character = (char*)malloc(len_tval * kind);
+			memcpy(tv.character, typeval->character,
+				(len_tval * kind));
+
+			unsigned pad_char, pad_byte;
+			for (pad_char = len_tval; pad_char < len_type; pad_char += kind)
+			{
+				tv.character[pad_char] = ' ';
+				for(pad_byte = 1; pad_byte < kind; pad_byte++)
+				{
+					tv.character[pad_char + pad_byte] = '\0';
+				}
+			}
+		}
+
 		return NULL;
 	}
 
@@ -826,9 +867,6 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 
 	if (type->type == typeval->type->type)
 		return ofc_sema_typeval_copy(typeval);
-
-	ofc_sema_typeval_t tv;
-	tv.type = type;
 
 	switch (type->type)
 	{
