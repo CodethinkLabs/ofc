@@ -167,6 +167,9 @@ static bool ofc_sema_scope__body(
 
 			default:
 				has_exec_stmt = true;
+				if (!ofc_sema_stmt_scoped_decl(
+					scope, stmt))
+					return false;
 				break;
 		}
 	}
@@ -208,7 +211,8 @@ static bool ofc_sema_scope__body(
 				default:
 					if (!ofc_sema_stmt_scoped(
 						scope, stmt))
-					return false;
+						return false;
+					break;
 			}
 		}
 	}

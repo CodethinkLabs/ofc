@@ -76,6 +76,9 @@ struct ofc_sema_stmt_s
 ofc_sema_stmt_t* ofc_sema_stmt(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
+bool ofc_sema_stmt_scoped_decl(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt);
 bool ofc_sema_stmt_scoped(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
@@ -84,6 +87,10 @@ ofc_sema_stmt_t* ofc_sema_stmt_alloc(
 	ofc_sema_stmt_t stmt);
 void ofc_sema_stmt_delete(
 	ofc_sema_stmt_t* stmt);
+
+bool ofc_sema_stmt_assignment_decl(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt);
 
 ofc_sema_stmt_t* ofc_sema_stmt_assignment(
 	ofc_sema_scope_t* scope,
