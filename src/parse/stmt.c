@@ -58,10 +58,6 @@ unsigned ofc_parse_stmt_equivalence(
 	ofc_parse_debug_t* debug,
 	ofc_parse_stmt_t* stmt);
 
-unsigned ofc_parse_stmt_assignment(
-	const ofc_sparse_t* src, const char* ptr,
-	ofc_parse_debug_t* debug,
-	ofc_parse_stmt_t* stmt);
 unsigned ofc_parse_stmt_continue(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
