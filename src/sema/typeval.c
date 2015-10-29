@@ -914,10 +914,13 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 					break;
 				case OFC_SEMA_TYPE_REAL:
 					tv.integer = (int64_t)typeval->real;
+					if ((long double)tv.integer != typeval->real)
+						lossy_cast = true;
 					break;
 				case OFC_SEMA_TYPE_COMPLEX:
 					tv.integer = (int64_t)typeval->complex.real;
-					if (typeval->complex.imaginary != 0.0)
+					if (((long double)tv.integer != typeval->complex.real)
+						|| (typeval->complex.imaginary != 0.0))
 						lossy_cast = true;
 					break;
 				case OFC_SEMA_TYPE_BYTE:
@@ -989,10 +992,13 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 					break;
 				case OFC_SEMA_TYPE_REAL:
 					tv.integer = (int64_t)typeval->real;
+					if ((long double)tv.integer != typeval->real)
+						lossy_cast = true;
 					break;
 				case OFC_SEMA_TYPE_COMPLEX:
 					tv.integer = (int64_t)typeval->complex.real;
-					if (typeval->complex.imaginary != 0.0)
+					if (((long double)tv.integer != typeval->complex.real)
+						|| (typeval->complex.imaginary != 0.0))
 						lossy_cast = true;
 					break;
 				case OFC_SEMA_TYPE_INTEGER:
