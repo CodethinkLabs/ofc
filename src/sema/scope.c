@@ -114,6 +114,8 @@ static bool ofc_sema_scope__body(
 	if (!body)
 		return true;
 
+	bool has_exec_stmt = false;
+
 	unsigned i;
 	for (i = 0; i < body->count; i++)
 	{
@@ -164,10 +166,50 @@ static bool ofc_sema_scope__body(
 				break;
 
 			default:
-				if (!ofc_sema_stmt_scoped(
-					scope, stmt))
-					return false;
+				has_exec_stmt = true;
 				break;
+		}
+	}
+
+	if (has_exec_stmt)
+	{
+		switch (scope->type)
+		{
+			case OFC_SEMA_SCOPE_GLOBAL:
+			case OFC_SEMA_SCOPE_COMMON:
+			case OFC_SEMA_SCOPE_BLOCK_DATA:
+				/* TODO - Error: Unexpected executable statement in scope. */
+				return false;
+			default:
+				break;
+		}
+
+		for (i = 0; i < body->count; i++)
+		{
+			ofc_parse_stmt_t* stmt = body->stmt[i];
+			if (!stmt) continue;
+
+			if (stmt->type == OFC_PARSE_STMT_EMPTY)
+				continue;
+
+			switch (stmt->type)
+			{
+				case OFC_PARSE_STMT_PROGRAM:
+				case OFC_PARSE_STMT_SUBROUTINE:
+				case OFC_PARSE_STMT_FUNCTION:
+				case OFC_PARSE_STMT_BLOCK_DATA:
+				case OFC_PARSE_STMT_PARAMETER:
+				case OFC_PARSE_STMT_IMPLICIT_NONE:
+				case OFC_PARSE_STMT_IMPLICIT:
+				case OFC_PARSE_STMT_DECL:
+				case OFC_PARSE_STMT_FORMAT:
+					/* These are already handled. */
+					break;
+				default:
+					if (!ofc_sema_stmt_scoped(
+						scope, stmt))
+					return false;
+			}
 		}
 	}
 
@@ -213,7 +255,8 @@ ofc_sema_scope_t* ofc_sema_scope_program(
 
 	program->name = stmt->program.name;
 
-	if (!ofc_sema_scope__body(scope, stmt->program.body))
+	if (!ofc_sema_scope__body(
+		program, stmt->program.body))
 	{
 		ofc_sema_scope_delete(program);
 		return NULL;
