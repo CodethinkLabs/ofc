@@ -352,6 +352,9 @@ static ofc_parse_lhs_t* ofc_parse__lhs(
 
 		break;
 	}
+
+	alhs->src = ofc_str_ref(ptr, i);
+
 	if (len) *len = i;
 	return alhs;
 }
