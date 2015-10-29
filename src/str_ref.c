@@ -33,21 +33,23 @@ uint8_t ofc_str_ref_hash_ci(const ofc_str_ref_t ref)
 	return hash;
 }
 
-bool ofc_str_ref_bridge(
-	ofc_str_ref_t start, ofc_str_ref_t end,
-	ofc_str_ref_t* ret)
+ofc_str_ref_t ofc_str_ref_bridge(
+	ofc_str_ref_t start, ofc_str_ref_t end)
 {
-	if (end.base > start.base)
-		return false;
+	if ((start.base == NULL)
+		|| (start.size == 0))
+		return end;
+	if ((end.base == NULL)
+		|| (end.size == 0))
+		return start;
 
     ofc_str_ref_t result =
 	{
 		.base = start.base,
-		.size = (end.base - start.base) + end.size
+		.size = ((uintptr_t)end.base - (uintptr_t)start.base) + end.size
 	};
 
-	*ret = result;
-	return true;
+	return result;
 }
 
 bool ofc_str_ref_equal(const ofc_str_ref_t a, const ofc_str_ref_t b)

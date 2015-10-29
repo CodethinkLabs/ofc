@@ -90,6 +90,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_assignment(
 		s.assignment.expr = cast;
 	}
 	s.type = OFC_SEMA_STMT_ASSIGNMENT;
+	s.src = stmt->src;
 
 	ofc_sema_stmt_t* as
 		= ofc_sema_stmt_alloc(s);

@@ -18,6 +18,8 @@ struct ofc_sema_stmt_s
 {
 	ofc_sema_stmt_e type;
 
+	ofc_str_ref_t src;
+
 	union
 	{
 		struct

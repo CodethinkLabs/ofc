@@ -243,6 +243,7 @@ ofc_sema_expr_t* ofc_sema_expr_cast(
 			return NULL;
 		}
 
+		cast->src = expr->src;
 		ofc_sema_expr_delete(expr);
 		return cast;
 	}
@@ -252,6 +253,7 @@ ofc_sema_expr_t* ofc_sema_expr_cast(
 			OFC_SEMA_EXPR_CAST);
 	if (!cast) return NULL;
 
+	cast->src = expr->src;
 	cast->cast.type = type;
 	cast->cast.expr = expr;
 	return cast;
@@ -385,7 +387,7 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 	expr->a = as;
 	expr->b = bs;
 
-	ofc_str_ref_bridge(as->src, bs->src, &expr->src);
+	expr->src = ofc_str_ref_bridge(as->src, bs->src);
 
 	return expr;
 }
