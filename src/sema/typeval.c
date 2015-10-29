@@ -795,6 +795,10 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 	if ((type->type == OFC_SEMA_TYPE_CHARACTER)
 		&& (typeval->type->type == OFC_SEMA_TYPE_CHARACTER))
 	{
+		unsigned kind = type->kind;
+		unsigned len_tval = typeval->type->len;
+		unsigned len_type = type->len;
+
 		if (typeval->type->kind > type->kind)
 		{
 			ofc_sema_scope_error(scope, typeval->src,
@@ -803,40 +807,57 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 		}
 		else if (typeval->type->kind < type->kind)
 		{
-			ofc_sema_scope_error(scope, typeval->src,
-				"Casting CHARACTER to a larger kind not yet supported.");
-			/* TODO - Support casting to a bigger kind. */
-			return NULL;
+			tv.character = (char*)malloc(len_type * kind);
+
+			unsigned wchar;
+			for (wchar = 0; wchar < len_type; wchar += kind)
+			{
+				memcpy(&tv.character[wchar], typeval->character,
+					typeval->type->kind);
+
+				unsigned wchar_pad;
+				for (wchar_pad = 1; wchar_pad < kind; wchar_pad++)
+				{
+					tv.character[wchar + wchar_pad] = '\0';
+				}
+			}
+
+			if (len_tval < len_type)
+			{
+				unsigned pad_char, pad_byte;
+				for (pad_char = len_tval; pad_char < (len_type * kind);
+					pad_char += kind)
+				{
+					tv.character[pad_char] = ' ';
+					for(pad_byte = 1; pad_byte < kind; pad_byte++)
+					{
+						tv.character[pad_char + pad_byte] = '\0';
+					}
+				}
+			}
 		}
-
-		unsigned kind = type->kind;
-		unsigned len_tval = typeval->type->len;
-		unsigned len_type = type->len;
-
-		if (len_tval >= len_type)
+		else
 		{
 			tv.character = (char*)malloc(len_type * kind);
 			memcpy(tv.character, typeval->character,
 				(len_type * kind));
-		}
-		else if (len_tval < len_type)
-		{
-			tv.character = (char*)malloc(len_tval * kind);
-			memcpy(tv.character, typeval->character,
-				(len_tval * kind));
 
-			unsigned pad_char;
-			for (pad_char = len_tval; pad_char < len_type; pad_char += kind)
+			if (len_tval < len_type)
 			{
-				tv.character[pad_char] = ' ';
-
-				unsigned pad_byte;
-				for(pad_byte = 1; pad_byte < kind; pad_byte++)
-					tv.character[pad_char + pad_byte] = '\0';
+				unsigned pad_char, pad_byte;
+				for (pad_char = len_tval; pad_char < (len_type * kind);
+					pad_char += kind)
+				{
+					tv.character[pad_char] = ' ';
+					for(pad_byte = 1; pad_byte < kind; pad_byte++)
+					{
+						tv.character[pad_char + pad_byte] = '\0';
+					}
+				}
 			}
 		}
 
-		return NULL;
+		return ofc_sema_typeval__alloc(tv);
 	}
 
 	bool invalid_cast = false;
