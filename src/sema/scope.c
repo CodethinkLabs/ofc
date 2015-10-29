@@ -252,11 +252,9 @@ ofc_sema_scope_t* ofc_sema_scope_function(
 
 ofc_sema_scope_t* ofc_sema_scope_if(
 	ofc_sema_scope_t* scope,
-	const ofc_parse_stmt_t* stmt,
 	const ofc_parse_stmt_list_t* block)
 {
-	if (!stmt || !scope
-		|| (stmt->type != OFC_PARSE_STMT_IF_THEN))
+	if (!scope || !block)
 		return NULL;
 
 	ofc_sema_scope_t* if_scope

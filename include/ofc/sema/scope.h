@@ -58,7 +58,6 @@ ofc_sema_scope_t* ofc_sema_scope_block_data(
 	const ofc_parse_stmt_t* stmt);
 ofc_sema_scope_t* ofc_sema_scope_if(
 	ofc_sema_scope_t* scope,
-	const ofc_parse_stmt_t* stmt,
 	const ofc_parse_stmt_list_t* block);
 
 void ofc_sema_scope_delete(
