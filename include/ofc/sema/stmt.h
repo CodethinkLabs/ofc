@@ -14,6 +14,7 @@ typedef enum
 	OFC_SEMA_STMT_GO_TO,
 	OFC_SEMA_STMT_DO_LABEL,
 	OFC_SEMA_STMT_DO_BLOCK,
+	OFC_SEMA_STMT_DO_WHILE_BLOCK,
 } ofc_sema_stmt_e;
 
 struct ofc_sema_stmt_s
@@ -91,6 +92,12 @@ struct ofc_sema_stmt_s
 			ofc_sema_expr_t*       step;
 			ofc_sema_stmt_list_t*  block;
 		} do_block;
+
+		struct
+		{
+			ofc_sema_expr_t*      cond;
+			ofc_sema_stmt_list_t* block;
+		} do_while_block;
 	};
 };
 

@@ -248,6 +248,75 @@ ofc_sema_stmt_t* ofc_sema_stmt_do__block(
 	return as;
 }
 
+ofc_sema_stmt_t* ofc_sema_stmt_do_while__block(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt)
+{
+
+	if (!stmt
+		|| (stmt->type != OFC_PARSE_STMT_DO_WHILE_BLOCK)
+		|| !stmt->do_while_block.cond)
+		return NULL;
+
+	ofc_sema_stmt_t s;
+	s.type = OFC_SEMA_STMT_DO_WHILE_BLOCK;
+
+	s.do_while_block.cond = ofc_sema_expr(
+		scope, stmt->do_while_block.cond);
+	if (!s.do_while_block.cond)
+		return NULL;
+
+	const ofc_sema_type_t* type
+		= ofc_sema_expr_type(s.do_while_block.cond);
+	if (!ofc_sema_type_is_logical(type))
+	{
+		ofc_sema_scope_error(scope, stmt->do_while_block.cond->src,
+			"IF condition type must be LOGICAL.");
+
+		ofc_sema_expr_delete(s.do_while_block.cond);
+		return NULL;
+	}
+
+	s.do_while_block.block = NULL;
+	if (stmt->do_while_block.block)
+	{
+
+		s.do_while_block.block = ofc_sema_stmt_list_create();
+
+		if (!s.do_while_block.block)
+		{
+			ofc_sema_expr_delete(s.do_while_block.cond);
+			return NULL;
+		}
+
+		unsigned i;
+		for (i = 0; i < stmt->do_while_block.block->count; i++)
+		{
+			ofc_sema_stmt_t* stat = ofc_sema_stmt(
+				scope, stmt->do_while_block.block->stmt[i]);
+
+			if (!ofc_sema_stmt_list_add(
+				s.do_while_block.block, stat))
+			{
+				ofc_sema_stmt_delete(stat);
+				ofc_sema_expr_delete(s.do_while_block.cond);
+				ofc_sema_stmt_list_delete(s.do_while_block.block);
+				return NULL;
+			}
+		}
+	}
+
+	ofc_sema_stmt_t* as = ofc_sema_stmt_alloc(s);
+	if (!as)
+	{
+		ofc_sema_stmt_list_delete(s.do_while_block.block);
+		ofc_sema_expr_delete(s.do_while_block.cond);
+		return NULL;
+	}
+
+	return as;
+}
+
 ofc_sema_stmt_t* ofc_sema_stmt_do(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt)
@@ -261,6 +330,8 @@ ofc_sema_stmt_t* ofc_sema_stmt_do(
 			return ofc_sema_stmt_do__label(scope, stmt);
 		case OFC_PARSE_STMT_DO_BLOCK:
 			return ofc_sema_stmt_do__block(scope, stmt);
+		case OFC_PARSE_STMT_DO_WHILE_BLOCK:
+			return ofc_sema_stmt_do_while__block(scope, stmt);
 		default:
 			break;
 	}
