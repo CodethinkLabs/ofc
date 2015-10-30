@@ -63,6 +63,7 @@ ofc_sema_stmt_t* ofc_sema_stmt(
 
 		case OFC_PARSE_STMT_DO_LABEL:
 		case OFC_PARSE_STMT_DO_BLOCK:
+		case OFC_PARSE_STMT_DO_WHILE:
 		case OFC_PARSE_STMT_DO_WHILE_BLOCK:
 			s = ofc_sema_stmt_do(scope, stmt);
 			break;
@@ -224,6 +225,12 @@ void ofc_sema_stmt_delete(
 				stmt->do_block.step);
 			ofc_sema_stmt_list_delete(
 				stmt->do_block.block);
+			break;
+		case OFC_SEMA_STMT_DO_WHILE:
+			ofc_sema_expr_delete(
+				stmt->do_while.end_label);
+			ofc_sema_expr_delete(
+				stmt->do_while.cond);
 			break;
 		case OFC_SEMA_STMT_DO_WHILE_BLOCK:
 			ofc_sema_expr_delete(
