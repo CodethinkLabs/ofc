@@ -35,9 +35,9 @@ typedef struct
 	ofc_hashmap_t*    map;
 } ofc_sema_decl_list_t;
 
-ofc_sema_decl_t* ofc_sema_decl_implicit_lhs(
+ofc_sema_decl_t* ofc_sema_decl_implicit_name(
 	const ofc_sema_scope_t* scope,
-	const ofc_parse_lhs_t* lhs);
+	ofc_str_ref_t name);
 
 bool ofc_sema_decl(
 	ofc_sema_scope_t* scope,

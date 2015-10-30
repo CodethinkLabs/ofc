@@ -24,8 +24,8 @@ struct ofc_sema_stmt_s
 	{
 		struct
 		{
-			const ofc_sema_decl_t* dest;
-			ofc_sema_expr_t*       expr;
+			ofc_sema_lhs_t*  dest;
+			ofc_sema_expr_t* expr;
 		} assignment;
 
 		struct

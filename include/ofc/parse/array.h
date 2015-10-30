@@ -11,7 +11,7 @@ typedef struct
 
 typedef struct
 {
-	unsigned              count;
+	unsigned                  count;
 	ofc_parse_array_range_t** range;
 } ofc_parse_array_index_t;
 

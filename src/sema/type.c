@@ -100,7 +100,7 @@ static const ofc_sema_type_t* ofc_sema_type__create(
 	ofc_sema_type_e type,
 	unsigned kind, unsigned len,
 	ofc_sema_array_t* array,
-	ofc_sema_type_t* subtype,
+	const ofc_sema_type_t* subtype,
 	const ofc_sema_structure_t* structure,
 	bool is_static,
 	bool is_automatic,
@@ -249,7 +249,8 @@ const ofc_sema_type_t* ofc_sema_type_create_pointer(
 }
 
 const ofc_sema_type_t* ofc_sema_type_create_array(
-	ofc_sema_type_t* type, ofc_sema_array_t* array,
+	const ofc_sema_type_t* type,
+	ofc_sema_array_t* array,
 	bool is_static,
 	bool is_automatic,
 	bool is_volatile)

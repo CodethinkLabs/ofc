@@ -161,6 +161,8 @@ void ofc_sema_stmt_delete(
 		case OFC_SEMA_STMT_ASSIGNMENT:
 			ofc_sema_expr_delete(
 				stmt->assignment.expr);
+			ofc_sema_lhs_delete(
+				stmt->assignment.dest);
 			break;
 		case OFC_SEMA_STMT_WRITE:
 			ofc_sema_expr_delete(

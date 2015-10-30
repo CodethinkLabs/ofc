@@ -30,19 +30,24 @@ bool ofc_sema_stmt_data(
 			const ofc_parse_lhs_t* lhs
 				= entry->nlist->lhs[i];
 
-			/* TODO - Support more advanced LHS. */
-			if (lhs->type != OFC_PARSE_LHS_VARIABLE)
+			ofc_str_ref_t base_name;
+			if (!ofc_parse_lhs_base_name(
+				*lhs, &base_name))
 				return false;
 
 			decl[i] = ofc_sema_decl_list_find(
-				scope->decl, lhs->variable);
+				scope->decl, base_name);
 			if (!decl[i])
 			{
-				decl[i] = ofc_sema_decl_implicit_lhs(
-					scope, lhs);
+				/* Can only implicitly declare variables. */
+				if (lhs->type != OFC_PARSE_LHS_VARIABLE)
+					return false;
+
+				decl[i] = ofc_sema_decl_implicit_name(
+					scope, base_name);
 				if (!decl[i])
 				{
-					ofc_str_ref_t n = lhs->variable;
+					ofc_str_ref_t n = base_name;
 					ofc_sema_scope_error(scope, stmt->src,
 						"No declaration for '%.*s' and no valid IMPLICIT rule.",
 						n.size, n.base);
@@ -108,11 +113,13 @@ bool ofc_sema_stmt_data(
 			elems = ctotal;
 		}
 
+		/* TODO - Initialize based on LHS not decl. */
 		for (i = 0, k = 0; i < entry->nlist->count; i++)
 		{
 			unsigned e = ofc_sema_decl_elem_count(decl[i]);
 			if (e != 1)
 			{
+				/* TODO - Support multi-element initializers. */
 				ofc_sema_scope_error(scope, stmt->src,
 					"Multi-element initializers not yet supported.");
 				for (i = 0; i < entry->clist->count; i++)

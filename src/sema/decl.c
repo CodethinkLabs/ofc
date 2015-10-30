@@ -28,11 +28,11 @@ static ofc_sema_decl_t* ofc_sema_decl__type_name(
 	return decl;
 }
 
-static ofc_sema_decl_t* ofc_sema_decl_implicit__name(
-	const ofc_sema_implicit_t* implicit,
+ofc_sema_decl_t* ofc_sema_decl_implicit_name(
+	const ofc_sema_scope_t* scope,
 	ofc_str_ref_t name)
 {
-	if (!implicit)
+	if (!scope)
 		return NULL;
 
 	if (ofc_str_ref_empty(name))
@@ -40,26 +40,10 @@ static ofc_sema_decl_t* ofc_sema_decl_implicit__name(
 
 	const ofc_sema_type_t* type
 		= ofc_sema_implicit_get(
-			implicit, name.base[0]);
+			scope->implicit, name.base[0]);
 
 	return ofc_sema_decl__type_name(
 		type, name);
-}
-
-ofc_sema_decl_t* ofc_sema_decl_implicit_lhs(
-	const ofc_sema_scope_t* scope,
-	const ofc_parse_lhs_t* lhs)
-{
-	if (!scope || !lhs)
-		return NULL;
-
-	/* Can't implicitly declare an array or struct. */
-	if (lhs->type
-		!= OFC_PARSE_LHS_VARIABLE)
-		return NULL;
-
-	return ofc_sema_decl_implicit__name(
-		scope->implicit, lhs->variable);
 }
 
 static ofc_sema_decl_t* ofc_sema_decl__decl(
