@@ -12,6 +12,7 @@ typedef enum
 	OFC_SEMA_STMT_STOP,
 	OFC_SEMA_STMT_PAUSE,
 	OFC_SEMA_STMT_GO_TO,
+	OFC_SEMA_STMT_DO_LABEL,
 	OFC_SEMA_STMT_DO_BLOCK,
 } ofc_sema_stmt_e;
 
@@ -72,6 +73,15 @@ struct ofc_sema_stmt_s
 		{
 			ofc_sema_expr_t* label;
 		} go_to;
+
+		struct
+		{
+			ofc_sema_expr_t*       end_label;
+			const ofc_sema_decl_t* iter;
+			ofc_sema_expr_t*       init;
+			ofc_sema_expr_t*       last;
+			ofc_sema_expr_t*       step;
+		} do_label;
 
 		struct
 		{

@@ -61,6 +61,7 @@ ofc_sema_stmt_t* ofc_sema_stmt(
 			s = ofc_sema_stmt_go_to(scope, stmt);
 			break;
 
+		case OFC_PARSE_STMT_DO_LABEL:
 		case OFC_PARSE_STMT_DO_BLOCK:
 			s = ofc_sema_stmt_do(scope, stmt);
 			break;
@@ -202,6 +203,16 @@ void ofc_sema_stmt_delete(
 		case OFC_SEMA_STMT_GO_TO:
 			ofc_sema_expr_delete(
 				stmt->go_to.label);
+			break;
+		case OFC_SEMA_STMT_DO_LABEL:
+			ofc_sema_expr_delete(
+				stmt->do_label.end_label);
+			ofc_sema_expr_delete(
+				stmt->do_label.init);
+			ofc_sema_expr_delete(
+				stmt->do_label.last);
+			ofc_sema_expr_delete(
+				stmt->do_label.step);
 			break;
 		case OFC_SEMA_STMT_DO_BLOCK:
 			ofc_sema_expr_delete(
