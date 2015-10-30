@@ -4,14 +4,6 @@
 #include <ofc/hashmap.h>
 
 typedef struct ofc_sema_decl_s ofc_sema_decl_t;
-typedef struct ofc_sema_equiv_s ofc_sema_equiv_t;
-
-
-struct ofc_sema_equiv_s
-{
-	unsigned          count;
-	ofc_sema_decl_t** decl;
-};
 
 struct ofc_sema_decl_s
 {

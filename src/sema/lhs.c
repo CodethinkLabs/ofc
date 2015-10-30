@@ -83,10 +83,24 @@ ofc_sema_lhs_t* ofc_sema_lhs(
 			sizeof(ofc_sema_lhs_t));
 	if (!slhs) return NULL;
 
-	slhs->decl  = decl;
-	slhs->index = NULL;
-	slhs->type  = decl->type;
+	slhs->decl   = decl;
+	slhs->index  = NULL;
+	slhs->type   = decl->type;
+	slhs->refcnt = 0;
 	return slhs;
+}
+
+bool ofc_sema_lhs_reference(
+	ofc_sema_lhs_t* lhs)
+{
+	if (!lhs)
+		return false;
+
+	if ((lhs->refcnt + 1) == 0)
+		return false;
+
+	lhs->refcnt++;
+	return true;
 }
 
 void ofc_sema_lhs_delete(
@@ -95,8 +109,42 @@ void ofc_sema_lhs_delete(
 	if (!lhs)
 		return;
 
+	if (lhs->refcnt > 0)
+	{
+		lhs->refcnt--;
+		return;
+	}
+
 	ofc_sema_array_delete(lhs->index);
 	free(lhs);
+}
+
+
+bool ofc_sema_lhs_compare(
+	const ofc_sema_lhs_t* a,
+	const ofc_sema_lhs_t* b)
+{
+	if (!a || !b)
+		return false;
+
+    if (a == b)
+		return true;
+
+	if (a->decl != b->decl)
+		return false;
+
+	if (!a->index && !b->index)
+		return true;
+
+	return ofc_sema_array_compare(
+		a->index, b->index);
+}
+
+
+ofc_sema_decl_t* ofc_sema_lhs_decl(
+	ofc_sema_lhs_t* lhs)
+{
+	return (lhs ? lhs->decl : NULL);
 }
 
 const ofc_sema_type_t* ofc_sema_lhs_type(
@@ -168,6 +216,7 @@ ofc_sema_lhs_t* ofc_sema_lhs_index(
 
 	lhs_index->decl  = lhs->decl;
 	lhs_index->index = index;
+	lhs_index->refcnt = 0;
 
 	if (sdims == 0)
 	{

@@ -155,18 +155,7 @@ void ofc_sema_decl_delete(
 	if (!decl)
 		return;
 
-	if (decl->equiv)
-	{
-		free(decl->equiv->decl);
-		decl->equiv->decl = NULL;
-
-		if (decl->equiv->count > 0)
-			decl->equiv->count -= 1;
-
-		if (decl->equiv->count == 0)
-			free(decl->equiv);
-	}
-
+	ofc_sema_equiv_delete(decl->equiv);
 	ofc_sema_typeval_delete(decl->init);
 	free(decl);
 }
@@ -194,93 +183,6 @@ const ofc_sema_type_t* ofc_sema_decl_type(
 	const ofc_sema_decl_t* decl)
 {
 	return (decl ? decl->type : NULL);
-}
-
-
-bool ofc_sema_decl_equiv(
-	ofc_sema_decl_t* a,
-	ofc_sema_decl_t* b)
-{
-	if (!a || !b)
-		return false;
-
-	if (a->equiv == b->equiv)
-		return true;
-
-	if (a->equiv && b->equiv)
-	{
-		ofc_sema_equiv_t* equiv = a->equiv;
-		ofc_sema_equiv_t* bequiv = b->equiv;
-
-		ofc_sema_decl_t** ndecl
-			= (ofc_sema_decl_t**)realloc(equiv->decl,
-				sizeof(ofc_sema_decl_t*) * (equiv->count + bequiv->count));
-		if (!ndecl) return false;
-		equiv->decl = ndecl;
-
-		unsigned i;
-		for (i = 0; i < bequiv->count; i++)
-		{
-			equiv->decl[equiv->count++] = bequiv->decl[i];
-			bequiv->decl[i]->equiv = equiv;
-		}
-
-		free(bequiv);
-	}
-	else if (!a->equiv && !b->equiv)
-	{
-		ofc_sema_equiv_t* equiv
-			= (ofc_sema_equiv_t*)malloc(
-				sizeof(ofc_sema_equiv_t));
-		if (!equiv) return false;
-
-		equiv->count = 2;
-		equiv->decl = (ofc_sema_decl_t**)malloc(
-			sizeof(ofc_sema_decl_t*) * equiv->count);
-		if (!equiv->decl)
-		{
-			free(equiv);
-			return false;
-		}
-
-		equiv->decl[0] = a;
-		equiv->decl[1] = b;
-		a->equiv = equiv;
-		b->equiv = equiv;
-	}
-	else if (!b->equiv)
-	{
-		ofc_sema_equiv_t* equiv = a->equiv;
-
-		ofc_sema_decl_t** ndecl
-			= (ofc_sema_decl_t**)realloc(equiv->decl,
-				sizeof(ofc_sema_decl_t*) * (equiv->count + 1));
-		if (!ndecl) return false;
-		equiv->decl = ndecl;
-
-		equiv->decl[equiv->count++] = b;
-		b->equiv = equiv;
-	}
-	else
-	{
-		ofc_sema_equiv_t* equiv = b->equiv;
-
-		ofc_sema_decl_t** ndecl
-			= (ofc_sema_decl_t**)realloc(equiv->decl,
-				sizeof(ofc_sema_decl_t*) * (equiv->count + 1));
-		if (!ndecl) return false;
-		equiv->decl = ndecl;
-
-		unsigned i;
-		for (i = 0; i < equiv->count; i++)
-			equiv->decl[equiv->count - i] = equiv->decl[equiv->count - (i + 1)];
-		equiv->decl[0] = a;
-		equiv->count += 1;
-
-		a->equiv = equiv;
-	}
-
-	return true;
 }
 
 

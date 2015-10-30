@@ -175,8 +175,12 @@ static bool ofc_sema_scope__body(
 					return false;
 				break;
 
-			case OFC_PARSE_STMT_ENTRY:
 			case OFC_PARSE_STMT_EQUIVALENCE:
+				if (!ofc_sema_stmt_equivalence(scope, stmt))
+					return false;
+				break;
+
+			case OFC_PARSE_STMT_ENTRY:
 			case OFC_PARSE_STMT_COMMON:
 			case OFC_PARSE_STMT_NAMELIST:
 			case OFC_PARSE_STMT_DECL_ATTR_EXTERNAL:

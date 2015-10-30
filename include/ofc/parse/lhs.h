@@ -56,7 +56,7 @@ struct ofc_parse_lhs_s
 
 typedef struct
 {
-	unsigned      count;
+	unsigned          count;
 	ofc_parse_lhs_t** lhs;
 } ofc_parse_lhs_list_t;
 
