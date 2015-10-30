@@ -170,8 +170,12 @@ static bool ofc_sema_scope__body(
 					return false;
 				break;
 
-			case OFC_PARSE_STMT_ENTRY:
 			case OFC_PARSE_STMT_DIMENSION:
+				if (!ofc_sema_stmt_dimension(scope, stmt))
+					return false;
+				break;
+
+			case OFC_PARSE_STMT_ENTRY:
 			case OFC_PARSE_STMT_EQUIVALENCE:
 			case OFC_PARSE_STMT_COMMON:
 			case OFC_PARSE_STMT_NAMELIST:

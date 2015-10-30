@@ -8,7 +8,7 @@ ofc_sema_array_t* ofc_sema_array_create(
     if (!count) return NULL;
 
 	ofc_sema_array_t* array
-		= (ofc_sema_array_t*)(sizeof(ofc_sema_array_t)
+		= (ofc_sema_array_t*)malloc(sizeof(ofc_sema_array_t)
 			+ (dimensions * 2 * sizeof(unsigned)));
 	if (!array) return NULL;
 

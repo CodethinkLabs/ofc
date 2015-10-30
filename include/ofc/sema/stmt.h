@@ -97,6 +97,9 @@ bool ofc_sema_stmt_assignment_decl(
 bool ofc_sema_stmt_data(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
+bool ofc_sema_stmt_dimension(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt);
 
 /* Execution statement analysis. */
 ofc_sema_stmt_t* ofc_sema_stmt_assignment(
