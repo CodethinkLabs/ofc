@@ -17,8 +17,8 @@ bool ofc_sema_stmt_assignment_decl(
 		return false;
 
 	const ofc_sema_decl_t* decl
-		= ofc_sema_decl_list_find(
-			scope->decl, base_name);
+		= ofc_sema_scope_decl_find(
+			scope, base_name);
 	if (decl) return true;
 
 	/* Can only implicitly declare variables. */

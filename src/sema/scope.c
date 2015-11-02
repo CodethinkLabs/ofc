@@ -401,6 +401,69 @@ ofc_lang_opts_t ofc_sema_scope_get_lang_opts(
 	return ofc_sema_scope_get_lang_opts(scope->parent);
 }
 
+
+
+const ofc_sema_decl_t* ofc_sema_scope_decl_find(
+	const ofc_sema_scope_t* scope, ofc_str_ref_t name)
+{
+	if (!scope)
+		return NULL;
+
+	const ofc_sema_decl_t* decl
+		= ofc_sema_decl_list_find(
+			scope->decl, name);
+	if (decl) return decl;
+
+	return ofc_sema_scope_decl_find(
+		scope->parent, name);
+}
+
+ofc_sema_decl_t* ofc_sema_scope_decl_find_modify(
+	ofc_sema_scope_t* scope, ofc_str_ref_t name)
+{
+	if (!scope)
+		return NULL;
+
+	ofc_sema_decl_t* decl
+		= ofc_sema_decl_list_find_modify(
+			scope->decl, name);
+	if (decl) return decl;
+
+	return ofc_sema_scope_decl_find_modify(
+		scope->parent, name);
+}
+
+const ofc_sema_scope_t* ofc_sema_scope_child_find(
+	const ofc_sema_scope_t* scope, ofc_str_ref_t name)
+{
+	if (!scope)
+		return NULL;
+
+	const ofc_sema_scope_t* child
+		= ofc_hashmap_find(scope->child, &name);
+	if (child) return child;
+
+	return ofc_sema_scope_child_find(
+		scope->parent, name);
+}
+
+ofc_sema_scope_t* ofc_sema_scope_child_find_modify(
+	ofc_sema_scope_t* scope, ofc_str_ref_t name)
+{
+	if (!scope)
+		return NULL;
+
+	ofc_sema_scope_t* child
+		= ofc_hashmap_find_modify(
+			scope->child, &name);
+	if (child) return child;
+
+	return ofc_sema_scope_child_find_modify(
+		scope->parent, name);
+}
+
+
+
 void ofc_sema_scope_error(
 	const ofc_sema_scope_t* scope, ofc_str_ref_t pos,
 	const char* format, ...)

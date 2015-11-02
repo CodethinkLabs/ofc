@@ -281,7 +281,17 @@ bool ofc_sema_decl_list_add(
 	return true;
 }
 
-ofc_sema_decl_t* ofc_sema_decl_list_find(
+const ofc_sema_decl_t* ofc_sema_decl_list_find(
+	const ofc_sema_decl_list_t* list, ofc_str_ref_t name)
+{
+	if (!list)
+		return NULL;
+
+	return ofc_hashmap_find(
+		list->map, &name);
+}
+
+ofc_sema_decl_t* ofc_sema_decl_list_find_modify(
 	ofc_sema_decl_list_t* list, ofc_str_ref_t name)
 {
 	if (!list)

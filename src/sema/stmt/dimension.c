@@ -30,8 +30,8 @@ bool ofc_sema_stmt_dimension(
 			return false;
 
 		ofc_sema_decl_t* decl
-			= ofc_sema_decl_list_find(
-				scope->decl, base_name);
+			= ofc_sema_scope_decl_find_modify(
+				scope, base_name);
 		if (!decl)
 		{
 			decl = ofc_sema_decl_implicit_name(

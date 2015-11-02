@@ -35,8 +35,8 @@ bool ofc_sema_stmt_data(
 				*lhs, &base_name))
 				return false;
 
-			decl[i] = ofc_sema_decl_list_find(
-				scope->decl, base_name);
+			decl[i] = ofc_sema_scope_decl_find_modify(
+				scope, base_name);
 			if (!decl[i])
 			{
 				/* Can only implicitly declare variables. */

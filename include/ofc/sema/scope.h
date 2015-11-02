@@ -68,6 +68,16 @@ const ofc_str_ref_t* ofc_sema_scope_get_name(
 ofc_lang_opts_t ofc_sema_scope_get_lang_opts(
 	const ofc_sema_scope_t* scope);
 
+const ofc_sema_decl_t* ofc_sema_scope_decl_find(
+	const ofc_sema_scope_t* scope, ofc_str_ref_t name);
+ofc_sema_decl_t* ofc_sema_scope_decl_find_modify(
+	ofc_sema_scope_t* scope, ofc_str_ref_t name);
+
+const ofc_sema_scope_t* ofc_sema_scope_child_find(
+	const ofc_sema_scope_t* scope, ofc_str_ref_t name);
+ofc_sema_scope_t* ofc_sema_scope_child_find_modify(
+	ofc_sema_scope_t* scope, ofc_str_ref_t name);
+
 void ofc_sema_scope_error(
 	const ofc_sema_scope_t* scope, ofc_str_ref_t pos,
 	const char* format, ...)

@@ -67,8 +67,8 @@ ofc_sema_lhs_t* ofc_sema_lhs(
 	}
 
 	ofc_sema_decl_t* decl
-		= ofc_sema_decl_list_find(
-			scope->decl, lhs->variable);
+		= ofc_sema_scope_decl_find_modify(
+			scope, lhs->variable);
 	if (!decl)
 	{
 		/* This shouldn't happen because variables should either

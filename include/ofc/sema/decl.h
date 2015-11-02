@@ -57,7 +57,10 @@ bool ofc_sema_decl_list_add(
 	ofc_sema_decl_list_t* list,
 	ofc_sema_decl_t* decl);
 
-ofc_sema_decl_t* ofc_sema_decl_list_find(
+const ofc_sema_decl_t* ofc_sema_decl_list_find(
+	const ofc_sema_decl_list_t* list,
+	ofc_str_ref_t name);
+ofc_sema_decl_t* ofc_sema_decl_list_find_modify(
 	ofc_sema_decl_list_t* list,
 	ofc_str_ref_t name);
 
