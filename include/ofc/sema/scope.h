@@ -28,6 +28,9 @@ struct ofc_sema_scope_s
 	const ofc_sema_type_t* return_type;
 	ofc_sema_decl_list_t*  args;
 
+	bool external;
+	bool intrinsic;
+
 	ofc_sema_implicit_t*  implicit;
 
 	ofc_sema_decl_list_t* decl;

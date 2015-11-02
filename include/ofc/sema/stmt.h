@@ -138,6 +138,11 @@ bool ofc_sema_stmt_equivalence(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
 
+/* Declaration attribute analysis. */
+bool ofc_sema_stmt_decl_attr(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt);
+
 /* Execution statement analysis. */
 ofc_sema_stmt_t* ofc_sema_stmt_assignment(
 	ofc_sema_scope_t* scope,
