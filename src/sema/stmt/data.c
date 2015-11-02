@@ -21,18 +21,18 @@ bool ofc_sema_stmt_data(
 			|| (entry->nlist->count == 0))
 			return false;
 
-		ofc_sema_decl_t* decl[entry->nlist->count];
+		ofc_sema_decl_t*       decl[entry->nlist->count];
+		const ofc_parse_lhs_t* lhs[entry->nlist->count];
 
 		unsigned elems = 0;
 		unsigned i;
 		for (i = 0; i < entry->nlist->count; i++)
 		{
-			const ofc_parse_lhs_t* lhs
-				= entry->nlist->lhs[i];
+			lhs[i] = entry->nlist->lhs[i];
 
 			ofc_str_ref_t base_name;
 			if (!ofc_parse_lhs_base_name(
-				*lhs, &base_name))
+				*(lhs[i]), &base_name))
 				return false;
 
 			decl[i] = ofc_sema_scope_decl_find_modify(
@@ -40,8 +40,12 @@ bool ofc_sema_stmt_data(
 			if (!decl[i])
 			{
 				/* Can only implicitly declare variables. */
-				if (lhs->type != OFC_PARSE_LHS_VARIABLE)
+				if (lhs[i]->type != OFC_PARSE_LHS_VARIABLE)
+				{
+					ofc_sema_scope_error(scope, stmt->src,
+						"Can only implicitly declare scalar variables in DATA statment");
 					return false;
+				}
 
 				decl[i] = ofc_sema_decl_implicit_name(
 					scope, base_name);
@@ -113,11 +117,27 @@ bool ofc_sema_stmt_data(
 			elems = ctotal;
 		}
 
-		/* TODO - Initialize based on LHS not decl. */
 		for (i = 0, k = 0; i < entry->nlist->count; i++)
 		{
-			unsigned e = ofc_sema_decl_elem_count(decl[i]);
-			if (e != 1)
+			unsigned elem_offset;
+			unsigned elem_count;
+			if (lhs[i]->type == OFC_PARSE_LHS_VARIABLE)
+			{
+				elem_offset = 0;
+				elem_count = ofc_sema_decl_elem_count(decl[i]);
+			}
+			else if (lhs[i]->type == OFC_PARSE_LHS_ARRAY)
+			{
+				/* TODO - Get count and offset from array indices. */
+				return false;
+			}
+			else
+			{
+				return false;
+			}
+
+			if ((elem_count != 1)
+				|| (elem_offset != 0))
 			{
 				/* TODO - Support multi-element initializers. */
 				ofc_sema_scope_error(scope, stmt->src,
@@ -126,39 +146,18 @@ bool ofc_sema_stmt_data(
 					ofc_sema_expr_delete(bexpr[i]);
 				return false;
 			}
-
-			const ofc_sema_typeval_t* ctv
-				= ofc_sema_expr_constant(cexpr[k]);
-			if (!ctv)
+			else
 			{
-				ofc_sema_scope_error(scope, cexpr[k]->src,
-					"Failed to resolve DATA initializer.");
-				for (i = 0; i < entry->clist->count; i++)
-					ofc_sema_expr_delete(bexpr[i]);
-				return false;
+				if (!ofc_sema_decl_init(
+					scope, decl[i], cexpr[k]))
+				{
+					for (i = 0; i < entry->clist->count; i++)
+						ofc_sema_expr_delete(bexpr[i]);
+					return false;
+				}
 			}
 
-			ofc_sema_typeval_t* tv
-				= ofc_sema_typeval_cast(scope, ctv,
-					ofc_sema_decl_type(decl[i]));
-			if (!tv)
-			{
-				for (i = 0; i < entry->clist->count; i++)
-					ofc_sema_expr_delete(bexpr[i]);
-				return false;
-			}
-
-			if (decl[i]->init)
-			{
-				ofc_sema_scope_error(scope, entry->nlist->lhs[i]->src,
-					"Re-initializing variable in DATA statement");
-				for (i = 0; i < entry->clist->count; i++)
-					ofc_sema_expr_delete(bexpr[i]);
-				return false;
-			}
-			decl[i]->init = tv;
-
-			k += e;
+			k += elem_count;
 		}
 
 		for (i = 0; i < entry->clist->count; i++)

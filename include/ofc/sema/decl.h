@@ -9,7 +9,12 @@ struct ofc_sema_decl_s
 {
 	const ofc_sema_type_t* type;
 	ofc_str_ref_t          name;
-	ofc_sema_typeval_t*    init;
+
+	union
+	{
+		ofc_sema_typeval_t*  init;
+		ofc_sema_typeval_t** init_array;
+	};
 
     bool is_static;
 	bool is_volatile;
@@ -48,9 +53,19 @@ bool ofc_sema_decl(
 void ofc_sema_decl_delete(
 	ofc_sema_decl_t* decl);
 
+bool ofc_sema_decl_init(
+	const ofc_sema_scope_t* scope,
+	ofc_sema_decl_t* decl,
+	const ofc_sema_expr_t* init);
+
 unsigned ofc_sema_decl_size(
 	const ofc_sema_decl_t* decl);
 unsigned ofc_sema_decl_elem_count(
+	const ofc_sema_decl_t* decl);
+
+bool ofc_sema_decl_is_composite(
+	const ofc_sema_decl_t* decl);
+bool ofc_sema_decl_is_initialized(
 	const ofc_sema_decl_t* decl);
 
 const ofc_sema_type_t* ofc_sema_decl_type(

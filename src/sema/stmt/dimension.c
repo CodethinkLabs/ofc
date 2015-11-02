@@ -24,6 +24,15 @@ bool ofc_sema_stmt_dimension(
 			return false;
 		}
 
+		if (!lhs->parent
+			|| (lhs->parent->type != OFC_PARSE_LHS_VARIABLE))
+		{
+			/* TODO - Support nested arrays in DIMENSION. */
+			ofc_sema_scope_error(scope, lhs->src,
+				"Nested arrays not yet supported in DIMENSION.");
+			return false;
+		}
+
         ofc_str_ref_t base_name;
 		if (!ofc_parse_lhs_base_name(
 			*lhs, &base_name))
@@ -53,7 +62,7 @@ bool ofc_sema_stmt_dimension(
 			}
 		}
 
-		if (decl->init)
+		if (ofc_sema_decl_is_initialized(decl))
 		{
 			ofc_sema_scope_error(scope, lhs->src,
 				"Can't modify dimensions of initialized declaration.");

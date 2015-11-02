@@ -32,6 +32,10 @@ ofc_sema_typeval_t* ofc_sema_typeval_literal(
 void ofc_sema_typeval_delete(
 	ofc_sema_typeval_t* typeval);
 
+bool ofc_sema_typeval_compare(
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b);
+
 ofc_sema_typeval_t* ofc_sema_typeval_copy(
 	const ofc_sema_typeval_t* typeval);
 ofc_sema_typeval_t* ofc_sema_typeval_cast(

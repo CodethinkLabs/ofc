@@ -16,7 +16,15 @@ static ofc_sema_decl_t* ofc_sema_decl__type_name(
 	decl->type = type;
 	decl->name = name;
 
-	decl->init = NULL;
+	if ((type->type == OFC_SEMA_TYPE_ARRAY)
+		|| (type->type == OFC_SEMA_TYPE_STRUCTURE))
+	{
+		decl->init_array = NULL;
+	}
+	else
+	{
+		decl->init = NULL;
+	}
 
 	decl->equiv = NULL;
 
@@ -114,14 +122,28 @@ static ofc_sema_decl_t* ofc_sema_decl__decl(
 	if (!decl || !type)
 		return NULL;
 
-	/* TODO - Support ARRAY declarations. */
-	if (decl->lhs->type
-		!= OFC_PARSE_LHS_VARIABLE)
+	switch (decl->lhs->type)
+	{
+		case OFC_PARSE_LHS_VARIABLE:
+		case OFC_PARSE_LHS_ARRAY:
+			break;
+		default:
+			return NULL;
+	}
+
+	ofc_str_ref_t base_name;
+	if (!ofc_parse_lhs_base_name(
+		*(decl->lhs), &base_name))
 		return NULL;
+
+	const ofc_sema_type_t* atype
+		= ofc_sema_lhs_decl_type(
+			scope, type, decl->lhs);
+	if (!atype) return NULL;
 
 	ofc_sema_decl_t* sdecl
 		= ofc_sema_decl__type_name(
-			type, decl->lhs->variable);
+			atype, base_name);
 
 	if (decl->init_expr)
 	{
@@ -133,12 +155,11 @@ static ofc_sema_decl_t* ofc_sema_decl__decl(
 			return NULL;
 		}
 
-		const ofc_sema_typeval_t* ctv
-			= ofc_sema_expr_constant(init_expr);
-		sdecl->init = ofc_sema_typeval_cast(
-			scope, ctv, type);
+		bool initialized = ofc_sema_decl_init(
+			scope, sdecl, init_expr);
 		ofc_sema_expr_delete(init_expr);
-		if (!sdecl->init)
+
+		if (!initialized)
 		{
 			ofc_sema_decl_delete(sdecl);
 			return NULL;
@@ -221,6 +242,60 @@ void ofc_sema_decl_delete(
 }
 
 
+bool ofc_sema_decl_init(
+	const ofc_sema_scope_t* scope,
+	ofc_sema_decl_t* decl,
+	const ofc_sema_expr_t* init)
+{
+	if (!decl || !init)
+		return false;
+
+    const ofc_sema_typeval_t* ctv
+		= ofc_sema_expr_constant(init);
+	if (!ctv)
+	{
+		ofc_sema_scope_error(scope, init->src,
+			"Initializer element not constant.");
+		return false;
+	}
+
+	if (ofc_sema_decl_is_composite(decl))
+	{
+		/* TODO - Support F90 "(/ 0, 1 /)" array initializers. */
+		ofc_sema_scope_error(scope, init->src,
+			"Can't initialize non-scalar declaration with expression.");
+		return false;
+	}
+
+	ofc_sema_typeval_t* tv
+		= ofc_sema_typeval_cast(
+			scope, ctv, decl->type);
+	if (!tv) return false;
+
+	if (ofc_sema_decl_is_initialized(decl))
+	{
+		bool redecl = ofc_sema_typeval_compare(
+			tv, decl->init);
+		ofc_sema_typeval_delete(tv);
+
+		if (redecl)
+		{
+			ofc_sema_scope_warning(scope, init->src,
+				"Duplicate initialization.");
+		}
+		else
+		{
+			ofc_sema_scope_error(scope, init->src,
+				"Can't re-initialize initialized declaration.");
+			return false;
+		}
+	}
+
+	decl->init = tv;
+	return true;
+}
+
+
 unsigned ofc_sema_decl_size(
 	const ofc_sema_decl_t* decl)
 {
@@ -237,6 +312,27 @@ unsigned ofc_sema_decl_elem_count(
 		return 0;
 	return ofc_sema_type_elem_count(
 		decl->type);
+}
+
+bool ofc_sema_decl_is_composite(
+	const ofc_sema_decl_t* decl)
+{
+	if (!decl)
+		return false;
+	return ofc_sema_type_is_composite(decl->type);
+}
+
+bool ofc_sema_decl_is_initialized(
+	const ofc_sema_decl_t* decl)
+{
+	if (!decl || !decl->type)
+		return false;
+
+	if ((decl->type->type == OFC_SEMA_TYPE_ARRAY)
+		|| (decl->type->type == OFC_SEMA_TYPE_STRUCTURE))
+		return (decl->init_array != NULL);
+
+	return (decl->init != NULL);
 }
 
 const ofc_sema_type_t* ofc_sema_decl_type(

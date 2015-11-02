@@ -743,6 +743,46 @@ void ofc_sema_typeval_delete(
 }
 
 
+bool ofc_sema_typeval_compare(
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b)
+{
+	if (!a || !b)
+		return false;
+
+	if (a == b)
+		return true;
+
+	if (!ofc_sema_type_compare(
+		a->type, b->type))
+		return false;
+
+	switch (a->type->type)
+	{
+		case OFC_SEMA_TYPE_LOGICAL:
+			return (a->logical == b->logical);
+		case OFC_SEMA_TYPE_INTEGER:
+			return (a->integer == b->integer);
+		case OFC_SEMA_TYPE_REAL:
+			return (a->real == b->real);
+		case OFC_SEMA_TYPE_COMPLEX:
+			return ((a->complex.real == b->complex.real)
+				&& (a->complex.imaginary == b->complex.imaginary));
+		case OFC_SEMA_TYPE_BYTE:
+			return ((a->integer & 0xFF) == (b->integer & 0xFF));
+		case OFC_SEMA_TYPE_CHARACTER:
+			return (memcmp(
+				a->character, b->character,
+				ofc_sema_type_size(a->type)) == 0);
+		default:
+			break;
+	}
+
+	return false;
+}
+
+
+
 unsigned ofc_sema_typeval_size(
 	const ofc_sema_typeval_t* typeval)
 {

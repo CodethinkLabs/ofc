@@ -733,6 +733,24 @@ bool ofc_sema_type_is_logical(const ofc_sema_type_t* type)
 	return false;
 }
 
+bool ofc_sema_type_is_composite(const ofc_sema_type_t* type)
+{
+	if (!type)
+		return false;
+
+	switch (type->type)
+	{
+		case OFC_SEMA_TYPE_ARRAY:
+		case OFC_SEMA_TYPE_STRUCTURE:
+			return true;
+
+		default:
+			break;
+	}
+
+	return false;
+}
+
 
 
 static unsigned umax(unsigned a, unsigned b)

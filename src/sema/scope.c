@@ -85,6 +85,7 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 	scope->return_type = NULL;
 	scope->args        = NULL;
 
+	/* TODO - Inherit implicit rules from parent. */
 	scope->implicit = ofc_sema_implicit_create();
 
 	scope->common    = NULL;
