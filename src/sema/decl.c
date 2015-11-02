@@ -28,22 +28,82 @@ static ofc_sema_decl_t* ofc_sema_decl__type_name(
 	return decl;
 }
 
-ofc_sema_decl_t* ofc_sema_decl_implicit_name(
+/* We must consume array since it may be used by the type system
+   even if this function returns NULL. */
+static ofc_sema_decl_t* ofc_sema_decl_implicit__name(
 	const ofc_sema_scope_t* scope,
-	ofc_str_ref_t name)
+	ofc_str_ref_t name, ofc_sema_array_t* array)
 {
 	if (!scope)
+	{
+		ofc_sema_array_delete(array);
 		return NULL;
+	}
 
 	if (ofc_str_ref_empty(name))
+	{
+		ofc_sema_array_delete(array);
 		return NULL;
+	}
 
 	const ofc_sema_type_t* type
 		= ofc_sema_implicit_get(
 			scope->implicit, name.base[0]);
 
+	if (array)
+	{
+		const ofc_sema_type_t* atype
+			= ofc_sema_type_create_array(
+				type, array,
+				type->is_static,
+				type->is_automatic,
+				type->is_volatile);
+		if (!atype)
+			ofc_sema_array_delete(array);
+		type = atype;
+	}
+
 	return ofc_sema_decl__type_name(
 		type, name);
+}
+
+ofc_sema_decl_t* ofc_sema_decl_implicit_name(
+	const ofc_sema_scope_t* scope,
+	ofc_str_ref_t name)
+{
+	return ofc_sema_decl_implicit__name(
+		scope, name, NULL);
+}
+
+ofc_sema_decl_t* ofc_sema_decl_implicit_lhs(
+	const ofc_sema_scope_t* scope,
+	const ofc_parse_lhs_t* lhs)
+{
+	if (!scope || !lhs)
+		return NULL;
+
+	ofc_sema_array_t* array = NULL;
+	ofc_str_ref_t base_name;
+	if (!ofc_parse_lhs_base_name(
+		*lhs, &base_name))
+		return NULL;
+
+    switch (lhs->type)
+	{
+		case OFC_PARSE_LHS_VARIABLE:
+			break;
+		case OFC_PARSE_LHS_ARRAY:
+			array = ofc_sema_array(
+				scope, NULL, lhs->array.index);
+			if (!array) return NULL;
+			break;
+		default:
+			break;
+	}
+
+	/* 'array' is always consumed. */
+	return ofc_sema_decl_implicit__name(
+		scope, base_name, array);
 }
 
 static ofc_sema_decl_t* ofc_sema_decl__decl(
@@ -207,25 +267,27 @@ bool ofc_sema_decl_list__remap(
 	return (list->map != NULL);
 }
 
-ofc_sema_decl_list_t* ofc_sema_decl_list_create(bool ignore_case)
+ofc_sema_decl_list_t* ofc_sema_decl_list__create(
+	bool case_sensitive, bool is_ref)
 {
 	ofc_sema_decl_list_t* list
 		= (ofc_sema_decl_list_t*)malloc(
 			sizeof(ofc_sema_decl_list_t));
 	if (!list) return NULL;
 
-	list->ignore_case = ignore_case;
+	list->case_sensitive = case_sensitive;
 
-	list->count = 0;
-	list->decl = NULL;
+	list->count  = 0;
+	list->decl   = NULL;
+	list->is_ref = is_ref;
 
 	list->map = ofc_hashmap_create(
-		(void*)(list->ignore_case
-			? ofc_str_ref_ptr_hash_ci
-			: ofc_str_ref_ptr_hash),
-		(void*)(list->ignore_case
-			? ofc_str_ref_ptr_equal_ci
-			: ofc_str_ref_ptr_equal),
+		(void*)(list->case_sensitive
+			? ofc_str_ref_ptr_hash
+			: ofc_str_ref_ptr_hash_ci),
+		(void*)(list->case_sensitive
+			? ofc_str_ref_ptr_equal
+			: ofc_str_ref_ptr_equal_ci),
 		(void*)ofc_sema_decl__key, NULL);
 	if (!list->map)
 	{
@@ -236,6 +298,20 @@ ofc_sema_decl_list_t* ofc_sema_decl_list_create(bool ignore_case)
 	return list;
 }
 
+ofc_sema_decl_list_t* ofc_sema_decl_list_create(
+	bool case_sensitive)
+{
+	return ofc_sema_decl_list__create(
+		case_sensitive, false);
+}
+
+ofc_sema_decl_list_t* ofc_sema_decl_list_create_ref(
+	bool case_sensitive)
+{
+	return ofc_sema_decl_list__create(
+		case_sensitive, true);
+}
+
 void ofc_sema_decl_list_delete(
 	ofc_sema_decl_list_t* list)
 {
@@ -244,9 +320,13 @@ void ofc_sema_decl_list_delete(
 
 	ofc_hashmap_delete(list->map);
 
-	unsigned i;
-	for (i = 0; i < list->count; i++)
-		ofc_sema_decl_delete(list->decl[i]);
+	if (!list->is_ref)
+	{
+		unsigned i;
+		for (i = 0; i < list->count; i++)
+			ofc_sema_decl_delete(list->decl[i]);
+	}
+
 	free(list->decl);
 
 	free(list);
@@ -256,7 +336,8 @@ bool ofc_sema_decl_list_add(
 	ofc_sema_decl_list_t* list,
 	ofc_sema_decl_t* decl)
 {
-	if (!list || !decl)
+	if (!list || !decl
+		|| list->is_ref)
 		return false;
 
 	/* Check for duplicate definitions. */
@@ -281,6 +362,33 @@ bool ofc_sema_decl_list_add(
 	return true;
 }
 
+bool ofc_sema_decl_list_add_ref(
+	ofc_sema_decl_list_t* list,
+	const ofc_sema_decl_t* decl)
+{
+	if (!list || !decl
+		|| !list->is_ref)
+		return false;
+
+	/* Check for duplicate definitions. */
+	if (ofc_sema_decl_list_find(
+		list, decl->name))
+		return false;
+
+    const ofc_sema_decl_t** ndecl
+		= (const ofc_sema_decl_t**)realloc(list->decl_ref,
+			(sizeof(const ofc_sema_decl_t*) * (list->count + 1)));
+	if (!ndecl) return false;
+	list->decl_ref = ndecl;
+
+	if (!ofc_hashmap_add(
+		list->map, (void*)decl))
+		return false;
+
+	list->decl_ref[list->count++] = decl;
+	return true;
+}
+
 const ofc_sema_decl_t* ofc_sema_decl_list_find(
 	const ofc_sema_decl_list_t* list, ofc_str_ref_t name)
 {
@@ -301,7 +409,7 @@ ofc_sema_decl_t* ofc_sema_decl_list_find_modify(
 		list->map, &name);
 }
 
-const ofc_hashmap_t* ofc_decl_list_map(
+const ofc_hashmap_t* ofc_sema_decl_list_map(
 	const ofc_sema_decl_list_t* list)
 {
 	return (list ? list->map : NULL);

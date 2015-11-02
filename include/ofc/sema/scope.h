@@ -4,7 +4,6 @@
 typedef enum
 {
 	OFC_SEMA_SCOPE_GLOBAL = 0,
-	OFC_SEMA_SCOPE_COMMON,
 	OFC_SEMA_SCOPE_PROGRAM,
 	OFC_SEMA_SCOPE_SUBROUTINE,
 	OFC_SEMA_SCOPE_FUNCTION,
@@ -33,6 +32,7 @@ struct ofc_sema_scope_s
 
 	ofc_sema_implicit_t*  implicit;
 
+	ofc_hashmap_t*        common;
 	ofc_sema_decl_list_t* decl;
 	ofc_hashmap_t*        parameter;
 	ofc_hashmap_t*        label;
@@ -80,6 +80,12 @@ const ofc_sema_scope_t* ofc_sema_scope_child_find(
 	const ofc_sema_scope_t* scope, ofc_str_ref_t name);
 ofc_sema_scope_t* ofc_sema_scope_child_find_modify(
 	ofc_sema_scope_t* scope, ofc_str_ref_t name);
+
+ofc_sema_common_t* ofc_sema_scope_common_find_create(
+	ofc_sema_scope_t* scope, ofc_str_ref_t name);
+bool ofc_sema_scope_common_add(
+	ofc_sema_scope_t* scope,
+	ofc_str_ref_t group, const ofc_sema_decl_t* decl);
 
 void ofc_sema_scope_error(
 	const ofc_sema_scope_t* scope, ofc_str_ref_t pos,

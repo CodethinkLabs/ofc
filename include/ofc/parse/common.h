@@ -9,7 +9,7 @@ typedef struct
 
 typedef struct
 {
-	unsigned               count;
+	unsigned                   count;
 	ofc_parse_common_group_t** group;
 } ofc_parse_common_group_list_t;
 

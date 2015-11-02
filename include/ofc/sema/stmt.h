@@ -137,6 +137,9 @@ bool ofc_sema_stmt_dimension(
 bool ofc_sema_stmt_equivalence(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
+bool ofc_sema_stmt_common(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt);
 
 /* Declaration attribute analysis. */
 bool ofc_sema_stmt_decl_attr(

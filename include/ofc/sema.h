@@ -19,6 +19,7 @@ typedef struct ofc_sema_lhs_s       ofc_sema_lhs_t;
 #include <ofc/sema/implicit.h>
 #include <ofc/sema/equiv.h>
 #include <ofc/sema/decl.h>
+#include <ofc/sema/common.h>
 #include <ofc/sema/format.h>
 #include <ofc/sema/label.h>
 

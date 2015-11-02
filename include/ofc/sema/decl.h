@@ -21,15 +21,26 @@ struct ofc_sema_decl_s
 
 typedef struct
 {
-	bool              ignore_case;
-	unsigned          count;
-	ofc_sema_decl_t** decl;
+	bool case_sensitive;
+	bool is_ref;
+
+	unsigned count;
+
+	union
+	{
+		ofc_sema_decl_t**       decl;
+		const ofc_sema_decl_t** decl_ref;
+	};
+
 	ofc_hashmap_t*    map;
 } ofc_sema_decl_list_t;
 
 ofc_sema_decl_t* ofc_sema_decl_implicit_name(
 	const ofc_sema_scope_t* scope,
 	ofc_str_ref_t name);
+ofc_sema_decl_t* ofc_sema_decl_implicit_lhs(
+	const ofc_sema_scope_t* scope,
+	const ofc_parse_lhs_t* lhs);
 
 bool ofc_sema_decl(
 	ofc_sema_scope_t* scope,
@@ -50,12 +61,16 @@ bool ofc_sema_decl_equiv(
 	ofc_sema_decl_t* b);
 
 
-ofc_sema_decl_list_t* ofc_sema_decl_list_create(bool ignore_case);
+ofc_sema_decl_list_t* ofc_sema_decl_list_create(bool case_sensitive);
+ofc_sema_decl_list_t* ofc_sema_decl_list_create_ref(bool case_sensitive);
 void ofc_sema_decl_list_delete(ofc_sema_decl_list_t* list);
 
 bool ofc_sema_decl_list_add(
 	ofc_sema_decl_list_t* list,
 	ofc_sema_decl_t* decl);
+bool ofc_sema_decl_list_add_ref(
+	ofc_sema_decl_list_t* list,
+	const ofc_sema_decl_t* decl);
 
 const ofc_sema_decl_t* ofc_sema_decl_list_find(
 	const ofc_sema_decl_list_t* list,
@@ -64,7 +79,7 @@ ofc_sema_decl_t* ofc_sema_decl_list_find_modify(
 	ofc_sema_decl_list_t* list,
 	ofc_str_ref_t name);
 
-const ofc_hashmap_t* ofc_decl_list_map(
+const ofc_hashmap_t* ofc_sema_decl_list_map(
 	const ofc_sema_decl_list_t* list);
 
 #endif

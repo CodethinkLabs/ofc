@@ -87,10 +87,11 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 
 	scope->implicit = ofc_sema_implicit_create();
 
-	scope->decl = ofc_sema_decl_list_create(opts.case_sensitive);
+	scope->common    = NULL;
+	scope->decl      = ofc_sema_decl_list_create(opts.case_sensitive);
 	scope->parameter = ofc_sema_parameter_map_create(opts.case_sensitive);
-	scope->label = ofc_sema_label_map_create();
-	scope->stmt = ofc_sema_stmt_list_create();
+	scope->label     = ofc_sema_label_map_create();
+	scope->stmt      = ofc_sema_stmt_list_create();
 
 	scope->external = false;
 	scope->intrinsic = false;
@@ -183,8 +184,12 @@ static bool ofc_sema_scope__body(
 					return false;
 				break;
 
-			case OFC_PARSE_STMT_ENTRY:
 			case OFC_PARSE_STMT_COMMON:
+				if (!ofc_sema_stmt_common(scope, stmt))
+					return false;
+				break;
+
+			case OFC_PARSE_STMT_ENTRY:
 			case OFC_PARSE_STMT_NAMELIST:
 			case OFC_PARSE_STMT_DECL_ATTR_EXTERNAL:
 			case OFC_PARSE_STMT_DECL_ATTR_INTRINSIC:
@@ -224,7 +229,6 @@ static bool ofc_sema_scope__body(
 		switch (scope->type)
 		{
 			case OFC_SEMA_SCOPE_GLOBAL:
-			case OFC_SEMA_SCOPE_COMMON:
 			case OFC_SEMA_SCOPE_BLOCK_DATA:
 				/* TODO - Error: Unexpected executable statement in scope. */
 				return false;
@@ -472,6 +476,68 @@ ofc_sema_scope_t* ofc_sema_scope_child_find_modify(
 		scope->parent, name);
 }
 
+
+ofc_sema_common_t* ofc_sema_scope_common_find_create(
+	ofc_sema_scope_t* scope, ofc_str_ref_t name)
+{
+	if (!scope)
+		return NULL;
+
+	ofc_lang_opts_t opts
+		= ofc_sema_scope_get_lang_opts(scope);
+
+	ofc_sema_common_t* common = NULL;
+	if (!scope->common)
+	{
+		switch (scope->type)
+		{
+			case OFC_SEMA_SCOPE_GLOBAL:
+			case OFC_SEMA_SCOPE_PROGRAM:
+			case OFC_SEMA_SCOPE_FUNCTION:
+			case OFC_SEMA_SCOPE_SUBROUTINE:
+				break;
+			default:
+				/* TODO - Error: Can't declare common block here. */
+				return NULL;
+		}
+
+		scope->common = ofc_sema_common_map_create(
+			opts.case_sensitive);
+		if (!scope->common) return NULL;
+	}
+	else
+	{
+		common = ofc_hashmap_find_modify(
+			scope->common, &name);
+	}
+
+	if (!common)
+	{
+		common = ofc_sema_common_create(
+			name, opts.case_sensitive);
+		if (!common) return NULL;
+
+		if (!ofc_hashmap_add(
+			scope->common, common))
+		{
+			ofc_sema_common_delete(common);
+			return NULL;
+		}
+	}
+
+	return common;
+}
+
+bool ofc_sema_scope_common_add(
+	ofc_sema_scope_t* scope,
+	ofc_str_ref_t group, const ofc_sema_decl_t* decl)
+{
+	ofc_sema_common_t* common
+		= ofc_sema_scope_common_find_create(
+			scope, group);
+    return ofc_sema_common_add(
+		common, decl);
+}
 
 
 void ofc_sema_scope_error(
