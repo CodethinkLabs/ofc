@@ -92,6 +92,12 @@ bool ofc_sema_stmt_scoped_decl(
 				return false;
 			break;
 
+		case OFC_PARSE_STMT_DO_LABEL:
+		case OFC_PARSE_STMT_DO_BLOCK:
+			if (!ofc_sema_stmt_do_decl(
+				scope, stmt))
+				return false;
+
 		default:
 			break;
 	}
