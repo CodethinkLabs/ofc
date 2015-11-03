@@ -521,6 +521,20 @@ ofc_sema_scope_t* ofc_sema_scope_if(
 	return if_scope;
 }
 
+ofc_sema_scope_t* ofc_sema_scope_implicit_do(
+	ofc_sema_scope_t* scope)
+{
+	if (!scope)
+		return NULL;
+
+	ofc_sema_scope_t* id_scope
+		= ofc_sema_scope__create(
+			scope, NULL, NULL, OFC_SEMA_SCOPE_IMPLICIT_DO);
+	if (!id_scope) return NULL;
+
+	return id_scope;
+}
+
 ofc_sema_scope_t* ofc_sema_scope_block_data(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt)
@@ -673,6 +687,14 @@ ofc_sema_common_t* ofc_sema_scope_common_find_create(
 
 	return common;
 }
+
+bool ofc_sema_scope_parameter_add(
+	ofc_sema_scope_t* scope,
+	ofc_sema_parameter_t* param)
+{
+	return ofc_hashmap_add(scope->parameter, param);
+}
+
 
 bool ofc_sema_scope_common_add(
 	ofc_sema_scope_t* scope,

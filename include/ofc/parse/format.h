@@ -3,7 +3,7 @@
 
 typedef enum
 {
-	OFC_PARSE_FORMAT_DESC_INTEGER,
+	OFC_PARSE_FORMAT_DESC_INTEGER = 0,
 	OFC_PARSE_FORMAT_DESC_REAL,
 	OFC_PARSE_FORMAT_DESC_D,
 	OFC_PARSE_FORMAT_DESC_E,
@@ -71,6 +71,8 @@ void ofc_parse_format_desc_delete(
 bool ofc_parse_format_desc_print(
 	ofc_colstr_t* cs, const ofc_parse_format_desc_t* desc);
 
+bool ofc_parse_format_is_data_desc(
+	ofc_parse_format_desc_t* desc);
 
 ofc_parse_format_desc_list_t* ofc_parse_format_desc_list(
 	const ofc_sparse_t* src, const char* ptr,

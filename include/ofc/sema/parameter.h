@@ -19,6 +19,13 @@ bool ofc_sema_parameter_decl(
 void ofc_sema_parameter_delete(
 	ofc_sema_parameter_t* parameter);
 
+ofc_sema_parameter_t* ofc_sema_parameter_create(
+	ofc_str_ref_t name,
+	ofc_sema_typeval_t* typeval);
+ofc_sema_parameter_t* ofc_sema_parameter_assign(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_assign_t* assign);
+
 const ofc_str_ref_t* ofc_sema_parameter_name(
 	const ofc_sema_parameter_t* parameter);
 

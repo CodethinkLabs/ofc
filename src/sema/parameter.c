@@ -16,7 +16,7 @@ ofc_hashmap_t* ofc_sema_parameter_map_create(
 }
 
 
-static ofc_sema_parameter_t* ofc_sema_parameter__create(
+ofc_sema_parameter_t* ofc_sema_parameter_create(
 	ofc_str_ref_t name,
 	ofc_sema_typeval_t* typeval)
 {
@@ -30,7 +30,7 @@ static ofc_sema_parameter_t* ofc_sema_parameter__create(
 	return parameter;
 }
 
-static ofc_sema_parameter_t* ofc_sema_parameter__assign(
+ofc_sema_parameter_t* ofc_sema_parameter_assign(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_assign_t* assign)
 {
@@ -78,7 +78,7 @@ static ofc_sema_parameter_t* ofc_sema_parameter__assign(
 	}
 
 	ofc_sema_parameter_t* param
-		= ofc_sema_parameter__create(
+		= ofc_sema_parameter_create(
 			assign->name->variable, typeval);
 	if (!param)
 	{
@@ -106,7 +106,7 @@ bool ofc_sema_parameter(
 	unsigned i;
 	for (i = 0; i < count; i++)
 	{
-		param[i] = ofc_sema_parameter__assign(
+		param[i] = ofc_sema_parameter_assign(
 			scope, stmt->parameter.list->assign[i]);
 		if (!param[i])
 		{

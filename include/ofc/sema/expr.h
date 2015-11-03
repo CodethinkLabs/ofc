@@ -118,10 +118,15 @@ void ofc_sema_expr_list_delete(
 bool ofc_sema_expr_list_add(
 	ofc_sema_expr_list_t* list,
 	ofc_sema_expr_t* expr);
+bool ofc_sema_expr_list_add_list(
+	ofc_sema_expr_list_t* alist,
+	ofc_sema_expr_list_t* blist);
 unsigned ofc_sema_expr_list_count(
 	const ofc_sema_expr_list_t* list);
 bool ofc_sema_expr_list_compare(
 	const ofc_sema_expr_list_t* a,
 	const ofc_sema_expr_list_t* b);
+ofc_sema_expr_list_t* ofc_sema_expr_list_implicit_do(
+	ofc_sema_scope_t* scope, ofc_parse_implicit_do_t* id);
 
 #endif

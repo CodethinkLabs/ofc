@@ -14,4 +14,8 @@ bool ofc_sema_format(
 void ofc_sema_format_delete(
 	ofc_sema_format_t* format);
 
+bool ofc_sema_compare_desc_expr_type(
+	unsigned type_desc,
+	unsigned type_expr);
+
 #endif

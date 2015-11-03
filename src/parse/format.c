@@ -396,3 +396,29 @@ bool ofc_parse_format_desc_list_print(
 		list->count, (const void**)list->desc,
 		(void*)ofc_parse_format_desc_print);
 }
+
+bool ofc_parse_format_is_data_desc(
+	ofc_parse_format_desc_t* desc)
+{
+	if (!desc)
+		return false;
+
+	switch(desc->type)
+	{
+		case OFC_PARSE_FORMAT_DESC_INTEGER:
+		case OFC_PARSE_FORMAT_DESC_BINARY:
+		case OFC_PARSE_FORMAT_DESC_OCTAL:
+		case OFC_PARSE_FORMAT_DESC_HEX:
+		case OFC_PARSE_FORMAT_DESC_REAL:
+		case OFC_PARSE_FORMAT_DESC_D:
+		case OFC_PARSE_FORMAT_DESC_E:
+		case OFC_PARSE_FORMAT_DESC_G:
+		case OFC_PARSE_FORMAT_DESC_CHARACTER:
+		case OFC_PARSE_FORMAT_DESC_LOGICAL:
+			return true;
+		default:
+			break;
+	}
+
+	return false;
+}
