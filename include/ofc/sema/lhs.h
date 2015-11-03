@@ -42,7 +42,7 @@ const ofc_sema_type_t* ofc_sema_lhs_decl_type(
 
 ofc_sema_lhs_t* ofc_sema_lhs(
 	ofc_sema_scope_t* scope,
-	ofc_parse_lhs_t* lhs);
+	const ofc_parse_lhs_t* lhs);
 bool ofc_sema_lhs_reference(
 	ofc_sema_lhs_t* lhs);
 void ofc_sema_lhs_delete(

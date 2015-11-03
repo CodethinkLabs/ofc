@@ -43,7 +43,7 @@ typedef struct
 static ofc_sema_expr__rule_t ofc_sema_expr__rule[] =
 {
 	{ NULL, 0, 0, 0, 0, 0 }, /* CONSTANT */
-	{ NULL, 0, 0, 0, 0, 0 }, /* DECL */
+	{ NULL, 0, 0, 0, 0, 0 }, /* LHS */
 	{ NULL, 0, 0, 0, 0, 0 }, /* CAST */
 	{ NULL, 0, 0, 0, 0, 0 }, /* INTRINSIC */
 
@@ -132,7 +132,7 @@ static ofc_sema_typeval_t* (*ofc_sema_expr__resolve[])(
 	const ofc_sema_typeval_t*) =
 {
 	NULL, /* CONSTANT */
-	NULL, /* DECL */
+	NULL, /* LHS */
 	NULL, /* CAST */
 	NULL, /* INTRINSIC */
 
@@ -178,8 +178,8 @@ static ofc_sema_expr_t* ofc_sema_expr__create(
 		case OFC_SEMA_EXPR_CONSTANT:
 			expr->constant = NULL;
 			break;
-		case OFC_SEMA_EXPR_DECL:
-			expr->decl = NULL;
+		case OFC_SEMA_EXPR_LHS:
+			expr->lhs = NULL;
 			break;
 		case OFC_SEMA_EXPR_CAST:
 			expr->cast.type = NULL;
@@ -516,30 +516,29 @@ static ofc_sema_expr_t* ofc_sema_expr__parameter(
 	return expr;
 }
 
-static ofc_sema_expr_t* ofc_sema_expr__decl(
+static ofc_sema_expr_t* ofc_sema_expr__lhs(
 	const ofc_sema_scope_t* scope,
 	const ofc_parse_lhs_t* name)
 {
 	if (!name)
 		return false;
 
-	if (name->type != OFC_PARSE_LHS_VARIABLE)
-	{
-		/* TODO - Handle array indices, struct members, etc. */
-		return false;
-	}
-
-	const ofc_sema_decl_t* decl = NULL;
-	if (scope->decl)
-		decl = ofc_hashmap_find(scope->decl->map, &name->variable);
-	if (!decl) return NULL;
+	/* TODO - Remove this const cast,
+              we need a const LHS variant. */
+	ofc_sema_lhs_t* lhs = ofc_sema_lhs(
+		(ofc_sema_scope_t*)scope, name);
+	if (!lhs) return NULL;
 
 	ofc_sema_expr_t* expr
 		= ofc_sema_expr__create(
-			OFC_SEMA_EXPR_DECL);
-	if (!expr) return NULL;
+			OFC_SEMA_EXPR_LHS);
+	if (!expr)
+	{
+		ofc_sema_lhs_delete(lhs);
+		return NULL;
+	}
 
-	expr->decl = decl;
+	expr->lhs = lhs;
 	expr->src = name->src;
 	return expr;
 }
@@ -550,7 +549,7 @@ static ofc_sema_expr_t* ofc_sema_expr__variable(
 {
 	ofc_sema_expr_t* expr
 		= ofc_sema_expr__parameter(scope, name);
-	if (!expr) expr = ofc_sema_expr__decl(scope, name);
+	if (!expr) expr = ofc_sema_expr__lhs(scope, name);
 
 	/* TODO - Intrinsics */
 
@@ -604,8 +603,8 @@ void ofc_sema_expr_delete(
 			ofc_sema_typeval_delete(
 				expr->constant);
 			break;
-		case OFC_SEMA_EXPR_DECL:
-			/* Don't delete decl since we're referencing it. */
+		case OFC_SEMA_EXPR_LHS:
+			ofc_sema_lhs_delete(expr->lhs);
 			break;
 		case OFC_SEMA_EXPR_CAST:
 			ofc_sema_expr_delete(expr->cast.expr);
@@ -642,8 +641,8 @@ bool ofc_sema_expr_compare(
 			return ofc_sema_typeval_compare(
 				a->constant, b->constant);
 
-		case OFC_SEMA_EXPR_DECL:
-			return (a->decl == b->decl);
+		case OFC_SEMA_EXPR_LHS:
+			return ofc_sema_lhs_compare(a->lhs, b->lhs);
 
 		case OFC_SEMA_EXPR_CAST:
 			if (!ofc_sema_type_compare(
@@ -729,9 +728,9 @@ const ofc_sema_type_t* ofc_sema_expr_type(
 	{
 		case OFC_SEMA_EXPR_CONSTANT:
 			return expr->constant->type;
-		case OFC_SEMA_EXPR_DECL:
-			return ofc_sema_decl_type(
-				expr->decl);
+		case OFC_SEMA_EXPR_LHS:
+			return ofc_sema_lhs_type(
+				expr->lhs);
 		case OFC_SEMA_EXPR_CAST:
 			return expr->cast.type;
 		case OFC_SEMA_EXPR_INTRINSIC:

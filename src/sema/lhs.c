@@ -127,7 +127,7 @@ const ofc_sema_type_t* ofc_sema_lhs_decl_type(
 
 ofc_sema_lhs_t* ofc_sema_lhs(
 	ofc_sema_scope_t* scope,
-	ofc_parse_lhs_t* lhs)
+	const ofc_parse_lhs_t* lhs)
 {
 	if (!scope || !lhs)
 		return NULL;

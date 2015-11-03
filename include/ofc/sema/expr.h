@@ -4,7 +4,7 @@
 typedef enum
 {
 	OFC_SEMA_EXPR_CONSTANT = 0,
-	OFC_SEMA_EXPR_DECL,
+	OFC_SEMA_EXPR_LHS,
 	OFC_SEMA_EXPR_CAST,
 	OFC_SEMA_EXPR_INTRINSIC,
 
@@ -40,7 +40,7 @@ struct ofc_sema_expr_s
 	{
 		ofc_sema_typeval_t* constant;
 
-		const ofc_sema_decl_t* decl;
+		ofc_sema_lhs_t* lhs;
 
 		struct
 		{
