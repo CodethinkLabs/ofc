@@ -119,32 +119,51 @@ bool ofc_sema_stmt_data(
 
 		for (i = 0, k = 0; i < entry->nlist->count; i++)
 		{
-			unsigned elem_offset;
+			ofc_sema_array_t* array;
 			unsigned elem_count;
 			if (lhs[i]->type == OFC_PARSE_LHS_VARIABLE)
 			{
-				elem_offset = 0;
+				array = NULL;
 				elem_count = ofc_sema_decl_elem_count(decl[i]);
+				if (elem_count > (ctotal - k))
+					elem_count = (ctotal - k);
 			}
 			else if (lhs[i]->type == OFC_PARSE_LHS_ARRAY)
 			{
+				if (!ofc_sema_decl_is_array(decl[i]))
+				{
+					ofc_sema_scope_error(scope, lhs[i]->src,
+						"Can't index non-array type.");
+					return false;
+				}
+
 				/* TODO - Get count and offset from array indices. */
 				return false;
 			}
 			else
 			{
+				ofc_sema_scope_error(scope, lhs[i]->src,
+					"Invalid LHS in DATA statement.");
 				return false;
 			}
 
-			if ((elem_count != 1)
-				|| (elem_offset != 0))
+			if (ofc_sema_decl_is_array(decl[i]))
 			{
-				/* TODO - Support multi-element initializers. */
-				ofc_sema_scope_error(scope, stmt->src,
-					"Multi-element initializers not yet supported.");
-				for (i = 0; i < entry->clist->count; i++)
-					ofc_sema_expr_delete(bexpr[i]);
-				return false;
+				if (array)
+				{
+					/* TODO - Support sub-array initializers. */
+					ofc_sema_scope_error(scope, stmt->src,
+						"Sub-array initializers not yet supported.");
+					ofc_sema_array_delete(array);
+					for (i = 0; i < entry->clist->count; i++)
+						ofc_sema_expr_delete(bexpr[i]);
+					return false;
+				}
+
+				bool initialized = ofc_sema_decl_init_array(
+					scope, decl[i], array, elem_count, &cexpr[k]);
+				ofc_sema_array_delete(array);
+				if (!initialized) return false;
 			}
 			else
 			{

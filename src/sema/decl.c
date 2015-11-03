@@ -295,6 +295,74 @@ bool ofc_sema_decl_init(
 	return true;
 }
 
+bool ofc_sema_decl_init_array(
+	const ofc_sema_scope_t* scope,
+	ofc_sema_decl_t* decl,
+	const ofc_sema_array_t* array,
+	unsigned count,
+	const ofc_sema_expr_t** init)
+{
+	if (!decl || !init)
+		return false;
+
+	if (!decl->type
+		|| (decl->type->type != OFC_SEMA_TYPE_ARRAY))
+		return false;
+
+	/* TODO - Support arrays of arrays. */
+	if (!decl->type->subtype
+		|| (decl->type->subtype->type == OFC_SEMA_TYPE_ARRAY))
+		return false;
+
+	unsigned elem_count
+		= ofc_sema_type_elem_count(decl->type);
+	if (elem_count == 0) return true;
+
+	if (!decl->init_array)
+	{
+		decl->init_array = (ofc_sema_typeval_t**)malloc(
+			sizeof(ofc_sema_typeval_t*) * elem_count);
+		if (!decl->init_array) return false;
+
+		unsigned i;
+		for (i = 0; i < elem_count; i++)
+			decl->init_array[i] = NULL;
+	}
+
+	if (!array)
+	{
+		if (count > elem_count)
+		{
+			ofc_sema_scope_warning(scope, init[0]->src,
+				"Array initializer too large, truncating.");
+			count = elem_count;
+		}
+
+		unsigned i;
+		for (i = 0; i < count; i++)
+		{
+			const ofc_sema_typeval_t* ctv
+				= ofc_sema_expr_constant(init[i]);
+			if (!ctv)
+			{
+				ofc_sema_scope_warning(scope, init[i]->src,
+					"Array initializer element not constant.");
+				return false;
+			}
+
+			decl->init_array[i] = ofc_sema_typeval_cast(
+				scope, ctv, decl->type->subtype);
+			if (!decl->init_array[i])
+				return false;
+		}
+
+		return true;
+	}
+
+	/* TODO - Iterate over array indices and initialize with provided elements. */
+	return false;
+}
+
 
 unsigned ofc_sema_decl_size(
 	const ofc_sema_decl_t* decl)
@@ -312,6 +380,13 @@ unsigned ofc_sema_decl_elem_count(
 		return 0;
 	return ofc_sema_type_elem_count(
 		decl->type);
+}
+
+bool ofc_sema_decl_is_array(
+	const ofc_sema_decl_t* decl)
+{
+	return (decl && decl->type
+		&& (decl->type->type == OFC_SEMA_TYPE_ARRAY));
 }
 
 bool ofc_sema_decl_is_composite(
@@ -339,6 +414,20 @@ const ofc_sema_type_t* ofc_sema_decl_type(
 	const ofc_sema_decl_t* decl)
 {
 	return (decl ? decl->type : NULL);
+}
+
+const ofc_sema_type_t* ofc_sema_decl_base_type(
+	const ofc_sema_decl_t* decl)
+{
+	if (!decl)
+		return NULL;
+
+	const ofc_sema_type_t* type;
+	for (type = decl->type;
+		type->type == OFC_SEMA_TYPE_ARRAY;
+		type = type->subtype);
+
+	return type;
 }
 
 

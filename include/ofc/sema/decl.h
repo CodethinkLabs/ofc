@@ -57,18 +57,28 @@ bool ofc_sema_decl_init(
 	const ofc_sema_scope_t* scope,
 	ofc_sema_decl_t* decl,
 	const ofc_sema_expr_t* init);
+bool ofc_sema_decl_init_array(
+	const ofc_sema_scope_t* scope,
+	ofc_sema_decl_t* decl,
+	const ofc_sema_array_t* array,
+	unsigned count,
+	const ofc_sema_expr_t** init);
 
 unsigned ofc_sema_decl_size(
 	const ofc_sema_decl_t* decl);
 unsigned ofc_sema_decl_elem_count(
 	const ofc_sema_decl_t* decl);
 
+bool ofc_sema_decl_is_array(
+	const ofc_sema_decl_t* decl);
 bool ofc_sema_decl_is_composite(
 	const ofc_sema_decl_t* decl);
 bool ofc_sema_decl_is_initialized(
 	const ofc_sema_decl_t* decl);
 
 const ofc_sema_type_t* ofc_sema_decl_type(
+	const ofc_sema_decl_t* decl);
+const ofc_sema_type_t* ofc_sema_decl_base_type(
 	const ofc_sema_decl_t* decl);
 
 bool ofc_sema_decl_equiv(

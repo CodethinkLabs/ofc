@@ -190,20 +190,17 @@ static bool ofc_sema_scope__body(
 					return false;
 				break;
 
-			case OFC_PARSE_STMT_ENTRY:
-			case OFC_PARSE_STMT_NAMELIST:
-			case OFC_PARSE_STMT_DECL_ATTR_EXTERNAL:
-			case OFC_PARSE_STMT_DECL_ATTR_INTRINSIC:
-				ofc_sema_scope_error(scope, stmt->src,
-					"Unsuported statement");
-				/* TODO - Support these statements. */
-				return false;
 			case OFC_PARSE_STMT_DECL_ATTR_AUTOMATIC:
 			case OFC_PARSE_STMT_DECL_ATTR_STATIC:
 			case OFC_PARSE_STMT_DECL_ATTR_VOLATILE:
 				if (!ofc_sema_stmt_decl_attr(scope, stmt))
 					return false;
 				break;
+
+			case OFC_PARSE_STMT_ENTRY:
+			case OFC_PARSE_STMT_NAMELIST:
+			case OFC_PARSE_STMT_DECL_ATTR_EXTERNAL:
+			case OFC_PARSE_STMT_DECL_ATTR_INTRINSIC:
 			case OFC_PARSE_STMT_POINTER:
 			case OFC_PARSE_STMT_TYPE:
 			case OFC_PARSE_STMT_STRUCTURE:
