@@ -36,6 +36,24 @@ ofc_sema_implicit_t* ofc_sema_implicit_create(void)
 	return implicit;
 }
 
+ofc_sema_implicit_t* ofc_sema_implicit_copy(
+	const ofc_sema_implicit_t* implicit)
+{
+	if (!implicit)
+		return NULL;
+
+	ofc_sema_implicit_t* copy
+		= (ofc_sema_implicit_t*)malloc(
+			sizeof(ofc_sema_implicit_t));
+	if (!copy) return NULL;
+
+	unsigned i;
+	for (i = 0; i < 26; i++)
+		copy->type[i] = implicit->type[i];
+
+	return copy;
+}
+
 
 bool ofc_sema_implicit_none(ofc_sema_implicit_t* implicit)
 {
