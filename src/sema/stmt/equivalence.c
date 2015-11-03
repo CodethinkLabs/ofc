@@ -40,8 +40,7 @@ bool ofc_sema_stmt_equivalence(
 					"EQUIVALENCE types don't match.");
 			}
 
-			if (!ofc_sema_equiv(
-				base, elhs))
+			if (!ofc_sema_equiv(base, elhs))
 			{
 				/* TODO - Better error messages for this in 'sema/equiv.c'. */
 				ofc_sema_scope_warning(scope, list->lhs[0]->src,
@@ -51,6 +50,8 @@ bool ofc_sema_stmt_equivalence(
 				ofc_sema_lhs_delete(base);
 				return false;
 			}
+
+			ofc_sema_lhs_delete(elhs);
 		}
 
 		ofc_sema_lhs_delete(base);

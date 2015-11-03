@@ -1,187 +1,408 @@
 #include <ofc/sema.h>
 
 
-ofc_sema_array_t* ofc_sema_array_create(
-	unsigned dimensions,
-	unsigned* base, unsigned* count)
+static bool ofc_sema_array__base(
+	const ofc_sema_array_t* array,
+	unsigned dim,
+	int64_t* base)
 {
-    if (!count) return NULL;
+	if (!array)
+		return false;
 
-	ofc_sema_array_t* array
-		= (ofc_sema_array_t*)malloc(sizeof(ofc_sema_array_t)
-			+ (dimensions * 2 * sizeof(unsigned)));
-	if (!array) return NULL;
+	if (dim >= array->dimensions)
+		return false;
 
-	array->dimensions = dimensions;
+	ofc_sema_expr_t* expr
+		= array->slice[dim].base;
 
-	unsigned i;
-	for (i = 0; i < dimensions; i++)
+	if (!expr)
 	{
-		unsigned b = (base ? base[i] : 1);
-		array->size[i][0] = b;
-		array->size[i][1] = count[i];
+		if (base) *base = 1;
+		return true;
 	}
 
-	return array;
+	const ofc_sema_typeval_t* ctv
+		= ofc_sema_expr_constant(expr);
+	if (!ctv) return NULL;
+
+	return ofc_sema_typeval_get_integer(
+		ctv, base);
 }
 
+
 ofc_sema_array_t* ofc_sema_array(
-	const ofc_sema_scope_t* scope,
-	const ofc_sema_array_t* base,
-	ofc_parse_array_index_t* index)
+	const ofc_sema_scope_t*        scope,
+	const ofc_sema_array_t*        array,
+	const ofc_parse_array_index_t* index)
 {
-	if (!scope || !index)
+	if (!index || (index->count == 0))
 		return NULL;
-
-	if (base && (index->count > base->dimensions))
-	{
-		/* TODO - Get source location for array. */
-		ofc_sema_scope_error(scope, OFC_STR_REF_EMPTY,
-			"Index has too many dimensions for array.");
-		return NULL;
-	}
-
-	unsigned ibase[index->count];
-	unsigned icount[index->count];
 
 	unsigned i;
 	for (i = 0; i < index->count; i++)
 	{
-		ofc_parse_array_range_t* range
-			= index->range[i];
-
-		if (!range)
+		if (!index->range[i])
 			return NULL;
 
-		unsigned first = 0;
-		if (range->first)
+		if (!index->range[i]->first
+			&& !index->range[i]->is_slice)
+			return NULL;
+	}
+
+	if (array && (index->count > array->dimensions))
+	{
+		/* TODO - Positional error. */
+		ofc_sema_scope_error(scope, OFC_STR_REF_EMPTY,
+			"Array slice has too many dimensions.");
+		return NULL;
+	}
+
+	unsigned dims = (array ? array->dimensions : index->count);
+
+	ofc_sema_array_t* slice
+		= (ofc_sema_array_t*)malloc(sizeof(ofc_sema_array_t)
+			+ (dims * sizeof(ofc_sema_array_slice_t)));
+	if (!slice) return NULL;
+
+	slice->dimensions = dims;
+
+	for (i = 0; i < dims; i++)
+		slice->slice[i].base = NULL;
+
+	for (i = 0; i < index->count; i++)
+	{
+		if (index->range[i]->first)
 		{
-			ofc_sema_expr_t* expr
-				= ofc_sema_expr(scope, range->first);
-			if (!expr) return NULL;
-			/* TODO - Allow negative array indices. */
-			bool resolved = ofc_sema_expr_resolve_uint(expr, &first);
-			ofc_sema_expr_delete(expr);
-			if (!resolved)
+			slice->slice[i].base = ofc_sema_expr(
+				scope, index->range[i]->first);
+			if (!slice->slice[i].base)
 			{
-				ofc_sema_scope_error(scope, range->first->src,
-					"Failed to resolve array index as integer at compile time.");
+				ofc_sema_array_delete(slice);
+				return NULL;
+			}
+
+			const ofc_sema_type_t* type
+				= ofc_sema_expr_type(slice->slice[i].base);
+
+			if (!ofc_sema_type_is_scalar(type))
+			{
+				ofc_sema_scope_error(scope,
+					slice->slice[i].base->src,
+					"Array index type must be scalar.");
+				ofc_sema_array_delete(slice);
+				return NULL;
+			}
+
+			if (!ofc_sema_type_is_integer(type))
+			{
+				const ofc_sema_type_t* int_type
+					= ofc_sema_type_create_primitive(
+						OFC_SEMA_TYPE_INTEGER, 0,
+						false, false, false);
+				ofc_sema_expr_t* cast = ofc_sema_expr_cast(
+					scope, slice->slice[i].base, int_type);
+				if (!cast)
+				{
+					ofc_sema_array_delete(slice);
+					return NULL;
+				}
+				slice->slice[i].base = cast;
+			}
+		}
+
+		int64_t array_base = 1;
+		if (array && !ofc_sema_array__base(
+			array, i, &array_base))
+		{
+			ofc_sema_array_delete(slice);
+			return NULL;
+		}
+
+		int64_t base;
+		bool base_const
+			= ofc_sema_array__base(
+				slice, i, &base);
+
+		if (array && base_const)
+		{
+			if (base < array_base)
+			{
+				ofc_sema_scope_error(scope,
+					slice->slice[i].base->src,
+					"Array index out-of-bounds (underflow).");
+				ofc_sema_array_delete(slice);
+				return NULL;
+			}
+			else if (base >= (array_base + array->slice[i].count))
+			{
+				ofc_sema_scope_error(scope,
+					slice->slice[i].base->src,
+					"Array index out-of-bounds (overflow).");
+				ofc_sema_array_delete(slice);
 				return NULL;
 			}
 		}
-		else if (base && range->is_slice)
+
+		if (array && !index->range[i]->is_slice
+			&& !index->range[i]->last
+			&& !index->range[i]->stride)
 		{
-			first = base->size[i][0];
+			slice->slice[i].count  = 1;
+			slice->slice[i].stride = 1;
+			continue;
+		}
+
+		if (!base_const)
+		{
+			ofc_sema_scope_error(scope,
+				slice->slice[i].base->src,
+				"Array slice base must be constant.");
+			ofc_sema_array_delete(slice);
+			return NULL;
+		}
+
+		int64_t count;
+		if (index->range[i]->last)
+		{
+			ofc_sema_expr_t* last = ofc_sema_expr(
+				scope, index->range[i]->last);
+			if (!last)
+			{
+				ofc_sema_array_delete(slice);
+				return NULL;
+			}
+
+			const ofc_sema_type_t* type
+				= ofc_sema_expr_type(last);
+
+			if (!ofc_sema_type_is_scalar(type))
+			{
+				ofc_sema_scope_error(scope, last->src,
+					"Array slice last index must be scalar.");
+				ofc_sema_expr_delete(last);
+				ofc_sema_array_delete(slice);
+				return NULL;
+			}
+
+			if (!ofc_sema_type_is_integer(type))
+			{
+				const ofc_sema_type_t* int_type
+					= ofc_sema_type_create_primitive(
+						OFC_SEMA_TYPE_INTEGER, 0,
+						false, false, false);
+				ofc_sema_expr_t* cast = ofc_sema_expr_cast(
+					scope, last, int_type);
+				if (!cast)
+				{
+					ofc_sema_expr_delete(last);
+					ofc_sema_array_delete(slice);
+					return NULL;
+				}
+				last = cast;
+			}
+
+			const ofc_sema_typeval_t* ctv
+				= ofc_sema_expr_constant(last);
+			if (!ctv)
+			{
+				ofc_sema_scope_error(scope, last->src,
+					"Array slice last index must be constant.");
+				ofc_sema_expr_delete(last);
+				ofc_sema_array_delete(slice);
+				return NULL;
+			}
+
+			bool resolved = ofc_sema_typeval_get_integer(ctv, &count);
+			ofc_sema_expr_delete(last);
+			if (!resolved)
+			{
+				ofc_sema_array_delete(slice);
+				return NULL;
+			}
+
+			if (count < base)
+			{
+				ofc_sema_scope_error(scope, last->src,
+					"Array slice last index must be greater than"
+					" or equal to base.");
+				ofc_sema_array_delete(slice);
+				return NULL;
+			}
+
+			count = 1 + (count - base);
+		}
+		else if (array)
+		{
+			int64_t offset = (base - array_base);
+			count = (array->slice[i].count - offset);
 		}
 		else
 		{
-			/* This should never happen. */
+			count = base;
+			base = 1;
+			ofc_sema_expr_delete(slice->slice[i].base);
+			slice->slice[i].base = NULL;
+		}
+
+		if (count == 0)
+		{
+			/* TODO - Proper positional error. */
+			ofc_sema_scope_error(scope, OFC_STR_REF_EMPTY,
+				"Array slice count must be greater than zero.");
+			ofc_sema_array_delete(slice);
 			return NULL;
 		}
 
-		unsigned count = 0;
-		if (range->last)
+		slice->slice[i].count = count;
+		if ((int64_t)slice->slice[i].count != count)
 		{
-			ofc_sema_expr_t* expr
-				= ofc_sema_expr(scope, range->last);
-			if (!expr) return NULL;
-			/* TODO - Allow negative array indices. */
-			unsigned last;
-			bool resolved = ofc_sema_expr_resolve_uint(expr, &last);
-			ofc_sema_expr_delete(expr);
-			if (!resolved)
-			{
-				ofc_sema_scope_error(scope, range->last->src,
-					"Failed to resolve array index (last) as integer at compile time.");
-				return NULL;
-			}
-
-			if (last < first)
-			{
-				ofc_sema_scope_error(scope, range->last->src,
-					"Last array index must be greater than first.");
-				return NULL;
-			}
-			count = (last - first);
-		}
-		else if (range->is_slice)
-		{
-			if (!base)
-			{
-				ofc_sema_scope_error(scope, range->last->src,
-					"Array declaration incomplete, last index undefined.");
-				return NULL;
-			}
-
-			count = base->size[i][1];
-		}
-		else if (!base)
-		{
-			count = first;
-			first = 1;
-		}
-
-		unsigned stride = 1;
-		if (range->stride)
-		{
-			ofc_sema_expr_t* expr
-				= ofc_sema_expr(scope, range->stride);
-			if (!expr) return NULL;
-			bool resolved = ofc_sema_expr_resolve_uint(expr, &stride);
-			ofc_sema_expr_delete(expr);
-			if (!resolved)
-			{
-				ofc_sema_scope_error(scope, range->first->src,
-					"Failed to resolve array stride as positive integer at compile time.");
-				return NULL;
-			}
-
-			if (stride == 0)
-			{
-				ofc_sema_scope_error(scope, range->first->src,
-					"Array stride must be greater than zero.");
-				return NULL;
-			}
-		}
-
-		if (stride > 1)
-		{
-			ofc_sema_scope_error(scope, range->first->src,
-				"Array stride not yet supported.");
-			/* TODO - Support array stride at semantic level. */
+			/* TODO - Proper positional error. */
+			ofc_sema_scope_error(scope, OFC_STR_REF_EMPTY,
+				"Array slice count out of range.");
+			ofc_sema_array_delete(slice);
 			return NULL;
 		}
 
-		if (base)
+		int64_t stride = 1;
+		if (index->range[i]->stride)
 		{
-			if ((first < base->size[i][0])
-				|| ((first + count) >= (base->size[i][0] + base->size[i][1])))
+			ofc_sema_expr_t* expr = ofc_sema_expr(
+				scope, index->range[i]->stride);
+			if (!expr)
 			{
-				/* TODO - Handle this in 'parse/array.h'. */
-				ofc_str_ref_t src = (range->first
-					? range->first->src : OFC_STR_REF_EMPTY);
-				if (range->last)
-					src = ofc_str_ref_bridge(src, range->last->src);
-				if (range->stride)
-					src = ofc_str_ref_bridge(src, range->stride->src);
+				ofc_sema_array_delete(slice);
+				return NULL;
+			}
 
-				ofc_sema_scope_error(scope, src,
-					"Array index out of range.");
+			const ofc_sema_type_t* type
+				= ofc_sema_expr_type(expr);
+
+			if (!ofc_sema_type_is_scalar(type))
+			{
+				ofc_sema_scope_error(scope, expr->src,
+					"Array slice stride must be scalar.");
+				ofc_sema_expr_delete(expr);
+				ofc_sema_array_delete(slice);
+				return NULL;
+			}
+
+			if (!ofc_sema_type_is_integer(type))
+			{
+				const ofc_sema_type_t* int_type
+					= ofc_sema_type_create_primitive(
+						OFC_SEMA_TYPE_INTEGER, 0,
+						false, false, false);
+				ofc_sema_expr_t* cast = ofc_sema_expr_cast(
+					scope, expr, int_type);
+				if (!cast)
+				{
+					ofc_sema_expr_delete(expr);
+					ofc_sema_array_delete(slice);
+					return NULL;
+				}
+				expr = cast;
+			}
+
+			const ofc_sema_typeval_t* ctv
+				= ofc_sema_expr_constant(expr);
+			if (!ctv)
+			{
+				ofc_sema_scope_error(scope, expr->src,
+					"Array slice stride must be constant.");
+				ofc_sema_expr_delete(expr);
+				ofc_sema_array_delete(slice);
+				return NULL;
+			}
+
+			bool resolved = ofc_sema_typeval_get_integer(ctv, &stride);
+			ofc_sema_expr_delete(expr);
+			if (!resolved)
+			{
+				ofc_sema_array_delete(slice);
 				return NULL;
 			}
 		}
 
-		ibase[i]  = first;
-		icount[i] = count;
+		if (array)
+			stride *= array->slice[i].stride;
+
+		if (stride == 0)
+		{
+			/* TODO - Proper positional error. */
+			ofc_sema_scope_error(scope, OFC_STR_REF_EMPTY,
+				"Array slice stride count must be non-zero.");
+			ofc_sema_array_delete(slice);
+			return NULL;
+		}
+
+		if (stride < 0)
+		{
+			/* TODO - Support negative array stride. */
+			/* TODO - Proper positional error. */
+			ofc_sema_scope_error(scope, OFC_STR_REF_EMPTY,
+				"Negative array slice strides not yet supported.");
+			ofc_sema_array_delete(slice);
+			return NULL;
+		}
+
+		slice->slice[i].stride = stride;
+		if ((int64_t)slice->slice[i].stride != stride)
+		{
+			/* TODO - Proper positional error. */
+			ofc_sema_scope_error(scope, OFC_STR_REF_EMPTY,
+				"Array slice stride out of range.");
+			ofc_sema_array_delete(slice);
+			return NULL;
+		}
 	}
 
-	return ofc_sema_array_create(
-		index->count, ibase, icount);
+	return slice;
 }
 
-
-void ofc_sema_array_delete(ofc_sema_array_t* array)
+ofc_sema_array_t* ofc_sema_array_copy(
+	const ofc_sema_array_t* array)
 {
+	if (!array)
+		return NULL;
+
+	unsigned i;
+	for (i = 0; i < array->dimensions; i++)
+	{
+		/* TODO - Handle array dims separately to slice. */
+		if (array->slice[i].base)
+			return NULL;
+	}
+
+	ofc_sema_array_t* copy
+		= (ofc_sema_array_t*)malloc(sizeof(ofc_sema_array_t)
+			+ (sizeof(ofc_sema_array_slice_t) * array->dimensions));
+	if (!copy) return NULL;
+
+	copy->dimensions = array->dimensions;
+
+	for (i = 0; i < copy->dimensions; i++)
+	{
+		copy->slice[i].base   = NULL;
+		copy->slice[i].count  = array->slice[i].count;
+		copy->slice[i].stride = array->slice[i].stride;
+	}
+
+	return copy;
+}
+
+void ofc_sema_array_delete(
+	ofc_sema_array_t* array)
+{
+	if (!array)
+		return;
+
+	unsigned i;
+	for (i = 0; i < array->dimensions; i++)
+	{
+		ofc_sema_expr_delete(
+			array->slice[i].base);
+	}
+
 	free(array);
 }
 
@@ -197,8 +418,9 @@ uint8_t ofc_sema_array_hash(
 	unsigned i;
 	for (i = 0; i < array->dimensions; i++)
 	{
-		hash += array->size[i][0];
-		hash += array->size[i][1];
+		/* TODO - Hash the base expr. */
+		hash += array->slice[i].count;
+		hash += array->slice[i].stride;
 	}
 
 	return hash;
@@ -217,27 +439,167 @@ bool ofc_sema_array_compare(
 	if (a->dimensions != b->dimensions)
 		return false;
 
-	unsigned i, j;
-	for (i = 0, j = 0; i < a->dimensions; i++, j += 2)
+	unsigned i;
+	for (i = 0; i < a->dimensions; i++)
 	{
-		if ((a->size[j][0] != b->size[j][0])
-			|| (a->size[j][1] != b->size[j][1]))
+		if ((a->slice[i].count != b->slice[i].count)
+			|| (a->slice[i].stride != b->slice[i].stride)
+			|| !ofc_sema_expr_compare(a->slice[i].base, b->slice[i].base))
 			return false;
 	}
 
 	return true;
 }
 
-
 unsigned ofc_sema_array_total(const ofc_sema_array_t* array)
 {
-	if (!array || (array->dimensions == 0))
+	if (!array)
 		return 0;
 
 	unsigned total = 1;
 	unsigned i;
 	for (i = 0; i < array->dimensions; i++)
-		total *= array->size[i][1];
+		total *= array->slice[i].count;
 
 	return total;
+}
+
+
+
+ofc_sema_array_index_t* ofc_sema_array_index(
+	const ofc_sema_scope_t*        scope,
+	const ofc_sema_array_t*        array,
+	const ofc_parse_array_index_t* index)
+{
+	if (!index || !array
+		|| (index->count != array->dimensions))
+		return NULL;
+
+	unsigned i;
+	for (i = 0; i < index->count; i++)
+	{
+		if (!index->range[i]
+			|| index->range[i]->is_slice
+			|| index->range[i]->last
+			|| index->range[i]->stride)
+			return NULL;
+	}
+
+	ofc_sema_array_index_t* ai
+		= (ofc_sema_array_index_t*)malloc(sizeof(ofc_sema_array_index_t)
+			+ (index->count * sizeof(ofc_sema_expr_t*)));
+	if (!ai) return NULL;
+
+	ai->dimensions = index->count;
+
+	for (i = 0; i < index->count; i++)
+		ai->index[i] = NULL;
+
+	for (i = 0; i < index->count; i++)
+	{
+		ai->index[i] = ofc_sema_expr(
+			scope, index->range[i]->first);
+		if (!ai->index[i])
+		{
+			ofc_sema_array_index_delete(ai);
+			return NULL;
+		}
+
+		ofc_sema_expr_t* expr = ai->index[i];
+
+		const ofc_sema_type_t* type
+			= ofc_sema_expr_type(expr);
+
+		if (!ofc_sema_type_is_scalar(type))
+		{
+			ofc_sema_scope_error(scope, expr->src,
+				"Array index type must be scalar.");
+			ofc_sema_array_index_delete(ai);
+			return NULL;
+		}
+
+		if (!ofc_sema_type_is_integer(type))
+		{
+			const ofc_sema_type_t* int_type
+				= ofc_sema_type_create_primitive(
+					OFC_SEMA_TYPE_INTEGER, 0,
+					false, false, false);
+			ofc_sema_expr_t* cast = ofc_sema_expr_cast(
+				scope, expr, int_type);
+			if (!cast)
+			{
+				ofc_sema_array_index_delete(ai);
+				return NULL;
+			}
+			ai->index[i] = cast;
+			expr = ai->index[i];
+		}
+
+		const ofc_sema_typeval_t* ctv
+			= ofc_sema_expr_constant(expr);
+		if (ctv)
+		{
+			int64_t base, first;
+			if (ofc_sema_array__base(array, i, &base)
+				&& ofc_sema_typeval_get_integer(ctv, &first))
+			{
+				first *= array->slice[i].stride;
+
+				if (first < base)
+				{
+					ofc_sema_scope_error(scope, expr->src,
+						"Array index out-of-bounds (underflow).");
+					ofc_sema_array_index_delete(ai);
+					return NULL;
+				}
+				else if (first >= (base + array->slice[i].count))
+				{
+					ofc_sema_scope_error(scope, expr->src,
+						"Array index out-of-bounds (overflow).");
+					ofc_sema_array_index_delete(ai);
+					return NULL;
+				}
+			}
+		}
+	}
+
+	return ai;
+}
+
+void ofc_sema_array_index_delete(
+	ofc_sema_array_index_t* index)
+{
+	if (!index)
+		return;
+
+	unsigned i;
+	for (i = 0; i < index->dimensions; i++)
+		ofc_sema_expr_delete(index->index[i]);
+
+	free(index);
+}
+
+
+bool ofc_sema_array_index_compare(
+	const ofc_sema_array_index_t* a,
+	const ofc_sema_array_index_t* b)
+{
+	if (!a || !b)
+		return false;
+
+	if (a == b)
+		return true;
+
+	if (a->dimensions != b->dimensions)
+		return false;
+
+	unsigned i;
+	for (i = 0; i < a->dimensions; i++)
+	{
+		if (!ofc_sema_expr_compare(
+			a->index[i], b->index[i]))
+			return false;
+	}
+
+	return true;
 }

@@ -50,8 +50,8 @@ struct ofc_sema_expr_s
 
 		struct
 		{
-			ofc_sema_expr_t*   a;
-			ofc_sema_expr_t*   b;
+			ofc_sema_expr_t* a;
+			ofc_sema_expr_t* b;
 		};
 	};
 };
@@ -71,6 +71,13 @@ ofc_sema_expr_t* ofc_sema_expr_cast(
 	const ofc_sema_type_t* type);
 void ofc_sema_expr_delete(
 	ofc_sema_expr_t* expr);
+
+bool ofc_sema_expr_compare(
+	const ofc_sema_expr_t* a,
+	const ofc_sema_expr_t* b);
+
+uint8_t ofc_sema_expr_hash(
+	const ofc_sema_expr_t* expr);
 
 const ofc_sema_type_t* ofc_sema_expr_type(
 	const ofc_sema_expr_t* expr);

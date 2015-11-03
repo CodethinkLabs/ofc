@@ -622,6 +622,54 @@ void ofc_sema_expr_delete(
 	free(expr);
 }
 
+
+bool ofc_sema_expr_compare(
+	const ofc_sema_expr_t* a,
+	const ofc_sema_expr_t* b)
+{
+	if (!a || !b)
+		return false;
+
+	if (a == b)
+		return true;
+
+	if (a->type != b->type)
+		return false;
+
+	switch (a->type)
+	{
+		case OFC_SEMA_EXPR_CONSTANT:
+			return ofc_sema_typeval_compare(
+				a->constant, b->constant);
+
+		case OFC_SEMA_EXPR_DECL:
+			return (a->decl == b->decl);
+
+		case OFC_SEMA_EXPR_CAST:
+			if (!ofc_sema_type_compare(
+				a->cast.type, b->cast.type))
+				return false;
+
+			return ofc_sema_expr_compare(
+				a->cast.expr, b->cast.expr);
+
+		case OFC_SEMA_EXPR_INTRINSIC:
+			return false;
+
+		default:
+			break;
+	}
+
+	if ((a->a != b->a)
+		&& !ofc_sema_expr_compare(a->a, b->a))
+		return false;
+
+	return ((a->b == b->b)
+		|| ofc_sema_expr_compare(a->b, b->b));
+}
+
+
+
 ofc_sema_expr_list_t* ofc_sema_expr_list_create(void)
 {
 	ofc_sema_expr_list_t* list

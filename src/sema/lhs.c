@@ -1,6 +1,79 @@
 #include <ofc/sema.h>
 
 
+static ofc_sema_lhs_t* ofc_sema_lhs_index(
+	ofc_sema_lhs_t* lhs,
+	ofc_sema_array_index_t* index)
+{
+	if (!lhs || !index)
+		return NULL;
+
+	ofc_sema_lhs_t* alhs
+		= (ofc_sema_lhs_t*)malloc(
+			sizeof(ofc_sema_lhs_t));
+	if (!lhs) return NULL;
+
+	alhs->type      = OFC_SEMA_LHS_ARRAY_INDEX;
+	alhs->parent    = lhs;
+	alhs->index     = index;
+	alhs->data_type = lhs->data_type->subtype;
+	alhs->refcnt    = 0;
+
+	return alhs;
+}
+
+static ofc_sema_lhs_t* ofc_sema_lhs_slice(
+	ofc_sema_lhs_t* lhs,
+	ofc_sema_array_t* slice)
+{
+	if (!lhs || !slice)
+		return NULL;
+
+	ofc_sema_array_t* cslice
+		= ofc_sema_array_copy(slice);
+	if (!cslice) return NULL;
+
+	const ofc_sema_type_t* base_type
+		= lhs->data_type;
+
+	const ofc_sema_type_t* type
+		= ofc_sema_type_create_array(
+			base_type, cslice,
+			base_type->is_static,
+			base_type->is_automatic,
+			base_type->is_volatile);
+	if (!type)
+	{
+		ofc_sema_array_delete(cslice);
+		return NULL;
+	}
+
+	ofc_sema_lhs_t* alhs
+		= (ofc_sema_lhs_t*)malloc(
+			sizeof(ofc_sema_lhs_t));
+	if (!lhs) return NULL;
+
+	alhs->type      = OFC_SEMA_LHS_ARRAY_SLICE;
+	alhs->parent    = lhs;
+	alhs->slice     = slice;
+	alhs->data_type = type;
+	alhs->refcnt    = 0;
+
+	return alhs;
+}
+
+static ofc_sema_lhs_t* ofc_sema_lhs_member(
+	ofc_sema_lhs_t* lhs,
+	ofc_str_ref_t member)
+{
+	if (!lhs || ofc_str_ref_empty(member))
+		return NULL;
+
+	/* TODO - Implement. */
+	return NULL;
+}
+
+
 const ofc_sema_type_t* ofc_sema_lhs_decl_type(
 	const ofc_sema_scope_t* scope,
 	const ofc_sema_type_t* type,
@@ -62,17 +135,46 @@ ofc_sema_lhs_t* ofc_sema_lhs(
 	switch (lhs->type)
 	{
 		case OFC_PARSE_LHS_IMPLICIT_DO:
-			/* TODO - Error: Can't resolve implicit do to single LHS. */
+			ofc_sema_scope_error(scope, lhs->src,
+				"Can't resolve implicit do to single LHS.");
 			return NULL;
 
 		case OFC_PARSE_LHS_STAR_LEN:
-			/* TODO - Error: Can't resolve star length to LHS. */
+			ofc_sema_scope_error(scope, lhs->src,
+				"Can't resolve star length to LHS.");
 			return NULL;
 
 		case OFC_PARSE_LHS_MEMBER_TYPE:
 		case OFC_PARSE_LHS_MEMBER_STRUCTURE:
-			/* TODO - Support structure members properly. */
-			return NULL;
+			{
+				ofc_sema_lhs_t* parent
+					= ofc_sema_lhs(scope, lhs->parent);
+				if (!parent) return NULL;
+
+				/* TODO - Check dereference type against structure type. */
+
+				if (!parent->data_type
+					|| (parent->data_type->type
+						!= OFC_SEMA_TYPE_STRUCTURE))
+				{
+					ofc_sema_scope_error(scope, lhs->src,
+						"Attempting to dereference member of a variable"
+						" that's not a structure.");
+					ofc_sema_lhs_delete(parent);
+					return NULL;
+				}
+
+				ofc_sema_lhs_t* slhs
+					= ofc_sema_lhs_member(
+						parent, lhs->member.name);
+				if (!slhs)
+				{
+					ofc_sema_lhs_delete(parent);
+					return NULL;
+				}
+
+				return slhs;
+			}
 
 		case OFC_PARSE_LHS_ARRAY:
 			{
@@ -80,8 +182,9 @@ ofc_sema_lhs_t* ofc_sema_lhs(
 					= ofc_sema_lhs(scope, lhs->parent);
 				if (!parent) return NULL;
 
-				if (!parent->type
-					|| (parent->type->type != OFC_SEMA_TYPE_ARRAY))
+				if (!parent->data_type
+					|| (parent->data_type->type
+						!= OFC_SEMA_TYPE_ARRAY))
 				{
 					ofc_sema_scope_error(scope, lhs->src,
 						"Attempting to index a variable that's not an array.");
@@ -89,22 +192,42 @@ ofc_sema_lhs_t* ofc_sema_lhs(
 					return NULL;
 				}
 
-				ofc_sema_array_t* array
-					= ofc_sema_array(scope,
-						parent->type->array,
+				ofc_sema_array_index_t* index
+					= ofc_sema_array_index(scope,
+						parent->data_type->array,
 						lhs->array.index);
-				if (!array)
+				if (index)
 				{
+					ofc_sema_lhs_t* slhs
+						= ofc_sema_lhs_index(parent, index);
+					ofc_sema_lhs_delete(parent);
+					if (!slhs)
+					{
+						ofc_sema_array_index_delete(index);
+						return NULL;
+					}
+					return slhs;
+				}
+
+				/* TODO - Don't double-error when an index is out-of-bounds. */
+
+				ofc_sema_array_t* slice
+					= ofc_sema_array(scope,
+						parent->data_type->array,
+						lhs->array.index);
+				if (!slice)
+				{
+					/* TODO - Resolve as function/subroutine assignment? */
 					ofc_sema_lhs_delete(parent);
 					return NULL;
 				}
 
 				ofc_sema_lhs_t* slhs
-					= ofc_sema_lhs_index(parent, array);
+					= ofc_sema_lhs_slice(parent, slice);
 				ofc_sema_lhs_delete(parent);
 				if (!slhs)
 				{
-					ofc_sema_array_delete(array);
+					ofc_sema_array_delete(slice);
 					return NULL;
 				}
 				return slhs;
@@ -134,10 +257,10 @@ ofc_sema_lhs_t* ofc_sema_lhs(
 			sizeof(ofc_sema_lhs_t));
 	if (!slhs) return NULL;
 
-	slhs->decl   = decl;
-	slhs->index  = NULL;
-	slhs->type   = decl->type;
-	slhs->refcnt = 0;
+	slhs->type      = OFC_SEMA_LHS_DECL;
+	slhs->decl      = decl;
+	slhs->data_type = decl->type;
+	slhs->refcnt    = 0;
 	return slhs;
 }
 
@@ -166,7 +289,20 @@ void ofc_sema_lhs_delete(
 		return;
 	}
 
-	ofc_sema_array_delete(lhs->index);
+	switch (lhs->type)
+	{
+		case OFC_SEMA_LHS_ARRAY_INDEX:
+			ofc_sema_array_index_delete(lhs->index);
+			break;
+
+		case OFC_SEMA_LHS_ARRAY_SLICE:
+			ofc_sema_array_delete(lhs->slice);
+			break;
+
+		default:
+			break;
+	}
+
 	free(lhs);
 }
 
@@ -181,14 +317,35 @@ bool ofc_sema_lhs_compare(
     if (a == b)
 		return true;
 
-	if (a->decl != b->decl)
+	if (a->type != b->type)
 		return false;
 
-	if (!a->index && !b->index)
-		return true;
+	if (a->type == OFC_SEMA_LHS_DECL)
+		return (a->decl == b->decl);
 
-	return ofc_sema_array_compare(
-		a->index, b->index);
+	if (!ofc_sema_lhs_compare(
+		a->parent, b->parent))
+		return false;
+
+	switch (a->type)
+	{
+		case OFC_SEMA_LHS_ARRAY_INDEX:
+			if (!ofc_sema_array_index_compare(
+				a->index, b->index))
+				return false;
+			break;
+
+		case OFC_SEMA_LHS_ARRAY_SLICE:
+			if (!ofc_sema_array_compare(
+				a->slice, b->slice))
+				return false;
+			break;
+
+		default:
+			return false;
+	}
+
+	return true;
 }
 
 
@@ -201,129 +358,5 @@ ofc_sema_decl_t* ofc_sema_lhs_decl(
 const ofc_sema_type_t* ofc_sema_lhs_type(
 	const ofc_sema_lhs_t* lhs)
 {
-	return (lhs ? lhs->type : NULL);
-}
-
-
-ofc_sema_lhs_t* ofc_sema_lhs_index(
-	ofc_sema_lhs_t* lhs,
-	ofc_sema_array_t* index)
-{
-	if (!index || (index->dimensions == 0))
-		return NULL;
-
-	const ofc_sema_type_t* type
-		= ofc_sema_lhs_type(lhs);
-	if (!type) return NULL;
-
-	if ((type->type != OFC_SEMA_TYPE_ARRAY)
-		|| !type->array)
-		return NULL;
-
-    if (index->dimensions > type->array->dimensions)
-	{
-		/* TODO - Error: Too many dimensions in array index. */
-		return NULL;
-	}
-
-	unsigned dims = type->array->dimensions;
-	unsigned sdims = 0;
-	unsigned base[dims];
-	unsigned count[dims];
-
-	unsigned i;
-	for (i = 0; i < index->dimensions; i++)
-	{
-		unsigned ib = index->size[i][0];
-		unsigned tb = type->array->size[i][0];
-		unsigned ic = index->size[i][1];
-		unsigned tc = type->array->size[i][1];
-
-		if ((ib < tb) || (((ib - tb) + ic) > tc))
-		{
-			/* TODO - Error: Array index out of range. */
-			return NULL;
-		}
-
-		base[i]  = ib;
-		count[i] = ic;
-
-		if (count[i] > 0)
-			sdims++;
-	}
-	for (; i < type->array->dimensions; i++)
-	{
-		base[i]  = type->array->size[i][0];
-		count[i] = type->array->size[i][1];
-
-		if (count[i] > 0)
-			sdims++;
-	}
-
-	ofc_sema_lhs_t* lhs_index
-		= (ofc_sema_lhs_t*)malloc(
-			sizeof(ofc_sema_lhs_t));
-	if (!lhs_index) return NULL;
-
-	lhs_index->decl  = lhs->decl;
-	lhs_index->index = index;
-	lhs_index->refcnt = 0;
-
-	if (sdims == 0)
-	{
-		lhs_index->type = type;
-	}
-	else
-	{
-		unsigned sbase[sdims];
-		unsigned scount[sdims];
-
-		unsigned j = 0;
-		for (i = 0; i < dims; i++)
-		{
-			if (count[i] == 0)
-				continue;
-
-			sbase[j]  = base[i];
-			scount[j] = count[i];
-			j += 1;
-		}
-
-		ofc_sema_array_t* sindex
-			= ofc_sema_array_create(
-				sdims, sbase, scount);
-		if (!sindex)
-		{
-			free(lhs_index);
-			return NULL;
-		}
-
-		const ofc_sema_type_t* stype
-			= ofc_sema_type_create_array(
-				type, sindex,
-				type->is_static,
-				type->is_automatic,
-				type->is_volatile);
-		if (!stype)
-		{
-			ofc_sema_array_delete(sindex);
-			free(lhs_index);
-			return NULL;
-		}
-
-		lhs_index->type = stype;
-	}
-
-	return lhs_index;
-}
-
-ofc_sema_lhs_t* ofc_sema_lhs_member(
-	ofc_sema_lhs_t* lhs,
-	ofc_str_ref_t member)
-{
-	if (!lhs || ofc_str_ref_empty(member))
-		return NULL;
-
-	/* TODO - Implement. */
-	return NULL;
+	return (lhs ? lhs->data_type : NULL);
 }
