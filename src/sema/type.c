@@ -214,6 +214,16 @@ const ofc_sema_type_t* ofc_sema_type_create_primitive(
 		is_static, is_automatic, is_volatile);
 }
 
+const ofc_sema_type_t* ofc_sema_type_create_character(
+	unsigned kind, unsigned len,
+	bool is_static, bool is_automatic, bool is_volatile)
+{
+	return ofc_sema_type__create(
+		OFC_SEMA_TYPE_CHARACTER, kind, len,
+		NULL, NULL, NULL,
+		is_static, is_automatic, is_volatile);
+}
+
 const ofc_sema_type_t* ofc_sema_type_create_byte(
 	bool is_static,
 	bool is_automatic,

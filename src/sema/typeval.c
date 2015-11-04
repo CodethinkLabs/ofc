@@ -524,9 +524,8 @@ static ofc_sema_typeval_t* ofc_sema_typeval__character_literal(
 
 	if (!typeval.type)
 	{
-		typeval.type = ofc_sema_type_create_primitive(
-			OFC_SEMA_TYPE_CHARACTER, 0, false, false, false);
-
+		typeval.type = ofc_sema_type_create_character(
+			1, size, false, false, false);
 		if (!typeval.type)
 		{
 			/* This should never happen. */
@@ -1308,9 +1307,8 @@ ofc_sema_typeval_t* ofc_sema_typeval_concat(
 	unsigned len = len_a + len_b;
 
 	ofc_sema_typeval_t tv;
-	tv.type = ofc_sema_type_create_primitive(
-		OFC_SEMA_TYPE_CHARACTER, len,
-		false, false, false);
+	tv.type = ofc_sema_type_create_character(
+		a->type->kind, len, false, false, false);
 	if (!tv.type) return NULL;
 
 	tv.character = (char*)malloc(sizeof(char) * len);

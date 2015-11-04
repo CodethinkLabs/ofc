@@ -52,6 +52,9 @@ const char* ofc_sema_type_str_rep(
 const ofc_sema_type_t* ofc_sema_type_create_primitive(
 	ofc_sema_type_e type, unsigned kind,
 	bool is_static, bool is_automatic, bool is_volatile);
+const ofc_sema_type_t* ofc_sema_type_create_character(
+	unsigned kind, unsigned len,
+	bool is_static, bool is_automatic, bool is_volatile);
 const ofc_sema_type_t* ofc_sema_type_create_byte(
 	bool is_static, bool is_automatic, bool is_volatile);
 const ofc_sema_type_t* ofc_sema_type_create_structure(
