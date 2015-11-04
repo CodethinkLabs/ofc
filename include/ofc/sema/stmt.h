@@ -4,6 +4,7 @@
 typedef enum
 {
 	OFC_SEMA_STMT_ASSIGNMENT = 0,
+	OFC_SEMA_STMT_ASSIGN,
 	OFC_SEMA_STMT_WRITE,
 	OFC_SEMA_STMT_CONTINUE,
 	OFC_SEMA_STMT_IF_COMPUTED,
@@ -31,6 +32,12 @@ struct ofc_sema_stmt_s
 			ofc_sema_lhs_t*  dest;
 			ofc_sema_expr_t* expr;
 		} assignment;
+
+		struct
+		{
+			const ofc_sema_decl_t* dest;
+			unsigned               label;
+		} assign;
 
 		struct
 		{
@@ -128,6 +135,9 @@ void ofc_sema_stmt_delete(
 bool ofc_sema_stmt_assignment_decl(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
+bool ofc_sema_stmt_assign_decl(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt);
 bool ofc_sema_stmt_data(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
@@ -151,6 +161,9 @@ bool ofc_sema_stmt_do_decl(
 ofc_sema_stmt_t* ofc_sema_stmt_assignment(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
+ofc_sema_stmt_t* ofc_sema_stmt_assign(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt);
 ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
@@ -166,6 +179,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_go_to(
 ofc_sema_stmt_t* ofc_sema_stmt_do(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
+
 
 struct ofc_sema_stmt_list_s
 {

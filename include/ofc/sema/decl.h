@@ -40,6 +40,10 @@ typedef struct
 	ofc_hashmap_t*    map;
 } ofc_sema_decl_list_t;
 
+ofc_sema_decl_t* ofc_sema_decl_create(
+	const ofc_sema_type_t* type,
+	ofc_str_ref_t name);
+
 ofc_sema_decl_t* ofc_sema_decl_implicit_name(
 	const ofc_sema_scope_t* scope,
 	ofc_str_ref_t name);

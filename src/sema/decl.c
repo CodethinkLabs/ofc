@@ -1,7 +1,7 @@
 #include <ofc/sema.h>
 
 
-static ofc_sema_decl_t* ofc_sema_decl__type_name(
+ofc_sema_decl_t* ofc_sema_decl_create(
 	const ofc_sema_type_t* type,
 	ofc_str_ref_t name)
 {
@@ -71,7 +71,7 @@ static ofc_sema_decl_t* ofc_sema_decl_implicit__name(
 		type = atype;
 	}
 
-	return ofc_sema_decl__type_name(
+	return ofc_sema_decl_create(
 		type, name);
 }
 
@@ -142,7 +142,7 @@ static ofc_sema_decl_t* ofc_sema_decl__decl(
 	if (!atype) return NULL;
 
 	ofc_sema_decl_t* sdecl
-		= ofc_sema_decl__type_name(
+		= ofc_sema_decl_create(
 			atype, base_name);
 
 	if (decl->init_expr)

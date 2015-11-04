@@ -37,6 +37,11 @@ ofc_sema_stmt_t* ofc_sema_stmt(
 				scope, stmt);
 			break;
 
+		case OFC_PARSE_STMT_ASSIGN:
+			s = ofc_sema_stmt_assign(
+				scope, stmt);
+			break;
+
 		case OFC_PARSE_STMT_CONTINUE:
 			s = ofc_sema_stmt_simple(stmt->type);
 			break;
@@ -88,6 +93,12 @@ bool ofc_sema_stmt_scoped_decl(
 	{
 		case OFC_PARSE_STMT_ASSIGNMENT:
 			if (!ofc_sema_stmt_assignment_decl(
+				scope, stmt))
+				return false;
+			break;
+
+		case OFC_PARSE_STMT_ASSIGN:
+			if (!ofc_sema_stmt_assign_decl(
 				scope, stmt))
 				return false;
 			break;

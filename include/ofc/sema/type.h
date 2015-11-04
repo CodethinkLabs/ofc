@@ -64,6 +64,8 @@ const ofc_sema_type_t* ofc_sema_type_create_array(
 	const ofc_sema_type_t* type, ofc_sema_array_t* array,
 	bool is_static, bool is_automatic, bool is_volatile);
 
+const ofc_sema_type_t* ofc_sema_type_integer_default(void);
+
 uint8_t ofc_sema_type_hash(
 	const ofc_sema_type_t* type);
 

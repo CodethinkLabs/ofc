@@ -262,6 +262,19 @@ const ofc_sema_type_t* ofc_sema_type_create_array(
 }
 
 
+const ofc_sema_type_t* ofc_sema_type_integer_default(void)
+{
+	static const ofc_sema_type_t* integer = NULL;
+
+	if (!integer)
+	{
+		integer = ofc_sema_type_create_primitive(
+			OFC_SEMA_TYPE_INTEGER, 0, false, false, false);
+	}
+
+	return integer;
+}
+
 
 const ofc_sema_type_t* ofc_sema_type(
 	const ofc_sema_scope_t* scope,
