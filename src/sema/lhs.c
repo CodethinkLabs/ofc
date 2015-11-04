@@ -258,6 +258,13 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 			return NULL;
 		}
 
+		if (!ofc_sema_decl_list_add(
+			scope->decl, decl))
+		{
+			ofc_sema_decl_delete(decl);
+			return NULL;
+		}
+
 		if (is_expr)
 		{
 			ofc_sema_scope_warning(scope, lhs->src,
