@@ -95,12 +95,9 @@ ofc_sema_array_t* ofc_sema_array(
 
 			if (!ofc_sema_type_is_integer(type))
 			{
-				const ofc_sema_type_t* int_type
-					= ofc_sema_type_create_primitive(
-						OFC_SEMA_TYPE_INTEGER, 0,
-						false, false, false);
 				ofc_sema_expr_t* cast = ofc_sema_expr_cast(
-					scope, slice->slice[i].base, int_type);
+					scope, slice->slice[i].base,
+					ofc_sema_type_integer_default());
 				if (!cast)
 				{
 					ofc_sema_array_delete(slice);
@@ -186,12 +183,9 @@ ofc_sema_array_t* ofc_sema_array(
 
 			if (!ofc_sema_type_is_integer(type))
 			{
-				const ofc_sema_type_t* int_type
-					= ofc_sema_type_create_primitive(
-						OFC_SEMA_TYPE_INTEGER, 0,
-						false, false, false);
-				ofc_sema_expr_t* cast = ofc_sema_expr_cast(
-					scope, last, int_type);
+				ofc_sema_expr_t* cast
+					= ofc_sema_expr_cast(scope, last,
+						ofc_sema_type_integer_default());
 				if (!cast)
 				{
 					ofc_sema_expr_delete(last);
@@ -288,12 +282,9 @@ ofc_sema_array_t* ofc_sema_array(
 
 			if (!ofc_sema_type_is_integer(type))
 			{
-				const ofc_sema_type_t* int_type
-					= ofc_sema_type_create_primitive(
-						OFC_SEMA_TYPE_INTEGER, 0,
-						false, false, false);
-				ofc_sema_expr_t* cast = ofc_sema_expr_cast(
-					scope, expr, int_type);
+				ofc_sema_expr_t* cast
+					= ofc_sema_expr_cast(scope, expr,
+					ofc_sema_type_integer_default());
 				if (!cast)
 				{
 					ofc_sema_expr_delete(expr);
@@ -520,12 +511,9 @@ ofc_sema_array_index_t* ofc_sema_array_index(
 
 		if (!ofc_sema_type_is_integer(type))
 		{
-			const ofc_sema_type_t* int_type
-				= ofc_sema_type_create_primitive(
-					OFC_SEMA_TYPE_INTEGER, 0,
-					false, false, false);
-			ofc_sema_expr_t* cast = ofc_sema_expr_cast(
-				scope, expr, int_type);
+			ofc_sema_expr_t* cast
+				= ofc_sema_expr_cast(scope, expr,
+					ofc_sema_type_integer_default());
 			if (!cast)
 			{
 				ofc_sema_array_index_delete(ai);

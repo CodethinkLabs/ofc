@@ -144,7 +144,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 			= ofc_sema_expr_type(s.io_write.unit);
 		if (!etype) return NULL;
 
-		if (etype->type != OFC_SEMA_TYPE_INTEGER)
+		if (!ofc_sema_type_is_integer(etype))
 		{
 			ofc_sema_scope_error(scope, stmt->src,
 				"UNIT must be of type INTEGER in WRITE");
@@ -203,7 +203,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 			= ofc_sema_expr_type(s.io_write.format_expr);
 		if (!etype) return NULL;
 
-		if (etype->type == OFC_SEMA_TYPE_INTEGER)
+		if (ofc_sema_type_is_integer(etype))
 		{
 			const ofc_sema_typeval_t* format_label
 				= ofc_sema_expr_constant(s.io_write.format_expr);

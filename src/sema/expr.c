@@ -764,7 +764,7 @@ bool ofc_sema_expr_validate_uint(
 
 	const ofc_sema_type_t* type
 		= ofc_sema_expr_type(expr);
-	if (!type || (type->type != OFC_SEMA_TYPE_INTEGER))
+	if (!ofc_sema_type_is_integer(type))
 		return false;
 
 	const ofc_sema_typeval_t* tv
