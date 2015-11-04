@@ -669,6 +669,39 @@ bool ofc_sema_expr_compare(
 
 
 
+ofc_sema_expr_list_t* ofc_sema_expr_list(
+	const ofc_sema_scope_t*      scope,
+	const ofc_parse_expr_list_t* list)
+{
+	if (!list)
+		return NULL;
+
+	ofc_sema_expr_list_t* slist
+		= ofc_sema_expr_list_create();
+	if (!slist) return NULL;
+
+	unsigned i;
+	for (i = 0; i < list->count; i++)
+	{
+		ofc_sema_expr_t* expr = ofc_sema_expr(
+			scope, list->expr[i]);
+		if (!expr)
+		{
+			ofc_sema_expr_list_delete(slist);
+			return NULL;
+		}
+
+		if (!ofc_sema_expr_list_add(slist, expr))
+		{
+			ofc_sema_expr_delete(expr);
+			ofc_sema_expr_list_delete(slist);
+			return NULL;
+		}
+	}
+
+	return slist;
+}
+
 ofc_sema_expr_list_t* ofc_sema_expr_list_create(void)
 {
 	ofc_sema_expr_list_t* list

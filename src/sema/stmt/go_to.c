@@ -1,13 +1,132 @@
 #include <ofc/sema.h>
 
 
+static ofc_sema_stmt_t* ofc_sema_stmt_go_to__assigned(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt)
+{
+	ofc_sema_stmt_t s;
+	s.type = OFC_SEMA_STMT_GO_TO;
+	s.go_to.label = ofc_sema_expr(
+		scope, stmt->go_to_list.cond);
+	if (!s.go_to.label) return NULL;
+
+	if (!ofc_sema_expr_validate_uint(s.go_to.label))
+	{
+		ofc_sema_scope_error(scope, s.go_to.label->src,
+			"GO TO target must be a positive integer.");
+		ofc_sema_expr_delete(s.go_to.label);
+		return NULL;
+	}
+
+	s.go_to.allow = ofc_sema_expr_list(
+		scope, stmt->go_to_list.label);
+	if (!s.go_to.allow)
+	{
+		ofc_sema_expr_delete(s.go_to.label);
+		return NULL;
+	}
+
+	unsigned i;
+	for (i = 0; i < s.go_to.allow->count; i++)
+	{
+		ofc_sema_expr_t* expr
+			= s.go_to.allow->expr[i];
+
+		if (!ofc_sema_expr_is_constant(expr))
+		{
+			ofc_sema_scope_error(scope, s.go_to.label->src,
+				"Assigned GO TO allow list entry must be constant.");
+			ofc_sema_expr_list_delete(s.go_to.allow);
+			ofc_sema_expr_delete(s.go_to.label);
+			return NULL;
+		}
+
+		if (!ofc_sema_expr_validate_uint(expr))
+		{
+			ofc_sema_scope_error(scope, s.go_to.label->src,
+				"Assigned GO TO allow list entry must be a positive INTEGER.");
+			ofc_sema_expr_list_delete(s.go_to.allow);
+			ofc_sema_expr_delete(s.go_to.label);
+			return NULL;
+		}
+	}
+
+	if (ofc_sema_expr_is_constant(s.go_to.label))
+	{
+		const ofc_sema_typeval_t* label_ctv
+			= ofc_sema_expr_constant(s.go_to.label);
+
+		bool match = false;
+		for (i = 0; i < s.go_to.allow->count; i++)
+		{
+			ofc_sema_expr_t* expr
+				= s.go_to.allow->expr[i];
+
+			const ofc_sema_typeval_t* ctv
+				= ofc_sema_expr_constant(expr);
+
+			if (ofc_sema_typeval_compare(label_ctv, ctv))
+			{
+				match = true;
+				break;
+			}
+		}
+
+		if (!match)
+		{
+			ofc_sema_scope_error(scope, s.go_to.label->src,
+				"Assigned GO TO target not in allow list.");
+			ofc_sema_expr_list_delete(s.go_to.allow);
+			ofc_sema_expr_delete(s.go_to.label);
+			return NULL;
+		}
+
+		ofc_sema_scope_warning(scope, stmt->src,
+			"Using assigned GO TO for a constant label makes little sense.");
+	}
+
+	ofc_sema_stmt_t* as
+		= ofc_sema_stmt_alloc(s);
+	if (!as)
+	{
+		ofc_sema_expr_list_delete(s.go_to.allow);
+		ofc_sema_expr_delete(s.go_to.label);
+		return NULL;
+	}
+
+	return as;
+}
+
+static ofc_sema_stmt_t* ofc_sema_stmt_go_to__computed(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt)
+{
+	(void)scope;
+	(void)stmt;
+	/* TODO - Implement computed GOTO */
+	return NULL;
+}
+
+
 ofc_sema_stmt_t* ofc_sema_stmt_go_to(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt)
 {
-	if (!scope || !stmt
-		|| (stmt->type != OFC_PARSE_STMT_GO_TO))
+	if (!scope || !stmt)
 		return NULL;
+
+	switch (stmt->type)
+	{
+		case OFC_PARSE_STMT_GO_TO:
+			break;
+		case OFC_PARSE_STMT_GO_TO_ASSIGNED:
+			return ofc_sema_stmt_go_to__assigned(scope, stmt);
+		case OFC_PARSE_STMT_GO_TO_COMPUTED:
+			return ofc_sema_stmt_go_to__computed(scope, stmt);
+		default:
+			return NULL;
+	}
 
 	ofc_sema_stmt_t s;
 	s.type = OFC_SEMA_STMT_GO_TO;
@@ -23,6 +142,14 @@ ofc_sema_stmt_t* ofc_sema_stmt_go_to(
 		return NULL;
 	}
 
+	if (!ofc_sema_expr_is_constant(s.go_to.label))
+	{
+		ofc_sema_scope_warning(scope, s.go_to.label->src,
+			"Should use assigned GO TO when target isn't a constant label");
+	}
+
+	s.go_to.allow = NULL;
+
 	ofc_sema_stmt_t* as
 		= ofc_sema_stmt_alloc(s);
 	if (!as)
@@ -32,26 +159,4 @@ ofc_sema_stmt_t* ofc_sema_stmt_go_to(
 	}
 
 	return as;
-}
-
-ofc_sema_stmt_t* ofc_sema_stmt_go_to_assigned(
-	ofc_sema_scope_t* scope,
-	const ofc_parse_stmt_t* stmt)
-{
-	if (!scope || !stmt || (stmt->type != OFC_PARSE_STMT_GO_TO_ASSIGNED))
-		return NULL;
-
-	/* TODO - Implement assigned GOTO */
-	return NULL;
-}
-
-ofc_sema_stmt_t* ofc_sema_stmt_go_to_computed(
-	ofc_sema_scope_t* scope,
-	const ofc_parse_stmt_t* stmt)
-{
-	if (!scope || !stmt || (stmt->type != OFC_PARSE_STMT_GO_TO_COMPUTED))
-		return NULL;
-
-	/* TODO - Implement computed GOTO */
-	return NULL;
 }

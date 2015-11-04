@@ -63,6 +63,8 @@ ofc_sema_stmt_t* ofc_sema_stmt(
 			break;
 
 		case OFC_PARSE_STMT_GO_TO:
+		case OFC_PARSE_STMT_GO_TO_ASSIGNED:
+		case OFC_PARSE_STMT_GO_TO_COMPUTED:
 			s = ofc_sema_stmt_go_to(scope, stmt);
 			break;
 

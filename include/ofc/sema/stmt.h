@@ -13,6 +13,7 @@ typedef enum
 	OFC_SEMA_STMT_STOP,
 	OFC_SEMA_STMT_PAUSE,
 	OFC_SEMA_STMT_GO_TO,
+	OFC_SEMA_STMT_GO_TO_COMPUTED,
 	OFC_SEMA_STMT_DO_LABEL,
 	OFC_SEMA_STMT_DO_BLOCK,
 	OFC_SEMA_STMT_DO_WHILE,
@@ -80,7 +81,8 @@ struct ofc_sema_stmt_s
 
 		struct
 		{
-			ofc_sema_expr_t* label;
+			ofc_sema_expr_t*      label;
+			ofc_sema_expr_list_t* allow;
 		} go_to;
 
 		struct
