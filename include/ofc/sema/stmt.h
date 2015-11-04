@@ -87,6 +87,12 @@ struct ofc_sema_stmt_s
 
 		struct
 		{
+			ofc_sema_expr_t*      cond;
+			ofc_sema_expr_list_t* label;
+		} go_to_comp;
+
+		struct
+		{
 			ofc_sema_expr_t*       end_label;
 			const ofc_sema_decl_t* iter;
 			ofc_sema_expr_t*       init;

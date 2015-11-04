@@ -222,8 +222,16 @@ void ofc_sema_stmt_delete(
 				stmt->stop_pause.str);
 			break;
 		case OFC_SEMA_STMT_GO_TO:
+			ofc_sema_expr_list_delete(
+				stmt->go_to.allow);
 			ofc_sema_expr_delete(
 				stmt->go_to.label);
+			break;
+		case OFC_SEMA_STMT_GO_TO_COMPUTED:
+			ofc_sema_expr_list_delete(
+				stmt->go_to_comp.label);
+			ofc_sema_expr_delete(
+				stmt->go_to_comp.cond);
 			break;
 		case OFC_SEMA_STMT_DO_LABEL:
 			ofc_sema_expr_delete(
