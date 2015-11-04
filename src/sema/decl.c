@@ -33,6 +33,7 @@ ofc_sema_decl_t* ofc_sema_decl_create(
 	decl->is_automatic = type->is_automatic;
 	decl->is_target    = false;
 
+	decl->lock = false;
 	return decl;
 }
 
@@ -250,6 +251,13 @@ bool ofc_sema_decl_init(
 	if (!decl || !init)
 		return false;
 
+	if (decl->lock)
+	{
+		ofc_sema_scope_error(scope, init->src,
+			"Can't initialize finalized declaration.");
+		return false;
+	}
+
     const ofc_sema_typeval_t* ctv
 		= ofc_sema_expr_constant(init);
 	if (!ctv)
@@ -272,7 +280,7 @@ bool ofc_sema_decl_init(
 			scope, ctv, decl->type);
 	if (!tv) return false;
 
-	if (ofc_sema_decl_is_initialized(decl))
+	if (ofc_sema_decl_is_locked(decl))
 	{
 		bool redecl = ofc_sema_typeval_compare(
 			tv, decl->init);
@@ -285,13 +293,15 @@ bool ofc_sema_decl_init(
 		}
 		else
 		{
+			/* TODO - Print where declaration was first used. */
 			ofc_sema_scope_error(scope, init->src,
-				"Can't re-initialize initialized declaration.");
+				"Can't initialize declaration after use.");
 			return false;
 		}
 	}
 
 	decl->init = tv;
+	decl->lock = true;
 	return true;
 }
 
@@ -302,8 +312,17 @@ bool ofc_sema_decl_init_array(
 	unsigned count,
 	const ofc_sema_expr_t** init)
 {
-	if (!decl || !init)
+	if (!decl || !init
+		|| (count == 0))
 		return false;
+
+	if (decl->lock)
+	{
+		/* TODO - Allow initialization of uninitialized elements. */
+		ofc_sema_scope_error(scope, init[0]->src,
+			"Can't initialize finalized declaration.");
+		return false;
+	}
 
 	if (!decl->type
 		|| (decl->type->type != OFC_SEMA_TYPE_ARRAY))
@@ -355,12 +374,15 @@ bool ofc_sema_decl_init_array(
 			if (!decl->init_array[i])
 				return false;
 		}
-
-		return true;
+	}
+	else
+	{
+		/* TODO - Iterate over array indices and initialize with provided elements. */
+		return false;
 	}
 
-	/* TODO - Iterate over array indices and initialize with provided elements. */
-	return false;
+	decl->lock = true;
+	return true;
 }
 
 
@@ -397,17 +419,10 @@ bool ofc_sema_decl_is_composite(
 	return ofc_sema_type_is_composite(decl->type);
 }
 
-bool ofc_sema_decl_is_initialized(
+bool ofc_sema_decl_is_locked(
 	const ofc_sema_decl_t* decl)
 {
-	if (!decl || !decl->type)
-		return false;
-
-	if ((decl->type->type == OFC_SEMA_TYPE_ARRAY)
-		|| (decl->type->type == OFC_SEMA_TYPE_STRUCTURE))
-		return (decl->init_array != NULL);
-
-	return (decl->init != NULL);
+	return (decl && decl->lock);
 }
 
 const ofc_sema_type_t* ofc_sema_decl_type(

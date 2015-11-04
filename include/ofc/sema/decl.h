@@ -22,6 +22,9 @@ struct ofc_sema_decl_s
 	bool is_target;
 
 	ofc_sema_equiv_t* equiv;
+
+	/* Set this once the decl has been used. */
+	bool lock;
 };
 
 typedef struct
@@ -77,7 +80,7 @@ bool ofc_sema_decl_is_array(
 	const ofc_sema_decl_t* decl);
 bool ofc_sema_decl_is_composite(
 	const ofc_sema_decl_t* decl);
-bool ofc_sema_decl_is_initialized(
+bool ofc_sema_decl_is_locked(
 	const ofc_sema_decl_t* decl);
 
 const ofc_sema_type_t* ofc_sema_decl_type(

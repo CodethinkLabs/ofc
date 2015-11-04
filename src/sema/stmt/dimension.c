@@ -62,10 +62,10 @@ bool ofc_sema_stmt_dimension(
 			}
 		}
 
-		if (ofc_sema_decl_is_initialized(decl))
+		if (ofc_sema_decl_is_locked(decl))
 		{
 			ofc_sema_scope_error(scope, lhs->src,
-				"Can't modify dimensions of initialized declaration.");
+				"Can't modify dimensions of declaration after use.");
 			return false;
 		}
 
