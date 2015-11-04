@@ -64,6 +64,9 @@ tests: $(TARGETS)
 $(TARGETS): $(FRONTEND)
 	@$(realpath $(FRONTEND)) $@ > /dev/null
 
+loc:
+	@wc -l $(SRC)
+
 -include $(DEB)
 
-.PHONY : all clean install uninstall debug cppcheck scan scan-cc scan-build check tests $(TARGETS)
+.PHONY : all clean install uninstall debug cppcheck scan scan-cc scan-build check tests $(TARGETS) loc
