@@ -200,14 +200,14 @@ struct ofc_parse_stmt_s
 		struct
 		{
 			ofc_parse_call_arg_list_t* params;
-			ofc_parse_iolist_t*        iolist;
+			ofc_parse_expr_list_t*     iolist;
 		} io;
 
 		struct
 		{
-			ofc_parse_expr_t*   format;
-			bool                format_asterisk;
-			ofc_parse_iolist_t* iolist;
+			ofc_parse_expr_t*      format;
+			bool                   format_asterisk;
+			ofc_parse_expr_list_t* iolist;
 		} io_print;
 
 		struct

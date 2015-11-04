@@ -99,7 +99,7 @@ static unsigned ofc_parse_stmt__io(
 	if (iolist)
 	{
 		unsigned len;
-		stmt->io.iolist = ofc_parse_iolist(
+		stmt->io.iolist = ofc_parse_expr_list(
 			src, &ptr[i], debug, &len);
 		if (stmt->io.iolist) i += len;
 	}
@@ -123,7 +123,7 @@ bool ofc_parse_stmt_io_print(
 		return false;
 
 	if (stmt->io.iolist)
-		ofc_parse_iolist_print(cs, stmt->io.iolist);
+		ofc_parse_expr_list_print(cs, stmt->io.iolist);
 	return true;
 }
 
@@ -160,7 +160,7 @@ bool ofc_parse_stmt_print_accept_print(
 	if (stmt->io_print.iolist)
 	{
 		if (!ofc_colstr_atomic_writef(cs, ", ")
-			|| !ofc_parse_iolist_print(
+			|| !ofc_parse_expr_list_print(
 				cs, stmt->io_print.iolist))
 			return false;
 	}
@@ -367,7 +367,7 @@ static unsigned ofc_parse_stmt_io__print_type_accept(
 	{
 		i += 1;
 
-		stmt->io_print.iolist = ofc_parse_iolist(
+		stmt->io_print.iolist = ofc_parse_expr_list(
 			src, &ptr[i], debug, &len);
 		if (!stmt->io_print.iolist)
 		{
