@@ -75,7 +75,7 @@ static ofc_sema_lhs_t* ofc_sema_lhs_member(
 
 
 const ofc_sema_type_t* ofc_sema_lhs_decl_type(
-	const ofc_sema_scope_t* scope,
+	ofc_sema_scope_t* scope,
 	const ofc_sema_type_t* type,
 	ofc_parse_lhs_t* lhs)
 {
@@ -125,9 +125,10 @@ const ofc_sema_type_t* ofc_sema_lhs_decl_type(
 		scope, atype, lhs->parent);
 }
 
-ofc_sema_lhs_t* ofc_sema_lhs(
+static ofc_sema_lhs_t* ofc_sema__lhs(
 	ofc_sema_scope_t* scope,
-	const ofc_parse_lhs_t* lhs)
+	const ofc_parse_lhs_t* lhs,
+	bool is_expr)
 {
 	if (!scope || !lhs)
 		return NULL;
@@ -136,12 +137,14 @@ ofc_sema_lhs_t* ofc_sema_lhs(
 	{
 		case OFC_PARSE_LHS_IMPLICIT_DO:
 			ofc_sema_scope_error(scope, lhs->src,
-				"Can't resolve implicit do to single LHS.");
+				"Can't resolve implicit do to single %s.",
+				(is_expr ? "primary expression": "LHS"));
 			return NULL;
 
 		case OFC_PARSE_LHS_STAR_LEN:
 			ofc_sema_scope_error(scope, lhs->src,
-				"Can't resolve star length to LHS.");
+				"Can't resolve star length to %s.",
+				(is_expr ? "primary expression": "LHS"));
 			return NULL;
 
 		case OFC_PARSE_LHS_MEMBER_TYPE:
@@ -245,11 +248,22 @@ ofc_sema_lhs_t* ofc_sema_lhs(
 			scope, lhs->variable);
 	if (!decl)
 	{
-		/* This shouldn't happen because variables should either
-		   have been implicitly declared, or an error raised. */
-		ofc_sema_scope_error(scope, lhs->src,
-			"No matching declaration found for LHS.");
-		return NULL;
+		decl = ofc_sema_decl_implicit_lhs(
+			scope, lhs);
+		if (!decl)
+		{
+			ofc_sema_scope_error(scope, lhs->src,
+				"No declaration for '%.*s' and no valid IMPLICIT rule.",
+				lhs->variable.size, lhs->variable.base);
+			return NULL;
+		}
+
+		if (is_expr)
+		{
+			ofc_sema_scope_warning(scope, lhs->src,
+				"Referencing uninitialized variable '%.*s' in expression.",
+				lhs->variable.size, lhs->variable.base);
+		}
 	}
 
 	ofc_sema_lhs_t* slhs
@@ -261,7 +275,26 @@ ofc_sema_lhs_t* ofc_sema_lhs(
 	slhs->decl      = decl;
 	slhs->data_type = decl->type;
 	slhs->refcnt    = 0;
+
+	if (is_expr)
+		decl->lock = true;
 	return slhs;
+}
+
+ofc_sema_lhs_t* ofc_sema_lhs(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_lhs_t* lhs)
+{
+	return ofc_sema__lhs(
+		scope, lhs, false);
+}
+
+ofc_sema_lhs_t* ofc_sema_lhs_expr(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_lhs_t* lhs)
+{
+	return ofc_sema__lhs(
+		scope, lhs, true);
 }
 
 bool ofc_sema_lhs_reference(

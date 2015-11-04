@@ -31,7 +31,7 @@ static bool ofc_sema_array__base(
 
 
 ofc_sema_array_t* ofc_sema_array(
-	const ofc_sema_scope_t*        scope,
+	ofc_sema_scope_t*              scope,
 	const ofc_sema_array_t*        array,
 	const ofc_parse_array_index_t* index)
 {
@@ -458,7 +458,7 @@ unsigned ofc_sema_array_total(const ofc_sema_array_t* array)
 
 
 ofc_sema_array_index_t* ofc_sema_array_index(
-	const ofc_sema_scope_t*        scope,
+	ofc_sema_scope_t*              scope,
 	const ofc_sema_array_t*        array,
 	const ofc_parse_array_index_t* index)
 {

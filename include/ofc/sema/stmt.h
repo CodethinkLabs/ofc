@@ -93,20 +93,20 @@ struct ofc_sema_stmt_s
 
 		struct
 		{
-			ofc_sema_expr_t*       end_label;
-			const ofc_sema_decl_t* iter;
-			ofc_sema_expr_t*       init;
-			ofc_sema_expr_t*       last;
-			ofc_sema_expr_t*       step;
+			ofc_sema_expr_t*      end_label;
+			const ofc_sema_lhs_t* iter;
+			ofc_sema_expr_t*      init;
+			ofc_sema_expr_t*      last;
+			ofc_sema_expr_t*      step;
 		} do_label;
 
 		struct
 		{
-			const ofc_sema_decl_t* iter;
-			ofc_sema_expr_t*       init;
-			ofc_sema_expr_t*       last;
-			ofc_sema_expr_t*       step;
-			ofc_sema_stmt_list_t*  block;
+			const ofc_sema_lhs_t* iter;
+			ofc_sema_expr_t*      init;
+			ofc_sema_expr_t*      last;
+			ofc_sema_expr_t*      step;
+			ofc_sema_stmt_list_t* block;
 		} do_block;
 
 		struct
@@ -127,9 +127,6 @@ struct ofc_sema_stmt_s
 ofc_sema_stmt_t* ofc_sema_stmt(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
-bool ofc_sema_stmt_scoped_decl(
-	ofc_sema_scope_t* scope,
-	const ofc_parse_stmt_t* stmt);
 bool ofc_sema_stmt_scoped(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
@@ -140,12 +137,6 @@ void ofc_sema_stmt_delete(
 	ofc_sema_stmt_t* stmt);
 
 /* Declaration statement analysis. */
-bool ofc_sema_stmt_assignment_decl(
-	ofc_sema_scope_t* scope,
-	const ofc_parse_stmt_t* stmt);
-bool ofc_sema_stmt_assign_decl(
-	ofc_sema_scope_t* scope,
-	const ofc_parse_stmt_t* stmt);
 bool ofc_sema_stmt_data(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
@@ -159,9 +150,6 @@ bool ofc_sema_stmt_common(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
 bool ofc_sema_stmt_decl_attr(
-	ofc_sema_scope_t* scope,
-	const ofc_parse_stmt_t* stmt);
-bool ofc_sema_stmt_do_decl(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
 

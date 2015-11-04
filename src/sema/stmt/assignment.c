@@ -1,59 +1,6 @@
 #include <ofc/sema.h>
 
 
-bool ofc_sema_stmt_assignment_decl(
-	ofc_sema_scope_t* scope,
-	const ofc_parse_stmt_t* stmt)
-{
-	if (!scope || !stmt
-		|| (stmt->type != OFC_PARSE_STMT_ASSIGNMENT)
-		|| !stmt->assignment
-		|| !stmt->assignment->name)
-		return false;
-
-	ofc_str_ref_t base_name;
-	if (!ofc_parse_lhs_base_name(
-		*(stmt->assignment->name), &base_name))
-		return false;
-
-	const ofc_sema_decl_t* decl
-		= ofc_sema_scope_decl_find(
-			scope, base_name);
-	if (decl) return true;
-
-	/* Can only implicitly declare variables. */
-	if (stmt->assignment->name->type
-		!= OFC_PARSE_LHS_VARIABLE)
-	{
-		ofc_str_ref_t n = base_name;
-		ofc_sema_scope_error(scope, stmt->assignment->name->src,
-			"Assignment to undeclared symbol '%.*s'.",
-			n.size, n.base);
-		return false;
-	}
-
-	ofc_sema_decl_t* idecl
-		= ofc_sema_decl_implicit_name(
-			scope, base_name);
-	if (!idecl)
-	{
-		ofc_str_ref_t n = base_name;
-		ofc_sema_scope_error(scope, stmt->assignment->name->src,
-			"No declaration for '%.*s' and no valid IMPLICIT rule.",
-			n.size, n.base);
-		return false;
-	}
-
-	if (!ofc_sema_decl_list_add(
-		scope->decl, idecl))
-	{
-		ofc_sema_decl_delete(idecl);
-		return false;
-	}
-
-	return true;
-}
-
 ofc_sema_stmt_t* ofc_sema_stmt_assignment(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt)
@@ -64,6 +11,26 @@ ofc_sema_stmt_t* ofc_sema_stmt_assignment(
 		|| !stmt->assignment->name
 		|| !stmt->assignment->init)
 		return NULL;
+
+	if (stmt->assignment->name->type
+		== OFC_PARSE_LHS_ARRAY)
+	{
+		ofc_str_ref_t base_name;
+		if (!ofc_parse_lhs_base_name(
+			*(stmt->assignment->name), &base_name))
+			return NULL;
+
+		const ofc_sema_decl_t* decl
+			= ofc_sema_scope_decl_find(
+				scope, base_name);
+		if (!decl)
+		{
+			/* TODO - Statement functions. */
+			ofc_sema_scope_error(scope, stmt->assignment->name->src,
+				"Statement functions not yet supported.");
+			return NULL;
+		}
+	}
 
 	ofc_sema_stmt_t s;
 	s.assignment.dest = ofc_sema_lhs(

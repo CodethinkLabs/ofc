@@ -260,7 +260,7 @@ ofc_sema_expr_t* ofc_sema_expr_cast(
 }
 
 static ofc_sema_expr_t* ofc_sema_expr__binary(
-	const ofc_sema_scope_t* scope,
+	ofc_sema_scope_t* scope,
 	ofc_parse_operator_e op,
 	const ofc_parse_expr_t* a,
 	const ofc_parse_expr_t* b)
@@ -393,7 +393,7 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 }
 
 static ofc_sema_expr_t* ofc_sema_expr__unary(
-	const ofc_sema_scope_t* scope,
+	ofc_sema_scope_t* scope,
 	ofc_parse_operator_e op,
 	const ofc_parse_expr_t* a)
 {
@@ -517,15 +517,13 @@ static ofc_sema_expr_t* ofc_sema_expr__parameter(
 }
 
 static ofc_sema_expr_t* ofc_sema_expr__lhs(
-	const ofc_sema_scope_t* scope,
+	ofc_sema_scope_t* scope,
 	const ofc_parse_lhs_t* name)
 {
 	if (!name)
 		return false;
 
-	/* TODO - Remove this const cast,
-              we need a const LHS variant. */
-	ofc_sema_lhs_t* lhs = ofc_sema_lhs(
+	ofc_sema_lhs_t* lhs = ofc_sema_lhs_expr(
 		(ofc_sema_scope_t*)scope, name);
 	if (!lhs) return NULL;
 
@@ -544,7 +542,7 @@ static ofc_sema_expr_t* ofc_sema_expr__lhs(
 }
 
 static ofc_sema_expr_t* ofc_sema_expr__variable(
-	const ofc_sema_scope_t* scope,
+	ofc_sema_scope_t* scope,
 	const ofc_parse_lhs_t* name)
 {
 	ofc_sema_expr_t* expr
@@ -560,7 +558,7 @@ static ofc_sema_expr_t* ofc_sema_expr__variable(
 
 
 ofc_sema_expr_t* ofc_sema_expr(
-	const ofc_sema_scope_t* scope,
+	ofc_sema_scope_t* scope,
 	const ofc_parse_expr_t* expr)
 {
 	if (!expr)
@@ -670,7 +668,7 @@ bool ofc_sema_expr_compare(
 
 
 ofc_sema_expr_list_t* ofc_sema_expr_list(
-	const ofc_sema_scope_t*      scope,
+	ofc_sema_scope_t*            scope,
 	const ofc_parse_expr_list_t* list)
 {
 	if (!list)

@@ -51,7 +51,7 @@ ofc_sema_decl_t* ofc_sema_decl_implicit_name(
 	const ofc_sema_scope_t* scope,
 	ofc_str_ref_t name);
 ofc_sema_decl_t* ofc_sema_decl_implicit_lhs(
-	const ofc_sema_scope_t* scope,
+	ofc_sema_scope_t*      scope,
 	const ofc_parse_lhs_t* lhs);
 
 bool ofc_sema_decl(

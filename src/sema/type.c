@@ -277,7 +277,7 @@ const ofc_sema_type_t* ofc_sema_type_integer_default(void)
 
 
 const ofc_sema_type_t* ofc_sema_type(
-	const ofc_sema_scope_t* scope,
+	ofc_sema_scope_t* scope,
 	const ofc_parse_type_t* ptype)
 {
 	if (!ptype)

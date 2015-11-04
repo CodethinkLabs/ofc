@@ -121,8 +121,6 @@ static bool ofc_sema_scope__body(
 	if (!body)
 		return true;
 
-	bool has_exec_stmt = false;
-
 	unsigned i;
 	for (i = 0; i < body->count; i++)
 	{
@@ -216,71 +214,21 @@ static bool ofc_sema_scope__body(
 				return false;
 
 			default:
-				has_exec_stmt = true;
-				if (!ofc_sema_stmt_scoped_decl(
+				switch (scope->type)
+				{
+					case OFC_SEMA_SCOPE_GLOBAL:
+					case OFC_SEMA_SCOPE_BLOCK_DATA:
+						ofc_sema_scope_error(scope, stmt->src,
+							"Unexpected executable statement in scope.");
+						return false;
+					default:
+						break;
+				}
+
+				if (!ofc_sema_stmt_scoped(
 					scope, stmt))
 					return false;
 				break;
-		}
-	}
-
-	if (has_exec_stmt)
-	{
-		switch (scope->type)
-		{
-			case OFC_SEMA_SCOPE_GLOBAL:
-			case OFC_SEMA_SCOPE_BLOCK_DATA:
-				/* TODO - Error: Unexpected executable statement in scope. */
-				return false;
-			default:
-				break;
-		}
-
-		for (i = 0; i < body->count; i++)
-		{
-			ofc_parse_stmt_t* stmt = body->stmt[i];
-			if (!stmt) continue;
-
-			if (stmt->type == OFC_PARSE_STMT_EMPTY)
-				continue;
-
-			switch (stmt->type)
-			{
-				case OFC_PARSE_STMT_PROGRAM:
-				case OFC_PARSE_STMT_SUBROUTINE:
-				case OFC_PARSE_STMT_FUNCTION:
-				case OFC_PARSE_STMT_BLOCK_DATA:
-				case OFC_PARSE_STMT_PARAMETER:
-				case OFC_PARSE_STMT_IMPLICIT_NONE:
-				case OFC_PARSE_STMT_IMPLICIT:
-				case OFC_PARSE_STMT_DECL:
-				case OFC_PARSE_STMT_FORMAT:
-				case OFC_PARSE_STMT_DATA:
-				case OFC_PARSE_STMT_ENTRY:
-				case OFC_PARSE_STMT_DIMENSION:
-				case OFC_PARSE_STMT_EQUIVALENCE:
-				case OFC_PARSE_STMT_COMMON:
-				case OFC_PARSE_STMT_NAMELIST:
-				case OFC_PARSE_STMT_DECL_ATTR_EXTERNAL:
-				case OFC_PARSE_STMT_DECL_ATTR_INTRINSIC:
-				case OFC_PARSE_STMT_DECL_ATTR_AUTOMATIC:
-				case OFC_PARSE_STMT_DECL_ATTR_STATIC:
-				case OFC_PARSE_STMT_DECL_ATTR_VOLATILE:
-				case OFC_PARSE_STMT_POINTER:
-				case OFC_PARSE_STMT_TYPE:
-				case OFC_PARSE_STMT_STRUCTURE:
-				case OFC_PARSE_STMT_UNION:
-				case OFC_PARSE_STMT_MAP:
-				case OFC_PARSE_STMT_RECORD:
-				case OFC_PARSE_STMT_SAVE:
-					/* These are already handled. */
-					break;
-				default:
-					if (!ofc_sema_stmt_scoped(
-						scope, stmt))
-						return false;
-					break;
-			}
 		}
 	}
 

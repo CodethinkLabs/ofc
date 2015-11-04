@@ -31,7 +31,7 @@ static ofc_sema_parameter_t* ofc_sema_parameter__create(
 }
 
 static ofc_sema_parameter_t* ofc_sema_parameter__assign(
-	const ofc_sema_scope_t* scope,
+	ofc_sema_scope_t* scope,
 	const ofc_parse_assign_t* assign)
 {
 	if (!assign

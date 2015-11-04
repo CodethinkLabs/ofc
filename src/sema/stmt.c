@@ -84,40 +84,6 @@ ofc_sema_stmt_t* ofc_sema_stmt(
 	return s;
 }
 
-bool ofc_sema_stmt_scoped_decl(
-	ofc_sema_scope_t* scope,
-	const ofc_parse_stmt_t* stmt)
-{
-	if (!stmt)
-		return false;
-
-	switch (stmt->type)
-	{
-		case OFC_PARSE_STMT_ASSIGNMENT:
-			if (!ofc_sema_stmt_assignment_decl(
-				scope, stmt))
-				return false;
-			break;
-
-		case OFC_PARSE_STMT_ASSIGN:
-			if (!ofc_sema_stmt_assign_decl(
-				scope, stmt))
-				return false;
-			break;
-
-		case OFC_PARSE_STMT_DO_LABEL:
-		case OFC_PARSE_STMT_DO_BLOCK:
-			if (!ofc_sema_stmt_do_decl(
-				scope, stmt))
-				return false;
-
-		default:
-			break;
-	}
-
-	return true;
-}
-
 bool ofc_sema_stmt_scoped(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt)

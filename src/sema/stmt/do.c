@@ -1,103 +1,35 @@
 #include <ofc/sema.h>
 
 
-bool ofc_sema_stmt_do_decl(
-	ofc_sema_scope_t* scope,
-	const ofc_parse_stmt_t* stmt)
-{
-	if (!scope || !stmt)
-		return false;
-
-
-	ofc_parse_assign_t* assign;
-	switch (stmt->type)
-	{
-		case OFC_PARSE_STMT_DO_LABEL:
-			assign = stmt->do_label.init;
-			break;
-
-		case OFC_PARSE_STMT_DO_BLOCK:
-			assign = stmt->do_block.init;
-			break;
-
-		case OFC_PARSE_STMT_DO_WHILE:
-		case OFC_PARSE_STMT_DO_WHILE_BLOCK:
-			return true;
-
-		default:
-			return false;
-	}
-
-	if (!assign || !assign->name)
-		return false;
-
-	ofc_parse_lhs_t* lhs
-		= assign->name;
-
-	ofc_str_ref_t base_name;
-	if (!ofc_parse_lhs_base_name(
-		*lhs, &base_name))
-		return false;
-
-	const ofc_sema_decl_t* iter
-		= ofc_sema_scope_decl_find(
-			scope, base_name);
-	if (iter) return true;
-
-	if (lhs->type != OFC_PARSE_LHS_VARIABLE)
-	{
-		ofc_sema_scope_error(scope, lhs->src,
-			"Can't implicitly declare array as DO loop iterator.");
-		return false;
-	}
-
-	ofc_sema_decl_t* idecl
-		= ofc_sema_decl_implicit_lhs(scope, lhs);
-	if (!idecl) return false;
-
-	if (!ofc_sema_decl_list_add(
-		scope->decl, idecl))
-	{
-		ofc_sema_decl_delete(idecl);
-		return false;
-	}
-
-	return true;
-}
-
-
 static bool ofc_sema_stmt__loop_control(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_assign_t* parse_init,
 	const ofc_parse_expr_t* parse_last,
 	const ofc_parse_expr_t* parse_step,
-	const ofc_sema_decl_t** sema_iter,
+	const ofc_sema_lhs_t** sema_iter,
 	ofc_sema_expr_t** sema_init,
 	ofc_sema_expr_t** sema_last,
 	ofc_sema_expr_t** sema_step)
 {
-	*sema_iter = ofc_sema_scope_decl_find(
-		scope, parse_init->name->variable);
+	*sema_iter = ofc_sema_lhs(
+		scope, parse_init->name);
 	if (!*sema_iter) return false;
 
 	const ofc_sema_type_t* dtype
-		= ofc_sema_decl_type(*sema_iter);
+		= ofc_sema_lhs_type(*sema_iter);
 	if (!ofc_sema_type_is_scalar(dtype))
 	{
-		ofc_sema_scope_error(scope,
-			parse_init->name->src,
-				"DO loop iterator must be a scalar type.");
-
+		ofc_sema_scope_error(
+			scope, parse_init->name->src,
+			"DO loop iterator must be a scalar type.");
 		return false;
 	}
 
 	if (!ofc_sema_type_is_integer(dtype))
 	{
-		ofc_sema_scope_warning(scope,
-			parse_init->name->src,
-				"Using REAL in DO loop iterator..");
-
-		return false;
+		ofc_sema_scope_warning(
+			scope, parse_init->name->src,
+			"Using REAL in DO loop iterator.");
 	}
 
 	*sema_init = ofc_sema_expr(

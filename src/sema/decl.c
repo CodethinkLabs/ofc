@@ -85,7 +85,7 @@ ofc_sema_decl_t* ofc_sema_decl_implicit_name(
 }
 
 ofc_sema_decl_t* ofc_sema_decl_implicit_lhs(
-	const ofc_sema_scope_t* scope,
+	ofc_sema_scope_t*      scope,
 	const ofc_parse_lhs_t* lhs)
 {
 	if (!scope || !lhs)
@@ -116,7 +116,7 @@ ofc_sema_decl_t* ofc_sema_decl_implicit_lhs(
 }
 
 static ofc_sema_decl_t* ofc_sema_decl__decl(
-	const ofc_sema_scope_t* scope,
+	ofc_sema_scope_t* scope,
 	const ofc_sema_type_t*  type,
 	const ofc_parse_decl_t* decl)
 {
