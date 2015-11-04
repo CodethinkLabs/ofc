@@ -78,4 +78,8 @@ bool ofc_sema_lhs_equiv(
 	ofc_sema_lhs_t* a,
 	ofc_sema_lhs_t* b);
 
+bool ofc_sema_lhs_print(
+	ofc_colstr_t* cs,
+	const ofc_sema_lhs_t* lhs);
+
 #endif

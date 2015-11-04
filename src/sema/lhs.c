@@ -513,3 +513,21 @@ unsigned ofc_sema_lhs_elem_count(
 		lhs->data_type);
 }
 
+bool ofc_sema_lhs_print(
+	ofc_colstr_t* cs,
+	const ofc_sema_lhs_t* lhs)
+{
+	if (!cs || !lhs) return false;
+
+	switch(lhs->type)
+	{
+		case OFC_SEMA_LHS_DECL:
+
+		case OFC_SEMA_LHS_ARRAY_INDEX:
+		case OFC_SEMA_LHS_ARRAY_SLICE:
+		case OFC_SEMA_LHS_STRUCTURE_MEMBER:
+
+		default:
+			return false;
+	}
+}

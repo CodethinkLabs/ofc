@@ -74,3 +74,32 @@ ofc_sema_stmt_t* ofc_sema_stmt_stop_pause(
 
 	return as;
 }
+
+bool ofc_sema_stmt_stop_pause_print(ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt)
+{
+	if (!cs || !stmt) return false;
+
+	if (stmt->type == OFC_SEMA_STMT_STOP)
+	{
+		if (!ofc_colstr_atomic_writef(cs, "STOP"))
+			return false;
+	}
+	else if (stmt->type == OFC_SEMA_STMT_PAUSE)
+	{
+		if (!ofc_colstr_atomic_writef(cs, "PAUSE"))
+			return false;
+	}
+	else
+	{
+		return false;
+	}
+
+	if (stmt->stop_pause.str)
+	{
+		if (!ofc_sema_expr_print(cs, stmt->stop_pause.str))
+			return false;
+	}
+
+	return true;
+}

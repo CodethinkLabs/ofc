@@ -112,4 +112,8 @@ void ofc_sema_scope_warning(
 	const char* format, ...)
 	__attribute__ ((format (printf, 3, 4)));
 
+bool ofc_sema_scope_print(
+	ofc_colstr_t* cs,
+	const ofc_sema_scope_t* scope);
+
 #endif

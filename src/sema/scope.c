@@ -1115,3 +1115,49 @@ void ofc_sema_scope_warning(
 	ofc_sparse_warning_va(scope->src, pos.base, format, args);
 	va_end(args);
 }
+
+bool ofc_sema_scope_print(
+	ofc_colstr_t* cs,
+	const ofc_sema_scope_t* scope)
+{
+	const char* kwstr;
+	bool has_args = false;
+	switch (scope->type)
+	{
+		case OFC_SEMA_SCOPE_GLOBAL:
+			break;
+		case OFC_SEMA_SCOPE_PROGRAM:
+			kwstr = "PROGRAM";
+			break;
+		case OFC_SEMA_SCOPE_SUBROUTINE:
+			kwstr = "SUBROUTINE";
+			has_args = true;
+			break;
+		case OFC_SEMA_SCOPE_FUNCTION:
+			kwstr = "FUNCTION";
+			has_args = true;
+			break;
+		case OFC_SEMA_SCOPE_BLOCK_DATA:
+			kwstr = "BLOCK DATA";
+			break;
+		case OFC_SEMA_SCOPE_IF:
+			kwstr = "IF";
+			break;
+		default:
+			return false;
+	}
+
+	if (!ofc_colstr_atomic_writef(cs, "%s", kwstr)) return false;
+
+	if (has_args)
+	{
+		if (!ofc_colstr_atomic_writef(cs, "(")) return false;
+		/* TODO - arg list printing. */
+		if (!ofc_colstr_atomic_writef(cs, ")")) return false;
+	}
+
+	if (!ofc_sema_decl_list_print(cs, scope->decl)) return false;
+	if (!ofc_sema_stmt_list_print(cs, scope->stmt)) return false;
+
+	return true;
+}

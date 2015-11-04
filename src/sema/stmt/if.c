@@ -227,3 +227,65 @@ ofc_sema_stmt_t* ofc_sema_stmt_if(
 
 	return NULL;
 }
+
+bool ofc_sema_stmt_if_print(ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt)
+{
+	if (!cs || !stmt) return false;
+
+	if (!ofc_colstr_atomic_writef(cs, "IF"))
+		return false;
+	if (!ofc_colstr_atomic_writef(cs, "("))
+		return false;
+	if (!ofc_sema_expr_print(cs, stmt->if_stmt.cond))
+		return false;
+	if (!ofc_colstr_atomic_writef(cs, ")"))
+		return false;
+	if (!ofc_sema_stmt_print(cs, stmt->if_stmt.stmt))
+		return false;
+
+	return true;
+}
+
+bool ofc_sema_stmt_if_comp_print(ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt)
+{
+	if (!cs || !stmt) return false;
+
+	if (!ofc_colstr_atomic_writef(cs, "IF"))
+		return false;
+	if (!ofc_colstr_atomic_writef(cs, "("))
+		return false;
+	if (!ofc_sema_expr_print(cs, stmt->if_comp.cond))
+		return false;
+	if (!ofc_colstr_atomic_writef(cs, ")"))
+		return false;
+	/* TODO - Label printing. */
+
+	return true;
+}
+
+bool ofc_sema_stmt_if_then_print(ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt)
+{
+	if (!cs || !stmt) return false;
+
+	if (!ofc_colstr_atomic_writef(cs, "IF"))
+		return false;
+	if (!ofc_colstr_atomic_writef(cs, "("))
+		return false;
+	if (!ofc_sema_expr_print(cs, stmt->if_then.cond))
+		return false;
+	if (!ofc_colstr_atomic_writef(cs, ")"))
+		return false;
+	if (!ofc_colstr_atomic_writef(cs, "THEN"))
+		return false;
+	if (!ofc_sema_scope_print(cs, stmt->if_then.scope_then))
+		return false;
+	if (!ofc_colstr_atomic_writef(cs, "ELSE"))
+		return false;
+	if (!ofc_sema_scope_print(cs, stmt->if_then.scope_else))
+		return false;
+
+	return true;
+}

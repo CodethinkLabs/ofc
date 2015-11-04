@@ -2045,3 +2045,51 @@ ofc_sema_typeval_t* ofc_sema_typeval_neqv(
 
 	return ofc_sema_typeval__alloc(tv);
 }
+
+bool ofc_sema_typeval_print(ofc_colstr_t*cs,
+	const ofc_sema_typeval_t* typeval)
+{
+	if (!cs || !typeval)
+		return false;
+
+	switch (typeval->type->type)
+	{
+		case OFC_SEMA_TYPE_LOGICAL:
+			if (typeval->logical)
+				return ofc_colstr_atomic_writef(cs, ".TRUE.");
+			else
+				return ofc_colstr_atomic_writef(cs, ".FALSE.");
+
+		case OFC_SEMA_TYPE_BYTE:
+		case OFC_SEMA_TYPE_INTEGER:
+			return ofc_colstr_atomic_writef(cs, "%d",
+				typeval->integer);
+
+		case OFC_SEMA_TYPE_REAL:
+			return ofc_colstr_atomic_writef(cs, "%f",
+				typeval->real);
+
+		case OFC_SEMA_TYPE_COMPLEX:
+			if (!ofc_colstr_atomic_writef(cs, "(")) return false;
+			if (!ofc_colstr_atomic_writef(cs, "%f",
+				typeval->complex.real))	            return false;
+			if (!ofc_colstr_atomic_writef(cs, ",")) return false;
+			if (!ofc_colstr_atomic_writef(cs, " ")) return false;
+			if (!ofc_colstr_atomic_writef(cs, "%f",
+				typeval->complex.imaginary))        return false;
+			if (!ofc_colstr_atomic_writef(cs, ")")) return false;
+			return true;
+
+		case OFC_SEMA_TYPE_CHARACTER:
+			return ofc_colstr_atomic_writef(cs, "%.*s",
+				typeval->type->len, typeval->character);
+
+		case OFC_SEMA_TYPE_STRUCTURE:
+		case OFC_SEMA_TYPE_POINTER:
+		case OFC_SEMA_TYPE_ARRAY:
+
+		default:
+			return false;
+
+	}
+}

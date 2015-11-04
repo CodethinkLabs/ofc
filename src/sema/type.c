@@ -785,7 +785,6 @@ const ofc_sema_type_t* ofc_sema_type_promote(
 	return NULL;
 }
 
-
 bool ofc_sema_type_cast_is_lossless(
 	const ofc_sema_type_t* base,
 	const ofc_sema_type_t* target)
@@ -876,4 +875,14 @@ bool ofc_sema_type_cast_is_lossless(
 	}
 
 	return false;
+}
+
+bool ofc_sema_type_print(
+	ofc_colstr_t* cs,
+	const ofc_sema_type_t* type)
+{
+    if (!cs || !type) return false;
+
+	return ofc_colstr_atomic_writef(cs, "%.*s",
+		ofc_sema_type__name[type->type]);
 }

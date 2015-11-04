@@ -232,3 +232,34 @@ ofc_sema_stmt_t* ofc_sema_stmt_go_to(
 
 	return as;
 }
+
+bool ofc_sema_go_to_print(
+	ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt)
+{
+	if (!cs || (stmt->type != OFC_SEMA_STMT_GO_TO))
+		return false;
+	if (!ofc_colstr_atomic_writef(cs, "GO TO"))
+		return false;
+	if (!ofc_sema_expr_print(cs, stmt->go_to.label))
+		return false;
+	if (!ofc_sema_expr_list_print(cs, stmt->go_to.allow))
+		return false;
+
+	return true;
+}
+
+bool ofc_sema_go_to_computed_print(
+	ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt)
+{
+	if (!cs || (stmt->type != OFC_SEMA_STMT_GO_TO_COMPUTED))
+		return false;
+
+	if (!cs || (stmt->type != OFC_SEMA_STMT_GO_TO))
+		return false;
+	if (!ofc_colstr_atomic_writef(cs, "GO TO"))
+		return false;
+
+	return true;
+}

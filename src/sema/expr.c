@@ -1322,3 +1322,89 @@ bool ofc_sema_expr_list_compare(
 
 	return true;
 }
+
+bool ofc_sema_expr_resolve_uint(
+	const ofc_sema_expr_t* expr,
+	unsigned* value)
+{
+	const ofc_sema_typeval_t* tv
+		= ofc_sema_expr_constant(expr);
+	if (!tv) return false;
+
+	int64_t i;
+	if (!ofc_sema_typeval_get_integer(tv, &i))
+		return false;
+	if (i < 0) return false;
+
+	unsigned u = i;
+	if (i != u)
+		return false;
+
+	if (value) *value = u;
+	return true;
+}
+
+static const char* ofc_sema_expr__operator[] =
+{
+	NULL, NULL, NULL, NULL,
+
+	"**",
+	"*",
+	"//",
+	"/",
+	"+",
+	"-",
+	"-",
+	".EQ.",
+	".NE.",
+	".LT.",
+	".LE.",
+	".GT.",
+	".GE.",
+	".NOT.",
+	".AND.",
+	".OR.",
+	".EQV.",
+	".NEQV.",
+};
+
+bool ofc_sema_expr_print(
+	ofc_colstr_t* cs,
+	const ofc_sema_expr_t* expr)
+{
+    if (!cs || !expr) return false;
+
+	switch (expr->type)
+	{
+		case OFC_SEMA_EXPR_CONSTANT:
+			return ofc_sema_typeval_print(cs,
+				expr->constant);
+		case OFC_SEMA_EXPR_LHS:
+		case OFC_SEMA_EXPR_CAST:
+		case OFC_SEMA_EXPR_INTRINSIC:
+
+		default:
+			break;
+	}
+
+	if (expr->type >= OFC_SEMA_EXPR_COUNT)
+		return false;
+
+	return ofc_colstr_atomic_writef(cs, "%.*s",
+		ofc_sema_expr__operator[expr->type]);
+}
+
+bool ofc_sema_expr_list_print(
+	ofc_colstr_t* cs,
+	const ofc_sema_expr_list_t* expr_list)
+{
+	if (!cs || !expr_list) return false;
+
+	unsigned i;
+	for (i = 0; i < expr_list->count; i++)
+	{
+		if (!ofc_sema_expr_print(cs, expr_list->expr[i]))
+			return false;
+	}
+	return true;
+}

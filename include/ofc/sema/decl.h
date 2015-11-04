@@ -150,4 +150,9 @@ ofc_sema_decl_t* ofc_sema_decl_list_find_modify(
 const ofc_hashmap_t* ofc_sema_decl_list_map(
 	const ofc_sema_decl_list_t* list);
 
+bool ofc_sema_decl_print(ofc_colstr_t* cs,
+	const ofc_sema_decl_t* decl);
+bool ofc_sema_decl_list_print(ofc_colstr_t* cs,
+	const ofc_sema_decl_list_t* decl_list);
+
 #endif

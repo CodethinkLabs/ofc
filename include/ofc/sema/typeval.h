@@ -131,4 +131,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_neqv(
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b);
 
+bool ofc_sema_typeval_print(ofc_colstr_t*cs,
+	const ofc_sema_typeval_t* typeval);
+
 #endif

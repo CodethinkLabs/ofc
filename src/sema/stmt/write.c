@@ -509,3 +509,77 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 	}
 	return as;
 }
+
+static bool ofc_sema_stmt_write__print_optional(
+	ofc_colstr_t* cs, const ofc_sema_expr_t* expr)
+{
+	if (!cs || !expr) return false;
+
+	if (!ofc_colstr_atomic_writef(cs, ","))
+		return false;
+	if (!ofc_sema_expr_print(cs, expr))
+		return false;
+	return true;
+}
+
+bool ofc_sema_stmt_write_print(ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt)
+{
+	if (!cs || (stmt->type != OFC_SEMA_STMT_WRITE))
+		return false;
+
+	if (!ofc_colstr_atomic_writef(cs, "WRITE"))
+		return false;
+	if (!ofc_colstr_atomic_writef(cs, "("))
+		return false;
+
+	if (stmt->io_write.stdout)
+	{
+		if (!ofc_colstr_atomic_writef(cs, "*"))
+			return false;
+	}
+	else
+	{
+		if (!ofc_sema_expr_print(cs,
+			stmt->io_write.unit))
+				return false;
+	}
+
+	if (stmt->io_write.format_ldio)
+	{
+		if (!ofc_colstr_atomic_writef(cs, ","))
+			return false;
+		if (!ofc_colstr_atomic_writef(cs, "*"))
+			return false;
+	}
+	else
+	{
+		if (!ofc_sema_stmt_write__print_optional(
+			cs,	stmt->io_write.format_expr))
+				return false;
+	}
+
+	if (stmt->io_write.iostat)
+	{
+		if (!ofc_sema_stmt_write__print_optional(
+			cs, stmt->io_write.iostat))
+				return false;
+	}
+	if (stmt->io_write.rec)
+	{
+		if (!ofc_sema_stmt_write__print_optional(
+			cs,	stmt->io_write.rec))
+				return false;
+	}
+	if (stmt->io_write.err)
+	{
+		if (!ofc_sema_stmt_write__print_optional(
+			cs,	stmt->io_write.err))
+				return false;
+	}
+
+	if (!ofc_colstr_atomic_writef(cs, ")"))
+		return false;
+
+	return true;
+}

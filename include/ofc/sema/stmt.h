@@ -243,4 +243,9 @@ bool ofc_sema_stmt_list_add(
 unsigned ofc_sema_stmt_list_count(
 	const ofc_sema_stmt_list_t* list);
 
+bool ofc_sema_stmt_print(ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt);
+bool ofc_sema_stmt_list_print(ofc_colstr_t* cs,
+	const ofc_sema_stmt_list_t* stmt_list);
+
 #endif

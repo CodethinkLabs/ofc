@@ -129,4 +129,11 @@ bool ofc_sema_expr_list_compare(
 ofc_sema_expr_list_t* ofc_sema_expr_list_implicit_do(
 	ofc_sema_scope_t* scope, ofc_parse_implicit_do_t* id);
 
+bool ofc_sema_expr_print(
+	ofc_colstr_t* cs,
+	const ofc_sema_expr_t* expr);
+bool ofc_sema_expr_list_print(
+	ofc_colstr_t* cs,
+	const ofc_sema_expr_list_t* expr_list);
+
 #endif

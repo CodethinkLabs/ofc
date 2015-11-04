@@ -103,3 +103,19 @@ ofc_sema_stmt_t* ofc_sema_stmt_assignment(
 
 	return as;
 }
+
+bool ofc_sema_stmt_assignment_print(
+	ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt)
+{
+	if (!cs || !stmt) return false;
+
+	if (!ofc_sema_lhs_print(cs, stmt->assignment.dest))
+		return false;
+	if (!ofc_colstr_atomic_writef(cs, "="))
+		return false;
+	if (!ofc_sema_expr_print(cs, stmt->assignment.expr))
+		return false;
+
+	return true;
+}

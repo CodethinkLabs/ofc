@@ -1,5 +1,30 @@
 #include <ofc/sema.h>
 
+bool ofc_sema_stmt_assignment_print(ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt);
+bool ofc_sema_stmt_write_print(ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt);
+bool ofc_sema_stmt_if_comp_print(ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt);
+bool ofc_sema_stmt_if_print(ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt);
+bool ofc_sema_stmt_if_then_print(ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt);
+bool ofc_sema_stmt_do_label_print(ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt);
+bool ofc_sema_stmt_do_block_print(ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt);
+bool ofc_sema_stmt_do_while_print(ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt);
+bool ofc_sema_stmt_do_while_block_print(ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt);
+bool ofc_sema_go_to_print(ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt);
+bool ofc_sema_go_to_computed_print(ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt);
+bool ofc_sema_stmt_stop_pause_print(ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt);
+
 
 static ofc_sema_stmt_t* ofc_sema_stmt_simple(
 	ofc_parse_stmt_e type)
@@ -72,6 +97,7 @@ ofc_sema_stmt_t* ofc_sema_stmt(
 			break;
 
 		case OFC_PARSE_STMT_GO_TO:
+
 		case OFC_PARSE_STMT_GO_TO_ASSIGNED:
 		case OFC_PARSE_STMT_GO_TO_COMPUTED:
 			s = ofc_sema_stmt_go_to(scope, stmt);
@@ -347,4 +373,55 @@ unsigned ofc_sema_stmt_list_count(
 	const ofc_sema_stmt_list_t* list)
 {
 	return (list ? list->count : 0);
+}
+
+bool ofc_sema_stmt_print(
+	ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt)
+{
+	switch (stmt->type)
+	{
+		case OFC_SEMA_STMT_ASSIGNMENT:
+			return ofc_sema_stmt_assignment_print(cs, stmt);
+		case OFC_SEMA_STMT_WRITE:
+			return ofc_sema_stmt_write_print(cs, stmt);
+		case OFC_SEMA_STMT_CONTINUE:
+			/* TODO - Continue statements will be transformed out? */
+			return false;
+		case OFC_SEMA_STMT_IF_COMPUTED:
+			return ofc_sema_stmt_if_comp_print(cs, stmt);
+		case OFC_SEMA_STMT_IF_STATEMENT:
+			return ofc_sema_stmt_if_print(cs, stmt);
+		case OFC_SEMA_STMT_IF_THEN:
+			return ofc_sema_stmt_if_then_print(cs, stmt);
+		case OFC_SEMA_STMT_STOP:
+		case OFC_SEMA_STMT_PAUSE:
+			return ofc_sema_stmt_stop_pause_print(cs, stmt);
+		case OFC_SEMA_STMT_GO_TO:
+			return ofc_sema_go_to_print(cs, stmt);
+		case OFC_SEMA_STMT_GO_TO_COMPUTED:
+			return ofc_sema_go_to_computed_print(cs, stmt);
+		case OFC_SEMA_STMT_DO_LABEL:
+			return ofc_sema_stmt_do_label_print(cs, stmt);
+		case OFC_SEMA_STMT_DO_BLOCK:
+			return ofc_sema_stmt_do_block_print(cs, stmt);
+		case OFC_SEMA_STMT_DO_WHILE:
+			return ofc_sema_stmt_do_while_print(cs, stmt);
+		case OFC_SEMA_STMT_DO_WHILE_BLOCK:
+			return ofc_sema_stmt_do_while_block_print(cs, stmt);
+		default:
+			return false;
+	}
+}
+
+bool ofc_sema_stmt_list_print(ofc_colstr_t* cs,
+	const ofc_sema_stmt_list_t* stmt_list)
+{
+    unsigned i;
+	for (i = 0; i < stmt_list->count; i++)
+	{
+		if (!ofc_sema_stmt_print(cs, stmt_list->stmt[i]))
+			return false;
+	}
+	return true;
 }

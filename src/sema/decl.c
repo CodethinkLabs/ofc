@@ -1101,3 +1101,30 @@ const ofc_hashmap_t* ofc_sema_decl_list_map(
 {
 	return (list ? list->map : NULL);
 }
+
+bool ofc_sema_decl_print(ofc_colstr_t* cs,
+	const ofc_sema_decl_t* decl)
+{
+	if (!cs || !decl) return false;
+
+	if (!ofc_colstr_atomic_writef(cs, "%s ",
+		ofc_sema_type_str_rep(decl->type->type)))
+			return false;
+
+	if (!ofc_colstr_atomic_writef(cs, "%.*s",
+		decl->name.size, decl->name.base))
+			return false;
+	return true;
+}
+
+bool ofc_sema_decl_list_print(ofc_colstr_t* cs,
+	const ofc_sema_decl_list_t* decl_list)
+{
+	unsigned i;
+	for (i = 0; i < decl_list->count; i++)
+	{
+		if (!ofc_sema_decl_print(cs, decl_list->decl[i]))
+			return false;
+	}
+	return true;
+}
