@@ -248,6 +248,13 @@ ofc_sema_expr_t* ofc_sema_expr_cast(
 		return cast;
 	}
 
+	if (!ofc_sema_type_cast_is_lossless(
+		ofc_sema_expr_type(expr), type))
+	{
+		ofc_sema_scope_warning(scope, expr->src,
+			"Implicit cast may be lossy.");
+	}
+
 	ofc_sema_expr_t* cast
 		= ofc_sema_expr__create(
 			OFC_SEMA_EXPR_CAST);

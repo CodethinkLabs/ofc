@@ -834,3 +834,96 @@ const ofc_sema_type_t* ofc_sema_type_promote(
 
 	return NULL;
 }
+
+
+bool ofc_sema_type_cast_is_lossless(
+	const ofc_sema_type_t* base,
+	const ofc_sema_type_t* target)
+{
+	if (!base || !target)
+		return false;
+
+	if (ofc_sema_type_compare(base, target))
+		return true;
+
+    switch (base->type)
+	{
+		case OFC_SEMA_TYPE_INTEGER:
+			switch (target->type)
+			{
+				case OFC_SEMA_TYPE_INTEGER:
+					return (target->kind >= base->kind);
+
+				case OFC_SEMA_TYPE_REAL:
+				case OFC_SEMA_TYPE_COMPLEX:
+					switch (target->kind)
+					{
+						case 4:
+							return (base->kind <= 3);
+						case 8:
+							return (base->kind <= 5);
+						case 10:
+							return (base->kind <= 8);
+						default:
+							break;
+					}
+					break;
+
+				case OFC_SEMA_TYPE_BYTE:
+					return (base->kind <= 1);
+
+				default:
+					break;
+			}
+			break;
+
+		case OFC_SEMA_TYPE_REAL:
+			switch (target->type)
+			{
+				case OFC_SEMA_TYPE_REAL:
+				case OFC_SEMA_TYPE_COMPLEX:
+					return (target->kind >= base->kind);
+
+				default:
+					break;
+			}
+			break;
+
+		case OFC_SEMA_TYPE_COMPLEX:
+			switch (target->type)
+			{
+				case OFC_SEMA_TYPE_COMPLEX:
+					return (target->kind >= base->kind);
+
+				default:
+					break;
+			}
+			break;
+
+		case OFC_SEMA_TYPE_BYTE:
+			switch (target->type)
+			{
+				case OFC_SEMA_TYPE_INTEGER:
+					return (target->kind >= 1);
+
+				case OFC_SEMA_TYPE_REAL:
+				case OFC_SEMA_TYPE_COMPLEX:
+				case OFC_SEMA_TYPE_BYTE:
+					return true;
+
+				default:
+					break;
+			}
+			break;
+
+		case OFC_SEMA_TYPE_CHARACTER:
+			return ((target->type == OFC_SEMA_TYPE_CHARACTER)
+				&& (target->kind >= base->kind)
+				&& (target->len >= base->len));
+
+		default:
+			break;
+	}
+
+	return false;
+}
