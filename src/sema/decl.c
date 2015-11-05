@@ -385,6 +385,19 @@ bool ofc_sema_decl_init_array(
 	return true;
 }
 
+bool ofc_sema_decl_init_stmt_func(
+	ofc_sema_decl_t* decl,
+	const ofc_sema_scope_t* func)
+{
+	if (!decl || !func
+		|| decl->lock)
+		return false;
+
+	decl->func = func;
+	decl->lock = true;
+	return true;
+}
+
 
 unsigned ofc_sema_decl_size(
 	const ofc_sema_decl_t* decl)

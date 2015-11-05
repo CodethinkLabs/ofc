@@ -1,5 +1,14 @@
 #include <ofc/sema.h>
 
+
+static bool ofc_sema_scope__has_body(
+	const ofc_sema_scope_t* scope)
+{
+	if (!scope)
+		return false;
+	return (scope->type != OFC_SEMA_SCOPE_STMT_FUNC);
+}
+
 void ofc_sema_scope_delete(
 	ofc_sema_scope_t* scope)
 {
@@ -20,8 +29,18 @@ void ofc_sema_scope_delete(
 		scope->parameter);
 	ofc_hashmap_delete(
 		scope->label);
-	ofc_sema_stmt_list_delete(
-		scope->stmt);
+
+	switch (scope->type)
+	{
+		case OFC_SEMA_SCOPE_STMT_FUNC:
+			ofc_sema_expr_delete(scope->expr);
+			break;
+
+		default:
+			ofc_sema_stmt_list_delete(
+				scope->stmt);
+			break;
+	}
 
 	free(scope);
 }
@@ -82,7 +101,6 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 
 	scope->type        = type;
 	scope->name        = OFC_STR_REF_EMPTY;
-	scope->return_type = NULL;
 	scope->args        = NULL;
 
 	scope->implicit = (parent
@@ -94,15 +112,29 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 	scope->decl      = ofc_sema_decl_list_create(opts.case_sensitive);
 	scope->parameter = ofc_sema_parameter_map_create(opts.case_sensitive);
 	scope->label     = ofc_sema_label_map_create();
-	scope->stmt      = ofc_sema_stmt_list_create();
 
 	scope->external = false;
 	scope->intrinsic = false;
 
+	switch (scope->type)
+	{
+		case OFC_SEMA_SCOPE_STMT_FUNC:
+			scope->expr = NULL;
+			break;
+
+		default:
+			scope->stmt = ofc_sema_stmt_list_create();
+			if (!scope->stmt)
+			{
+				ofc_sema_scope_delete(scope);
+				return NULL;
+			}
+			break;
+	}
+
 	if (!scope->implicit
 		|| !scope->decl
-		|| !scope->parameter
-		|| !scope->stmt)
+		|| !scope->parameter)
 	{
 		ofc_sema_scope_delete(scope);
 		return NULL;
@@ -115,7 +147,7 @@ static bool ofc_sema_scope__body(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_list_t* body)
 {
-	if (!scope)
+	if (!ofc_sema_scope__has_body(scope))
 		return false;
 
 	if (!body)
@@ -129,6 +161,13 @@ static bool ofc_sema_scope__body(
 
 		if (stmt->type == OFC_PARSE_STMT_EMPTY)
 			continue;
+
+		if (ofc_sema_stmt_is_stmt_func(scope, stmt))
+		{
+			if (!ofc_sema_scope_stmt_func(scope, stmt))
+				return false;
+			continue;
+		}
 
 		switch (stmt->type)
 		{
@@ -225,8 +264,7 @@ static bool ofc_sema_scope__body(
 						break;
 				}
 
-				if (!ofc_sema_stmt_scoped(
-					scope, stmt))
+				if (!ofc_sema_stmt_scoped(scope, stmt))
 					return false;
 				break;
 		}
@@ -288,6 +326,88 @@ ofc_sema_scope_t* ofc_sema_scope_program(
 	}
 
 	return program;
+}
+
+ofc_sema_scope_t* ofc_sema_scope_stmt_func(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt)
+{
+	if (!scope || !stmt
+		|| (stmt->type != OFC_PARSE_STMT_ASSIGNMENT)
+		|| !stmt->assignment
+		|| !stmt->assignment->name
+		|| !stmt->assignment->init)
+		return NULL;
+
+	if ((stmt->assignment->name->type != OFC_PARSE_LHS_ARRAY)
+		|| !stmt->assignment->name->parent
+		|| (stmt->assignment->name->parent->type != OFC_PARSE_LHS_VARIABLE))
+		return NULL;
+
+	ofc_str_ref_t base_name;
+	if (!ofc_parse_lhs_base_name(
+		*(stmt->assignment->name), &base_name))
+		return NULL;
+
+    ofc_sema_decl_t* decl
+		= ofc_sema_scope_decl_find_modify(scope, base_name);
+	if (!decl)
+	{
+		decl = ofc_sema_decl_implicit_name(
+			scope, base_name);
+		if (!decl)
+		{
+			ofc_sema_scope_error(scope, stmt->src,
+				"No IMPLICIT rule matches statement function name.");
+			return NULL;
+		}
+	}
+	else
+	{
+		if (ofc_sema_decl_is_array(decl))
+		{
+			/* This is an array assignment. */
+			return NULL;
+		}
+
+		if (ofc_sema_decl_is_locked(decl))
+		{
+			ofc_sema_scope_error(scope, stmt->src,
+				"Can't redeclare as statement function.");
+			return NULL;
+		}
+	}
+
+	ofc_sema_scope_t* func
+		= ofc_sema_scope__create(
+			scope, NULL, NULL, OFC_SEMA_SCOPE_STMT_FUNC);
+	if (!func) return NULL;
+
+	/* TODO - Parse arguments. */
+	func->args = NULL;
+
+	func->expr = ofc_sema_expr(
+		func, stmt->assignment->init);
+	if (!func->expr)
+	{
+		ofc_sema_scope_delete(func);
+		return NULL;
+	}
+
+	if (!ofc_sema_scope__add_child(scope, func))
+	{
+		ofc_sema_scope_delete(func);
+		return NULL;
+	}
+
+	if (!ofc_sema_decl_init_stmt_func(
+		decl, scope))
+	{
+		/* This should never happen. */
+		return NULL;
+	}
+
+	return func;
 }
 
 ofc_sema_scope_t* ofc_sema_scope_subroutine(

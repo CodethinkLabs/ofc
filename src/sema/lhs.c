@@ -220,7 +220,6 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 						lhs->array.index);
 				if (!slice)
 				{
-					/* TODO - Resolve as function/subroutine assignment? */
 					ofc_sema_lhs_delete(parent);
 					return NULL;
 				}

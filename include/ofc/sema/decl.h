@@ -7,8 +7,9 @@ typedef struct ofc_sema_decl_s ofc_sema_decl_t;
 
 struct ofc_sema_decl_s
 {
-	const ofc_sema_type_t* type;
-	ofc_str_ref_t          name;
+	const ofc_sema_type_t*  type;
+	ofc_str_ref_t           name;
+	const ofc_sema_scope_t* func;
 
 	union
 	{
@@ -70,6 +71,9 @@ bool ofc_sema_decl_init_array(
 	const ofc_sema_array_t* array,
 	unsigned count,
 	const ofc_sema_expr_t** init);
+bool ofc_sema_decl_init_stmt_func(
+	ofc_sema_decl_t* decl,
+	const ofc_sema_scope_t* func);
 
 unsigned ofc_sema_decl_size(
 	const ofc_sema_decl_t* decl);

@@ -5,6 +5,7 @@ typedef enum
 {
 	OFC_SEMA_SCOPE_GLOBAL = 0,
 	OFC_SEMA_SCOPE_PROGRAM,
+	OFC_SEMA_SCOPE_STMT_FUNC,
 	OFC_SEMA_SCOPE_SUBROUTINE,
 	OFC_SEMA_SCOPE_FUNCTION,
 	OFC_SEMA_SCOPE_BLOCK_DATA,
@@ -24,7 +25,6 @@ struct ofc_sema_scope_s
 
 	ofc_sema_scope_e       type;
 	ofc_str_ref_t          name;
-	const ofc_sema_type_t* return_type;
 	ofc_sema_decl_list_t*  args;
 
 	bool external;
@@ -38,7 +38,11 @@ struct ofc_sema_scope_s
 	ofc_hashmap_t*        label;
 	/* namelist_list_map */
 
-	ofc_sema_stmt_list_t* stmt;
+	union
+	{
+		ofc_sema_stmt_list_t* stmt;
+		ofc_sema_expr_t*      expr;
+	};
 };
 
 
@@ -48,6 +52,9 @@ ofc_sema_scope_t* ofc_sema_scope_global(
 	const ofc_parse_stmt_list_t* list);
 
 ofc_sema_scope_t* ofc_sema_scope_program(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt);
+ofc_sema_scope_t* ofc_sema_scope_stmt_func(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
 ofc_sema_scope_t* ofc_sema_scope_subroutine(

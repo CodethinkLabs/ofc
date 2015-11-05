@@ -176,6 +176,9 @@ ofc_sema_stmt_t* ofc_sema_stmt_do(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
 
+bool ofc_sema_stmt_is_stmt_func(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt);
 
 struct ofc_sema_stmt_list_s
 {
