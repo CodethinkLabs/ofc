@@ -85,13 +85,6 @@ bool ofc_sema_type_is_logical(const ofc_sema_type_t* type);
 
 bool ofc_sema_type_is_composite(const ofc_sema_type_t* type);
 
-bool ofc_sema_type_cast_value(
-	const ofc_sema_type_t* itype,
-	const void* ivalue,
-	const ofc_sema_type_t* otype,
-	void* ovalue,
-	bool* lossy);
-
 const ofc_sema_type_t* ofc_sema_type_promote(
 	const ofc_sema_type_t* a,
 	const ofc_sema_type_t* b);
