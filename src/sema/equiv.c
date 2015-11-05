@@ -30,8 +30,7 @@ static ofc_sema_equiv_t* ofc_sema_equiv__create(void)
 	if (!equiv) return NULL;
 
 	equiv->count = 0;
-	equiv->lhs = (ofc_sema_lhs_t**)malloc(
-		(sizeof(ofc_sema_lhs_t*) * equiv->count));
+	equiv->lhs = NULL;
 	if (!equiv->lhs)
 	{
 		free(equiv);
@@ -44,7 +43,6 @@ static ofc_sema_equiv_t* ofc_sema_equiv__create(void)
 		(void*)ofc_sema_equiv__key, NULL);
 	if (!equiv->map)
 	{
-		free(equiv->lhs);
 		free(equiv);
 		return NULL;
 	}
@@ -59,6 +57,9 @@ static bool ofc_sema_equiv__add(
 	ofc_sema_decl_t* decl)
 {
 	if (!equiv)
+		return false;
+
+	if (decl->func)
 		return false;
 
 	const ofc_sema_lhs_t* exist
@@ -100,6 +101,9 @@ static bool ofc_sema_equiv__create_pair(
 	ofc_sema_lhs_t* b,
 	ofc_sema_decl_t* bd)
 {
+	if (!ad || !bd)
+		return false;
+
 	ofc_sema_equiv_t* equiv
 		= ofc_sema_equiv__create();
 	if (!equiv) return false;

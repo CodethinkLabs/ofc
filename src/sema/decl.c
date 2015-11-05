@@ -390,7 +390,8 @@ bool ofc_sema_decl_init_stmt_func(
 	const ofc_sema_scope_t* func)
 {
 	if (!decl || !func
-		|| decl->lock)
+		|| decl->lock
+		|| decl->equiv)
 		return false;
 
 	decl->func = func;

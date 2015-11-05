@@ -11,7 +11,7 @@ static ofc_sema_lhs_t* ofc_sema_lhs_index(
 	ofc_sema_lhs_t* alhs
 		= (ofc_sema_lhs_t*)malloc(
 			sizeof(ofc_sema_lhs_t));
-	if (!lhs) return NULL;
+	if (!alhs) return NULL;
 
 	alhs->type      = OFC_SEMA_LHS_ARRAY_INDEX;
 	alhs->parent    = lhs;
@@ -203,9 +203,9 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 				{
 					ofc_sema_lhs_t* slhs
 						= ofc_sema_lhs_index(parent, index);
-					ofc_sema_lhs_delete(parent);
 					if (!slhs)
 					{
+						ofc_sema_lhs_delete(parent);
 						ofc_sema_array_index_delete(index);
 						return NULL;
 					}
@@ -226,9 +226,9 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 
 				ofc_sema_lhs_t* slhs
 					= ofc_sema_lhs_slice(parent, slice);
-				ofc_sema_lhs_delete(parent);
 				if (!slhs)
 				{
+					ofc_sema_lhs_delete(parent);
 					ofc_sema_array_delete(slice);
 					return NULL;
 				}
@@ -331,6 +331,18 @@ void ofc_sema_lhs_delete(
 	switch (lhs->type)
 	{
 		case OFC_SEMA_LHS_ARRAY_INDEX:
+		case OFC_SEMA_LHS_ARRAY_SLICE:
+		case OFC_SEMA_LHS_STRUCTURE_MEMBER:
+			ofc_sema_lhs_delete(lhs->parent);
+			break;
+
+		default:
+			break;
+	}
+
+	switch (lhs->type)
+	{
+		case OFC_SEMA_LHS_ARRAY_INDEX:
 			ofc_sema_array_index_delete(lhs->index);
 			break;
 
@@ -391,7 +403,24 @@ bool ofc_sema_lhs_compare(
 ofc_sema_decl_t* ofc_sema_lhs_decl(
 	ofc_sema_lhs_t* lhs)
 {
-	return (lhs ? lhs->decl : NULL);
+	if (!lhs)
+		return NULL;
+
+	switch (lhs->type)
+	{
+		case OFC_SEMA_LHS_DECL:
+			return lhs->decl;
+
+		case OFC_SEMA_LHS_ARRAY_INDEX:
+		case OFC_SEMA_LHS_ARRAY_SLICE:
+		case OFC_SEMA_LHS_STRUCTURE_MEMBER:
+			return ofc_sema_lhs_decl(lhs->parent);
+
+		default:
+			break;
+	}
+
+	return NULL;
 }
 
 const ofc_sema_type_t* ofc_sema_lhs_type(
