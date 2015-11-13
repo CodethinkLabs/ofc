@@ -197,7 +197,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 	{
 		s.io_write.format_expr = ofc_sema_expr(
 			scope, ca_format->expr);
-		if (!s.io_write.unit) return NULL;
+		if (!s.io_write.format_expr) return NULL;
 
 		const ofc_sema_type_t* etype
 			= ofc_sema_expr_type(s.io_write.format_expr);
