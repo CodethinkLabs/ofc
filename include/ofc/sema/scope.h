@@ -15,10 +15,17 @@ typedef enum
 	OFC_SEMA_SCOPE_COUNT
 } ofc_sema_scope_e;
 
+typedef struct
+{
+	unsigned count;
+	ofc_sema_scope_t**       scope;
+} ofc_sema_scope_list_t;
+
+
 struct ofc_sema_scope_s
 {
 	ofc_sema_scope_t* parent;
-	ofc_hashmap_t*    child;
+	ofc_sema_scope_list_t*    child;
 
 	const ofc_lang_opts_t* lang_opts;
 
@@ -115,5 +122,13 @@ void ofc_sema_scope_warning(
 bool ofc_sema_scope_print(
 	ofc_colstr_t* cs,
 	const ofc_sema_scope_t* scope);
+
+ofc_sema_scope_list_t* ofc_sema_scope_list_create();
+
+bool ofc_sema_scope_list_add(
+	ofc_sema_scope_list_t* list,
+	ofc_sema_scope_t* scope);
+void ofc_sema_scope_list_delete(
+	ofc_sema_scope_list_t* list);
 
 #endif

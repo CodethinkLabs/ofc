@@ -7,7 +7,8 @@ void ofc_sema_scope_delete(
 	if (!scope)
 		return;
 
-	ofc_hashmap_delete(scope->child);
+	ofc_sema_scope_list_delete(
+		scope->child);
 
 	ofc_str_ref_list_delete(
 		scope->args);
@@ -52,20 +53,11 @@ static bool ofc_sema_scope__add_child(
 
 	if (!scope->child)
 	{
-		bool cs = (scope->lang_opts
-			&& scope->lang_opts->case_sensitive);
-
-		scope->child = ofc_hashmap_create(
-			(void*)(cs ? ofc_str_ref_ptr_hash
-				: ofc_str_ref_ptr_hash_ci),
-			(void*)(cs ? ofc_str_ref_ptr_equal
-				: ofc_str_ref_ptr_equal_ci),
-			(void*)ofc_sema_scope_get_name,
-			(void*)ofc_sema_scope_delete);
+		scope->child = ofc_sema_scope_list_create();
 		if (!scope->child) return false;
 	}
 
-	return ofc_hashmap_add(
+	return ofc_sema_scope_list_add(
 		scope->child, child);
 }
 
@@ -1000,36 +992,6 @@ ofc_sema_decl_t* ofc_sema_scope_decl_find_modify(
 		scope->parent, name, false);
 }
 
-const ofc_sema_scope_t* ofc_sema_scope_child_find(
-	const ofc_sema_scope_t* scope, ofc_str_ref_t name)
-{
-	if (!scope)
-		return NULL;
-
-	const ofc_sema_scope_t* child
-		= ofc_hashmap_find(scope->child, &name);
-	if (child) return child;
-
-	return ofc_sema_scope_child_find(
-		scope->parent, name);
-}
-
-ofc_sema_scope_t* ofc_sema_scope_child_find_modify(
-	ofc_sema_scope_t* scope, ofc_str_ref_t name)
-{
-	if (!scope)
-		return NULL;
-
-	ofc_sema_scope_t* child
-		= ofc_hashmap_find_modify(
-			scope->child, &name);
-	if (child) return child;
-
-	return ofc_sema_scope_child_find_modify(
-		scope->parent, name);
-}
-
-
 ofc_sema_common_t* ofc_sema_scope_common_find_create(
 	ofc_sema_scope_t* scope, ofc_str_ref_t name)
 {
@@ -1125,6 +1087,8 @@ bool ofc_sema_scope_print(
 	switch (scope->type)
 	{
 		case OFC_SEMA_SCOPE_GLOBAL:
+			/* TODO - Take the global print out, just for testing.*/
+			kwstr = "TEST GLOBAL";
 			break;
 		case OFC_SEMA_SCOPE_PROGRAM:
 			kwstr = "PROGRAM";
@@ -1160,4 +1124,47 @@ bool ofc_sema_scope_print(
 	if (!ofc_sema_stmt_list_print(cs, scope->stmt)) return false;
 
 	return true;
+}
+
+ofc_sema_scope_list_t* ofc_sema_scope_list_create()
+{
+	ofc_sema_scope_list_t* list
+		= (ofc_sema_scope_list_t*)malloc(
+			sizeof(ofc_sema_scope_list_t));
+	if (!list) return NULL;
+
+	list->scope = NULL;
+	list->count = 0;
+
+	return list;
+}
+
+bool ofc_sema_scope_list_add(
+	ofc_sema_scope_list_t* list,
+	ofc_sema_scope_t* scope)
+{
+	if (!list || !scope) return false;
+
+    ofc_sema_scope_t** nscope
+		= (ofc_sema_scope_t**)realloc(list->scope,
+			(sizeof(ofc_sema_scope_t*) * (list->count + 1)));
+	if (!nscope) return false;
+	list->scope = nscope;
+
+	list->scope[list->count++] = scope;
+	return true;
+}
+
+void ofc_sema_scope_list_delete(
+	ofc_sema_scope_list_t* list)
+{
+	if (!list)
+		return;
+
+	unsigned i;
+	for (i = 0; i < list->count; i++)
+		ofc_sema_scope_delete(list->scope[i]);
+
+	free(list->scope);
+	free(list);
 }
