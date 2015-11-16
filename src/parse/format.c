@@ -104,8 +104,8 @@ ofc_parse_format_desc_t* ofc_parse_format_desc(
 			src, &ptr[i], debug, &l);
 		if (desc->repeat) i += l;
 
-		desc->neg = negative;
-		desc->n    = n;
+		desc->neg  = negative;
+		desc->n    = (n == 0 ? 1 : n);
 		desc->type = OFC_PARSE_FORMAT_DESC_REPEAT;
 
 		if (ptr[i++] != ')')
