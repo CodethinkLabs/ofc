@@ -361,6 +361,13 @@ ofc_sema_scope_t* ofc_sema_scope_stmt_func(
 				"No IMPLICIT rule matches statement function name.");
 			return NULL;
 		}
+
+		if (!ofc_sema_decl_list_add(
+			scope->decl, decl))
+		{
+			ofc_sema_decl_delete(decl);
+			return NULL;
+		}
 	}
 	else
 	{
@@ -383,8 +390,69 @@ ofc_sema_scope_t* ofc_sema_scope_stmt_func(
 			scope, NULL, NULL, OFC_SEMA_SCOPE_STMT_FUNC);
 	if (!func) return NULL;
 
-	/* TODO - Parse arguments. */
-	func->args = NULL;
+	ofc_lang_opts_t opts
+		= ofc_sema_scope_get_lang_opts(scope);
+
+	const ofc_parse_array_index_t* index
+		= stmt->assignment->name->array.index;
+	if (index && (index->count > 0))
+	{
+		func->args = ofc_sema_decl_list_create(
+			opts.case_sensitive);
+		if (!func->args)
+		{
+			ofc_sema_scope_delete(func);
+			return NULL;
+		}
+
+		unsigned i;
+		for (i = 0; i < index->count; i++)
+		{
+			const ofc_parse_array_range_t* range
+				= index->range[i];
+			if (!range || range->is_slice
+				|| range->last || range->stride)
+			{
+				ofc_sema_scope_error(scope, stmt->src,
+					"Invalid argument list in statement function.");
+				ofc_sema_scope_delete(func);
+				return NULL;
+			}
+
+			const ofc_parse_expr_t* expr
+				= range->first;
+			if ((expr->type != OFC_PARSE_EXPR_VARIABLE)
+				|| !expr->variable
+				|| (expr->variable->type != OFC_PARSE_LHS_VARIABLE))
+			{
+				ofc_sema_scope_error(scope, stmt->src,
+					"Statement function's argument list"
+					" must only contain argument names.");
+				ofc_sema_scope_delete(func);
+				return NULL;
+			}
+
+			ofc_str_ref_t arg_name
+				= expr->variable->variable;
+
+			ofc_sema_decl_t* arg_decl
+				= ofc_sema_decl_implicit_name(
+					scope, arg_name);
+			if (!arg_decl)
+			{
+				ofc_sema_scope_delete(func);
+				return NULL;
+			}
+
+			if (!ofc_sema_decl_list_add(
+				func->args, arg_decl))
+			{
+				ofc_sema_decl_delete(arg_decl);
+				ofc_sema_scope_delete(func);
+				return NULL;
+			}
+		}
+	}
 
 	func->expr = ofc_sema_expr(
 		func, stmt->assignment->init);
@@ -401,7 +469,7 @@ ofc_sema_scope_t* ofc_sema_scope_stmt_func(
 	}
 
 	if (!ofc_sema_decl_init_stmt_func(
-		decl, scope))
+		decl, func))
 	{
 		/* This should never happen. */
 		return NULL;

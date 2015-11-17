@@ -46,6 +46,7 @@ static ofc_sema_expr__rule_t ofc_sema_expr__rule[] =
 	{ NULL, 0, 0, 0, 0, 0 }, /* LHS */
 	{ NULL, 0, 0, 0, 0, 0 }, /* CAST */
 	{ NULL, 0, 0, 0, 0, 0 }, /* INTRINSIC */
+	{ NULL, 0, 0, 0, 0, 0 }, /* FUNCTION */
 
 	{ NULL, 0, 1, 1, 1, 0 }, /* POWER */
 	{ NULL, 0, 1, 1, 1, 0 }, /* MULTIPLY */
@@ -135,6 +136,7 @@ static ofc_sema_typeval_t* (*ofc_sema_expr__resolve[])(
 	NULL, /* LHS */
 	NULL, /* CAST */
 	NULL, /* INTRINSIC */
+	NULL, /* FUNCTION */
 
 	ofc_sema_typeval_power,
 	ofc_sema_typeval_multiply,
@@ -188,6 +190,10 @@ static ofc_sema_expr_t* ofc_sema_expr__create(
 		case OFC_SEMA_EXPR_INTRINSIC:
 			expr->intrinsic = NULL;
 			expr->args      = NULL;
+			break;
+		case OFC_SEMA_EXPR_FUNCTION:
+			expr->function = NULL;
+			expr->args     = NULL;
 			break;
 		default:
 			expr->a = NULL;
@@ -598,6 +604,90 @@ static ofc_sema_expr_t* ofc_sema_expr__intrinsic(
 	return expr;
 }
 
+static ofc_sema_expr_t* ofc_sema_expr__function(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_lhs_t* name,
+	const ofc_sema_decl_t* decl)
+{
+	if (!name || !decl
+		|| !decl->func
+		|| (name->type != OFC_PARSE_LHS_ARRAY)
+		|| !name->array.index
+		|| !name->parent
+		|| (name->parent->type != OFC_PARSE_LHS_VARIABLE))
+	{
+		ofc_sema_scope_error(scope, name->src,
+			"Invalid invocation of function.");
+		return NULL;
+	}
+
+	const ofc_sema_scope_t* fscope = decl->func;
+
+	if (fscope->args
+		? (name->array.index->count != fscope->args->count)
+		: (name->array.index->count != 0))
+	{
+		ofc_sema_scope_error(scope, name->src,
+			"Incorrect number of arguments in function call.");
+		return NULL;
+	}
+
+	ofc_sema_expr_list_t* args = NULL;
+	if (name->array.index->count > 0)
+	{
+		if (!name->array.index->range)
+			return NULL;
+
+		args = ofc_sema_expr_list_create();
+		if (!args) return NULL;
+
+		unsigned i;
+		for (i = 0; i < name->array.index->count; i++)
+		{
+			const ofc_parse_array_range_t* range
+				= name->array.index->range[i];
+
+			if (!range || range->is_slice
+				|| range->last || range->stride)
+			{
+				ofc_sema_expr_list_delete(args);
+				return NULL;
+			}
+
+			ofc_sema_expr_t* expr
+				= ofc_sema_expr(scope, range->first);
+			if (!expr)
+			{
+				ofc_sema_expr_list_delete(args);
+				return NULL;
+			}
+
+			if (!ofc_sema_expr_list_add(args, expr))
+			{
+				ofc_sema_expr_delete(expr);
+				ofc_sema_expr_list_delete(args);
+				return NULL;
+			}
+		}
+
+		/* TODO - Validate and cast arguments. */
+	}
+
+	ofc_sema_expr_t* expr
+		= ofc_sema_expr__create(
+			OFC_SEMA_EXPR_FUNCTION);
+	if (!expr)
+	{
+		ofc_sema_expr_list_delete(args);
+		return NULL;
+	}
+
+	expr->function = decl;
+	expr->args     = args;
+
+	return expr;
+}
+
 static ofc_sema_expr_t* ofc_sema_expr__lhs(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_lhs_t* name)
@@ -646,11 +736,14 @@ static ofc_sema_expr_t* ofc_sema_expr__variable(
 		expr = ofc_sema_expr__intrinsic(
 			scope, name, intrinsic);
 	}
+	else if (decl && decl->func)
+	{
+		expr = ofc_sema_expr__function(
+			scope, name, decl);
+	}
 	else
 	{
 		expr = ofc_sema_expr__lhs(scope, name);
-
-		/* TODO - Functions */
 	}
 
 	return expr;
@@ -708,6 +801,7 @@ void ofc_sema_expr_delete(
 			ofc_sema_expr_delete(expr->cast.expr);
 			break;
 		case OFC_SEMA_EXPR_INTRINSIC:
+		case OFC_SEMA_EXPR_FUNCTION:
 			ofc_sema_expr_list_delete(expr->args);
 			break;
 		default:
@@ -754,6 +848,10 @@ bool ofc_sema_expr_compare(
 			return ((a->intrinsic == b->intrinsic)
 				&& ofc_sema_expr_list_compare(a->args, b->args));
 
+		case OFC_SEMA_EXPR_FUNCTION:
+			return ((a->function == b->function)
+				&& ofc_sema_expr_list_compare(a->args, b->args));
+
 		default:
 			break;
 	}
@@ -785,7 +883,9 @@ const ofc_sema_type_t* ofc_sema_expr_type(
 		case OFC_SEMA_EXPR_INTRINSIC:
 			return ofc_sema_intrinsic_type(
 				expr->intrinsic, expr->args);
-			return NULL;
+		case OFC_SEMA_EXPR_FUNCTION:
+			return ofc_sema_decl_type(
+				expr->function);
 		default:
 			break;
 	}

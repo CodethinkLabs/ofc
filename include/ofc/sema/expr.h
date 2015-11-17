@@ -7,6 +7,7 @@ typedef enum
 	OFC_SEMA_EXPR_LHS,
 	OFC_SEMA_EXPR_CAST,
 	OFC_SEMA_EXPR_INTRINSIC,
+	OFC_SEMA_EXPR_FUNCTION,
 
 	OFC_SEMA_EXPR_POWER,
 	OFC_SEMA_EXPR_MULTIPLY,
@@ -56,7 +57,11 @@ struct ofc_sema_expr_s
 
 		struct
 		{
-			const ofc_sema_intrinsic_t* intrinsic;
+			union
+			{
+				const ofc_sema_intrinsic_t* intrinsic;
+				const ofc_sema_decl_t*      function;
+			};
 			ofc_sema_expr_list_t*       args;
 		};
 	};

@@ -15,6 +15,7 @@ ofc_sema_decl_t* ofc_sema_decl_create(
 
 	decl->type = type;
 	decl->name = name;
+	decl->func = NULL;
 
 	if ((type->type == OFC_SEMA_TYPE_ARRAY)
 		|| (type->type == OFC_SEMA_TYPE_STRUCTURE))
