@@ -49,12 +49,32 @@ ofc_sema_array_t* ofc_sema_array(
 			return NULL;
 	}
 
-	if (array && (index->count > array->dimensions))
+	if (array)
 	{
-		/* TODO - Positional error. */
-		ofc_sema_scope_error(scope, OFC_STR_REF_EMPTY,
-			"Array slice has too many dimensions.");
-		return NULL;
+		if (index->count > array->dimensions)
+		{
+			/* TODO - Positional error. */
+			ofc_sema_scope_error(scope, OFC_STR_REF_EMPTY,
+				"Array slice has too many dimensions.");
+			return NULL;
+		}
+		else if (index->count == array->dimensions)
+		{
+			bool is_slice = false;
+			for (i = 0; i < index->count; i++)
+			{
+				if (index->range[i]->is_slice
+					|| index->range[i]->last
+					|| index->range[i]->stride)
+				{
+					is_slice = true;
+					break;
+				}
+			}
+
+			if (!is_slice)
+				return NULL;
+		}
 	}
 
 	unsigned dims = (array ? array->dimensions : index->count);
