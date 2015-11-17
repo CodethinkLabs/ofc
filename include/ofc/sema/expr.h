@@ -53,12 +53,18 @@ struct ofc_sema_expr_s
 			ofc_sema_expr_t* a;
 			ofc_sema_expr_t* b;
 		};
+
+		struct
+		{
+			const ofc_sema_intrinsic_t* intrinsic;
+			ofc_sema_expr_list_t*       args;
+		};
 	};
 };
 
 struct ofc_sema_expr_list_s
 {
-	unsigned           count;
+	unsigned          count;
 	ofc_sema_expr_t** expr;
 };
 
@@ -109,5 +115,8 @@ bool ofc_sema_expr_list_add(
 	ofc_sema_expr_t* expr);
 unsigned ofc_sema_expr_list_count(
 	const ofc_sema_expr_list_t* list);
+bool ofc_sema_expr_list_compare(
+	const ofc_sema_expr_list_t* a,
+	const ofc_sema_expr_list_t* b);
 
 #endif

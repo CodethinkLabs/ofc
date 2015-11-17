@@ -186,7 +186,8 @@ static ofc_sema_expr_t* ofc_sema_expr__create(
 			expr->cast.expr = NULL;
 			break;
 		case OFC_SEMA_EXPR_INTRINSIC:
-			/* TODO - Implement. */
+			expr->intrinsic = NULL;
+			expr->args      = NULL;
 			break;
 		default:
 			expr->a = NULL;
@@ -523,12 +524,86 @@ static ofc_sema_expr_t* ofc_sema_expr__parameter(
 	return expr;
 }
 
+static ofc_sema_expr_t* ofc_sema_expr__intrinsic(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_lhs_t* name,
+	const ofc_sema_intrinsic_t* intrinsic)
+{
+	if (!name || !intrinsic
+		|| (name->type != OFC_PARSE_LHS_ARRAY)
+		|| !name->array.index
+		|| !name->parent
+		|| (name->parent->type != OFC_PARSE_LHS_VARIABLE))
+	{
+		ofc_sema_scope_error(scope, name->src,
+			"Invalid invocation of INTRINSIC function.");
+		return NULL;
+	}
+
+	ofc_sema_expr_list_t* args = NULL;
+	if (name->array.index->count > 0)
+	{
+		if (!name->array.index->range)
+			return NULL;
+
+		args = ofc_sema_expr_list_create();
+		if (!args) return NULL;
+
+		unsigned i;
+		for (i = 0; i < name->array.index->count; i++)
+		{
+			const ofc_parse_array_range_t* range
+				= name->array.index->range[i];
+
+			if (!range || range->is_slice
+				|| range->last || range->stride)
+			{
+				ofc_sema_expr_list_delete(args);
+				return NULL;
+			}
+
+			ofc_sema_expr_t* expr
+				= ofc_sema_expr(scope, range->first);
+			if (!expr)
+			{
+				ofc_sema_expr_list_delete(args);
+				return NULL;
+			}
+
+			if (!ofc_sema_expr_list_add(args, expr))
+			{
+				ofc_sema_expr_delete(expr);
+				ofc_sema_expr_list_delete(args);
+				return NULL;
+			}
+		}
+
+		args = ofc_sema_intrinsic_cast(
+			scope, name->src, intrinsic, args);
+		if (!args) return NULL;
+	}
+
+	ofc_sema_expr_t* expr
+		= ofc_sema_expr__create(
+			OFC_SEMA_EXPR_INTRINSIC);
+	if (!expr)
+	{
+		ofc_sema_expr_list_delete(args);
+		return NULL;
+	}
+
+	expr->intrinsic = intrinsic;
+	expr->args      = args;
+
+	return expr;
+}
+
 static ofc_sema_expr_t* ofc_sema_expr__lhs(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_lhs_t* name)
 {
 	if (!name)
-		return false;
+		return NULL;
 
 	ofc_sema_lhs_t* lhs = ofc_sema_lhs_expr(
 		(ofc_sema_scope_t*)scope, name);
@@ -554,11 +629,29 @@ static ofc_sema_expr_t* ofc_sema_expr__variable(
 {
 	ofc_sema_expr_t* expr
 		= ofc_sema_expr__parameter(scope, name);
-	if (!expr) expr = ofc_sema_expr__lhs(scope, name);
+	if (expr) return expr;
 
-	/* TODO - Intrinsics */
+	ofc_str_ref_t base_name;
+	if (!ofc_parse_lhs_base_name(
+		*name, &base_name))
+		return NULL;
 
-	/* TODO - Functions */
+	const ofc_sema_intrinsic_t* intrinsic
+		= ofc_sema_intrinsic(scope, base_name);
+	const ofc_sema_decl_t* decl
+		= ofc_sema_scope_decl_find(scope, base_name);
+
+	if (intrinsic && !decl)
+	{
+		expr = ofc_sema_expr__intrinsic(
+			scope, name, intrinsic);
+	}
+	else
+	{
+		expr = ofc_sema_expr__lhs(scope, name);
+
+		/* TODO - Functions */
+	}
 
 	return expr;
 }
@@ -615,7 +708,7 @@ void ofc_sema_expr_delete(
 			ofc_sema_expr_delete(expr->cast.expr);
 			break;
 		case OFC_SEMA_EXPR_INTRINSIC:
-			/* TODO - Implement. */
+			ofc_sema_expr_list_delete(expr->args);
 			break;
 		default:
 			ofc_sema_expr_delete(expr->b);
@@ -658,7 +751,8 @@ bool ofc_sema_expr_compare(
 				a->cast.expr, b->cast.expr);
 
 		case OFC_SEMA_EXPR_INTRINSIC:
-			return false;
+			return ((a->intrinsic == b->intrinsic)
+				&& ofc_sema_expr_list_compare(a->args, b->args));
 
 		default:
 			break;
@@ -670,6 +764,90 @@ bool ofc_sema_expr_compare(
 
 	return ((a->b == b->b)
 		|| ofc_sema_expr_compare(a->b, b->b));
+}
+
+
+const ofc_sema_type_t* ofc_sema_expr_type(
+	const ofc_sema_expr_t* expr)
+{
+	if (!expr)
+		return NULL;
+
+	switch (expr->type)
+	{
+		case OFC_SEMA_EXPR_CONSTANT:
+			return expr->constant->type;
+		case OFC_SEMA_EXPR_LHS:
+			return ofc_sema_lhs_type(
+				expr->lhs);
+		case OFC_SEMA_EXPR_CAST:
+			return expr->cast.type;
+		case OFC_SEMA_EXPR_INTRINSIC:
+			return ofc_sema_intrinsic_type(
+				expr->intrinsic, expr->args);
+			return NULL;
+		default:
+			break;
+	}
+
+	if (expr->type >= OFC_SEMA_EXPR_COUNT)
+		return NULL;
+
+	ofc_sema_expr__rule_t rule
+		= ofc_sema_expr__rule[expr->type];
+
+	if (rule.rtype)
+		return rule.rtype(
+			ofc_sema_expr_type(expr->a),
+			ofc_sema_expr_type(expr->b));
+
+	return ofc_sema_expr_type(expr->a);
+}
+
+
+
+bool ofc_sema_expr_validate_uint(
+	const ofc_sema_expr_t* expr)
+{
+	if (!expr)
+		return false;
+
+	const ofc_sema_type_t* type
+		= ofc_sema_expr_type(expr);
+	if (!ofc_sema_type_is_integer(type))
+		return false;
+
+	const ofc_sema_typeval_t* tv
+		= ofc_sema_expr_constant(expr);
+    if (tv)
+	{
+		int64_t v;
+		bool has_val = ofc_sema_typeval_get_integer(tv, &v);
+		if (has_val && (v < 0)) return false;
+	}
+
+	return true;
+}
+
+bool ofc_sema_expr_resolve_uint(
+	const ofc_sema_expr_t* expr,
+	unsigned* value)
+{
+	const ofc_sema_typeval_t* tv
+		= ofc_sema_expr_constant(expr);
+	if (!tv) return false;
+
+	int64_t i;
+	if (!ofc_sema_typeval_get_integer(tv, &i))
+		return false;
+	if (i < 0) return false;
+
+	unsigned u = i;
+	if (i != u)
+		return false;
+
+	if (value) *value = u;
+	return true;
 }
 
 
@@ -756,84 +934,26 @@ unsigned ofc_sema_expr_list_count(
 	return (list ? list->count : 0);
 }
 
-const ofc_sema_type_t* ofc_sema_expr_type(
-	const ofc_sema_expr_t* expr)
+bool ofc_sema_expr_list_compare(
+	const ofc_sema_expr_list_t* a,
+	const ofc_sema_expr_list_t* b)
 {
-	if (!expr)
-		return NULL;
+	if (!a || !b)
+		return false;
 
-	switch (expr->type)
+	if (a == b)
+		return true;
+
+	if (a->count != b->count)
+		return false;
+
+	unsigned i;
+	for (i = 0; i < a->count; i++)
 	{
-		case OFC_SEMA_EXPR_CONSTANT:
-			return expr->constant->type;
-		case OFC_SEMA_EXPR_LHS:
-			return ofc_sema_lhs_type(
-				expr->lhs);
-		case OFC_SEMA_EXPR_CAST:
-			return expr->cast.type;
-		case OFC_SEMA_EXPR_INTRINSIC:
-			/* TODO - Implement. */
-			return NULL;
-		default:
-			break;
+		if (!ofc_sema_expr_compare(
+			a->expr[i], b->expr[i]))
+			return false;
 	}
 
-	if (expr->type >= OFC_SEMA_EXPR_COUNT)
-		return NULL;
-
-	ofc_sema_expr__rule_t rule
-		= ofc_sema_expr__rule[expr->type];
-
-	if (rule.rtype)
-		return rule.rtype(
-			ofc_sema_expr_type(expr->a),
-			ofc_sema_expr_type(expr->b));
-
-	return ofc_sema_expr_type(expr->a);
-}
-
-
-
-bool ofc_sema_expr_validate_uint(
-	const ofc_sema_expr_t* expr)
-{
-	if (!expr)
-		return false;
-
-	const ofc_sema_type_t* type
-		= ofc_sema_expr_type(expr);
-	if (!ofc_sema_type_is_integer(type))
-		return false;
-
-	const ofc_sema_typeval_t* tv
-		= ofc_sema_expr_constant(expr);
-    if (tv)
-	{
-		int64_t v;
-		bool has_val = ofc_sema_typeval_get_integer(tv, &v);
-		if (has_val && (v < 0)) return false;
-	}
-
-	return true;
-}
-
-bool ofc_sema_expr_resolve_uint(
-	const ofc_sema_expr_t* expr,
-	unsigned* value)
-{
-	const ofc_sema_typeval_t* tv
-		= ofc_sema_expr_constant(expr);
-	if (!tv) return false;
-
-	int64_t i;
-	if (!ofc_sema_typeval_get_integer(tv, &i))
-		return false;
-	if (i < 0) return false;
-
-	unsigned u = i;
-	if (i != u)
-		return false;
-
-	if (value) *value = u;
 	return true;
 }

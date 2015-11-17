@@ -272,6 +272,19 @@ const ofc_sema_type_t* ofc_sema_type_create_array(
 }
 
 
+const ofc_sema_type_t* ofc_sema_type_logical_default(void)
+{
+	static const ofc_sema_type_t* logical = NULL;
+
+	if (!logical)
+	{
+		logical = ofc_sema_type_create_primitive(
+			OFC_SEMA_TYPE_LOGICAL, 0, false, false, false);
+	}
+
+	return logical;
+}
+
 const ofc_sema_type_t* ofc_sema_type_integer_default(void)
 {
 	static const ofc_sema_type_t* integer = NULL;
@@ -283,6 +296,62 @@ const ofc_sema_type_t* ofc_sema_type_integer_default(void)
 	}
 
 	return integer;
+}
+
+const ofc_sema_type_t* ofc_sema_type_real_default(void)
+{
+	static const ofc_sema_type_t* real = NULL;
+
+	if (!real)
+	{
+		real = ofc_sema_type_create_primitive(
+			OFC_SEMA_TYPE_REAL, 0, false, false, false);
+	}
+
+	return real;
+}
+
+const ofc_sema_type_t* ofc_sema_type_double_default(void)
+{
+	static const ofc_sema_type_t* dbl = NULL;
+
+	if (!dbl)
+	{
+		const ofc_sema_type_t* real
+			= ofc_sema_type_real_default();
+		if (!real) return NULL;
+
+		dbl = ofc_sema_type_create_primitive(
+			OFC_SEMA_TYPE_REAL, (real->kind * 2), false, false, false);
+	}
+
+	return dbl;
+}
+
+const ofc_sema_type_t* ofc_sema_type_complex_default(void)
+{
+	static const ofc_sema_type_t* complex = NULL;
+
+	if (!complex)
+	{
+		complex = ofc_sema_type_create_primitive(
+			OFC_SEMA_TYPE_COMPLEX, 0, false, false, false);
+	}
+
+	return complex;
+}
+
+const ofc_sema_type_t* ofc_sema_type_byte_default(void)
+{
+	static const ofc_sema_type_t* byte = NULL;
+
+	if (!byte)
+	{
+		byte = ofc_sema_type_create_primitive(
+			OFC_SEMA_TYPE_BYTE, 1, false, false, false);
+	}
+
+	return byte;
 }
 
 

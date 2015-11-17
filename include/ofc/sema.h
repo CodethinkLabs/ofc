@@ -22,6 +22,7 @@ typedef struct ofc_sema_lhs_s       ofc_sema_lhs_t;
 #include <ofc/sema/common.h>
 #include <ofc/sema/format.h>
 #include <ofc/sema/label.h>
+#include <ofc/sema/intrinsic.h>
 
 #include <ofc/sema/stmt.h>
 #include <ofc/sema/scope.h>

@@ -67,7 +67,14 @@ const ofc_sema_type_t* ofc_sema_type_create_array(
 	const ofc_sema_type_t* type, ofc_sema_array_t* array,
 	bool is_static, bool is_automatic, bool is_volatile);
 
+typedef const ofc_sema_type_t* (*ofc_sema_type_f)(void);
+
+const ofc_sema_type_t* ofc_sema_type_logical_default(void);
 const ofc_sema_type_t* ofc_sema_type_integer_default(void);
+const ofc_sema_type_t* ofc_sema_type_real_default(void);
+const ofc_sema_type_t* ofc_sema_type_double_default(void);
+const ofc_sema_type_t* ofc_sema_type_complex_default(void);
+const ofc_sema_type_t* ofc_sema_type_byte_default(void);
 
 uint8_t ofc_sema_type_hash(
 	const ofc_sema_type_t* type);
