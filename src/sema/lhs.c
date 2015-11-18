@@ -358,6 +358,41 @@ void ofc_sema_lhs_delete(
 }
 
 
+bool ofc_sema_lhs_init(
+	const ofc_sema_scope_t* scope,
+	ofc_sema_lhs_t* lhs,
+	const ofc_sema_expr_t* init)
+{
+	if (!lhs || !init)
+		return false;
+
+	switch (lhs->type)
+	{
+		case OFC_SEMA_LHS_DECL:
+			return ofc_sema_decl_init(
+				scope, lhs->decl, init);
+
+		case OFC_SEMA_LHS_ARRAY_INDEX:
+		{
+			unsigned offset;
+			if (!ofc_sema_array_index_offset(
+				scope, lhs->decl, lhs->index, &offset))
+				return false;
+
+			return ofc_sema_decl_init_offset(
+				scope, lhs->decl, offset, init);
+		}
+
+		/* TODO - Initialize all LHS types. */
+
+		default:
+			break;
+	}
+
+	return false;
+}
+
+
 bool ofc_sema_lhs_compare(
 	const ofc_sema_lhs_t* a,
 	const ofc_sema_lhs_t* b)

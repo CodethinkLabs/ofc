@@ -680,6 +680,9 @@ void ofc_sema_scope_error(
 	const ofc_sema_scope_t* scope, ofc_str_ref_t pos,
 	const char* format, ...)
 {
+	if (!scope)
+		return;
+
 	va_list args;
 	va_start(args, format);
 	ofc_sparse_error_va(scope->src, pos.base, format, args);
@@ -690,6 +693,9 @@ void ofc_sema_scope_warning(
 	const ofc_sema_scope_t* scope, ofc_str_ref_t pos,
 	const char* format, ...)
 {
+	if (!scope)
+		return;
+
 	va_list args;
 	va_start(args, format);
 	ofc_sparse_warning_va(scope->src, pos.base, format, args);

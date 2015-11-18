@@ -51,6 +51,11 @@ bool ofc_sema_lhs_reference(
 void ofc_sema_lhs_delete(
 	ofc_sema_lhs_t* lhs);
 
+bool ofc_sema_lhs_init(
+	const ofc_sema_scope_t* scope,
+	ofc_sema_lhs_t* lhs,
+	const ofc_sema_expr_t* init);
+
 bool ofc_sema_lhs_compare(
 	const ofc_sema_lhs_t* a,
 	const ofc_sema_lhs_t* b);

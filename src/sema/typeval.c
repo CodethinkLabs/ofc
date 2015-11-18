@@ -1110,11 +1110,25 @@ bool ofc_sema_typeval_get_integer(
 	const ofc_sema_typeval_t* typeval,
 	int64_t* integer)
 {
-	if (!typeval || !typeval->type
-		|| !ofc_sema_type_is_integer(typeval->type))
+	if (!typeval || !typeval->type)
 		return false;
 
-	/* TODO - Casting. */
+	if (!ofc_sema_type_is_integer(typeval->type))
+	{
+		const ofc_sema_type_t* ptype
+			= ofc_sema_type_promote(typeval->type,
+				ofc_sema_type_integer_default());
+
+		ofc_sema_typeval_t* tv
+			= ofc_sema_typeval_cast(
+				NULL, typeval, ptype);
+		if (!tv) return false;
+
+		if (integer)
+			*integer = tv->integer;
+		ofc_sema_typeval_delete(tv);
+		return true;
+	}
 
 	if (integer)
 		*integer = typeval->integer;

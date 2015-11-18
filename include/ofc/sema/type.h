@@ -28,7 +28,7 @@ struct ofc_sema_type_s
 	{
 		struct
 		{
-			ofc_sema_array_t* array;
+			ofc_sema_array_t*      array;
 			const ofc_sema_type_t* subtype;
 		};
 

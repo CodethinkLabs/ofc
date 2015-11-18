@@ -218,9 +218,8 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 			}
 
 			int64_t fl64 = 0;
-			ofc_sema_typeval_get_integer(format_label, &fl64);
-
-			if (fl64 < 0)
+			if (!ofc_sema_typeval_get_integer(
+				format_label, &fl64) || (fl64 < 0))
 			{
 				ofc_sema_scope_error(scope, stmt->src,
 					"Format (FMT) label expression must be a positive INTEGER in WRITE");

@@ -306,6 +306,94 @@ bool ofc_sema_decl_init(
 	return true;
 }
 
+bool ofc_sema_decl_init_offset(
+	const ofc_sema_scope_t* scope,
+	ofc_sema_decl_t* decl,
+	unsigned offset,
+	const ofc_sema_expr_t* init)
+{
+	if (!decl || !init)
+		return false;
+
+	if (decl->lock)
+	{
+		ofc_sema_scope_warning(scope, init->src,
+			"Initializing array in multiple statements");
+	}
+
+	if (!decl->type
+		|| (decl->type->type != OFC_SEMA_TYPE_ARRAY))
+	{
+		if (offset == 0)
+			return ofc_sema_decl_init(
+				scope, decl, init);
+		return false;
+	}
+
+	/* TODO - Support arrays of arrays. */
+	if (!decl->type->subtype
+		|| (decl->type->subtype->type == OFC_SEMA_TYPE_ARRAY))
+		return false;
+
+	unsigned elem_count
+		= ofc_sema_decl_elem_count(decl);
+	if (offset >= elem_count)
+	{
+		ofc_sema_scope_warning(scope, init->src,
+			"Initializer destination out-of-bounds");
+		return false;
+	}
+
+	if (!decl->init_array)
+	{
+		decl->init_array = (ofc_sema_typeval_t**)malloc(
+			sizeof(ofc_sema_typeval_t*) * elem_count);
+		if (!decl->init_array) return false;
+
+		unsigned i;
+		for (i = 0; i < elem_count; i++)
+			decl->init_array[i] = NULL;
+	}
+
+	const ofc_sema_typeval_t* ctv
+		= ofc_sema_expr_constant(init);
+	if (!ctv)
+	{
+		ofc_sema_scope_error(scope, init->src,
+			"Array initializer element not constant.");
+		return false;
+	}
+
+	ofc_sema_typeval_t* tv = ofc_sema_typeval_cast(
+		scope, ctv, decl->type->subtype);
+	if (!tv) return false;
+
+	if (decl->init_array[offset])
+	{
+		bool equal = ofc_sema_typeval_compare(
+			decl->init_array[offset], tv);
+		ofc_sema_typeval_delete(tv);
+
+		if (!equal)
+		{
+			ofc_sema_scope_error(scope, init->src,
+				"Re-initialization of array element"
+				" with different value");
+			return false;
+		}
+
+		ofc_sema_scope_warning(scope, init->src,
+			"Re-initialization of array element");
+	}
+	else
+	{
+		decl->init_array[offset] = tv;
+	}
+
+	decl->lock = true;
+	return true;
+}
+
 bool ofc_sema_decl_init_array(
 	const ofc_sema_scope_t* scope,
 	ofc_sema_decl_t* decl,
@@ -319,10 +407,8 @@ bool ofc_sema_decl_init_array(
 
 	if (decl->lock)
 	{
-		/* TODO - Allow initialization of uninitialized elements. */
-		ofc_sema_scope_error(scope, init[0]->src,
-			"Can't initialize finalized declaration.");
-		return false;
+		ofc_sema_scope_warning(scope, init[0]->src,
+			"Initializing arrays in multiple statements.");
 	}
 
 	if (!decl->type
@@ -365,20 +451,41 @@ bool ofc_sema_decl_init_array(
 				= ofc_sema_expr_constant(init[i]);
 			if (!ctv)
 			{
-				ofc_sema_scope_warning(scope, init[i]->src,
+				ofc_sema_scope_error(scope, init[i]->src,
 					"Array initializer element not constant.");
 				return false;
 			}
 
-			decl->init_array[i] = ofc_sema_typeval_cast(
+			ofc_sema_typeval_t* tv = ofc_sema_typeval_cast(
 				scope, ctv, decl->type->subtype);
-			if (!decl->init_array[i])
-				return false;
+			if (!tv) return false;
+
+			if (decl->init_array[i])
+			{
+				bool equal = ofc_sema_typeval_compare(
+					decl->init_array[i], tv);
+				ofc_sema_typeval_delete(tv);
+
+				if (!equal)
+				{
+					ofc_sema_scope_error(scope, init[i]->src,
+						"Re-initialization of array element"
+						" with different value");
+					return false;
+				}
+
+				ofc_sema_scope_warning(scope, init[i]->src,
+					"Re-initialization of array element");
+			}
+			else
+			{
+				decl->init_array[i] = tv;
+			}
 		}
 	}
 	else
 	{
-		/* TODO - Iterate over array indices and initialize with provided elements. */
+		/* TODO - Initialize array slice. */
 		return false;
 	}
 

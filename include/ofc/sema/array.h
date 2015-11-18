@@ -46,6 +46,12 @@ ofc_sema_array_index_t* ofc_sema_array_index(
 void ofc_sema_array_index_delete(
 	ofc_sema_array_index_t* index);
 
+bool ofc_sema_array_index_offset(
+	const ofc_sema_scope_t*       scope,
+	const ofc_sema_decl_t*        decl,
+	const ofc_sema_array_index_t* index,
+	unsigned* offset);
+
 bool ofc_sema_array_index_compare(
 	const ofc_sema_array_index_t* a,
 	const ofc_sema_array_index_t* b);

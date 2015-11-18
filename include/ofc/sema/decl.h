@@ -3,8 +3,6 @@
 
 #include <ofc/hashmap.h>
 
-typedef struct ofc_sema_decl_s ofc_sema_decl_t;
-
 struct ofc_sema_decl_s
 {
 	const ofc_sema_type_t*  type;
@@ -28,7 +26,7 @@ struct ofc_sema_decl_s
 	bool lock;
 };
 
-typedef struct
+struct ofc_sema_decl_list_s
 {
 	bool case_sensitive;
 	bool is_ref;
@@ -36,13 +34,14 @@ typedef struct
 	unsigned count;
 
 	union
+	__attribute__((__packed__))
 	{
 		ofc_sema_decl_t**       decl;
 		const ofc_sema_decl_t** decl_ref;
 	};
 
 	ofc_hashmap_t*    map;
-} ofc_sema_decl_list_t;
+};
 
 ofc_sema_decl_t* ofc_sema_decl_create(
 	const ofc_sema_type_t* type,
@@ -64,6 +63,11 @@ void ofc_sema_decl_delete(
 bool ofc_sema_decl_init(
 	const ofc_sema_scope_t* scope,
 	ofc_sema_decl_t* decl,
+	const ofc_sema_expr_t* init);
+bool ofc_sema_decl_init_offset(
+	const ofc_sema_scope_t* scope,
+	ofc_sema_decl_t* decl,
+	unsigned offset,
 	const ofc_sema_expr_t* init);
 bool ofc_sema_decl_init_array(
 	const ofc_sema_scope_t* scope,

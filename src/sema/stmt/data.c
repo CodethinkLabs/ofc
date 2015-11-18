@@ -39,7 +39,6 @@ bool ofc_sema_stmt_data(
 				scope, base_name);
 			if (!decl[i])
 			{
-				/* Can only implicitly declare variables. */
 				if (lhs[i]->type != OFC_PARSE_LHS_VARIABLE)
 				{
 					ofc_sema_scope_error(scope, stmt->src,
@@ -66,7 +65,11 @@ bool ofc_sema_stmt_data(
 				}
 			}
 
-			elems += ofc_sema_type_elem_count(decl[i]->type);
+			ofc_sema_lhs_t* slhs
+				= ofc_sema_lhs(scope, lhs[i]);
+			elems += ofc_sema_type_elem_count(
+				ofc_sema_lhs_type(slhs));
+			ofc_sema_lhs_delete(slhs);
 		}
 
 		unsigned ctotal = 0;
@@ -119,11 +122,12 @@ bool ofc_sema_stmt_data(
 
 		for (i = 0, k = 0; i < entry->nlist->count; i++)
 		{
-			ofc_sema_array_t* array;
+			ofc_sema_array_index_t* index = NULL;
+			ofc_sema_array_t*       slice = NULL;
+
 			unsigned elem_count;
 			if (lhs[i]->type == OFC_PARSE_LHS_VARIABLE)
 			{
-				array = NULL;
 				elem_count = ofc_sema_decl_elem_count(decl[i]);
 				if (elem_count > (ctotal - k))
 					elem_count = (ctotal - k);
@@ -134,36 +138,65 @@ bool ofc_sema_stmt_data(
 				{
 					ofc_sema_scope_error(scope, lhs[i]->src,
 						"Can't index non-array type.");
-					return false;
-				}
-
-				/* TODO - Get count and offset from array indices. */
-				return false;
-			}
-			else
-			{
-				ofc_sema_scope_error(scope, lhs[i]->src,
-					"Invalid LHS in DATA statement.");
-				return false;
-			}
-
-			if (ofc_sema_decl_is_array(decl[i]))
-			{
-				if (array)
-				{
-					/* TODO - Support sub-array initializers. */
-					ofc_sema_scope_error(scope, stmt->src,
-						"Sub-array initializers not yet supported.");
-					ofc_sema_array_delete(array);
 					for (i = 0; i < entry->clist->count; i++)
 						ofc_sema_expr_delete(bexpr[i]);
 					return false;
 				}
 
-				bool initialized = ofc_sema_decl_init_array(
-					scope, decl[i], array, elem_count, &cexpr[k]);
-				ofc_sema_array_delete(array);
-				if (!initialized) return false;
+				index = ofc_sema_array_index(
+					scope, decl[i]->type->array,
+					lhs[i]->array.index);
+				elem_count = 1;
+
+				if (!index)
+				{
+					slice = ofc_sema_array(
+						scope, decl[i]->type->array,
+						lhs[i]->array.index);
+					/*elem_count = ofc_sema_array_elem_count(slice);*/
+				}
+			}
+			else
+			{
+				ofc_sema_scope_error(scope, lhs[i]->src,
+					"Invalid LHS in DATA statement.");
+				for (i = 0; i < entry->clist->count; i++)
+					ofc_sema_expr_delete(bexpr[i]);
+				return false;
+			}
+
+			if (ofc_sema_decl_is_array(decl[i]))
+			{
+				if (index)
+				{
+					/* TODO - Support array index initializers. */
+					ofc_sema_scope_error(scope, stmt->src,
+						"Array index initializers not yet supported.");
+					ofc_sema_array_index_delete(index);
+					for (i = 0; i < entry->clist->count; i++)
+						ofc_sema_expr_delete(bexpr[i]);
+					return false;
+				}
+				else if (slice)
+				{
+					/* TODO - Support array slice initializers. */
+					ofc_sema_scope_error(scope, stmt->src,
+						"Array slice initializers not yet supported.");
+					ofc_sema_array_delete(slice);
+					for (i = 0; i < entry->clist->count; i++)
+						ofc_sema_expr_delete(bexpr[i]);
+					return false;
+				}
+				else
+				{
+					if (!ofc_sema_decl_init_array(
+						scope, decl[i], NULL, elem_count, &cexpr[k]))
+					{
+						for (i = 0; i < entry->clist->count; i++)
+							ofc_sema_expr_delete(bexpr[i]);
+						return false;
+					}
+				}
 			}
 			else
 			{

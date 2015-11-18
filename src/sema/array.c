@@ -25,8 +25,7 @@ static bool ofc_sema_array__base(
 		= ofc_sema_expr_constant(expr);
 	if (!ctv) return NULL;
 
-	return ofc_sema_typeval_get_integer(
-		ctv, base);
+	return ofc_sema_typeval_get_integer(ctv, base);
 }
 
 
@@ -585,6 +584,92 @@ void ofc_sema_array_index_delete(
 		ofc_sema_expr_delete(index->index[i]);
 
 	free(index);
+}
+
+
+bool ofc_sema_array_index_offset(
+	const ofc_sema_scope_t*       scope,
+	const ofc_sema_decl_t*        decl,
+	const ofc_sema_array_index_t* index,
+	unsigned* offset)
+{
+    if (!scope || !decl || !index
+		|| (index->dimensions == 0))
+		return false;
+
+	if (!decl->type || (decl->type->type != OFC_SEMA_TYPE_ARRAY))
+	{
+		/* TODO - Positional error. */
+		ofc_sema_scope_error(scope, OFC_STR_REF_EMPTY,
+			"Can't index non-array type");
+		return false;
+	}
+
+	const ofc_sema_array_t* array
+		= decl->type->array;
+	if (!array) return false;
+
+	if (index->dimensions
+		!= array->dimensions)
+	{
+		/* TODO - Positional error. */
+		ofc_sema_scope_error(scope, OFC_STR_REF_EMPTY,
+			"Index dimensions don't match array");
+		return false;
+	}
+
+	int64_t o = 0;
+	int64_t s = 1;
+
+	unsigned i;
+	for (i = 0; i < index->dimensions; i++)
+	{
+		const ofc_sema_array_slice_t slice
+			= array->slice[i];
+
+		const ofc_sema_expr_t* expr
+			= index->index[i];
+		if (!expr) return false;
+
+		int64_t so;
+		if (!ofc_sema_typeval_get_integer(
+			ofc_sema_expr_constant(expr), &so))
+		{
+			ofc_sema_scope_error(scope, expr->src,
+				"Failed to resolve array index");
+			return false;
+		}
+
+		int64_t base;
+		if (!ofc_sema_typeval_get_integer(
+			ofc_sema_expr_constant(slice.base), &base))
+			return false;
+
+		if (so < base)
+		{
+			ofc_sema_scope_error(scope, expr->src,
+				"Array index out-of-range, too low");
+			return false;
+		}
+		so -= base;
+
+		if (so >= slice.count)
+		{
+			ofc_sema_scope_error(scope, expr->src,
+				"Array index out-of-range, too high");
+			return false;
+		}
+
+		o += (so * s);
+		s *= slice.count;
+	}
+
+	unsigned uo = o;
+	if ((int64_t)uo != o)
+		return false;
+
+	if (offset) *offset = uo;
+	return true;
 }
 
 
