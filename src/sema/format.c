@@ -120,12 +120,29 @@ bool ofc_sema_format(
 	if (!format) return false;
 
 	if (!ofc_sema_label_map_add_format(
-		scope, stmt, scope->label,
+		scope, stmt, scope->label, scope->format,
 		stmt->label, format))
 	{
 		ofc_sema_format_delete(format);
 		return false;
 	}
+
+	return true;
+}
+
+bool ofc_sema_format_print(ofc_colstr_t* cs,
+	ofc_sema_format_t* format)
+{
+    if (!cs || !format)
+		return false;
+
+	if (!ofc_colstr_atomic_writef(cs, "FORMAT ("))
+		return false;
+	if (!ofc_parse_format_desc_list_print(
+		cs, format->src))
+			return false;
+	if (!ofc_colstr_atomic_writef(cs, ")"))
+		return false;
 
 	return true;
 }

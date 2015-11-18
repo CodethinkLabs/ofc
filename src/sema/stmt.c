@@ -386,8 +386,9 @@ bool ofc_sema_stmt_print(
 		case OFC_SEMA_STMT_WRITE:
 			return ofc_sema_stmt_write_print(cs, stmt);
 		case OFC_SEMA_STMT_CONTINUE:
-			/* TODO - Continue statements will be transformed out? */
-			return false;
+			if (!ofc_colstr_atomic_writef(cs, "CONTINUE"))
+				return false;
+			return true;
 		case OFC_SEMA_STMT_IF_COMPUTED:
 			return ofc_sema_stmt_if_comp_print(cs, stmt);
 		case OFC_SEMA_STMT_IF_STATEMENT:
@@ -409,6 +410,7 @@ bool ofc_sema_stmt_print(
 			return ofc_sema_stmt_do_while_print(cs, stmt);
 		case OFC_SEMA_STMT_DO_WHILE_BLOCK:
 			return ofc_sema_stmt_do_while_block_print(cs, stmt);
+
 		default:
 			return false;
 	}
@@ -422,6 +424,8 @@ bool ofc_sema_stmt_list_print(ofc_colstr_t* cs,
 	{
 		if (!ofc_sema_stmt_print(cs, stmt_list->stmt[i]))
 			return false;
+
+		if (!ofc_colstr_newline(cs, NULL)) return false;
 	}
 	return true;
 }

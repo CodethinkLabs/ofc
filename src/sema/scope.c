@@ -99,6 +99,7 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 	scope->decl      = ofc_sema_decl_list_create(opts.case_sensitive);
 	scope->parameter = ofc_sema_parameter_map_create(opts.case_sensitive);
 	scope->label     = ofc_sema_label_map_create();
+	scope->format    = ofc_sema_format_label_list_create();
 
 	scope->external = false;
 	scope->intrinsic = false;
@@ -1084,12 +1085,19 @@ bool ofc_sema_scope_print(
 {
 	const char* kwstr;
 	bool has_args = false;
+	unsigned i;
 	switch (scope->type)
 	{
 		case OFC_SEMA_SCOPE_GLOBAL:
-			/* TODO - Take the global print out, just for testing.*/
-			kwstr = "TEST GLOBAL";
-			break;
+			if (!scope->child) return false;
+
+			for (i = 0; i < scope->child->count; i++)
+			{
+				if (!ofc_sema_scope_print(
+					cs, scope->child->scope[i]))
+						return false;
+			}
+			return true;
 		case OFC_SEMA_SCOPE_PROGRAM:
 			kwstr = "PROGRAM";
 			break;
@@ -1105,23 +1113,64 @@ bool ofc_sema_scope_print(
 			kwstr = "BLOCK DATA";
 			break;
 		case OFC_SEMA_SCOPE_IF:
-			kwstr = "IF";
-			break;
+			if (!scope->child) return false;
+
+			for (i = 0; i < scope->child->count; i++)
+			{
+				if (!ofc_sema_scope_print(
+					cs, scope->child->scope[i]))
+						return false;
+			}
+			return true;
+
 		default:
 			return false;
 	}
 
-	if (!ofc_colstr_atomic_writef(cs, "%s", kwstr)) return false;
+	if (!ofc_colstr_atomic_writef(cs, "%s ", kwstr))
+		return false;
+	if (scope->name.base)
+	{
+		if (!ofc_colstr_atomic_writef(cs, "%.*s",
+			scope->name.size, scope->name.base))
+				return false;
+	}
 
 	if (has_args)
 	{
-		if (!ofc_colstr_atomic_writef(cs, "(")) return false;
+		if (!ofc_colstr_atomic_writef(cs, "("))
+			return false;
 		/* TODO - arg list printing. */
-		if (!ofc_colstr_atomic_writef(cs, ")")) return false;
+		if (!ofc_colstr_atomic_writef(cs, ")"))
+			return false;
 	}
 
-	if (!ofc_sema_decl_list_print(cs, scope->decl)) return false;
-	if (!ofc_sema_stmt_list_print(cs, scope->stmt)) return false;
+	if (!ofc_colstr_newline(cs, NULL))
+		return false;
+
+	if (!ofc_sema_decl_list_print(cs, scope->decl))
+		return false;
+	if (!ofc_colstr_newline(cs, NULL))
+		return false;
+
+	if (!ofc_sema_stmt_list_print(cs, scope->stmt))
+		return false;
+	if (!ofc_colstr_newline(cs, NULL))
+		return false;
+
+	if (!ofc_sema_format_label_list_print(cs, scope->format))
+		return false;
+	if (!ofc_colstr_newline(cs, NULL))
+		return false;
+
+	if (!ofc_colstr_atomic_writef(cs, "END %s ", kwstr))
+		return false;
+	if (scope->name.base)
+	{
+		if (!ofc_colstr_atomic_writef(cs, "%.*s",
+			scope->name.size, scope->name.base))
+				return false;
+	}
 
 	return true;
 }

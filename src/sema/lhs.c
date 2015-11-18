@@ -522,10 +522,19 @@ bool ofc_sema_lhs_print(
 	switch(lhs->type)
 	{
 		case OFC_SEMA_LHS_DECL:
-
+			if (!ofc_sema_decl_print(cs, false, lhs->decl))
+				return false;
+			return true;
 		case OFC_SEMA_LHS_ARRAY_INDEX:
+			if (!ofc_sema_array_index_print(cs, lhs->index))
+				return false;
+			return true;
 		case OFC_SEMA_LHS_ARRAY_SLICE:
 		case OFC_SEMA_LHS_STRUCTURE_MEMBER:
+			if (!ofc_colstr_atomic_writef(cs, "%.*s",
+				lhs->member.size, lhs->member.base))
+					return false;
+			return true;
 
 		default:
 			return false;

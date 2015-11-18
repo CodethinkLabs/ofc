@@ -117,7 +117,8 @@ bool ofc_sema_label_map_add_stmt(
 
 bool ofc_sema_label_map_add_format(
 	const ofc_sema_scope_t* scope, const ofc_parse_stmt_t* stmt,
-	ofc_hashmap_t* map, unsigned label, ofc_sema_format_t* format)
+	ofc_hashmap_t* map, ofc_sema_format_label_list_t* list,
+	unsigned label, ofc_sema_format_t* format)
 {
 	if (!map || !format)
 		return false;
@@ -149,6 +150,9 @@ bool ofc_sema_label_map_add_format(
 		return false;
 	}
 
+	if (!ofc_sema_format_label_list_add(list, l))
+		return false;
+
 	return true;
 }
 
@@ -156,4 +160,64 @@ const ofc_sema_label_t* ofc_sema_label_map_find(
 	const ofc_hashmap_t* map, unsigned label)
 {
 	return ofc_hashmap_find(map, &label);
+}
+
+ofc_sema_format_label_list_t*
+	ofc_sema_format_label_list_create()
+{
+	ofc_sema_format_label_list_t* list
+		= (ofc_sema_format_label_list_t*)malloc(
+			sizeof(ofc_sema_format_label_list_t));
+	if (!list) return NULL;
+
+	list->count = 0;
+	list->format = NULL;
+
+	return list;
+}
+
+bool ofc_sema_format_label_list_add(
+	ofc_sema_format_label_list_t* list,
+	ofc_sema_label_t* format)
+{
+    ofc_sema_label_t** nformat
+		= (ofc_sema_label_t**)realloc(list->format,
+			(sizeof(ofc_sema_label_t*) * (list->count + 1)));
+	if (!nformat) return false;
+	list->format = nformat;
+
+	list->format[list->count++] = format;
+
+	return true;
+}
+
+bool ofc_sema_format_label_list_print(ofc_colstr_t* cs,
+	ofc_sema_format_label_list_t* list)
+{
+	if (!cs || !list)
+		return false;
+
+	unsigned i;
+	for (i = 0; i < list->count; i++)
+	{
+		if (!ofc_sema_format_label_print(cs, list->format[i]))
+			return false;
+
+
+		if (!ofc_colstr_newline(cs, NULL)) return false;
+	}
+
+	return true;
+}
+
+bool ofc_sema_format_label_print(ofc_colstr_t* cs,
+	ofc_sema_label_t* label)
+{
+	if (!cs || (label->type != OFC_SEMA_LABEL_FORMAT))
+		return false;
+
+	if (!ofc_sema_format_print(cs, label->format))
+		return false;
+
+	return true;
 }

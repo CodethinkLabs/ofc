@@ -1323,27 +1323,6 @@ bool ofc_sema_expr_list_compare(
 	return true;
 }
 
-bool ofc_sema_expr_resolve_uint(
-	const ofc_sema_expr_t* expr,
-	unsigned* value)
-{
-	const ofc_sema_typeval_t* tv
-		= ofc_sema_expr_constant(expr);
-	if (!tv) return false;
-
-	int64_t i;
-	if (!ofc_sema_typeval_get_integer(tv, &i))
-		return false;
-	if (i < 0) return false;
-
-	unsigned u = i;
-	if (i != u)
-		return false;
-
-	if (value) *value = u;
-	return true;
-}
-
 static const char* ofc_sema_expr__operator[] =
 {
 	NULL, NULL, NULL, NULL,
@@ -1377,9 +1356,9 @@ bool ofc_sema_expr_print(
 	switch (expr->type)
 	{
 		case OFC_SEMA_EXPR_CONSTANT:
-			return ofc_sema_typeval_print(cs,
-				expr->constant);
+			return ofc_sema_typeval_print(cs, expr->constant);
 		case OFC_SEMA_EXPR_LHS:
+			return ofc_sema_lhs_print(cs, expr->lhs);
 		case OFC_SEMA_EXPR_CAST:
 		case OFC_SEMA_EXPR_INTRINSIC:
 
@@ -1390,7 +1369,7 @@ bool ofc_sema_expr_print(
 	if (expr->type >= OFC_SEMA_EXPR_COUNT)
 		return false;
 
-	return ofc_colstr_atomic_writef(cs, "%.*s",
+	return ofc_colstr_atomic_writef(cs, "%s",
 		ofc_sema_expr__operator[expr->type]);
 }
 
@@ -1404,6 +1383,8 @@ bool ofc_sema_expr_list_print(
 	for (i = 0; i < expr_list->count; i++)
 	{
 		if (!ofc_sema_expr_print(cs, expr_list->expr[i]))
+			return false;
+		if (!ofc_colstr_atomic_writef(cs, " "))
 			return false;
 	}
 	return true;

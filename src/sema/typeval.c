@@ -2086,7 +2086,6 @@ bool ofc_sema_typeval_print(ofc_colstr_t*cs,
 
 		case OFC_SEMA_TYPE_STRUCTURE:
 		case OFC_SEMA_TYPE_POINTER:
-		case OFC_SEMA_TYPE_ARRAY:
 
 		default:
 			return false;

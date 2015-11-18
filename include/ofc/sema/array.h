@@ -38,6 +38,9 @@ typedef struct
 	ofc_sema_expr_t* index[0];
 } ofc_sema_array_index_t;
 
+bool ofc_sema_array_index_print(ofc_colstr_t* cs,
+	const ofc_sema_array_index_t* index);
+
 ofc_sema_array_index_t* ofc_sema_array_index(
 	ofc_sema_scope_t*              scope,
 	const ofc_sema_array_t*        array,

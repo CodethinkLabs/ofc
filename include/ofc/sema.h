@@ -15,6 +15,7 @@ typedef struct ofc_sema_lhs_s       ofc_sema_lhs_t;
 typedef struct ofc_sema_decl_s      ofc_sema_decl_t;
 typedef struct ofc_sema_decl_list_s ofc_sema_decl_list_t;
 typedef struct ofc_sema_implicit_s  ofc_sema_implicit_t;
+typedef struct ofc_sema_format_label_list_s ofc_sema_format_label_list_t;
 
 #include <ofc/sema/array.h>
 #include <ofc/sema/structure.h>

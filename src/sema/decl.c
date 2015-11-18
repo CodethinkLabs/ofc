@@ -1102,18 +1102,43 @@ const ofc_hashmap_t* ofc_sema_decl_list_map(
 	return (list ? list->map : NULL);
 }
 
-bool ofc_sema_decl_print(ofc_colstr_t* cs,
+bool ofc_sema_decl_print(ofc_colstr_t* cs, bool print_type,
 	const ofc_sema_decl_t* decl)
 {
 	if (!cs || !decl) return false;
 
-	if (!ofc_colstr_atomic_writef(cs, "%s ",
-		ofc_sema_type_str_rep(decl->type->type)))
-			return false;
+	if (print_type)
+	{
+		if (ofc_sema_type_is_array(decl->type))
+		{
+			if (!ofc_colstr_atomic_writef(cs, "%s, DIMENSION() :: ",
+			ofc_sema_type_str_rep(decl->type->type)))
+				return false;
+		}
+		else
+		{
+			if (!ofc_colstr_atomic_writef(cs, "%s :: ",
+				ofc_sema_type_str_rep(decl->type->type)))
+					return false;
+		}
+	}
 
-	if (!ofc_colstr_atomic_writef(cs, "%.*s",
+	if (!ofc_colstr_atomic_writef(cs, "%.*s ",
 		decl->name.size, decl->name.base))
 			return false;
+
+	if (ofc_sema_type_is_array(decl->type))
+	{
+
+	}
+	else if (decl->init)
+	{
+		if (!ofc_colstr_atomic_writef(cs, " = "))
+			return false;
+		if (!ofc_sema_typeval_print(cs, decl->init))
+			return false;
+	}
+
 	return true;
 }
 
@@ -1123,8 +1148,12 @@ bool ofc_sema_decl_list_print(ofc_colstr_t* cs,
 	unsigned i;
 	for (i = 0; i < decl_list->count; i++)
 	{
-		if (!ofc_sema_decl_print(cs, decl_list->decl[i]))
+		if (!ofc_sema_decl_print(cs, true,
+			decl_list->decl[i]))
+				return false;
+		if (!ofc_colstr_newline(cs, NULL))
 			return false;
 	}
+
 	return true;
 }

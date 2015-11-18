@@ -40,11 +40,13 @@ struct ofc_sema_scope_s
 
 	ofc_sema_implicit_t*  implicit;
 
-	ofc_sema_common_map_t* common;
-	ofc_hashmap_t*         spec;
-	ofc_sema_decl_list_t*  decl;
-	ofc_hashmap_t*         parameter;
-	ofc_hashmap_t*         label;
+	ofc_sema_common_map_t*        common;
+	ofc_hashmap_t*                spec;
+	ofc_sema_decl_list_t*         decl;
+	ofc_hashmap_t*                parameter;
+	ofc_hashmap_t*                label;
+	ofc_sema_format_label_list_t* format;
+
 	/* namelist_list_map */
 
 	union

@@ -112,7 +112,7 @@ bool ofc_sema_stmt_assignment_print(
 
 	if (!ofc_sema_lhs_print(cs, stmt->assignment.dest))
 		return false;
-	if (!ofc_colstr_atomic_writef(cs, "="))
+	if (!ofc_colstr_atomic_writef(cs, "= "))
 		return false;
 	if (!ofc_sema_expr_print(cs, stmt->assignment.expr))
 		return false;

@@ -241,6 +241,10 @@ bool ofc_sema_stmt_if_print(ofc_colstr_t* cs,
 		return false;
 	if (!ofc_colstr_atomic_writef(cs, ")"))
 		return false;
+	if (!ofc_colstr_newline(cs, NULL))
+		return false;
+	if (!ofc_colstr_atomic_writef(cs, "  "))
+		return false;
 	if (!ofc_sema_stmt_print(cs, stmt->if_stmt.stmt))
 		return false;
 
@@ -258,9 +262,10 @@ bool ofc_sema_stmt_if_comp_print(ofc_colstr_t* cs,
 		return false;
 	if (!ofc_sema_expr_print(cs, stmt->if_comp.cond))
 		return false;
-	if (!ofc_colstr_atomic_writef(cs, ")"))
+	if (!ofc_colstr_atomic_writef(cs, ") "))
 		return false;
-	/* TODO - Label printing. */
+	if (!ofc_sema_expr_list_print(cs, stmt->if_comp.label))
+		return false;
 
 	return true;
 }

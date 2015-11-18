@@ -325,6 +325,21 @@ ofc_sema_array_index_t* ofc_sema_array_index(
 	return ai;
 }
 
+bool ofc_sema_array_index_print(ofc_colstr_t* cs,
+	const ofc_sema_array_index_t* index)
+{
+	if (!cs || !index) return false;
+
+	unsigned i;
+	for (i = 0; i < index->dimensions; i++)
+	{
+		if (!ofc_sema_expr_print(cs, index->index[i]))
+			return false;
+	}
+
+	return true;
+}
+
 void ofc_sema_array_index_delete(
 	ofc_sema_array_index_t* index)
 {
