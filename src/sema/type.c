@@ -11,7 +11,7 @@ static const char* ofc_sema_type__name[] =
 	"COMPLEX",
 	"BYTE",
 	"CHARACTER",
-	"STRCCTURE",
+	"STRUCTURE",
 	"POINTER",
 };
 
