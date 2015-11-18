@@ -17,7 +17,7 @@ static ofc_sema_lhs_t* ofc_sema_lhs_index(
 	alhs->src       = lhs->src;
 	alhs->parent    = lhs;
 	alhs->index     = index;
-	alhs->data_type = lhs->data_type->subtype;
+	alhs->data_type = ofc_sema_type_base(lhs->data_type);
 	alhs->refcnt    = 0;
 
 	return alhs;
@@ -187,9 +187,7 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 					= ofc_sema_lhs(scope, lhs->parent);
 				if (!parent) return NULL;
 
-				if (!parent->data_type
-					|| (parent->data_type->type
-						!= OFC_SEMA_TYPE_ARRAY))
+				if (!ofc_sema_type_is_array(parent->data_type))
 				{
 					ofc_sema_scope_error(scope, lhs->src,
 						"Attempting to index a variable that's not an array.");

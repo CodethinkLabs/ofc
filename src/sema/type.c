@@ -13,7 +13,6 @@ static const char* ofc_sema_type__name[] =
 	"CHARACTER",
 	"STRCCTURE",
 	"POINTER",
-	"ARRAY",
 };
 
 const char* ofc_sema_type_str_rep(
@@ -30,15 +29,7 @@ static void ofc_sema_type__delete(ofc_sema_type_t* type)
 	if (!type)
 		return;
 
-	switch (type->type)
-	{
-		case OFC_SEMA_TYPE_ARRAY:
-			ofc_sema_array_delete(type->array);
-			break;
-		default:
-			break;
-	}
-
+	ofc_sema_array_delete(type->array);
 	free(type);
 }
 
@@ -49,6 +40,8 @@ uint8_t ofc_sema_type_hash(
 		return 0;
 
 	uint8_t hash = type->type;
+
+	hash += ofc_sema_array_hash(type->array);
 
 	if (type->is_static   ) hash +=  8;
 	if (type->is_automatic) hash += 16;
@@ -64,13 +57,6 @@ uint8_t ofc_sema_type_hash(
 		case OFC_SEMA_TYPE_POINTER:
 			hash += ofc_sema_type_hash(
 				type->subtype);
-			break;
-
-		case OFC_SEMA_TYPE_ARRAY:
-			hash += ofc_sema_type_hash(
-				type->subtype);
-			hash += ofc_sema_array_hash(
-				type->array);
 			break;
 
 		case OFC_SEMA_TYPE_CHARACTER:
@@ -122,6 +108,7 @@ static const ofc_sema_type_t* ofc_sema_type__create(
 	ofc_sema_type_t stype =
 		{
 			.type         = type,
+			.array        = array,
 			.is_static    = is_static,
 			.is_automatic = is_automatic,
 			.is_volatile  = is_volatile,
@@ -131,10 +118,6 @@ static const ofc_sema_type_t* ofc_sema_type__create(
 	{
 		case OFC_SEMA_TYPE_POINTER:
 			stype.subtype = subtype;
-			break;
-		case OFC_SEMA_TYPE_ARRAY:
-			stype.subtype = subtype;
-			stype.array   = array;
 			break;
 		case OFC_SEMA_TYPE_STRUCTURE:
 			stype.structure = structure;
@@ -266,8 +249,8 @@ const ofc_sema_type_t* ofc_sema_type_create_array(
 	bool is_volatile)
 {
 	return ofc_sema_type__create(
-		OFC_SEMA_TYPE_ARRAY, 0, 0,
-		array, type, NULL,
+		type->type, type->kind, type->len,
+		array, type->subtype, type->structure,
 		is_static, is_automatic, is_volatile);
 }
 
@@ -673,6 +656,11 @@ bool ofc_sema_type_compare(
 	if (a->type != b->type)
 		return false;
 
+	if ((a->array || b->array)
+		&& !ofc_sema_array_compare(
+			a->array, b->array))
+		return false;
+
 	switch (a->type)
 	{
 		case OFC_SEMA_TYPE_STRUCTURE:
@@ -682,12 +670,6 @@ bool ofc_sema_type_compare(
 		case OFC_SEMA_TYPE_POINTER:
 			return ofc_sema_type_compare(
 				a->subtype, b->subtype);
-
-		case OFC_SEMA_TYPE_ARRAY:
-			return (ofc_sema_type_compare(
-				a->subtype, b->subtype)
-				&& ofc_sema_array_compare(
-					a->array, b->array));
 
 		case OFC_SEMA_TYPE_CHARACTER:
 			if (a->len != b->len)
@@ -707,39 +689,45 @@ unsigned ofc_sema_type_size(const ofc_sema_type_t* type)
 	if (!type)
 		return 0;
 
+	unsigned size;
 	switch (type->type)
 	{
 		case OFC_SEMA_TYPE_LOGICAL:
 		case OFC_SEMA_TYPE_INTEGER:
 		case OFC_SEMA_TYPE_REAL:
-			return type->kind;
+			size = type->kind;
+			break;
 
 		case OFC_SEMA_TYPE_COMPLEX:
-			return (type->kind * 2);
+			size = (type->kind * 2);
+			break;
 
 		case OFC_SEMA_TYPE_BYTE:
-			return 1;
+			size = 1;
+			break;
 
 		case OFC_SEMA_TYPE_CHARACTER:
-			return (type->kind * type->len);
+			size = (type->kind * type->len);
+			break;
 
 		case OFC_SEMA_TYPE_STRUCTURE:
-			return ofc_sema_structure_size(
+			size = ofc_sema_structure_size(
 				type->structure);
+			break;
 
 		case OFC_SEMA_TYPE_POINTER:
 			/* TODO - Do this based on target arch. */
-			return sizeof(void*);
-
-		case OFC_SEMA_TYPE_ARRAY:
-			return (ofc_sema_type_size(type->subtype)
-				* ofc_sema_array_total(type->array));
+			size = sizeof(void*);
+			break;
 
 		default:
-			break;
+			return 0;
 	}
 
-	return 0;
+	if (type->array)
+		size *= ofc_sema_array_total(type->array);
+
+	return size;
 }
 
 unsigned ofc_sema_type_elem_count(const ofc_sema_type_t* type)
@@ -747,6 +735,7 @@ unsigned ofc_sema_type_elem_count(const ofc_sema_type_t* type)
 	if (!type)
 		return 0;
 
+	unsigned count;
 	switch (type->type)
 	{
 		case OFC_SEMA_TYPE_LOGICAL:
@@ -756,21 +745,22 @@ unsigned ofc_sema_type_elem_count(const ofc_sema_type_t* type)
 		case OFC_SEMA_TYPE_BYTE:
 		case OFC_SEMA_TYPE_CHARACTER:
 		case OFC_SEMA_TYPE_POINTER:
-			return 1;
+			count = 1;
+			break;
 
 		case OFC_SEMA_TYPE_STRUCTURE:
-			return ofc_sema_structure_elem_count(
+			count = ofc_sema_structure_elem_count(
 				type->structure);
-
-		case OFC_SEMA_TYPE_ARRAY:
-			return (ofc_sema_type_elem_count(type->subtype)
-				* ofc_sema_array_total(type->array));
+			break;
 
 		default:
-			break;
+			return 0;
 	}
 
-	return 0;
+	if (type->array)
+		count *= ofc_sema_array_total(type->array);
+
+	return count;
 }
 
 bool ofc_sema_type_is_integer(const ofc_sema_type_t* type)
@@ -827,7 +817,7 @@ bool ofc_sema_type_is_logical(const ofc_sema_type_t* type)
 
 bool ofc_sema_type_is_array(const ofc_sema_type_t* type)
 {
-	return (type && (type->type == OFC_SEMA_TYPE_ARRAY));
+	return (type && type->array);
 }
 
 bool ofc_sema_type_is_structure(const ofc_sema_type_t* type)
@@ -839,6 +829,22 @@ bool ofc_sema_type_is_composite(const ofc_sema_type_t* type)
 {
 	return (ofc_sema_type_is_array(type)
 		|| ofc_sema_type_is_structure(type));
+}
+
+
+const ofc_sema_type_t* ofc_sema_type_base(
+	const ofc_sema_type_t* type)
+{
+	if (!type)
+		return NULL;
+
+	if (!type->array)
+		return type;
+
+	return ofc_sema_type__create(
+		type->type, type->kind, type->len,
+		NULL, type->subtype, type->structure,
+		type->is_static, type->is_automatic, type->is_volatile);
 }
 
 

@@ -11,7 +11,6 @@ typedef enum
 	OFC_SEMA_TYPE_CHARACTER,
 	OFC_SEMA_TYPE_STRUCTURE,
 	OFC_SEMA_TYPE_POINTER,
-	OFC_SEMA_TYPE_ARRAY,
 
 	OFC_SEMA_TYPE_COUNT
 } ofc_sema_type_e;
@@ -20,17 +19,15 @@ struct ofc_sema_type_s
 {
 	ofc_sema_type_e type;
 
+	ofc_sema_array_t* array;
+
     bool is_static;
 	bool is_volatile;
 	bool is_automatic;
 
 	union
 	{
-		struct
-		{
-			ofc_sema_array_t*      array;
-			const ofc_sema_type_t* subtype;
-		};
+		const ofc_sema_type_t* subtype;
 
 		struct
 		{
@@ -93,6 +90,8 @@ bool ofc_sema_type_is_logical(const ofc_sema_type_t* type);
 bool ofc_sema_type_is_array(const ofc_sema_type_t* type);
 bool ofc_sema_type_is_structure(const ofc_sema_type_t* type);
 bool ofc_sema_type_is_composite(const ofc_sema_type_t* type);
+
+const ofc_sema_type_t* ofc_sema_type_base(const ofc_sema_type_t* type);
 
 const ofc_sema_type_t* ofc_sema_type_promote(
 	const ofc_sema_type_t* a,

@@ -17,8 +17,7 @@ static ofc_sema_decl_t* ofc_sema_decl__create(
 	decl->name = name;
 	decl->func = NULL;
 
-	if ((type->type == OFC_SEMA_TYPE_ARRAY)
-		|| (type->type == OFC_SEMA_TYPE_STRUCTURE))
+	if (ofc_sema_type_is_composite(type))
 	{
 		decl->init_array = NULL;
 	}
@@ -323,19 +322,16 @@ bool ofc_sema_decl_init_offset(
 			"Initializing array in multiple statements");
 	}
 
-	if (!decl->type
-		|| (decl->type->type != OFC_SEMA_TYPE_ARRAY))
+	if (!decl->type)
+		return NULL;
+
+	if (!ofc_sema_type_is_array(decl->type))
 	{
 		if (offset == 0)
 			return ofc_sema_decl_init(
 				scope, decl, init);
 		return false;
 	}
-
-	/* TODO - Support arrays of arrays. */
-	if (!decl->type->subtype
-		|| (decl->type->subtype->type == OFC_SEMA_TYPE_ARRAY))
-		return false;
 
 	unsigned elem_count
 		= ofc_sema_decl_elem_count(decl);
@@ -367,7 +363,7 @@ bool ofc_sema_decl_init_offset(
 	}
 
 	ofc_sema_typeval_t* tv = ofc_sema_typeval_cast(
-		scope, ctv, decl->type->subtype);
+		scope, ctv, ofc_sema_type_base(decl->type));
 	if (!tv) return false;
 
 	if (decl->init_array[offset])
@@ -415,19 +411,16 @@ bool ofc_sema_decl_init_array(
 			"Initializing arrays in multiple statements.");
 	}
 
-	if (!decl->type
-		|| (decl->type->type != OFC_SEMA_TYPE_ARRAY))
+	if (!decl->type)
+		return false;
+
+	if (!ofc_sema_type_is_array(decl->type))
 	{
 		if (!array && (count == 1))
 			return ofc_sema_decl_init(
 				scope, decl, init[0]);
 		return false;
 	}
-
-	/* TODO - Support arrays of arrays. */
-	if (!decl->type->subtype
-		|| (decl->type->subtype->type == OFC_SEMA_TYPE_ARRAY))
-		return false;
 
 	unsigned elem_count
 		= ofc_sema_type_elem_count(decl->type);
@@ -466,7 +459,7 @@ bool ofc_sema_decl_init_array(
 			}
 
 			ofc_sema_typeval_t* tv = ofc_sema_typeval_cast(
-				scope, ctv, decl->type->subtype);
+				scope, ctv, ofc_sema_type_base(decl->type));
 			if (!tv) return false;
 
 			if (decl->init_array[i])
@@ -538,8 +531,7 @@ unsigned ofc_sema_decl_elem_count(
 bool ofc_sema_decl_is_array(
 	const ofc_sema_decl_t* decl)
 {
-	return (decl && decl->type
-		&& (decl->type->type == OFC_SEMA_TYPE_ARRAY));
+	return (decl && ofc_sema_type_is_array(decl->type));
 }
 
 bool ofc_sema_decl_is_composite(
@@ -568,12 +560,7 @@ const ofc_sema_type_t* ofc_sema_decl_base_type(
 	if (!decl)
 		return NULL;
 
-	const ofc_sema_type_t* type;
-	for (type = decl->type;
-		type->type == OFC_SEMA_TYPE_ARRAY;
-		type = type->subtype);
-
-	return type;
+	return ofc_sema_type_base(decl->type);
 }
 
 
