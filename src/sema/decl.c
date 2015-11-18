@@ -152,10 +152,58 @@ static bool ofc_sema_decl__decl(
 
 	if (exist)
 	{
-		/* TODO - Handle this case. */
-		ofc_sema_scope_error(scope, decl->lhs->src,
-			"Redeclarations not yet handled.");
-		return false;
+		const ofc_sema_type_t* ebase_type
+			= ofc_sema_decl_base_type(sdecl);
+		if (!ofc_sema_type_compare(
+			ebase_type, type))
+		{
+			if (sdecl->lock)
+			{
+				/* TODO - Support this where possible. */
+				ofc_sema_scope_error(scope, decl->lhs->src,
+					"Redefining type after initialization");
+				return false;
+			}
+			else if (!sdecl->is_implicit)
+			{
+				ofc_sema_scope_error(scope, decl->lhs->src,
+					"Redeclaration with different type");
+				return false;
+			}
+		}
+
+		ofc_sema_array_t* array = type->array;
+		if (array)
+		{
+			if (ofc_sema_decl_is_array(sdecl)
+				&& !ofc_sema_array_compare(
+					type->array, sdecl->type->array))
+			{
+				/* TODO - Support adding dimensions together? */
+				ofc_sema_scope_error(scope, decl->lhs->src,
+					"Redefining array dimensions");
+				return false;
+			}
+		}
+		else if (ofc_sema_decl_is_array(sdecl))
+		{
+			array = sdecl->type->array;
+		}
+
+		const ofc_sema_type_t* atype = type;
+		if (array)
+		{
+			atype = ofc_sema_type_create_array(
+					type, array, false, false, false);
+			if (!atype) return false;
+		}
+
+		sdecl->type = atype;
+		sdecl->is_implicit = false;
+
+		sdecl->is_static    |= type->is_static;
+		sdecl->is_automatic |= type->is_automatic;
+		sdecl->is_volatile  |= type->is_volatile;
 	}
 	else
 	{
@@ -661,10 +709,7 @@ bool ofc_sema_decl_list_add(
 	/* Check for duplicate definitions. */
 	if (ofc_sema_decl_list_find(
 		list, decl->name))
-	{
-		/* TODO - Ignore duplicate so long as it matches. */
 		return false;
-	}
 
     ofc_sema_decl_t** ndecl
 		= (ofc_sema_decl_t**)realloc(list->decl,
