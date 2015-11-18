@@ -25,7 +25,7 @@ struct ofc_sema_lhs_s
 
 			union
 			{
-				ofc_sema_array_t*       slice;
+				ofc_sema_array_slice_t* slice;
 				ofc_sema_array_index_t* index;
 				ofc_str_ref_t           member;
 			};

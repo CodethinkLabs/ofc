@@ -1,22 +1,21 @@
 #ifndef __ofc_sema_array_h__
 #define __ofc_sema_array_h__
 
-typedef struct
-{
-	ofc_sema_expr_t* base;
-	unsigned         count;
-	unsigned         stride;
-} ofc_sema_array_slice_t;
 
 typedef struct
 {
-	unsigned               dimensions;
-	ofc_sema_array_slice_t slice[0];
+	int      base;
+	unsigned count;
+} ofc_sema_array_dims_t;
+
+typedef struct
+{
+	unsigned              dimensions;
+	ofc_sema_array_dims_t segment[0];
 } ofc_sema_array_t;
 
 ofc_sema_array_t* ofc_sema_array(
 	ofc_sema_scope_t*              scope,
-	const ofc_sema_array_t*        array,
 	const ofc_parse_array_index_t* index);
 
 ofc_sema_array_t* ofc_sema_array_copy(
@@ -55,5 +54,35 @@ bool ofc_sema_array_index_offset(
 bool ofc_sema_array_index_compare(
 	const ofc_sema_array_index_t* a,
 	const ofc_sema_array_index_t* b);
+
+
+typedef struct
+{
+	ofc_sema_expr_t* index;
+
+	int              base;
+	unsigned         count;
+	unsigned         stride;
+} ofc_sema_array_segment_t;
+
+typedef struct
+{
+	unsigned                 dimensions;
+	ofc_sema_array_segment_t segment[0];
+} ofc_sema_array_slice_t;
+
+ofc_sema_array_slice_t* ofc_sema_array_slice(
+	ofc_sema_scope_t*              scope,
+	const ofc_sema_array_t*        array,
+	const ofc_parse_array_index_t* index);
+void ofc_sema_array_slice_delete(
+	ofc_sema_array_slice_t* slice);
+
+bool ofc_sema_array_slice_compare(
+	const ofc_sema_array_slice_t* a,
+	const ofc_sema_array_slice_t* b);
+
+ofc_sema_array_t* ofc_sema_array_slice_dims(
+	const ofc_sema_array_slice_t* slice);
 
 #endif

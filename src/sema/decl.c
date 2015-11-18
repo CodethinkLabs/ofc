@@ -111,7 +111,7 @@ ofc_sema_decl_t* ofc_sema_decl_implicit_lhs(
 			break;
 		case OFC_PARSE_LHS_ARRAY:
 			array = ofc_sema_array(
-				scope, NULL, lhs->array.index);
+				scope, lhs->array.index);
 			if (!array) return NULL;
 			break;
 		default:

@@ -71,7 +71,7 @@ bool ofc_sema_stmt_dimension(
 
 		ofc_sema_array_t* array
 			= ofc_sema_array(
-				scope, NULL, lhs->array.index);
+				scope, lhs->array.index);
 		if (!array) return false;
 
 		const ofc_sema_type_t* type

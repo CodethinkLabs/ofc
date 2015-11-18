@@ -25,27 +25,27 @@ static ofc_sema_lhs_t* ofc_sema_lhs_index(
 
 static ofc_sema_lhs_t* ofc_sema_lhs_slice(
 	ofc_sema_lhs_t* lhs,
-	ofc_sema_array_t* slice)
+	ofc_sema_array_slice_t* slice)
 {
 	if (!lhs || !slice)
 		return NULL;
 
-	ofc_sema_array_t* cslice
-		= ofc_sema_array_copy(slice);
-	if (!cslice) return NULL;
+	ofc_sema_array_t* array
+		= ofc_sema_array_slice_dims(slice);
+	if (!array) return NULL;
 
 	const ofc_sema_type_t* base_type
 		= lhs->data_type;
 
 	const ofc_sema_type_t* type
 		= ofc_sema_type_create_array(
-			base_type, cslice,
+			base_type, array,
 			base_type->is_static,
 			base_type->is_automatic,
 			base_type->is_volatile);
 	if (!type)
 	{
-		ofc_sema_array_delete(cslice);
+		ofc_sema_array_delete(array);
 		return NULL;
 	}
 
@@ -108,7 +108,7 @@ const ofc_sema_type_t* ofc_sema_lhs_decl_type(
 		return itype;
 
 	ofc_sema_array_t* array = ofc_sema_array(
-		scope, NULL, lhs->array.index);
+		scope, lhs->array.index);
 	if (!array) return NULL;
 
 	const ofc_sema_type_t* atype
@@ -214,8 +214,8 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 
 				/* TODO - Don't double-error when an index is out-of-bounds. */
 
-				ofc_sema_array_t* slice
-					= ofc_sema_array(scope,
+				ofc_sema_array_slice_t* slice
+					= ofc_sema_array_slice(scope,
 						parent->data_type->array,
 						lhs->array.index);
 				if (!slice)
@@ -229,7 +229,7 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 				if (!slhs)
 				{
 					ofc_sema_lhs_delete(parent);
-					ofc_sema_array_delete(slice);
+					ofc_sema_array_slice_delete(slice);
 					return NULL;
 				}
 				return slhs;
@@ -348,7 +348,7 @@ void ofc_sema_lhs_delete(
 			break;
 
 		case OFC_SEMA_LHS_ARRAY_SLICE:
-			ofc_sema_array_delete(lhs->slice);
+			ofc_sema_array_slice_delete(lhs->slice);
 			break;
 
 		default:
@@ -451,7 +451,7 @@ bool ofc_sema_lhs_compare(
 			break;
 
 		case OFC_SEMA_LHS_ARRAY_SLICE:
-			if (!ofc_sema_array_compare(
+			if (!ofc_sema_array_slice_compare(
 				a->slice, b->slice))
 				return false;
 			break;
