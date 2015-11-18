@@ -246,7 +246,7 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 
 	ofc_sema_decl_t* decl
 		= ofc_sema_scope_decl_find_modify(
-			scope, lhs->variable);
+			scope, lhs->variable, false);
 	if (!decl)
 	{
 		decl = ofc_sema_decl_implicit_lhs(

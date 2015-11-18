@@ -15,7 +15,7 @@ static bool ofc_sema_stmt_decl_attr__decl(
 
 		ofc_sema_decl_t* decl =
 			ofc_sema_scope_decl_find_modify(
-				scope, decl_name);
+				scope, decl_name, true);
 
 		if (!decl)
 		{

@@ -1,9 +1,9 @@
 #include <ofc/sema.h>
 
 
-ofc_sema_decl_t* ofc_sema_decl_create(
+static ofc_sema_decl_t* ofc_sema_decl__create(
 	const ofc_sema_type_t* type,
-	ofc_str_ref_t name)
+	ofc_str_ref_t name, bool is_implicit)
 {
 	if (!type)
 		return NULL;
@@ -29,6 +29,7 @@ ofc_sema_decl_t* ofc_sema_decl_create(
 
 	decl->equiv = NULL;
 
+	decl->is_implicit  = is_implicit;
 	decl->is_static    = type->is_static;
 	decl->is_volatile  = type->is_volatile;
 	decl->is_automatic = type->is_automatic;
@@ -36,6 +37,13 @@ ofc_sema_decl_t* ofc_sema_decl_create(
 
 	decl->lock = false;
 	return decl;
+}
+
+ofc_sema_decl_t* ofc_sema_decl_create(
+	const ofc_sema_type_t* type,
+	ofc_str_ref_t name)
+{
+	return ofc_sema_decl__create(type, name, false);
 }
 
 /* We must consume array since it may be used by the type system
@@ -73,8 +81,8 @@ static ofc_sema_decl_t* ofc_sema_decl_implicit__name(
 		type = atype;
 	}
 
-	return ofc_sema_decl_create(
-		type, name);
+	return ofc_sema_decl__create(
+		type, name, true);
 }
 
 ofc_sema_decl_t* ofc_sema_decl_implicit_name(
@@ -116,13 +124,13 @@ ofc_sema_decl_t* ofc_sema_decl_implicit_lhs(
 		scope, base_name, array);
 }
 
-static ofc_sema_decl_t* ofc_sema_decl__decl(
+static bool ofc_sema_decl__decl(
 	ofc_sema_scope_t* scope,
 	const ofc_sema_type_t*  type,
 	const ofc_parse_decl_t* decl)
 {
 	if (!decl || !type)
-		return NULL;
+		return false;
 
 	switch (decl->lhs->type)
 	{
@@ -130,22 +138,37 @@ static ofc_sema_decl_t* ofc_sema_decl__decl(
 		case OFC_PARSE_LHS_ARRAY:
 			break;
 		default:
-			return NULL;
+			return false;
 	}
 
 	ofc_str_ref_t base_name;
 	if (!ofc_parse_lhs_base_name(
 		*(decl->lhs), &base_name))
-		return NULL;
-
-	const ofc_sema_type_t* atype
-		= ofc_sema_lhs_decl_type(
-			scope, type, decl->lhs);
-	if (!atype) return NULL;
+		return false;
 
 	ofc_sema_decl_t* sdecl
-		= ofc_sema_decl_create(
+		= ofc_sema_scope_decl_find_modify(
+			scope, base_name, true);
+	bool exist = (sdecl != NULL);
+
+	if (exist)
+	{
+		/* TODO - Handle this case. */
+		ofc_sema_scope_error(scope, decl->lhs->src,
+			"Redeclarations not yet handled.");
+		return false;
+	}
+	else
+	{
+		const ofc_sema_type_t* atype
+			= ofc_sema_lhs_decl_type(
+				scope, type, decl->lhs);
+		if (!atype) return false;
+
+		sdecl = ofc_sema_decl_create(
 			atype, base_name);
+		if (!sdecl) return false;
+	}
 
 	if (decl->init_expr)
 	{
@@ -154,7 +177,7 @@ static ofc_sema_decl_t* ofc_sema_decl__decl(
 		if (!init_expr)
 		{
 			ofc_sema_decl_delete(sdecl);
-			return NULL;
+			return false;
 		}
 
 		bool initialized = ofc_sema_decl_init(
@@ -164,17 +187,24 @@ static ofc_sema_decl_t* ofc_sema_decl__decl(
 		if (!initialized)
 		{
 			ofc_sema_decl_delete(sdecl);
-			return NULL;
+			return false;
 		}
 	}
 	else if (decl->init_clist)
 	{
 		/* TODO - CList initializer resolution. */
 		ofc_sema_decl_delete(sdecl);
-		return NULL;
+		return false;
 	}
 
-	return sdecl;
+	if (!exist && !ofc_sema_decl_list_add(
+		scope->decl, sdecl))
+	{
+		ofc_sema_decl_delete(sdecl);
+		return false;
+	}
+
+	return true;
 }
 
 bool ofc_sema_decl(
@@ -193,40 +223,12 @@ bool ofc_sema_decl(
 	unsigned count = stmt->decl.decl->count;
 	if (count == 0) return false;
 
-	ofc_sema_decl_t* decl[count];
-
 	unsigned i;
 	for (i = 0; i < count; i++)
 	{
-		decl[i] = ofc_sema_decl__decl(
-			scope, type, stmt->decl.decl->decl[i]);
-
-		if (decl[i] && ofc_sema_decl_list_find(
-			scope->decl, decl[i]->name))
-		{
-			/* TODO - Allow redeclaration as long as it matches original. */
-			ofc_sema_decl_delete(decl[i]);
-			decl[i] = NULL;
-		}
-
-		if (!decl[i])
-		{
-			unsigned j;
-			for (j = 0; j < i; j++)
-				ofc_sema_decl_delete(decl[j]);
+		if (!ofc_sema_decl__decl(
+			scope, type, stmt->decl.decl->decl[i]))
 			return false;
-		}
-	}
-
-	for (i = 0; i < count; i++)
-	{
-		if (!ofc_sema_decl_list_add(
-			scope->decl, decl[i]))
-		{
-			/* This should never happen. */
-			abort();
-			return false;
-		}
 	}
 
 	return true;

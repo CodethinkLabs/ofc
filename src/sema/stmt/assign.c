@@ -12,7 +12,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_assign(
 
 	ofc_sema_stmt_t s;
 	s.assign.dest = ofc_sema_scope_decl_find(
-		scope, stmt->assign.variable);
+		scope, stmt->assign.variable, false);
 	if (!s.assign.dest)
 	{
 		const ofc_sema_type_t* type = ofc_sema_implicit_get(

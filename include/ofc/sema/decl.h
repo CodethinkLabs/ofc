@@ -15,6 +15,7 @@ struct ofc_sema_decl_s
 		ofc_sema_typeval_t** init_array;
 	};
 
+	bool is_implicit;
     bool is_static;
 	bool is_volatile;
 	bool is_automatic;

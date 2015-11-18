@@ -27,7 +27,7 @@ bool ofc_sema_stmt_is_stmt_func(
 
 	const ofc_sema_decl_t* decl
 		= ofc_sema_scope_decl_find(
-			scope, base_name);
+			scope, base_name, false);
 	return !ofc_sema_decl_is_array(decl);
 }
 

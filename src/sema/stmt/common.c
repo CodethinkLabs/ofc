@@ -46,7 +46,7 @@ bool ofc_sema_stmt_common(
 
 			ofc_sema_decl_t* decl
 				= ofc_sema_scope_decl_find_modify(
-					scope, base_name);
+					scope, base_name, false);
 			if (!decl)
 			{
 				decl = ofc_sema_decl_implicit_lhs(

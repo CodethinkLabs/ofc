@@ -350,7 +350,7 @@ ofc_sema_scope_t* ofc_sema_scope_stmt_func(
 		return NULL;
 
     ofc_sema_decl_t* decl
-		= ofc_sema_scope_decl_find_modify(scope, base_name);
+		= ofc_sema_scope_decl_find_modify(scope, base_name, false);
 	if (!decl)
 	{
 		decl = ofc_sema_decl_implicit_name(
@@ -554,7 +554,7 @@ ofc_lang_opts_t ofc_sema_scope_get_lang_opts(
 
 
 const ofc_sema_decl_t* ofc_sema_scope_decl_find(
-	const ofc_sema_scope_t* scope, ofc_str_ref_t name)
+	const ofc_sema_scope_t* scope, ofc_str_ref_t name, bool local)
 {
 	if (!scope)
 		return NULL;
@@ -564,12 +564,19 @@ const ofc_sema_decl_t* ofc_sema_scope_decl_find(
 			scope->decl, name);
 	if (decl) return decl;
 
+	decl = ofc_sema_decl_list_find(
+			scope->args, name);
+	if (decl) return decl;
+
+	if (local)
+		return NULL;
+
 	return ofc_sema_scope_decl_find(
-		scope->parent, name);
+		scope->parent, name, false);
 }
 
 ofc_sema_decl_t* ofc_sema_scope_decl_find_modify(
-	ofc_sema_scope_t* scope, ofc_str_ref_t name)
+	ofc_sema_scope_t* scope, ofc_str_ref_t name, bool local)
 {
 	if (!scope)
 		return NULL;
@@ -579,8 +586,11 @@ ofc_sema_decl_t* ofc_sema_scope_decl_find_modify(
 			scope->decl, name);
 	if (decl) return decl;
 
+	if (local)
+		return NULL;
+
 	return ofc_sema_scope_decl_find_modify(
-		scope->parent, name);
+		scope->parent, name, false);
 }
 
 const ofc_sema_scope_t* ofc_sema_scope_child_find(

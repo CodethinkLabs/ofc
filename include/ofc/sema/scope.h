@@ -79,9 +79,9 @@ ofc_lang_opts_t ofc_sema_scope_get_lang_opts(
 	const ofc_sema_scope_t* scope);
 
 const ofc_sema_decl_t* ofc_sema_scope_decl_find(
-	const ofc_sema_scope_t* scope, ofc_str_ref_t name);
+	const ofc_sema_scope_t* scope, ofc_str_ref_t name, bool local);
 ofc_sema_decl_t* ofc_sema_scope_decl_find_modify(
-	ofc_sema_scope_t* scope, ofc_str_ref_t name);
+	ofc_sema_scope_t* scope, ofc_str_ref_t name, bool local);
 
 const ofc_sema_scope_t* ofc_sema_scope_child_find(
 	const ofc_sema_scope_t* scope, ofc_str_ref_t name);

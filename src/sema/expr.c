@@ -729,7 +729,8 @@ static ofc_sema_expr_t* ofc_sema_expr__variable(
 	const ofc_sema_intrinsic_t* intrinsic
 		= ofc_sema_intrinsic(scope, base_name);
 	const ofc_sema_decl_t* decl
-		= ofc_sema_scope_decl_find(scope, base_name);
+		= ofc_sema_scope_decl_find(
+			scope, base_name, false);
 
 	if (intrinsic && !decl)
 	{
