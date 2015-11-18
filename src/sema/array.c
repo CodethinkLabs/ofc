@@ -664,6 +664,10 @@ bool ofc_sema_array_index_offset(
 		s *= slice.count;
 	}
 
+	unsigned ec = ofc_sema_type_elem_count(
+		decl->type->subtype);
+	if (ec > 0) o *= ec;
+
 	unsigned uo = o;
 	if ((int64_t)uo != o)
 		return false;
