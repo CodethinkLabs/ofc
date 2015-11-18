@@ -52,7 +52,7 @@ static ofc_sema_lhs_t* ofc_sema_lhs_slice(
 	ofc_sema_lhs_t* alhs
 		= (ofc_sema_lhs_t*)malloc(
 			sizeof(ofc_sema_lhs_t));
-	if (!lhs) return NULL;
+	if (!alhs) return NULL;
 
 	alhs->type      = OFC_SEMA_LHS_ARRAY_SLICE;
 	alhs->src       = lhs->src;
