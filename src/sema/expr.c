@@ -535,7 +535,10 @@ static ofc_sema_expr_t* ofc_sema_expr__intrinsic(
 	const ofc_parse_lhs_t* name,
 	const ofc_sema_intrinsic_t* intrinsic)
 {
-	if (!name || !intrinsic
+	if (!name)
+		return NULL;
+
+	if (!intrinsic
 		|| (name->type != OFC_PARSE_LHS_ARRAY)
 		|| !name->array.index
 		|| !name->parent
@@ -609,8 +612,10 @@ static ofc_sema_expr_t* ofc_sema_expr__function(
 	const ofc_parse_lhs_t* name,
 	const ofc_sema_decl_t* decl)
 {
-	if (!name || !decl
-		|| !decl->func
+	if (!name)
+		return NULL;
+
+	if (!decl || !decl->func
 		|| (name->type != OFC_PARSE_LHS_ARRAY)
 		|| !name->array.index
 		|| !name->parent
