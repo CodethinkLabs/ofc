@@ -597,7 +597,7 @@ bool ofc_sema_array_index_offset(
 		|| (index->dimensions == 0))
 		return false;
 
-	if (!decl->type || (decl->type->type != OFC_SEMA_TYPE_ARRAY))
+	if (!ofc_sema_type_is_array(decl->type))
 	{
 		/* TODO - Positional error. */
 		ofc_sema_scope_error(scope, OFC_STR_REF_EMPTY,
@@ -640,10 +640,13 @@ bool ofc_sema_array_index_offset(
 			return false;
 		}
 
-		int64_t base;
-		if (!ofc_sema_typeval_get_integer(
-			ofc_sema_expr_constant(slice.base), &base))
-			return false;
+		int64_t base = 1;
+		if (slice.base)
+		{
+			if (!ofc_sema_typeval_get_integer(
+				ofc_sema_expr_constant(slice.base), &base))
+				return false;
+		}
 
 		if (so < base)
 		{

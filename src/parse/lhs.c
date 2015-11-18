@@ -52,6 +52,7 @@ static bool ofc_parse_lhs__clone(
 
 	ofc_parse_lhs_t clone;
 	clone.type = src->type;
+	clone.src  = src->src;
 
 	switch (src->type)
 	{
@@ -155,6 +156,7 @@ static ofc_parse_lhs_t* ofc_parse_lhs__array(
 	i += l;
 
 	lhs.type   = OFC_PARSE_LHS_ARRAY;
+	lhs.src    = ofc_str_ref(ptr, i);
 	lhs.parent = NULL;
 
 	ofc_parse_lhs_t* alhs
@@ -167,7 +169,6 @@ static ofc_parse_lhs_t* ofc_parse_lhs__array(
 	}
 
 	alhs->parent = parent;
-	alhs->src = ofc_str_ref(ptr, i);
 
 	if (len) *len = i;
 	return alhs;
@@ -201,6 +202,8 @@ static ofc_parse_lhs_t* ofc_parse_lhs__star_len(
 		&lhs.star_len.var);
 	if (i == 0) return NULL;
 
+	lhs.src = ofc_str_ref(ptr, i);
+
 	ofc_parse_lhs_t* alhs
 		= ofc_parse_lhs__alloc(lhs);
 	if (!alhs)
@@ -209,10 +212,6 @@ static ofc_parse_lhs_t* ofc_parse_lhs__star_len(
 		ofc_parse_debug_rewind(debug, dpos);
 		return NULL;
 	}
-
-	alhs->parent = parent;
-
-	alhs->src = ofc_str_ref(ptr, i);
 
 	if (len) *len = i;
 	return alhs;
@@ -265,6 +264,8 @@ static ofc_parse_lhs_t* ofc_parse_lhs__member(
 	if (l == 0) return NULL;
 	i += l;
 
+	lhs.src = ofc_str_ref(ptr, i);
+
 	ofc_parse_lhs_t* alhs
 		= ofc_parse_lhs__alloc(lhs);
 	if (!alhs)
@@ -274,8 +275,6 @@ static ofc_parse_lhs_t* ofc_parse_lhs__member(
 	}
 
 	alhs->parent = parent;
-
-	alhs->src = ofc_str_ref(ptr, i);
 
 	if (len) *len = i;
 	return alhs;
@@ -303,6 +302,8 @@ static ofc_parse_lhs_t* ofc_parse__lhs(
 		lhs.type = OFC_PARSE_LHS_IMPLICIT_DO;
 	}
 
+	lhs.src = ofc_str_ref(ptr, i);
+
 	ofc_parse_lhs_t* alhs
 		= ofc_parse_lhs__alloc(lhs);
 	if (!alhs)
@@ -324,6 +325,7 @@ static ofc_parse_lhs_t* ofc_parse__lhs(
 			if (child_lhs)
 			{
 				i += l;
+				alhs->src = ofc_str_ref(ptr, i);
 				alhs = child_lhs;
 				continue;
 			}
@@ -336,6 +338,7 @@ static ofc_parse_lhs_t* ofc_parse__lhs(
 			if (child_lhs)
 			{
 				i += l;
+				alhs->src = ofc_str_ref(ptr, i);
 				alhs = child_lhs;
 				continue;
 			}
@@ -346,14 +349,13 @@ static ofc_parse_lhs_t* ofc_parse__lhs(
 		if (child_lhs)
 		{
 			i += l;
+			alhs->src = ofc_str_ref(ptr, i);
 			alhs = child_lhs;
 			continue;
 		}
 
 		break;
 	}
-
-	alhs->src = ofc_str_ref(ptr, i);
 
 	if (len) *len = i;
 	return alhs;

@@ -90,6 +90,8 @@ bool ofc_sema_type_is_integer(const ofc_sema_type_t* type);
 bool ofc_sema_type_is_scalar(const ofc_sema_type_t* type);
 bool ofc_sema_type_is_logical(const ofc_sema_type_t* type);
 
+bool ofc_sema_type_is_array(const ofc_sema_type_t* type);
+bool ofc_sema_type_is_structure(const ofc_sema_type_t* type);
 bool ofc_sema_type_is_composite(const ofc_sema_type_t* type);
 
 const ofc_sema_type_t* ofc_sema_type_promote(

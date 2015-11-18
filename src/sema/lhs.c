@@ -14,6 +14,7 @@ static ofc_sema_lhs_t* ofc_sema_lhs_index(
 	if (!alhs) return NULL;
 
 	alhs->type      = OFC_SEMA_LHS_ARRAY_INDEX;
+	alhs->src       = lhs->src;
 	alhs->parent    = lhs;
 	alhs->index     = index;
 	alhs->data_type = lhs->data_type->subtype;
@@ -54,6 +55,7 @@ static ofc_sema_lhs_t* ofc_sema_lhs_slice(
 	if (!lhs) return NULL;
 
 	alhs->type      = OFC_SEMA_LHS_ARRAY_SLICE;
+	alhs->src       = lhs->src;
 	alhs->parent    = lhs;
 	alhs->slice     = slice;
 	alhs->data_type = type;
@@ -278,6 +280,7 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 	if (!slhs) return NULL;
 
 	slhs->type      = OFC_SEMA_LHS_DECL;
+	slhs->src       = lhs->src;
 	slhs->decl      = decl;
 	slhs->data_type = decl->type;
 	slhs->refcnt    = 0;
@@ -366,21 +369,24 @@ bool ofc_sema_lhs_init(
 	if (!lhs || !init)
 		return false;
 
+	ofc_sema_decl_t* decl
+		= ofc_sema_lhs_decl(lhs);
+
 	switch (lhs->type)
 	{
 		case OFC_SEMA_LHS_DECL:
 			return ofc_sema_decl_init(
-				scope, lhs->decl, init);
+				scope, decl, init);
 
 		case OFC_SEMA_LHS_ARRAY_INDEX:
 		{
 			unsigned offset;
 			if (!ofc_sema_array_index_offset(
-				scope, lhs->decl, lhs->index, &offset))
+				scope, decl, lhs->index, &offset))
 				return false;
 
 			return ofc_sema_decl_init_offset(
-				scope, lhs->decl, offset, init);
+				scope, decl, offset, init);
 		}
 
 		/* TODO - Initialize all LHS types. */
@@ -390,6 +396,31 @@ bool ofc_sema_lhs_init(
 	}
 
 	return false;
+}
+
+bool ofc_sema_lhs_init_array(
+	const ofc_sema_scope_t* scope,
+	ofc_sema_lhs_t* lhs,
+	const ofc_sema_array_t* array,
+	unsigned count,
+	const ofc_sema_expr_t** init)
+{
+	if (!lhs || !init)
+		return false;
+
+	if (count == 0)
+		return true;
+
+	/* TODO - Support initializing array slices. */
+    if (lhs->type == OFC_SEMA_LHS_ARRAY_SLICE)
+		return false;
+
+	if (lhs->type != OFC_SEMA_LHS_DECL)
+		return false;
+
+	return ofc_sema_decl_init_array(
+		scope, ofc_sema_lhs_decl(lhs),
+		array, count, init);
 }
 
 
@@ -463,3 +494,14 @@ const ofc_sema_type_t* ofc_sema_lhs_type(
 {
 	return (lhs ? lhs->data_type : NULL);
 }
+
+unsigned ofc_sema_lhs_elem_count(
+	const ofc_sema_lhs_t* lhs)
+{
+	if (!lhs)
+		return 0;
+
+	return ofc_sema_type_elem_count(
+		lhs->data_type);
+}
+

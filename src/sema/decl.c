@@ -401,9 +401,11 @@ bool ofc_sema_decl_init_array(
 	unsigned count,
 	const ofc_sema_expr_t** init)
 {
-	if (!decl || !init
-		|| (count == 0))
+	if (!decl || !init)
 		return false;
+
+	if (count == 0)
+		return true;
 
 	if (decl->lock)
 	{
@@ -413,7 +415,12 @@ bool ofc_sema_decl_init_array(
 
 	if (!decl->type
 		|| (decl->type->type != OFC_SEMA_TYPE_ARRAY))
+	{
+		if (!array && (count == 1))
+			return ofc_sema_decl_init(
+				scope, decl, init[0]);
 		return false;
+	}
 
 	/* TODO - Support arrays of arrays. */
 	if (!decl->type->subtype

@@ -825,22 +825,20 @@ bool ofc_sema_type_is_logical(const ofc_sema_type_t* type)
 	return false;
 }
 
+bool ofc_sema_type_is_array(const ofc_sema_type_t* type)
+{
+	return (type && (type->type == OFC_SEMA_TYPE_ARRAY));
+}
+
+bool ofc_sema_type_is_structure(const ofc_sema_type_t* type)
+{
+	return (type && (type->type == OFC_SEMA_TYPE_STRUCTURE));
+}
+
 bool ofc_sema_type_is_composite(const ofc_sema_type_t* type)
 {
-	if (!type)
-		return false;
-
-	switch (type->type)
-	{
-		case OFC_SEMA_TYPE_ARRAY:
-		case OFC_SEMA_TYPE_STRUCTURE:
-			return true;
-
-		default:
-			break;
-	}
-
-	return false;
+	return (ofc_sema_type_is_array(type)
+		|| ofc_sema_type_is_structure(type));
 }
 
 
