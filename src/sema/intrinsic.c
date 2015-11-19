@@ -468,7 +468,7 @@ const ofc_sema_type_t* ofc_sema_intrinsic_type(
 			case IT_SCALAR:
 			case IT_REAL:
 				return ofc_sema_type_create_primitive(
-					OFC_SEMA_TYPE_REAL, (atype->kind * 2),
+					OFC_SEMA_TYPE_REAL, atype->kind,
 					false, false, false);
 
 			default:
