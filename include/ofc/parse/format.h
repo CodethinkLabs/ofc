@@ -31,6 +31,8 @@ typedef enum
 	OFC_PARSE_FORMAT_DESC_BINARY,
 	OFC_PARSE_FORMAT_DESC_OCTAL,
 	OFC_PARSE_FORMAT_DESC_HEX,
+
+	OFC_PARSE_FORMAT_DESC_COUNT
 } ofc_parse_format_desc_e;
 
 typedef struct ofc_parse_format_desc_s ofc_parse_format_desc_t;

@@ -186,7 +186,7 @@ void ofc_sema_stmt_delete(
 			break;
 		case OFC_SEMA_STMT_IO_PRINT:
 			ofc_sema_expr_delete(
-				stmt->io_print.format);
+				stmt->io_print.format_expr);
 			ofc_sema_expr_list_delete(
 				stmt->io_print.iolist);
 			break;

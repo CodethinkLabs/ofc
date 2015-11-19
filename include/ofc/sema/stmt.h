@@ -81,7 +81,8 @@ struct ofc_sema_stmt_s
 
 		struct
 		{
-			ofc_sema_expr_t*      format;
+			ofc_sema_expr_t*      format_expr;
+			ofc_sema_format_t*    format;
 			bool                  format_asterisk;
 			ofc_sema_expr_list_t* iolist;
 		} io_print;

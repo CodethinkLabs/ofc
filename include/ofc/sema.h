@@ -24,6 +24,7 @@ typedef struct ofc_sema_decl_list_s ofc_sema_decl_list_t;
 #include <ofc/sema/format.h>
 #include <ofc/sema/label.h>
 #include <ofc/sema/intrinsic.h>
+#include <ofc/sema/io.h>
 
 #include <ofc/sema/stmt.h>
 #include <ofc/sema/scope.h>

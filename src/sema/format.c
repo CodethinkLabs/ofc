@@ -36,6 +36,49 @@ static bool ofc_sema__type_rule[][9] =
 	{ 0, 1, 0, 0, 0, 0, 0, 0, 0 }, /* OFC_PARSE_FORMAT_DESC_HEX */
 };
 
+static const char* ofc_sema_type__name[] =
+{
+	"INTEGER",
+	"REAL",
+	"D",
+	"E",
+	"G",
+	"CHARACTER",
+	"LOGICAL",
+	"HOLLERITH",
+	"S",
+	"REAL_SCALE",
+	"X",
+	"T",
+	"SLASH",
+	"DOLLAR",
+	"BACKSLASH",
+	"Q",
+	"COLON",
+	"BN",
+	"BZ",
+	"SP",
+	"SS",
+	"TL",
+	"TR",
+	"STRING",
+	"REPEAT",
+	"BINARY",
+	"OCTAL",
+	"HEX",
+
+	NULL
+};
+
+const char* ofc_sema_format_str_rep(
+	const ofc_parse_format_desc_e type)
+{
+	if (type >= OFC_PARSE_FORMAT_DESC_COUNT)
+		return NULL;
+
+	return ofc_sema_type__name[type];
+}
+
 bool ofc_sema_compare_desc_expr_type(
 	ofc_parse_format_desc_e type_desc,
 	ofc_sema_type_e type_expr)
@@ -96,4 +139,31 @@ void ofc_sema_format_delete(
 	ofc_parse_format_desc_list_delete(
 		format->format);
 	free(format);
+}
+
+const ofc_sema_type_t* ofc_sema_format_desc_type(
+	const ofc_parse_format_desc_t* desc)
+{
+	if (!desc) return NULL;
+
+	switch (desc->type)
+	{
+		case OFC_PARSE_FORMAT_DESC_INTEGER:
+		case OFC_PARSE_FORMAT_DESC_BINARY:
+		case OFC_PARSE_FORMAT_DESC_OCTAL:
+		case OFC_PARSE_FORMAT_DESC_HEX:
+			return ofc_sema_type_integer_default();
+		case OFC_PARSE_FORMAT_DESC_REAL:
+		case OFC_PARSE_FORMAT_DESC_D:
+		case OFC_PARSE_FORMAT_DESC_E:
+		case OFC_PARSE_FORMAT_DESC_REAL_SCALE:
+			return ofc_sema_type_real_default();
+		case OFC_PARSE_FORMAT_DESC_LOGICAL:
+			return ofc_sema_type_logical_default();
+		default:
+			break;
+
+	}
+
+	return NULL;
 }
