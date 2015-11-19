@@ -175,14 +175,14 @@ void ofc_sema_stmt_delete(
 				stmt->io_write.unit);
 			ofc_sema_expr_delete(
 				stmt->io_write.format_expr);
-			ofc_sema_format_delete(
-				stmt->io_write.format);
 			ofc_sema_expr_delete(
 				stmt->io_write.iostat);
 			ofc_sema_expr_delete(
 				stmt->io_write.rec);
 			ofc_sema_expr_delete(
 				stmt->io_write.err);
+			ofc_sema_expr_list_delete(
+				stmt->io_write.iolist);
 			break;
 		case OFC_SEMA_STMT_IO_PRINT:
 			ofc_sema_expr_delete(

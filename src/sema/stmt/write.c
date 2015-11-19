@@ -1,4 +1,5 @@
 #include <ofc/sema.h>
+#include <math.h>
 
 
 ofc_sema_stmt_t* ofc_sema_stmt_io_write(
@@ -20,6 +21,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 	s.io_write.iostat      = NULL;
 	s.io_write.rec         = NULL;
 	s.io_write.err         = NULL;
+	s.io_write.iolist      = NULL;
 
 	ofc_parse_call_arg_t* ca_unit   = NULL;
 	ofc_parse_call_arg_t* ca_format = NULL;
@@ -227,6 +229,36 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 				ofc_sema_expr_delete(s.io_write.unit);
 				return NULL;
 			}
+
+			unsigned ulabel = (unsigned) fl64;
+
+			if (((int64_t) ulabel) != fl64)
+			{
+				ofc_sema_expr_delete(s.io_write.format_expr);
+				ofc_sema_expr_delete(s.io_write.unit);
+				return NULL;
+			}
+
+			const ofc_sema_label_t* label
+				= ofc_sema_label_map_find(scope->label, ulabel);
+			if (!label)
+			{
+				ofc_sema_scope_error(scope, stmt->src,
+					"Format label expression not defined in WRITE");
+				ofc_sema_expr_delete(s.io_write.format_expr);
+				ofc_sema_expr_delete(s.io_write.unit);
+				return NULL;
+			}
+
+			if (label->type != OFC_SEMA_LABEL_FORMAT)
+			{
+				ofc_sema_scope_error(scope, stmt->src,
+					"Label expression must be a FORMAT statement in WRITE");
+				ofc_sema_expr_delete(s.io_write.format_expr);
+				ofc_sema_expr_delete(s.io_write.unit);
+				return NULL;
+			}
+			s.io_write.format = label->format;
 		}
 		else if (etype->type == OFC_SEMA_TYPE_CHARACTER)
 		{
@@ -268,13 +300,87 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 
 	if (s.io_write.format)
 	{
-		/* TODO - Validate iolist against FORMAT. */
+		/* Check iolist */
+		if (stmt->io.iolist)
+		{
+			s.io_write.iolist
+				= ofc_sema_iolist(
+					scope, stmt->io.iolist);
+			if (!s.io_write.iolist)
+			{
+				ofc_sema_expr_delete(s.io_write.format_expr);
+				ofc_sema_expr_delete(s.io_write.unit);
+				return NULL;
+			}
+		}
+
+		/* Count elements in iolist */
+		unsigned iolist_len
+			= ofc_sema_iolist_count(
+				s.io_write.iolist);
+
+
+		unsigned data_desc_count
+			= ofc_sema_io_data_format_count(s.io_write.format);
+
+		if ((data_desc_count > 0) && (iolist_len > 0))
+		{
+			if (iolist_len < data_desc_count)
+			{
+				ofc_sema_scope_warning(scope, stmt->src,
+					"IO list shorter than FORMAT list,"
+					" last FORMAT data descriptors will be ignored");
+			}
+			else if (fmod(iolist_len, data_desc_count) != 0)
+			{
+				ofc_sema_scope_warning(scope, stmt->src,
+					"IO list length is not a multiple of FORMAT list length");
+			}
+
+			/* Create a format list of same length as iolist
+			 * with only data edit descriptors  */
+			ofc_parse_format_desc_list_t* format_list
+				= ofc_sema_io_data_format(s.io_write.format, iolist_len);
+			if (!format_list)
+			{
+				ofc_sema_expr_delete(s.io_write.format_expr);
+				ofc_sema_expr_delete(s.io_write.unit);
+				ofc_sema_expr_list_delete(s.io_write.iolist);
+				return NULL;
+			}
+
+			/* Compare iolist with format */
+			bool fail = !ofc_sema_io_format_iolist_compare(
+				scope, stmt, format_list, s.io_write.iolist);
+			ofc_parse_format_desc_list_delete(format_list);
+			if (fail)
+			{
+				ofc_sema_expr_delete(s.io_write.format_expr);
+				ofc_sema_expr_delete(s.io_write.unit);
+				ofc_sema_expr_list_delete(s.io_write.iolist);
+				return NULL;
+			}
+		}
+		else if (iolist_len > 0)
+		{
+			ofc_sema_scope_warning(scope, stmt->src,
+				"No data edit descriptors in FORMAT list");
+		}
+		else if (data_desc_count > 0)
+		{
+			ofc_sema_scope_warning(scope, stmt->src,
+				"No IO list in PRINT statement");
+		}
+
 	}
 
 	ofc_sema_stmt_t* as
 		= ofc_sema_stmt_alloc(s);
 	if (!as)
 	{
+		ofc_sema_expr_delete(s.io_write.format_expr);
+		ofc_sema_expr_delete(s.io_write.unit);
+		ofc_sema_expr_list_delete(s.io_write.iolist);
 		return NULL;
 	}
 	return as;
