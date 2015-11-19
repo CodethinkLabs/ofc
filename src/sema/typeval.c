@@ -654,7 +654,6 @@ static ofc_sema_typeval_t* ofc_sema_typeval__byte_literal(
 		case OFC_PARSE_LITERAL_CHARACTER:
 			return ofc_sema_typeval__character_literal(
 				scope, literal, type);
-			return NULL;
 		default:
 			break;
 	}
