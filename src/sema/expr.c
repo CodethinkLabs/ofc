@@ -603,6 +603,7 @@ static ofc_sema_expr_t* ofc_sema_expr__intrinsic(
 
 	expr->intrinsic = intrinsic;
 	expr->args      = args;
+	expr->src       = ofc_str_ref_bridge(name->parent->src, name->src);
 
 	return expr;
 }
@@ -692,6 +693,7 @@ static ofc_sema_expr_t* ofc_sema_expr__function(
 
 	expr->function = decl;
 	expr->args     = args;
+	expr->src      = ofc_str_ref_bridge(name->parent->src, name->src);
 
 	return expr;
 }
