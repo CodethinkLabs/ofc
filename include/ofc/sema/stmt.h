@@ -19,6 +19,10 @@ typedef enum
 	OFC_SEMA_STMT_DO_BLOCK,
 	OFC_SEMA_STMT_DO_WHILE,
 	OFC_SEMA_STMT_DO_WHILE_BLOCK,
+	OFC_SEMA_STMT_CALL,
+	OFC_SEMA_STMT_RETURN,
+
+	OFC_SEMA_STMT_COUNT
 } ofc_sema_stmt_e;
 
 struct ofc_sema_stmt_s
@@ -55,7 +59,7 @@ struct ofc_sema_stmt_s
 
 		struct
 		{
-			ofc_sema_expr_t* cond;
+			ofc_sema_expr_t*  cond;
 			ofc_sema_scope_t* scope_then;
 			ofc_sema_scope_t* scope_else;
 		} if_then;
@@ -128,6 +132,12 @@ struct ofc_sema_stmt_s
 			ofc_sema_expr_t*      cond;
 			ofc_sema_stmt_list_t* block;
 		} do_while_block;
+
+		struct
+		{
+			const ofc_sema_decl_t* subroutine;
+			ofc_sema_expr_list_t*  args;
+		} call;
 	};
 };
 
@@ -184,6 +194,12 @@ ofc_sema_stmt_t* ofc_sema_stmt_go_to(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
 ofc_sema_stmt_t* ofc_sema_stmt_do(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt);
+ofc_sema_stmt_t* ofc_sema_stmt_call(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt);
+ofc_sema_stmt_t* ofc_sema_stmt_return(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
 

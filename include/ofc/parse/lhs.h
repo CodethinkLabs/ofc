@@ -85,6 +85,9 @@ bool ofc_parse_lhs_base_name(
 	const ofc_parse_lhs_t lhs,
 	ofc_str_ref_t* name);
 
+bool ofc_parse_lhs_possible_function_call(
+	const ofc_parse_lhs_t lhs);
+
 ofc_parse_lhs_list_t* ofc_parse_lhs_list(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,

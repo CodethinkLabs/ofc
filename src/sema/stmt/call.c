@@ -1,0 +1,103 @@
+#include <ofc/sema.h>
+
+
+ofc_sema_stmt_t* ofc_sema_stmt_call(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt)
+{
+	if (!scope || !stmt
+		|| (stmt->type != OFC_PARSE_STMT_CALL))
+		return NULL;
+
+	ofc_sema_stmt_t s;
+	s.type = OFC_SEMA_STMT_CALL;
+
+	s.call.subroutine = ofc_sema_scope_decl_find(
+		scope, stmt->call_entry.name, false);
+	if (!s.call.subroutine)
+	{
+		const ofc_sema_type_t* type
+			= ofc_sema_type_subroutine();
+
+		ofc_sema_decl_t* decl
+			= ofc_sema_decl_create(
+				type, stmt->call_entry.name);
+		if (!decl) return NULL;
+
+		if (!ofc_sema_decl_list_add(
+			scope->decl, decl))
+		{
+			ofc_sema_decl_delete(decl);
+			return NULL;
+		}
+
+		s.call.subroutine = decl;
+	}
+	else if (!ofc_sema_decl_is_subroutine(s.call.subroutine))
+	{
+		ofc_sema_scope_error(scope, stmt->src,
+			"CALL target must be a valid SUBROUTINE");
+		return NULL;
+	}
+
+	s.call.args = NULL;
+	if (stmt->call_entry.args)
+	{
+		s.call.args = ofc_sema_expr_list_create();
+		if (!s.call.args) return NULL;
+
+		unsigned i;
+		for (i = 0; i < stmt->call_entry.args->count; i++)
+		{
+			ofc_parse_call_arg_t* arg
+				= stmt->call_entry.args->call_arg[i];
+			if (!arg)
+			{
+				ofc_sema_expr_list_delete(s.call.args);
+				return NULL;
+			}
+
+			if (arg->type != OFC_PARSE_CALL_ARG_EXPR)
+			{
+				ofc_sema_scope_error(scope, stmt->src,
+					"Non-expression CALL arguments supported");
+				ofc_sema_expr_list_delete(s.call.args);
+				return NULL;
+			}
+
+			if (!ofc_str_ref_empty(arg->name))
+			{
+				ofc_sema_scope_error(scope, stmt->src,
+					"CALL arguments musn't be named");
+				ofc_sema_expr_list_delete(s.call.args);
+				return NULL;
+			}
+
+			ofc_sema_expr_t* expr
+				= ofc_sema_expr(scope, arg->expr);
+			if (!expr)
+			{
+				ofc_sema_expr_list_delete(s.call.args);
+				return NULL;
+			}
+
+			if (!ofc_sema_expr_list_add(
+				s.call.args, expr))
+			{
+				ofc_sema_expr_delete(expr);
+				ofc_sema_expr_list_delete(s.call.args);
+				return NULL;
+			}
+		}
+	}
+
+	ofc_sema_stmt_t* as
+		= ofc_sema_stmt_alloc(s);
+	if (!as)
+	{
+		ofc_sema_expr_list_delete(s.call.args);
+		return NULL;
+	}
+
+    return as;
+}

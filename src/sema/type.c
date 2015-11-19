@@ -13,6 +13,10 @@ static const char* ofc_sema_type__name[] =
 	"CHARACTER",
 	"STRUCTURE",
 	"POINTER",
+	"SUBROUTINE",
+	"FUNCTION",
+
+	NULL
 };
 
 const char* ofc_sema_type_str_rep(
@@ -61,6 +65,11 @@ uint8_t ofc_sema_type_hash(
 
 		case OFC_SEMA_TYPE_CHARACTER:
 			hash += type->kind + type->len;
+			break;
+
+		case OFC_SEMA_TYPE_FUNCTION:
+			hash += ofc_sema_type_hash(
+				type->subtype);
 			break;
 
 		default:
@@ -117,6 +126,7 @@ static const ofc_sema_type_t* ofc_sema_type__create(
 	switch (type)
 	{
 		case OFC_SEMA_TYPE_POINTER:
+		case OFC_SEMA_TYPE_FUNCTION:
 			stype.subtype = subtype;
 			break;
 		case OFC_SEMA_TYPE_STRUCTURE:
@@ -248,9 +258,30 @@ const ofc_sema_type_t* ofc_sema_type_create_array(
 	bool is_automatic,
 	bool is_volatile)
 {
+	if (ofc_sema_type_is_procedure(type))
+		return NULL;
+
 	return ofc_sema_type__create(
 		type->type, type->kind, type->len,
 		array, type->subtype, type->structure,
+		is_static, is_automatic, is_volatile);
+}
+
+const ofc_sema_type_t* ofc_sema_type_create_function(
+	const ofc_sema_type_t* type,
+	bool is_static,
+	bool is_automatic,
+	bool is_volatile)
+{
+	if (!type)
+		return NULL;
+
+	if (ofc_sema_type_is_procedure(type))
+		return NULL;
+
+	return ofc_sema_type__create(
+		OFC_SEMA_TYPE_FUNCTION, 0, 0,
+		NULL, type, NULL,
 		is_static, is_automatic, is_volatile);
 }
 
@@ -335,6 +366,20 @@ const ofc_sema_type_t* ofc_sema_type_byte_default(void)
 	}
 
 	return byte;
+}
+
+const ofc_sema_type_t* ofc_sema_type_subroutine(void)
+{
+	static const ofc_sema_type_t* subroutine = NULL;
+
+	if (!subroutine)
+	{
+		subroutine = ofc_sema_type__create(
+			OFC_SEMA_TYPE_SUBROUTINE, 0, 0,
+			NULL, NULL,NULL, false, false ,false);
+	}
+
+	return subroutine;
 }
 
 
@@ -668,6 +713,7 @@ bool ofc_sema_type_compare(
 				a->structure, b->structure);
 
 		case OFC_SEMA_TYPE_POINTER:
+		case OFC_SEMA_TYPE_FUNCTION:
 			return ofc_sema_type_compare(
 				a->subtype, b->subtype);
 
@@ -675,6 +721,9 @@ bool ofc_sema_type_compare(
 			if (a->len != b->len)
 				return false;
 			break;
+
+		case OFC_SEMA_TYPE_SUBROUTINE:
+			return true;
 
 		default:
 			break;
@@ -832,19 +881,52 @@ bool ofc_sema_type_is_composite(const ofc_sema_type_t* type)
 }
 
 
+bool ofc_sema_type_is_subroutine(const ofc_sema_type_t* type)
+{
+	return (type && (type->type == OFC_SEMA_TYPE_SUBROUTINE));
+}
+
+bool ofc_sema_type_is_function(const ofc_sema_type_t* type)
+{
+	return (type && (type->type == OFC_SEMA_TYPE_FUNCTION));
+}
+
+bool ofc_sema_type_is_procedure(const ofc_sema_type_t* type)
+{
+	return (ofc_sema_type_is_subroutine(type)
+		|| ofc_sema_type_is_function(type));
+}
+
+
 const ofc_sema_type_t* ofc_sema_type_base(
 	const ofc_sema_type_t* type)
 {
 	if (!type)
 		return NULL;
 
-	if (!type->array)
+	if (type->array)
+	{
+		type = ofc_sema_type__create(
+			type->type, type->kind, type->len,
+			NULL, type->subtype, type->structure,
+			type->is_static, type->is_automatic, type->is_volatile);
 		return type;
+	}
 
-	return ofc_sema_type__create(
-		type->type, type->kind, type->len,
-		NULL, type->subtype, type->structure,
-		type->is_static, type->is_automatic, type->is_volatile);
+	switch (type->type)
+	{
+		case OFC_SEMA_TYPE_POINTER:
+		case OFC_SEMA_TYPE_FUNCTION:
+			return type->subtype;
+
+		case OFC_SEMA_TYPE_SUBROUTINE:
+			return NULL;
+
+		default:
+			break;
+	}
+
+	return type;
 }
 
 

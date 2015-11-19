@@ -5,9 +5,6 @@ static ofc_sema_decl_t* ofc_sema_decl__create(
 	const ofc_sema_type_t* type,
 	ofc_str_ref_t name, bool is_implicit)
 {
-	if (!type)
-		return NULL;
-
 	ofc_sema_decl_t* decl
 		= (ofc_sema_decl_t*)malloc(
 			sizeof(ofc_sema_decl_t));
@@ -29,9 +26,9 @@ static ofc_sema_decl_t* ofc_sema_decl__create(
 	decl->equiv = NULL;
 
 	decl->is_implicit  = is_implicit;
-	decl->is_static    = type->is_static;
-	decl->is_volatile  = type->is_volatile;
-	decl->is_automatic = type->is_automatic;
+	decl->is_static    = (type ? type->is_static    : false);
+	decl->is_volatile  = (type ? type->is_volatile  : false);
+	decl->is_automatic = (type ? type->is_automatic : false);
 	decl->is_target    = false;
 
 	decl->lock = false;
@@ -43,6 +40,12 @@ ofc_sema_decl_t* ofc_sema_decl_create(
 	ofc_str_ref_t name)
 {
 	return ofc_sema_decl__create(type, name, false);
+}
+
+ofc_sema_decl_t* ofc_sema_decl_implicit_untyped(
+	ofc_str_ref_t name)
+{
+	return ofc_sema_decl__create(NULL, name, true);
 }
 
 /* We must consume array since it may be used by the type system
@@ -287,6 +290,7 @@ void ofc_sema_decl_delete(
 	if (!decl)
 		return;
 
+	ofc_sema_scope_delete(decl->func);
 	ofc_sema_equiv_delete(decl->equiv);
 	ofc_sema_typeval_delete(decl->init);
 	free(decl);
@@ -298,7 +302,8 @@ bool ofc_sema_decl_init(
 	ofc_sema_decl_t* decl,
 	const ofc_sema_expr_t* init)
 {
-	if (!decl || !init)
+	if (!decl || !init || !decl->type
+		|| ofc_sema_decl_is_procedure(decl))
 		return false;
 
 	if (decl->lock)
@@ -361,7 +366,8 @@ bool ofc_sema_decl_init_offset(
 	unsigned offset,
 	const ofc_sema_expr_t* init)
 {
-	if (!decl || !init)
+	if (!decl || !init || !decl->type
+		|| ofc_sema_decl_is_procedure(decl))
 		return false;
 
 	if (decl->lock)
@@ -447,7 +453,8 @@ bool ofc_sema_decl_init_array(
 	unsigned count,
 	const ofc_sema_expr_t** init)
 {
-	if (!decl || !init)
+	if (!decl || !init
+		|| ofc_sema_decl_is_procedure(decl))
 		return false;
 
 	if (count == 0)
@@ -543,13 +550,17 @@ bool ofc_sema_decl_init_array(
 	return true;
 }
 
-bool ofc_sema_decl_init_stmt_func(
+bool ofc_sema_decl_init_func(
 	ofc_sema_decl_t* decl,
-	const ofc_sema_scope_t* func)
+	ofc_sema_scope_t* func)
 {
-	if (!decl || !func
-		|| decl->lock
-		|| decl->equiv)
+	if (!ofc_sema_decl_is_procedure(decl))
+		return false;
+
+	if (decl->func)
+		return (decl->func == func);
+
+	if (decl->lock || decl->equiv)
 		return false;
 
 	decl->func = func;
@@ -595,6 +606,27 @@ bool ofc_sema_decl_is_locked(
 {
 	return (decl && decl->lock);
 }
+
+
+bool ofc_sema_decl_is_subroutine(
+	const ofc_sema_decl_t* decl)
+{
+	return (decl && ofc_sema_type_is_subroutine(decl->type));
+}
+
+bool ofc_sema_decl_is_function(
+	const ofc_sema_decl_t* decl)
+{
+	return (decl && ofc_sema_type_is_function(decl->type));
+}
+
+bool ofc_sema_decl_is_procedure(
+	const ofc_sema_decl_t* decl)
+{
+	return (ofc_sema_decl_is_subroutine(decl)
+		|| ofc_sema_decl_is_function(decl));
+}
+
 
 const ofc_sema_type_t* ofc_sema_decl_type(
 	const ofc_sema_decl_t* decl)

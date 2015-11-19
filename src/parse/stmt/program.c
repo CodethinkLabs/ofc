@@ -30,7 +30,7 @@ unsigned ofc_parse_stmt_program__body(
 
 	unsigned len = ofc_parse_keyword_end_named(
 		src, &ptr[i], debug,
-		OFC_PARSE_KEYWORD_PROGRAM, false,
+		keyword, false,
 		&stmt->program.name);
 	if (len == 0)
 	{
@@ -189,22 +189,31 @@ unsigned ofc_parse_stmt_function(
 	}
 	i += len;
 
-	stmt->program.args = NULL;
-	if (ptr[i] == '(')
+	if (ptr[i] == '*')
 	{
-		i += 1;
+		/* TODO - Allow star kind for function */
 
-		unsigned len;
-		stmt->program.args = ofc_parse_call_arg_list(
-			src, &ptr[i], debug, &len);
-		if (stmt->program.args) i += len;
+		ofc_parse_type_delete(stmt->program.type);
+		ofc_parse_debug_rewind(debug, dpos);
+		return 0;
+	}
 
-		if (ptr[i++] != ')')
-		{
-			ofc_parse_call_arg_list_delete(stmt->program.args);
-			ofc_parse_debug_rewind(debug, dpos);
-			return 0;
-		}
+	if (ptr[i++] != '(')
+	{
+		ofc_parse_type_delete(stmt->program.type);
+		ofc_parse_debug_rewind(debug, dpos);
+		return 0;
+	}
+
+	stmt->program.args = ofc_parse_call_arg_list(
+		src, &ptr[i], debug, &len);
+	if (stmt->program.args) i += len;
+
+	if (ptr[i++] != ')')
+	{
+		ofc_parse_call_arg_list_delete(stmt->program.args);
+		ofc_parse_debug_rewind(debug, dpos);
+		return 0;
 	}
 
 	if (!ofc_is_end_statement(&ptr[i], &len))

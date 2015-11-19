@@ -5,11 +5,12 @@
 
 struct ofc_sema_decl_s
 {
-	const ofc_sema_type_t*  type;
-	ofc_str_ref_t           name;
-	const ofc_sema_scope_t* func;
+	const ofc_sema_type_t* type;
+	ofc_str_ref_t          name;
+	ofc_sema_scope_t*      func;
 
 	union
+	__attribute__((__packed__))
 	{
 		ofc_sema_typeval_t*  init;
 		ofc_sema_typeval_t** init_array;
@@ -41,13 +42,14 @@ struct ofc_sema_decl_list_s
 		const ofc_sema_decl_t** decl_ref;
 	};
 
-	ofc_hashmap_t*    map;
+	ofc_hashmap_t* map;
 };
 
 ofc_sema_decl_t* ofc_sema_decl_create(
 	const ofc_sema_type_t* type,
 	ofc_str_ref_t name);
 
+ofc_sema_decl_t* ofc_sema_decl_implicit_untyped(ofc_str_ref_t name);
 ofc_sema_decl_t* ofc_sema_decl_implicit_name(
 	const ofc_sema_scope_t* scope,
 	ofc_str_ref_t name);
@@ -76,9 +78,9 @@ bool ofc_sema_decl_init_array(
 	const ofc_sema_array_t* array,
 	unsigned count,
 	const ofc_sema_expr_t** init);
-bool ofc_sema_decl_init_stmt_func(
+bool ofc_sema_decl_init_func(
 	ofc_sema_decl_t* decl,
-	const ofc_sema_scope_t* func);
+	ofc_sema_scope_t* func);
 
 unsigned ofc_sema_decl_size(
 	const ofc_sema_decl_t* decl);
@@ -90,6 +92,13 @@ bool ofc_sema_decl_is_array(
 bool ofc_sema_decl_is_composite(
 	const ofc_sema_decl_t* decl);
 bool ofc_sema_decl_is_locked(
+	const ofc_sema_decl_t* decl);
+
+bool ofc_sema_decl_is_subroutine(
+	const ofc_sema_decl_t* decl);
+bool ofc_sema_decl_is_function(
+	const ofc_sema_decl_t* decl);
+bool ofc_sema_decl_is_procedure(
 	const ofc_sema_decl_t* decl);
 
 const ofc_sema_type_t* ofc_sema_decl_type(

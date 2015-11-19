@@ -80,6 +80,14 @@ ofc_sema_stmt_t* ofc_sema_stmt(
 			s = ofc_sema_stmt_do(scope, stmt);
 			break;
 
+		case OFC_PARSE_STMT_CALL:
+			s = ofc_sema_stmt_call(scope, stmt);
+			break;
+
+		case OFC_PARSE_STMT_RETURN:
+			s = ofc_sema_stmt_return(scope, stmt);
+			break;
+
 		default:
 			ofc_sema_scope_error(scope, stmt->src,
 				"Unsuported statement");
@@ -241,6 +249,10 @@ void ofc_sema_stmt_delete(
 				stmt->do_while_block.cond);
 			ofc_sema_stmt_list_delete(
 				stmt->do_while_block.block);
+			break;
+		case OFC_SEMA_STMT_CALL:
+			ofc_sema_expr_list_delete(
+				stmt->call.args);
 			break;
 		default:
 			break;

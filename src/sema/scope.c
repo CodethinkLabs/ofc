@@ -1,14 +1,6 @@
 #include <ofc/sema.h>
 
 
-static bool ofc_sema_scope__has_body(
-	const ofc_sema_scope_t* scope)
-{
-	if (!scope)
-		return false;
-	return (scope->type != OFC_SEMA_SCOPE_STMT_FUNC);
-}
-
 void ofc_sema_scope_delete(
 	ofc_sema_scope_t* scope)
 {
@@ -143,20 +135,339 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 	return scope;
 }
 
+
+static bool ofc_sema_scope__body(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_list_t* body);
+
+static bool ofc_sema_scope__subroutine(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt)
+{
+	if (!scope || !stmt
+		|| (stmt->type != OFC_PARSE_STMT_SUBROUTINE))
+		return false;
+
+	ofc_str_ref_t name = stmt->program.name;
+	if (ofc_str_ref_empty(name))
+		return false;
+
+	ofc_sema_decl_t* decl
+		= ofc_sema_scope_decl_find_modify(
+			scope, name, true);
+	if (decl)
+	{
+		if (!ofc_sema_decl_is_subroutine(decl))
+		{
+			ofc_sema_scope_error(scope, stmt->src,
+				"Can't redefine variable as SUBROUTINE");
+			return false;
+		}
+	}
+	else
+	{
+		const ofc_sema_type_t* stype
+			= ofc_sema_type_subroutine();
+		if (!stype) return false;
+
+		decl = ofc_sema_decl_create(stype, name);
+		if (!decl) return false;
+
+		if (!ofc_sema_decl_list_add(
+			scope->decl, decl))
+		{
+			ofc_sema_decl_delete(decl);
+			return false;
+		}
+	}
+
+
+	ofc_sema_scope_t* sub_scope
+		= ofc_sema_scope__create(scope, NULL, NULL,
+			OFC_SEMA_SCOPE_SUBROUTINE);
+	if (!sub_scope) return false;
+	sub_scope->name = name;
+
+	if (stmt->program.args)
+	{
+		ofc_lang_opts_t opts
+			= ofc_sema_scope_get_lang_opts(scope);
+
+		sub_scope->args = ofc_sema_decl_list_create(
+			opts.case_sensitive);
+		if (!sub_scope->args)
+		{
+			ofc_sema_scope_delete(sub_scope);
+			return false;
+		}
+
+		unsigned i;
+		for (i = 0; i < stmt->program.args->count; i++)
+		{
+			/* TODO - Handle ASTERISK and AMPERSAND in SUBROUTINE arguments. */
+			ofc_parse_call_arg_t* arg
+				= stmt->program.args->call_arg[i];
+			if (!arg
+				|| (arg->type != OFC_PARSE_CALL_ARG_EXPR)
+				|| !arg->expr
+				|| (arg->expr->type != OFC_PARSE_EXPR_VARIABLE)
+				|| !arg->expr->variable
+				|| (arg->expr->variable->type != OFC_PARSE_LHS_VARIABLE))
+			{
+				ofc_sema_scope_error(scope, stmt->src,
+					"SUBROUTINE arguments can only be names");
+				ofc_sema_scope_delete(sub_scope);
+				return false;
+			}
+
+			if (!ofc_str_ref_empty(arg->name))
+			{
+				ofc_sema_scope_error(scope, stmt->src,
+					"Named parameters not valid as SUBROUTINE arguments");
+				ofc_sema_scope_delete(sub_scope);
+				return false;
+			}
+
+			ofc_str_ref_t arg_name
+				= arg->expr->variable->variable;
+
+			ofc_sema_decl_t* arg_decl
+				= ofc_sema_decl_implicit_name(
+					sub_scope, arg_name);
+			if (!arg_decl)
+			{
+				ofc_sema_scope_delete(sub_scope);
+				return false;
+			}
+
+			if (!ofc_sema_decl_list_add(
+				sub_scope->args, arg_decl))
+			{
+				ofc_sema_decl_delete(arg_decl);
+				ofc_sema_scope_delete(sub_scope);
+				return false;
+			}
+		}
+	}
+
+	if (!ofc_sema_scope__body(
+		sub_scope, stmt->program.body))
+	{
+		ofc_sema_scope_delete(sub_scope);
+		return false;
+	}
+
+	if (!ofc_sema_decl_init_func(
+		decl, sub_scope))
+	{
+		ofc_sema_scope_delete(sub_scope);
+		return false;
+	}
+
+	return true;
+}
+
+static bool ofc_sema_scope__function(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt)
+{
+	if (!scope || !stmt
+		|| (stmt->type != OFC_PARSE_STMT_FUNCTION))
+		return false;
+
+	ofc_str_ref_t name = stmt->program.name;
+	if (ofc_str_ref_empty(name))
+		return false;
+
+	const ofc_sema_type_t* rtype;
+	if (stmt->program.type)
+	{
+		rtype = ofc_sema_type(scope, stmt->program.type);
+		if (!rtype) return false;
+	}
+	else
+	{
+		rtype = ofc_sema_implicit_get(
+			scope->implicit, name.base[0]);
+		if (!rtype)
+		{
+			ofc_sema_scope_error(scope, stmt->src,
+				"No IMPLICIT type matches FUNCTION name");
+			return false;
+		}
+	}
+
+	const ofc_sema_type_t* ftype
+		= ofc_sema_type_create_function(
+			rtype, false, false, false);
+	if (!ftype) return false;
+
+	ofc_sema_decl_t* decl
+		= ofc_sema_scope_decl_find_modify(
+			scope, name, true);
+	if (decl)
+	{
+		if (ofc_sema_decl_is_function(decl))
+		{
+			if (!ofc_sema_type_compare(rtype,
+				ofc_sema_decl_base_type(decl)))
+			{
+				ofc_sema_scope_error(scope, stmt->src,
+					"Conflicting definitions of FUNCTION return type");
+				return false;
+			}
+		}
+		else
+		{
+			if (!ofc_sema_type_compare(rtype,
+				ofc_sema_decl_type(decl)))
+			{
+				ofc_sema_scope_error(scope, stmt->src,
+					"Conflicting definitions of FUNCTION return type");
+				return false;
+			}
+
+			if (ofc_sema_decl_is_locked(decl))
+			{
+				ofc_sema_scope_error(scope, stmt->src,
+					"Can't redeclare used variable as FUNCTION");
+				return false;
+			}
+
+			decl->type = ftype;
+		}
+	}
+	else
+	{
+		decl = ofc_sema_decl_create(ftype, name);
+		if (!decl) return false;
+
+		if (!ofc_sema_decl_list_add(
+			scope->decl, decl))
+		{
+			ofc_sema_decl_delete(decl);
+			return false;
+		}
+	}
+
+
+	ofc_sema_scope_t* func_scope
+		= ofc_sema_scope__create(scope, NULL, NULL,
+			OFC_SEMA_SCOPE_FUNCTION);
+	if (!func_scope) return false;
+	func_scope->name = name;
+
+	if (stmt->program.args)
+	{
+		ofc_lang_opts_t opts
+			= ofc_sema_scope_get_lang_opts(scope);
+
+		func_scope->args = ofc_sema_decl_list_create(
+			opts.case_sensitive);
+		if (!func_scope->args)
+		{
+			ofc_sema_scope_delete(func_scope);
+			return false;
+		}
+
+		unsigned i;
+		for (i = 0; i < stmt->program.args->count; i++)
+		{
+			ofc_parse_call_arg_t* arg
+				= stmt->program.args->call_arg[i];
+			if (!arg
+				|| (arg->type != OFC_PARSE_CALL_ARG_EXPR)
+				|| !arg->expr
+				|| (arg->expr->type != OFC_PARSE_EXPR_VARIABLE)
+				|| !arg->expr->variable
+				|| (arg->expr->variable->type != OFC_PARSE_LHS_VARIABLE))
+			{
+				ofc_sema_scope_error(scope, stmt->src,
+					"FUNCTION arguments can only be names");
+				ofc_sema_scope_delete(func_scope);
+				return false;
+			}
+
+			if (!ofc_str_ref_empty(arg->name))
+			{
+				ofc_sema_scope_error(scope, stmt->src,
+					"Named parameters not valid as FUNCTION arguments");
+				ofc_sema_scope_delete(func_scope);
+				return false;
+			}
+
+			ofc_str_ref_t arg_name
+				= arg->expr->variable->variable;
+
+			ofc_sema_decl_t* arg_decl
+				= ofc_sema_decl_implicit_name(
+					func_scope, arg_name);
+			if (!arg_decl)
+			{
+				ofc_sema_scope_delete(func_scope);
+				return false;
+			}
+
+			if (!ofc_sema_decl_list_add(
+				func_scope->args, arg_decl))
+			{
+				ofc_sema_decl_delete(arg_decl);
+				ofc_sema_scope_delete(func_scope);
+				return false;
+			}
+		}
+	}
+
+	if (!ofc_sema_scope__body(
+		func_scope, stmt->program.body))
+	{
+		ofc_sema_scope_delete(func_scope);
+		return false;
+	}
+
+	if (!ofc_sema_decl_init_func(
+		decl, func_scope))
+	{
+		ofc_sema_scope_delete(func_scope);
+		return false;
+	}
+
+	return true;
+}
+
+
 static bool ofc_sema_scope__body(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_list_t* body)
 {
-	if (!ofc_sema_scope__has_body(scope))
+	if (scope->type == OFC_SEMA_SCOPE_STMT_FUNC)
 		return false;
 
 	if (!body)
 		return true;
 
+	/* Initial scan for FORMAT statements */
 	unsigned i;
 	for (i = 0; i < body->count; i++)
 	{
-        ofc_parse_stmt_t* stmt = body->stmt[i];
+		ofc_parse_stmt_t* stmt = body->stmt[i];
+		if (!stmt) continue;
+
+		switch (stmt->type)
+		{
+			case OFC_PARSE_STMT_FORMAT:
+				if (!ofc_sema_format(scope, stmt))
+					return false;
+				break;
+
+			default:
+				break;
+		}
+	}
+
+	for (i = 0; i < body->count; i++)
+	{
+		ofc_parse_stmt_t* stmt = body->stmt[i];
 		if (!stmt) continue;
 
 		if (stmt->type == OFC_PARSE_STMT_EMPTY)
@@ -171,18 +482,25 @@ static bool ofc_sema_scope__body(
 
 		switch (stmt->type)
 		{
+			case OFC_PARSE_STMT_FORMAT:
+				/* These are already handled. */
+				break;
+
+			case OFC_PARSE_STMT_SUBROUTINE:
+				if (!ofc_sema_scope__subroutine(scope, stmt))
+					return false;
+				break;
+
+			case OFC_PARSE_STMT_FUNCTION:
+				if (!ofc_sema_scope__function(scope, stmt))
+					return false;
+				break;
+
 			case OFC_PARSE_STMT_PROGRAM:
 				if (!ofc_sema_scope_program(scope, stmt))
 					return false;
 				break;
-			case OFC_PARSE_STMT_SUBROUTINE:
-				if (!ofc_sema_scope_subroutine(scope, stmt))
-					return false;
-				break;
-			case OFC_PARSE_STMT_FUNCTION:
-				if (!ofc_sema_scope_function(scope, stmt))
-					return false;
-				break;
+
 			case OFC_PARSE_STMT_BLOCK_DATA:
 				if (!ofc_sema_scope_block_data(scope, stmt))
 					return false;
@@ -201,11 +519,6 @@ static bool ofc_sema_scope__body(
 
 			case OFC_PARSE_STMT_DECL:
 				if (!ofc_sema_decl(scope, stmt))
-					return false;
-				break;
-
-			case OFC_PARSE_STMT_FORMAT:
-				if (!ofc_sema_format(scope, stmt))
 					return false;
 				break;
 
@@ -350,7 +663,7 @@ ofc_sema_scope_t* ofc_sema_scope_stmt_func(
 		return NULL;
 
     ofc_sema_decl_t* decl
-		= ofc_sema_scope_decl_find_modify(scope, base_name, false);
+		= ofc_sema_scope_decl_find_modify(scope, base_name, true);
 	if (!decl)
 	{
 		decl = ofc_sema_decl_implicit_name(
@@ -384,6 +697,14 @@ ofc_sema_scope_t* ofc_sema_scope_stmt_func(
 			return NULL;
 		}
 	}
+
+	const ofc_sema_type_t* ftype
+		= ofc_sema_type_create_function(
+			ofc_sema_decl_type(decl), false, false ,false);
+	if (!ftype) return NULL;
+
+	decl->type = ftype;
+	decl->is_implicit = false;
 
 	ofc_sema_scope_t* func
 		= ofc_sema_scope__create(
@@ -435,13 +756,30 @@ ofc_sema_scope_t* ofc_sema_scope_stmt_func(
 			ofc_str_ref_t arg_name
 				= expr->variable->variable;
 
-			ofc_sema_decl_t* arg_decl
-				= ofc_sema_decl_implicit_name(
-					scope, arg_name);
+			/* Copy existing decl type if it exists. */
+			const ofc_sema_decl_t* exist
+				= ofc_sema_scope_decl_find(
+					scope, arg_name, true);
+
+			ofc_sema_decl_t* arg_decl = NULL;
+
+			if (exist && !exist->func)
+			{
+				const ofc_sema_type_t* type
+					= ofc_sema_decl_type(exist);
+				arg_decl = ofc_sema_decl_create(
+					type, arg_name);
+			}
+
 			if (!arg_decl)
 			{
-				ofc_sema_scope_delete(func);
-				return NULL;
+				arg_decl = ofc_sema_decl_implicit_name(
+						scope, arg_name);
+				if (!arg_decl)
+				{
+					ofc_sema_scope_delete(func);
+					return NULL;
+				}
 			}
 
 			if (!ofc_sema_decl_list_add(
@@ -462,42 +800,14 @@ ofc_sema_scope_t* ofc_sema_scope_stmt_func(
 		return NULL;
 	}
 
-	if (!ofc_sema_scope__add_child(scope, func))
+	if (!ofc_sema_decl_init_func(
+		decl, func))
 	{
 		ofc_sema_scope_delete(func);
 		return NULL;
 	}
 
-	if (!ofc_sema_decl_init_stmt_func(
-		decl, func))
-	{
-		/* This should never happen. */
-		return NULL;
-	}
-
 	return func;
-}
-
-ofc_sema_scope_t* ofc_sema_scope_subroutine(
-	ofc_sema_scope_t* scope,
-	const ofc_parse_stmt_t* stmt)
-{
-	if (!scope || !stmt)
-		return NULL;
-
-	/* TODO - Implement. */
-	return NULL;
-}
-
-ofc_sema_scope_t* ofc_sema_scope_function(
-	ofc_sema_scope_t* scope,
-	const ofc_parse_stmt_t* stmt)
-{
-	if (!scope || !stmt)
-		return NULL;
-
-	/* TODO - Implement. */
-	return NULL;
 }
 
 ofc_sema_scope_t* ofc_sema_scope_if(

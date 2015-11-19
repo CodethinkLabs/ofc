@@ -11,6 +11,8 @@ typedef enum
 	OFC_SEMA_TYPE_CHARACTER,
 	OFC_SEMA_TYPE_STRUCTURE,
 	OFC_SEMA_TYPE_POINTER,
+	OFC_SEMA_TYPE_FUNCTION,
+	OFC_SEMA_TYPE_SUBROUTINE,
 
 	OFC_SEMA_TYPE_COUNT
 } ofc_sema_type_e;
@@ -63,6 +65,9 @@ const ofc_sema_type_t* ofc_sema_type_create_pointer(
 const ofc_sema_type_t* ofc_sema_type_create_array(
 	const ofc_sema_type_t* type, ofc_sema_array_t* array,
 	bool is_static, bool is_automatic, bool is_volatile);
+const ofc_sema_type_t* ofc_sema_type_create_function(
+	const ofc_sema_type_t* type,
+	bool is_static, bool is_automatic, bool is_volatile);
 
 typedef const ofc_sema_type_t* (*ofc_sema_type_f)(void);
 
@@ -72,6 +77,7 @@ const ofc_sema_type_t* ofc_sema_type_real_default(void);
 const ofc_sema_type_t* ofc_sema_type_double_default(void);
 const ofc_sema_type_t* ofc_sema_type_complex_default(void);
 const ofc_sema_type_t* ofc_sema_type_byte_default(void);
+const ofc_sema_type_t* ofc_sema_type_subroutine(void);
 
 uint8_t ofc_sema_type_hash(
 	const ofc_sema_type_t* type);
@@ -90,6 +96,10 @@ bool ofc_sema_type_is_logical(const ofc_sema_type_t* type);
 bool ofc_sema_type_is_array(const ofc_sema_type_t* type);
 bool ofc_sema_type_is_structure(const ofc_sema_type_t* type);
 bool ofc_sema_type_is_composite(const ofc_sema_type_t* type);
+
+bool ofc_sema_type_is_subroutine(const ofc_sema_type_t* type);
+bool ofc_sema_type_is_function(const ofc_sema_type_t* type);
+bool ofc_sema_type_is_procedure(const ofc_sema_type_t* type);
 
 const ofc_sema_type_t* ofc_sema_type_base(const ofc_sema_type_t* type);
 

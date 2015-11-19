@@ -615,7 +615,7 @@ static ofc_sema_expr_t* ofc_sema_expr__function(
 	if (!name)
 		return NULL;
 
-	if (!decl || !decl->func
+	if (!decl || !ofc_sema_decl_is_function(decl)
 		|| (name->type != OFC_PARSE_LHS_ARRAY)
 		|| !name->array.index
 		|| !name->parent
@@ -626,15 +626,18 @@ static ofc_sema_expr_t* ofc_sema_expr__function(
 		return NULL;
 	}
 
+	/* TODO - Defer checking of arguments for a later pass? */
 	const ofc_sema_scope_t* fscope = decl->func;
-
-	if (fscope->args
-		? (name->array.index->count != fscope->args->count)
-		: (name->array.index->count != 0))
+	if (fscope)
 	{
-		ofc_sema_scope_error(scope, name->src,
-			"Incorrect number of arguments in function call.");
-		return NULL;
+		if (fscope->args
+			? (name->array.index->count != fscope->args->count)
+			: (name->array.index->count != 0))
+		{
+			ofc_sema_scope_error(scope, name->src,
+				"Incorrect number of arguments in function call.");
+			return NULL;
+		}
 	}
 
 	ofc_sema_expr_list_t* args = NULL;
@@ -742,10 +745,49 @@ static ofc_sema_expr_t* ofc_sema_expr__variable(
 		expr = ofc_sema_expr__intrinsic(
 			scope, name, intrinsic);
 	}
-	else if (decl && decl->func)
+	else if (ofc_sema_decl_is_function(decl))
 	{
 		expr = ofc_sema_expr__function(
 			scope, name, decl);
+	}
+	else if (!ofc_sema_decl_is_array(decl)
+		&& ofc_parse_lhs_possible_function_call(*name))
+	{
+		if ((name->type != OFC_PARSE_LHS_ARRAY)
+			|| !name->parent
+			|| (name->parent->type != OFC_PARSE_LHS_VARIABLE))
+		{
+			/* TODO - Handle complicated functions
+			          returning arrays or structures. */
+			return NULL;
+		}
+
+		ofc_sema_decl_t* fdecl
+			= ofc_sema_scope_decl_find_modify(
+				scope, base_name, true);
+
+		if (!fdecl)
+		{
+			fdecl = ofc_sema_decl_implicit_name(
+				scope, base_name);
+			if (!fdecl) return NULL;
+		}
+
+		if (ofc_sema_decl_is_locked(fdecl))
+		{
+			ofc_sema_scope_error(scope, name->src,
+				"Can't redeclare referenced variable as function");
+			return NULL;
+		}
+
+		const ofc_sema_type_t* ftype
+			= ofc_sema_type_create_function(
+				ofc_sema_decl_type(fdecl), false, false, false);
+		if (!ftype) return NULL;
+		fdecl->type = ftype;
+
+		expr = ofc_sema_expr__function(
+			scope, name, fdecl);
 	}
 	else
 	{
@@ -890,7 +932,7 @@ const ofc_sema_type_t* ofc_sema_expr_type(
 			return ofc_sema_intrinsic_type(
 				expr->intrinsic, expr->args);
 		case OFC_SEMA_EXPR_FUNCTION:
-			return ofc_sema_decl_type(
+			return ofc_sema_decl_base_type(
 				expr->function);
 		default:
 			break;

@@ -242,33 +242,73 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 			return NULL;
 	}
 
-	ofc_sema_decl_t* decl
-		= ofc_sema_scope_decl_find_modify(
-			scope, lhs->variable, false);
-	if (!decl)
+	ofc_sema_decl_t* decl;
+	if ((scope->type == OFC_SEMA_SCOPE_FUNCTION)
+		&& (ofc_sema_scope_get_lang_opts(scope).case_sensitive
+			? ofc_str_ref_equal(lhs->variable, scope->name)
+			: ofc_str_ref_equal_ci(lhs->variable, scope->name)))
 	{
-		decl = ofc_sema_decl_implicit_lhs(
-			scope, lhs);
+		/* Special case for FUNCTION return value. */
+
+		decl = ofc_sema_scope_decl_find_modify(
+			scope, lhs->variable, true);
 		if (!decl)
 		{
-			ofc_sema_scope_error(scope, lhs->src,
-				"No declaration for '%.*s' and no valid IMPLICIT rule.",
-				lhs->variable.size, lhs->variable.base);
-			return NULL;
-		}
+			ofc_sema_decl_t* fdecl
+				= ofc_sema_scope_decl_find_modify(
+					scope, lhs->variable, false);
+			if (!fdecl)
+			{
+				/* This should never happen. */
+				return NULL;
+			}
 
-		if (!ofc_sema_decl_list_add(
-			scope->decl, decl))
-		{
-			ofc_sema_decl_delete(decl);
-			return NULL;
-		}
+			const ofc_sema_type_t* rtype
+				= ofc_sema_decl_base_type(fdecl);
+			decl = ofc_sema_decl_create(rtype, lhs->variable);
+			if (!decl) return NULL;
 
-		if (is_expr)
+			if (!ofc_sema_decl_list_add(
+				scope->decl, decl))
+			{
+				ofc_sema_decl_delete(decl);
+				return NULL;
+			}
+
+			/* Can't modify return type once it's been referenced. */
+			fdecl->is_implicit = false;
+			decl->is_implicit  = false;
+		}
+	}
+	else
+	{
+		decl = ofc_sema_scope_decl_find_modify(
+				scope, lhs->variable, false);
+		if (!decl)
 		{
-			ofc_sema_scope_warning(scope, lhs->src,
-				"Referencing uninitialized variable '%.*s' in expression.",
-				lhs->variable.size, lhs->variable.base);
+			decl = ofc_sema_decl_implicit_lhs(
+				scope, lhs);
+			if (!decl)
+			{
+				ofc_sema_scope_error(scope, lhs->src,
+					"No declaration for '%.*s' and no valid IMPLICIT rule.",
+					lhs->variable.size, lhs->variable.base);
+				return NULL;
+			}
+
+			if (!ofc_sema_decl_list_add(
+				scope->decl, decl))
+			{
+				ofc_sema_decl_delete(decl);
+				return NULL;
+			}
+
+			if (is_expr)
+			{
+				ofc_sema_scope_warning(scope, lhs->src,
+					"Referencing uninitialized variable '%.*s' in expression.",
+					lhs->variable.size, lhs->variable.base);
+			}
 		}
 	}
 

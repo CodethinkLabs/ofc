@@ -509,6 +509,38 @@ bool ofc_parse_lhs_base_name(
 }
 
 
+bool ofc_parse_lhs_possible_function_call(
+	const ofc_parse_lhs_t lhs)
+{
+	if ((lhs.type != OFC_PARSE_LHS_ARRAY)
+		|| !lhs.parent)
+		return false;
+
+	if (ofc_parse_lhs_possible_function_call(*lhs.parent))
+		return true;
+
+	if (!lhs.array.index)
+		return true;
+
+	if (!lhs.array.index->range)
+		return false;
+
+	unsigned i;
+	for (i = 0; i < lhs.array.index->count; i++)
+	{
+		ofc_parse_array_range_t* range
+			= lhs.array.index->range[i];
+		if (!range) return false;
+
+		if (!range->first || range->is_slice
+			|| range->last || range->stride)
+			return false;
+	}
+
+	return true;
+}
+
+
 
 ofc_parse_lhs_list_t* ofc_parse_lhs_list(
 	const ofc_sparse_t* src, const char* ptr,
