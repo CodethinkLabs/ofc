@@ -575,7 +575,10 @@ static ofc_sema_typeval_t* ofc_sema_typeval__character_literal(
 
 	typeval.src = literal->src;
 
-	return ofc_sema_typeval__alloc(typeval);
+	ofc_sema_typeval_t* atv
+		= ofc_sema_typeval__alloc(typeval);
+	if (!atv && !is_byte) free(typeval.character);
+	return atv;
 }
 
 static ofc_sema_typeval_t* ofc_sema_typeval__logical_literal(
