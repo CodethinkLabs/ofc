@@ -195,11 +195,19 @@ void ofc_sema_stmt_delete(
 			ofc_sema_expr_list_delete(
 				stmt->if_comp.label);
 			break;
+		case OFC_SEMA_STMT_IF_STATEMENT:
+			ofc_sema_expr_delete(
+				stmt->if_stmt.cond);
+			ofc_sema_stmt_delete(
+				stmt->if_stmt.stmt);
+			break;
 		case OFC_SEMA_STMT_IF_THEN:
 			ofc_sema_expr_delete(
 				stmt->if_then.cond);
 			ofc_sema_scope_delete(
 				stmt->if_then.scope_then);
+			ofc_sema_scope_delete(
+				stmt->if_then.scope_else);
 			break;
 		case OFC_SEMA_STMT_STOP:
 		case OFC_SEMA_STMT_PAUSE:
