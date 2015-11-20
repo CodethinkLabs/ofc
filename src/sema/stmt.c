@@ -230,6 +230,8 @@ void ofc_sema_stmt_delete(
 		case OFC_SEMA_STMT_DO_LABEL:
 			ofc_sema_expr_delete(
 				stmt->do_label.end_label);
+			ofc_sema_lhs_delete(
+				stmt->do_label.iter);
 			ofc_sema_expr_delete(
 				stmt->do_label.init);
 			ofc_sema_expr_delete(
@@ -238,6 +240,8 @@ void ofc_sema_stmt_delete(
 				stmt->do_label.step);
 			break;
 		case OFC_SEMA_STMT_DO_BLOCK:
+			ofc_sema_lhs_delete(
+				stmt->do_block.iter);
 			ofc_sema_expr_delete(
 				stmt->do_block.init);
 			ofc_sema_expr_delete(

@@ -4,9 +4,9 @@
 static bool ofc_sema_stmt__loop_control(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_assign_t* parse_init,
-	const ofc_parse_expr_t* parse_last,
-	const ofc_parse_expr_t* parse_step,
-	const ofc_sema_lhs_t** sema_iter,
+	const ofc_parse_expr_t*   parse_last,
+	const ofc_parse_expr_t*   parse_step,
+	ofc_sema_lhs_t**  sema_iter,
 	ofc_sema_expr_t** sema_init,
 	ofc_sema_expr_t** sema_last,
 	ofc_sema_expr_t** sema_step)
@@ -22,6 +22,7 @@ static bool ofc_sema_stmt__loop_control(
 		ofc_sema_scope_error(
 			scope, parse_init->name->src,
 			"DO loop iterator must be a scalar type.");
+		ofc_sema_lhs_delete(*sema_iter);
 		return false;
 	}
 
@@ -34,7 +35,11 @@ static bool ofc_sema_stmt__loop_control(
 
 	*sema_init = ofc_sema_expr(
 		scope, parse_init->init);
-	if (!*sema_init) return false;
+	if (!*sema_init)
+	{
+		ofc_sema_lhs_delete(*sema_iter);
+		return false;
+	}
 
 	if (!ofc_sema_type_compare(dtype,
 		ofc_sema_expr_type(*sema_init)))
@@ -52,6 +57,7 @@ static bool ofc_sema_stmt__loop_control(
 				ofc_sema_type_str_rep(expr_type->type),
 				ofc_sema_type_str_rep(dtype->type));
 			ofc_sema_expr_delete(*sema_init);
+			ofc_sema_lhs_delete(*sema_iter);
 			return false;
 		}
 		*sema_init = cast;
@@ -62,6 +68,7 @@ static bool ofc_sema_stmt__loop_control(
 	if (!*sema_last)
 	{
 		ofc_sema_expr_delete(*sema_init);
+		ofc_sema_lhs_delete(*sema_iter);
 		return false;
 	}
 
@@ -82,6 +89,7 @@ static bool ofc_sema_stmt__loop_control(
 				ofc_sema_type_str_rep(dtype->type));
 			ofc_sema_expr_delete(*sema_init);
 			ofc_sema_expr_delete(*sema_last);
+			ofc_sema_lhs_delete(*sema_iter);
 			return false;
 		}
 		*sema_last = cast;
@@ -96,6 +104,7 @@ static bool ofc_sema_stmt__loop_control(
 		{
 			ofc_sema_expr_delete(*sema_init);
 			ofc_sema_expr_delete(*sema_last);
+			ofc_sema_lhs_delete(*sema_iter);
 			return false;
 		}
 
@@ -114,9 +123,10 @@ static bool ofc_sema_stmt__loop_control(
 						"Expression type %s doesn't match lhs type %s",
 					ofc_sema_type_str_rep(expr_type->type),
 					ofc_sema_type_str_rep(dtype->type));
+				ofc_sema_expr_delete(*sema_step);
 				ofc_sema_expr_delete(*sema_init);
 				ofc_sema_expr_delete(*sema_last);
-				ofc_sema_expr_delete(*sema_step);
+				ofc_sema_lhs_delete(*sema_iter);
 				return false;
 			}
 			*sema_step = cast;

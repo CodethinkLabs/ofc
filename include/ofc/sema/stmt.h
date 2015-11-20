@@ -105,16 +105,16 @@ struct ofc_sema_stmt_s
 
 		struct
 		{
-			ofc_sema_expr_t*      end_label;
-			const ofc_sema_lhs_t* iter;
-			ofc_sema_expr_t*      init;
-			ofc_sema_expr_t*      last;
-			ofc_sema_expr_t*      step;
+			ofc_sema_expr_t* end_label;
+			ofc_sema_lhs_t*  iter;
+			ofc_sema_expr_t* init;
+			ofc_sema_expr_t* last;
+			ofc_sema_expr_t* step;
 		} do_label;
 
 		struct
 		{
-			const ofc_sema_lhs_t* iter;
+			ofc_sema_lhs_t*       iter;
 			ofc_sema_expr_t*      init;
 			ofc_sema_expr_t*      last;
 			ofc_sema_expr_t*      step;
