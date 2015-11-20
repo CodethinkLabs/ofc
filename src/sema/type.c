@@ -161,7 +161,11 @@ static const ofc_sema_type_t* ofc_sema_type__create(
 	const ofc_sema_type_t* gtype
 		= ofc_hashmap_find(
 			ofc_sema_type__map, &stype);
-	if (gtype) return gtype;
+	if (gtype)
+	{
+		ofc_sema_array_delete(array);
+		return gtype;
+	}
 
 	ofc_sema_type_t* ntype
 		= (ofc_sema_type_t*)malloc(
