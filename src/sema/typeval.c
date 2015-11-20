@@ -884,13 +884,14 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 		else
 		{
 			tv.character = (char*)malloc(len_type * kind);
-			memcpy(tv.character, typeval->character,
-				(len_type * kind));
 
 			if (len_tval < len_type)
 			{
+				memcpy(tv.character, typeval->character,
+					(len_tval * kind));
+
 				unsigned pad_char, pad_byte;
-				for (pad_char = len_tval; pad_char < (len_type * kind);
+				for (pad_char = (len_tval * kind); pad_char < (len_type * kind);
 					pad_char += kind)
 				{
 					tv.character[pad_char] = ' ';
@@ -899,6 +900,11 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 						tv.character[pad_char + pad_byte] = '\0';
 					}
 				}
+			}
+			else
+			{
+				memcpy(tv.character, typeval->character,
+					(len_type * kind));
 			}
 		}
 
