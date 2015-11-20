@@ -1325,7 +1325,9 @@ bool ofc_sema_expr_list_compare(
 
 static const char* ofc_sema_expr__operator[] =
 {
-	NULL, NULL, NULL, NULL,
+	/* Set expressions types that do not have operators
+	   to NULL, see ofc_sema_expr_e. */
+	NULL, NULL, NULL, NULL, NULL,
 
 	"**",
 	"*",
@@ -1360,7 +1362,30 @@ bool ofc_sema_expr_print(
 		case OFC_SEMA_EXPR_LHS:
 			return ofc_sema_lhs_print(cs, expr->lhs);
 		case OFC_SEMA_EXPR_CAST:
+			{
+				/* TODO - Should we actually print these? */
+				const char* cast
+					= ofc_sema_type_str_cast_rep(
+						expr->cast.type->type);
+				if (cast)
+				{
+					if (!ofc_colstr_atomic_writef(cs, "%s", cast)
+						|| !ofc_colstr_atomic_writef(cs, "(")
+						|| !ofc_sema_expr_print(cs, expr->cast.expr)
+						|| !ofc_colstr_atomic_writef(cs, ")"))
+						return false;
+				}
+				else
+				{
+					if (!ofc_sema_expr_print(cs, expr->cast.expr))
+						return false;
+				}
+			}
+			return true;
+
 		case OFC_SEMA_EXPR_INTRINSIC:
+		case OFC_SEMA_EXPR_FUNCTION:
+			return false;
 
 		default:
 			break;
@@ -1369,8 +1394,18 @@ bool ofc_sema_expr_print(
 	if (expr->type >= OFC_SEMA_EXPR_COUNT)
 		return false;
 
-	return ofc_colstr_atomic_writef(cs, "%s",
-		ofc_sema_expr__operator[expr->type]);
+	if (!ofc_sema_expr_print(cs, expr->a))
+		return false;
+	if (!ofc_colstr_atomic_writef(cs, " %s ",
+		ofc_sema_expr__operator[expr->type]))
+			return false;
+	if (expr->b)
+	{
+		if (!ofc_sema_expr_print(cs, expr->b))
+			return false;
+	}
+
+	return true;
 }
 
 bool ofc_sema_expr_list_print(
@@ -1384,8 +1419,13 @@ bool ofc_sema_expr_list_print(
 	{
 		if (!ofc_sema_expr_print(cs, expr_list->expr[i]))
 			return false;
-		if (!ofc_colstr_atomic_writef(cs, " "))
-			return false;
+
+		if ((expr_list->count > 1)
+			&& (i < expr_list->count - 1))
+		{
+			if (!ofc_colstr_atomic_writef(cs, ", "))
+				return false;
+		}
 	}
 	return true;
 }

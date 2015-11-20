@@ -31,6 +31,10 @@ bool ofc_sema_array_compare(
 
 unsigned ofc_sema_array_total(const ofc_sema_array_t* array);
 
+bool ofc_sema_array_print(
+	ofc_colstr_t* cs,
+	const ofc_sema_array_t* array);
+
 
 typedef struct
 {
@@ -38,7 +42,8 @@ typedef struct
 	ofc_sema_expr_t* index[0];
 } ofc_sema_array_index_t;
 
-bool ofc_sema_array_index_print(ofc_colstr_t* cs,
+bool ofc_sema_array_index_print(
+	ofc_colstr_t* cs,
 	const ofc_sema_array_index_t* index);
 
 ofc_sema_array_index_t* ofc_sema_array_index(
@@ -86,6 +91,10 @@ bool ofc_sema_array_slice_compare(
 	const ofc_sema_array_slice_t* b);
 
 ofc_sema_array_t* ofc_sema_array_slice_dims(
+	const ofc_sema_array_slice_t* slice);
+
+bool ofc_sema_array_slice_print(
+	ofc_colstr_t* cs,
 	const ofc_sema_array_slice_t* slice);
 
 #endif

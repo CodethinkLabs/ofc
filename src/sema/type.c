@@ -19,6 +19,22 @@ static const char* ofc_sema_type__name[] =
 	NULL
 };
 
+static const char* ofc_sema_type__cast[] =
+{
+	NULL,
+	"INT",
+	"REAL",
+	"CMPLX",
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+
+	NULL
+};
+
 const char* ofc_sema_type_str_rep(
 	const ofc_sema_type_e type)
 {
@@ -26,6 +42,15 @@ const char* ofc_sema_type_str_rep(
 		return NULL;
 
 	return ofc_sema_type__name[type];
+}
+
+const char* ofc_sema_type_str_cast_rep(
+	const ofc_sema_type_e type)
+{
+	if (type >= OFC_SEMA_TYPE_COUNT)
+		return NULL;
+
+	return ofc_sema_type__cast[type];
 }
 
 static void ofc_sema_type__delete(ofc_sema_type_t* type)

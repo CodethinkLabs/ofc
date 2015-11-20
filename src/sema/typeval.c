@@ -2066,18 +2066,33 @@ bool ofc_sema_typeval_print(ofc_colstr_t*cs,
 				typeval->integer);
 
 		case OFC_SEMA_TYPE_REAL:
-			return ofc_colstr_atomic_writef(cs, "%f",
-				typeval->real);
+			{
+				char buff[64];
+				sprintf(buff, "%Lg", typeval->real);
+
+				unsigned i;
+				for (i = 0; buff[i] != '\0'; i++)
+				{
+					if ((buff[i] == '.')
+						|| (tolower(buff[i]) == 'e'))
+						break;
+				}
+				if (buff[i] == '\0')
+					strcat(buff, ".0");
+
+				return ofc_colstr_atomic_writef(cs, "%s", buff);
+			}
 
 		case OFC_SEMA_TYPE_COMPLEX:
-			if (!ofc_colstr_atomic_writef(cs, "(")) return false;
-			if (!ofc_colstr_atomic_writef(cs, "%f",
-				typeval->complex.real))	            return false;
-			if (!ofc_colstr_atomic_writef(cs, ",")) return false;
-			if (!ofc_colstr_atomic_writef(cs, " ")) return false;
-			if (!ofc_colstr_atomic_writef(cs, "%f",
-				typeval->complex.imaginary))        return false;
-			if (!ofc_colstr_atomic_writef(cs, ")")) return false;
+			if (!ofc_colstr_atomic_writef(cs, "(")
+				|| !ofc_colstr_atomic_writef(cs, "%LF",
+					typeval->complex.real)
+				|| !ofc_colstr_atomic_writef(cs, ",")
+				|| !ofc_colstr_atomic_writef(cs, " ")
+				|| !ofc_colstr_atomic_writef(cs, "%LF",
+					typeval->complex.imaginary)
+				|| !ofc_colstr_atomic_writef(cs, ")"))
+				return false;
 			return true;
 
 		case OFC_SEMA_TYPE_CHARACTER:

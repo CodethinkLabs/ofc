@@ -1109,21 +1109,28 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs, bool print_type,
 
 	if (print_type)
 	{
-		if (ofc_sema_type_is_array(decl->type))
+		const ofc_sema_type_t* type = decl->type;
+		if (ofc_sema_decl_is_procedure(decl))
+			type = type->subtype;
+
+		/* TODO - Handle POINTER and STRUCTURE declarations. */
+
+		if (!ofc_colstr_atomic_writef(cs, "%s",
+			ofc_sema_type_str_rep(type->type)))
+			return false;
+
+		if (ofc_sema_type_is_array(type))
 		{
-			if (!ofc_colstr_atomic_writef(cs, "%s, DIMENSION() :: ",
-			ofc_sema_type_str_rep(decl->type->type)))
+			if (!ofc_colstr_atomic_writef(cs, ", DIMENSION")
+				|| !ofc_sema_array_print(cs, type->array))
 				return false;
 		}
-		else
-		{
-			if (!ofc_colstr_atomic_writef(cs, "%s :: ",
-				ofc_sema_type_str_rep(decl->type->type)))
-					return false;
-		}
+
+		if (!ofc_colstr_atomic_writef(cs, " :: "))
+			return false;
 	}
 
-	if (!ofc_colstr_atomic_writef(cs, "%.*s ",
+	if (!ofc_colstr_atomic_writef(cs, "%.*s",
 		decl->name.size, decl->name.base))
 			return false;
 
@@ -1133,9 +1140,8 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs, bool print_type,
 	}
 	else if (decl->init)
 	{
-		if (!ofc_colstr_atomic_writef(cs, " = "))
-			return false;
-		if (!ofc_sema_typeval_print(cs, decl->init))
+		if (!ofc_colstr_atomic_writef(cs, " = ")
+			|| !ofc_sema_typeval_print(cs, decl->init))
 			return false;
 	}
 

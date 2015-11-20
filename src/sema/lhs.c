@@ -521,22 +521,43 @@ bool ofc_sema_lhs_print(
 
 	switch(lhs->type)
 	{
+		case OFC_SEMA_LHS_ARRAY_INDEX:
+		case OFC_SEMA_LHS_ARRAY_SLICE:
+		case OFC_SEMA_LHS_STRUCTURE_MEMBER:
+			if (!ofc_sema_lhs_print(
+				cs, lhs->parent))
+				return false;
+			break;
+		default:
+			break;
+	}
+
+	switch(lhs->type)
+	{
 		case OFC_SEMA_LHS_DECL:
 			if (!ofc_sema_decl_print(cs, false, lhs->decl))
 				return false;
-			return true;
+			break;
+
 		case OFC_SEMA_LHS_ARRAY_INDEX:
 			if (!ofc_sema_array_index_print(cs, lhs->index))
 				return false;
-			return true;
+			break;
+
 		case OFC_SEMA_LHS_ARRAY_SLICE:
+			if (!ofc_sema_array_slice_print(cs, lhs->slice))
+				return false;
+			break;
+
 		case OFC_SEMA_LHS_STRUCTURE_MEMBER:
-			if (!ofc_colstr_atomic_writef(cs, "%.*s",
+			if (!ofc_colstr_atomic_writef(cs, ".%.*s",
 				lhs->member.size, lhs->member.base))
 					return false;
-			return true;
+			break;
 
 		default:
 			return false;
 	}
+
+	return true;
 }

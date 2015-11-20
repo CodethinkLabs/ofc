@@ -222,6 +222,41 @@ unsigned ofc_sema_array_total(const ofc_sema_array_t* array)
 	return total;
 }
 
+bool ofc_sema_array_print(
+	ofc_colstr_t* cs,
+	const ofc_sema_array_t* array)
+{
+	if (!cs || !array)
+		return false;
+
+	if (!ofc_colstr_atomic_writef(cs, "("))
+		return false;
+
+	unsigned i;
+	for (i = 0; i < array->dimensions; i++)
+	{
+		if ((i > 0) && !ofc_colstr_atomic_writef(cs, ", "))
+			return false;
+
+		ofc_sema_array_dims_t dims
+			= array->segment[i];
+		if (dims.base == 1)
+		{
+			if (!ofc_colstr_atomic_writef(
+				cs, "%u", dims.count))
+				return false;
+		}
+		else
+		{
+			if (!ofc_colstr_atomic_writef(cs, "%d:%d",
+				dims.base, ((dims.base + dims.count) - 1)))
+				return false;
+		}
+	}
+
+	return ofc_colstr_atomic_writef(cs, ")");
+}
+
 
 
 ofc_sema_array_index_t* ofc_sema_array_index(
@@ -325,10 +360,14 @@ ofc_sema_array_index_t* ofc_sema_array_index(
 	return ai;
 }
 
-bool ofc_sema_array_index_print(ofc_colstr_t* cs,
+bool ofc_sema_array_index_print(
+	ofc_colstr_t* cs,
 	const ofc_sema_array_index_t* index)
 {
 	if (!cs || !index) return false;
+
+	if (!ofc_colstr_atomic_writef(cs, "("))
+		return false;
 
 	unsigned i;
 	for (i = 0; i < index->dimensions; i++)
@@ -337,7 +376,7 @@ bool ofc_sema_array_index_print(ofc_colstr_t* cs,
 			return false;
 	}
 
-	return true;
+	return ofc_colstr_atomic_writef(cs, ")");
 }
 
 void ofc_sema_array_index_delete(
@@ -560,4 +599,42 @@ ofc_sema_array_t* ofc_sema_array_slice_dims(
 	}
 
 	return array;
+}
+
+bool ofc_sema_array_slice_print(
+	ofc_colstr_t* cs,
+	const ofc_sema_array_slice_t* slice)
+{
+	if (!cs || !slice)
+		return false;
+
+	if (!ofc_colstr_atomic_writef(cs, "("))
+		return false;
+
+	unsigned i;
+	for (i = 0; i < slice->dimensions; i++)
+	{
+		if ((i > 0) && !ofc_colstr_atomic_writef(cs, ", "))
+			return false;
+
+		ofc_sema_array_segment_t seg
+			= slice->segment[i];
+		if (seg.index)
+		{
+			if (!ofc_sema_expr_print(cs, seg.index))
+				return false;
+		}
+		else
+		{
+			if (!ofc_colstr_atomic_writef(cs, "%d:%u",
+				seg.base, ((seg.base + seg.count) - 1)))
+				return false;
+
+			if ((seg.stride != 1) && !ofc_colstr_atomic_writef(
+				cs, ":%u", seg.stride))
+				return false;
+		}
+	}
+
+	return ofc_colstr_atomic_writef(cs, ")");
 }

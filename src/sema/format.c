@@ -120,7 +120,7 @@ bool ofc_sema_format(
 	if (!format) return false;
 
 	if (!ofc_sema_label_map_add_format(
-		scope, stmt, scope->label, scope->format,
+		scope, stmt, scope->label,
 		stmt->label, format))
 	{
 		ofc_sema_format_delete(format);

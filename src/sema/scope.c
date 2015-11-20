@@ -22,9 +22,8 @@ void ofc_sema_scope_delete(
 		scope->decl);
 	ofc_hashmap_delete(
 		scope->parameter);
-	ofc_hashmap_delete(
+	ofc_sema_label_map_delete(
 		scope->label);
-
 	switch (scope->type)
 	{
 		case OFC_SEMA_SCOPE_STMT_FUNC:
@@ -99,7 +98,6 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 	scope->decl      = ofc_sema_decl_list_create(opts.case_sensitive);
 	scope->parameter = ofc_sema_parameter_map_create(opts.case_sensitive);
 	scope->label     = ofc_sema_label_map_create();
-	scope->format    = ofc_sema_format_label_list_create();
 
 	scope->external = false;
 	scope->intrinsic = false;
@@ -520,7 +518,7 @@ static bool ofc_sema_scope__body(
 			case OFC_PARSE_STMT_MAP:
 			case OFC_PARSE_STMT_RECORD:
 				ofc_sema_scope_error(scope, stmt->src,
-					"Unsuported statement");
+					"Unsupported statement");
 				/* TODO - Support these statements. */
 				return false;
 
@@ -1127,8 +1125,10 @@ bool ofc_sema_scope_print(
 			return false;
 	}
 
-	if (!ofc_colstr_atomic_writef(cs, "%s ", kwstr))
+	if (!ofc_colstr_newline(cs, NULL)
+		|| !ofc_colstr_atomic_writef(cs, "%s ", kwstr))
 		return false;
+
 	if (scope->name.base)
 	{
 		if (!ofc_colstr_atomic_writef(cs, "%.*s",
@@ -1145,26 +1145,15 @@ bool ofc_sema_scope_print(
 			return false;
 	}
 
-	if (!ofc_colstr_newline(cs, NULL))
+	if (!ofc_colstr_newline(cs, NULL)
+		|| !ofc_sema_decl_list_print(cs, scope->decl)
+		|| !ofc_sema_stmt_list_print(cs, scope->label, scope->stmt)
+		|| !ofc_colstr_newline(cs, NULL)
+		|| !ofc_sema_format_label_list_print(cs, scope->label->format)
+		|| !ofc_colstr_newline(cs, NULL)
+		|| !ofc_colstr_atomic_writef(cs, "END %s ", kwstr))
 		return false;
 
-	if (!ofc_sema_decl_list_print(cs, scope->decl))
-		return false;
-	if (!ofc_colstr_newline(cs, NULL))
-		return false;
-
-	if (!ofc_sema_stmt_list_print(cs, scope->stmt))
-		return false;
-	if (!ofc_colstr_newline(cs, NULL))
-		return false;
-
-	if (!ofc_sema_format_label_list_print(cs, scope->format))
-		return false;
-	if (!ofc_colstr_newline(cs, NULL))
-		return false;
-
-	if (!ofc_colstr_atomic_writef(cs, "END %s ", kwstr))
-		return false;
 	if (scope->name.base)
 	{
 		if (!ofc_colstr_atomic_writef(cs, "%.*s",

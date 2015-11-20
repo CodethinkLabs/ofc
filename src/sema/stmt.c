@@ -138,7 +138,7 @@ bool ofc_sema_stmt_scoped(
 	if (stmt->label != 0)
 	{
 		if (ofc_sema_label_map_find(
-			scope->label, stmt->label))
+			scope->label->label, stmt->label))
 		{
 			ofc_sema_scope_error(scope, stmt->src,
 				"Duplicate label definition");
@@ -383,49 +383,79 @@ bool ofc_sema_stmt_print(
 	{
 		case OFC_SEMA_STMT_ASSIGNMENT:
 			return ofc_sema_stmt_assignment_print(cs, stmt);
+
 		case OFC_SEMA_STMT_WRITE:
 			return ofc_sema_stmt_write_print(cs, stmt);
+
 		case OFC_SEMA_STMT_CONTINUE:
-			if (!ofc_colstr_atomic_writef(cs, "CONTINUE"))
-				return false;
-			return true;
+			return ofc_colstr_atomic_writef(cs, "CONTINUE");
+
 		case OFC_SEMA_STMT_IF_COMPUTED:
 			return ofc_sema_stmt_if_comp_print(cs, stmt);
+
 		case OFC_SEMA_STMT_IF_STATEMENT:
 			return ofc_sema_stmt_if_print(cs, stmt);
+
 		case OFC_SEMA_STMT_IF_THEN:
 			return ofc_sema_stmt_if_then_print(cs, stmt);
+
 		case OFC_SEMA_STMT_STOP:
 		case OFC_SEMA_STMT_PAUSE:
 			return ofc_sema_stmt_stop_pause_print(cs, stmt);
+
 		case OFC_SEMA_STMT_GO_TO:
 			return ofc_sema_go_to_print(cs, stmt);
+
 		case OFC_SEMA_STMT_GO_TO_COMPUTED:
 			return ofc_sema_go_to_computed_print(cs, stmt);
+
 		case OFC_SEMA_STMT_DO_LABEL:
 			return ofc_sema_stmt_do_label_print(cs, stmt);
+
 		case OFC_SEMA_STMT_DO_BLOCK:
 			return ofc_sema_stmt_do_block_print(cs, stmt);
+
 		case OFC_SEMA_STMT_DO_WHILE:
 			return ofc_sema_stmt_do_while_print(cs, stmt);
+
 		case OFC_SEMA_STMT_DO_WHILE_BLOCK:
 			return ofc_sema_stmt_do_while_block_print(cs, stmt);
 
 		default:
-			return false;
+			break;
 	}
+
+	return false;
 }
 
 bool ofc_sema_stmt_list_print(ofc_colstr_t* cs,
+	ofc_sema_label_map_t* label_map,
 	const ofc_sema_stmt_list_t* stmt_list)
 {
     unsigned i;
 	for (i = 0; i < stmt_list->count; i++)
 	{
+		const ofc_sema_label_t* label = NULL;
+
+		if (label_map && label_map->offset)
+		{
+			label = ofc_sema_label_map_find(label_map->offset, i);
+			if (label)
+			{
+				unsigned label_num = label->number;
+				if (!ofc_colstr_newline(cs, &label_num))
+					return false;
+			}
+		}
+
+		if (!label)
+		{
+			if (!ofc_colstr_newline(cs, NULL))
+				return false;
+		}
+
 		if (!ofc_sema_stmt_print(cs, stmt_list->stmt[i]))
 			return false;
-
-		if (!ofc_colstr_newline(cs, NULL)) return false;
 	}
 	return true;
 }

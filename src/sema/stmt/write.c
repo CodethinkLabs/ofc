@@ -232,7 +232,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 				}
 
 				const ofc_sema_label_t* label
-					= ofc_sema_label_map_find(scope->label, ulabel);
+					= ofc_sema_label_map_find(scope->label->label, ulabel);
 				if (!label)
 				{
 					ofc_sema_scope_error(scope, stmt->src,
@@ -387,7 +387,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 				}
 
 				const ofc_sema_label_t* label
-					= ofc_sema_label_map_find(scope->label, ulabel);
+					= ofc_sema_label_map_find(scope->label->label, ulabel);
 				if (!label)
 				{
 					ofc_sema_scope_error(scope, stmt->src,
@@ -515,7 +515,7 @@ static bool ofc_sema_stmt_write__print_optional(
 {
 	if (!cs || !expr) return false;
 
-	if (!ofc_colstr_atomic_writef(cs, ","))
+	if (!ofc_colstr_atomic_writef(cs, ", "))
 		return false;
 	if (!ofc_sema_expr_print(cs, expr))
 		return false;
@@ -547,7 +547,7 @@ bool ofc_sema_stmt_write_print(ofc_colstr_t* cs,
 
 	if (stmt->io_write.format_ldio)
 	{
-		if (!ofc_colstr_atomic_writef(cs, ","))
+		if (!ofc_colstr_atomic_writef(cs, ", "))
 			return false;
 		if (!ofc_colstr_atomic_writef(cs, "*"))
 			return false;
@@ -580,6 +580,16 @@ bool ofc_sema_stmt_write_print(ofc_colstr_t* cs,
 
 	if (!ofc_colstr_atomic_writef(cs, ")"))
 		return false;
+
+	if (stmt->io_write.iolist)
+	{
+		if (!ofc_colstr_atomic_writef(cs, " "))
+			return false;
+
+		if (!ofc_sema_expr_list_print(cs,
+			stmt->io_write.iolist))
+				return false;
+	}
 
 	return true;
 }

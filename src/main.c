@@ -236,6 +236,7 @@ int main(int argc, const char* argv[])
 		printf("sema scope print failed");
 	ofc_colstr_fdprint(cs, STDOUT_FILENO);
 
+	ofc_colstr_delete(cs);
 	ofc_sema_scope_delete(sema);
 	ofc_parse_stmt_list_delete(program);
 	ofc_sparse_delete(condense);
