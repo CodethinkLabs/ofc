@@ -48,23 +48,15 @@ ofc_sema_decl_t* ofc_sema_decl_implicit_untyped(
 	return ofc_sema_decl__create(NULL, name, true);
 }
 
-/* We must consume array since it may be used by the type system
-   even if this function returns NULL. */
 static ofc_sema_decl_t* ofc_sema_decl_implicit__name(
 	const ofc_sema_scope_t* scope,
-	ofc_str_ref_t name, ofc_sema_array_t* array)
+	ofc_str_ref_t name, const ofc_sema_array_t* array)
 {
 	if (!scope)
-	{
-		ofc_sema_array_delete(array);
 		return NULL;
-	}
 
 	if (ofc_str_ref_empty(name))
-	{
-		ofc_sema_array_delete(array);
 		return NULL;
-	}
 
 	const ofc_sema_type_t* type
 		= ofc_sema_implicit_get(
@@ -72,15 +64,11 @@ static ofc_sema_decl_t* ofc_sema_decl_implicit__name(
 
 	if (array)
 	{
-		const ofc_sema_type_t* atype
-			= ofc_sema_type_create_array(
-				type, array,
-				type->is_static,
-				type->is_automatic,
-				type->is_volatile);
-		if (!atype)
-			ofc_sema_array_delete(array);
-		type = atype;
+		type = ofc_sema_type_create_array(
+			type, array,
+			type->is_static,
+			type->is_automatic,
+			type->is_volatile);
 	}
 
 	return ofc_sema_decl__create(
@@ -121,9 +109,11 @@ ofc_sema_decl_t* ofc_sema_decl_implicit_lhs(
 			break;
 	}
 
-	/* 'array' is always consumed. */
-	return ofc_sema_decl_implicit__name(
-		scope, base_name, array);
+	ofc_sema_decl_t* decl
+		= ofc_sema_decl_implicit__name(
+			scope, base_name, array);
+	ofc_sema_array_delete(array);
+	return decl;
 }
 
 static bool ofc_sema_decl__decl(

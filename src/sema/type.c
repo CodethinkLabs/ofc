@@ -94,7 +94,7 @@ static void ofc_sema_type__map_cleanup(void)
 static const ofc_sema_type_t* ofc_sema_type__create(
 	ofc_sema_type_e type,
 	unsigned kind, unsigned len,
-	ofc_sema_array_t* array,
+	const ofc_sema_array_t* array,
 	const ofc_sema_type_t* subtype,
 	const ofc_sema_structure_t* structure,
 	bool is_static,
@@ -117,11 +117,17 @@ static const ofc_sema_type_t* ofc_sema_type__create(
 	ofc_sema_type_t stype =
 		{
 			.type         = type,
-			.array        = array,
+			.array        = NULL,
 			.is_static    = is_static,
 			.is_automatic = is_automatic,
 			.is_volatile  = is_volatile,
 		};
+
+	if (array)
+	{
+		stype.array = ofc_sema_array_copy(array);
+		if (!stype.array) return NULL;
+	}
 
 	switch (type)
 	{
@@ -163,20 +169,24 @@ static const ofc_sema_type_t* ofc_sema_type__create(
 			ofc_sema_type__map, &stype);
 	if (gtype)
 	{
-		ofc_sema_array_delete(array);
+		ofc_sema_array_delete(stype.array);
 		return gtype;
 	}
 
 	ofc_sema_type_t* ntype
 		= (ofc_sema_type_t*)malloc(
 			sizeof(ofc_sema_type_t));
-	if (!ntype) return NULL;
+	if (!ntype)
+	{
+		ofc_sema_array_delete(stype.array);
+		return NULL;
+	}
 	*ntype = stype;
 
 	if (!ofc_hashmap_add(
 		ofc_sema_type__map, ntype))
 	{
-		free(ntype);
+		ofc_sema_type__delete(ntype);
 		return NULL;
 	}
 
@@ -257,7 +267,7 @@ const ofc_sema_type_t* ofc_sema_type_create_pointer(
 
 const ofc_sema_type_t* ofc_sema_type_create_array(
 	const ofc_sema_type_t* type,
-	ofc_sema_array_t* array,
+	const ofc_sema_array_t* array,
 	bool is_static,
 	bool is_automatic,
 	bool is_volatile)

@@ -117,11 +117,8 @@ const ofc_sema_type_t* ofc_sema_lhs_decl_type(
 			itype->is_static,
 			itype->is_automatic,
 			itype->is_volatile);
-	if (!atype)
-	{
-		ofc_sema_array_delete(array);
-		return NULL;
-	}
+	ofc_sema_array_delete(array);
+	if (!atype) return NULL;
 
 	return ofc_sema_lhs_decl_type(
 		scope, atype, lhs->parent);

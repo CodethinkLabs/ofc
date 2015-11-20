@@ -78,11 +78,8 @@ bool ofc_sema_stmt_dimension(
 			= ofc_sema_type_create_array(
 				decl->type, array,
 				false, false, false);
-		if (!type)
-		{
-			ofc_sema_array_delete(array);
-			return false;
-		}
+		ofc_sema_array_delete(array);
+		if (!type) return false;
 
 		decl->type = type;
 	}
