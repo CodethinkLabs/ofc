@@ -822,7 +822,7 @@ ofc_sema_scope_t* ofc_sema_scope_if(
 			scope, NULL, NULL, OFC_SEMA_SCOPE_IF);
 	if (!if_scope) return NULL;
 
-	if (!ofc_sema_scope__body(scope, block))
+	if (!ofc_sema_scope__body(if_scope, block))
 	{
 		ofc_sema_scope_delete(if_scope);
 		return NULL;
