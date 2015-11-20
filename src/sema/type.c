@@ -301,8 +301,9 @@ const ofc_sema_type_t* ofc_sema_type_star_len(
 		if (type->len != 0)
 			return NULL;
 
-		return ofc_sema_type_create_character(
-			type->kind, star_len,
+		return ofc_sema_type__create(
+			type->type, type->kind, star_len,
+			type->array, type->subtype, type->structure,
 			type->is_static, type->is_automatic, type->is_volatile);
 	}
 
