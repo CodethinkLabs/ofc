@@ -213,6 +213,8 @@ static ofc_parse_lhs_t* ofc_parse_lhs__star_len(
 		return NULL;
 	}
 
+	alhs->parent = parent;
+
 	if (len) *len = i;
 	return alhs;
 }

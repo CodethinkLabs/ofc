@@ -131,10 +131,45 @@ static bool ofc_sema_decl__decl(
 	const ofc_sema_type_t*  type,
 	const ofc_parse_decl_t* decl)
 {
-	if (!decl || !type)
+	if (!decl || !type
+		|| !decl->lhs)
 		return false;
 
-	switch (decl->lhs->type)
+	const ofc_parse_lhs_t* lhs = decl->lhs;
+	if (lhs->type == OFC_PARSE_LHS_STAR_LEN)
+	{
+		if (lhs->star_len.var)
+		{
+			/* TODO - Support this? */
+			ofc_sema_scope_error(scope, lhs->src,
+				"Variable length star length in decl list");
+			return false;
+		}
+
+		ofc_sema_expr_t* expr
+			= ofc_sema_expr(scope, lhs->star_len.len);
+		if (!expr) return false;
+
+		unsigned star_len;
+		bool resolved = ofc_sema_expr_resolve_uint(expr, &star_len);
+		ofc_sema_expr_delete(expr);
+
+		if (!resolved)
+		{
+			ofc_sema_scope_error(scope, lhs->src,
+				"Star length must be a positive whole integer");
+			return false;
+		}
+
+		type = ofc_sema_type_star_len(
+			type, star_len);
+		if (!type) return false;
+
+		lhs = lhs->parent;
+		if (!lhs) return false;
+	}
+
+	switch (lhs->type)
 	{
 		case OFC_PARSE_LHS_VARIABLE:
 		case OFC_PARSE_LHS_ARRAY:
@@ -145,7 +180,7 @@ static bool ofc_sema_decl__decl(
 
 	ofc_str_ref_t base_name;
 	if (!ofc_parse_lhs_base_name(
-		*(decl->lhs), &base_name))
+		*lhs, &base_name))
 		return false;
 
 	ofc_sema_decl_t* sdecl
@@ -163,13 +198,13 @@ static bool ofc_sema_decl__decl(
 			if (sdecl->lock)
 			{
 				/* TODO - Support this where possible. */
-				ofc_sema_scope_error(scope, decl->lhs->src,
+				ofc_sema_scope_error(scope, lhs->src,
 					"Redefining type after initialization");
 				return false;
 			}
 			else if (!sdecl->is_implicit)
 			{
-				ofc_sema_scope_error(scope, decl->lhs->src,
+				ofc_sema_scope_error(scope, lhs->src,
 					"Redeclaration with different type");
 				return false;
 			}
@@ -183,7 +218,7 @@ static bool ofc_sema_decl__decl(
 					type->array, sdecl->type->array))
 			{
 				/* TODO - Support adding dimensions together? */
-				ofc_sema_scope_error(scope, decl->lhs->src,
+				ofc_sema_scope_error(scope, lhs->src,
 					"Redefining array dimensions");
 				return false;
 			}
@@ -212,7 +247,7 @@ static bool ofc_sema_decl__decl(
 	{
 		const ofc_sema_type_t* atype
 			= ofc_sema_lhs_decl_type(
-				scope, type, decl->lhs);
+				scope, type, lhs);
 		if (!atype) return false;
 
 		sdecl = ofc_sema_decl_create(

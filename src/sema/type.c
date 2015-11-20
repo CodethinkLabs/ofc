@@ -286,6 +286,54 @@ const ofc_sema_type_t* ofc_sema_type_create_function(
 }
 
 
+const ofc_sema_type_t* ofc_sema_type_star_len(
+	const ofc_sema_type_t* type, unsigned star_len)
+{
+	if (!type || (star_len == 0))
+		return NULL;
+
+	if (type->type == OFC_SEMA_TYPE_CHARACTER)
+	{
+		if (type->len != 0)
+			return NULL;
+
+		return ofc_sema_type_create_character(
+			type->kind, star_len,
+			type->is_static, type->is_automatic, type->is_volatile);
+	}
+
+	/* TODO - Fail if a star_length has already been set. */
+
+	if (type->type == OFC_SEMA_TYPE_FUNCTION)
+	{
+		const ofc_sema_type_t* subtype
+			= ofc_sema_type_star_len(
+				type->subtype, star_len);
+		if (!subtype) return NULL;
+
+		return ofc_sema_type_create_function(subtype,
+			type->is_static, type->is_automatic, type->is_volatile);
+	}
+
+	switch (type->type)
+	{
+		case OFC_SEMA_TYPE_LOGICAL:
+		case OFC_SEMA_TYPE_INTEGER:
+		case OFC_SEMA_TYPE_REAL:
+		case OFC_SEMA_TYPE_COMPLEX:
+			return ofc_sema_type__create(
+				type->type, star_len, type->len,
+				type->array, type->subtype, type->structure,
+				type->is_static, type->is_automatic, type->is_volatile);
+			break;
+		default:
+			break;
+	}
+
+	return NULL;
+}
+
+
 const ofc_sema_type_t* ofc_sema_type_logical_default(void)
 {
 	static const ofc_sema_type_t* logical = NULL;

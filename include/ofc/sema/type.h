@@ -69,6 +69,9 @@ const ofc_sema_type_t* ofc_sema_type_create_function(
 	const ofc_sema_type_t* type,
 	bool is_static, bool is_automatic, bool is_volatile);
 
+const ofc_sema_type_t* ofc_sema_type_star_len(
+	const ofc_sema_type_t* type, unsigned star_len);
+
 typedef const ofc_sema_type_t* (*ofc_sema_type_f)(void);
 
 const ofc_sema_type_t* ofc_sema_type_logical_default(void);
