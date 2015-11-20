@@ -395,38 +395,6 @@ const ofc_sema_type_t* ofc_sema_type(
 	unsigned len = 0;
 	bool len_var = false;
 
-	if (ptype->count_expr)
-	{
-		ofc_sema_expr_t* count_expr
-			= ofc_sema_expr(scope, ptype->count_expr);
-		const ofc_sema_typeval_t* count_tv
-			= ofc_sema_expr_constant(count_expr);
-		if (!count_tv)
-		{
-			ofc_sema_scope_error(scope, count_expr->src,
-				"Type LEN parameter can't be resolved at compile time.");
-			ofc_sema_expr_delete(count_expr);
-			return NULL;
-		}
-
-		bool resolved = ofc_sema_expr_resolve_uint(
-			count_expr, &len);
-		ofc_sema_expr_delete(count_expr);
-		if (!resolved)
-		{
-			ofc_sema_scope_error(scope, count_expr->src,
-				"Type LEN parameter can't be resolved at compile time.");
-			return NULL;
-		}
-
-		if (len == 0)
-		{
-			ofc_sema_scope_error(scope, count_expr->src,
-				"Type LEN parameter must be greater than zero.");
-			return NULL;
-		}
-	}
-
 	if (ptype->params)
 	{
 		unsigned i;
