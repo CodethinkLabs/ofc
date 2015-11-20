@@ -46,9 +46,6 @@ bool ofc_sema_compare_desc_expr_type(
 static ofc_sema_format_t* ofc_sema_format__create(
 	const ofc_parse_format_desc_list_t* src)
 {
-	if (!src)
-		return NULL;
-
 	ofc_sema_format_t* format
 		= (ofc_sema_format_t*)malloc(
 			sizeof(ofc_sema_format_t));
