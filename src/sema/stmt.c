@@ -101,7 +101,7 @@ bool ofc_sema_stmt_scoped(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt)
 {
-	if (!stmt)
+	if (!scope || !stmt)
 		return false;
 
 	if (stmt->label != 0)
