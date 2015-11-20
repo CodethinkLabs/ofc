@@ -540,6 +540,10 @@ static ofc_sema_typeval_t* ofc_sema_typeval__character_literal(
 
 		typeval.integer = literal->string->base[0];
 	}
+	else if (size == 0)
+	{
+		typeval.character = NULL;
+	}
 	else
 	{
 		typeval.character = (char*)malloc(sizeof(char) * size);
