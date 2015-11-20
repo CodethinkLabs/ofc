@@ -571,7 +571,17 @@ const ofc_sema_type_t* ofc_sema_type(
 	else if (kind == 0)
 	{
 		/* TODO - If KIND is not set, get default from lang_opts. */
-		kind = 4;
+		switch (ptype->type)
+		{
+			case OFC_PARSE_TYPE_BYTE:
+			case OFC_PARSE_TYPE_CHARACTER:
+				kind = 1;
+				break;
+
+			default:
+				kind = 4;
+				break;
+		}
 	}
 
 	switch (ptype->type)
