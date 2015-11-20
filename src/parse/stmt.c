@@ -831,7 +831,11 @@ ofc_parse_stmt_list_t* ofc_parse_stmt_list(
 		&list->count, (void***)&list->stmt,
 		(void*)ofc_parse_stmt,
 		(void*)ofc_parse_stmt_delete);
-	if (i == 0) return NULL;
+	if (i == 0)
+	{
+		free(list);
+		return NULL;
+	}
 
 	unsigned j;
 	for (j = 0; j < (list->count - 1); j++)
