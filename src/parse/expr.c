@@ -168,6 +168,7 @@ static unsigned ofc_parse_expr__literal(
 	if (len == 0) return 0;
 
 	expr->type = OFC_PARSE_EXPR_CONSTANT;
+	expr->src  = ofc_str_ref(ptr, len);
 	return len;
 }
 
@@ -181,6 +182,7 @@ static unsigned ofc_parse_expr__integer(
 	if (len == 0) return 0;
 
 	expr->type = OFC_PARSE_EXPR_CONSTANT;
+	expr->src  = ofc_str_ref(ptr, len);
 	return len;
 }
 
@@ -198,6 +200,7 @@ static unsigned ofc_parse_expr__integer_variable(
 	if (!expr->variable) return 0;
 
 	expr->type = OFC_PARSE_EXPR_VARIABLE;
+	expr->src  = ofc_str_ref(ptr, len);
 	return len;
 }
 
@@ -215,6 +218,7 @@ static unsigned ofc_parse_expr__primary(
 	if (expr->variable)
 	{
 		expr->type = OFC_PARSE_EXPR_VARIABLE;
+		expr->src = ofc_str_ref(ptr, len);
 		return len;
 	}
 
@@ -233,6 +237,8 @@ static unsigned ofc_parse_expr__primary(
 			}
 			else
 			{
+				len += 2;
+
 				expr->brackets.expr
 					= ofc_parse_expr__alloc(expr_brackets);
 				if (!expr->brackets.expr)
@@ -242,7 +248,8 @@ static unsigned ofc_parse_expr__primary(
 					return 0;
 				}
 				expr->type = OFC_PARSE_EXPR_BRACKETS;
-				return (len + 2);
+				expr->src = ofc_str_ref(ptr, len);
+				return len;
 			}
 		}
 	}
@@ -286,6 +293,8 @@ static unsigned ofc_parse_expr__unary(
 	}
 
 	expr->type = OFC_PARSE_EXPR_UNARY;
+	expr->src = ofc_str_ref(ptr, (op_len + a_len));
+
 	expr->unary.operator = op;
 
 	expr->unary.a = ofc_parse_expr__alloc(a);
@@ -330,7 +339,10 @@ static void ofc_parse_expr__cull_right_ambig_point(
 	{
 		case OFC_PARSE_EXPR_CONSTANT:
 			if (expr->literal.type == OFC_PARSE_LITERAL_NUMBER)
+			{
 				expr->literal.number.size -= 1;
+				expr->src.size            -= 1;
+			}
 			break;
 		case OFC_PARSE_EXPR_UNARY:
 			ofc_parse_expr__cull_right_ambig_point(expr->unary.a);
@@ -341,6 +353,61 @@ static void ofc_parse_expr__cull_right_ambig_point(
 		default:
 			break;
 	}
+}
+
+
+static unsigned ofc_parse_expr__binary_at_or_below_b(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_expr_t a,
+	ofc_parse_expr_t* expr, unsigned level)
+{
+	/* TODO - Defined binary operators. */
+
+	ofc_parse_operator_e op;
+	unsigned op_len = ofc_parse_operator(
+		src, ptr, debug, &op);
+	if ((op_len == 0) || !ofc_parse_operator_binary(op))
+		return 0;
+
+	unsigned op_level = ofc_parse_operator_precedence(op);
+	if ((op_level > level)
+		|| (ofc_parse_expr__level(a) > op_level))
+		return 0;
+
+	ofc_parse_expr_t b;
+	unsigned b_len = ofc_parse_expr__at_or_below(
+		src, &ptr[op_len], debug, &b, (op_level - 1));
+	if (b_len == 0) return 0;
+
+	ofc_parse_expr_t c;
+
+	c.type = OFC_PARSE_EXPR_BINARY;
+	c.src  = ofc_str_ref_bridge(a.src, b.src);
+	c.binary.operator = op;
+
+	c.binary.a = ofc_parse_expr__alloc(a);
+	if (!c.binary.a)
+	{
+		ofc_parse_expr__cleanup(b);
+		return 0;
+	}
+
+	c.binary.b = ofc_parse_expr__alloc(b);
+	if (!c.binary.b)
+	{
+		/* Don't cleanup a here, we didn't create it. */
+		free(c.binary.a);
+		ofc_parse_expr__cleanup(b);
+		return 0;
+	}
+
+	unsigned c_len = ofc_parse_expr__binary_at_or_below_b(
+		src, &ptr[op_len + b_len], debug, c, expr, op_level);
+	if (c_len > 0) return (op_len + b_len + c_len);
+
+	*expr = c;
+	return (op_len + b_len);
 }
 
 static unsigned ofc_parse_expr__binary_at_or_below(
@@ -378,30 +445,8 @@ static unsigned ofc_parse_expr__binary_at_or_below(
 		}
 	}
 
-	/* TODO - Defined binary operators. */
-
-	ofc_parse_operator_e op;
-	unsigned op_len = ofc_parse_operator(
-		src, &ptr[a_len], debug, &op);
-	if ((op_len == 0) || !ofc_parse_operator_binary(op))
-	{
-		ofc_parse_expr__cleanup(a);
-		ofc_parse_debug_rewind(debug, dpos);
-		return 0;
-	}
-
-	unsigned op_level = ofc_parse_operator_precedence(op);
-	if ((op_level > level)
-		|| (ofc_parse_expr__level(a) >= op_level))
-	{
-		ofc_parse_expr__cleanup(a);
-		ofc_parse_debug_rewind(debug, dpos);
-		return 0;
-	}
-
-	ofc_parse_expr_t b;
-	unsigned b_len = ofc_parse_expr__at_or_below(
-		src, &ptr[a_len + op_len], debug, &b, op_level);
+	unsigned b_len = ofc_parse_expr__binary_at_or_below_b(
+		src, &ptr[a_len], debug, a, expr, level);
 	if (b_len == 0)
 	{
 		ofc_parse_expr__cleanup(a);
@@ -409,28 +454,7 @@ static unsigned ofc_parse_expr__binary_at_or_below(
 		return 0;
 	}
 
-	expr->type = OFC_PARSE_EXPR_BINARY;
-	expr->binary.operator = op;
-
-	expr->binary.a = ofc_parse_expr__alloc(a);
-	if (!expr->binary.a)
-	{
-		ofc_parse_expr__cleanup(a);
-		ofc_parse_expr__cleanup(b);
-		ofc_parse_debug_rewind(debug, dpos);
-		return 0;
-	}
-
-	expr->binary.b = ofc_parse_expr__alloc(b);
-	if (!expr->binary.b)
-	{
-		ofc_parse_expr_delete(expr->binary.a);
-		ofc_parse_expr__cleanup(b);
-		ofc_parse_debug_rewind(debug, dpos);
-		return 0;
-	}
-
-	return (a_len + op_len + b_len);
+	return (a_len + b_len);
 }
 
 static unsigned ofc_parse_expr__binary(
@@ -489,7 +513,6 @@ ofc_parse_expr_t* ofc_parse_expr_integer(
 	}
 
 	if (len) *len = i;
-	expr->src = ofc_str_ref(ptr, i);
 	return expr;
 }
 
@@ -540,9 +563,6 @@ ofc_parse_expr_t* ofc_parse_expr(
 	}
 
 	if (len) *len = i;
-
-	expr->src = ofc_str_ref(ptr, i);
-
 	return expr;
 }
 
