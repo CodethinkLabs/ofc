@@ -812,12 +812,19 @@ ofc_sema_typeval_t* ofc_sema_typeval_copy(
 
 	if (copy->type->type == OFC_SEMA_TYPE_CHARACTER)
 	{
-		copy->character
-			= strdup(typeval->character);
-		if (!copy->character)
+		unsigned size = ofc_sema_type_size(typeval->type);
+		copy->character = NULL;
+		if (size > 0)
 		{
-			free(copy);
-			return NULL;
+			copy->character = malloc(size);
+			if (!copy->character)
+			{
+				free(copy);
+				return NULL;
+			}
+
+			memcpy(copy->character,
+				typeval->character, size);
 		}
 	}
 
