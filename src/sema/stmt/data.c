@@ -43,15 +43,21 @@ static bool ofc_sema_stmt__data(
 
 	/* Expand LHS list to match size. */
 	ofc_sema_lhs_t* elhs[lhs_count];
+	unsigned        elhsc[lhs_count];
 
 	unsigned j;
 	for (i = 0, j = 0; i < nlist->count; i++)
 	{
-		elhs[j++] = lhs[i];
+		elhs[j]  = lhs[i];
+		elhsc[j] = lhsc[i];
+		j++;
 
 		unsigned k;
-		for (k = 1; k < lhsc[i]; k++)
-			elhs[j++] = NULL;
+		for (k = 1; k < lhsc[i]; k++, j++)
+		{
+			elhs[j]  = NULL;
+			elhsc[j] = (lhsc[i] - k);
+		}
 	}
 
 	/* Resolve expression list. */
@@ -68,7 +74,7 @@ static bool ofc_sema_stmt__data(
 			for (j = 0; j < i; j++)
 				ofc_sema_expr_delete(expr[j]);
 			for (j = 0; j < nlist->count; j++)
-				ofc_sema_lhs_delete(lhs[i]);
+				ofc_sema_lhs_delete(lhs[j]);
 			return false;
 		}
 
@@ -108,7 +114,7 @@ static bool ofc_sema_stmt__data(
 			= ofc_sema_lhs_type(elhs[i]);
 		if (ofc_sema_type_is_composite(ltype))
 		{
-			unsigned elem_count = lhsc[i];
+			unsigned elem_count = elhsc[i];
 			if (elem_count > (count - i))
 				elem_count = (count - i);
 
