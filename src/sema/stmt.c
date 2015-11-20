@@ -94,6 +94,7 @@ ofc_sema_stmt_t* ofc_sema_stmt(
 			break;
 	}
 
+	if (s) s->src = stmt->src;
 	return s;
 }
 
