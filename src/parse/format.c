@@ -345,6 +345,102 @@ bool ofc_parse_format_desc_print(
 	return true;
 }
 
+static void ofc_parse_format_desc__cleanup(
+	ofc_parse_format_desc_t desc)
+{
+	switch (desc.type)
+	{
+		case OFC_PARSE_FORMAT_DESC_STRING:
+		case OFC_PARSE_FORMAT_DESC_HOLLERITH:
+			ofc_string_delete(desc.string);
+			break;
+		case OFC_PARSE_FORMAT_DESC_REPEAT:
+			ofc_parse_format_desc_list_delete(desc.repeat);
+			break;
+
+		default:
+			break;
+	}
+}
+
+static bool ofc_parse_format_desc__clone(
+	ofc_parse_format_desc_t* dst, const ofc_parse_format_desc_t* src)
+{
+	if (!src || !dst)
+		return false;
+
+	ofc_parse_format_desc_t clone = *src;
+	switch(clone.type)
+	{
+		case OFC_PARSE_FORMAT_DESC_STRING:
+		case OFC_PARSE_FORMAT_DESC_HOLLERITH:
+			clone.string = ofc_string_copy(src->string);
+			if (src->string && !clone.string)
+				return false;
+			break;
+		case OFC_PARSE_FORMAT_DESC_REPEAT:
+			clone.repeat = ofc_parse_format_desc_list_copy(src->repeat);
+			if (src->repeat && !clone.repeat)
+				return false;
+			break;
+		default:
+			break;
+	}
+	*dst = clone;
+	return true;
+}
+
+static ofc_parse_format_desc_t* ofc_parse_format_desc__alloc(
+	ofc_parse_format_desc_t desc)
+{
+	ofc_parse_format_desc_t* adesc
+		= (ofc_parse_format_desc_t*)malloc(
+			sizeof(ofc_parse_format_desc_t));
+	if (!adesc) return NULL;
+	*adesc = desc;
+	return adesc;
+}
+
+ofc_parse_format_desc_t* ofc_parse_format_desc_copy(
+	const ofc_parse_format_desc_t* desc)
+{
+	ofc_parse_format_desc_t copy;
+	if (!ofc_parse_format_desc__clone(&copy, desc))
+		return NULL;
+
+	ofc_parse_format_desc_t* acopy
+		= ofc_parse_format_desc__alloc(copy);
+	if (!acopy)
+		ofc_parse_format_desc__cleanup(copy);
+	return acopy;
+}
+
+ofc_parse_format_desc_list_t* ofc_parse_format_desc_list_copy(
+	const ofc_parse_format_desc_list_t* list)
+{
+	if (!list)
+		return NULL;
+
+	ofc_parse_format_desc_list_t* copy
+		= (ofc_parse_format_desc_list_t*)malloc(
+			sizeof(ofc_parse_format_desc_list_t));
+	if (!copy) return NULL;
+
+	copy->count = 0;
+	copy->desc = NULL;
+
+	if (!ofc_parse_list_copy(
+		&copy->count, (void***)&copy->desc,
+		list->count, (const void**)list->desc,
+		(void*)ofc_parse_format_desc_copy,
+		(void*)ofc_parse_format_desc_delete))
+	{
+		free(copy);
+		return NULL;
+	}
+
+	return copy;
+}
 
 ofc_parse_format_desc_list_t* ofc_parse_format_desc_list(
 	const ofc_sparse_t* src, const char* ptr,

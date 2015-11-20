@@ -85,4 +85,8 @@ void ofc_parse_format_desc_list_delete(
 bool ofc_parse_format_desc_list_print(
 	ofc_colstr_t* cs, const ofc_parse_format_desc_list_t* list);
 
+ofc_parse_format_desc_t* ofc_parse_format_desc_copy(
+	const ofc_parse_format_desc_t* desc);
+ofc_parse_format_desc_list_t* ofc_parse_format_desc_list_copy(
+	const ofc_parse_format_desc_list_t* list);
 #endif

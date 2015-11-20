@@ -156,6 +156,76 @@ unsigned ofc_sema_iolist_count(
 	return iolist_len;
 }
 
+static bool ofc_sema_io__data_format_helper(
+	ofc_parse_format_desc_list_t* format_list,
+	const ofc_parse_format_desc_list_t* format_src,
+	unsigned* iolist_len, unsigned* offset)
+{
+	if (!format_list || !format_src) return false;
+
+	/* If *iolist_len == 0 then
+	 * format_list has iolist_len length*/
+	if (*iolist_len > 0)
+	{
+		if (format_src->count <= *offset) *offset = 0;
+
+		ofc_parse_format_desc_t* desc
+			= format_src->desc[*offset];
+
+		/* If it's a data descriptor, we add it to the list
+		 * and call the function again to the next offset
+		 * We are an element closer to have length iolist_len
+		 */
+		if (ofc_parse_format_is_data_desc(desc))
+		{
+			ofc_parse_format_desc_t** ndesc
+				= (ofc_parse_format_desc_t**)realloc(format_list->desc,
+					(sizeof(ofc_parse_format_desc_t*) * (format_list->count + 1)));
+			if (!ndesc) return false;
+
+			ofc_parse_format_desc_t* cdesc
+				= ofc_parse_format_desc_copy(
+					format_src->desc[*offset]);
+			if (!cdesc) return false;
+
+			format_list->desc = ndesc;
+			format_list->desc[format_list->count++] = cdesc;
+
+			(*iolist_len)--;
+			(*offset)++;
+
+			if (!ofc_sema_io__data_format_helper(
+				format_list, format_src, iolist_len, offset))
+				return false;
+		}
+		/* If the descriptor is of type repeat, we call
+		 * the function again for the sub-format-list */
+		else if (desc->type == OFC_PARSE_FORMAT_DESC_REPEAT)
+		{
+			unsigned i;
+			for (i = 0; i < desc->n; i++)
+			{
+				unsigned repeat_offset = 0;
+				if (!ofc_sema_io__data_format_helper(
+					format_list, desc->repeat, iolist_len, &repeat_offset))
+					return false;
+			}
+		}
+		/* If it's a different type, we ignore it
+		 * and continue with the next offset */
+		else
+		{
+			(*offset)++;
+
+			if (!ofc_sema_io__data_format_helper(
+				format_list, format_src, iolist_len, offset))
+				return false;
+		}
+	}
+
+	return true;
+}
+
 ofc_parse_format_desc_list_t* ofc_sema_io_data_format(
 	ofc_sema_format_t* format, unsigned iolist_len)
 {
@@ -169,31 +239,45 @@ ofc_parse_format_desc_list_t* ofc_sema_io_data_format(
 	format_list->count = 0;
 	format_list->desc = NULL;
 
-	unsigned i, j =0;
-	for (i = 0; i < iolist_len; i++)
+	unsigned i = iolist_len;
+	unsigned offset = 0;
+
+	if (!ofc_sema_io__data_format_helper(
+		format_list, format->src, &i, &offset))
 	{
-		if (format->src->count <= j) j = 0;
-		ofc_parse_format_desc_t* desc
-			= format->src->desc[j];
-
-		while (!ofc_parse_format_is_data_desc(desc))
-		{
-			j++;
-			if (format->src->count <= j) j = 0;
-			desc = format->src->desc[j];
-		}
-		ofc_parse_format_desc_t** ndesc
-			= (ofc_parse_format_desc_t**)realloc(format_list->desc,
-				(sizeof(ofc_parse_format_desc_t*) * (format_list->count + 1)));
-		if (!ndesc) return NULL;
-
-		format_list->desc = ndesc;
-		format_list->desc[format_list->count++] = desc;
-
-		j++;
+		ofc_parse_format_desc_list_delete(format_list);
+		return NULL;
 	}
 
 	return format_list;
+}
+
+unsigned ofc_sema_io__data_format_count_helper(
+	const ofc_parse_format_desc_list_t* format_src)
+{
+	if (!format_src) return 0;
+
+	unsigned i, count = 0;
+	for (i = 0; i < format_src->count; i++)
+	{
+		ofc_parse_format_desc_t* desc
+			= format_src->desc[i];
+
+		if (ofc_parse_format_is_data_desc(desc))
+		{
+			count += 1;
+		}
+		else if (desc->type == OFC_PARSE_FORMAT_DESC_REPEAT)
+		{
+			unsigned n;
+			for (n = 0; n < desc->n; n++)
+			{
+				count += ofc_sema_io__data_format_count_helper(desc->repeat);
+			}
+		}
+	}
+
+	return count;
 }
 
 unsigned ofc_sema_io_data_format_count(
@@ -201,18 +285,7 @@ unsigned ofc_sema_io_data_format_count(
 {
 	if (!format) return 0;
 
-	ofc_parse_format_desc_t* desc
-		= format->src->desc[0];
-
-	unsigned count = 0;
-	unsigned i;
-	for (i = 0; i < format->src->count; i++)
-	{
-		if (ofc_parse_format_is_data_desc(desc))
-			count ++;
-	}
-
-	return count;
+	return ofc_sema_io__data_format_count_helper(format->src);
 }
 
 bool ofc_sema_io_format_iolist_compare(
