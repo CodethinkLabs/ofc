@@ -315,9 +315,25 @@ void ofc_sema_decl_delete(
 	if (!decl)
 		return;
 
+	if (ofc_sema_decl_is_composite(decl)
+		&& decl->init_array)
+	{
+		unsigned count
+			= ofc_sema_decl_elem_count(decl);
+
+		unsigned i;
+		for (i = 0; i < count; i++)
+			ofc_sema_typeval_delete(decl->init_array[i]);
+
+		free(decl->init_array);
+	}
+	else
+	{
+		ofc_sema_typeval_delete(decl->init);
+	}
+
 	ofc_sema_scope_delete(decl->func);
 	ofc_sema_equiv_delete(decl->equiv);
-	ofc_sema_typeval_delete(decl->init);
 	free(decl);
 }
 
