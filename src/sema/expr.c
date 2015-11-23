@@ -633,7 +633,6 @@ static ofc_sema_expr_t* ofc_sema_expr__function(
 
 	if (!decl || !ofc_sema_decl_is_function(decl)
 		|| (name->type != OFC_PARSE_LHS_ARRAY)
-		|| !name->array.index
 		|| !name->parent
 		|| (name->parent->type != OFC_PARSE_LHS_VARIABLE))
 	{
@@ -646,9 +645,13 @@ static ofc_sema_expr_t* ofc_sema_expr__function(
 	const ofc_sema_scope_t* fscope = decl->func;
 	if (fscope)
 	{
+		unsigned acount = 0;
+		if (name->array.index)
+			acount = name->array.index->count;
+
 		if (fscope->args
-			? (name->array.index->count != fscope->args->count)
-			: (name->array.index->count != 0))
+			? (acount != fscope->args->count)
+			: (acount != 0))
 		{
 			ofc_sema_scope_error(scope, name->src,
 				"Incorrect number of arguments in function call.");
@@ -657,7 +660,8 @@ static ofc_sema_expr_t* ofc_sema_expr__function(
 	}
 
 	ofc_sema_expr_list_t* args = NULL;
-	if (name->array.index->count > 0)
+	if (name->array.index
+		&& (name->array.index->count > 0))
 	{
 		if (!name->array.index->range)
 			return NULL;
