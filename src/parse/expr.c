@@ -380,6 +380,22 @@ static unsigned ofc_parse_expr__binary_at_or_below_b(
 		src, &ptr[op_len], debug, &b, (op_level - 1));
 	if (b_len == 0) return 0;
 
+	/* Handle case where we have something like:
+	   ( 3 ** 3 .EQ. 76 ) */
+	if (ofc_parse_expr__has_right_ambig_point(&b))
+	{
+		ofc_parse_operator_e cop;
+		unsigned cop_len = ofc_parse_operator(
+			src, &ptr[op_len + b_len - 1], debug, &cop);
+		if ((cop_len > 0)
+			&& ofc_parse_operator_binary(cop)
+			&& (ofc_parse_operator_precedence(cop) <= op_level))
+		{
+			ofc_parse_expr__cull_right_ambig_point(&b);
+			b_len -= 1;
+		}
+	}
+
 	ofc_parse_expr_t c;
 
 	c.type = OFC_PARSE_EXPR_BINARY;
