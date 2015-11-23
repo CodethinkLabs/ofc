@@ -35,15 +35,25 @@ ofc_sema_stmt_t* ofc_sema_stmt_stop_pause(
 
 		if (type->type != OFC_SEMA_TYPE_CHARACTER)
 		{
-			/* TODO - Implement ofc_sema_expr_to_string and use here. */
-			ofc_sema_expr_delete(expr);
-			return NULL;
-		}
+			if (!ofc_sema_type_is_integer(type))
+			{
+				ofc_sema_scope_error(scope, expr->src,
+					"STOP/PAUSE code must be a string or an integer");
+				ofc_sema_expr_delete(expr);
+				return NULL;
+			}
 
-		if (type->kind > 5)
-		{
-			ofc_sema_scope_warning(scope, expr->src,
-				"STOP/PAUSE string should be 5 characters or less.");
+			if (ofc_sema_expr_is_constant(expr))
+			{
+				unsigned v;
+				if (!ofc_sema_expr_resolve_uint(expr, &v)
+					|| (v >= 100000))
+				{
+					ofc_sema_scope_warning(scope, expr->src,
+						"STOP/PAUSE code should be a positive integer"
+						" less than 5 digits long");
+				}
+			}
 		}
 	}
 	else if (stmt->stop_pause_return.value)
