@@ -1534,21 +1534,39 @@ ofc_sema_typeval_t* ofc_sema_typeval_eq(
 		OFC_SEMA_TYPE_LOGICAL, 0,
 		false, false, false);
 
-	switch (a->type->type)
+	if (a->type->type == OFC_SEMA_TYPE_CHARACTER)
 	{
-		case OFC_SEMA_TYPE_REAL:
-			tv.logical = (a->real == b->real);
-			break;
-		case OFC_SEMA_TYPE_COMPLEX:
-			tv.logical = ((a->complex.real == b->complex.real)
-				&& (a->complex.imaginary == b->complex.imaginary));
-			break;
-		case OFC_SEMA_TYPE_INTEGER:
-		case OFC_SEMA_TYPE_BYTE:
-			tv.logical = (a->integer == b->integer);
-			break;
-		default:
+		if (b->type->type != OFC_SEMA_TYPE_CHARACTER)
 			return NULL;
+
+		if (a->type->len != b->type->len)
+			return NULL;
+
+		/* TODO - Support comparison of types with differing kinds. */
+		if (a->type->kind != b->type->kind)
+			return NULL;
+
+		tv.logical = (memcmp(a->character, b->character,
+			(a->type->len * a->type->kind)) == 0);
+	}
+	else
+	{
+		switch (a->type->type)
+		{
+			case OFC_SEMA_TYPE_REAL:
+				tv.logical = (a->real == b->real);
+				break;
+			case OFC_SEMA_TYPE_COMPLEX:
+				tv.logical = ((a->complex.real == b->complex.real)
+					&& (a->complex.imaginary == b->complex.imaginary));
+				break;
+			case OFC_SEMA_TYPE_INTEGER:
+			case OFC_SEMA_TYPE_BYTE:
+				tv.logical = (a->integer == b->integer);
+				break;
+			default:
+				return NULL;
+		}
 	}
 
 	return ofc_sema_typeval__alloc(tv);
@@ -1572,21 +1590,39 @@ ofc_sema_typeval_t* ofc_sema_typeval_ne(
 		OFC_SEMA_TYPE_LOGICAL, 0,
 		false, false, false);
 
-	switch (a->type->type)
+	if (a->type->type == OFC_SEMA_TYPE_CHARACTER)
 	{
-		case OFC_SEMA_TYPE_REAL:
-			tv.logical = (a->real != b->real);
-			break;
-		case OFC_SEMA_TYPE_COMPLEX:
-			tv.logical = ((a->complex.real != b->complex.real)
-							|| (a->complex.imaginary != b->complex.imaginary));
-			break;
-		case OFC_SEMA_TYPE_INTEGER:
-		case OFC_SEMA_TYPE_BYTE:
-			tv.logical = (a->integer != b->integer);
-			break;
-		default:
+		if (b->type->type != OFC_SEMA_TYPE_CHARACTER)
 			return NULL;
+
+		if (a->type->len != b->type->len)
+			return NULL;
+
+		/* TODO - Support comparison of types with differing kinds. */
+		if (a->type->kind != b->type->kind)
+			return NULL;
+
+		tv.logical = (memcmp(a->character, b->character,
+			(a->type->len * a->type->kind)) != 0);
+	}
+	else
+	{
+		switch (a->type->type)
+		{
+			case OFC_SEMA_TYPE_REAL:
+				tv.logical = (a->real != b->real);
+				break;
+			case OFC_SEMA_TYPE_COMPLEX:
+				tv.logical = ((a->complex.real != b->complex.real)
+								|| (a->complex.imaginary != b->complex.imaginary));
+				break;
+			case OFC_SEMA_TYPE_INTEGER:
+			case OFC_SEMA_TYPE_BYTE:
+				tv.logical = (a->integer != b->integer);
+				break;
+			default:
+				return NULL;
+		}
 	}
 
 	return ofc_sema_typeval__alloc(tv);
@@ -1609,17 +1645,51 @@ ofc_sema_typeval_t* ofc_sema_typeval_lt(
 		OFC_SEMA_TYPE_LOGICAL, 0,
 		false, false, false);
 
-	switch (a->type->type)
+	if (a->type->type == OFC_SEMA_TYPE_CHARACTER)
 	{
-		case OFC_SEMA_TYPE_REAL:
-			tv.logical = (a->real < b->real);
-			break;
-		case OFC_SEMA_TYPE_INTEGER:
-		case OFC_SEMA_TYPE_BYTE:
-			tv.logical = (a->integer < b->integer);
-			break;
-		default:
+		if (b->type->type != OFC_SEMA_TYPE_CHARACTER)
 			return NULL;
+
+		if (a->type->len != b->type->len)
+			return NULL;
+
+		/* TODO - Support comparison of types with differing kinds. */
+		if (a->type->kind != b->type->kind)
+			return NULL;
+
+		/* Strings of characters larger than 8-bytes aren't suported. */
+		if (a->type->kind > 8)
+			return NULL;
+
+		tv.logical = false;
+		unsigned i, j;
+		for (i = 0, j = 0; i < a->type->len; i++, j += a->type->kind)
+		{
+			uint64_t ac = 0, bc = 0;
+			memcpy(&ac, &a->character[j], a->type->kind);
+			memcpy(&bc, &b->character[j], a->type->kind);
+
+			if (ac == bc)
+				continue;
+
+			tv.logical = (ac < bc);
+			break;
+		}
+	}
+	else
+	{
+		switch (a->type->type)
+		{
+			case OFC_SEMA_TYPE_REAL:
+				tv.logical = (a->real < b->real);
+				break;
+			case OFC_SEMA_TYPE_INTEGER:
+			case OFC_SEMA_TYPE_BYTE:
+				tv.logical = (a->integer < b->integer);
+				break;
+			default:
+				return NULL;
+		}
 	}
 
 	return ofc_sema_typeval__alloc(tv);
@@ -1643,17 +1713,51 @@ ofc_sema_typeval_t* ofc_sema_typeval_le(
 		OFC_SEMA_TYPE_LOGICAL, 0,
 		false, false, false);
 
-	switch (a->type->type)
+	if (a->type->type == OFC_SEMA_TYPE_CHARACTER)
 	{
-		case OFC_SEMA_TYPE_REAL:
-			tv.logical = (a->real <= b->real);
-			break;
-		case OFC_SEMA_TYPE_INTEGER:
-		case OFC_SEMA_TYPE_BYTE:
-			tv.logical = (a->integer <= b->integer);
-			break;
-		default:
+		if (b->type->type != OFC_SEMA_TYPE_CHARACTER)
 			return NULL;
+
+		if (a->type->len != b->type->len)
+			return NULL;
+
+		/* TODO - Support comparison of types with differing kinds. */
+		if (a->type->kind != b->type->kind)
+			return NULL;
+
+		/* Strings of characters larger than 8-bytes aren't suported. */
+		if (a->type->kind > 8)
+			return NULL;
+
+		tv.logical = true;
+		unsigned i, j;
+		for (i = 0, j = 0; i < a->type->len; i++, j += a->type->kind)
+		{
+			uint64_t ac = 0, bc = 0;
+			memcpy(&ac, &a->character[j], a->type->kind);
+			memcpy(&bc, &b->character[j], a->type->kind);
+
+			if (ac == bc)
+				continue;
+
+			tv.logical = (ac < bc);
+			break;
+		}
+	}
+	else
+	{
+		switch (a->type->type)
+		{
+			case OFC_SEMA_TYPE_REAL:
+				tv.logical = (a->real <= b->real);
+				break;
+			case OFC_SEMA_TYPE_INTEGER:
+			case OFC_SEMA_TYPE_BYTE:
+				tv.logical = (a->integer <= b->integer);
+				break;
+			default:
+				return NULL;
+		}
 	}
 
 	return ofc_sema_typeval__alloc(tv);
@@ -1672,22 +1776,57 @@ ofc_sema_typeval_t* ofc_sema_typeval_gt(
 			a->type, b->type))
 		return NULL;
 
+
 	ofc_sema_typeval_t tv;
 	tv.type = ofc_sema_type_create_primitive(
 		OFC_SEMA_TYPE_LOGICAL, 0,
 		false, false, false);
 
-	switch (a->type->type)
+	if (a->type->type == OFC_SEMA_TYPE_CHARACTER)
 	{
-		case OFC_SEMA_TYPE_REAL:
-			tv.logical = (a->real > b->real);
-			break;
-		case OFC_SEMA_TYPE_INTEGER:
-		case OFC_SEMA_TYPE_BYTE:
-			tv.logical = (a->integer > b->integer);
-			break;
-		default:
+		if (b->type->type != OFC_SEMA_TYPE_CHARACTER)
 			return NULL;
+
+		if (a->type->len != b->type->len)
+			return NULL;
+
+		/* TODO - Support comparison of types with differing kinds. */
+		if (a->type->kind != b->type->kind)
+			return NULL;
+
+		/* Strings of characters larger than 8-bytes aren't suported. */
+		if (a->type->kind > 8)
+			return NULL;
+
+		tv.logical = false;
+		unsigned i, j;
+		for (i = 0, j = 0; i < a->type->len; i++, j += a->type->kind)
+		{
+			uint64_t ac = 0, bc = 0;
+			memcpy(&ac, &a->character[j], a->type->kind);
+			memcpy(&bc, &b->character[j], a->type->kind);
+
+			if (ac == bc)
+				continue;
+
+			tv.logical = (ac > bc);
+			break;
+		}
+	}
+	else
+	{
+		switch (a->type->type)
+		{
+			case OFC_SEMA_TYPE_REAL:
+				tv.logical = (a->real > b->real);
+				break;
+			case OFC_SEMA_TYPE_INTEGER:
+			case OFC_SEMA_TYPE_BYTE:
+				tv.logical = (a->integer > b->integer);
+				break;
+			default:
+				return NULL;
+		}
 	}
 
 	return ofc_sema_typeval__alloc(tv);
@@ -1711,17 +1850,51 @@ ofc_sema_typeval_t* ofc_sema_typeval_ge(
 		OFC_SEMA_TYPE_LOGICAL, 0,
 		false, false, false);
 
-	switch (a->type->type)
+	if (a->type->type == OFC_SEMA_TYPE_CHARACTER)
 	{
-		case OFC_SEMA_TYPE_REAL:
-			tv.logical = (a->real >= b->real);
-			break;
-		case OFC_SEMA_TYPE_INTEGER:
-		case OFC_SEMA_TYPE_BYTE:
-			tv.logical = (a->integer >= b->integer);
-			break;
-		default:
+		if (b->type->type != OFC_SEMA_TYPE_CHARACTER)
 			return NULL;
+
+		if (a->type->len != b->type->len)
+			return NULL;
+
+		/* TODO - Support comparison of types with differing kinds. */
+		if (a->type->kind != b->type->kind)
+			return NULL;
+
+		/* Strings of characters larger than 8-bytes aren't suported. */
+		if (a->type->kind > 8)
+			return NULL;
+
+		tv.logical = true;
+		unsigned i, j;
+		for (i = 0, j = 0; i < a->type->len; i++, j += a->type->kind)
+		{
+			uint64_t ac = 0, bc = 0;
+			memcpy(&ac, &a->character[j], a->type->kind);
+			memcpy(&bc, &b->character[j], a->type->kind);
+
+			if (ac == bc)
+				continue;
+
+			tv.logical = (ac > bc);
+			break;
+		}
+	}
+	else
+	{
+		switch (a->type->type)
+		{
+			case OFC_SEMA_TYPE_REAL:
+				tv.logical = (a->real >= b->real);
+				break;
+			case OFC_SEMA_TYPE_INTEGER:
+			case OFC_SEMA_TYPE_BYTE:
+				tv.logical = (a->integer >= b->integer);
+				break;
+			default:
+				return NULL;
+		}
 	}
 
 	return ofc_sema_typeval__alloc(tv);
