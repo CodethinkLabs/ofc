@@ -90,6 +90,14 @@ ofc_sema_array_t* ofc_sema_array(
 
 			d -= array->segment[i].base;
 
+			/* Count is inclusive. */
+			if ((d + 1) == 0)
+			{
+				ofc_sema_array_delete(array);
+				return NULL;
+			}
+			d += 1;
+
 			array->segment[i].count = d;
 			if ((int64_t)array->segment[i].count != d)
 			{
