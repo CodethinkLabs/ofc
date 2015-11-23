@@ -15,6 +15,7 @@ void ofc_sema_scope_delete(
 	ofc_sema_implicit_delete(
 		scope->implicit);
 
+	ofc_hashmap_delete(scope->common);
 	ofc_sema_decl_list_delete(
 		scope->decl);
 	ofc_hashmap_delete(
