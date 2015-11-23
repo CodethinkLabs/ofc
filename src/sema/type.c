@@ -309,7 +309,9 @@ const ofc_sema_type_t* ofc_sema_type_star_len(
 	if (type->type == OFC_SEMA_TYPE_CHARACTER)
 	{
 		if (type->len != 0)
-			return NULL;
+		{
+			/* TODO - Warn that length is being overridden. */
+		}
 
 		return ofc_sema_type__create(
 			type->type, type->kind, star_len,
@@ -317,7 +319,7 @@ const ofc_sema_type_t* ofc_sema_type_star_len(
 			type->is_static, type->is_automatic, type->is_volatile);
 	}
 
-	/* TODO - Fail if a star_length has already been set. */
+	/* TODO - Warn if a kind isn't implicit. */
 
 	if (type->type == OFC_SEMA_TYPE_FUNCTION)
 	{
