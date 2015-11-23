@@ -877,7 +877,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 			if (len_tval < len_type)
 			{
 				unsigned pad_char, pad_byte;
-				for (pad_char = len_tval; pad_char < (len_type * kind);
+				for (pad_char = len_tval; pad_char < len_type;
 					pad_char += kind)
 				{
 					tv.character[pad_char] = ' ';
