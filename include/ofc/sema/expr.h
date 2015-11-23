@@ -37,10 +37,10 @@ struct ofc_sema_expr_s
 
 	ofc_str_ref_t src;
 
+	ofc_sema_typeval_t* constant;
+
 	union
 	{
-		ofc_sema_typeval_t* constant;
-
 		ofc_sema_lhs_t* lhs;
 
 		struct

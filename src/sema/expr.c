@@ -4,8 +4,7 @@
 const ofc_sema_typeval_t* ofc_sema_expr_constant(
 	const ofc_sema_expr_t* expr)
 {
-	return (expr && (expr->type == OFC_SEMA_EXPR_CONSTANT)
-		? expr->constant : NULL);
+	return (expr ? expr->constant : NULL);
 }
 
 bool ofc_sema_expr_is_constant(
@@ -175,10 +174,13 @@ static ofc_sema_expr_t* ofc_sema_expr__create(
 
 	expr->type = type;
 
+	expr->src = OFC_STR_REF_EMPTY;
+
+	expr->constant = NULL;
+
 	switch (type)
 	{
 		case OFC_SEMA_EXPR_CONSTANT:
-			expr->constant = NULL;
 			break;
 		case OFC_SEMA_EXPR_LHS:
 			expr->lhs = NULL;
@@ -235,13 +237,13 @@ ofc_sema_expr_t* ofc_sema_expr_cast(
 	if (!type || !expr)
 		return NULL;
 
+	ofc_sema_expr_t* cast
+		= ofc_sema_expr__create(
+			OFC_SEMA_EXPR_CAST);
+	if (!cast) return NULL;
+
 	if (ofc_sema_expr_is_constant(expr))
 	{
-		ofc_sema_expr_t* cast
-			= ofc_sema_expr__create(
-				OFC_SEMA_EXPR_CONSTANT);
-		if (!cast) return NULL;
-
 		cast->constant = ofc_sema_typeval_cast(
 			scope, expr->constant, type);
 		if (!cast->constant)
@@ -249,23 +251,13 @@ ofc_sema_expr_t* ofc_sema_expr_cast(
 			ofc_sema_expr_delete(cast);
 			return NULL;
 		}
-
-		cast->src = expr->src;
-		ofc_sema_expr_delete(expr);
-		return cast;
 	}
-
-	if (!ofc_sema_type_cast_is_lossless(
+	else if (!ofc_sema_type_cast_is_lossless(
 		ofc_sema_expr_type(expr), type))
 	{
 		ofc_sema_scope_warning(scope, expr->src,
 			"Implicit cast may be lossy.");
 	}
-
-	ofc_sema_expr_t* cast
-		= ofc_sema_expr__create(
-			OFC_SEMA_EXPR_CAST);
-	if (!cast) return NULL;
 
 	cast->src = expr->src;
 	cast->cast.type = type;
@@ -380,30 +372,6 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 		}
 	}
 
-	if (ofc_sema_expr_is_constant(as)
-		&& ofc_sema_expr_is_constant(bs)
-		&& ofc_sema_expr__resolve[type])
-	{
-		ofc_sema_typeval_t* tv
-			= ofc_sema_expr__resolve[type](scope,
-				as->constant, bs->constant);
-		ofc_sema_expr_delete(bs);
-		ofc_sema_expr_delete(as);
-		if (!tv) return NULL;
-
-		ofc_sema_expr_t* expr
-			= ofc_sema_expr__create(
-				OFC_SEMA_EXPR_CONSTANT);
-		if (!expr)
-		{
-			ofc_sema_typeval_delete(tv);
-			return NULL;
-		}
-
-		expr->constant = tv;
-		return expr;
-	}
-
 	ofc_sema_expr_t* expr
 		= ofc_sema_expr__create(type);
 	if (!expr)
@@ -411,6 +379,14 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 		ofc_sema_expr_delete(bs);
 		ofc_sema_expr_delete(as);
 		return NULL;
+	}
+
+	if (ofc_sema_expr_is_constant(as)
+		&& ofc_sema_expr_is_constant(bs)
+		&& ofc_sema_expr__resolve[type])
+	{
+		expr->constant = ofc_sema_expr__resolve[type](
+			scope, as->constant, bs->constant);
 	}
 
 	expr->a = as;
@@ -455,34 +431,19 @@ static ofc_sema_expr_t* ofc_sema_expr__unary(
 		return NULL;
 	}
 
-	if (ofc_sema_expr_is_constant(as)
-		&& ofc_sema_expr__resolve[type])
-	{
-		ofc_sema_typeval_t* tv
-			= ofc_sema_expr__resolve[type](scope,
-				as->constant, NULL);
-		ofc_sema_expr_delete(as);
-		if (!tv) return NULL;
-
-		ofc_sema_expr_t* expr
-			= ofc_sema_expr__create(
-				OFC_SEMA_EXPR_CONSTANT);
-		if (!expr)
-		{
-			ofc_sema_typeval_delete(tv);
-			return NULL;
-		}
-
-		expr->constant = tv;
-		return expr;
-	}
-
 	ofc_sema_expr_t* expr
 		= ofc_sema_expr__create(type);
 	if (!expr)
 	{
 		ofc_sema_expr_delete(as);
 		return NULL;
+	}
+
+	if (ofc_sema_expr_is_constant(as)
+		&& ofc_sema_expr__resolve[type])
+	{
+		expr->constant = ofc_sema_expr__resolve[type](
+			scope, as->constant, NULL);
 	}
 
 	expr->a = as;
@@ -857,11 +818,12 @@ void ofc_sema_expr_delete(
 	if (!expr)
 		return;
 
+	ofc_sema_typeval_delete(
+		expr->constant);
+
 	switch (expr->type)
 	{
 		case OFC_SEMA_EXPR_CONSTANT:
-			ofc_sema_typeval_delete(
-				expr->constant);
 			break;
 		case OFC_SEMA_EXPR_LHS:
 			ofc_sema_lhs_delete(expr->lhs);
@@ -896,11 +858,15 @@ bool ofc_sema_expr_compare(
 	if (a->type != b->type)
 		return false;
 
+	if (ofc_sema_expr_is_constant(a)
+		&& ofc_sema_expr_is_constant(b))
+		return ofc_sema_typeval_compare(
+			a->constant, b->constant);
+
 	switch (a->type)
 	{
 		case OFC_SEMA_EXPR_CONSTANT:
-			return ofc_sema_typeval_compare(
-				a->constant, b->constant);
+			return false;
 
 		case OFC_SEMA_EXPR_LHS:
 			return ofc_sema_lhs_compare(a->lhs, b->lhs);
