@@ -159,14 +159,38 @@ static bool ofc_sema_decl__decl(
 		if (!lhs) return false;
 	}
 
-	switch (lhs->type)
+	if (lhs->type == OFC_PARSE_LHS_ARRAY)
 	{
-		case OFC_PARSE_LHS_VARIABLE:
-		case OFC_PARSE_LHS_ARRAY:
-			break;
-		default:
-			return false;
+		ofc_sema_array_t* darray
+			= ofc_sema_array(scope, lhs->array.index);
+		if (!darray) return false;
+
+		if (type->array)
+		{
+			if (!ofc_sema_array_compare(
+				type->array, darray))
+			{
+				ofc_sema_scope_error(scope, lhs->src,
+					"Conflicting array definitions in declaration");
+				ofc_sema_array_delete(darray);
+				return false;
+			}
+
+			ofc_sema_scope_warning(scope, lhs->src,
+				"Multiple array definitions in declaration");
+		}
+
+		type = ofc_sema_type_create_array(type, darray,
+			type->is_static, type->is_automatic, type->is_volatile);
+		ofc_sema_array_delete(darray);
+		if (!type) return false;
+
+		lhs = lhs->parent;
+		if (!lhs) return false;
 	}
+
+	if (lhs->type != OFC_PARSE_LHS_VARIABLE)
+		return false;
 
 	ofc_str_ref_t base_name;
 	if (!ofc_parse_lhs_base_name(
@@ -222,7 +246,7 @@ static bool ofc_sema_decl__decl(
 		if (array)
 		{
 			atype = ofc_sema_type_create_array(
-					type, array, false, false, false);
+				type, array, false, false ,false);
 			if (!atype) return false;
 		}
 
@@ -235,13 +259,8 @@ static bool ofc_sema_decl__decl(
 	}
 	else
 	{
-		const ofc_sema_type_t* atype
-			= ofc_sema_lhs_decl_type(
-				scope, type, lhs);
-		if (!atype) return false;
-
 		sdecl = ofc_sema_decl_create(
-			atype, base_name);
+			type, base_name);
 		if (!sdecl) return false;
 	}
 

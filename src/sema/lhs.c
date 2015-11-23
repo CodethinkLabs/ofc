@@ -76,54 +76,6 @@ static ofc_sema_lhs_t* ofc_sema_lhs_member(
 }
 
 
-const ofc_sema_type_t* ofc_sema_lhs_decl_type(
-	ofc_sema_scope_t* scope,
-	const ofc_sema_type_t* type,
-	const ofc_parse_lhs_t* lhs)
-{
-	if (!type || !lhs)
-		return NULL;
-
-	bool is_array = (lhs->type == OFC_PARSE_LHS_ARRAY);
-	if (!is_array && (lhs->type != OFC_PARSE_LHS_VARIABLE))
-		return NULL;
-
-	const ofc_sema_type_t* itype = type;
-	if (!itype)
-	{
-		if (!scope)
-			return NULL;
-
-		ofc_str_ref_t base_name;
-		if (!ofc_parse_lhs_base_name(
-			*lhs, &base_name))
-			return NULL;
-
-		itype = ofc_sema_implicit_get(
-			scope->implicit, base_name.base[0]);
-		if (!itype) return NULL;
-	}
-
-	if (!is_array)
-		return itype;
-
-	ofc_sema_array_t* array = ofc_sema_array(
-		scope, lhs->array.index);
-	if (!array) return NULL;
-
-	const ofc_sema_type_t* atype
-		= ofc_sema_type_create_array(
-			itype, array,
-			itype->is_static,
-			itype->is_automatic,
-			itype->is_volatile);
-	ofc_sema_array_delete(array);
-	if (!atype) return NULL;
-
-	return ofc_sema_lhs_decl_type(
-		scope, atype, lhs->parent);
-}
-
 static ofc_sema_lhs_t* ofc_sema__lhs(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_lhs_t* lhs,

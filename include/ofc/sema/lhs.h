@@ -37,11 +37,6 @@ struct ofc_sema_lhs_s
 	unsigned refcnt;
 };
 
-const ofc_sema_type_t* ofc_sema_lhs_decl_type(
-	ofc_sema_scope_t* scope,
-	const ofc_sema_type_t* type,
-	const ofc_parse_lhs_t* lhs);
-
 ofc_sema_lhs_t* ofc_sema_lhs(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_lhs_t* lhs);
