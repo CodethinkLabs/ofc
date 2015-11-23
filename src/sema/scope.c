@@ -857,6 +857,30 @@ ofc_sema_scope_t* ofc_sema_scope_block_data(
 }
 
 
+bool ofc_sema_scope_is_root(
+	const ofc_sema_scope_t* scope)
+{
+	switch (scope->type)
+	{
+		case OFC_SEMA_SCOPE_STMT_FUNC:
+		case OFC_SEMA_SCOPE_IF:
+		case OFC_SEMA_SCOPE_IMPLICIT_DO:
+			return false;
+		default:
+			break;
+	}
+
+	return true;
+}
+
+ofc_sema_scope_t* ofc_sema_scope_root(
+	ofc_sema_scope_t* scope)
+{
+	return (ofc_sema_scope_is_root(scope) ? scope
+		: ofc_sema_scope_root(scope->parent));
+}
+
+
 const ofc_str_ref_t* ofc_sema_scope_get_name(
 	const ofc_sema_scope_t* scope)
 {

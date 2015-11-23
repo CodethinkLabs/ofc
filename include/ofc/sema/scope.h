@@ -67,6 +67,11 @@ ofc_sema_scope_t* ofc_sema_scope_if(
 ofc_sema_scope_t* ofc_sema_scope_implicit_do(
 	ofc_sema_scope_t* scope);
 
+bool ofc_sema_scope_is_root(
+	const ofc_sema_scope_t* scope);
+ofc_sema_scope_t* ofc_sema_scope_root(
+	ofc_sema_scope_t* scope);
+
 void ofc_sema_scope_delete(
 	ofc_sema_scope_t* scope);
 
