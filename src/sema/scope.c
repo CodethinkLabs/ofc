@@ -850,11 +850,31 @@ ofc_sema_scope_t* ofc_sema_scope_block_data(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt)
 {
-	if (!scope || !stmt)
+	if (!stmt || !scope
+		|| (stmt->type != OFC_PARSE_STMT_BLOCK_DATA))
 		return NULL;
 
-	/* TODO - Implement. */
-	return NULL;
+	ofc_sema_scope_t* block_data
+		= ofc_sema_scope__create(
+			scope, NULL, NULL, OFC_SEMA_SCOPE_BLOCK_DATA);
+	if (!block_data) return NULL;
+
+	block_data->name = stmt->program.name;
+
+	if (!ofc_sema_scope__body(
+		block_data, stmt->program.body))
+	{
+		ofc_sema_scope_delete(block_data);
+		return NULL;
+	}
+
+	if (!ofc_sema_scope__add_child(scope, block_data))
+	{
+		ofc_sema_scope_delete(block_data);
+		return NULL;
+	}
+
+	return block_data;
 }
 
 
