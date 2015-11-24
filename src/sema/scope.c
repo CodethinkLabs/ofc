@@ -1008,8 +1008,9 @@ ofc_sema_common_t* ofc_sema_scope_common_find_create(
 		{
 			case OFC_SEMA_SCOPE_GLOBAL:
 			case OFC_SEMA_SCOPE_PROGRAM:
-			case OFC_SEMA_SCOPE_FUNCTION:
 			case OFC_SEMA_SCOPE_SUBROUTINE:
+			case OFC_SEMA_SCOPE_FUNCTION:
+			case OFC_SEMA_SCOPE_BLOCK_DATA:
 				break;
 			default:
 				/* TODO - Error: Can't declare common block here. */
