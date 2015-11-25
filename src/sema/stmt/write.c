@@ -209,56 +209,51 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 		{
 			const ofc_sema_typeval_t* format_label
 				= ofc_sema_expr_constant(s.io_write.format_expr);
-			if (!format_label)
+			if (format_label)
 			{
-				ofc_sema_scope_error(scope, stmt->src,
-					"Format (FMT) label expression must be resolvable"
-					" at compile time in WRITE");
-				ofc_sema_expr_delete(s.io_write.format_expr);
-				ofc_sema_expr_delete(s.io_write.unit);
-				return NULL;
+				int64_t fl64 = 0;
+				if (!ofc_sema_typeval_get_integer(
+					format_label, &fl64) || (fl64 < 0))
+				{
+					ofc_sema_scope_error(scope, stmt->src,
+						"Format (FMT) label expression must be a positive INTEGER in WRITE");
+					ofc_sema_expr_delete(s.io_write.format_expr);
+					ofc_sema_expr_delete(s.io_write.unit);
+					return NULL;
+				}
+
+				unsigned ulabel = (unsigned) fl64;
+
+				if (((int64_t) ulabel) != fl64)
+				{
+					ofc_sema_expr_delete(s.io_write.format_expr);
+					ofc_sema_expr_delete(s.io_write.unit);
+					return NULL;
+				}
+
+				const ofc_sema_label_t* label
+					= ofc_sema_label_map_find(scope->label, ulabel);
+				if (!label)
+				{
+					ofc_sema_scope_error(scope, stmt->src,
+						"Format label expression not defined in WRITE");
+					ofc_sema_expr_delete(s.io_write.format_expr);
+					ofc_sema_expr_delete(s.io_write.unit);
+					return NULL;
+				}
+
+				if (label->type != OFC_SEMA_LABEL_FORMAT)
+				{
+					ofc_sema_scope_error(scope, stmt->src,
+						"Label expression must be a FORMAT statement in WRITE");
+					ofc_sema_expr_delete(s.io_write.format_expr);
+					ofc_sema_expr_delete(s.io_write.unit);
+					return NULL;
+				}
+				s.io_write.format = label->format;
 			}
 
-			int64_t fl64 = 0;
-			if (!ofc_sema_typeval_get_integer(
-				format_label, &fl64) || (fl64 < 0))
-			{
-				ofc_sema_scope_error(scope, stmt->src,
-					"Format (FMT) label expression must be a positive INTEGER in WRITE");
-				ofc_sema_expr_delete(s.io_write.format_expr);
-				ofc_sema_expr_delete(s.io_write.unit);
-				return NULL;
-			}
 
-			unsigned ulabel = (unsigned) fl64;
-
-			if (((int64_t) ulabel) != fl64)
-			{
-				ofc_sema_expr_delete(s.io_write.format_expr);
-				ofc_sema_expr_delete(s.io_write.unit);
-				return NULL;
-			}
-
-			const ofc_sema_label_t* label
-				= ofc_sema_label_map_find(scope->label, ulabel);
-			if (!label)
-			{
-				ofc_sema_scope_error(scope, stmt->src,
-					"Format label expression not defined in WRITE");
-				ofc_sema_expr_delete(s.io_write.format_expr);
-				ofc_sema_expr_delete(s.io_write.unit);
-				return NULL;
-			}
-
-			if (label->type != OFC_SEMA_LABEL_FORMAT)
-			{
-				ofc_sema_scope_error(scope, stmt->src,
-					"Label expression must be a FORMAT statement in WRITE");
-				ofc_sema_expr_delete(s.io_write.format_expr);
-				ofc_sema_expr_delete(s.io_write.unit);
-				return NULL;
-			}
-			s.io_write.format = label->format;
 		}
 		else if (etype->type == OFC_SEMA_TYPE_CHARACTER)
 		{
