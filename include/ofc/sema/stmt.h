@@ -7,6 +7,7 @@ typedef enum
 	OFC_SEMA_STMT_ASSIGN,
 	OFC_SEMA_STMT_WRITE,
 	OFC_SEMA_STMT_IO_PRINT,
+	OFC_SEMA_STMT_IO_REWIND,
 	OFC_SEMA_STMT_CONTINUE,
 	OFC_SEMA_STMT_IF_COMPUTED,
 	OFC_SEMA_STMT_IF_STATEMENT,
@@ -88,6 +89,13 @@ struct ofc_sema_stmt_s
 			bool                  format_asterisk;
 			ofc_sema_expr_list_t* iolist;
 		} io_print;
+
+		struct
+		{
+			ofc_sema_expr_t* unit;
+			ofc_sema_expr_t* iostat;
+			ofc_sema_expr_t* err;
+		} io_rewind;
 
 		struct
 		{
@@ -185,6 +193,9 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
 ofc_sema_stmt_t* ofc_sema_stmt_io_print(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt);
+ofc_sema_stmt_t* ofc_sema_stmt_io_rewind(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
 ofc_sema_stmt_t* ofc_sema_stmt_if(
