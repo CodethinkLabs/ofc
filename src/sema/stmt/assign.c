@@ -15,20 +15,24 @@ ofc_sema_stmt_t* ofc_sema_stmt_assign(
 		scope, stmt->assign.variable, false);
 	if (!s.assign.dest)
 	{
-		const ofc_sema_type_t* type = ofc_sema_implicit_get(
-			scope->implicit, stmt->assign.variable.base[0]);
-		if (!type) return false;
+		ofc_sema_spec_t* spec = ofc_sema_scope_spec_modify(
+			scope, stmt->assign.variable);
+		if (!spec) return false;
 
-		if (!ofc_sema_type_is_integer(type))
+		if (spec->type != OFC_SEMA_TYPE_INTEGER)
 		{
-			ofc_sema_scope_warning(scope, stmt->assign.variable,
-				"IMPLICIT declaration of variable in ASSIGN destination"
-				" as non-INTEGER makes no sense, declaring as INTEGER.");
-			type = ofc_sema_type_integer_default();
+			if (!spec->type_implicit)
+			{
+				ofc_sema_scope_warning(scope, stmt->assign.variable,
+					"IMPLICIT declaration of variable in ASSIGN destination"
+					" as non-INTEGER makes no sense, declaring as INTEGER.");
+			}
+			spec->type_implicit = false;
+			spec->type = OFC_SEMA_TYPE_INTEGER;
 		}
 
-		ofc_sema_decl_t* idecl = ofc_sema_decl_create(
-			type, stmt->assign.variable);
+		ofc_sema_decl_t* idecl = ofc_sema_decl_spec(
+			scope, stmt->assign.variable, spec, NULL);
 		if (!idecl) return false;
 
 		if (!ofc_sema_decl_list_add(

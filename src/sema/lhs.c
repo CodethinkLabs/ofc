@@ -39,10 +39,7 @@ static ofc_sema_lhs_t* ofc_sema_lhs_slice(
 
 	const ofc_sema_type_t* type
 		= ofc_sema_type_create_array(
-			base_type, array,
-			base_type->is_static,
-			base_type->is_automatic,
-			base_type->is_volatile);
+			base_type, array);
 	if (!type)
 	{
 		ofc_sema_array_delete(array);
@@ -232,16 +229,12 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 				ofc_sema_decl_delete(decl);
 				return NULL;
 			}
-
-			/* Can't modify return type once it's been referenced. */
-			fdecl->is_implicit = false;
-			decl->is_implicit  = false;
 		}
 	}
 	else
 	{
 		decl = ofc_sema_scope_decl_find_modify(
-				scope, lhs->variable, false);
+			scope, lhs->variable, false);
 		if (!decl)
 		{
 			decl = ofc_sema_decl_implicit_lhs(
@@ -282,7 +275,7 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 	slhs->refcnt    = 0;
 
 	if (is_expr)
-		decl->lock = true;
+		decl->used = true;
 	return slhs;
 }
 
@@ -417,6 +410,25 @@ bool ofc_sema_lhs_init_array(
 	return ofc_sema_decl_init_array(
 		scope, ofc_sema_lhs_decl(lhs),
 		array, count, init);
+}
+
+
+bool ofc_sema_lhs_mark_used(
+	ofc_sema_lhs_t* lhs)
+{
+	if (!lhs)
+		return false;
+
+	if (lhs->type == OFC_SEMA_LHS_DECL)
+	{
+		if (!lhs->decl)
+			return false;
+		lhs->decl->used = true;
+		return true;
+	}
+
+	return ofc_sema_lhs_mark_used(
+		lhs->parent);
 }
 
 

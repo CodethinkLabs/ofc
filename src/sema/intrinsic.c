@@ -468,8 +468,7 @@ const ofc_sema_type_t* ofc_sema_intrinsic_type(
 			case IT_SCALAR:
 			case IT_REAL:
 				return ofc_sema_type_create_primitive(
-					OFC_SEMA_TYPE_REAL, atype->kind,
-					false, false, false);
+					OFC_SEMA_TYPE_REAL, atype->kind);
 
 			default:
 				break;
@@ -484,8 +483,7 @@ const ofc_sema_type_t* ofc_sema_intrinsic_type(
 				if (atype->type == OFC_SEMA_TYPE_REAL)
 				{
 					return ofc_sema_type_create_primitive(
-						OFC_SEMA_TYPE_COMPLEX, atype->kind,
-						false, false, false);
+						OFC_SEMA_TYPE_COMPLEX, atype->kind);
 				}
 				else if (ofc_sema_type_is_scalar(atype))
 				{
@@ -493,8 +491,7 @@ const ofc_sema_type_t* ofc_sema_intrinsic_type(
 						= ofc_sema_type_promote(atype,
 							ofc_sema_type_real_default());
 					return ofc_sema_type_create_primitive(
-						OFC_SEMA_TYPE_COMPLEX, ptype->kind,
-						false, false, false);
+						OFC_SEMA_TYPE_COMPLEX, ptype->kind);
 				}
 				break;
 

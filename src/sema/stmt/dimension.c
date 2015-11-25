@@ -27,9 +27,8 @@ bool ofc_sema_stmt_dimension(
 		if (!lhs->parent
 			|| (lhs->parent->type != OFC_PARSE_LHS_VARIABLE))
 		{
-			/* TODO - Support nested arrays in DIMENSION. */
 			ofc_sema_scope_error(scope, lhs->src,
-				"Nested arrays not yet supported in DIMENSION.");
+				"Invalid array layout in DIMENSION");
 			return false;
 		}
 
@@ -38,34 +37,25 @@ bool ofc_sema_stmt_dimension(
 			*lhs, &base_name))
 			return false;
 
-		ofc_sema_decl_t* decl
-			= ofc_sema_scope_decl_find_modify(
+		const ofc_sema_decl_t* decl
+			= ofc_sema_scope_decl_find(
 				scope, base_name, true);
-		if (!decl)
-		{
-			decl = ofc_sema_decl_implicit_name(
-				scope, base_name);
-			if (!decl)
-			{
-				ofc_str_ref_t n = base_name;
-				ofc_sema_scope_error(scope, lhs->src,
-					"No declaration for '%.*s' and no valid IMPLICIT rule.",
-					n.size, n.base);
-				return false;
-			}
-
-			if (!ofc_sema_decl_list_add(
-				scope->decl, decl))
-			{
-				ofc_sema_decl_delete(decl);
-				return false;
-			}
-		}
-
-		if (ofc_sema_decl_is_locked(decl))
+		if (decl)
 		{
 			ofc_sema_scope_error(scope, lhs->src,
-				"Can't modify dimensions of declaration after use.");
+				"Can't modify dimensions of declaration after use");
+			return false;
+		}
+
+		ofc_sema_spec_t* spec
+			= ofc_sema_scope_spec_modify(
+				scope, base_name);
+		if (!spec)
+		{
+			ofc_str_ref_t n = base_name;
+			ofc_sema_scope_error(scope, lhs->src,
+				"No declaration for '%.*s' and no valid IMPLICIT rule.",
+				n.size, n.base);
 			return false;
 		}
 
@@ -74,14 +64,26 @@ bool ofc_sema_stmt_dimension(
 				scope, lhs->array.index);
 		if (!array) return false;
 
-		const ofc_sema_type_t* type
-			= ofc_sema_type_create_array(
-				decl->type, array,
-				false, false, false);
-		ofc_sema_array_delete(array);
-		if (!type) return false;
+		if (spec->array)
+		{
+			bool conflict = !ofc_sema_array_compare(
+				spec->array, array);
+			ofc_sema_array_delete(array);
 
-		decl->type = type;
+			if (conflict)
+			{
+				ofc_sema_scope_error(scope, lhs->src,
+					"Conflicting array dimension specifications");
+				return false;
+			}
+
+			ofc_sema_scope_warning(scope, lhs->src,
+				"Multiple array dimension specifications");
+		}
+		else
+		{
+			spec->array = array;
+		}
 	}
 
 	return true;

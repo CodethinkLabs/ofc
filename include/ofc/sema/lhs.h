@@ -59,6 +59,9 @@ bool ofc_sema_lhs_init_array(
 	unsigned count,
 	const ofc_sema_expr_t** init);
 
+bool ofc_sema_lhs_mark_used(
+	ofc_sema_lhs_t* lhs);
+
 bool ofc_sema_lhs_compare(
 	const ofc_sema_lhs_t* a,
 	const ofc_sema_lhs_t* b);

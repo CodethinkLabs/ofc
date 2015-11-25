@@ -35,62 +35,80 @@ bool ofc_sema_stmt_common(
 				*lhs, &base_name))
 				return false;
 
-			if ((lhs->type != OFC_PARSE_LHS_VARIABLE)
-				&& (lhs->type != OFC_PARSE_LHS_ARRAY))
+			ofc_sema_array_t* array = NULL;
+			if (lhs->type == OFC_PARSE_LHS_ARRAY)
 			{
-				ofc_sema_scope_error(scope, lhs->src,
-					"Invalid LHS '%.*s' in COMMON list.",
-					base_name.size, base_name.base);
-				return false;
-			}
-
-			ofc_sema_decl_t* decl
-				= ofc_sema_scope_decl_find_modify(
-					scope, base_name, false);
-			if (!decl)
-			{
-				decl = ofc_sema_decl_implicit_lhs(
-					scope, lhs);
-				if (!decl)
+				array = ofc_sema_array(
+					scope, lhs->array.index);
+				if (!array)
 				{
 					ofc_sema_scope_error(scope, lhs->src,
-						"No declaration for '%.*s' and no valid IMPLICIT rule.",
-						base_name.size, base_name.base);
+						"Invalid array index in COMMON list");
 					return false;
 				}
 
-				if (!ofc_sema_decl_list_add(
-					scope->decl, decl))
+				lhs = lhs->parent;
+				if (!lhs)
 				{
-					ofc_sema_decl_delete(decl);
+					ofc_sema_array_delete(array);
 					return false;
 				}
 			}
-			else if (lhs->type != OFC_PARSE_LHS_VARIABLE)
+
+			if (lhs->type != OFC_PARSE_LHS_VARIABLE)
 			{
 				ofc_sema_scope_error(scope, lhs->src,
-					"Can't mark part of array '%.*s' as COMMON.",
-					base_name.size, base_name.base);
+					"Invalid entry in COMMON list");
+				ofc_sema_array_delete(array);
 				return false;
 			}
 
-			if (!ofc_sema_common_add(
-				common, decl))
+			ofc_sema_spec_t* spec
+				= ofc_sema_scope_spec_modify(
+					scope, base_name);
+			if (!spec)
 			{
-				if (ofc_str_ref_empty(base_name))
+				ofc_sema_array_delete(array);
+				return false;
+			}
+
+			if (spec->common
+				&& (spec->common != common))
+			{
+				ofc_sema_scope_error(scope, lhs->src,
+					"Specifier used in multiple COMMON blocks");
+				ofc_sema_array_delete(array);
+				return false;
+			}
+
+			if (array)
+			{
+				if (spec->array)
 				{
-					ofc_sema_scope_error(scope, lhs->src,
-						"Failed to add '%.*s' to global COMMON block.",
-						base_name.size, base_name.base);
+					bool conflict = !ofc_sema_array_compare(
+						spec->array, array);
+					ofc_sema_array_delete(array);
+					if (conflict)
+					{
+						ofc_sema_scope_error(scope, lhs->src,
+							"Conflicting array definition in COMMON list");
+						return false;
+					}
 				}
 				else
 				{
-					ofc_sema_scope_error(scope, lhs->src,
-						"Failed to add '%.*s' to COMMON block '%.*s'.",
-						base_name.size, base_name.base,
-						group->group.size, group->group.base);
+					spec->array = array;
 				}
-				return false;
+			}
+
+			if (!spec->common)
+			{
+				unsigned offset = common->count;
+				if (!ofc_sema_common_add(common, spec))
+					return false;
+
+				spec->common        = common;
+				spec->common_offset = offset;
 			}
 		}
 	}

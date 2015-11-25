@@ -23,10 +23,6 @@ struct ofc_sema_type_s
 
 	ofc_sema_array_t* array;
 
-    bool is_static;
-	bool is_volatile;
-	bool is_automatic;
-
 	union
 	{
 		const ofc_sema_type_t* subtype;
@@ -41,33 +37,24 @@ struct ofc_sema_type_s
 	};
 };
 
-const ofc_sema_type_t* ofc_sema_type(
-	ofc_sema_scope_t* scope,
-	const ofc_parse_type_t* ptype);
+const ofc_sema_type_t* ofc_sema_type_spec(
+	const ofc_sema_spec_t* spec);
 
 const char* ofc_sema_type_str_rep(
 	const ofc_sema_type_e type);
 
 const ofc_sema_type_t* ofc_sema_type_create_primitive(
-	ofc_sema_type_e type, unsigned kind,
-	bool is_static, bool is_automatic, bool is_volatile);
+	ofc_sema_type_e type, unsigned kind);
 const ofc_sema_type_t* ofc_sema_type_create_character(
-	unsigned kind, unsigned len,
-	bool is_static, bool is_automatic, bool is_volatile);
-const ofc_sema_type_t* ofc_sema_type_create_byte(
-	bool is_static, bool is_automatic, bool is_volatile);
+	unsigned kind, unsigned len);
 const ofc_sema_type_t* ofc_sema_type_create_structure(
-	const ofc_sema_structure_t* structure,
-	bool is_static, bool is_automatic, bool is_volatile);
+	const ofc_sema_structure_t* structure);
 const ofc_sema_type_t* ofc_sema_type_create_pointer(
-	ofc_sema_type_t* target,
-	bool is_static, bool is_automatic, bool is_volatile);
+	ofc_sema_type_t* target);
 const ofc_sema_type_t* ofc_sema_type_create_array(
-	const ofc_sema_type_t* type, const ofc_sema_array_t* array,
-	bool is_static, bool is_automatic, bool is_volatile);
+	const ofc_sema_type_t* type, const ofc_sema_array_t* array);
 const ofc_sema_type_t* ofc_sema_type_create_function(
-	const ofc_sema_type_t* type,
-	bool is_static, bool is_automatic, bool is_volatile);
+	const ofc_sema_type_t* type);
 
 const ofc_sema_type_t* ofc_sema_type_star_len(
 	const ofc_sema_type_t* type, unsigned star_len);

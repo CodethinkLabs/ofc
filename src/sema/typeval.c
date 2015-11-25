@@ -207,7 +207,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 	if (!typeval.type)
 	{
 		typeval.type = ofc_sema_type_create_primitive(
-			OFC_SEMA_TYPE_INTEGER, kind, false, false, false);
+			OFC_SEMA_TYPE_INTEGER, kind);
 
 		if (!typeval.type)
 		{
@@ -408,7 +408,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__real_literal(
 	if (!typeval.type)
 	{
 		typeval.type = ofc_sema_type_create_primitive(
-			OFC_SEMA_TYPE_REAL, kind, false, false, false);
+			OFC_SEMA_TYPE_REAL, kind);
 
 		if (!typeval.type)
 		{
@@ -457,7 +457,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__complex_literal(
 	if (!typeval.type)
 	{
 		typeval.type = ofc_sema_type_create_primitive(
-			OFC_SEMA_TYPE_COMPLEX, kind, false, false, false);
+			OFC_SEMA_TYPE_COMPLEX, kind);
 
 		if (!typeval.type)
 		{
@@ -524,8 +524,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__character_literal(
 
 	if (!typeval.type)
 	{
-		typeval.type = ofc_sema_type_create_character(
-			1, size, false, false, false);
+		typeval.type = ofc_sema_type_create_character(1, size);
 		if (!typeval.type)
 		{
 			/* This should never happen. */
@@ -616,7 +615,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__logical_literal(
 	if (!typeval.type)
 	{
 		typeval.type = ofc_sema_type_create_primitive(
-			OFC_SEMA_TYPE_LOGICAL, 0, false, false, false);
+			OFC_SEMA_TYPE_LOGICAL, 0);
 
 		if (!typeval.type)
 		{
@@ -678,8 +677,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_unsigned(
 
 	const ofc_sema_type_t* type
 		= ofc_sema_type_create_primitive(
-			OFC_SEMA_TYPE_INTEGER, kind,
-			false, false, false);
+			OFC_SEMA_TYPE_INTEGER, kind);
 	if (!type) return NULL;
 
 	ofc_sema_typeval_t* typeval
@@ -1341,7 +1339,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_concat(
 
 	ofc_sema_typeval_t tv;
 	tv.type = ofc_sema_type_create_character(
-		a->type->kind, len, false, false, false);
+		a->type->kind, len);
 	if (!tv.type) return NULL;
 
 	tv.character = (char*)malloc(sizeof(char) * len);
@@ -1531,8 +1529,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_eq(
 
 	ofc_sema_typeval_t tv;
 	tv.type = ofc_sema_type_create_primitive(
-		OFC_SEMA_TYPE_LOGICAL, 0,
-		false, false, false);
+		OFC_SEMA_TYPE_LOGICAL, 0);
 
 	if (a->type->type == OFC_SEMA_TYPE_CHARACTER)
 	{
@@ -1587,8 +1584,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_ne(
 
 	ofc_sema_typeval_t tv;
 	tv.type = ofc_sema_type_create_primitive(
-		OFC_SEMA_TYPE_LOGICAL, 0,
-		false, false, false);
+		OFC_SEMA_TYPE_LOGICAL, 0);
 
 	if (a->type->type == OFC_SEMA_TYPE_CHARACTER)
 	{
@@ -1642,8 +1638,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_lt(
 
 	ofc_sema_typeval_t tv;
 	tv.type = ofc_sema_type_create_primitive(
-		OFC_SEMA_TYPE_LOGICAL, 0,
-		false, false, false);
+		OFC_SEMA_TYPE_LOGICAL, 0);
 
 	if (a->type->type == OFC_SEMA_TYPE_CHARACTER)
 	{
@@ -1710,8 +1705,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_le(
 
 	ofc_sema_typeval_t tv;
 	tv.type = ofc_sema_type_create_primitive(
-		OFC_SEMA_TYPE_LOGICAL, 0,
-		false, false, false);
+		OFC_SEMA_TYPE_LOGICAL, 0);
 
 	if (a->type->type == OFC_SEMA_TYPE_CHARACTER)
 	{
@@ -1779,8 +1773,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_gt(
 
 	ofc_sema_typeval_t tv;
 	tv.type = ofc_sema_type_create_primitive(
-		OFC_SEMA_TYPE_LOGICAL, 0,
-		false, false, false);
+		OFC_SEMA_TYPE_LOGICAL, 0);
 
 	if (a->type->type == OFC_SEMA_TYPE_CHARACTER)
 	{
@@ -1847,8 +1840,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_ge(
 
 	ofc_sema_typeval_t tv;
 	tv.type = ofc_sema_type_create_primitive(
-		OFC_SEMA_TYPE_LOGICAL, 0,
-		false, false, false);
+		OFC_SEMA_TYPE_LOGICAL, 0);
 
 	if (a->type->type == OFC_SEMA_TYPE_CHARACTER)
 	{
@@ -2005,8 +1997,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_eqv(
 
 	ofc_sema_typeval_t tv;
 	tv.type = ofc_sema_type_create_primitive(
-		OFC_SEMA_TYPE_LOGICAL, 0,
-		false, false, false);
+		OFC_SEMA_TYPE_LOGICAL, 0);
 
 	switch (a->type->type)
 	{
@@ -2038,8 +2029,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_neqv(
 
 	ofc_sema_typeval_t tv;
 	tv.type = ofc_sema_type_create_primitive(
-		OFC_SEMA_TYPE_LOGICAL, 0,
-		false, false, false);
+		OFC_SEMA_TYPE_LOGICAL, 0);
 
 	switch (a->type->type)
 	{

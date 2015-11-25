@@ -20,8 +20,7 @@ static const ofc_sema_type_t* OFC_SEMA_EXPR__LOGICAL_RETURN(
 {
 	(void)a;
 	(void)b;
-	return ofc_sema_type_create_primitive(
-		OFC_SEMA_TYPE_LOGICAL, 0, false, false, false);
+	return ofc_sema_type_logical_default();
 }
 
 typedef struct
@@ -732,48 +731,63 @@ static ofc_sema_expr_t* ofc_sema_expr__variable(
 		expr = ofc_sema_expr__function(
 			scope, name, decl);
 	}
-	else if (!ofc_sema_decl_is_array(decl)
-		&& ofc_parse_lhs_possible_function_call(*name))
-	{
-		if ((name->type != OFC_PARSE_LHS_ARRAY)
-			|| !name->parent
-			|| (name->parent->type != OFC_PARSE_LHS_VARIABLE))
-		{
-			/* TODO - Handle complicated functions
-			          returning arrays or structures. */
-			return NULL;
-		}
-
-		ofc_sema_decl_t* fdecl
-			= ofc_sema_scope_decl_find_modify(
-				scope, base_name, true);
-
-		if (!fdecl)
-		{
-			fdecl = ofc_sema_decl_implicit_name(
-				scope, base_name);
-			if (!fdecl) return NULL;
-		}
-
-		if (ofc_sema_decl_is_locked(fdecl))
-		{
-			ofc_sema_scope_error(scope, name->src,
-				"Can't redeclare referenced variable as function");
-			return NULL;
-		}
-
-		const ofc_sema_type_t* ftype
-			= ofc_sema_type_create_function(
-				ofc_sema_decl_type(fdecl), false, false, false);
-		if (!ftype) return NULL;
-		fdecl->type = ftype;
-
-		expr = ofc_sema_expr__function(
-			scope, name, fdecl);
-	}
 	else
 	{
-		expr = ofc_sema_expr__lhs(scope, name);
+
+		bool is_array    = false;
+		bool is_function = false;
+		if (decl)
+		{
+			is_array = ofc_sema_decl_is_array(decl);
+			is_function = ofc_sema_decl_is_function(decl);
+		}
+		else
+		{
+			const ofc_sema_spec_t* spec
+				= ofc_sema_scope_spec_modify(
+					scope, base_name);
+			if (spec)
+			{
+				is_array    = (spec->array != NULL);
+				is_function = (spec->is_intrinsic || spec->is_external);
+			}
+		}
+
+		if ((is_function || !is_array)
+			&& ofc_parse_lhs_possible_function_call(*name))
+		{
+			if ((name->type != OFC_PARSE_LHS_ARRAY)
+				|| !name->parent
+				|| (name->parent->type != OFC_PARSE_LHS_VARIABLE))
+			{
+				/* TODO - Handle complicated functions
+						  returning arrays or structures. */
+				return NULL;
+			}
+
+			ofc_sema_spec_t* fspec
+				= ofc_sema_scope_spec_find_final(
+					scope, base_name);
+			ofc_sema_decl_t* fdecl
+				= ofc_sema_decl_function(
+					scope, base_name, fspec);
+			ofc_sema_spec_delete(fspec);
+			if (!fdecl) return NULL;
+
+			if (!ofc_sema_decl_list_add(
+				scope->decl, fdecl))
+			{
+				ofc_sema_decl_delete(fdecl);
+				return NULL;
+			}
+
+			expr = ofc_sema_expr__function(
+				scope, name, fdecl);
+		}
+		else
+		{
+			expr = ofc_sema_expr__lhs(scope, name);
+		}
 	}
 
 	return expr;

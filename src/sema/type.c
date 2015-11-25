@@ -47,10 +47,6 @@ uint8_t ofc_sema_type_hash(
 
 	hash += ofc_sema_array_hash(type->array);
 
-	if (type->is_static   ) hash +=  8;
-	if (type->is_automatic) hash += 16;
-	if (type->is_volatile ) hash += 32;
-
 	switch (type->type)
 	{
 		case OFC_SEMA_TYPE_STRUCTURE:
@@ -96,11 +92,54 @@ static const ofc_sema_type_t* ofc_sema_type__create(
 	unsigned kind, unsigned len,
 	const ofc_sema_array_t* array,
 	const ofc_sema_type_t* subtype,
-	const ofc_sema_structure_t* structure,
-	bool is_static,
-	bool is_automatic,
-	bool is_volatile)
+	const ofc_sema_structure_t* structure)
 {
+	if (kind == 0)
+	{
+		/* TODO - Work out default kinds properly from lang_opts. */
+		switch (type)
+		{
+			case OFC_SEMA_TYPE_BYTE:
+			case OFC_SEMA_TYPE_CHARACTER:
+				kind = 1;
+				break;
+			case OFC_SEMA_TYPE_LOGICAL:
+			case OFC_SEMA_TYPE_INTEGER:
+			case OFC_SEMA_TYPE_REAL:
+			case OFC_SEMA_TYPE_COMPLEX:
+				kind = 4;
+				break;
+			default:
+				break;
+		}
+	}
+
+	switch (type)
+	{
+		case OFC_SEMA_TYPE_BYTE:
+			if ((kind != 1)
+				|| (len != 0))
+				return NULL;
+			break;
+
+		case OFC_SEMA_TYPE_CHARACTER:
+			if (kind == 0)
+				return NULL;
+			break;
+
+		case OFC_SEMA_TYPE_LOGICAL:
+		case OFC_SEMA_TYPE_INTEGER:
+		case OFC_SEMA_TYPE_REAL:
+		case OFC_SEMA_TYPE_COMPLEX:
+			if ((kind == 0)
+				|| (len != 0))
+				return NULL;
+			break;
+
+		default:
+			break;
+	}
+
 	if (!ofc_sema_type__map)
 	{
 		ofc_sema_type__map = ofc_hashmap_create(
@@ -116,11 +155,8 @@ static const ofc_sema_type_t* ofc_sema_type__create(
 
 	ofc_sema_type_t stype =
 		{
-			.type         = type,
-			.array        = NULL,
-			.is_static    = is_static,
-			.is_automatic = is_automatic,
-			.is_volatile  = is_volatile,
+			.type  = type,
+			.array = NULL,
 		};
 
 	if (array)
@@ -138,22 +174,7 @@ static const ofc_sema_type_t* ofc_sema_type__create(
 		case OFC_SEMA_TYPE_STRUCTURE:
 			stype.structure = structure;
 			break;
-		case OFC_SEMA_TYPE_BYTE:
-			stype.kind = 1;
-			stype.len = 0;
-			break;
-		case OFC_SEMA_TYPE_CHARACTER:
-			if (kind == 0)
-				kind = 1;
-			stype.kind = kind;
-			stype.len = len;
-			break;
 		default:
-			if (kind == 0)
-			{
-				/* TODO - Work this out per-kind from lang_opts. */
-				kind = 4;
-			}
 			stype.kind = kind;
 			stype.len = 0;
 			break;
@@ -195,10 +216,7 @@ static const ofc_sema_type_t* ofc_sema_type__create(
 
 const ofc_sema_type_t* ofc_sema_type_create_primitive(
 	ofc_sema_type_e type,
-	unsigned kind,
-	bool is_static,
-	bool is_automatic,
-	bool is_volatile)
+	unsigned kind)
 {
 	switch (type)
 	{
@@ -217,75 +235,47 @@ const ofc_sema_type_t* ofc_sema_type_create_primitive(
 
 	return ofc_sema_type__create(
 		type, kind, 0,
-		NULL, NULL, NULL,
-		is_static, is_automatic, is_volatile);
+		NULL, NULL, NULL);
 }
 
 const ofc_sema_type_t* ofc_sema_type_create_character(
-	unsigned kind, unsigned len,
-	bool is_static, bool is_automatic, bool is_volatile)
+	unsigned kind, unsigned len)
 {
 	return ofc_sema_type__create(
 		OFC_SEMA_TYPE_CHARACTER, kind, len,
-		NULL, NULL, NULL,
-		is_static, is_automatic, is_volatile);
-}
-
-const ofc_sema_type_t* ofc_sema_type_create_byte(
-	bool is_static,
-	bool is_automatic,
-	bool is_volatile)
-{
-	return ofc_sema_type_create_primitive(
-		OFC_SEMA_TYPE_BYTE, 0,
-		is_static, is_automatic, is_volatile);
+		NULL, NULL, NULL);
 }
 
 const ofc_sema_type_t* ofc_sema_type_create_structure(
-	const ofc_sema_structure_t* structure,
-	bool is_static,
-	bool is_automatic,
-	bool is_volatile)
+	const ofc_sema_structure_t* structure)
 {
 	return ofc_sema_type__create(
 		OFC_SEMA_TYPE_STRUCTURE, 0, 0,
-		NULL, NULL, structure,
-		is_static, is_automatic, is_volatile);
+		NULL, NULL, structure);
 }
 
 const ofc_sema_type_t* ofc_sema_type_create_pointer(
-	ofc_sema_type_t* target,
-	bool is_static,
-	bool is_automatic,
-	bool is_volatile)
+	ofc_sema_type_t* target)
 {
 	return ofc_sema_type__create(
 		OFC_SEMA_TYPE_POINTER, 0, 0,
-		NULL, target, NULL,
-		is_static, is_automatic, is_volatile);
+		NULL, target, NULL);
 }
 
 const ofc_sema_type_t* ofc_sema_type_create_array(
 	const ofc_sema_type_t* type,
-	const ofc_sema_array_t* array,
-	bool is_static,
-	bool is_automatic,
-	bool is_volatile)
+	const ofc_sema_array_t* array)
 {
 	if (ofc_sema_type_is_procedure(type))
 		return NULL;
 
 	return ofc_sema_type__create(
 		type->type, type->kind, type->len,
-		array, type->subtype, type->structure,
-		is_static, is_automatic, is_volatile);
+		array, type->subtype, type->structure);
 }
 
 const ofc_sema_type_t* ofc_sema_type_create_function(
-	const ofc_sema_type_t* type,
-	bool is_static,
-	bool is_automatic,
-	bool is_volatile)
+	const ofc_sema_type_t* type)
 {
 	if (!type)
 		return NULL;
@@ -295,8 +285,7 @@ const ofc_sema_type_t* ofc_sema_type_create_function(
 
 	return ofc_sema_type__create(
 		OFC_SEMA_TYPE_FUNCTION, 0, 0,
-		NULL, type, NULL,
-		is_static, is_automatic, is_volatile);
+		NULL, type, NULL);
 }
 
 
@@ -315,8 +304,7 @@ const ofc_sema_type_t* ofc_sema_type_star_len(
 
 		return ofc_sema_type__create(
 			type->type, type->kind, star_len,
-			type->array, type->subtype, type->structure,
-			type->is_static, type->is_automatic, type->is_volatile);
+			type->array, type->subtype, type->structure);
 	}
 
 	/* TODO - Warn if a kind isn't implicit. */
@@ -328,8 +316,7 @@ const ofc_sema_type_t* ofc_sema_type_star_len(
 				type->subtype, star_len);
 		if (!subtype) return NULL;
 
-		return ofc_sema_type_create_function(subtype,
-			type->is_static, type->is_automatic, type->is_volatile);
+		return ofc_sema_type_create_function(subtype);
 	}
 
 	switch (type->type)
@@ -340,8 +327,7 @@ const ofc_sema_type_t* ofc_sema_type_star_len(
 		case OFC_SEMA_TYPE_COMPLEX:
 			return ofc_sema_type__create(
 				type->type, star_len, type->len,
-				type->array, type->subtype, type->structure,
-				type->is_static, type->is_automatic, type->is_volatile);
+				type->array, type->subtype, type->structure);
 			break;
 		default:
 			break;
@@ -358,7 +344,7 @@ const ofc_sema_type_t* ofc_sema_type_logical_default(void)
 	if (!logical)
 	{
 		logical = ofc_sema_type_create_primitive(
-			OFC_SEMA_TYPE_LOGICAL, 0, false, false, false);
+			OFC_SEMA_TYPE_LOGICAL, 0);
 	}
 
 	return logical;
@@ -371,7 +357,7 @@ const ofc_sema_type_t* ofc_sema_type_integer_default(void)
 	if (!integer)
 	{
 		integer = ofc_sema_type_create_primitive(
-			OFC_SEMA_TYPE_INTEGER, 0, false, false, false);
+			OFC_SEMA_TYPE_INTEGER, 0);
 	}
 
 	return integer;
@@ -384,7 +370,7 @@ const ofc_sema_type_t* ofc_sema_type_real_default(void)
 	if (!real)
 	{
 		real = ofc_sema_type_create_primitive(
-			OFC_SEMA_TYPE_REAL, 0, false, false, false);
+			OFC_SEMA_TYPE_REAL, 0);
 	}
 
 	return real;
@@ -401,7 +387,7 @@ const ofc_sema_type_t* ofc_sema_type_double_default(void)
 		if (!real) return NULL;
 
 		dbl = ofc_sema_type_create_primitive(
-			OFC_SEMA_TYPE_REAL, (real->kind * 2), false, false, false);
+			OFC_SEMA_TYPE_REAL, (real->kind * 2));
 	}
 
 	return dbl;
@@ -414,7 +400,7 @@ const ofc_sema_type_t* ofc_sema_type_complex_default(void)
 	if (!complex)
 	{
 		complex = ofc_sema_type_create_primitive(
-			OFC_SEMA_TYPE_COMPLEX, 0, false, false, false);
+			OFC_SEMA_TYPE_COMPLEX, 0);
 	}
 
 	return complex;
@@ -427,7 +413,7 @@ const ofc_sema_type_t* ofc_sema_type_byte_default(void)
 	if (!byte)
 	{
 		byte = ofc_sema_type_create_primitive(
-			OFC_SEMA_TYPE_BYTE, 1, false, false, false);
+			OFC_SEMA_TYPE_BYTE, 1);
 	}
 
 	return byte;
@@ -441,295 +427,65 @@ const ofc_sema_type_t* ofc_sema_type_subroutine(void)
 	{
 		subroutine = ofc_sema_type__create(
 			OFC_SEMA_TYPE_SUBROUTINE, 0, 0,
-			NULL, NULL,NULL, false, false ,false);
+			NULL, NULL,NULL);
 	}
 
 	return subroutine;
 }
 
 
-const ofc_sema_type_t* ofc_sema_type(
-	ofc_sema_scope_t* scope,
-	const ofc_parse_type_t* ptype)
+const ofc_sema_type_t* ofc_sema_type_spec(
+	const ofc_sema_spec_t* spec)
 {
-	if (!ptype)
+	if (!spec)
 		return NULL;
 
+	if (spec->type_implicit)
+		return NULL;
 
-	unsigned kind = 0;
-	unsigned len = 0;
-	bool len_var = false;
-
-	if (ptype->params)
+	const ofc_sema_type_t* type;
+	switch (spec->type)
 	{
-		unsigned i;
-		for (i = 0; i < ptype->params->count; i++)
-		{
-			/* TODO - Handle unnamed kind, len */
-			if (ofc_str_ref_equal_strz_ci(ptype->params->call_arg[i]->name, "LEN"))
-			{
-				if ((len != 0) || len_var)
-				{
-					ofc_sema_scope_error(scope, ptype->src,
-						"Type LEN specified multiple times.");
-					return NULL;
-				}
-
-				if (ptype->params->call_arg[i]->type
-					== OFC_PARSE_CALL_ARG_ASTERISK)
-				{
-					len_var = true;
-				}
-				else
-				{
-					if (ptype->params->call_arg[i]->type
-						!= OFC_PARSE_CALL_ARG_EXPR)
-						return NULL;
-
-					ofc_sema_expr_t* expr = ofc_sema_expr(
-						scope, ptype->params->call_arg[i]->expr);
-					if (!expr) return NULL;
-
-					bool resolved = ofc_sema_expr_resolve_uint(expr, &len);
-					ofc_sema_expr_delete(expr);
-					if (!resolved)
-					{
-						ofc_sema_scope_error(scope, ptype->src,
-							"Type LEN expression couldn't be resolved.");
-						return NULL;
-					}
-
-
-					if (len == 0)
-					{
-						ofc_sema_scope_error(scope, ptype->src,
-							"Type LEN paramater must be greater than zero.");
-						return NULL;
-					}
-				}
-			}
-			else if (ofc_str_ref_equal_strz_ci(ptype->params->call_arg[i]->name, "KIND"))
-			{
-				if (kind != 0)
-				{
-					ofc_sema_scope_error(scope, ptype->src,
-						"Type KIND specified multiple times.");
-					return NULL;
-				}
-
-				if (ptype->params->call_arg[i]->type
-					!= OFC_PARSE_CALL_ARG_EXPR)
-					return NULL;
-
-				ofc_sema_expr_t* expr = ofc_sema_expr(
-					scope, ptype->params->call_arg[i]->expr);
-				if (!expr) return NULL;
-
-				bool resolved = ofc_sema_expr_resolve_uint(expr, &kind);
-				ofc_sema_expr_delete(expr);
-				if (!resolved)
-				{
-					ofc_sema_scope_error(scope, ptype->src,
-						"Type KIND expression couldn't be resolved.");
-					return NULL;
-				}
-
-
-				if (kind == 0)
-				{
-					ofc_sema_scope_error(scope, ptype->src,
-						"Type KIND paramater must be greater than zero.");
-					return NULL;
-				}
-			}
-			else
-			{
-				ofc_sema_scope_error(scope, ptype->src,
-					"Unknown parameter in type.");
+		case OFC_SEMA_TYPE_LOGICAL:
+		case OFC_SEMA_TYPE_INTEGER:
+		case OFC_SEMA_TYPE_REAL:
+		case OFC_SEMA_TYPE_COMPLEX:
+			if ((spec->len != 0)
+				|| spec->len_var)
 				return NULL;
-			}
-		}
-	}
+			type = ofc_sema_type_create_primitive(
+				spec->type, spec->kind);
+			break;
 
-	if (ptype->kind > 0)
-	{
-		if (kind > 0)
-		{
-			if (ptype->kind == kind)
-			{
-				ofc_sema_scope_warning(scope, ptype->src,
-					"KIND specified multiple times in type.");
-			}
-			else
-			{
-				ofc_sema_scope_error(scope, ptype->src,
-					"KIND specified differently in multiple places.");
+		case OFC_SEMA_TYPE_BYTE:
+			if ((spec->kind > 1)
+				|| (spec->len != 0)
+				|| spec->len_var)
 				return NULL;
-			}
-		}
-
-		kind = ptype->kind;
-	}
-	else if (kind == 0)
-	{
-		/* TODO - If KIND is not set, get default from lang_opts. */
-		switch (ptype->type)
-		{
-			case OFC_PARSE_TYPE_BYTE:
-			case OFC_PARSE_TYPE_CHARACTER:
-				kind = 1;
-				break;
-
-			default:
-				kind = 4;
-				break;
-		}
-	}
-
-	switch (ptype->type)
-	{
-		case OFC_PARSE_TYPE_DOUBLE_PRECISION:
-			kind *= 2;
+			type = ofc_sema_type_byte_default();
 			break;
-		case OFC_PARSE_TYPE_DOUBLE_COMPLEX:
-			kind *= 2;
-			break;
-		default:
-			break;
-	}
 
-	if (ptype->count_var)
-	{
-		if (len != 0)
-		{
-			ofc_sema_scope_error(scope, ptype->src,
-				"Type LEN specified as both static and variable.");
-			return NULL;
-		}
-
-		len_var = true;
-	}
-	else if (ptype->count_expr)
-	{
-		if (len_var)
-		{
-			ofc_sema_scope_error(scope, ptype->src,
-				"Type LEN specified as both static and variable.");
-			return NULL;
-		}
-
-		ofc_sema_expr_t* expr
-			= ofc_sema_expr(scope, ptype->count_expr);
-
-		unsigned nlen;
-		bool resolved = ofc_sema_expr_resolve_uint(expr, &nlen);
-		ofc_sema_expr_delete(expr);
-
-		if (!resolved)
-		{
-			ofc_sema_scope_error(scope, ptype->count_expr->src,
-				"Type LEN expression couldn't be resolved.");
-			return NULL;
-		}
-
-		if (nlen == 0)
-		{
-			ofc_sema_scope_error(scope, ptype->count_expr->src,
-				"Type LEN must be greater than zero");
-			return NULL;
-		}
-
-		if (len > 0)
-		{
-			if (len != nlen)
-			{
-				ofc_sema_scope_error(scope, ptype->src,
-					"Type LEN specified differently in multiple places.");
+		case OFC_SEMA_TYPE_CHARACTER:
+			/* TODO - Support variable length CHARACTER type. */
+			if (spec->len_var)
 				return NULL;
-			}
-			else
-			{
-				ofc_sema_scope_warning(scope, ptype->src,
-					"Type LEN specified in multiple places.");
-			}
-		}
-
-		len = nlen;
-	}
-
-	/* TODO - Use LEN parameter to create an array of other types. */
-	if ((len != 0) || len_var)
-	{
-		if (ptype->type != OFC_PARSE_TYPE_CHARACTER)
-		{
-			ofc_sema_scope_error(scope, ptype->src,
-					"LEN parameter only supported for CHARACTER type.");
-			return NULL;
-		}
-	}
-
-	const ofc_sema_type_t* stype = NULL;
-	switch (ptype->type)
-	{
-		case OFC_PARSE_TYPE_LOGICAL:
-			stype = ofc_sema_type__create(
-				OFC_SEMA_TYPE_LOGICAL, kind, 0,
-				NULL, NULL, NULL,
-				ptype->attr.is_static,
-				ptype->attr.is_automatic,
-				ptype->attr.is_volatile);
-			break;
-		case OFC_PARSE_TYPE_CHARACTER:
-			stype = ofc_sema_type__create(
-				OFC_SEMA_TYPE_CHARACTER, kind, len,
-				NULL, NULL, NULL,
-				ptype->attr.is_static,
-				ptype->attr.is_automatic,
-				ptype->attr.is_volatile);
-			break;
-		case OFC_PARSE_TYPE_INTEGER:
-			stype = ofc_sema_type__create(
-				OFC_SEMA_TYPE_INTEGER, kind, 0,
-				NULL, NULL, NULL,
-				ptype->attr.is_static,
-				ptype->attr.is_automatic,
-				ptype->attr.is_volatile);
-			break;
-		case OFC_PARSE_TYPE_REAL:
-		case OFC_PARSE_TYPE_DOUBLE_PRECISION:
-			stype = ofc_sema_type__create(
-				OFC_SEMA_TYPE_REAL, kind, 0,
-				NULL, NULL, NULL,
-				ptype->attr.is_static,
-				ptype->attr.is_automatic,
-				ptype->attr.is_volatile);
-			break;
-		case OFC_PARSE_TYPE_COMPLEX:
-		case OFC_PARSE_TYPE_DOUBLE_COMPLEX:
-			stype = ofc_sema_type__create(
-				OFC_SEMA_TYPE_COMPLEX, kind, 0,
-				NULL, NULL, NULL,
-				ptype->attr.is_static,
-				ptype->attr.is_automatic,
-				ptype->attr.is_volatile);
-			break;
-		case OFC_PARSE_TYPE_BYTE:
-			stype = ofc_sema_type__create(
-				OFC_SEMA_TYPE_BYTE, kind, 0,
-				NULL, NULL, NULL,
-				ptype->attr.is_static,
-				ptype->attr.is_automatic,
-				ptype->attr.is_volatile);
-			break;
-		case OFC_PARSE_TYPE_TYPE:
+			type = ofc_sema_type_create_character(
+				spec->kind, spec->len);
 			break;
 
 		default:
 			return NULL;
 	}
 
-	return stype;
+	if (spec->array)
+	{
+		type = ofc_sema_type_create_array(
+			type, spec->array);
+	}
+
+	return type;
 }
+
 
 bool ofc_sema_type_compare(
 	const ofc_sema_type_t* a,
@@ -951,8 +707,7 @@ const ofc_sema_type_t* ofc_sema_type_base(
 	{
 		type = ofc_sema_type__create(
 			type->type, type->kind, type->len,
-			NULL, type->subtype, type->structure,
-			type->is_static, type->is_automatic, type->is_volatile);
+			NULL, type->subtype, type->structure);
 		return type;
 	}
 
@@ -1012,20 +767,17 @@ const ofc_sema_type_t* ofc_sema_type_promote(
 	if (logical && integer)
 	{
 		return ofc_sema_type_create_primitive(
-			OFC_SEMA_TYPE_INTEGER, kind,
-			false, false, false);
+			OFC_SEMA_TYPE_INTEGER, kind);
 	}
 	else if (real && (logical || integer))
 	{
 		return ofc_sema_type_create_primitive(
-			OFC_SEMA_TYPE_REAL, kind,
-			false, false, false);
+			OFC_SEMA_TYPE_REAL, kind);
 	}
 	else if (complex && (real || logical || integer))
 	{
 		return ofc_sema_type_create_primitive(
-			OFC_SEMA_TYPE_COMPLEX, kind,
-			false, false, false);
+			OFC_SEMA_TYPE_COMPLEX, kind);
 	}
 
 	/* We can't promote characters, arrays, structures or pointers. */

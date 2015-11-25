@@ -16,16 +16,17 @@ struct ofc_sema_decl_s
 		ofc_sema_typeval_t** init_array;
 	};
 
-	bool is_implicit;
     bool is_static;
-	bool is_volatile;
 	bool is_automatic;
+	bool is_volatile;
+	bool is_intrinsic;
+	bool is_external;
+
 	bool is_target;
 
 	ofc_sema_equiv_t* equiv;
 
-	/* Set this once the decl has been used. */
-	bool lock;
+	bool used;
 };
 
 struct ofc_sema_decl_list_s
@@ -49,13 +50,29 @@ ofc_sema_decl_t* ofc_sema_decl_create(
 	const ofc_sema_type_t* type,
 	ofc_str_ref_t name);
 
-ofc_sema_decl_t* ofc_sema_decl_implicit_untyped(ofc_str_ref_t name);
-ofc_sema_decl_t* ofc_sema_decl_implicit_name(
+ofc_sema_decl_t* ofc_sema_decl_spec(
 	const ofc_sema_scope_t* scope,
-	ofc_str_ref_t name);
+	ofc_str_ref_t           name,
+	const ofc_sema_spec_t*  spec,
+	const ofc_sema_array_t* array);
+ofc_sema_decl_t* ofc_sema_decl_implicit(
+	const ofc_sema_scope_t* scope,
+	ofc_str_ref_t           name,
+	const ofc_sema_array_t* array);
 ofc_sema_decl_t* ofc_sema_decl_implicit_lhs(
 	ofc_sema_scope_t*      scope,
 	const ofc_parse_lhs_t* lhs);
+
+ofc_sema_decl_t* ofc_sema_decl_function(
+	ofc_sema_scope_t*      scope,
+	ofc_str_ref_t          name,
+	const ofc_sema_spec_t* spec);
+ofc_sema_decl_t* ofc_sema_decl_implicit_function(
+	ofc_sema_scope_t* scope,
+	ofc_str_ref_t     name);
+ofc_sema_decl_t* ofc_sema_decl_subroutine(
+	ofc_sema_scope_t* scope,
+	ofc_str_ref_t     name);
 
 bool ofc_sema_decl(
 	ofc_sema_scope_t* scope,
@@ -91,14 +108,15 @@ bool ofc_sema_decl_is_array(
 	const ofc_sema_decl_t* decl);
 bool ofc_sema_decl_is_composite(
 	const ofc_sema_decl_t* decl);
-bool ofc_sema_decl_is_locked(
-	const ofc_sema_decl_t* decl);
 
 bool ofc_sema_decl_is_subroutine(
 	const ofc_sema_decl_t* decl);
 bool ofc_sema_decl_is_function(
 	const ofc_sema_decl_t* decl);
 bool ofc_sema_decl_is_procedure(
+	const ofc_sema_decl_t* decl);
+
+bool ofc_sema_decl_has_initializer(
 	const ofc_sema_decl_t* decl);
 
 const ofc_sema_type_t* ofc_sema_decl_type(
