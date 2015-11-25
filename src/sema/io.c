@@ -178,20 +178,25 @@ static bool ofc_sema_io__data_format_helper(
 		 */
 		if (ofc_parse_format_is_data_desc(desc))
 		{
-			ofc_parse_format_desc_t** ndesc
-				= (ofc_parse_format_desc_t**)realloc(format_list->desc,
-					(sizeof(ofc_parse_format_desc_t*) * (format_list->count + 1)));
-			if (!ndesc) return false;
+			unsigned i;
+			for (i = 0; i < desc->n; i++)
+			{
+				ofc_parse_format_desc_t** ndesc
+					= (ofc_parse_format_desc_t**)realloc(format_list->desc,
+						(sizeof(ofc_parse_format_desc_t*) * (format_list->count + 1)));
+				if (!ndesc) return false;
 
-			ofc_parse_format_desc_t* cdesc
-				= ofc_parse_format_desc_copy(
-					format_src->desc[*offset]);
-			if (!cdesc) return false;
+				ofc_parse_format_desc_t* cdesc
+					= ofc_parse_format_desc_copy(
+						format_src->desc[*offset]);
+				if (!cdesc) return false;
 
-			format_list->desc = ndesc;
-			format_list->desc[format_list->count++] = cdesc;
+				format_list->desc = ndesc;
+				format_list->desc[format_list->count++] = cdesc;
 
-			(*iolist_len)--;
+				(*iolist_len)--;
+			}
+
 			(*offset)++;
 
 			if (!ofc_sema_io__data_format_helper(
@@ -265,7 +270,7 @@ unsigned ofc_sema_io__data_format_count_helper(
 
 		if (ofc_parse_format_is_data_desc(desc))
 		{
-			count += 1;
+			count += desc->n;
 		}
 		else if (desc->type == OFC_PARSE_FORMAT_DESC_REPEAT)
 		{

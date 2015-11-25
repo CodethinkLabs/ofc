@@ -67,7 +67,7 @@ ofc_parse_format_desc_t* ofc_parse_format_desc(
 	if (i > 0)
 	{
 		desc->neg  = false;
-		desc->n    = 0;
+		desc->n    = 1;
 		desc->type = OFC_PARSE_FORMAT_DESC_HOLLERITH;
 
 		if (len) *len = i;
@@ -78,7 +78,7 @@ ofc_parse_format_desc_t* ofc_parse_format_desc(
 	if (negative || (ptr[i] == '+'))
 		i += 1;
 
-	unsigned l, n = 0;
+	unsigned l, n = 1;
 	l = ofc_parse_unsigned(
 		src, &ptr[i], debug, &n);
 	i = (l > 0 ? i + l : 0);
