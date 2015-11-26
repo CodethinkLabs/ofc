@@ -730,6 +730,12 @@ static ofc_sema_expr_t* ofc_sema_expr__variable(
 	{
 		expr = ofc_sema_expr__function(
 			scope, name, decl);
+
+		if (!expr)
+		{
+			/* FUNCTION types are only valid as arguments. */
+			expr = ofc_sema_expr__lhs(scope, name);
+		}
 	}
 	else
 	{
