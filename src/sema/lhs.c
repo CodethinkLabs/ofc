@@ -254,7 +254,7 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 				return NULL;
 			}
 
-			if (is_expr)
+			if (is_expr && !ofc_sema_decl_is_procedure(decl))
 			{
 				ofc_sema_scope_warning(scope, lhs->src,
 					"Referencing uninitialized variable '%.*s' in expression.",
