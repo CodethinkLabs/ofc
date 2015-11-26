@@ -8,6 +8,8 @@ typedef struct
 	unsigned                count;
 	const ofc_sema_decl_t** decl;
 	const ofc_sema_spec_t** spec;
+
+	bool save;
 } ofc_sema_common_t;
 
 typedef struct
@@ -31,6 +33,9 @@ bool ofc_sema_common_define(
 	ofc_sema_common_t* common,
 	unsigned offset,
 	const ofc_sema_decl_t* decl);
+
+bool ofc_sema_common_save(
+	ofc_sema_common_t* common);
 
 
 ofc_sema_common_map_t* ofc_sema_common_map_create(

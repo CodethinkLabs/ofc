@@ -161,12 +161,18 @@ static ofc_sema_decl_t* ofc_sema_decl__spec(
 	decl->is_intrinsic = spec->is_intrinsic;
 	decl->is_external  = spec->is_external;
 
-	/* TODO - Do this after the decl is in a list. */
-	if (spec->common && !ofc_sema_common_define(
-		spec->common, spec->common_offset, decl))
+
+	if (spec->common)
 	{
-		ofc_sema_decl_delete(decl);
-		return NULL;
+		/* TODO - Do this after the decl is in a list. */
+		if (!ofc_sema_common_define(
+			spec->common, spec->common_offset, decl))
+		{
+			ofc_sema_decl_delete(decl);
+			return NULL;
+		}
+
+		decl->is_static |= spec->common->save;
 	}
 
 	return decl;

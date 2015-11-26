@@ -513,6 +513,11 @@ static bool ofc_sema_scope__body(
 					return false;
 				break;
 
+			case OFC_PARSE_STMT_SAVE:
+				if (!ofc_sema_stmt_save(scope, stmt))
+					return false;
+				break;
+
 			case OFC_PARSE_STMT_ENTRY:
 			case OFC_PARSE_STMT_NAMELIST:
 			case OFC_PARSE_STMT_POINTER:
@@ -521,7 +526,6 @@ static bool ofc_sema_scope__body(
 			case OFC_PARSE_STMT_UNION:
 			case OFC_PARSE_STMT_MAP:
 			case OFC_PARSE_STMT_RECORD:
-			case OFC_PARSE_STMT_SAVE:
 				ofc_sema_scope_error(scope, stmt->src,
 					"Unsuported statement");
 				/* TODO - Support these statements. */

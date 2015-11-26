@@ -12,6 +12,7 @@ ofc_sema_common_t* ofc_sema_common_create(
 	common->count = 0;
 	common->decl  = NULL;
 	common->spec  = NULL;
+	common->save  = false;
 
 	common->name = name;
 	return common;
@@ -65,6 +66,28 @@ bool ofc_sema_common_define(
 		return (common->decl[offset] == decl);
 
 	common->decl[offset] = decl;
+	return true;
+}
+
+bool ofc_sema_common_save(
+	ofc_sema_common_t* common)
+{
+	if (!common)
+		return false;
+
+	if (common->save)
+		return true;
+
+	unsigned i;
+	for (i = 0; i < common->count; i++)
+	{
+		/* TODO - Support applying STATIC attribute
+		          to existing declarations? */
+		if (common->decl[i])
+			return false;
+	}
+
+	common->save = true;
 	return true;
 }
 
