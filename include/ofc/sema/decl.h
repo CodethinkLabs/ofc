@@ -60,19 +60,19 @@ ofc_sema_decl_t* ofc_sema_decl_implicit(
 	ofc_str_ref_t           name,
 	const ofc_sema_array_t* array);
 ofc_sema_decl_t* ofc_sema_decl_implicit_lhs(
-	ofc_sema_scope_t*      scope,
-	const ofc_parse_lhs_t* lhs);
+	ofc_sema_scope_t*       scope,
+	const ofc_parse_lhs_t*  lhs);
 
 ofc_sema_decl_t* ofc_sema_decl_function(
-	ofc_sema_scope_t*      scope,
-	ofc_str_ref_t          name,
-	const ofc_sema_spec_t* spec);
+	const ofc_sema_scope_t* scope,
+	ofc_str_ref_t           name,
+	const ofc_sema_spec_t*  spec);
 ofc_sema_decl_t* ofc_sema_decl_implicit_function(
-	ofc_sema_scope_t* scope,
-	ofc_str_ref_t     name);
+	const ofc_sema_scope_t* scope,
+	ofc_str_ref_t           name);
 ofc_sema_decl_t* ofc_sema_decl_subroutine(
-	ofc_sema_scope_t* scope,
-	ofc_str_ref_t     name);
+	const ofc_sema_scope_t* scope,
+	ofc_str_ref_t           name);
 
 bool ofc_sema_decl(
 	ofc_sema_scope_t* scope,

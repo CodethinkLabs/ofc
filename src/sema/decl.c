@@ -189,15 +189,36 @@ ofc_sema_decl_t* ofc_sema_decl_implicit(
 {
 	ofc_sema_spec_t* spec
 		= ofc_sema_scope_spec_find_final(scope, name);
-	ofc_sema_decl_t* decl = ofc_sema_decl_spec(
-		scope, name, spec, array);
+	if (!spec) return NULL;
+
+	ofc_sema_decl_t* decl;
+	if (spec->is_external
+		|| spec->is_intrinsic)
+	{
+		if (spec->type_implicit)
+		{
+			decl = ofc_sema_decl_subroutine(
+				scope, name);
+		}
+		else
+		{
+			decl = ofc_sema_decl_function(
+				scope, name, spec);
+		}
+	}
+	else
+	{
+		decl = ofc_sema_decl_spec(
+			scope, name, spec, array);
+	}
+
 	ofc_sema_spec_delete(spec);
 	return decl;
 }
 
 ofc_sema_decl_t* ofc_sema_decl_implicit_lhs(
-	ofc_sema_scope_t*      scope,
-	const ofc_parse_lhs_t* lhs)
+	ofc_sema_scope_t*       scope,
+	const ofc_parse_lhs_t*  lhs)
 {
 	if (!scope || !lhs)
 		return NULL;
@@ -230,17 +251,17 @@ ofc_sema_decl_t* ofc_sema_decl_implicit_lhs(
 
 
 ofc_sema_decl_t* ofc_sema_decl_function(
-	ofc_sema_scope_t*      scope,
-	ofc_str_ref_t          name,
-	const ofc_sema_spec_t* spec)
+	const ofc_sema_scope_t* scope,
+	ofc_str_ref_t           name,
+	const ofc_sema_spec_t*  spec)
 {
 	return ofc_sema_decl__spec(
 		scope, name, spec, NULL, true, true);
 }
 
 ofc_sema_decl_t* ofc_sema_decl_implicit_function(
-	ofc_sema_scope_t* scope,
-	ofc_str_ref_t     name)
+	const ofc_sema_scope_t* scope,
+	ofc_str_ref_t           name)
 {
 	ofc_sema_spec_t* spec
 		= ofc_sema_scope_spec_find_final(
@@ -253,8 +274,8 @@ ofc_sema_decl_t* ofc_sema_decl_implicit_function(
 }
 
 ofc_sema_decl_t* ofc_sema_decl_subroutine(
-	ofc_sema_scope_t* scope,
-	ofc_str_ref_t     name)
+	const ofc_sema_scope_t* scope,
+	ofc_str_ref_t           name)
 {
 	ofc_sema_spec_t* spec
 		= ofc_sema_scope_spec_find_final(
