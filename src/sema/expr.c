@@ -721,7 +721,8 @@ static ofc_sema_expr_t* ofc_sema_expr__variable(
 		= ofc_sema_scope_decl_find(
 			scope, base_name, false);
 
-	if (intrinsic && !decl)
+	if (intrinsic && !decl
+		&& (name->type == OFC_PARSE_LHS_ARRAY))
 	{
 		expr = ofc_sema_expr__intrinsic(
 			scope, name, intrinsic);
