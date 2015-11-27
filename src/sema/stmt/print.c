@@ -6,7 +6,8 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_print(
 	const ofc_parse_stmt_t* stmt)
 {
 	if (!scope || !stmt
-		|| (stmt->type != OFC_PARSE_STMT_IO_PRINT))
+		|| ((stmt->type != OFC_PARSE_STMT_IO_PRINT)
+			&& (stmt->type != OFC_PARSE_STMT_IO_TYPE)))
 		return NULL;
 
 	ofc_sema_stmt_t s;

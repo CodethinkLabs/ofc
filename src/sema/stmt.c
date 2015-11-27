@@ -51,6 +51,7 @@ ofc_sema_stmt_t* ofc_sema_stmt(
 				scope, stmt);
 			break;
 
+		case OFC_PARSE_STMT_IO_TYPE:
 		case OFC_PARSE_STMT_IO_PRINT:
 			s = ofc_sema_stmt_io_print(
 				scope, stmt);
