@@ -244,9 +244,10 @@ unsigned ofc_parse_stmt_io_read(
 	ofc_parse_debug_t* debug,
 	ofc_parse_stmt_t* stmt)
 {
+	/* TODO - Handle unbracketed READ statements */
 	unsigned i = ofc_parse_stmt__io(
 		src, ptr, debug,
-		OFC_PARSE_KEYWORD_READ, true, false,
+		OFC_PARSE_KEYWORD_READ, true, true,
 		stmt);
 	if (i == 0) return 0;
 
