@@ -76,6 +76,11 @@ ofc_sema_stmt_t* ofc_sema_stmt(
 				scope, stmt);
 			break;
 
+		case OFC_PARSE_STMT_IO_READ:
+			s = ofc_sema_stmt_io_read(
+				scope, stmt);
+			break;
+
 		case OFC_PARSE_STMT_IO_TYPE:
 		case OFC_PARSE_STMT_IO_PRINT:
 			s = ofc_sema_stmt_io_print(
@@ -213,6 +218,28 @@ void ofc_sema_stmt_delete(
 				stmt->io_write.err);
 			ofc_sema_expr_list_delete(
 				stmt->io_write.iolist);
+			break;
+		case OFC_SEMA_STMT_IO_READ:
+			ofc_sema_expr_delete(
+				stmt->io_read.unit);
+			ofc_sema_expr_delete(
+				stmt->io_read.format_expr);
+			ofc_sema_expr_delete(
+				stmt->io_read.iostat);
+			ofc_sema_expr_delete(
+				stmt->io_read.rec);
+			ofc_sema_expr_delete(
+				stmt->io_read.err);
+			ofc_sema_expr_delete(
+				stmt->io_read.advance);
+			ofc_sema_expr_delete(
+				stmt->io_read.end);
+			ofc_sema_expr_delete(
+				stmt->io_read.eor);
+			ofc_sema_expr_delete(
+				stmt->io_read.size);
+			ofc_sema_expr_list_delete(
+				stmt->io_read.iolist);
 			break;
 		case OFC_SEMA_STMT_IO_PRINT:
 			ofc_sema_expr_delete(
