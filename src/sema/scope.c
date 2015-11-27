@@ -568,13 +568,6 @@ static bool ofc_sema_scope__body(
 					scope, spec->name, spec, NULL);
 				ofc_sema_spec_delete(fspec);
 				if (!decl) return false;
-
-				if (!ofc_sema_decl_list_add(
-					scope->decl, decl))
-				{
-					ofc_sema_decl_delete(decl);
-					return false;
-				}
 			}
 		}
 	}
@@ -700,13 +693,6 @@ ofc_sema_scope_t* ofc_sema_scope_stmt_func(
 	{
 		ofc_sema_scope_error(scope, stmt->src,
 			"No IMPLICIT rule matches statement function name.");
-		return NULL;
-	}
-
-	if (!ofc_sema_decl_list_add(
-		scope->decl, decl))
-	{
-		ofc_sema_decl_delete(decl);
 		return NULL;
 	}
 

@@ -781,13 +781,6 @@ static ofc_sema_expr_t* ofc_sema_expr__variable(
 			ofc_sema_spec_delete(fspec);
 			if (!fdecl) return NULL;
 
-			if (!ofc_sema_decl_list_add(
-				scope->decl, fdecl))
-			{
-				ofc_sema_decl_delete(fdecl);
-				return NULL;
-			}
-
 			expr = ofc_sema_expr__function(
 				scope, name, fdecl);
 		}

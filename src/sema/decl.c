@@ -35,7 +35,7 @@ ofc_sema_decl_t* ofc_sema_decl_create(
 }
 
 static ofc_sema_decl_t* ofc_sema_decl__spec(
-	const ofc_sema_scope_t* scope,
+	ofc_sema_scope_t*       scope,
 	ofc_str_ref_t           name,
 	const ofc_sema_spec_t*  spec,
 	const ofc_sema_array_t* array,
@@ -44,6 +44,16 @@ static ofc_sema_decl_t* ofc_sema_decl__spec(
 {
 	if (!spec)
 		return NULL;
+
+	if (spec->common && (spec->is_static
+		|| spec->is_automatic || spec->is_volatile
+		|| spec->is_intrinsic || spec->is_external))
+	{
+		/* TODO - Work out if VOLATILE should be allowed. */
+		ofc_sema_scope_error(scope, name,
+			"COMMON block entries can't have declaration attributes.");
+		return NULL;
+	}
 
 	if (is_procedure)
 	{
@@ -161,25 +171,28 @@ static ofc_sema_decl_t* ofc_sema_decl__spec(
 	decl->is_intrinsic = spec->is_intrinsic;
 	decl->is_external  = spec->is_external;
 
+	if (!ofc_sema_decl_list_add(
+		scope->decl, decl))
+	{
+		ofc_sema_decl_delete(decl);
+		return NULL;
+	}
 
 	if (spec->common)
 	{
-		/* TODO - Do this after the decl is in a list. */
 		if (!ofc_sema_common_define(
 			spec->common, spec->common_offset, decl))
 		{
-			ofc_sema_decl_delete(decl);
-			return NULL;
+			/* This should never happen. */
+			abort();
 		}
-
-		decl->is_static |= spec->common->save;
 	}
 
 	return decl;
 }
 
 ofc_sema_decl_t* ofc_sema_decl_spec(
-	const ofc_sema_scope_t* scope,
+	ofc_sema_scope_t*       scope,
 	ofc_str_ref_t           name,
 	const ofc_sema_spec_t*  spec,
 	const ofc_sema_array_t* array)
@@ -189,7 +202,7 @@ ofc_sema_decl_t* ofc_sema_decl_spec(
 }
 
 ofc_sema_decl_t* ofc_sema_decl_implicit(
-	const ofc_sema_scope_t* scope,
+	ofc_sema_scope_t*       scope,
 	ofc_str_ref_t           name,
 	const ofc_sema_array_t* array)
 {
@@ -257,7 +270,7 @@ ofc_sema_decl_t* ofc_sema_decl_implicit_lhs(
 
 
 ofc_sema_decl_t* ofc_sema_decl_function(
-	const ofc_sema_scope_t* scope,
+	ofc_sema_scope_t*       scope,
 	ofc_str_ref_t           name,
 	const ofc_sema_spec_t*  spec)
 {
@@ -265,23 +278,9 @@ ofc_sema_decl_t* ofc_sema_decl_function(
 		scope, name, spec, NULL, true, true);
 }
 
-ofc_sema_decl_t* ofc_sema_decl_implicit_function(
-	const ofc_sema_scope_t* scope,
-	ofc_str_ref_t           name)
-{
-	ofc_sema_spec_t* spec
-		= ofc_sema_scope_spec_find_final(
-			scope, name);
-	ofc_sema_decl_t* decl
-		= ofc_sema_decl_function(
-			scope, name, spec);
-	ofc_sema_spec_delete(spec);
-	return decl;
-}
-
 ofc_sema_decl_t* ofc_sema_decl_subroutine(
-	const ofc_sema_scope_t* scope,
-	ofc_str_ref_t           name)
+	ofc_sema_scope_t* scope,
+	ofc_str_ref_t     name)
 {
 	ofc_sema_spec_t* spec
 		= ofc_sema_scope_spec_find_final(

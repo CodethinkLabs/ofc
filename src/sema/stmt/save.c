@@ -25,15 +25,10 @@ bool ofc_sema_stmt_save(
 		if (save->is_common)
 		{
 			ofc_sema_common_t* common
-				= ofc_sema_common_map_find_modify(
-					scope->common, save->common);
-			if (!common)
-			{
-				/* TODO - Create empty COMMON block and warn. */
-				ofc_sema_scope_error(scope, save->common,
-					"Can't SAVE unspecified COMMON block");
-				return false;
-			}
+				= ofc_sema_scope_common_find_create(
+					scope, save->common);
+			/* TODO - Warn when new COMMON block is created in SAVE */
+			if (!common) return NULL;
 
 			if (!ofc_sema_common_save(common))
 			{

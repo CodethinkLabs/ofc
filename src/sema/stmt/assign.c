@@ -35,12 +35,6 @@ ofc_sema_stmt_t* ofc_sema_stmt_assign(
 			scope, stmt->assign.variable, spec, NULL);
 		if (!idecl) return false;
 
-		if (!ofc_sema_decl_list_add(
-			scope->decl, idecl))
-		{
-			ofc_sema_decl_delete(idecl);
-			return false;
-		}
 		s.assign.dest = idecl;
 	}
 
