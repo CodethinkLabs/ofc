@@ -80,6 +80,9 @@ struct ofc_sema_stmt_s
 			ofc_sema_expr_t* rec;
 			ofc_sema_expr_t* err;
 
+			ofc_sema_expr_t* advance;
+			bool             is_advancing;
+
 			ofc_sema_expr_list_t* iolist;
 		} io_write;
 

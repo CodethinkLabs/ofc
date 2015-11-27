@@ -216,6 +216,8 @@ void ofc_sema_stmt_delete(
 				stmt->io_write.rec);
 			ofc_sema_expr_delete(
 				stmt->io_write.err);
+			ofc_sema_expr_delete(
+				stmt->io_write.advance);
 			ofc_sema_expr_list_delete(
 				stmt->io_write.iolist);
 			break;

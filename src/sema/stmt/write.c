@@ -24,21 +24,24 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 
 	ofc_sema_stmt_t s;
 	s.type = OFC_SEMA_STMT_WRITE;
-	s.io_write.unit        = NULL;
-	s.io_write.stdout      = false;
-	s.io_write.format_expr = NULL;
-	s.io_write.format      = NULL;
-	s.io_write.format_ldio = false;
-	s.io_write.iostat      = NULL;
-	s.io_write.rec         = NULL;
-	s.io_write.err         = NULL;
-	s.io_write.iolist      = NULL;
+	s.io_write.unit         = NULL;
+	s.io_write.stdout       = false;
+	s.io_write.format_expr  = NULL;
+	s.io_write.format       = NULL;
+	s.io_write.format_ldio  = false;
+	s.io_write.advance      = NULL;
+	s.io_write.is_advancing = true;
+	s.io_write.err          = NULL;
+	s.io_write.iostat       = NULL;
+	s.io_write.rec          = NULL;
+	s.io_write.iolist       = NULL;
 
-	ofc_parse_call_arg_t* ca_unit   = NULL;
-	ofc_parse_call_arg_t* ca_format = NULL;
-	ofc_parse_call_arg_t* ca_iostat = NULL;
-	ofc_parse_call_arg_t* ca_rec    = NULL;
-	ofc_parse_call_arg_t* ca_err    = NULL;
+	ofc_parse_call_arg_t* ca_unit    = NULL;
+	ofc_parse_call_arg_t* ca_format  = NULL;
+	ofc_parse_call_arg_t* ca_iostat  = NULL;
+	ofc_parse_call_arg_t* ca_rec     = NULL;
+	ofc_parse_call_arg_t* ca_err     = NULL;
+	ofc_parse_call_arg_t* ca_advance = NULL;
 
 	unsigned i;
 	for (i = 0; i < stmt->io.params->count; i++)
@@ -126,6 +129,17 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 			}
 
 			ca_err = param;
+		}
+		else if (ofc_str_ref_equal_strz_ci(param->name, "ADVANCE"))
+		{
+			if (ca_advance)
+			{
+				ofc_sema_scope_error(scope, param->src,
+					"Re-definition of ADVANCE in WRITE.");
+				return NULL;
+			}
+
+			ca_advance = param;
 		}
 		else
 		{
@@ -272,6 +286,71 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 		return NULL;
 	}
 
+	if (ca_advance && s.io_write.stdout)
+	{
+		ofc_sema_scope_error(scope, stmt->src,
+			"ADVANCE specifier can only be used with an external UNIT in WRITE");
+		ofc_sema_stmt_io_write__cleanup(s);
+		return NULL;
+	}
+	else if (ca_advance && (!ca_format || s.io_write.format_ldio))
+	{
+		ofc_sema_scope_error(scope, stmt->src,
+			"ADVANCE specifier can only be used with a formatted input in WRITE");
+		ofc_sema_stmt_io_write__cleanup(s);
+		return NULL;
+	}
+	else if (ca_advance)
+	{
+		s.io_write.advance = ofc_sema_expr(
+			scope, ca_advance->expr);
+		if (!s.io_write.advance)
+		{
+			ofc_sema_stmt_io_write__cleanup(s);
+			return NULL;
+		}
+
+		const ofc_sema_type_t* etype
+			= ofc_sema_expr_type(s.io_write.advance);
+		if (!etype)
+		{
+			ofc_sema_stmt_io_write__cleanup(s);
+			return NULL;
+		}
+
+		if (etype->type != OFC_SEMA_TYPE_CHARACTER)
+		{
+			ofc_sema_scope_error(scope, stmt->src,
+				"ADVANCE must be a CHARACTER expression in WRITE");
+			ofc_sema_stmt_io_write__cleanup(s);
+			return NULL;
+		}
+		else
+		{
+			const ofc_sema_typeval_t* constant
+				= ofc_sema_expr_constant(s.io_write.advance);
+
+			const char* advance_str;
+			if (!ofc_sema_typeval_get_character(constant, &advance_str))
+			{
+				ofc_sema_stmt_io_write__cleanup(s);
+				return NULL;
+			}
+
+			if (strcasecmp(advance_str, "NO") == 0)
+			{
+				s.io_write.is_advancing = false;
+			}
+			else if (strcasecmp(advance_str, "YES") != 0)
+			{
+				ofc_sema_scope_error(scope, stmt->src,
+					"ADVANCE must be 'YES' or 'NO' in WRITE");
+				ofc_sema_stmt_io_write__cleanup(s);
+				return NULL;
+			}
+		}
+	}
+
 	if (ca_iostat)
 	{
 		s.io_write.iostat = ofc_sema_expr(
@@ -307,9 +386,39 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 		}
 	}
 
-	if (ca_rec)
+	if (ca_rec && s.io_write.format_ldio)
 	{
-		/* TODO - Validate REC as positive INTEGER. */
+		ofc_sema_scope_error(scope, stmt->src,
+			"REC specifier not compatible with namelist"
+			" or list-directed data transfer in WRITE");
+		ofc_sema_stmt_io_write__cleanup(s);
+		return NULL;
+	}
+	else if (ca_rec)
+	{
+		s.io_write.rec = ofc_sema_expr(
+			scope, ca_rec->expr);
+		if (!s.io_write.rec)
+		{
+			ofc_sema_stmt_io_write__cleanup(s);
+			return NULL;
+		}
+
+		const ofc_sema_type_t* etype
+			= ofc_sema_expr_type(s.io_write.rec);
+		if (!etype)
+		{
+			ofc_sema_stmt_io_write__cleanup(s);
+			return NULL;
+		}
+
+		if (!ofc_sema_type_is_integer(etype))
+		{
+			ofc_sema_scope_error(scope, stmt->src,
+				"REC must be of type INTEGER in WRITE");
+			ofc_sema_stmt_io_write__cleanup(s);
+			return NULL;
+		}
 	}
 
 	if (ca_err)
