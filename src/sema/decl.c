@@ -1112,6 +1112,8 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs, bool print_type,
 		if (ofc_sema_decl_is_procedure(decl))
 			type = type->subtype;
 
+		if (!type) return false;
+
 		/* TODO - Handle POINTER and STRUCTURE declarations. */
 
 		if (!ofc_colstr_atomic_writef(cs, "%s",

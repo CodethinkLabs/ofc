@@ -231,12 +231,21 @@ int main(int argc, const char* argv[])
 		return EXIT_FAILURE;
 	}
 
+	#ifdef OFC_PRINT_SEMA
 	ofc_colstr_t* cs = ofc_colstr_create(72, 0);
-	if(!ofc_sema_scope_print(cs, sema))
-		printf("sema scope print failed");
+	if (!ofc_sema_scope_print(cs, sema))
+	{
+		fprintf(stderr, "Error: Failed to print semantic tree\n");
+		ofc_colstr_delete(cs);
+		ofc_sema_scope_delete(sema);
+		ofc_parse_stmt_list_delete(program);
+		ofc_sparse_delete(condense);
+		return EXIT_FAILURE;
+	}
 	ofc_colstr_fdprint(cs, STDOUT_FILENO);
-
 	ofc_colstr_delete(cs);
+	#endif
+
 	ofc_sema_scope_delete(sema);
 	ofc_parse_stmt_list_delete(program);
 	ofc_sparse_delete(condense);
