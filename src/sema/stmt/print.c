@@ -56,7 +56,8 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_print(
 				}
 
 				const ofc_sema_label_t* label
-					= ofc_sema_label_map_find(scope->label->label, ulabel);
+					= ofc_sema_label_map_find(
+						scope->label, ulabel);
 				if (!label)
 				{
 					ofc_sema_scope_error(scope, stmt->io_print.format->src,

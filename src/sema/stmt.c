@@ -138,7 +138,7 @@ bool ofc_sema_stmt_scoped(
 	if (stmt->label != 0)
 	{
 		if (ofc_sema_label_map_find(
-			scope->label->label, stmt->label))
+			scope->label, stmt->label))
 		{
 			ofc_sema_scope_error(scope, stmt->src,
 				"Duplicate label definition");
@@ -435,20 +435,15 @@ bool ofc_sema_stmt_list_print(ofc_colstr_t* cs,
     unsigned i;
 	for (i = 0; i < stmt_list->count; i++)
 	{
-		const ofc_sema_label_t* label = NULL;
-
-		if (label_map && label_map->offset)
+		const ofc_sema_label_t* label
+			= ofc_sema_label_map_find_offset(label_map, i);
+		if (label)
 		{
-			label = ofc_sema_label_map_find(label_map->offset, i);
-			if (label)
-			{
-				unsigned label_num = label->number;
-				if (!ofc_colstr_newline(cs, &label_num))
-					return false;
-			}
+			unsigned label_num = label->number;
+			if (!ofc_colstr_newline(cs, &label_num))
+				return false;
 		}
-
-		if (!label)
+		else
 		{
 			if (!ofc_colstr_newline(cs, NULL))
 				return false;

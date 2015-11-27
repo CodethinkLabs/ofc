@@ -63,6 +63,8 @@ bool ofc_sema_label_map_add_format(
 	ofc_sema_label_map_t* map, unsigned label,
 	ofc_sema_format_t* format);
 const ofc_sema_label_t* ofc_sema_label_map_find(
-	const ofc_hashmap_t* map, unsigned label);
+	const ofc_sema_label_map_t* map, unsigned label);
+const ofc_sema_label_t* ofc_sema_label_map_find_offset(
+	const ofc_sema_label_map_t* map, unsigned label);
 
 #endif

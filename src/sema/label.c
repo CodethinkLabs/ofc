@@ -219,9 +219,21 @@ bool ofc_sema_label_map_add_format(
 }
 
 const ofc_sema_label_t* ofc_sema_label_map_find(
-	const ofc_hashmap_t* map, unsigned label)
+	const ofc_sema_label_map_t* map, unsigned label)
 {
-	return ofc_hashmap_find(map, &label);
+	if (!map)
+		return NULL;
+	return ofc_hashmap_find(
+		map->label, &label);
+}
+
+const ofc_sema_label_t* ofc_sema_label_map_find_offset(
+	const ofc_sema_label_map_t* map, unsigned label)
+{
+	if (!map)
+		return NULL;
+	return ofc_hashmap_find(
+		map->offset, &label);
 }
 
 ofc_sema_format_label_list_t*
