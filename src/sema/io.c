@@ -317,3 +317,64 @@ bool ofc_sema_io_format_iolist_compare(
 
 	return true;
 }
+
+
+bool ofc_sema_io_check_label(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt,
+	const char* name, unsigned name_size,
+	ofc_sema_expr_t* expr,
+	const ofc_sema_label_t** label_dst)
+{
+	if (!expr) return false;
+
+	const ofc_sema_type_t* etype
+		= ofc_sema_expr_type(expr);
+	if (!etype) return false;
+
+	const ofc_sema_label_t* label_ret = NULL;
+	if (ofc_sema_type_is_integer(etype))
+	{
+		const ofc_sema_typeval_t* label
+			= ofc_sema_expr_constant(expr);
+		if (label)
+		{
+			int64_t fl64 = 0;
+			if (!ofc_sema_typeval_get_integer(
+				label, &fl64) || (fl64 < 0))
+			{
+				ofc_sema_scope_error(scope, stmt->src,
+					"'%.*s' label expression must be a positive INTEGER", name_size, name);
+				return false;
+			}
+
+			unsigned ulabel = (unsigned)fl64;
+
+			if (((int64_t)ulabel) != fl64)
+				return false;
+
+			label_ret = ofc_sema_label_map_find(
+				scope->label, ulabel);
+			if (!label_ret)
+			{
+				ofc_sema_scope_error(scope, stmt->src,
+					"'%.*s' label expression not defined", name_size, name);
+				return false;
+			}
+		}
+		else
+		{
+			ofc_sema_scope_warning(scope, stmt->src,
+				"Using a variable for '%.*s' label is deprecated", name_size, name);
+		}
+	}
+	else
+	{
+		ofc_sema_scope_error(scope, stmt->src,
+			"'%.*s' must be a label", name_size, name);
+		return false;
+	}
+
+	if (label_dst) *label_dst = label_ret;
+	return true;
+}

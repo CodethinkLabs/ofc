@@ -1,6 +1,17 @@
 #include <ofc/sema.h>
 #include <math.h>
 
+void ofc_sema_stmt_io_write__cleanup(
+	ofc_sema_stmt_t s)
+{
+	ofc_sema_expr_delete(s.io_write.unit);
+	ofc_sema_expr_delete(s.io_write.format_expr);
+	ofc_sema_expr_delete(s.io_write.advance);
+	ofc_sema_expr_delete(s.io_write.err);
+	ofc_sema_expr_delete(s.io_write.iostat);
+	ofc_sema_expr_delete(s.io_write.rec);
+	ofc_sema_expr_list_delete(s.io_write.iolist);
+}
 
 ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 	ofc_sema_scope_t* scope,
@@ -144,13 +155,17 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 
 		const ofc_sema_type_t* etype
 			= ofc_sema_expr_type(s.io_write.unit);
-		if (!etype) return NULL;
+		if (!etype)
+		{
+			ofc_sema_stmt_io_write__cleanup(s);
+			return NULL;
+		}
 
 		if (!ofc_sema_type_is_integer(etype))
 		{
 			ofc_sema_scope_error(scope, stmt->src,
 				"UNIT must be of type INTEGER in WRITE");
-			ofc_sema_expr_delete(s.io_write.unit);
+			ofc_sema_stmt_io_write__cleanup(s);
 			return NULL;
 		}
 
@@ -168,7 +183,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 				{
 					ofc_sema_scope_error(scope, stmt->src,
 						"UNIT must be a positive INTEGER in WRITE");
-					ofc_sema_expr_delete(s.io_write.unit);
+					ofc_sema_stmt_io_write__cleanup(s);
 					return NULL;
 				}
 
@@ -199,61 +214,41 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 	{
 		s.io_write.format_expr = ofc_sema_expr(
 			scope, ca_format->expr);
-		if (!s.io_write.format_expr) return NULL;
+		if (!s.io_write.format_expr)
+		{
+			ofc_sema_stmt_io_write__cleanup(s);
+			return NULL;
+		}
 
 		const ofc_sema_type_t* etype
 			= ofc_sema_expr_type(s.io_write.format_expr);
-		if (!etype) return NULL;
+		if (!etype)
+		{
+			ofc_sema_stmt_io_write__cleanup(s);
+			return NULL;
+		}
 
 		if (ofc_sema_type_is_integer(etype))
 		{
-			const ofc_sema_typeval_t* format_label
-				= ofc_sema_expr_constant(s.io_write.format_expr);
-			if (format_label)
+			const ofc_sema_label_t* label;
+			if (!ofc_sema_io_check_label(
+				scope, stmt, ca_format->name.base,
+				ca_format->name.size,
+				s.io_write.format_expr, &label))
 			{
-				int64_t fl64 = 0;
-				if (!ofc_sema_typeval_get_integer(
-					format_label, &fl64) || (fl64 < 0))
-				{
-					ofc_sema_scope_error(scope, stmt->src,
-						"Format (FMT) label expression must be a positive INTEGER in WRITE");
-					ofc_sema_expr_delete(s.io_write.format_expr);
-					ofc_sema_expr_delete(s.io_write.unit);
-					return NULL;
-				}
-
-				unsigned ulabel = (unsigned) fl64;
-
-				if (((int64_t) ulabel) != fl64)
-				{
-					ofc_sema_expr_delete(s.io_write.format_expr);
-					ofc_sema_expr_delete(s.io_write.unit);
-					return NULL;
-				}
-
-				const ofc_sema_label_t* label
-					= ofc_sema_label_map_find(scope->label, ulabel);
-				if (!label)
-				{
-					ofc_sema_scope_error(scope, stmt->src,
-						"Format label expression not defined in WRITE");
-					ofc_sema_expr_delete(s.io_write.format_expr);
-					ofc_sema_expr_delete(s.io_write.unit);
-					return NULL;
-				}
-
-				if (label->type != OFC_SEMA_LABEL_FORMAT)
-				{
-					ofc_sema_scope_error(scope, stmt->src,
-						"Label expression must be a FORMAT statement in WRITE");
-					ofc_sema_expr_delete(s.io_write.format_expr);
-					ofc_sema_expr_delete(s.io_write.unit);
-					return NULL;
-				}
-				s.io_write.format = label->format;
+				ofc_sema_stmt_io_write__cleanup(s);
+				return NULL;
 			}
 
-
+			if (label && label->type != OFC_SEMA_LABEL_FORMAT)
+			{
+				ofc_sema_scope_error(scope, stmt->src,
+					"Label expression must be a FORMAT statement in WRITE");
+				ofc_sema_stmt_io_write__cleanup(s);
+				return NULL;
+			}
+			if (label)
+				s.io_write.format = label->format;
 		}
 		else if (etype->type == OFC_SEMA_TYPE_CHARACTER)
 		{
@@ -265,8 +260,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 
 			ofc_sema_scope_error(scope, stmt->src,
 				"Format (FMT) must be a label or character string in WRITE");
-			ofc_sema_expr_delete(s.io_write.format_expr);
-			ofc_sema_expr_delete(s.io_write.unit);
+			ofc_sema_stmt_io_write__cleanup(s);
 			return NULL;
 		}
 	}
@@ -274,7 +268,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 	{
 		ofc_sema_scope_error(scope, stmt->src,
 			"Format (FMT) must be an INTEGER expression or asterisk in WRITE");
-		ofc_sema_expr_delete(s.io_write.unit);
+		ofc_sema_stmt_io_write__cleanup(s);
 		return NULL;
 	}
 
@@ -284,20 +278,15 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 			scope, ca_iostat->expr);
 		if (!s.io_write.iostat)
 		{
-			ofc_sema_expr_delete(s.io_write.unit);
-			ofc_sema_expr_delete(s.io_write.format_expr);
-
+			ofc_sema_stmt_io_write__cleanup(s);
 			return NULL;
 		}
 
 		if (s.io_write.iostat->type != OFC_SEMA_EXPR_LHS)
 		{
 			ofc_sema_scope_error(scope, stmt->src,
-				"IOSTAT must be of a variable in REWIND");
-			ofc_sema_expr_delete(s.io_write.unit);
-			ofc_sema_expr_delete(s.io_write.format_expr);
-
-			ofc_sema_expr_delete(s.io_write.iostat);
+				"IOSTAT must be a variable in WRITE");
+			ofc_sema_stmt_io_write__cleanup(s);
 			return NULL;
 		}
 
@@ -305,21 +294,15 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 			= ofc_sema_expr_type(s.io_write.iostat);
 		if (!etype)
 		{
-			ofc_sema_expr_delete(s.io_write.unit);
-			ofc_sema_expr_delete(s.io_write.format_expr);
-
-			ofc_sema_expr_delete(s.io_write.iostat);
+			ofc_sema_stmt_io_write__cleanup(s);
 			return NULL;
 		}
 
 		if (!ofc_sema_type_is_integer(etype))
 		{
 			ofc_sema_scope_error(scope, stmt->src,
-				"IOSTAT must be of type INTEGER in REWIND");
-			ofc_sema_expr_delete(s.io_write.unit);
-			ofc_sema_expr_delete(s.io_write.format_expr);
-
-			ofc_sema_expr_delete(s.io_write.iostat);
+				"IOSTAT must be of type INTEGER in WRITE");
+			ofc_sema_stmt_io_write__cleanup(s);
 			return NULL;
 		}
 	}
@@ -335,80 +318,15 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 			scope, ca_err->expr);
 		if (!s.io_write.err)
 		{
-			ofc_sema_expr_delete(s.io_write.unit);
-			ofc_sema_expr_delete(s.io_write.format_expr);
-
-			ofc_sema_expr_delete(s.io_write.iostat);
+			ofc_sema_stmt_io_write__cleanup(s);
 			return NULL;
 		}
 
-		const ofc_sema_type_t* etype
-			= ofc_sema_expr_type(s.io_write.err);
-		if (!etype)
+		if (!ofc_sema_io_check_label(
+			scope, stmt, ca_err->name.base,
+			ca_err->name.size, s.io_write.err, NULL))
 		{
-			ofc_sema_expr_delete(s.io_write.unit);
-			ofc_sema_expr_delete(s.io_write.format_expr);
-
-			ofc_sema_expr_delete(s.io_write.iostat);
-			ofc_sema_expr_delete(s.io_write.err);
-			return NULL;
-		}
-
-		if (ofc_sema_type_is_integer(etype))
-		{
-			const ofc_sema_typeval_t* err_label
-				= ofc_sema_expr_constant(s.io_write.err);
-			if (err_label)
-			{
-				int64_t fl64 = 0;
-				if (!ofc_sema_typeval_get_integer(
-					err_label, &fl64) || (fl64 < 0))
-				{
-					ofc_sema_scope_error(scope, stmt->src,
-						"Error (ERR) label expression must be a positive INTEGER in REWIND");
-					ofc_sema_expr_delete(s.io_write.unit);
-					ofc_sema_expr_delete(s.io_write.format_expr);
-
-					ofc_sema_expr_delete(s.io_write.iostat);
-					ofc_sema_expr_delete(s.io_write.err);
-					return NULL;
-				}
-
-				unsigned ulabel = (unsigned) fl64;
-
-				if (((int64_t) ulabel) != fl64)
-				{
-					ofc_sema_expr_delete(s.io_write.unit);
-					ofc_sema_expr_delete(s.io_write.format_expr);
-
-					ofc_sema_expr_delete(s.io_write.iostat);
-					ofc_sema_expr_delete(s.io_write.err);
-					return NULL;
-				}
-
-				const ofc_sema_label_t* label
-					= ofc_sema_label_map_find(scope->label, ulabel);
-				if (!label)
-				{
-					ofc_sema_scope_error(scope, stmt->src,
-						"Error label expression not defined in REWIND");
-					ofc_sema_expr_delete(s.io_write.unit);
-					ofc_sema_expr_delete(s.io_write.format_expr);
-
-					ofc_sema_expr_delete(s.io_write.iostat);
-					ofc_sema_expr_delete(s.io_write.err);
-					return NULL;
-				}
-			}
-		}
-		else
-		{
-			ofc_sema_scope_error(scope, stmt->src,
-				"Error (ERR) must be a label in REWIND");
-			ofc_sema_expr_delete(s.io_write.unit);
-			ofc_sema_expr_delete(s.io_write.format_expr);
-
-			ofc_sema_expr_delete(s.io_write.iostat);
+			ofc_sema_stmt_io_write__cleanup(s);
 			return NULL;
 		}
 	}
@@ -423,11 +341,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 					scope, stmt->io.iolist);
 			if (!s.io_write.iolist)
 			{
-				ofc_sema_expr_delete(s.io_write.unit);
-				ofc_sema_expr_delete(s.io_write.format_expr);
-
-				ofc_sema_expr_delete(s.io_write.iostat);
-				ofc_sema_expr_delete(s.io_write.err);
+				ofc_sema_stmt_io_write__cleanup(s);
 				return NULL;
 			}
 		}
@@ -461,11 +375,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 				= ofc_sema_io_data_format(s.io_write.format, iolist_len);
 			if (!format_list)
 			{
-				ofc_sema_expr_delete(s.io_write.unit);
-				ofc_sema_expr_delete(s.io_write.format_expr);
-				ofc_sema_expr_delete(s.io_write.iostat);
-				ofc_sema_expr_delete(s.io_write.err);
-				ofc_sema_expr_list_delete(s.io_write.iolist);
+				ofc_sema_stmt_io_write__cleanup(s);
 				return NULL;
 			}
 
@@ -475,11 +385,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 			ofc_parse_format_desc_list_delete(format_list);
 			if (fail)
 			{
-				ofc_sema_expr_delete(s.io_write.unit);
-				ofc_sema_expr_delete(s.io_write.format_expr);
-				ofc_sema_expr_delete(s.io_write.iostat);
-				ofc_sema_expr_delete(s.io_write.err);
-				ofc_sema_expr_list_delete(s.io_write.iolist);
+				ofc_sema_stmt_io_write__cleanup(s);
 				return NULL;
 			}
 		}
@@ -500,11 +406,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 		= ofc_sema_stmt_alloc(s);
 	if (!as)
 	{
-		ofc_sema_expr_delete(s.io_write.unit);
-		ofc_sema_expr_delete(s.io_write.format_expr);
-		ofc_sema_expr_delete(s.io_write.iostat);
-		ofc_sema_expr_delete(s.io_write.err);
-		ofc_sema_expr_list_delete(s.io_write.iolist);
+		ofc_sema_stmt_io_write__cleanup(s);
 		return NULL;
 	}
 	return as;
