@@ -14,6 +14,7 @@ SRC = $(foreach dir, $(SRC_DIR_BASE), $(wildcard $(dir)/*.c))
 OBJ = $(patsubst %.c, %.o, $(SRC))
 OBJ_DEBUG = $(patsubst %.c, %.debug.o, $(SRC))
 DEB = $(patsubst %.c, %.d, $(SRC))
+DEB_DEBUG = $(patsubst %.c, %.debug.d, $(SRC))
 
 PREFIX = $(DESTDIR)/usr/local
 BINDIR = $(PREFIX)/bin
@@ -35,7 +36,7 @@ $(OBJ_DEBUG) : %.debug.o : %.c
 debug: $(FRONTEND_DEBUG)
 
 clean:
-	rm -f $(FRONTEND) $(FRONTEND_DEBUG) $(OBJ) $(OBJ_DEBUG) $(DEB)
+	rm -f $(FRONTEND) $(FRONTEND_DEBUG) $(OBJ) $(OBJ_DEBUG) $(DEB) $(DEB_DEBUG)
 
 install: $(FRONTEND)
 	install $(FRONTEND) $(BINDIR)
