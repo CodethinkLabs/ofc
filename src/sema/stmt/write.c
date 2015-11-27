@@ -266,7 +266,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 		}
 		else if (etype->type == OFC_SEMA_TYPE_CHARACTER)
 		{
-            /* TODO - Check we can resolve this as a format descriptor. */
+			/* TODO - Check we can resolve this as a format descriptor. */
 		}
 		else
 		{
