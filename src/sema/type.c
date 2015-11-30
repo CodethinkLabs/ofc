@@ -201,7 +201,7 @@ static const ofc_sema_type_t* ofc_sema_type__create(
 			break;
 		default:
 			stype.kind = kind;
-			stype.len = 0;
+			stype.len = len;
 			break;
 	}
 
@@ -686,6 +686,12 @@ bool ofc_sema_type_is_logical(const ofc_sema_type_t* type)
 	}
 
 	return false;
+}
+
+bool ofc_sema_type_is_character(
+	const ofc_sema_type_t* type)
+{
+	return (type && (type->type == OFC_SEMA_TYPE_CHARACTER));
 }
 
 bool ofc_sema_type_is_array(const ofc_sema_type_t* type)

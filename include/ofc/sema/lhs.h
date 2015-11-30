@@ -6,6 +6,7 @@ typedef enum
 	OFC_SEMA_LHS_DECL,
 	OFC_SEMA_LHS_ARRAY_INDEX,
 	OFC_SEMA_LHS_ARRAY_SLICE,
+	OFC_SEMA_LHS_SUBSTRING,
 	OFC_SEMA_LHS_STRUCTURE_MEMBER,
 } ofc_sema_lhs_e;
 
@@ -26,8 +27,16 @@ struct ofc_sema_lhs_s
 			union
 			{
 				ofc_sema_array_slice_t* slice;
+
 				ofc_sema_array_index_t* index;
-				ofc_str_ref_t           member;
+
+				struct
+				{
+					ofc_sema_expr_t* first;
+					ofc_sema_expr_t* last;
+				} substring;
+
+				ofc_str_ref_t member;
 			};
 		};
 	};

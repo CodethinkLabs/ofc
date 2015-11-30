@@ -84,6 +84,7 @@ unsigned ofc_sema_type_elem_count(const ofc_sema_type_t* type);
 bool ofc_sema_type_is_integer(const ofc_sema_type_t* type);
 bool ofc_sema_type_is_scalar(const ofc_sema_type_t* type);
 bool ofc_sema_type_is_logical(const ofc_sema_type_t* type);
+bool ofc_sema_type_is_character(const ofc_sema_type_t* type);
 
 bool ofc_sema_type_is_array(const ofc_sema_type_t* type);
 bool ofc_sema_type_is_structure(const ofc_sema_type_t* type);

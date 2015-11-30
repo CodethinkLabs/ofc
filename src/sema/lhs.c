@@ -61,6 +61,144 @@ static ofc_sema_lhs_t* ofc_sema_lhs_slice(
 	return alhs;
 }
 
+static ofc_sema_lhs_t* ofc_sema_lhs_substring(
+	ofc_sema_scope_t* scope,
+	ofc_sema_lhs_t* lhs,
+	const ofc_parse_array_index_t* index)
+{
+	if (!lhs || !index
+		|| (index->count != 1)
+		|| !lhs->data_type)
+		return NULL;
+
+	const ofc_parse_array_range_t* range
+		= index->range[0];
+	if (!range || range->stride)
+		return NULL;
+
+	ofc_sema_expr_t* first
+		= ofc_sema_expr(scope, range->first);
+	if (range->first && !first) return NULL;
+
+	ofc_sema_expr_t* last = NULL;
+	if (range->last)
+	{
+		last = ofc_sema_expr(scope, range->last);
+		if (!last)
+		{
+			ofc_sema_expr_delete(first);
+			return NULL;
+		}
+	}
+	else if (!range->is_slice)
+	{
+		last = first;
+	}
+
+	unsigned len = 0;
+	if ((!first || ofc_sema_expr_is_constant(first))
+		&& ofc_sema_expr_is_constant(last))
+	{
+		const ofc_sema_typeval_t* first_ctv
+			= ofc_sema_expr_constant(first);
+		const ofc_sema_typeval_t* last_ctv
+			= ofc_sema_expr_constant(last);
+
+		if ((first && !first_ctv) || !last_ctv)
+		{
+			if (last != first)
+				ofc_sema_expr_delete(last);
+			ofc_sema_expr_delete(first);
+			return NULL;
+		}
+
+		int64_t ifirst = 1;
+		if (first && !ofc_sema_typeval_get_integer(
+			first_ctv, &ifirst))
+		{
+			if (last != first)
+				ofc_sema_expr_delete(last);
+			ofc_sema_expr_delete(first);
+			return NULL;
+		}
+
+		int64_t ilast;
+		if (!ofc_sema_typeval_get_integer(
+			last_ctv, &ilast))
+		{
+			if (last != first)
+				ofc_sema_expr_delete(last);
+			ofc_sema_expr_delete(first);
+			return NULL;
+		}
+
+		if (ifirst < 0)
+		{
+			ofc_sema_scope_error(scope, lhs->src,
+				"First index in character substring must be 1 or greater");
+
+			if (last != first)
+				ofc_sema_expr_delete(last);
+			ofc_sema_expr_delete(first);
+			return NULL;
+		}
+
+		if (ilast < ifirst)
+		{
+			ofc_sema_scope_error(scope, lhs->src,
+				"Last index in character substring must be greater than first");
+
+			if (last != first)
+				ofc_sema_expr_delete(last);
+			ofc_sema_expr_delete(first);
+			return NULL;
+		}
+
+		if (ilast > lhs->data_type->len)
+		{
+			ofc_sema_scope_warning(scope, lhs->src,
+				"Last index in character substring out-of-bounds");
+		}
+
+		int64_t ilen = (ilast - ifirst) + 1;
+		len = ilen;
+		if ((int64_t)len != ilen)
+		{
+			if (last != first)
+				ofc_sema_expr_delete(last);
+			ofc_sema_expr_delete(first);
+			return NULL;
+		}
+	}
+
+	const ofc_sema_type_t* type
+		= ofc_sema_type_create_character(
+			lhs->data_type->kind, len);
+	if (!type)
+	{
+		if (last != first)
+			ofc_sema_expr_delete(last);
+		ofc_sema_expr_delete(first);
+		return NULL;
+	}
+
+	ofc_sema_lhs_t* alhs
+		= (ofc_sema_lhs_t*)malloc(
+			sizeof(ofc_sema_lhs_t));
+	if (!alhs) return NULL;
+
+	alhs->type            = OFC_SEMA_LHS_SUBSTRING;
+	alhs->src             = lhs->src;
+	alhs->parent          = lhs;
+	alhs->substring.first = first;
+	alhs->substring.last  = last;
+	alhs->data_type       = type;
+	alhs->refcnt          = 0;
+
+	return alhs;
+}
+
+
 static ofc_sema_lhs_t* ofc_sema_lhs_member(
 	ofc_sema_lhs_t* lhs,
 	ofc_str_ref_t member)
@@ -135,10 +273,24 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 
 				if (!ofc_sema_type_is_array(parent->data_type))
 				{
-					ofc_sema_scope_error(scope, lhs->src,
-						"Attempting to index a variable that's not an array.");
-					ofc_sema_lhs_delete(parent);
-					return NULL;
+					if (!ofc_sema_type_is_character(
+						parent->data_type))
+					{
+						ofc_sema_scope_error(scope, lhs->src,
+							"Attempting to index a variable that's not an array");
+						ofc_sema_lhs_delete(parent);
+						return NULL;
+					}
+
+					ofc_sema_lhs_t* slhs
+						= ofc_sema_lhs_substring(
+							scope, parent, lhs->array.index);
+					if (!slhs)
+					{
+						ofc_sema_lhs_delete(parent);
+						return NULL;
+					}
+					return slhs;
 				}
 
 				ofc_sema_array_index_t* index
@@ -317,6 +469,7 @@ void ofc_sema_lhs_delete(
 	{
 		case OFC_SEMA_LHS_ARRAY_INDEX:
 		case OFC_SEMA_LHS_ARRAY_SLICE:
+		case OFC_SEMA_LHS_SUBSTRING:
 		case OFC_SEMA_LHS_STRUCTURE_MEMBER:
 			ofc_sema_lhs_delete(lhs->parent);
 			break;
@@ -333,6 +486,12 @@ void ofc_sema_lhs_delete(
 
 		case OFC_SEMA_LHS_ARRAY_SLICE:
 			ofc_sema_array_slice_delete(lhs->slice);
+			break;
+
+		case OFC_SEMA_LHS_SUBSTRING:
+			if (lhs->substring.last != lhs->substring.first)
+				ofc_sema_expr_delete(lhs->substring.last);
+			ofc_sema_expr_delete(lhs->substring.first);
 			break;
 
 		default:
@@ -539,6 +698,26 @@ bool ofc_sema_lhs_print(
 
 		case OFC_SEMA_LHS_ARRAY_SLICE:
 			if (!ofc_sema_array_slice_print(cs, lhs->slice))
+				return false;
+			break;
+
+		case OFC_SEMA_LHS_SUBSTRING:
+			if (!ofc_colstr_atomic_writef(cs, "("))
+				return false;
+			if (lhs->substring.first
+				&& !ofc_sema_expr_print(cs,
+					lhs->substring.first))
+				return false;
+			if (lhs->substring.first != lhs->substring.last)
+			{
+				if (!ofc_colstr_atomic_writef(cs, ":"))
+					return false;
+				if (lhs->substring.last
+					&& !ofc_sema_expr_print(cs,
+						lhs->substring.last))
+					return false;
+			}
+			if (!ofc_colstr_atomic_writef(cs, ")"))
 				return false;
 			break;
 
