@@ -87,7 +87,9 @@ ofc_sema_stmt_t* ofc_sema_stmt(
 				scope, stmt);
 			break;
 		case OFC_PARSE_STMT_IO_REWIND:
-			s = ofc_sema_stmt_io_rewind(
+		case OFC_PARSE_STMT_IO_END_FILE:
+		case OFC_PARSE_STMT_IO_BACKSPACE:
+			s = ofc_sema_stmt_io_position(
 				scope, stmt);
 			break;
 		case OFC_PARSE_STMT_IF_THEN:
@@ -250,12 +252,14 @@ void ofc_sema_stmt_delete(
 				stmt->io_print.iolist);
 			break;
 		case OFC_SEMA_STMT_IO_REWIND:
+		case OFC_SEMA_STMT_IO_END_FILE:
+		case OFC_SEMA_STMT_IO_BACKSPACE:
 			ofc_sema_expr_delete(
-				stmt->io_rewind.unit);
+				stmt->io_position.unit);
 			ofc_sema_expr_delete(
-				stmt->io_rewind.iostat);
+				stmt->io_position.iostat);
 			ofc_sema_expr_delete(
-				stmt->io_rewind.err);
+				stmt->io_position.err);
 			break;
 		case OFC_SEMA_STMT_IF_COMPUTED:
 			ofc_sema_expr_delete(
