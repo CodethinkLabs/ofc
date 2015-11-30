@@ -36,21 +36,24 @@ static const char* ofc_sema_type__cast[] =
 };
 
 const char* ofc_sema_type_str_rep(
-	const ofc_sema_type_e type)
+	const ofc_sema_type_t* type)
 {
-	if (type >= OFC_SEMA_TYPE_COUNT)
-		return NULL;
+	if (!type || (type->type >= OFC_SEMA_TYPE_COUNT))
+		return "<UNDEFINED>";
 
-	return ofc_sema_type__name[type];
+	return ofc_sema_type__name[type->type];
 }
 
 const char* ofc_sema_type_str_cast_rep(
-	const ofc_sema_type_e type)
+	const ofc_sema_type_t* type)
 {
-	if (type >= OFC_SEMA_TYPE_COUNT)
+	if (!type)
 		return NULL;
 
-	return ofc_sema_type__cast[type];
+	if (type->type >= OFC_SEMA_TYPE_COUNT)
+		return NULL;
+
+	return ofc_sema_type__cast[type->type];
 }
 
 static void ofc_sema_type__delete(ofc_sema_type_t* type)

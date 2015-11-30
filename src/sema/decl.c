@@ -1117,7 +1117,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs, bool print_type,
 		/* TODO - Handle POINTER and STRUCTURE declarations. */
 
 		if (!ofc_colstr_atomic_writef(cs, "%s",
-			ofc_sema_type_str_rep(type->type)))
+			ofc_sema_type_str_rep(type)))
 			return false;
 
 		if (ofc_sema_type_is_array(type))

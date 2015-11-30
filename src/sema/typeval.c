@@ -1084,8 +1084,8 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 	{
 		ofc_sema_scope_error(scope, typeval->src,
 			"Can't cast %s to %s",
-			ofc_sema_type_str_rep(typeval->type->type),
-			ofc_sema_type_str_rep(type->type));
+			ofc_sema_type_str_rep(typeval->type),
+			ofc_sema_type_str_rep(type));
 		return NULL;
 	}
 
@@ -1093,8 +1093,8 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 	{
 		ofc_sema_scope_warning(scope, typeval->src,
 			"Cast from %s to %s was lossy",
-			ofc_sema_type_str_rep(typeval->type->type),
-			ofc_sema_type_str_rep(type->type));
+			ofc_sema_type_str_rep(typeval->type),
+			ofc_sema_type_str_rep(type));
 	}
 
 	return ofc_sema_typeval__alloc(tv);

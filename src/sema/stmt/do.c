@@ -54,8 +54,8 @@ static bool ofc_sema_stmt__loop_control(
 			ofc_sema_scope_error(scope,
 				parse_init->init->src,
 					"Expression type %s doesn't match lhs type %s",
-				ofc_sema_type_str_rep(expr_type->type),
-				ofc_sema_type_str_rep(dtype->type));
+				ofc_sema_type_str_rep(expr_type),
+				ofc_sema_type_str_rep(dtype));
 			ofc_sema_expr_delete(*sema_init);
 			ofc_sema_lhs_delete(*sema_iter);
 			return false;
@@ -85,8 +85,8 @@ static bool ofc_sema_stmt__loop_control(
 			ofc_sema_scope_error(scope,
 				parse_last->src,
 					"Expression type %s doesn't match lhs type %s",
-				ofc_sema_type_str_rep(expr_type->type),
-				ofc_sema_type_str_rep(dtype->type));
+				ofc_sema_type_str_rep(expr_type),
+				ofc_sema_type_str_rep(dtype));
 			ofc_sema_expr_delete(*sema_init);
 			ofc_sema_expr_delete(*sema_last);
 			ofc_sema_lhs_delete(*sema_iter);
@@ -121,8 +121,8 @@ static bool ofc_sema_stmt__loop_control(
 				ofc_sema_scope_error(scope,
 					parse_step->src,
 						"Expression type %s doesn't match lhs type %s",
-					ofc_sema_type_str_rep(expr_type->type),
-					ofc_sema_type_str_rep(dtype->type));
+					ofc_sema_type_str_rep(expr_type),
+					ofc_sema_type_str_rep(dtype));
 				ofc_sema_expr_delete(*sema_step);
 				ofc_sema_expr_delete(*sema_init);
 				ofc_sema_expr_delete(*sema_last);

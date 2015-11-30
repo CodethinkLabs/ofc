@@ -41,9 +41,9 @@ const ofc_sema_type_t* ofc_sema_type_spec(
 	const ofc_sema_spec_t* spec);
 
 const char* ofc_sema_type_str_rep(
-	const ofc_sema_type_e type);
+	const ofc_sema_type_t* type);
 const char* ofc_sema_type_str_cast_rep(
-	const ofc_sema_type_e type);
+	const ofc_sema_type_t* type);
 
 const ofc_sema_type_t* ofc_sema_type_create_primitive(
 	ofc_sema_type_e type, unsigned kind);

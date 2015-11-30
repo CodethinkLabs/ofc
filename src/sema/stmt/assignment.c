@@ -76,7 +76,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_assignment(
 			ofc_sema_scope_error(scope, stmt->src,
 				"Expression type %s doesn't match lhs type %s",
 				ofc_sema_type_str_rep(expr_type),
-				ofc_sema_type_str_rep(dtype);
+				ofc_sema_type_str_rep(dtype));
 			ofc_sema_expr_delete(s.assignment.expr);
 			return NULL;
 		}

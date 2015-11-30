@@ -291,7 +291,7 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 	{
 		ofc_sema_scope_error(scope, a->src,
 			"Can't use type %s in operator '%s'",
-			ofc_sema_type_str_rep(at->type),
+			ofc_sema_type_str_rep(at),
 			ofc_parse_operator_str_rep(op));
 		ofc_sema_expr_delete(as);
 		return NULL;
@@ -317,7 +317,7 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 	{
 		ofc_sema_scope_error(scope, a->src,
 			"Can't use type %s in operator '%s'",
-			ofc_sema_type_str_rep(bt->type),
+			ofc_sema_type_str_rep(bt),
 			ofc_parse_operator_str_rep(op));
 		ofc_sema_expr_delete(bs);
 		ofc_sema_expr_delete(as);
@@ -1166,8 +1166,8 @@ ofc_sema_expr_list_t* ofc_sema_expr_list_implicit_do(
 			ofc_sema_scope_error(scope,
 				id->limit->src,
 					"Expression type %s doesn't match iterator type %s",
-				ofc_sema_type_str_rep(expr_type->type),
-				ofc_sema_type_str_rep(dtype->type));
+				ofc_sema_type_str_rep(expr_type),
+				ofc_sema_type_str_rep(dtype));
 			ofc_sema_expr_delete(limit);
 			ofc_sema_parameter_delete(param);
 			ofc_sema_scope_delete(idscope);
@@ -1203,8 +1203,8 @@ ofc_sema_expr_list_t* ofc_sema_expr_list_implicit_do(
 				ofc_sema_scope_error(scope,
 					id->step->src,
 						"Expression type %s doesn't match iterator type %s",
-					ofc_sema_type_str_rep(expr_type->type),
-					ofc_sema_type_str_rep(dtype->type));
+					ofc_sema_type_str_rep(expr_type),
+					ofc_sema_type_str_rep(dtype));
 				ofc_sema_expr_delete(step);
 				ofc_sema_expr_delete(limit);
 				ofc_sema_parameter_delete(param);
@@ -1359,7 +1359,7 @@ bool ofc_sema_expr_print(
 				/* TODO - Should we actually print these? */
 				const char* cast
 					= ofc_sema_type_str_cast_rep(
-						expr->cast.type->type);
+						expr->cast.type);
 				if (cast)
 				{
 					if (!ofc_colstr_atomic_writef(cs, "%s", cast)

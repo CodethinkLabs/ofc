@@ -62,7 +62,7 @@ bool ofc_sema_io_compare_types(
 				ofc_sema_scope_error(scope, (*expr)->src,
 					"FORMAT descriptor (%s) and output type (%s) not compatible",
 					ofc_sema_format_str_rep(desc->type),
-					ofc_sema_type_str_rep(type->type));
+					ofc_sema_type_str_rep(type));
 				return false;
 			}
 
