@@ -1335,25 +1335,73 @@ ofc_sema_expr_list_t* ofc_sema_expr_list_implicit_do(
 		return NULL;
 	}
 
-	while(!ofc_sema_typeval_lt(idscope,
-		param->typeval, limit->constant))
+	ofc_sema_typeval_t* value
+		= ofc_sema_typeval_le(idscope,
+			param->typeval, limit->constant);
+	if (!value)
 	{
-		ofc_sema_expr_t* expr
-			= ofc_sema_expr__lhs(
-				idscope, id->dlist);
+		ofc_sema_expr_delete(step);
+		ofc_sema_expr_delete(limit);
+		ofc_sema_scope_delete(idscope);
+		ofc_sema_expr_list_delete(list);
+		return NULL;
+	}
 
-		if (!ofc_sema_expr_list_add(list, expr))
+	while(value->logical)
+	{
+		if (id->dlist->type == OFC_PARSE_LHS_IMPLICIT_DO)
 		{
-			ofc_sema_expr_delete(step);
-			ofc_sema_expr_delete(limit);
-			ofc_sema_expr_list_delete(list);
-			ofc_sema_scope_delete(idscope);
-			return NULL;
+			ofc_sema_expr_list_t* implicit_do
+				= ofc_sema_expr_list_implicit_do(
+					scope, id->dlist->implicit_do);
+			if (!implicit_do)
+			{
+				ofc_sema_expr_delete(step);
+				ofc_sema_expr_delete(limit);
+				ofc_sema_expr_list_delete(list);
+				ofc_sema_scope_delete(idscope);
+				return NULL;
+			}
+
+			if (!ofc_sema_expr_list_add_list(list, implicit_do))
+			{
+				ofc_sema_expr_delete(step);
+				ofc_sema_expr_delete(limit);
+				ofc_sema_expr_list_delete(list);
+				ofc_sema_expr_list_delete(implicit_do);
+				ofc_sema_scope_delete(idscope);
+				return NULL;
+			}
+		}
+		else
+		{
+			ofc_sema_expr_t* expr
+				= ofc_sema_expr__lhs(
+					idscope, id->dlist);
+			if (!ofc_sema_expr_list_add(list, expr))
+			{
+				ofc_sema_expr_delete(step);
+				ofc_sema_expr_delete(limit);
+				ofc_sema_expr_list_delete(list);
+				ofc_sema_scope_delete(idscope);
+				return NULL;
+			}
 		}
 
 		param->typeval
 			= ofc_sema_typeval_add(idscope,
 				param->typeval, step->constant);
+
+		value = ofc_sema_typeval_le(
+			idscope, param->typeval, limit->constant);
+		if (!value)
+		{
+			ofc_sema_expr_delete(step);
+			ofc_sema_expr_delete(limit);
+			ofc_sema_scope_delete(idscope);
+			ofc_sema_expr_list_delete(list);
+			return NULL;
+		}
 	}
 
 	return list;
