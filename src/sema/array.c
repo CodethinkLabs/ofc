@@ -197,9 +197,9 @@ uint8_t ofc_sema_array_hash(
 	unsigned i;
 	for (i = 0; i < array->dimensions; i++)
 	{
-		if (array->segment[i].first_var)
+		if (!array->segment[i].first_var)
 			hash += array->segment[i].first;
-		if (array->segment[i].last_var)
+		if (!array->segment[i].last_var)
 			hash += array->segment[i].last;
 	}
 
