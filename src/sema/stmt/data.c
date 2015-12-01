@@ -121,7 +121,7 @@ static bool ofc_sema_stmt__data(
 			if (elhs[i]->type == OFC_SEMA_LHS_ARRAY_SLICE)
 			{
 				ofc_sema_scope_error(scope, elhs[i]->src,
-					"Array index initializers not yet supported");
+					"Array slice initializers not yet supported");
 				success = false;
 			}
 			else
@@ -129,7 +129,11 @@ static bool ofc_sema_stmt__data(
 				if (!ofc_sema_lhs_init_array(
 					scope, elhs[i], NULL,
 					elem_count, &eexpr[i]))
+				{
+					ofc_sema_scope_error(scope, elhs[i]->src,
+						"Invalid array LHS in DATA statement");
 					success = false;
+				}
 			}
 
 			i += (elem_count - 1);
@@ -138,7 +142,11 @@ static bool ofc_sema_stmt__data(
 		{
 			if (!ofc_sema_lhs_init(
 				scope, elhs[i], eexpr[i]))
+			{
+				ofc_sema_scope_error(scope, elhs[i]->src,
+					"Invalid LHS in DATA statement");
 				success = false;
+			}
 		}
 	}
 
