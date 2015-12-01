@@ -24,6 +24,9 @@ bool ofc_sema_go_to_computed_print(ofc_colstr_t* cs,
 	const ofc_sema_stmt_t* stmt);
 bool ofc_sema_stmt_stop_pause_print(ofc_colstr_t* cs,
 	const ofc_sema_stmt_t* stmt);
+bool ofc_sema_stmt_assign_print(ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt);
+
 
 
 static ofc_sema_stmt_t* ofc_sema_stmt_simple(
@@ -453,6 +456,9 @@ bool ofc_sema_stmt_print(
 
 		case OFC_SEMA_STMT_DO_WHILE_BLOCK:
 			return ofc_sema_stmt_do_while_block_print(cs, stmt);
+
+		case OFC_SEMA_STMT_ASSIGN:
+			return ofc_sema_stmt_assign_print(cs, stmt);
 
 		default:
 			break;

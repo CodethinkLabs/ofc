@@ -1063,6 +1063,22 @@ void ofc_sema_scope_warning(
 	va_end(args);
 }
 
+static bool ofc_sema_scope_body__print(
+	ofc_colstr_t* cs,
+	const ofc_sema_scope_t* scope)
+{
+	if (!cs || !scope)
+		return false;
+
+	if (!ofc_sema_decl_list_print(cs, scope->decl)
+		|| !ofc_sema_stmt_list_print(cs, scope->label, scope->stmt)
+		|| !ofc_colstr_newline(cs, NULL)
+		|| !ofc_sema_format_label_list_print(cs, scope->label->format))
+		return false;
+
+	return true;
+}
+
 bool ofc_sema_scope_print(
 	ofc_colstr_t* cs,
 	const ofc_sema_scope_t* scope)
@@ -1097,15 +1113,7 @@ bool ofc_sema_scope_print(
 			kwstr = "BLOCK DATA";
 			break;
 		case OFC_SEMA_SCOPE_IF:
-			if (!scope->child) return false;
-
-			for (i = 0; i < scope->child->count; i++)
-			{
-				if (!ofc_sema_scope_print(
-					cs, scope->child->scope[i]))
-						return false;
-			}
-			return true;
+			return ofc_sema_scope_body__print(cs, scope);
 
 		default:
 			return false;
@@ -1132,11 +1140,10 @@ bool ofc_sema_scope_print(
 	}
 
 	if (!ofc_colstr_newline(cs, NULL)
-		|| !ofc_sema_decl_list_print(cs, scope->decl)
-		|| !ofc_sema_stmt_list_print(cs, scope->label, scope->stmt)
-		|| !ofc_colstr_newline(cs, NULL)
-		|| !ofc_sema_format_label_list_print(cs, scope->label->format)
-		|| !ofc_colstr_newline(cs, NULL)
+		|| !ofc_sema_scope_body__print(cs, scope))
+			return false;
+
+	if (!ofc_colstr_newline(cs, NULL)
 		|| !ofc_colstr_atomic_writef(cs, "END %s ", kwstr))
 		return false;
 

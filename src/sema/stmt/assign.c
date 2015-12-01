@@ -57,3 +57,22 @@ ofc_sema_stmt_t* ofc_sema_stmt_assign(
 
 	return as;
 }
+
+bool ofc_sema_stmt_assign_print(
+	ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt)
+{
+	if (!cs || !stmt)
+		return false;
+
+	if (!ofc_colstr_atomic_writef(cs, "ASSIGN")
+		|| !ofc_colstr_atomic_writef(cs, " ")
+		|| !ofc_colstr_atomic_writef(cs, "%d", stmt->assign.label)
+		|| !ofc_colstr_atomic_writef(cs, " ")
+		|| !ofc_colstr_atomic_writef(cs, "TO")
+		|| !ofc_colstr_atomic_writef(cs, " ")
+		|| !ofc_sema_decl_print(cs, false, stmt->assign.dest))
+		return false;
+
+	return true;
+}

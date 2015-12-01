@@ -239,6 +239,7 @@ bool ofc_sema_go_to_print(
 {
 	if (!cs || (stmt->type != OFC_SEMA_STMT_GO_TO))
 		return false;
+
 	if (!ofc_colstr_atomic_writef(cs, "GO TO "))
 		return false;
 	if (!ofc_sema_expr_print(cs, stmt->go_to.label))
@@ -257,9 +258,12 @@ bool ofc_sema_go_to_computed_print(
 	if (!cs || (stmt->type != OFC_SEMA_STMT_GO_TO_COMPUTED))
 		return false;
 
-	if (!cs || (stmt->type != OFC_SEMA_STMT_GO_TO))
-		return false;
-	if (!ofc_colstr_atomic_writef(cs, "GO TO "))
+	if (!ofc_colstr_atomic_writef(cs, "GO TO ")
+		|| !ofc_colstr_atomic_writef(cs, "(")
+		|| !ofc_sema_expr_list_print(cs, stmt->go_to_comp.label)
+		|| !ofc_colstr_atomic_writef(cs, ")")
+		|| !ofc_colstr_atomic_writef(cs, ", ")
+		|| !ofc_sema_expr_print(cs, stmt->go_to_comp.cond))
 		return false;
 
 	return true;

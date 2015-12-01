@@ -177,6 +177,8 @@ static ofc_sema_expr_t* ofc_sema_expr__create(
 
 	expr->constant = NULL;
 
+	expr->brackets = false;
+
 	switch (type)
 	{
 		case OFC_SEMA_EXPR_CONSTANT:
@@ -810,7 +812,7 @@ ofc_sema_expr_t* ofc_sema_expr(
 			return ofc_sema_expr__variable(
 				scope, expr->variable);
 		case OFC_PARSE_EXPR_BRACKETS:
-			return ofc_sema_expr(
+			return ofc_sema_expr_brackets(
 				scope, expr->brackets.expr);
 		case OFC_PARSE_EXPR_UNARY:
 			return ofc_sema_expr__unary(
@@ -824,6 +826,23 @@ ofc_sema_expr_t* ofc_sema_expr(
 	}
 
 	return NULL;
+}
+
+ofc_sema_expr_t* ofc_sema_expr_brackets(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_expr_t* expr)
+{
+	if (!scope || !expr)
+		return NULL;
+
+	ofc_sema_expr_t* expr_bracket
+		= ofc_sema_expr(scope, expr);
+
+	if (!expr_bracket)
+		return NULL;
+
+	expr_bracket->brackets = true;
+	return expr_bracket;
 }
 
 void ofc_sema_expr_delete(
@@ -1348,6 +1367,12 @@ bool ofc_sema_expr_print(
 {
     if (!cs || !expr) return false;
 
+	if (expr->brackets)
+	{
+		if (!ofc_colstr_atomic_writef(cs, "("))
+			return false;
+	}
+
 	switch (expr->type)
 	{
 		case OFC_SEMA_EXPR_CONSTANT:
@@ -1377,8 +1402,14 @@ bool ofc_sema_expr_print(
 			return true;
 
 		case OFC_SEMA_EXPR_INTRINSIC:
-		case OFC_SEMA_EXPR_FUNCTION:
 			return false;
+		case OFC_SEMA_EXPR_FUNCTION:
+			if (!ofc_sema_decl_print(cs, false, expr->function)
+				|| !ofc_colstr_atomic_writef(cs, "(")
+				|| !ofc_sema_expr_list_print(cs, expr->args)
+				|| !ofc_colstr_atomic_writef(cs, ")"))
+				return false;
+			return true;
 
 		default:
 			break;
@@ -1395,6 +1426,12 @@ bool ofc_sema_expr_print(
 	if (expr->b)
 	{
 		if (!ofc_sema_expr_print(cs, expr->b))
+			return false;
+	}
+
+	if (expr->brackets)
+	{
+		if (!ofc_colstr_atomic_writef(cs, ")"))
 			return false;
 	}
 
