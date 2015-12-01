@@ -97,6 +97,10 @@ ofc_sema_stmt_t* ofc_sema_stmt(
 			s = ofc_sema_stmt_io_position(
 				scope, stmt);
 			break;
+		case OFC_PARSE_STMT_IO_OPEN:
+			s = ofc_sema_stmt_io_open(
+				scope, stmt);
+			break;
 		case OFC_PARSE_STMT_IF_THEN:
 		case OFC_PARSE_STMT_IF_STATEMENT:
 		case OFC_PARSE_STMT_IF_COMPUTED:
@@ -269,6 +273,34 @@ void ofc_sema_stmt_delete(
 				stmt->io_position.iostat);
 			ofc_sema_expr_delete(
 				stmt->io_position.err);
+			break;
+		case OFC_SEMA_STMT_IO_OPEN:
+			ofc_sema_expr_delete(
+				stmt->io_open.unit);
+			ofc_sema_expr_delete(
+				stmt->io_open.access);
+			ofc_sema_expr_delete(
+				stmt->io_open.action);
+			ofc_sema_expr_delete(
+				stmt->io_open.blank);
+			ofc_sema_expr_delete(
+				stmt->io_open.delim);
+			ofc_sema_expr_delete(
+				stmt->io_open.err);
+			ofc_sema_expr_delete(
+				stmt->io_open.file);
+			ofc_sema_expr_delete(
+				stmt->io_open.form);
+			ofc_sema_expr_delete(
+				stmt->io_open.iostat);
+			ofc_sema_expr_delete(
+				stmt->io_open.pad);
+			ofc_sema_expr_delete(
+				stmt->io_open.position);
+			ofc_sema_expr_delete(
+				stmt->io_open.recl);
+			ofc_sema_expr_delete(
+				stmt->io_open.status);
 			break;
 		case OFC_SEMA_STMT_IF_COMPUTED:
 			ofc_sema_expr_delete(
