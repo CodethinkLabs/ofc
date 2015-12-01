@@ -116,11 +116,14 @@ ofc_sema_expr_list_t* ofc_sema_iolist(
 		if ((parse_expr->type == OFC_PARSE_EXPR_VARIABLE)
 			&& (parse_expr->variable->type == OFC_PARSE_LHS_IMPLICIT_DO))
 		{
-			if (!ofc_sema_expr_list_add_list(sema_iolist,
-					ofc_sema_expr_list_implicit_do(scope, parse_expr->variable->implicit_do)))
+			ofc_sema_expr_list_t* implicit_do
+				= ofc_sema_expr_list_implicit_do(
+					scope, parse_expr->variable->implicit_do);
+			if (!ofc_sema_expr_list_add_list(sema_iolist, implicit_do))
 			{
 				ofc_parse_expr_delete(parse_expr);
 				ofc_sema_expr_list_delete(sema_iolist);
+				ofc_sema_expr_list_delete(implicit_do);
 				return NULL;
 			}
 		}
