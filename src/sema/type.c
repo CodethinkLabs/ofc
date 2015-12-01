@@ -494,11 +494,8 @@ const ofc_sema_type_t* ofc_sema_type_spec(
 			break;
 
 		case OFC_SEMA_TYPE_CHARACTER:
-			/* TODO - Support variable length CHARACTER type. */
-			if (spec->len_var)
-				return NULL;
 			type = ofc_sema_type_create_character(
-				spec->kind, spec->len);
+				spec->kind, (spec->len_var ? 0 : spec->len));
 			break;
 
 		default:

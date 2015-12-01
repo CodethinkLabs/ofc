@@ -154,7 +154,8 @@ static ofc_sema_lhs_t* ofc_sema_lhs_substring(
 			return NULL;
 		}
 
-		if (ilast > lhs->data_type->len)
+		if ((lhs->data_type->len > 0)
+			&& (ilast > lhs->data_type->len))
 		{
 			ofc_sema_scope_warning(scope, lhs->src,
 				"Last index in character substring out-of-bounds");
