@@ -34,24 +34,35 @@ ofc_sema_array_t* ofc_sema_array(
 		ofc_sema_expr_t* expr = ofc_sema_expr(
 			scope, index->range[i]->first);
 
+		int64_t d = 0;
 		const ofc_sema_typeval_t* ctv
 			= ofc_sema_expr_constant(expr);
-
-		int64_t d;
-		bool got = ofc_sema_typeval_get_integer(ctv, &d);
-		ofc_sema_expr_delete(expr);
-
-		if (!got)
+		bool d_resolved = (ctv != NULL);
+		if (d_resolved)
 		{
-			ofc_sema_scope_error(scope,
-				index->range[i]->first->src,
-				"Failed to resolve array dimension");
-			ofc_sema_array_delete(array);
-			return NULL;
+			if (!ofc_sema_typeval_get_integer(ctv, &d))
+			{
+				ofc_sema_scope_error(scope,
+					index->range[i]->first->src,
+					"Failed to resolve array dimension");
+				ofc_sema_expr_delete(expr);
+				ofc_sema_array_delete(array);
+				return NULL;
+			}
 		}
+		ofc_sema_expr_delete(expr);
 
 		if (index->range[i]->last)
 		{
+			if (!d_resolved)
+			{
+				ofc_sema_scope_error(scope,
+					index->range[i]->first->src,
+					"Failed to resolve array base");
+				ofc_sema_array_delete(array);
+				return NULL;
+			}
+
 			array->segment[i].base = d;
 			if ((int64_t)array->segment[i].base != d)
 			{
@@ -65,38 +76,44 @@ ofc_sema_array_t* ofc_sema_array(
 			expr = ofc_sema_expr(
 				scope, index->range[i]->last);
 
+			d = 0;
 			ctv = ofc_sema_expr_constant(expr);
+			d_resolved = (ctv != NULL);
 
-			got = ofc_sema_typeval_get_integer(ctv, &d);
+			if (d_resolved)
+			{
+				if (!ofc_sema_typeval_get_integer(ctv, &d))
+				{
+					ofc_sema_scope_error(scope,
+						index->range[i]->last->src,
+						"Failed to resolve last array index");
+					ofc_sema_expr_delete(expr);
+					ofc_sema_array_delete(array);
+					return NULL;
+				}
+
+				if (d <= array->segment[i].base)
+				{
+					ofc_sema_scope_error(scope,
+						index->range[i]->first->src,
+						"Last array index must be greater than base");
+					ofc_sema_expr_delete(expr);
+					ofc_sema_array_delete(array);
+					return NULL;
+				}
+
+				d -= array->segment[i].base;
+
+				/* Count is inclusive. */
+				if ((d + 1) == 0)
+				{
+					ofc_sema_expr_delete(expr);
+					ofc_sema_array_delete(array);
+					return NULL;
+				}
+				d += 1;
+			}
 			ofc_sema_expr_delete(expr);
-
-			if (!got)
-			{
-				ofc_sema_scope_error(scope,
-					index->range[i]->last->src,
-					"Failed to resolve last array index");
-				ofc_sema_array_delete(array);
-				return NULL;
-			}
-
-			if (d <= array->segment[i].base)
-			{
-				ofc_sema_scope_error(scope,
-					index->range[i]->first->src,
-					"Last array index must be greater than base");
-				ofc_sema_array_delete(array);
-				return NULL;
-			}
-
-			d -= array->segment[i].base;
-
-			/* Count is inclusive. */
-			if ((d + 1) == 0)
-			{
-				ofc_sema_array_delete(array);
-				return NULL;
-			}
-			d += 1;
 
 			array->segment[i].count = d;
 			if ((int64_t)array->segment[i].count != d)
@@ -110,13 +127,24 @@ ofc_sema_array_t* ofc_sema_array(
 		}
 		else
 		{
-			if (d < 0)
+			if (d_resolved)
 			{
-				ofc_sema_scope_error(scope,
-					index->range[i]->first->src,
-					"Array count must be positive");
-				ofc_sema_array_delete(array);
-				return NULL;
+				if (d < 0)
+				{
+					ofc_sema_scope_error(scope,
+						index->range[i]->first->src,
+						"Array count must be positive");
+					ofc_sema_array_delete(array);
+					return NULL;
+				}
+				else if (d == 0)
+				{
+					ofc_sema_scope_error(scope,
+						index->range[i]->first->src,
+						"Array count must be non-zero");
+					ofc_sema_array_delete(array);
+					return NULL;
+				}
 			}
 
 			array->segment[i].count = d;
