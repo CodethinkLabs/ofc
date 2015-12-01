@@ -35,8 +35,10 @@ static bool ofc_sema_typeval__in_range(
 		!= OFC_SEMA_TYPE_INTEGER)
 		return true;
 
-	unsigned size = ofc_sema_type_size(
-		typeval->type);
+	unsigned size;
+	if (!ofc_sema_type_size(
+		typeval->type, &size))
+		return false;
 
 	if (size >= sizeof(typeval->integer))
 		return true;
@@ -182,7 +184,9 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 			kind = nkind;
 		}
 
-		if (type && (ofc_sema_type_size(type) != kind))
+		unsigned tkind;
+		if (ofc_sema_type_size(type, &tkind)
+			&& (tkind != kind))
 		{
 			ofc_sema_scope_error(scope, literal->src,
 				"Expected kind doesn't match literal kind");
@@ -517,7 +521,12 @@ static ofc_sema_typeval_t* ofc_sema_typeval__character_literal(
 			return NULL;
 		}
 
-		size = ofc_sema_type_size(type);
+		if (!ofc_sema_type_size(type, &size))
+		{
+			ofc_sema_scope_error(scope, literal->src,
+				"Can't create variable length constant");
+			return NULL;
+		}
 	}
 
 	ofc_sema_typeval_t typeval = { .type = type };
@@ -774,9 +783,14 @@ bool ofc_sema_typeval_compare(
 		case OFC_SEMA_TYPE_BYTE:
 			return ((a->integer & 0xFF) == (b->integer & 0xFF));
 		case OFC_SEMA_TYPE_CHARACTER:
-			return (memcmp(
-				a->character, b->character,
-				ofc_sema_type_size(a->type)) == 0);
+			{
+				unsigned size;
+				if (!ofc_sema_type_size(
+					a->type, &size))
+					return false;
+				return (memcmp(a->character,
+					b->character, size) == 0);
+			}
 		default:
 			break;
 	}
@@ -791,7 +805,9 @@ unsigned ofc_sema_typeval_size(
 {
 	if (!typeval)
 		return 0;
-	return ofc_sema_type_size(typeval->type);
+	unsigned size = 0;
+	ofc_sema_type_size(typeval->type, &size);
+	return size;
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_copy(
@@ -810,7 +826,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_copy(
 
 	if (copy->type->type == OFC_SEMA_TYPE_CHARACTER)
 	{
-		unsigned size = ofc_sema_type_size(typeval->type);
+		unsigned size = ofc_sema_typeval_size(typeval);
 		copy->character = NULL;
 		if (size > 0)
 		{

@@ -556,8 +556,8 @@ void ofc_sema_decl_delete(
 	if (ofc_sema_decl_is_composite(decl)
 		&& decl->init_array)
 	{
-		unsigned count
-			= ofc_sema_decl_elem_count(decl);
+		unsigned count = 0;
+		ofc_sema_decl_elem_count(decl, &count);
 
 		unsigned i;
 		for (i = 0; i < count; i++)
@@ -672,8 +672,15 @@ bool ofc_sema_decl_init_offset(
 			"Initializing array in multiple statements");
 	}
 
-	unsigned elem_count
-		= ofc_sema_decl_elem_count(decl);
+	unsigned elem_count;
+	if (!ofc_sema_decl_elem_count(
+		decl, &elem_count))
+	{
+		ofc_sema_scope_error(scope, init->src,
+			"Can't initialize element in array of unknown size");
+		return false;
+	}
+
 	if (offset >= elem_count)
 	{
 		ofc_sema_scope_warning(scope, init->src,
@@ -768,8 +775,14 @@ bool ofc_sema_decl_init_array(
 			"Initializing arrays in multiple statements.");
 	}
 
-	unsigned elem_count
-		= ofc_sema_type_elem_count(decl->type);
+	unsigned elem_count;
+	if (!ofc_sema_type_elem_count(
+		decl->type, &elem_count))
+	{
+		ofc_sema_scope_error(scope, init[0]->src,
+			"Can't initialize array of unknown size");
+		return false;
+	}
 	if (elem_count == 0) return true;
 
 	if (!decl->init_array)
@@ -855,22 +868,22 @@ bool ofc_sema_decl_init_func(
 }
 
 
-unsigned ofc_sema_decl_size(
-	const ofc_sema_decl_t* decl)
+bool ofc_sema_decl_size(
+	const ofc_sema_decl_t* decl,
+	unsigned* size)
 {
-	if (!decl)
-		return 0;
+	if (!decl) return false;
 	return ofc_sema_type_size(
-		decl->type);
+		decl->type, size);
 }
 
-unsigned ofc_sema_decl_elem_count(
-	const ofc_sema_decl_t* decl)
+bool ofc_sema_decl_elem_count(
+	const ofc_sema_decl_t* decl,
+	unsigned* count)
 {
-	if (!decl)
-		return 0;
+	if (!decl) return false;
 	return ofc_sema_type_elem_count(
-		decl->type);
+		decl->type, count);
 }
 
 bool ofc_sema_decl_is_array(

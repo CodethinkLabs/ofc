@@ -656,14 +656,13 @@ const ofc_sema_type_t* ofc_sema_lhs_type(
 	return (lhs ? lhs->data_type : NULL);
 }
 
-unsigned ofc_sema_lhs_elem_count(
-	const ofc_sema_lhs_t* lhs)
+bool ofc_sema_lhs_elem_count(
+	const ofc_sema_lhs_t* lhs,
+	unsigned* count)
 {
-	if (!lhs)
-		return 0;
-
+	if (!lhs) return false;
 	return ofc_sema_type_elem_count(
-		lhs->data_type);
+		lhs->data_type, count);
 }
 
 bool ofc_sema_lhs_print(

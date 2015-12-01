@@ -29,7 +29,9 @@ bool ofc_sema_array_compare(
 	const ofc_sema_array_t* a,
 	const ofc_sema_array_t* b);
 
-unsigned ofc_sema_array_total(const ofc_sema_array_t* array);
+bool ofc_sema_array_total(
+	const ofc_sema_array_t* array,
+	unsigned* total);
 
 bool ofc_sema_array_print(
 	ofc_colstr_t* cs,

@@ -96,10 +96,12 @@ bool ofc_sema_decl_init_func(
 	ofc_sema_decl_t* decl,
 	ofc_sema_scope_t* func);
 
-unsigned ofc_sema_decl_size(
-	const ofc_sema_decl_t* decl);
-unsigned ofc_sema_decl_elem_count(
-	const ofc_sema_decl_t* decl);
+bool ofc_sema_decl_size(
+	const ofc_sema_decl_t* decl,
+	unsigned* size);
+bool ofc_sema_decl_elem_count(
+	const ofc_sema_decl_t* decl,
+	unsigned* count);
 
 bool ofc_sema_decl_is_array(
 	const ofc_sema_decl_t* decl);

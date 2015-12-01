@@ -209,17 +209,25 @@ bool ofc_sema_array_compare(
 	return true;
 }
 
-unsigned ofc_sema_array_total(const ofc_sema_array_t* array)
+bool ofc_sema_array_total(
+	const ofc_sema_array_t* array,
+	unsigned* total)
 {
 	if (!array)
-		return 0;
+		return false;
 
-	unsigned total = 1;
+	unsigned t = 1;
 	unsigned i;
 	for (i = 0; i < array->dimensions; i++)
-		total *= array->segment[i].count;
+	{
+		if (array->segment[i].count == 0)
+			return false;
 
-	return total;
+		t *= array->segment[i].count;
+	}
+
+	if (total) *total = t;
+	return true;
 }
 
 bool ofc_sema_array_print(

@@ -557,58 +557,72 @@ bool ofc_sema_type_compare(
 }
 
 
-unsigned ofc_sema_type_size(const ofc_sema_type_t* type)
+bool ofc_sema_type_size(
+	const ofc_sema_type_t* type,
+	unsigned* size)
 {
 	if (!type)
-		return 0;
+		return false;
 
-	unsigned size;
+	unsigned s;
 	switch (type->type)
 	{
 		case OFC_SEMA_TYPE_LOGICAL:
 		case OFC_SEMA_TYPE_INTEGER:
 		case OFC_SEMA_TYPE_REAL:
-			size = type->kind;
+			s = type->kind;
 			break;
 
 		case OFC_SEMA_TYPE_COMPLEX:
-			size = (type->kind * 2);
+			s = (type->kind * 2);
 			break;
 
 		case OFC_SEMA_TYPE_BYTE:
-			size = 1;
+			s = 1;
 			break;
 
 		case OFC_SEMA_TYPE_CHARACTER:
-			size = (type->kind * type->len);
+			if (type->len == 0)
+				return false;
+			s = (type->kind * type->len);
 			break;
 
 		case OFC_SEMA_TYPE_STRUCTURE:
-			size = ofc_sema_structure_size(
-				type->structure);
+			if (!ofc_sema_structure_size(
+				type->structure, &s))
+				return false;
 			break;
 
 		case OFC_SEMA_TYPE_POINTER:
 			/* TODO - Do this based on target arch. */
-			size = sizeof(void*);
+			s = sizeof(void*);
 			break;
 
 		default:
-			return 0;
+			return false;
 	}
 
 	if (type->array)
-		size *= ofc_sema_array_total(type->array);
+	{
+		unsigned count;
+		if (!ofc_sema_array_total(
+			type->array, &count))
+			return false;
+		s *= count;
+	}
 
-	return size;
+	if (size) *size = s;
+	return true;
 }
 
-unsigned ofc_sema_type_elem_count(const ofc_sema_type_t* type)
+bool ofc_sema_type_elem_count(
+	const ofc_sema_type_t* type,
+	unsigned* count)
 {
 	if (!type)
-		return 0;
+		return false;
 
-	unsigned count;
+	unsigned c;
 	switch (type->type)
 	{
 		case OFC_SEMA_TYPE_LOGICAL:
@@ -618,22 +632,30 @@ unsigned ofc_sema_type_elem_count(const ofc_sema_type_t* type)
 		case OFC_SEMA_TYPE_BYTE:
 		case OFC_SEMA_TYPE_CHARACTER:
 		case OFC_SEMA_TYPE_POINTER:
-			count = 1;
+			c = 1;
 			break;
 
 		case OFC_SEMA_TYPE_STRUCTURE:
-			count = ofc_sema_structure_elem_count(
-				type->structure);
+			if (!ofc_sema_structure_elem_count(
+				type->structure, &c))
+				return false;
 			break;
 
 		default:
-			return 0;
+			return false;
 	}
 
 	if (type->array)
-		count *= ofc_sema_array_total(type->array);
+	{
+		unsigned e;
+		if (!ofc_sema_array_total(
+			type->array, &e))
+			return false;
+		c *= e;
+	}
 
-	return count;
+	if (count) *count = c;
+	return true;
 }
 
 bool ofc_sema_type_is_integer(const ofc_sema_type_t* type)

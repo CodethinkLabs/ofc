@@ -19,7 +19,10 @@ bool ofc_sema_io_compare_types(
 	 */
 	if (ofc_sema_type_is_array(type))
 	{
-		unsigned array_count = ofc_sema_array_total(type->array);
+		unsigned array_count;
+		if (!ofc_sema_array_total(
+			type->array, &array_count))
+			return false;
 
 		type = ofc_sema_type_base(type);
 
@@ -148,9 +151,15 @@ unsigned ofc_sema_iolist_count(
 
 		if (ofc_sema_type_is_array(type)
 			|| ofc_sema_type_is_structure(type))
-			iolist_len += ofc_sema_type_elem_count(type);
+		{
+			unsigned elem_count = 0;
+			ofc_sema_type_elem_count(type, &elem_count);
+			iolist_len += elem_count;
+		}
 		else
+		{
 			iolist_len++;
+		}
 	}
 
 	return iolist_len;

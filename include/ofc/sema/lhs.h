@@ -80,8 +80,9 @@ ofc_sema_decl_t* ofc_sema_lhs_decl(
 const ofc_sema_type_t* ofc_sema_lhs_type(
 	const ofc_sema_lhs_t* lhs);
 
-unsigned ofc_sema_lhs_elem_count(
-	const ofc_sema_lhs_t* lhs);
+bool ofc_sema_lhs_elem_count(
+	const ofc_sema_lhs_t* lhs,
+	unsigned* count);
 
 bool ofc_sema_lhs_equiv(
 	ofc_sema_lhs_t* a,

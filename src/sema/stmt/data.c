@@ -28,9 +28,8 @@ static bool ofc_sema_stmt__data(
 			return false;
 		}
 
-		lhsc[i] = ofc_sema_lhs_elem_count(lhs[i]);
-
-		if (lhsc[i] == 0)
+		if (!ofc_sema_lhs_elem_count(lhs[i], &lhsc[i])
+			|| (lhsc[i] == 0))
 		{
 			unsigned j;
 			for (j = 0; j <= i; j++)
