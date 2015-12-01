@@ -1209,7 +1209,6 @@ ofc_sema_expr_list_t* ofc_sema_expr_list_implicit_do(
 	{
 		ofc_sema_scope_error(scope, id->init->name->src,
 			"Implicit do loop iterator must be a scalar type.");
-		ofc_sema_parameter_delete(param);
 		ofc_sema_scope_delete(idscope);
 		return NULL;
 	}
@@ -1225,7 +1224,6 @@ ofc_sema_expr_list_t* ofc_sema_expr_list_implicit_do(
 		= ofc_sema_expr(scope, id->limit);
 	if (!limit)
 	{
-		ofc_sema_parameter_delete(param);
 		ofc_sema_scope_delete(idscope);
 		return NULL;
 	}
@@ -1246,7 +1244,6 @@ ofc_sema_expr_list_t* ofc_sema_expr_list_implicit_do(
 				ofc_sema_type_str_rep(expr_type),
 				ofc_sema_type_str_rep(dtype));
 			ofc_sema_expr_delete(limit);
-			ofc_sema_parameter_delete(param);
 			ofc_sema_scope_delete(idscope);
 			return NULL;
 		}
@@ -1262,7 +1259,6 @@ ofc_sema_expr_list_t* ofc_sema_expr_list_implicit_do(
 		if (!step)
 		{
 			ofc_sema_expr_delete(limit);
-			ofc_sema_parameter_delete(param);
 			ofc_sema_scope_delete(idscope);
 			return NULL;
 		}
@@ -1284,7 +1280,6 @@ ofc_sema_expr_list_t* ofc_sema_expr_list_implicit_do(
 					ofc_sema_type_str_rep(dtype));
 				ofc_sema_expr_delete(step);
 				ofc_sema_expr_delete(limit);
-				ofc_sema_parameter_delete(param);
 				ofc_sema_scope_delete(idscope);
 				return NULL;
 			}
@@ -1298,7 +1293,6 @@ ofc_sema_expr_list_t* ofc_sema_expr_list_implicit_do(
 		if (!step)
 		{
 			ofc_sema_expr_delete(limit);
-			ofc_sema_parameter_delete(param);
 			ofc_sema_scope_delete(idscope);
 			return NULL;
 		}
@@ -1309,7 +1303,6 @@ ofc_sema_expr_list_t* ofc_sema_expr_list_implicit_do(
 		{
 			ofc_sema_expr_delete(step);
 			ofc_sema_expr_delete(limit);
-			ofc_sema_parameter_delete(param);
 			ofc_sema_scope_delete(idscope);
 			return NULL;
 		}
@@ -1324,7 +1317,6 @@ ofc_sema_expr_list_t* ofc_sema_expr_list_implicit_do(
 			{
 				ofc_sema_expr_delete(step);
 				ofc_sema_expr_delete(limit);
-				ofc_sema_parameter_delete(param);
 				ofc_sema_scope_delete(idscope);
 				return NULL;
 			}
@@ -1339,7 +1331,6 @@ ofc_sema_expr_list_t* ofc_sema_expr_list_implicit_do(
 	{
 		ofc_sema_expr_delete(step);
 		ofc_sema_expr_delete(limit);
-		ofc_sema_parameter_delete(param);
 		ofc_sema_scope_delete(idscope);
 		return NULL;
 	}
@@ -1356,7 +1347,6 @@ ofc_sema_expr_list_t* ofc_sema_expr_list_implicit_do(
 			ofc_sema_expr_delete(step);
 			ofc_sema_expr_delete(limit);
 			ofc_sema_expr_list_delete(list);
-			ofc_sema_parameter_delete(param);
 			ofc_sema_scope_delete(idscope);
 			return NULL;
 		}
