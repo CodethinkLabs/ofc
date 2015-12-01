@@ -2101,11 +2101,11 @@ bool ofc_sema_typeval_print(ofc_colstr_t*cs,
 
 		case OFC_SEMA_TYPE_COMPLEX:
 			if (!ofc_colstr_atomic_writef(cs, "(")
-				|| !ofc_colstr_atomic_writef(cs, "%LF",
+				|| !ofc_colstr_atomic_writef(cs, "%Lg",
 					typeval->complex.real)
 				|| !ofc_colstr_atomic_writef(cs, ",")
 				|| !ofc_colstr_atomic_writef(cs, " ")
-				|| !ofc_colstr_atomic_writef(cs, "%LF",
+				|| !ofc_colstr_atomic_writef(cs, "%Lg",
 					typeval->complex.imaginary)
 				|| !ofc_colstr_atomic_writef(cs, ")"))
 				return false;
