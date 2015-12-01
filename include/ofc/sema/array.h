@@ -4,8 +4,8 @@
 
 typedef struct
 {
-	int      base;
-	unsigned count;
+	int  first    , last;
+	bool first_var, last_var;
 } ofc_sema_array_dims_t;
 
 typedef struct

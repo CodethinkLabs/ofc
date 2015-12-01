@@ -29,133 +29,121 @@ ofc_sema_array_t* ofc_sema_array(
 
 	for (i = 0; i < index->count; i++)
 	{
-		array->segment[i].base = 1;
+		ofc_sema_array_dims_t* seg
+			= &array->segment[i];
 
-		ofc_sema_expr_t* expr = ofc_sema_expr(
-			scope, index->range[i]->first);
+		seg->first     = 1;
+		seg->first_var = false;
 
-		int64_t d = 0;
-		const ofc_sema_typeval_t* ctv
-			= ofc_sema_expr_constant(expr);
-		bool d_resolved = (ctv != NULL);
-		if (d_resolved)
+		if (index->range[i]->first)
 		{
-			if (!ofc_sema_typeval_get_integer(ctv, &d))
+			ofc_sema_expr_t* expr = ofc_sema_expr(
+				scope, index->range[i]->first);
+			if (!expr)
 			{
 				ofc_sema_scope_error(scope,
 					index->range[i]->first->src,
-					"Failed to resolve array dimension");
-				ofc_sema_expr_delete(expr);
+					"Invalid array base expression");
 				ofc_sema_array_delete(array);
 				return NULL;
 			}
+
+			const ofc_sema_typeval_t* ctv
+				= ofc_sema_expr_constant(expr);
+			seg->first_var = (ctv == NULL);
+			if (!seg->first_var)
+			{
+				int64_t d;
+				if (!ofc_sema_typeval_get_integer(ctv, &d))
+				{
+					ofc_sema_scope_error(scope,
+						index->range[i]->first->src,
+						"Failed to resolve array base");
+					ofc_sema_expr_delete(expr);
+					ofc_sema_array_delete(array);
+					return NULL;
+				}
+
+				seg->first = d;
+				if ((int64_t)seg->first != d)
+				{
+					ofc_sema_scope_error(scope,
+						index->range[i]->first->src,
+						"Array base out-of-range");
+					ofc_sema_expr_delete(expr);
+					ofc_sema_array_delete(array);
+					return NULL;
+				}
+			}
+			ofc_sema_expr_delete(expr);
 		}
-		ofc_sema_expr_delete(expr);
 
 		if (index->range[i]->last)
 		{
-			if (!d_resolved)
-			{
-				ofc_sema_scope_error(scope,
-					index->range[i]->first->src,
-					"Failed to resolve array base");
-				ofc_sema_array_delete(array);
-				return NULL;
-			}
-
-			array->segment[i].base = d;
-			if ((int64_t)array->segment[i].base != d)
-			{
-				ofc_sema_scope_error(scope,
-					index->range[i]->first->src,
-					"Array base out-of-range");
-				ofc_sema_array_delete(array);
-				return NULL;
-			}
-
-			expr = ofc_sema_expr(
+			ofc_sema_expr_t* expr = ofc_sema_expr(
 				scope, index->range[i]->last);
-
-			d = 0;
-			ctv = ofc_sema_expr_constant(expr);
-			d_resolved = (ctv != NULL);
-
-			if (d_resolved)
+			if (!expr)
 			{
+				ofc_sema_scope_error(scope,
+					index->range[i]->last->src,
+					"Invalid array last expression");
+				ofc_sema_array_delete(array);
+				return NULL;
+			}
+
+			const ofc_sema_typeval_t* ctv
+				= ofc_sema_expr_constant(expr);
+			seg->last_var = (ctv == NULL);
+			if (!seg->last_var)
+			{
+				int64_t d;
 				if (!ofc_sema_typeval_get_integer(ctv, &d))
 				{
 					ofc_sema_scope_error(scope,
 						index->range[i]->last->src,
-						"Failed to resolve last array index");
+						"Failed to resolve array last");
 					ofc_sema_expr_delete(expr);
 					ofc_sema_array_delete(array);
 					return NULL;
 				}
 
-				if (d <= array->segment[i].base)
+				seg->last = d;
+				if ((int64_t)seg->last != d)
+				{
+					ofc_sema_scope_error(scope,
+						index->range[i]->last->src,
+						"Array last out-of-range");
+					ofc_sema_expr_delete(expr);
+					ofc_sema_array_delete(array);
+					return NULL;
+				}
+
+				if (!seg->first_var
+					&& (seg->first > seg->last))
 				{
 					ofc_sema_scope_error(scope,
 						index->range[i]->first->src,
-						"Last array index must be greater than base");
+						"Array last must be greater than base");
 					ofc_sema_expr_delete(expr);
 					ofc_sema_array_delete(array);
 					return NULL;
 				}
-
-				d -= array->segment[i].base;
-
-				/* Count is inclusive. */
-				if ((d + 1) == 0)
-				{
-					ofc_sema_expr_delete(expr);
-					ofc_sema_array_delete(array);
-					return NULL;
-				}
-				d += 1;
 			}
 			ofc_sema_expr_delete(expr);
+		}
+		else if (index->range[i]->first
+			&& !seg->first_var)
+		{
+			seg->last_var = false;
+			seg->last  = seg->first;
 
-			array->segment[i].count = d;
-			if ((int64_t)array->segment[i].count != d)
-			{
-				ofc_sema_scope_error(scope,
-					index->range[i]->first->src,
-					"Last array index out-of-range");
-				ofc_sema_array_delete(array);
-				return NULL;
-			}
+			seg->first_var = false;
+			seg->first = 1;
 		}
 		else
 		{
-			if (d_resolved)
-			{
-				if (d < 0)
-				{
-					ofc_sema_scope_error(scope,
-						index->range[i]->first->src,
-						"Array count must be positive");
-					ofc_sema_array_delete(array);
-					return NULL;
-				}
-				else if (d == 0)
-				{
-					ofc_sema_scope_error(scope,
-						index->range[i]->first->src,
-						"Array count must be non-zero");
-					ofc_sema_array_delete(array);
-					return NULL;
-				}
-			}
-
-			array->segment[i].count = d;
-			if ((int64_t)array->segment[i].count != d)
-			{
-				ofc_sema_scope_error(scope,
-					index->range[i]->first->src,
-					"Array count out-of-range");
-				ofc_sema_array_delete(array);
-				return NULL;
-			}
+			seg->last_var = true;
+			seg->last     = 0;
 		}
 	}
 
@@ -178,8 +166,11 @@ ofc_sema_array_t* ofc_sema_array_copy(
 	unsigned i;
 	for (i = 0; i < copy->dimensions; i++)
 	{
-		copy->segment[i].base  = array->segment[i].base;
-		copy->segment[i].count = array->segment[i].count;
+		copy->segment[i].first = array->segment[i].first;
+		copy->segment[i].last  = array->segment[i].last;
+
+		copy->segment[i].first_var = array->segment[i].first_var;
+		copy->segment[i].last_var  = array->segment[i].last_var;
 	}
 
 	return copy;
@@ -206,8 +197,10 @@ uint8_t ofc_sema_array_hash(
 	unsigned i;
 	for (i = 0; i < array->dimensions; i++)
 	{
-		hash += array->segment[i].base;
-		hash += array->segment[i].count;
+		if (array->segment[i].first_var)
+			hash += array->segment[i].first;
+		if (array->segment[i].last_var)
+			hash += array->segment[i].last;
 	}
 
 	return hash;
@@ -229,8 +222,14 @@ bool ofc_sema_array_compare(
 	unsigned i;
 	for (i = 0; i < a->dimensions; i++)
 	{
-		if ((a->segment[i].base != b->segment[i].base)
-			|| (a->segment[i].count != b->segment[i].count))
+		if (a->segment[i].first_var
+			|| a->segment[i].last_var
+			|| b->segment[i].first_var
+			|| b->segment[i].last_var)
+			return false;
+
+		if ((a->segment[i].first != b->segment[i].first)
+			|| (a->segment[i].last != b->segment[i].last))
 			return false;
 	}
 
@@ -248,10 +247,14 @@ bool ofc_sema_array_total(
 	unsigned i;
 	for (i = 0; i < array->dimensions; i++)
 	{
-		if (array->segment[i].count == 0)
+		ofc_sema_array_dims_t seg
+			= array->segment[i];
+
+		if (seg.first_var || seg.last_var
+			|| (seg.first > seg.last))
 			return false;
 
-		t *= array->segment[i].count;
+		t *= ((seg.last - seg.first) + 1);
 	}
 
 	if (total) *total = t;
@@ -276,16 +279,16 @@ bool ofc_sema_array_print(
 
 		ofc_sema_array_dims_t dims
 			= array->segment[i];
-		if (dims.base == 1)
+		if (dims.first == 1)
 		{
 			if (!ofc_colstr_atomic_writef(
-				cs, "%u", dims.count))
+				cs, "%d", dims.last))
 				return false;
 		}
 		else
 		{
 			if (!ofc_colstr_atomic_writef(cs, "%d:%d",
-				dims.base, ((dims.base + dims.count) - 1)))
+				dims.first, dims.last))
 				return false;
 		}
 	}
@@ -374,21 +377,15 @@ ofc_sema_array_index_t* ofc_sema_array_index(
 				return NULL;
 			}
 
-			if (idx < array->segment[i].base)
+			if (idx < array->segment[i].first)
 			{
-				ofc_sema_scope_error(scope, expr->src,
+				ofc_sema_scope_warning(scope, expr->src,
 					"Array index out-of-bounds (underflow)");
-				ofc_sema_array_index_delete(ai);
-				return NULL;
 			}
-			idx -= array->segment[i].base;
-
-			if (idx >= array->segment[i].count)
+			else if (idx > array->segment[i].last)
 			{
-				ofc_sema_scope_error(scope, expr->src,
+				ofc_sema_scope_warning(scope, expr->src,
 					"Array index out-of-bounds (overflow)");
-				ofc_sema_array_index_delete(ai);
-				return NULL;
 			}
 		}
 	}
@@ -482,23 +479,21 @@ bool ofc_sema_array_index_offset(
 			return false;
 		}
 
-		if (so < dims.base)
+		if (so < dims.first)
 		{
 			ofc_sema_scope_error(scope, expr->src,
 				"Array index out-of-range, too low");
 			return false;
 		}
-		so -= dims.base;
-
-		if (so >= dims.count)
+		else if (so > dims.last)
 		{
 			ofc_sema_scope_error(scope, expr->src,
 				"Array index out-of-range, too high");
 			return false;
 		}
 
-		o += (so * s);
-		s *= dims.count;
+		o += ((so - dims.first) * s);
+		s *= ((dims.last - dims.first) + 1);
 	}
 
 	unsigned uo = o;
@@ -629,8 +624,10 @@ ofc_sema_array_t* ofc_sema_array_slice_dims(
 		if (slice->segment[i].index)
 			continue;
 
-		array->segment[j].base  = slice->segment[i].base;
-		array->segment[j].count = slice->segment[i].count;
+		array->segment[j].first
+			= slice->segment[i].base;
+		array->segment[j].last
+			= (slice->segment[i].base + slice->segment[i].count) - 1;
 		j++;
 	}
 
