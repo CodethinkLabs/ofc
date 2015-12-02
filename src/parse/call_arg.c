@@ -34,30 +34,17 @@ static ofc_parse_call_arg_t* ofc_parse__call_arg(
 	}
 
 	call_arg->expr = NULL;
-	bool was_asterisk = (ptr[i] == '*');
-	if (was_asterisk || (ptr[i] == '&'))
+	if ((ptr[i] == '*') || (ptr[i] == '&'))
 	{
 		i += 1;
 
-		unsigned l;
+		unsigned l = 0;
 		call_arg->expr = ofc_parse_expr_integer_variable(
 			src, &ptr[i], debug, &l);
-		if (!call_arg->expr)
-		{
-			if (!was_asterisk)
-			{
-				free(call_arg);
-				ofc_parse_debug_rewind(debug, dpos);
-				return NULL;
-			}
-
-			call_arg->type = OFC_PARSE_CALL_ARG_ASTERISK;
-		}
-		else
-		{
-			i += l;
-			call_arg->type = OFC_PARSE_CALL_ARG_RETURN;
-		}
+		call_arg->type = ((call_arg->expr != NULL)
+			? OFC_PARSE_CALL_ARG_RETURN
+			: OFC_PARSE_CALL_ARG_ASTERISK);
+		i += l;
 	}
 	else
 	{
