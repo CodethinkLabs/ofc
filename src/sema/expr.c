@@ -1422,8 +1422,10 @@ bool ofc_sema_expr_print(
 	{
 		case OFC_SEMA_EXPR_CONSTANT:
 			return ofc_sema_typeval_print(cs, expr->constant);
+
 		case OFC_SEMA_EXPR_LHS:
 			return ofc_sema_lhs_print(cs, expr->lhs);
+
 		case OFC_SEMA_EXPR_CAST:
 			{
 				/* TODO - Should we actually print these? */
@@ -1447,7 +1449,13 @@ bool ofc_sema_expr_print(
 			return true;
 
 		case OFC_SEMA_EXPR_INTRINSIC:
-			return false;
+			if(!ofc_sema_intrinsic_print(cs, expr->intrinsic)
+				|| !ofc_colstr_atomic_writef(cs, "(")
+				|| !ofc_sema_expr_list_print(cs, expr->args)
+				|| !ofc_colstr_atomic_writef(cs, ")"))
+				return false;
+			return true;
+
 		case OFC_SEMA_EXPR_FUNCTION:
 			if (!ofc_sema_decl_print(cs, false, expr->function)
 				|| !ofc_colstr_atomic_writef(cs, "(")

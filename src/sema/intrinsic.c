@@ -519,3 +519,15 @@ const ofc_sema_type_t* ofc_sema_intrinsic_type(
 
 	return NULL;
 }
+
+bool ofc_sema_intrinsic_print(
+	ofc_colstr_t* cs,
+	const ofc_sema_intrinsic_t* intrinsic)
+{
+	if (!cs || !intrinsic) return false;
+
+	if (!ofc_str_ref_print(cs, intrinsic->name))
+		return false;
+
+	return true;
+}
