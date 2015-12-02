@@ -59,6 +59,11 @@ bool ofc_sema_typeval_get_character(
 	const ofc_sema_typeval_t* typeval,
 	const char** character);
 
+bool ofc_typeval_character_equal_strz(
+const ofc_sema_typeval_t* tv, const char* strz);
+bool ofc_typeval_character_equal_strz_ci(
+const ofc_sema_typeval_t* tv, const char* strz);
+
 
 ofc_sema_typeval_t* ofc_sema_typeval_power(
 	const ofc_sema_scope_t* scope,

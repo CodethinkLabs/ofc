@@ -1226,6 +1226,40 @@ bool ofc_sema_typeval_get_character(
 
 
 
+static bool ofc_typeval_character_equal__strz(
+	const ofc_sema_typeval_t* tv, const char* strz,
+	bool case_sensitive)
+{
+	if (!tv || !strz
+		|| !ofc_sema_type_is_character(tv->type)
+		|| (tv->type->kind != 1))
+		return false;
+
+	unsigned slen = strlen(strz);
+	unsigned tlen = tv->type->len;
+
+	if (tlen != slen)
+		return false;
+
+	return ((case_sensitive
+		? strncmp(tv->character, strz, slen)
+		: strncasecmp(tv->character, strz, slen)) == 0);
+}
+
+bool ofc_typeval_character_equal_strz(
+	const ofc_sema_typeval_t* tv, const char* strz)
+{
+	return ofc_typeval_character_equal__strz(tv, strz, true);
+}
+
+bool ofc_typeval_character_equal_strz_ci(
+	const ofc_sema_typeval_t* tv, const char* strz)
+{
+	return ofc_typeval_character_equal__strz(tv, strz, false);
+}
+
+
+
 ofc_sema_typeval_t* ofc_sema_typeval_power(
 	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
