@@ -49,7 +49,10 @@ struct ofc_sema_lhs_s
 ofc_sema_lhs_t* ofc_sema_lhs(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_lhs_t* lhs);
-ofc_sema_lhs_t* ofc_sema_lhs_expr(
+ofc_sema_lhs_t* ofc_sema_lhs_from_expr(
+	ofc_sema_scope_t* scope,
+	ofc_parse_expr_t* expr);
+ofc_sema_lhs_t* ofc_sema_lhs_in_expr(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_lhs_t* lhs);
 bool ofc_sema_lhs_reference(

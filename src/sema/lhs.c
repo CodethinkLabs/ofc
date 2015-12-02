@@ -433,7 +433,23 @@ ofc_sema_lhs_t* ofc_sema_lhs(
 		scope, lhs, false);
 }
 
-ofc_sema_lhs_t* ofc_sema_lhs_expr(
+ofc_sema_lhs_t* ofc_sema_lhs_from_expr(
+	ofc_sema_scope_t* scope,
+	ofc_parse_expr_t* expr)
+{
+	if (!scope || !expr) return NULL;
+
+	if (expr->type != OFC_PARSE_EXPR_VARIABLE)
+	{
+		ofc_sema_scope_error(scope, expr->src,
+			"Attempting to convert to lhs and expression that is not an lhs");
+		return NULL;
+	}
+	return ofc_sema_lhs(
+		scope, expr->variable);
+}
+
+ofc_sema_lhs_t* ofc_sema_lhs_in_expr(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_lhs_t* lhs)
 {

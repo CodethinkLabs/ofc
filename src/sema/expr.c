@@ -718,7 +718,7 @@ static ofc_sema_expr_t* ofc_sema_expr__lhs(
 	if (!name)
 		return NULL;
 
-	ofc_sema_lhs_t* lhs = ofc_sema_lhs_expr(
+	ofc_sema_lhs_t* lhs = ofc_sema_lhs_in_expr(
 		(ofc_sema_scope_t*)scope, name);
 	if (!lhs) return NULL;
 
