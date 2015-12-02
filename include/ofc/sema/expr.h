@@ -8,6 +8,7 @@ typedef enum
 	OFC_SEMA_EXPR_CAST,
 	OFC_SEMA_EXPR_INTRINSIC,
 	OFC_SEMA_EXPR_FUNCTION,
+	OFC_SEMA_EXPR_ALT_RETURN,
 
 	OFC_SEMA_EXPR_POWER,
 	OFC_SEMA_EXPR_MULTIPLY,
@@ -66,6 +67,11 @@ struct ofc_sema_expr_s
 			};
 			ofc_sema_expr_list_t*       args;
 		};
+
+		struct
+		{
+			ofc_sema_expr_t* expr;
+		} alt_return;
 	};
 };
 
@@ -85,6 +91,8 @@ ofc_sema_expr_t* ofc_sema_expr_cast(
 	const ofc_sema_scope_t* scope,
 	ofc_sema_expr_t* expr,
 	const ofc_sema_type_t* type);
+ofc_sema_expr_t* ofc_sema_expr_alt_return(
+	ofc_sema_expr_t* expr);
 void ofc_sema_expr_delete(
 	ofc_sema_expr_t* expr);
 

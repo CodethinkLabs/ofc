@@ -45,6 +45,7 @@ static ofc_sema_expr__rule_t ofc_sema_expr__rule[] =
 	{ NULL, 0, 0, 0, 0, 0 }, /* CAST */
 	{ NULL, 0, 0, 0, 0, 0 }, /* INTRINSIC */
 	{ NULL, 0, 0, 0, 0, 0 }, /* FUNCTION */
+	{ NULL, 0, 0, 0, 0, 0 }, /* ALT_RETURN */
 
 	{ NULL, 0, 1, 1, 1, 0 }, /* POWER */
 	{ NULL, 0, 1, 1, 1, 0 }, /* MULTIPLY */
@@ -135,6 +136,7 @@ static ofc_sema_typeval_t* (*ofc_sema_expr__resolve[])(
 	NULL, /* CAST */
 	NULL, /* INTRINSIC */
 	NULL, /* FUNCTION */
+	NULL, /* ALT_RETURN */
 
 	ofc_sema_typeval_power,
 	ofc_sema_typeval_multiply,
@@ -197,6 +199,9 @@ static ofc_sema_expr_t* ofc_sema_expr__create(
 		case OFC_SEMA_EXPR_FUNCTION:
 			expr->function = NULL;
 			expr->args     = NULL;
+			break;
+		case OFC_SEMA_EXPR_ALT_RETURN:
+			expr->alt_return.expr = NULL;
 			break;
 		default:
 			expr->a = NULL;
@@ -264,6 +269,33 @@ ofc_sema_expr_t* ofc_sema_expr_cast(
 	cast->cast.type = type;
 	cast->cast.expr = expr;
 	return cast;
+}
+
+ofc_sema_expr_t* ofc_sema_expr_alt_return(
+	ofc_sema_expr_t* expr)
+{
+	if (!expr)
+		return NULL;
+
+	ofc_sema_expr_t* alt_return
+		= ofc_sema_expr__create(
+			OFC_SEMA_EXPR_ALT_RETURN);
+	if (!alt_return) return NULL;
+
+	if (ofc_sema_expr_is_constant(expr))
+	{
+		alt_return->constant
+			= ofc_sema_typeval_copy(expr->constant);
+		if (!alt_return->constant)
+		{
+			ofc_sema_expr_delete(alt_return);
+			return NULL;
+		}
+	}
+
+	alt_return->src = expr->src;
+	alt_return->alt_return.expr = expr;
+	return alt_return;
 }
 
 static ofc_sema_expr_t* ofc_sema_expr__binary(
@@ -868,6 +900,9 @@ void ofc_sema_expr_delete(
 		case OFC_SEMA_EXPR_FUNCTION:
 			ofc_sema_expr_list_delete(expr->args);
 			break;
+		case OFC_SEMA_EXPR_ALT_RETURN:
+			ofc_sema_expr_delete(expr->alt_return.expr);
+			break;
 		default:
 			ofc_sema_expr_delete(expr->b);
 			ofc_sema_expr_delete(expr->a);
@@ -920,6 +955,10 @@ bool ofc_sema_expr_compare(
 			return ((a->function == b->function)
 				&& ofc_sema_expr_list_compare(a->args, b->args));
 
+		case OFC_SEMA_EXPR_ALT_RETURN:
+			return ofc_sema_expr_compare(
+				a->alt_return.expr, b->alt_return.expr);
+
 		default:
 			break;
 	}
@@ -954,6 +993,9 @@ const ofc_sema_type_t* ofc_sema_expr_type(
 		case OFC_SEMA_EXPR_FUNCTION:
 			return ofc_sema_decl_base_type(
 				expr->function);
+		case OFC_SEMA_EXPR_ALT_RETURN:
+			return ofc_sema_expr_type(
+				expr->alt_return.expr);
 		default:
 			break;
 	}
@@ -1337,9 +1379,12 @@ bool ofc_sema_expr_list_compare(
 
 static const char* ofc_sema_expr__operator[] =
 {
-	/* Set expressions types that do not have operators
-	   to NULL, see ofc_sema_expr_e. */
-	NULL, NULL, NULL, NULL, NULL,
+	NULL, /* CONSTANT */
+	NULL, /* LHS */
+	NULL, /* CAST */
+	NULL, /* INTRINSIC */
+	NULL, /* FUNCTION */
+	NULL, /* ALT_RETURN */
 
 	"**",
 	"*",
@@ -1410,6 +1455,10 @@ bool ofc_sema_expr_print(
 				|| !ofc_colstr_atomic_writef(cs, ")"))
 				return false;
 			return true;
+
+		case OFC_SEMA_EXPR_ALT_RETURN:
+			return (ofc_colstr_atomic_writef(cs, "*")
+				&& ofc_sema_expr_print(cs, expr->alt_return.expr));
 
 		default:
 			break;

@@ -57,14 +57,6 @@ ofc_sema_stmt_t* ofc_sema_stmt_call(
 				return NULL;
 			}
 
-			if (arg->type != OFC_PARSE_CALL_ARG_EXPR)
-			{
-				ofc_sema_scope_error(scope, stmt->src,
-					"Non-expression CALL arguments supported");
-				ofc_sema_expr_list_delete(s.call.args);
-				return NULL;
-			}
-
 			if (!ofc_str_ref_empty(arg->name))
 			{
 				ofc_sema_scope_error(scope, stmt->src,
@@ -73,12 +65,37 @@ ofc_sema_stmt_t* ofc_sema_stmt_call(
 				return NULL;
 			}
 
+			switch (arg->type)
+			{
+				case OFC_PARSE_CALL_ARG_EXPR:
+				case OFC_PARSE_CALL_ARG_RETURN:
+					break;
+				default:
+					ofc_sema_scope_error(scope, stmt->src,
+						"CALL arguments must be an expression or return label");
+					ofc_sema_expr_list_delete(s.call.args);
+					return NULL;
+			}
+
 			ofc_sema_expr_t* expr
 				= ofc_sema_expr(scope, arg->expr);
 			if (!expr)
 			{
 				ofc_sema_expr_list_delete(s.call.args);
 				return NULL;
+			}
+
+			if (arg->type == OFC_PARSE_CALL_ARG_RETURN)
+			{
+				ofc_sema_expr_t* alt_return
+					= ofc_sema_expr_alt_return(expr);
+				if (!alt_return)
+				{
+					ofc_sema_expr_delete(expr);
+					ofc_sema_expr_list_delete(s.call.args);
+					return NULL;
+				}
+				expr = alt_return;
 			}
 
 			if (!ofc_sema_expr_list_add(
