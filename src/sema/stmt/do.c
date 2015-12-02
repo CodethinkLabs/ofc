@@ -422,7 +422,7 @@ bool ofc_sema_stmt_do_label_print(
 }
 
 bool ofc_sema_stmt_do_block_print(
-	ofc_colstr_t* cs,
+	ofc_colstr_t* cs, unsigned indent,
 	const ofc_sema_stmt_t* stmt)
 {
 	if (!cs || (stmt->type != OFC_SEMA_STMT_DO_BLOCK))
@@ -450,7 +450,8 @@ bool ofc_sema_stmt_do_block_print(
 		if (!ofc_sema_expr_print(cs, stmt->do_block.step))
 			return false;
 	}
-	if (!ofc_sema_stmt_list_print(cs, NULL, stmt->do_block.block))
+	if (!ofc_sema_stmt_list_print(cs, indent, NULL,
+		stmt->do_block.block))
 		return false;
 	if (!ofc_colstr_atomic_writef(cs, "END DO"))
 		return false;
@@ -476,7 +477,7 @@ bool ofc_sema_stmt_do_while_print(
 }
 
 bool ofc_sema_stmt_do_while_block_print(
-	ofc_colstr_t* cs,
+	ofc_colstr_t* cs, unsigned indent,
 	const ofc_sema_stmt_t* stmt)
 {
 	if (!cs || (stmt->type != OFC_SEMA_STMT_DO_WHILE_BLOCK))
@@ -486,7 +487,8 @@ bool ofc_sema_stmt_do_while_block_print(
 		return false;
 	if (!ofc_sema_expr_print(cs, stmt->do_while_block.cond))
 		return false;
-	if (!ofc_sema_stmt_list_print(cs, NULL, stmt->do_while_block.block))
+	if (!ofc_sema_stmt_list_print(cs, indent, NULL,
+		stmt->do_while_block.block))
 		return false;
 	if (!ofc_colstr_atomic_writef(cs, "END DO"))
 		return false;

@@ -951,23 +951,30 @@ void ofc_sema_scope_warning(
 }
 
 static bool ofc_sema_scope_body__print(
-	ofc_colstr_t* cs,
+	ofc_colstr_t* cs, unsigned indent,
 	const ofc_sema_scope_t* scope)
 {
-	if (!cs || !scope)
+	if (!cs
+		|| !scope
+		|| !scope->decl
+		|| !scope->stmt
+		|| !scope->label
+		|| !scope->label->format)
 		return false;
 
-	if (!ofc_sema_decl_list_print(cs, scope->decl)
-		|| !ofc_sema_stmt_list_print(cs, scope->label, scope->stmt)
-		|| !ofc_colstr_newline(cs, NULL)
-		|| !ofc_sema_format_label_list_print(cs, scope->label->format))
+	if (!ofc_sema_decl_list_print(cs,
+			indent, scope->decl)
+		|| !ofc_sema_stmt_list_print(cs,
+			indent, scope->label, scope->stmt)
+		|| !ofc_sema_format_label_list_print(cs,
+			indent, scope->label->format))
 		return false;
 
 	return true;
 }
 
 bool ofc_sema_scope_print(
-	ofc_colstr_t* cs,
+	ofc_colstr_t* cs, unsigned indent,
 	const ofc_sema_scope_t* scope)
 {
 	const char* kwstr;
@@ -981,7 +988,7 @@ bool ofc_sema_scope_print(
 			for (i = 0; i < scope->child->count; i++)
 			{
 				if (!ofc_sema_scope_print(
-					cs, scope->child->scope[i]))
+					cs, indent, scope->child->scope[i]))
 						return false;
 			}
 			return true;
@@ -1000,13 +1007,13 @@ bool ofc_sema_scope_print(
 			kwstr = "BLOCK DATA";
 			break;
 		case OFC_SEMA_SCOPE_IF:
-			return ofc_sema_scope_body__print(cs, scope);
+			return ofc_sema_scope_body__print(cs, indent, scope);
 
 		default:
 			return false;
 	}
 
-	if (!ofc_colstr_newline(cs, NULL)
+	if (!ofc_colstr_newline(cs, indent, NULL)
 		|| !ofc_colstr_atomic_writef(cs, "%s ", kwstr))
 		return false;
 
@@ -1026,11 +1033,10 @@ bool ofc_sema_scope_print(
 			return false;
 	}
 
-	if (!ofc_colstr_newline(cs, NULL)
-		|| !ofc_sema_scope_body__print(cs, scope))
-			return false;
+	if (!ofc_sema_scope_body__print(cs, indent, scope))
+		return false;
 
-	if (!ofc_colstr_newline(cs, NULL)
+	if (!ofc_colstr_newline(cs, indent, NULL)
 		|| !ofc_colstr_atomic_writef(cs, "END %s ", kwstr))
 		return false;
 

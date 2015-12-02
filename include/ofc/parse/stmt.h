@@ -256,22 +256,20 @@ void ofc_parse_stmt_delete(
 	ofc_parse_stmt_t* stmt);
 
 bool ofc_parse_stmt_print(
-	ofc_colstr_t* cs,
-	const ofc_parse_stmt_t* stmt,
-	unsigned indent);
-
+	ofc_colstr_t* cs, unsigned indent,
+	const ofc_parse_stmt_t* stmt);
 
 ofc_parse_stmt_list_t* ofc_parse_stmt_list(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
 	unsigned* len);
+
 void ofc_parse_stmt_list_delete(
 	ofc_parse_stmt_list_t* list);
 
 bool ofc_parse_stmt_list_print(
-	ofc_colstr_t* cs,
-	const ofc_parse_stmt_list_t* list,
-	unsigned indent);
+	ofc_colstr_t* cs, unsigned indent,
+	const ofc_parse_stmt_list_t* list);
 
 bool ofc_parse_stmt_list_contains_error(
 	const ofc_parse_stmt_list_t* list);

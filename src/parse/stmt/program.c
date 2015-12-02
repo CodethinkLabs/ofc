@@ -305,7 +305,7 @@ unsigned ofc_parse_stmt_block_data(
 
 
 bool ofc_parse_stmt_program_print(
-	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt, unsigned indent)
+	ofc_colstr_t* cs,  unsigned indent, const ofc_parse_stmt_t* stmt)
 {
 	if (!stmt) return false;
 
@@ -375,10 +375,10 @@ bool ofc_parse_stmt_program_print(
 
 	if (stmt->program.body
 		&& !ofc_parse_stmt_list_print(
-			cs, stmt->program.body, (indent + 1)))
+			cs, (indent + 1), stmt->program.body))
 		return false;
 
-	if (!ofc_colstr_newline(cs, NULL))
+	if (!ofc_colstr_newline(cs, indent, NULL))
 		return false;
 
 	unsigned i;

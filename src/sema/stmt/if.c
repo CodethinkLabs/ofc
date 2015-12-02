@@ -228,7 +228,8 @@ ofc_sema_stmt_t* ofc_sema_stmt_if(
 	return NULL;
 }
 
-bool ofc_sema_stmt_if_print(ofc_colstr_t* cs,
+bool ofc_sema_stmt_if_print(
+	ofc_colstr_t* cs, unsigned indent,
 	const ofc_sema_stmt_t* stmt)
 {
 	if (!cs || !stmt) return false;
@@ -237,9 +238,10 @@ bool ofc_sema_stmt_if_print(ofc_colstr_t* cs,
 		|| !ofc_colstr_atomic_writef(cs, "(")
 		|| !ofc_sema_expr_print(cs, stmt->if_stmt.cond)
 		|| !ofc_colstr_atomic_writef(cs, ")")
-		|| !ofc_colstr_newline(cs, NULL)
+		|| !ofc_colstr_newline(cs, indent, NULL)
 		|| !ofc_colstr_atomic_writef(cs, "  ")
-		|| !ofc_sema_stmt_print(cs, stmt->if_stmt.stmt))
+		|| !ofc_sema_stmt_print(cs, indent,
+			stmt->if_stmt.stmt))
 		return false;
 
 	return true;
@@ -260,7 +262,8 @@ bool ofc_sema_stmt_if_comp_print(ofc_colstr_t* cs,
 	return true;
 }
 
-bool ofc_sema_stmt_if_then_print(ofc_colstr_t* cs,
+bool ofc_sema_stmt_if_then_print(
+	ofc_colstr_t* cs, unsigned indent,
 	const ofc_sema_stmt_t* stmt)
 {
 	if (!cs || !stmt) return false;
@@ -274,18 +277,21 @@ bool ofc_sema_stmt_if_then_print(ofc_colstr_t* cs,
 
 	if (stmt->if_then.scope_then)
 	{
-		if (!ofc_sema_scope_print(cs, stmt->if_then.scope_then))
-			return false;
+		if (!ofc_sema_scope_print(cs, indent + 1,
+			stmt->if_then.scope_then))
+				return false;
 	}
 
 	if (stmt->if_then.scope_else)
 	{
 		if (!ofc_colstr_atomic_writef(cs, "ELSE")
-			|| !ofc_sema_scope_print(cs, stmt->if_then.scope_else))
-			return false;
+			|| !ofc_sema_scope_print(cs, indent + 1,
+				stmt->if_then.scope_else))
+					return false;
 	}
 
-	if (!ofc_colstr_atomic_writef(cs, "END")
+	if (!ofc_colstr_newline(cs, indent, NULL)
+		|| !ofc_colstr_atomic_writef(cs, "END")
 		|| !ofc_colstr_atomic_writef(cs, " ")
 		|| !ofc_colstr_atomic_writef(cs, "IF"))
 		return false;

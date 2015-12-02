@@ -247,7 +247,8 @@ unsigned ofc_parse_stmt_if(
 }
 
 bool ofc_parse_stmt_if_print(
-	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt, unsigned indent)
+	ofc_colstr_t* cs, unsigned indent,
+	const ofc_parse_stmt_t* stmt)
 {
 	if (!stmt)
 		return false;
@@ -265,7 +266,7 @@ bool ofc_parse_stmt_if_print(
 		if (!ofc_colstr_atomic_writef(cs, "IF (")
 			|| !ofc_parse_expr_print(cs, stmt->if_stmt.cond)
 			|| !ofc_colstr_atomic_writef(cs, ") ")
-			|| !ofc_parse_stmt_print(cs, stmt->if_stmt.stmt, indent))
+			|| !ofc_parse_stmt_print(cs, indent, stmt->if_stmt.stmt))
 			return false;
 	}
 	else if (stmt->type == OFC_PARSE_STMT_IF_THEN)
@@ -277,12 +278,12 @@ bool ofc_parse_stmt_if_print(
 
 		if (stmt->if_then.block_then
 			&& !ofc_parse_stmt_list_print(
-				cs, stmt->if_then.block_then, (indent + 1)))
+				cs, (indent + 1), stmt->if_then.block_then))
 			return false;
 
 		if (stmt->if_then.block_else)
 		{
-			if (!ofc_colstr_newline(cs, NULL))
+			if (!ofc_colstr_newline(cs, indent, NULL))
 				return false;
 
 			unsigned i;
@@ -296,19 +297,12 @@ bool ofc_parse_stmt_if_print(
 				return false;
 
 			if (!ofc_parse_stmt_list_print(
-				cs, stmt->if_then.block_else, (indent + 1)))
+				cs, (indent + 1), stmt->if_then.block_else))
 				return false;
 		}
 
-		if (!ofc_colstr_newline(cs, NULL))
+		if (!ofc_colstr_newline(cs, indent, NULL))
 				return false;
-
-		unsigned i;
-		for (i = 0; i < indent; i++)
-		{
-			if (!ofc_colstr_atomic_writef(cs, "  "))
-				return false;
-		}
 
 		if (!ofc_colstr_atomic_writef(cs, "END IF"))
 			return false;

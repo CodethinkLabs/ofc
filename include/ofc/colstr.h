@@ -10,7 +10,8 @@ ofc_colstr_t* ofc_colstr_create(
 void ofc_colstr_delete(ofc_colstr_t* cstr);
 
 bool ofc_colstr_newline(
-	ofc_colstr_t* cstr, unsigned* label);
+	ofc_colstr_t* cstr, unsigned indent,
+	unsigned* label);
 
 #include <stdarg.h>
 

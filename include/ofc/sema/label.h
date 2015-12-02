@@ -54,7 +54,8 @@ void ofc_sema_format_label_list_delete(
 bool ofc_sema_format_label_list_add(
 	ofc_sema_format_label_list_t* list,
 	ofc_sema_label_t* format);
-bool ofc_sema_format_label_list_print(ofc_colstr_t* cs,
+bool ofc_sema_format_label_list_print(
+	ofc_colstr_t* cs, unsigned indent,
 	ofc_sema_format_label_list_t* list);
 bool ofc_sema_format_label_print(ofc_colstr_t* cs,
 	ofc_sema_label_t* label);

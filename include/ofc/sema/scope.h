@@ -120,7 +120,7 @@ void ofc_sema_scope_warning(
 	__attribute__ ((format (printf, 3, 4)));
 
 bool ofc_sema_scope_print(
-	ofc_colstr_t* cs,
+	ofc_colstr_t* cs, unsigned indent,
 	const ofc_sema_scope_t* scope);
 
 ofc_sema_scope_list_t* ofc_sema_scope_list_create();

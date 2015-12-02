@@ -364,7 +364,8 @@ unsigned ofc_parse_stmt_do(
 
 
 bool ofc_parse_stmt__do_while_block_print(
-	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt, unsigned indent)
+	ofc_colstr_t* cs, unsigned indent,
+	const ofc_parse_stmt_t* stmt)
 {
 	if (!ofc_colstr_atomic_writef(cs, "DO WHILE(")
 		|| !ofc_parse_expr_print(cs, stmt->do_while_block.cond)
@@ -372,18 +373,11 @@ bool ofc_parse_stmt__do_while_block_print(
 		return false;
 
 	if (stmt->do_while_block.block && !ofc_parse_stmt_list_print(
-		cs, stmt->do_while_block.block, (indent + 1)))
+		cs, (indent + 1), stmt->do_while_block.block))
 		return false;
 
-	if (!ofc_colstr_newline(cs, NULL))
+	if (!ofc_colstr_newline(cs, indent, NULL))
 		return false;
-
-	unsigned j;
-	for (j = 0; j < indent; j++)
-	{
-		if (!ofc_colstr_atomic_writef(cs, "  "))
-			return false;
-	}
 
 	return ofc_colstr_atomic_writef(cs, "END DO");
 }
@@ -421,7 +415,7 @@ bool ofc_parse_stmt__do_label_print(
 }
 
 bool ofc_parse_stmt__do_block_print(
-	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt, unsigned indent)
+	ofc_colstr_t* cs, unsigned indent, const ofc_parse_stmt_t* stmt)
 {
 	if (!ofc_colstr_atomic_writef(cs, "DO ")
 		|| !ofc_parse_assign_print(cs, stmt->do_block.init)
@@ -438,24 +432,18 @@ bool ofc_parse_stmt__do_block_print(
 	}
 
 	if (stmt->do_block.block && !ofc_parse_stmt_list_print(
-			cs, stmt->do_block.block, (indent + 1)))
+			cs, (indent + 1), stmt->do_block.block))
 		return false;
 
-	if (!ofc_colstr_newline(cs, NULL))
+	if (!ofc_colstr_newline(cs, indent, NULL))
 		return false;
-
-	unsigned j;
-	for (j = 0; j < indent; j++)
-	{
-		if (!ofc_colstr_atomic_writef(cs, "  "))
-			return false;
-	}
 
 	return ofc_colstr_atomic_writef(cs, "END DO");
 }
 
 bool ofc_parse_stmt_do_print(
-	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt, unsigned indent)
+	ofc_colstr_t* cs, unsigned indent,
+	const ofc_parse_stmt_t* stmt)
 {
 	if (!stmt)
 		return false;
@@ -466,12 +454,12 @@ bool ofc_parse_stmt_do_print(
 			return ofc_parse_stmt__do_label_print(cs, stmt);
 		case OFC_PARSE_STMT_DO_BLOCK:
 			return ofc_parse_stmt__do_block_print(
-				cs, stmt, indent);
+				cs, indent, stmt);
 		case OFC_PARSE_STMT_DO_WHILE:
 			return ofc_parse_stmt__do_while_print(cs, stmt);
 		case OFC_PARSE_STMT_DO_WHILE_BLOCK:
 			return ofc_parse_stmt__do_while_block_print(
-				cs, stmt, indent);
+				cs, indent, stmt);
 		default:
 			break;
 	}

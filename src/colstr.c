@@ -79,7 +79,8 @@ static bool ofc_colstr__enlarge(
 
 
 bool ofc_colstr_newline(
-	ofc_colstr_t* cstr, unsigned* label)
+	ofc_colstr_t* cstr, unsigned indent,
+	unsigned* label)
 {
 	bool first = (cstr->size == 0);
 
@@ -105,9 +106,18 @@ bool ofc_colstr_newline(
 			cstr->base[cstr->size + i] = ' ';
 	}
 	cstr->size += 6;
-
 	cstr->col = 6;
+
+	unsigned indent_level;
+	for (indent_level = 0; indent_level < indent; indent_level++)
+	{
+		/* TODO - Make the number of spaces to indent a lang opt? */
+		if (!ofc_colstr_atomic_writef(cstr, "  "))
+			return false;
+	}
+
 	cstr->oversize = false;
+
 	return true;
 }
 

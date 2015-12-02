@@ -282,11 +282,18 @@ bool ofc_sema_format_label_list_add(
 	return true;
 }
 
-bool ofc_sema_format_label_list_print(ofc_colstr_t* cs,
+bool ofc_sema_format_label_list_print(
+	ofc_colstr_t* cs, unsigned indent,
 	ofc_sema_format_label_list_t* list)
 {
 	if (!cs || !list)
 		return false;
+
+	if (list->count > 0)
+	{
+		if (!ofc_colstr_newline(cs, indent, NULL))
+			return false;
+	}
 
 	unsigned i;
 	for (i = 0; i < list->count; i++)
@@ -295,7 +302,7 @@ bool ofc_sema_format_label_list_print(ofc_colstr_t* cs,
 
 		unsigned label_num = list->format[i]->number;
 
-		if (!ofc_colstr_newline(cs, &label_num)
+		if (!ofc_colstr_newline(cs, indent, &label_num)
 			|| !ofc_sema_format_label_print(cs, list->format[i]))
 			return false;
 	}

@@ -6,9 +6,11 @@ bool ofc_sema_stmt_write_print(ofc_colstr_t* cs,
 	const ofc_sema_stmt_t* stmt);
 bool ofc_sema_stmt_if_comp_print(ofc_colstr_t* cs,
 	const ofc_sema_stmt_t* stmt);
-bool ofc_sema_stmt_if_print(ofc_colstr_t* cs,
+bool ofc_sema_stmt_if_print(
+	ofc_colstr_t* cs, unsigned indent,
 	const ofc_sema_stmt_t* stmt);
-bool ofc_sema_stmt_if_then_print(ofc_colstr_t* cs,
+bool ofc_sema_stmt_if_then_print(
+	ofc_colstr_t* cs, unsigned indent,
 	const ofc_sema_stmt_t* stmt);
 bool ofc_sema_stmt_do_label_print(ofc_colstr_t* cs,
 	const ofc_sema_stmt_t* stmt);
@@ -424,7 +426,7 @@ unsigned ofc_sema_stmt_list_count(
 }
 
 bool ofc_sema_stmt_print(
-	ofc_colstr_t* cs,
+	ofc_colstr_t* cs, unsigned indent,
 	const ofc_sema_stmt_t* stmt)
 {
 	switch (stmt->type)
@@ -442,10 +444,10 @@ bool ofc_sema_stmt_print(
 			return ofc_sema_stmt_if_comp_print(cs, stmt);
 
 		case OFC_SEMA_STMT_IF_STATEMENT:
-			return ofc_sema_stmt_if_print(cs, stmt);
+			return ofc_sema_stmt_if_print(cs, indent, stmt);
 
 		case OFC_SEMA_STMT_IF_THEN:
-			return ofc_sema_stmt_if_then_print(cs, stmt);
+			return ofc_sema_stmt_if_then_print(cs, indent, stmt);
 
 		case OFC_SEMA_STMT_STOP:
 		case OFC_SEMA_STMT_PAUSE:
@@ -479,10 +481,14 @@ bool ofc_sema_stmt_print(
 	return false;
 }
 
-bool ofc_sema_stmt_list_print(ofc_colstr_t* cs,
+bool ofc_sema_stmt_list_print(
+	ofc_colstr_t* cs, unsigned indent,
 	ofc_sema_label_map_t* label_map,
 	const ofc_sema_stmt_list_t* stmt_list)
 {
+	if (!cs || !stmt_list)
+		return false;
+
     unsigned i;
 	for (i = 0; i < stmt_list->count; i++)
 	{
@@ -491,16 +497,17 @@ bool ofc_sema_stmt_list_print(ofc_colstr_t* cs,
 		if (label)
 		{
 			unsigned label_num = label->number;
-			if (!ofc_colstr_newline(cs, &label_num))
+			if (!ofc_colstr_newline(cs, indent, &label_num))
 				return false;
 		}
 		else
 		{
-			if (!ofc_colstr_newline(cs, NULL))
+			if (!ofc_colstr_newline(cs, indent, NULL))
 				return false;
 		}
 
-		if (!ofc_sema_stmt_print(cs, stmt_list->stmt[i]))
+		if (!ofc_sema_stmt_print(cs, indent,
+			stmt_list->stmt[i]))
 			return false;
 	}
 	return true;

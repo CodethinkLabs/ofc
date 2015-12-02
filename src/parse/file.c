@@ -32,6 +32,6 @@ bool ofc_parse_file_print(
 	ofc_colstr_t* cs,
 	const ofc_parse_stmt_list_t* list)
 {
-	return (ofc_parse_stmt_list_print(cs, list, 0)
+	return (ofc_parse_stmt_list_print(cs, 0, list)
 		&& ofc_colstr_writef(cs, "\n"));
 }

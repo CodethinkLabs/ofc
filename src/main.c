@@ -221,6 +221,19 @@ int main(int argc, const char* argv[])
 		return EXIT_FAILURE;
 	}
 
+	#ifdef OFC_PRINT_PARSE
+	ofc_colstr_t* cs = ofc_colstr_create(72, 0);
+	if (!ofc_parse_stmt_list_print(cs, 0, program))
+	{
+		fprintf(stderr, "Error: Failed to print parse tree\n");
+		ofc_parse_stmt_list_delete(program);
+		ofc_sparse_delete(condense);
+		return EXIT_FAILURE;
+	}
+	ofc_colstr_fdprint(cs, STDOUT_FILENO);
+	ofc_colstr_delete(cs);
+	#endif
+
 	ofc_sema_scope_t* sema = ofc_sema_scope_global(
 		&opts, condense, program);
 	if (!sema)
@@ -233,7 +246,7 @@ int main(int argc, const char* argv[])
 
 	#ifdef OFC_PRINT_SEMA
 	ofc_colstr_t* cs = ofc_colstr_create(72, 0);
-	if (!ofc_sema_scope_print(cs, sema))
+	if (!ofc_sema_scope_print(cs, 0, sema))
 	{
 		fprintf(stderr, "Error: Failed to print semantic tree\n");
 		ofc_colstr_delete(cs);

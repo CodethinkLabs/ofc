@@ -1162,17 +1162,20 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs, bool print_type,
 	return true;
 }
 
-bool ofc_sema_decl_list_print(ofc_colstr_t* cs,
+bool ofc_sema_decl_list_print(
+	ofc_colstr_t* cs, unsigned indent,
 	const ofc_sema_decl_list_t* decl_list)
 {
+	if (!cs || !decl_list)
+		return false;
+
 	unsigned i;
 	for (i = 0; i < decl_list->count; i++)
 	{
-		if (!ofc_sema_decl_print(cs, true,
-			decl_list->decl[i]))
-				return false;
-		if (!ofc_colstr_newline(cs, NULL))
-			return false;
+		if (!ofc_colstr_newline(cs, indent, NULL)
+			|| !ofc_sema_decl_print(cs, true,
+				decl_list->decl[i]))
+					return false;
 	}
 
 	return true;

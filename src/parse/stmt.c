@@ -598,13 +598,15 @@ void ofc_parse_stmt_delete(
 bool ofc_parse_stmt_include_print(
 	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt);
 bool ofc_parse_stmt_program_print(
-	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt, unsigned indent);
+	ofc_colstr_t* cs, unsigned indent,
+	const ofc_parse_stmt_t* stmt);
 bool ofc_parse_stmt_assign_print(
 	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt);
 bool ofc_parse_stmt_decl_print(
 	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt);
 bool ofc_parse_stmt_if_print(
-	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt, unsigned indent);
+	ofc_colstr_t* cs, unsigned indent,
+	const ofc_parse_stmt_t* stmt);
 bool ofc_parse_stmt_stop_pause_return_print(
 	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt);
 bool ofc_parse_stmt_format_print(
@@ -632,7 +634,8 @@ bool ofc_parse_stmt_call_entry_print(
 bool ofc_parse_stmt_equivalence_print(
 	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt);
 bool ofc_parse_stmt_do_print(
-	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt, unsigned indent);
+	ofc_colstr_t* cs, unsigned indent,
+	const ofc_parse_stmt_t* stmt);
 bool ofc_parse_stmt_decl_attr_print(
 	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt);
 bool ofc_parse_stmt_pointer_print(
@@ -640,7 +643,8 @@ bool ofc_parse_stmt_pointer_print(
 bool ofc_parse_stmt_go_to_print(
 	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt);
 bool ofc_parse_stmt_structure_print(
-	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt, unsigned indent);
+	ofc_colstr_t* cs, unsigned indent,
+	const ofc_parse_stmt_t* stmt);
 bool ofc_parse_stmt_record_print(
 	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt);
 bool ofc_parse_stmt_io_print(
@@ -652,9 +656,8 @@ bool ofc_parse_stmt_define_file_print(
 
 
 bool ofc_parse_stmt_print(
-	ofc_colstr_t* cs,
-	const ofc_parse_stmt_t* stmt,
-	unsigned indent)
+	ofc_colstr_t* cs, unsigned indent,
+	const ofc_parse_stmt_t* stmt)
 {
 	if (stmt->type == OFC_PARSE_STMT_EMPTY)
 		return true;
@@ -671,7 +674,7 @@ bool ofc_parse_stmt_print(
 		case OFC_PARSE_STMT_FUNCTION:
 		case OFC_PARSE_STMT_BLOCK_DATA:
 			if (!ofc_parse_stmt_program_print(
-				cs, stmt, indent))
+				cs, indent, stmt))
 				return false;
 			break;
 		case OFC_PARSE_STMT_IMPLICIT_NONE:
@@ -745,21 +748,21 @@ bool ofc_parse_stmt_print(
 		case OFC_PARSE_STMT_IF_COMPUTED:
 		case OFC_PARSE_STMT_IF_STATEMENT:
 		case OFC_PARSE_STMT_IF_THEN:
-			if (!ofc_parse_stmt_if_print(cs, stmt, indent))
+			if (!ofc_parse_stmt_if_print(cs, indent, stmt))
 				return false;
 			break;
 		case OFC_PARSE_STMT_DO_LABEL:
 		case OFC_PARSE_STMT_DO_BLOCK:
 		case OFC_PARSE_STMT_DO_WHILE:
 		case OFC_PARSE_STMT_DO_WHILE_BLOCK:
-			if (!ofc_parse_stmt_do_print(cs, stmt, indent))
+			if (!ofc_parse_stmt_do_print(cs, indent, stmt))
 				return false;
 			break;
 		case OFC_PARSE_STMT_TYPE:
 		case OFC_PARSE_STMT_STRUCTURE:
 		case OFC_PARSE_STMT_UNION:
 		case OFC_PARSE_STMT_MAP:
-			if (!ofc_parse_stmt_structure_print(cs, stmt, indent))
+			if (!ofc_parse_stmt_structure_print(cs, indent, stmt))
 				return false;
 			break;
 		case OFC_PARSE_STMT_RECORD:
@@ -882,9 +885,8 @@ void ofc_parse_stmt_list_delete(
 
 
 bool ofc_parse_stmt_list_print(
-	ofc_colstr_t* cs,
-	const ofc_parse_stmt_list_t* list,
-	unsigned indent)
+	ofc_colstr_t* cs, unsigned indent,
+	const ofc_parse_stmt_list_t* list)
 {
 	if (!list)
 		return false;
@@ -892,20 +894,13 @@ bool ofc_parse_stmt_list_print(
 	unsigned i;
 	for (i = 0; i < list->count; i++)
 	{
-		if (!ofc_colstr_newline(cs,
+		if (!ofc_colstr_newline(cs, indent,
 			(list->stmt[i]->label > 0
 				? &list->stmt[i]->label : NULL)))
 			return false;
 
-		unsigned j;
-		for (j = 0; j < indent; j++)
-		{
-			if (!ofc_colstr_atomic_writef(cs, "  "))
-				return false;
-		}
-
 		if (!ofc_parse_stmt_print(
-			cs, list->stmt[i], indent))
+			cs, indent, list->stmt[i]))
 			return false;
 	}
 
