@@ -243,6 +243,13 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 		}
 	}
 
+	if (!ca_unit)
+	{
+		ofc_sema_scope_error(scope, stmt->src,
+			"No UNIT defined in OPEN.");
+		return NULL;
+	}
+
 	if (ca_unit->type == OFC_PARSE_CALL_ARG_EXPR)
 	{
 		s.io_open.unit = ofc_sema_expr(
