@@ -1,0 +1,287 @@
+#include <ofc/sema.h>
+
+void ofc_sema_stmt_io_close__cleanup(
+	ofc_sema_stmt_t s)
+{
+	ofc_sema_expr_delete(s.io_close.unit);
+	ofc_sema_expr_delete(s.io_close.err);
+	ofc_sema_expr_delete(s.io_close.iostat);
+	ofc_sema_expr_delete(s.io_close.status);
+}
+
+ofc_sema_stmt_t* ofc_sema_stmt_io_close(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt)
+{
+	if (!scope || !stmt
+		|| (stmt->type != OFC_PARSE_STMT_IO_CLOSE)
+		|| !stmt->io.params)
+		return NULL;
+
+	ofc_sema_stmt_t s;
+	s.type = OFC_SEMA_STMT_IO_CLOSE;
+	s.io_close.unit   = NULL;
+	s.io_close.iostat = NULL;
+	s.io_close.err    = NULL;
+	s.io_close.status = NULL;
+
+	ofc_parse_call_arg_t* ca_unit   = NULL;
+	ofc_parse_call_arg_t* ca_iostat = NULL;
+	ofc_parse_call_arg_t* ca_err    = NULL;
+	ofc_parse_call_arg_t* ca_status = NULL;
+
+	unsigned i;
+	for (i = 0; i < stmt->io.params->count; i++)
+	{
+		ofc_parse_call_arg_t* param
+			= stmt->io.params->call_arg[i];
+		if (!param) continue;
+
+		if (ofc_str_ref_empty(param->name))
+		{
+			if (i >= 1)
+			{
+				ofc_sema_scope_error(scope, param->src,
+					"Un-named parameter %u has no meaning in CLOSE.", i);
+				return NULL;
+			}
+
+			if (i == 0)
+			{
+				ca_unit = param;
+			}
+		}
+		else if (ofc_str_ref_equal_strz_ci(param->name, "UNIT"))
+		{
+			if (ca_unit)
+			{
+				ofc_sema_scope_error(scope, param->src,
+					"Re-definition of UNIT in CLOSE.");
+				return NULL;
+			}
+
+			ca_unit = param;
+		}
+		else if (ofc_str_ref_equal_strz_ci(param->name, "IOSTAT"))
+		{
+			if (ca_iostat)
+			{
+				ofc_sema_scope_error(scope, param->src,
+					"Re-definition of IOSTAT in CLOSE.");
+				return NULL;
+			}
+
+			ca_iostat = param;
+		}
+		else if (ofc_str_ref_equal_strz_ci(param->name, "ERR"))
+		{
+			if (ca_err)
+			{
+				ofc_sema_scope_error(scope, param->src,
+					"Re-definition of ERR in CLOSE.");
+				return NULL;
+			}
+
+			ca_err = param;
+		}
+		else if (ofc_str_ref_equal_strz_ci(param->name, "STATUS"))
+		{
+			if (ca_status)
+			{
+				ofc_sema_scope_error(scope, param->src,
+					"Re-definition of STATUS in CLOSE.");
+				return NULL;
+			}
+
+			ca_status = param;
+		}
+		else
+		{
+			ofc_sema_scope_error(scope, param->src,
+				"Unrecognized paramater %u name '%.*s' in CLOSE.",
+				i, param->name.size, param->name.base);
+			return NULL;
+		}
+	}
+
+	if (!ca_unit)
+	{
+		ofc_sema_scope_error(scope, stmt->src,
+			"No UNIT defined in CLOSE.");
+		return NULL;
+	}
+
+	if (ca_unit->type == OFC_PARSE_CALL_ARG_EXPR)
+	{
+		s.io_close.unit = ofc_sema_expr(
+			scope, ca_unit->expr);
+		if (!s.io_close.unit) return NULL;
+
+		const ofc_sema_type_t* etype
+			= ofc_sema_expr_type(s.io_close.unit);
+		if (!etype)
+		{
+			ofc_sema_stmt_io_close__cleanup(s);
+			return NULL;
+		}
+
+		if (!ofc_sema_type_is_integer(etype))
+		{
+			ofc_sema_scope_error(scope, stmt->src,
+				"UNIT must be of type INTEGER in CLOSE");
+			ofc_sema_stmt_io_close__cleanup(s);
+			return NULL;
+		}
+
+		if (ofc_sema_expr_validate_uint(s.io_close.unit))
+		{
+			ofc_sema_scope_error(scope, stmt->src,
+				"UNIT must be a positive INTEGER in CLOSE");
+			ofc_sema_stmt_io_close__cleanup(s);
+			return NULL;
+		}
+	}
+	else
+	{
+		ofc_sema_scope_error(scope, stmt->src,
+			"UNIT must be an INTEGER expression in CLOSE");
+		return NULL;
+	}
+
+	if (ca_iostat)
+	{
+		s.io_close.iostat = ofc_sema_expr(
+			scope, ca_iostat->expr);
+		if (!s.io_close.iostat)
+		{
+			ofc_sema_stmt_io_close__cleanup(s);
+			return NULL;
+		}
+
+		if (s.io_close.iostat->type != OFC_SEMA_EXPR_LHS)
+		{
+			ofc_sema_scope_error(scope, stmt->src,
+				"IOSTAT must be of a variable in CLOSE");
+			ofc_sema_stmt_io_close__cleanup(s);
+			return NULL;
+		}
+
+		const ofc_sema_type_t* etype
+			= ofc_sema_expr_type(s.io_close.iostat);
+		if (!etype)
+		{
+			ofc_sema_stmt_io_close__cleanup(s);
+			return NULL;
+		}
+
+		if (!ofc_sema_type_is_integer(etype))
+		{
+			ofc_sema_scope_error(scope, stmt->src,
+				"IOSTAT must be of type INTEGER in CLOSE");
+			ofc_sema_stmt_io_close__cleanup(s);
+			return NULL;
+		}
+
+	}
+
+	if (ca_err)
+	{
+		s.io_close.err = ofc_sema_expr(
+			scope, ca_err->expr);
+		if (!s.io_close.err)
+		{
+			ofc_sema_stmt_io_close__cleanup(s);
+			return NULL;
+		}
+
+		const ofc_sema_type_t* etype
+			= ofc_sema_expr_type(s.io_close.err);
+		if (!etype)
+		{
+			ofc_sema_stmt_io_close__cleanup(s);
+			return NULL;
+		}
+
+		if (ofc_sema_type_is_integer(etype))
+		{
+			const ofc_sema_typeval_t* err_label
+				= ofc_sema_expr_constant(s.io_close.err);
+			if (err_label)
+			{
+				int64_t fl64 = 0;
+				if (!ofc_sema_typeval_get_integer(
+					err_label, &fl64) || (fl64 < 0))
+				{
+					ofc_sema_scope_error(scope, stmt->src,
+						"ERR label expression must be a positive INTEGER in CLOSE");
+					ofc_sema_stmt_io_close__cleanup(s);
+					return NULL;
+				}
+			}
+		}
+		else
+		{
+			ofc_sema_scope_error(scope, stmt->src,
+				"ERR must be a label in CLOSE");
+			ofc_sema_stmt_io_close__cleanup(s);
+			return NULL;
+		}
+	}
+
+	if (ca_status)
+	{
+		s.io_close.status = ofc_sema_expr(
+			scope, ca_status->expr);
+		if (!s.io_close.status)
+		{
+			ofc_sema_stmt_io_close__cleanup(s);
+			return NULL;
+		}
+
+		const ofc_sema_type_t* etype
+			= ofc_sema_expr_type(s.io_close.status);
+		if (!etype)
+		{
+			ofc_sema_stmt_io_close__cleanup(s);
+			return NULL;
+		}
+
+		if (etype->type != OFC_SEMA_TYPE_CHARACTER)
+		{
+			ofc_sema_scope_error(scope, stmt->src,
+				"STATUS must be a CHARACTER expression in CLOSE");
+			ofc_sema_stmt_io_close__cleanup(s);
+			return NULL;
+		}
+		else
+		{
+			const ofc_sema_typeval_t* constant
+				= ofc_sema_expr_constant(s.io_close.status);
+
+			if (ofc_typeval_character_equal_strz_ci(constant, "DELETE"))
+			{
+				s.io_close.status_type = OFC_SEMA_CALL_ARG_DELETE;
+			}
+			else if (ofc_typeval_character_equal_strz_ci(constant, "KEEP"))
+			{
+				s.io_close.status_type = OFC_SEMA_CALL_ARG_KEEP;
+			}
+			else
+			{
+				ofc_sema_scope_error(scope, stmt->src,
+					"STATUS must be 'DELETE' or 'KEEP' in CLOSE");
+				ofc_sema_stmt_io_close__cleanup(s);
+				return NULL;
+			}
+		}
+	}
+
+	ofc_sema_stmt_t* as
+		= ofc_sema_stmt_alloc(s);
+	if (!as)
+	{
+		ofc_sema_stmt_io_close__cleanup(s);
+		return NULL;
+	}
+	return as;
+}

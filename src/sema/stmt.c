@@ -101,6 +101,10 @@ ofc_sema_stmt_t* ofc_sema_stmt(
 			s = ofc_sema_stmt_io_open(
 				scope, stmt);
 			break;
+		case OFC_PARSE_STMT_IO_CLOSE:
+			s = ofc_sema_stmt_io_close(
+				scope, stmt);
+			break;
 		case OFC_PARSE_STMT_IF_THEN:
 		case OFC_PARSE_STMT_IF_STATEMENT:
 		case OFC_PARSE_STMT_IF_COMPUTED:
@@ -301,6 +305,16 @@ void ofc_sema_stmt_delete(
 				stmt->io_open.recl);
 			ofc_sema_expr_delete(
 				stmt->io_open.status);
+			break;
+		case OFC_SEMA_STMT_IO_CLOSE:
+			ofc_sema_expr_delete(
+				stmt->io_close.unit);
+			ofc_sema_expr_delete(
+				stmt->io_close.iostat);
+			ofc_sema_expr_delete(
+				stmt->io_close.err);
+			ofc_sema_expr_delete(
+				stmt->io_close.status);
 			break;
 		case OFC_SEMA_STMT_IF_COMPUTED:
 			ofc_sema_expr_delete(
