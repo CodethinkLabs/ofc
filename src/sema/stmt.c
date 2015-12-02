@@ -105,6 +105,10 @@ ofc_sema_stmt_t* ofc_sema_stmt(
 			s = ofc_sema_stmt_io_close(
 				scope, stmt);
 			break;
+		case OFC_PARSE_STMT_IO_INQUIRE:
+			s = ofc_sema_stmt_io_inquire(
+				scope, stmt);
+			break;
 		case OFC_PARSE_STMT_IF_THEN:
 		case OFC_PARSE_STMT_IF_STATEMENT:
 		case OFC_PARSE_STMT_IF_COMPUTED:
@@ -315,6 +319,58 @@ void ofc_sema_stmt_delete(
 				stmt->io_close.err);
 			ofc_sema_expr_delete(
 				stmt->io_close.status);
+			break;
+		case OFC_SEMA_STMT_IO_INQUIRE:
+			ofc_sema_expr_delete(
+				stmt->io_inquire.unit);
+			ofc_sema_expr_delete(
+				stmt->io_inquire.file);
+			ofc_sema_expr_delete(
+				stmt->io_inquire.err);
+			ofc_sema_lhs_delete(
+				stmt->io_inquire.access);
+			ofc_sema_lhs_delete(
+				stmt->io_inquire.action);
+			ofc_sema_lhs_delete(
+				stmt->io_inquire.blank);
+			ofc_sema_lhs_delete(
+				stmt->io_inquire.delim);
+			ofc_sema_lhs_delete(
+				stmt->io_inquire.direct);
+			ofc_sema_lhs_delete(
+				stmt->io_inquire.exist);
+			ofc_sema_lhs_delete(
+				stmt->io_inquire.form);
+			ofc_sema_lhs_delete(
+				stmt->io_inquire.formatted);
+			ofc_sema_lhs_delete(
+				stmt->io_inquire.iostat);
+			ofc_sema_lhs_delete(
+				stmt->io_inquire.name);
+			ofc_sema_lhs_delete(
+				stmt->io_inquire.named);
+			ofc_sema_lhs_delete(
+				stmt->io_inquire.nextrec);
+			ofc_sema_lhs_delete(
+				stmt->io_inquire.number);
+			ofc_sema_lhs_delete(
+				stmt->io_inquire.opened);
+			ofc_sema_lhs_delete(
+				stmt->io_inquire.pad);
+			ofc_sema_lhs_delete(
+				stmt->io_inquire.position);
+			ofc_sema_lhs_delete(
+				stmt->io_inquire.read);
+			ofc_sema_lhs_delete(
+				stmt->io_inquire.readwrite);
+			ofc_sema_lhs_delete(
+				stmt->io_inquire.recl);
+			ofc_sema_lhs_delete(
+				stmt->io_inquire.sequential);
+			ofc_sema_lhs_delete(
+				stmt->io_inquire.unformatted);
+			ofc_sema_lhs_delete(
+				stmt->io_inquire.write);
 			break;
 		case OFC_SEMA_STMT_IF_COMPUTED:
 			ofc_sema_expr_delete(

@@ -13,6 +13,7 @@ typedef enum
 	OFC_SEMA_STMT_IO_BACKSPACE,
 	OFC_SEMA_STMT_IO_OPEN,
 	OFC_SEMA_STMT_IO_CLOSE,
+	OFC_SEMA_STMT_IO_INQUIRE,
 	OFC_SEMA_STMT_CONTINUE,
 	OFC_SEMA_STMT_IF_COMPUTED,
 	OFC_SEMA_STMT_IF_STATEMENT,
@@ -178,6 +179,36 @@ struct ofc_sema_stmt_s
 
 		struct
 		{
+			ofc_sema_expr_t* unit;
+			ofc_sema_expr_t* file;
+			ofc_sema_expr_t* err;
+
+			ofc_sema_lhs_t* access;
+			ofc_sema_lhs_t* action;
+			ofc_sema_lhs_t* blank;
+			ofc_sema_lhs_t* delim;
+			ofc_sema_lhs_t* direct;
+			ofc_sema_lhs_t* exist;
+			ofc_sema_lhs_t* form;
+			ofc_sema_lhs_t* formatted;
+			ofc_sema_lhs_t* iostat;
+			ofc_sema_lhs_t* name;
+			ofc_sema_lhs_t* named;
+			ofc_sema_lhs_t* nextrec;
+			ofc_sema_lhs_t* number;
+			ofc_sema_lhs_t* opened;
+			ofc_sema_lhs_t* pad;
+			ofc_sema_lhs_t* position;
+			ofc_sema_lhs_t* read;
+			ofc_sema_lhs_t* readwrite;
+			ofc_sema_lhs_t* recl;
+			ofc_sema_lhs_t* sequential;
+			ofc_sema_lhs_t* unformatted;
+			ofc_sema_lhs_t* write;
+		} io_inquire;
+
+		struct
+		{
 			ofc_sema_expr_t* str;
 		} stop_pause;
 
@@ -293,6 +324,9 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
 ofc_sema_stmt_t* ofc_sema_stmt_io_close(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt);
+ofc_sema_stmt_t* ofc_sema_stmt_io_inquire(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
 ofc_sema_stmt_t* ofc_sema_stmt_if(
