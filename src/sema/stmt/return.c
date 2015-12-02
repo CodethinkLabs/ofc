@@ -17,7 +17,6 @@ ofc_sema_stmt_t* ofc_sema_stmt_return(
 	{
 		ofc_sema_scope_error(scope, stmt->src,
 			"Alternate RETURN or RETURN with value not yet supported");
-			ofc_sema_expr_list_delete(s.call.args);
 		return NULL;
 	}
 
