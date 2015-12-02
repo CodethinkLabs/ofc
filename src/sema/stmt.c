@@ -341,6 +341,10 @@ void ofc_sema_stmt_delete(
 			ofc_sema_expr_list_delete(
 				stmt->call.args);
 			break;
+		case OFC_SEMA_STMT_RETURN:
+			ofc_sema_expr_delete(
+				stmt->alt_return);
+			break;
 		default:
 			break;
 	}

@@ -37,6 +37,8 @@ struct ofc_sema_stmt_s
 
 	union
 	{
+		ofc_sema_expr_t* alt_return;
+
 		struct
 		{
 			ofc_sema_lhs_t*  dest;

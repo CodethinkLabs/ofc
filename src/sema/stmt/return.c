@@ -11,18 +11,28 @@ ofc_sema_stmt_t* ofc_sema_stmt_return(
 
 	ofc_sema_stmt_t s;
 	s.type = OFC_SEMA_STMT_RETURN;
+	s.alt_return = NULL;
 
-	/* TODO - Support RETURN argument. */
 	if (stmt->stop_pause_return.value)
 	{
-		ofc_sema_scope_error(scope, stmt->src,
-			"Alternate RETURN or RETURN with value not yet supported");
-		return NULL;
+		s.alt_return = ofc_sema_expr(
+			scope, stmt->stop_pause_return.value);
+		if (!ofc_sema_expr_validate_uint(s.alt_return))
+		{
+			ofc_sema_scope_error(scope, stmt->src,
+				"Alternate RETURN value must be a positive INTEGER");
+			ofc_sema_expr_delete(s.alt_return);
+			return NULL;
+		}
 	}
 
 	ofc_sema_stmt_t* as
 		= ofc_sema_stmt_alloc(s);
-	if (!as) return NULL;
+	if (!as)
+	{
+		ofc_sema_expr_delete(s.alt_return);
+		return NULL;
+	}
 
     return as;
 }
