@@ -25,6 +25,7 @@ typedef enum
 	OFC_SEMA_STMT_DO_WHILE_BLOCK,
 	OFC_SEMA_STMT_CALL,
 	OFC_SEMA_STMT_RETURN,
+	OFC_SEMA_STMT_ENTRY,
 
 	OFC_SEMA_STMT_COUNT
 } ofc_sema_stmt_e;
@@ -181,6 +182,12 @@ struct ofc_sema_stmt_s
 			const ofc_sema_decl_t* subroutine;
 			ofc_sema_expr_list_t*  args;
 		} call;
+
+		struct
+		{
+			ofc_str_ref_t        name;
+			ofc_sema_arg_list_t* args;
+		} entry;
 	};
 };
 
@@ -252,6 +259,9 @@ ofc_sema_stmt_t* ofc_sema_stmt_call(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
 ofc_sema_stmt_t* ofc_sema_stmt_return(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt);
+ofc_sema_stmt_t* ofc_sema_stmt_entry(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
 
