@@ -10,7 +10,7 @@ void ofc_sema_scope_delete(
 	ofc_sema_scope_list_delete(
 		scope->child);
 
-	ofc_str_ref_list_delete(
+	ofc_sema_arg_list_delete(
 		scope->args);
 
 	ofc_sema_implicit_delete(
@@ -184,50 +184,12 @@ static bool ofc_sema_scope__subroutine(
 
 	if (stmt->program.args)
 	{
-		/* TODO - Create exclusive list to avoid duplicate arguments. */
-		sub_scope->args = ofc_str_ref_list_create();
+		sub_scope->args = ofc_sema_arg_list(
+			scope, stmt->program.args);
 		if (!sub_scope->args)
 		{
 			ofc_sema_scope_delete(sub_scope);
 			return false;
-		}
-
-		unsigned i;
-		for (i = 0; i < stmt->program.args->count; i++)
-		{
-			/* TODO - Handle ASTERISK and AMPERSAND in SUBROUTINE arguments. */
-			ofc_parse_call_arg_t* arg
-				= stmt->program.args->call_arg[i];
-			if (!arg
-				|| (arg->type != OFC_PARSE_CALL_ARG_EXPR)
-				|| !arg->expr
-				|| (arg->expr->type != OFC_PARSE_EXPR_VARIABLE)
-				|| !arg->expr->variable
-				|| (arg->expr->variable->type != OFC_PARSE_LHS_VARIABLE))
-			{
-				ofc_sema_scope_error(scope, stmt->src,
-					"SUBROUTINE arguments can only be names");
-				ofc_sema_scope_delete(sub_scope);
-				return false;
-			}
-
-			if (!ofc_str_ref_empty(arg->name))
-			{
-				ofc_sema_scope_error(scope, stmt->src,
-					"Named parameters not valid as SUBROUTINE arguments");
-				ofc_sema_scope_delete(sub_scope);
-				return false;
-			}
-
-			ofc_str_ref_t arg_name
-				= arg->expr->variable->variable;
-
-			if (!ofc_str_ref_list_add(
-				sub_scope->args, arg_name))
-			{
-				ofc_sema_scope_delete(sub_scope);
-				return false;
-			}
 		}
 	}
 
@@ -326,49 +288,12 @@ static bool ofc_sema_scope__function(
 
 	if (stmt->program.args)
 	{
-		/* TODO - Create exclusive list to avoid duplicate arguments. */
-		func_scope->args = ofc_str_ref_list_create();
+		func_scope->args = ofc_sema_arg_list(
+			scope, stmt->program.args);
 		if (!func_scope->args)
 		{
 			ofc_sema_scope_delete(func_scope);
 			return false;
-		}
-
-		unsigned i;
-		for (i = 0; i < stmt->program.args->count; i++)
-		{
-			ofc_parse_call_arg_t* arg
-				= stmt->program.args->call_arg[i];
-			if (!arg
-				|| (arg->type != OFC_PARSE_CALL_ARG_EXPR)
-				|| !arg->expr
-				|| (arg->expr->type != OFC_PARSE_EXPR_VARIABLE)
-				|| !arg->expr->variable
-				|| (arg->expr->variable->type != OFC_PARSE_LHS_VARIABLE))
-			{
-				ofc_sema_scope_error(scope, stmt->src,
-					"FUNCTION arguments can only be names");
-				ofc_sema_scope_delete(func_scope);
-				return false;
-			}
-
-			if (!ofc_str_ref_empty(arg->name))
-			{
-				ofc_sema_scope_error(scope, stmt->src,
-					"Named parameters not valid as FUNCTION arguments");
-				ofc_sema_scope_delete(func_scope);
-				return false;
-			}
-
-			ofc_str_ref_t arg_name
-				= arg->expr->variable->variable;
-
-			if (!ofc_str_ref_list_add(
-				func_scope->args, arg_name))
-			{
-				ofc_sema_scope_delete(func_scope);
-				return false;
-			}
 		}
 	}
 
@@ -705,49 +630,12 @@ ofc_sema_scope_t* ofc_sema_scope_stmt_func(
 		= stmt->assignment->name->array.index;
 	if (index && (index->count > 0))
 	{
-		func->args = ofc_str_ref_list_create();
+		func->args = ofc_sema_arg_list_stmt_func(
+			scope, index);
 		if (!func->args)
 		{
 			ofc_sema_scope_delete(func);
-			return NULL;
-		}
-
-		unsigned i;
-		for (i = 0; i < index->count; i++)
-		{
-			const ofc_parse_array_range_t* range
-				= index->range[i];
-			if (!range || range->is_slice
-				|| range->last || range->stride)
-			{
-				ofc_sema_scope_error(scope, stmt->src,
-					"Invalid argument list in statement function.");
-				ofc_sema_scope_delete(func);
-				return NULL;
-			}
-
-			const ofc_parse_expr_t* expr
-				= range->first;
-			if ((expr->type != OFC_PARSE_EXPR_VARIABLE)
-				|| !expr->variable
-				|| (expr->variable->type != OFC_PARSE_LHS_VARIABLE))
-			{
-				ofc_sema_scope_error(scope, stmt->src,
-					"Statement function's argument list"
-					" must only contain argument names.");
-				ofc_sema_scope_delete(func);
-				return NULL;
-			}
-
-			ofc_str_ref_t arg_name
-				= expr->variable->variable;
-
-			if (!ofc_str_ref_list_add(
-				func->args, arg_name))
-			{
-				ofc_sema_scope_delete(func);
-				return NULL;
-			}
+			return false;
 		}
 	}
 

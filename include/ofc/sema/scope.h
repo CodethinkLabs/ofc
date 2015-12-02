@@ -31,9 +31,9 @@ struct ofc_sema_scope_s
 
 	const ofc_sparse_t* src;
 
-	ofc_sema_scope_e    type;
-	ofc_str_ref_t       name;
-	ofc_str_ref_list_t* args;
+	ofc_sema_scope_e     type;
+	ofc_str_ref_t        name;
+	ofc_sema_arg_list_t* args;
 
 	bool external;
 	bool intrinsic;
