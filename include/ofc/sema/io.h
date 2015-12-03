@@ -62,6 +62,6 @@ bool ofc_sema_io_check_label(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt,
 	const char* name, unsigned name_size,
-	ofc_sema_expr_t* expr,
+	bool is_format, ofc_sema_expr_t* expr,
 	const ofc_sema_label_t** label_dst);
 #endif

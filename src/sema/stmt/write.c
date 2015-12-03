@@ -233,7 +233,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 			const ofc_sema_label_t* label;
 			if (!ofc_sema_io_check_label(
 				scope, stmt, ca_format->name.base,
-				ca_format->name.size,
+				ca_format->name.size, true,
 				s.io_write.format_expr, &label))
 			{
 				ofc_sema_stmt_io_write__cleanup(s);
@@ -419,7 +419,8 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 
 		if (!ofc_sema_io_check_label(
 			scope, stmt, ca_err->name.base,
-			ca_err->name.size, s.io_write.err, NULL))
+			ca_err->name.size, false,
+			s.io_write.err, NULL))
 		{
 			ofc_sema_stmt_io_write__cleanup(s);
 			return NULL;

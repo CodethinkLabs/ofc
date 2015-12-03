@@ -596,7 +596,8 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_inquire(
 
 		if (!ofc_sema_io_check_label(
 			scope, stmt, ca_err->name.base,
-			ca_err->name.size, s.io_inquire.err, NULL))
+			ca_err->name.size, false,
+			s.io_inquire.err, NULL))
 		{
 			ofc_sema_stmt_io_inquire__cleanup(s);
 			return NULL;

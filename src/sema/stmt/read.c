@@ -248,7 +248,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 			const ofc_sema_label_t* label;
 			if (!ofc_sema_io_check_label(
 				scope, stmt, ca_format->name.base,
-				ca_format->name.size,
+				ca_format->name.size, true,
 				s.io_read.format_expr, &label))
 			{
 				ofc_sema_stmt_io_read__cleanup(s);
@@ -357,7 +357,8 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 
 		if (!ofc_sema_io_check_label(
 			scope, stmt, ca_end->name.base,
-			ca_end->name.size, s.io_read.end, NULL))
+			ca_end->name.size, false,
+			s.io_read.end, NULL))
 		{
 			ofc_sema_stmt_io_read__cleanup(s);
 			return NULL;
@@ -376,7 +377,8 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 
 		if (!ofc_sema_io_check_label(
 			scope, stmt, ca_eor->name.base,
-			ca_eor->name.size, s.io_read.eor, NULL))
+			ca_eor->name.size, false,
+			s.io_read.eor, NULL))
 		{
 			ofc_sema_stmt_io_read__cleanup(s);
 			return NULL;
@@ -395,7 +397,8 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 
 		if (!ofc_sema_io_check_label(
 			scope, stmt, ca_err->name.base,
-			ca_err->name.size, s.io_read.err, NULL))
+			ca_err->name.size, false,
+			s.io_read.err, NULL))
 		{
 			ofc_sema_stmt_io_read__cleanup(s);
 			return NULL;

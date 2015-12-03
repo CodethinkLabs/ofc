@@ -332,7 +332,7 @@ bool ofc_sema_io_check_label(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt,
 	const char* name, unsigned name_size,
-	ofc_sema_expr_t* expr,
+	bool is_format, ofc_sema_expr_t* expr,
 	const ofc_sema_label_t** label_dst)
 {
 	if (!expr) return false;
@@ -357,18 +357,21 @@ bool ofc_sema_io_check_label(
 				return false;
 			}
 
-			unsigned ulabel = (unsigned)fl64;
-
-			if (((int64_t)ulabel) != fl64)
-				return false;
-
-			label_ret = ofc_sema_label_map_find(
-				scope->label, ulabel);
-			if (!label_ret)
+			if (is_format)
 			{
-				ofc_sema_scope_error(scope, stmt->src,
-					"'%.*s' label expression not defined", name_size, name);
-				return false;
+				unsigned ulabel = (unsigned)fl64;
+
+				if (((int64_t)ulabel) != fl64)
+					return false;
+
+				label_ret = ofc_sema_label_map_find(
+					scope->label, ulabel);
+				if (!label_ret)
+				{
+					ofc_sema_scope_error(scope, stmt->src,
+						"'%.*s' label expression not defined", name_size, name);
+					return false;
+				}
 			}
 		}
 		else
