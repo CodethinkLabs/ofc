@@ -133,7 +133,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_close(
 			return NULL;
 		}
 
-		if (ofc_sema_expr_validate_uint(s.io_close.unit))
+		if (!ofc_sema_expr_validate_uint(s.io_close.unit))
 		{
 			ofc_sema_scope_error(scope, stmt->src,
 				"UNIT must be a positive INTEGER in CLOSE");
