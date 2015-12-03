@@ -279,6 +279,13 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 			return NULL;
 		}
 	}
+	else if (ca_format)
+	{
+		ofc_sema_scope_error(scope, stmt->src,
+			"Format (FMT) must be an INTEGER expression or asterisk in READ");
+		ofc_sema_stmt_io_read__cleanup(s);
+		return NULL;
+	}
 
 	if (ca_advance && s.io_read.stdout)
 	{

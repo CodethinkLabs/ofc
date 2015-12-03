@@ -198,19 +198,11 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 		return NULL;
 	}
 
-	if (!ca_format)
-	{
-		ofc_sema_scope_error(scope, stmt->src,
-			"No format (FMT) defined in WRITE.");
-		ofc_sema_expr_delete(s.io_write.unit);
-		return NULL;
-	}
-
-	if (ca_format->type == OFC_PARSE_CALL_ARG_ASTERISK)
+	if (ca_format && (ca_format->type == OFC_PARSE_CALL_ARG_ASTERISK))
 	{
 		s.io_write.format_ldio = true;
 	}
-	else if (ca_format->type == OFC_PARSE_CALL_ARG_EXPR)
+	else if (ca_format && (ca_format->type == OFC_PARSE_CALL_ARG_EXPR))
 	{
 		s.io_write.format_expr = ofc_sema_expr(
 			scope, ca_format->expr);
@@ -264,7 +256,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 			return NULL;
 		}
 	}
-	else
+	else if (ca_format)
 	{
 		ofc_sema_scope_error(scope, stmt->src,
 			"Format (FMT) must be an INTEGER expression or asterisk in WRITE");
