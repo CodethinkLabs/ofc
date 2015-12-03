@@ -38,7 +38,7 @@ ofc_colstr_t* cs, int key_val)
 static unsigned ofc_parse_stmt__io(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
-	ofc_parse_keyword_e keyword, bool iolist,
+	ofc_parse_keyword_e keyword, bool has_iolist,
 	bool force_brackets,
 	ofc_parse_stmt_t* stmt)
 {
@@ -96,12 +96,26 @@ static unsigned ofc_parse_stmt__io(
 	}
 
 	stmt->io.iolist = NULL;
-	if (iolist)
+	unsigned len = 0;
+	stmt->io.iolist = ofc_parse_expr_list(
+		src, &ptr[i], debug, &len);
+
+	if (stmt->io.iolist)
 	{
-		unsigned len;
-		stmt->io.iolist = ofc_parse_expr_list(
-			src, &ptr[i], debug, &len);
-		if (stmt->io.iolist) i += len;
+		if (!has_iolist)
+		{
+			ofc_sparse_error(src, &ptr[i],
+				"IO statement can't have iolist");
+			ofc_parse_call_arg_list_delete(
+				stmt->io.params);
+			ofc_parse_expr_list_delete(
+				stmt->io.iolist);
+			ofc_parse_debug_rewind(debug, dpos);
+
+			stmt->type = OFC_PARSE_STMT_ERROR;
+			return 0;
+		}
+		i += len;
 	}
 
 	return i;
