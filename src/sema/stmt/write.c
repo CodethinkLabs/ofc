@@ -175,18 +175,13 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 			return NULL;
 		}
 
-		if (!ofc_sema_type_is_integer(etype))
+		if (!ofc_sema_type_is_character(etype)
+			&& (!ofc_sema_type_is_integer(etype)
+				|| !ofc_sema_expr_validate_uint(s.io_write.unit)))
 		{
 			ofc_sema_scope_error(scope, stmt->src,
-				"UNIT must be of type INTEGER in WRITE");
-			ofc_sema_stmt_io_write__cleanup(s);
-			return NULL;
-		}
-
-		if (!ofc_sema_expr_validate_uint(s.io_write.unit))
-		{
-			ofc_sema_scope_error(scope, stmt->src,
-				   "UNIT must be a positive INTEGER in WRITE");
+				   "UNIT must be a positive INTEGER "
+				   "or a CHARACTER expression in WRITE");
 			ofc_sema_stmt_io_write__cleanup(s);
 			return NULL;
 		}
@@ -194,7 +189,8 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 	else
 	{
 		ofc_sema_scope_error(scope, stmt->src,
-			"UNIT must be an INTEGER expression or asterisk in WRITE");
+			"UNIT must be an INTEGER or CHARACTER "
+			"expression, or asterisk in WRITE");
 		return NULL;
 	}
 

@@ -197,27 +197,22 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 			return NULL;
 		}
 
-		if (!ofc_sema_type_is_integer(etype))
+		if (!ofc_sema_type_is_character(etype)
+			&& (!ofc_sema_type_is_integer(etype)
+				|| !ofc_sema_expr_validate_uint(s.io_read.unit)))
 		{
 			ofc_sema_scope_error(scope, stmt->src,
-				"UNIT must be of type INTEGER in READ");
-			ofc_sema_stmt_io_read__cleanup(s);
-			return NULL;
-		}
-
-		if (!ofc_sema_expr_validate_uint(s.io_read.unit))
-		{
-			ofc_sema_scope_error(scope, stmt->src,
-				   "UNIT must be a positive INTEGER in READ");
+				   "UNIT must be a positive INTEGER "
+				   "or a CHARACTER expression in READ");
 			ofc_sema_stmt_io_read__cleanup(s);
 			return NULL;
 		}
 	}
 	else
 	{
-		/* TODO - Allow default character expression */
 		ofc_sema_scope_error(scope, stmt->src,
-			"UNIT must be an INTEGER expression or asterisk in READ");
+			"UNIT must be an INTEGER or CHARACTER "
+			"expression, or asterisk in READ");
 		return NULL;
 	}
 
