@@ -272,27 +272,13 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 			return NULL;
 		}
 
-		const ofc_sema_typeval_t* evalue
-			= ofc_sema_expr_constant(s.io_open.unit);
-		if (evalue)
+		if (!ofc_sema_expr_validate_uint(s.io_open.unit))
 		{
-			int64_t evalue64;
-			bool success = ofc_sema_typeval_get_integer(
-				evalue, &evalue64);
-
-			if (success)
-			{
-				if (evalue64 < 0)
-				{
-					ofc_sema_scope_error(scope, stmt->src,
-						"UNIT must be a positive INTEGER in OPEN");
-					ofc_sema_stmt_io_open__cleanup(s);
-					return NULL;
-				}
-
-				/* TODO - Clamp to range? */
-			}
-        }
+			ofc_sema_scope_error(scope, stmt->src,
+				   "UNIT must be a positive INTEGER in OPEN");
+			ofc_sema_stmt_io_open__cleanup(s);
+			return NULL;
+		}
 	}
 	else
 	{
