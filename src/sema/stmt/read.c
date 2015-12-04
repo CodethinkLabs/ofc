@@ -179,11 +179,11 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 		}
 	}
 
-	if (ca_unit && ca_unit->type == OFC_PARSE_CALL_ARG_ASTERISK)
+	if (ca_unit && (ca_unit->type == OFC_PARSE_CALL_ARG_ASTERISK))
 	{
 		s.io_read.stdout = true;
 	}
-	else if (ca_unit && ca_unit->type == OFC_PARSE_CALL_ARG_EXPR)
+	else if (ca_unit && (ca_unit->type == OFC_PARSE_CALL_ARG_EXPR))
 	{
 		s.io_read.unit = ofc_sema_expr(
 			scope, ca_unit->expr);
@@ -216,11 +216,11 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 		return NULL;
 	}
 
-	if (ca_format && ca_format->type == OFC_PARSE_CALL_ARG_ASTERISK)
+	if (ca_format && (ca_format->type == OFC_PARSE_CALL_ARG_ASTERISK))
 	{
 		s.io_read.format_ldio = true;
 	}
-	else if (ca_format&& ca_format->type == OFC_PARSE_CALL_ARG_EXPR)
+	else if (ca_format&& (ca_format->type == OFC_PARSE_CALL_ARG_EXPR))
 	{
 		s.io_read.format_expr = ofc_sema_expr(
 			scope, ca_format->expr);
