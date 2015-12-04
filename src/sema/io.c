@@ -62,17 +62,17 @@ bool ofc_sema_io_compare_types(
 				= ofc_sema_expr_cast(scope, *expr, dtype);
 			if (!cast)
 			{
-				ofc_sema_scope_error(scope, (*expr)->src,
-					"FORMAT descriptor (%s) and output type (%s) not compatible",
+				ofc_sema_scope_warning(scope, (*expr)->src,
+					"Trying to format a %s output  with a %s FORMAT descriptor",
 					ofc_sema_format_str_rep(desc->type),
 					ofc_sema_type_str_rep(type));
-				return false;
 			}
-
-			*expr = cast;
+			else
+			{
+				*expr = cast;
+			}
 		}
-
-		if ((desc->type == OFC_PARSE_FORMAT_DESC_CHARACTER)
+		else if ((desc->type == OFC_PARSE_FORMAT_DESC_CHARACTER)
 			&& (type->kind != 1))
 		{
 			ofc_sema_scope_error(scope, (*expr)->src,
