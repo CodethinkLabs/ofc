@@ -20,7 +20,8 @@ PREFIX = $(DESTDIR)/usr/local
 BINDIR = $(PREFIX)/bin
 
 TEST_DIR = tests
-TARGETS := $(sort $(wildcard $(TEST_DIR)/*.f $(TEST_DIR)/*.f77 $(TEST_DIR)/*.f90 $(TEST_DIR)/*.FOR))
+TARGETS = $(sort $(wildcard $(TEST_DIR)/*.f $(TEST_DIR)/*.f77 $(TEST_DIR)/*.f90 $(TEST_DIR)/*.FOR))
+VG_TARGETS = $(addsuffix .vg, $(TARGETS))
 
 all : $(FRONTEND)
 
@@ -36,7 +37,7 @@ $(OBJ_DEBUG) : %.debug.o : %.c
 debug: $(FRONTEND_DEBUG)
 
 clean:
-	rm -f $(FRONTEND) $(FRONTEND_DEBUG) $(OBJ) $(OBJ_DEBUG) $(DEB) $(DEB_DEBUG)
+	rm -f $(FRONTEND) $(FRONTEND_DEBUG) $(OBJ) $(OBJ_DEBUG) $(DEB) $(DEB_DEBUG) $(VG_TARGETS)
 
 install: $(FRONTEND)
 	install $(FRONTEND) $(BINDIR)
@@ -65,9 +66,14 @@ tests: $(TARGETS)
 $(TARGETS): $(FRONTEND)
 	@$(realpath $(FRONTEND)) $@ > /dev/null
 
+$(VG_TARGETS) : %.vg : %
+	valgrind -v --leak-check=full --errors-for-leak-kinds=all --error-exitcode=1 $(realpath $(FRONTEND)) $^ > $@ 2>&1
+
+valgrind: $(VG_TARGETS)
+
 loc:
 	@wc -l $(SRC)
 
 -include $(DEB)
 
-.PHONY : all clean install uninstall debug cppcheck scan scan-cc scan-build check tests $(TARGETS) loc
+.PHONY : all clean install uninstall debug cppcheck scan scan-cc scan-build check tests $(TARGETS) loc valgrind
