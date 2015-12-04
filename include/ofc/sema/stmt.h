@@ -153,7 +153,6 @@ struct ofc_sema_stmt_s
 			ofc_sema_call_arg_e delim_type;
 
 			ofc_sema_expr_t*    file;
-			const ofc_sema_typeval_t* file_name;
 
 			ofc_sema_expr_t*    form;
 			ofc_sema_call_arg_e format_type;

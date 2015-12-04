@@ -36,7 +36,6 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 	s.io_open.delim         = NULL;
 	s.io_open.err           = NULL;
 	s.io_open.file          = NULL;
-	s.io_open.file_name     = NULL;
 	s.io_open.form          = NULL;
 	s.io_open.iostat        = NULL;
 	s.io_open.pad           = NULL;
@@ -660,19 +659,6 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 				"FILE must be a CHARACTER expression in OPEN");
 			ofc_sema_stmt_io_open__cleanup(s);
 			return NULL;
-		}
-		else
-		{
-
-			const ofc_sema_typeval_t* constant
-				= ofc_sema_expr_constant(s.io_open.file);
-			if (!constant)
-			{
-				ofc_sema_stmt_io_open__cleanup(s);
-				return NULL;
-			}
-
-			s.io_open.file_name = constant;
 		}
 	}
 
