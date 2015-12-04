@@ -240,13 +240,18 @@ bool ofc_sema_go_to_print(
 	if (!cs || (stmt->type != OFC_SEMA_STMT_GO_TO))
 		return false;
 
-	if (!ofc_colstr_atomic_writef(cs, "GO TO "))
+	if (!ofc_colstr_atomic_writef(cs, "GO TO ")
+		|| !ofc_sema_expr_print(cs, stmt->go_to.label))
 		return false;
-	if (!ofc_sema_expr_print(cs, stmt->go_to.label))
-		return false;
-	if ((stmt->go_to.allow) &&
-		(!ofc_sema_expr_list_print(cs, stmt->go_to.allow)))
+
+	if (stmt->go_to.allow)
+	{
+		if (!ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_colstr_atomic_writef(cs, "(")
+			|| !ofc_sema_expr_list_print(cs, stmt->go_to.allow)
+			|| !ofc_colstr_atomic_writef(cs, ")"))
 			return false;
+	}
 
 	return true;
 }
