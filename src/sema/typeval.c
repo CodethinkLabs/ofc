@@ -1350,8 +1350,8 @@ ofc_sema_typeval_t* ofc_sema_typeval_multiply(
 		case OFC_SEMA_TYPE_BYTE:
 			{
 				int64_t r = a->integer * b->integer;
-				if ((r / b->integer)
-					!= a->integer)
+				if ((b->integer != 0)
+					&& ((r / b->integer) != a->integer))
 					return NULL;
 				tv.integer = r;
 			}
