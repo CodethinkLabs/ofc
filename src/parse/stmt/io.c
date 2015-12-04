@@ -105,17 +105,35 @@ static unsigned ofc_parse_stmt__io(
 		if (!has_iolist)
 		{
 			ofc_sparse_error(src, &ptr[i],
-				"IO statement can't have iolist");
+				"%s statement can't have iolist",
+				ofc_parse_keyword_name(keyword));
 			ofc_parse_call_arg_list_delete(
 				stmt->io.params);
 			ofc_parse_expr_list_delete(
 				stmt->io.iolist);
-			ofc_parse_debug_rewind(debug, dpos);
 
 			stmt->type = OFC_PARSE_STMT_ERROR;
-			return 0;
+			return (i + len);
 		}
+
 		i += len;
+
+		/* We're only sure it's an IO statement if there's an IO list,
+		   otherwise this could be an implicit FUNCTION call. */
+		if (!ofc_is_end_statement(
+			&ptr[i], NULL))
+		{
+			ofc_sparse_error(src, &ptr[i],
+				"Expected end of %s statement",
+				ofc_parse_keyword_name(keyword));
+			ofc_parse_call_arg_list_delete(
+				stmt->io.params);
+			ofc_parse_expr_list_delete(
+				stmt->io.iolist);
+
+			stmt->type = OFC_PARSE_STMT_ERROR;
+			return i;
+		}
 	}
 
 	return i;
@@ -198,14 +216,12 @@ unsigned ofc_parse_stmt_io_open(
 	ofc_parse_debug_t* debug,
 	ofc_parse_stmt_t* stmt)
 {
-	unsigned i = ofc_parse_stmt__io(
+	stmt->type = OFC_PARSE_STMT_IO_OPEN;
+
+	return ofc_parse_stmt__io(
 		src, ptr, debug,
 		OFC_PARSE_KEYWORD_OPEN, false, true,
 		stmt);
-	if (i == 0) return 0;
-
-	stmt->type = OFC_PARSE_STMT_IO_OPEN;
-	return i;
 }
 
 unsigned ofc_parse_stmt_io_inquire(
@@ -213,14 +229,11 @@ unsigned ofc_parse_stmt_io_inquire(
 	ofc_parse_debug_t* debug,
 	ofc_parse_stmt_t* stmt)
 {
-	unsigned i = ofc_parse_stmt__io(
+	stmt->type = OFC_PARSE_STMT_IO_INQUIRE;
+	return ofc_parse_stmt__io(
 		src, ptr, debug,
 		OFC_PARSE_KEYWORD_INQUIRE, false, true,
 		stmt);
-	if (i == 0) return 0;
-
-	stmt->type = OFC_PARSE_STMT_IO_INQUIRE;
-	return i;
 }
 
 unsigned ofc_parse_stmt_io_rewind(
@@ -228,14 +241,11 @@ unsigned ofc_parse_stmt_io_rewind(
 	ofc_parse_debug_t* debug,
 	ofc_parse_stmt_t* stmt)
 {
-	unsigned i = ofc_parse_stmt__io(
+	stmt->type = OFC_PARSE_STMT_IO_REWIND;
+	return ofc_parse_stmt__io(
 		src, ptr, debug,
 		OFC_PARSE_KEYWORD_REWIND, false, false,
 		stmt);
-	if (i == 0) return 0;
-
-	stmt->type = OFC_PARSE_STMT_IO_REWIND;
-	return i;
 }
 
 unsigned ofc_parse_stmt_io_backspace(
@@ -243,14 +253,11 @@ unsigned ofc_parse_stmt_io_backspace(
 	ofc_parse_debug_t* debug,
 	ofc_parse_stmt_t* stmt)
 {
-	unsigned i = ofc_parse_stmt__io(
+	stmt->type = OFC_PARSE_STMT_IO_BACKSPACE;
+	return ofc_parse_stmt__io(
 		src, ptr, debug,
 		OFC_PARSE_KEYWORD_BACKSPACE, false, false,
 		stmt);
-	if (i == 0) return 0;
-
-	stmt->type = OFC_PARSE_STMT_IO_BACKSPACE;
-	return i;
 }
 
 unsigned ofc_parse_stmt_io_read(
@@ -259,14 +266,11 @@ unsigned ofc_parse_stmt_io_read(
 	ofc_parse_stmt_t* stmt)
 {
 	/* TODO - Handle unbracketed READ statements */
-	unsigned i = ofc_parse_stmt__io(
+	stmt->type = OFC_PARSE_STMT_IO_READ;
+	return ofc_parse_stmt__io(
 		src, ptr, debug,
 		OFC_PARSE_KEYWORD_READ, true, true,
 		stmt);
-	if (i == 0) return 0;
-
-	stmt->type = OFC_PARSE_STMT_IO_READ;
-	return i;
 }
 
 unsigned ofc_parse_stmt_io_write(
@@ -274,14 +278,11 @@ unsigned ofc_parse_stmt_io_write(
 	ofc_parse_debug_t* debug,
 	ofc_parse_stmt_t* stmt)
 {
-	unsigned i = ofc_parse_stmt__io(
+	stmt->type = OFC_PARSE_STMT_IO_WRITE;
+	return ofc_parse_stmt__io(
 		src, ptr, debug,
 		OFC_PARSE_KEYWORD_WRITE, true, false,
 		stmt);
-	if (i == 0) return 0;
-
-	stmt->type = OFC_PARSE_STMT_IO_WRITE;
-	return i;
 }
 
 unsigned ofc_parse_stmt_io_end_file(
@@ -289,14 +290,11 @@ unsigned ofc_parse_stmt_io_end_file(
 	ofc_parse_debug_t* debug,
 	ofc_parse_stmt_t* stmt)
 {
-	unsigned i = ofc_parse_stmt__io(
+	stmt->type = OFC_PARSE_STMT_IO_END_FILE;
+	return ofc_parse_stmt__io(
 		src, ptr, debug,
 		OFC_PARSE_KEYWORD_END_FILE, false, false,
 		stmt);
-	if (i == 0) return 0;
-
-	stmt->type = OFC_PARSE_STMT_IO_END_FILE;
-	return i;
 }
 
 unsigned ofc_parse_stmt_io_close(
@@ -304,14 +302,11 @@ unsigned ofc_parse_stmt_io_close(
 	ofc_parse_debug_t* debug,
 	ofc_parse_stmt_t* stmt)
 {
-	unsigned i = ofc_parse_stmt__io(
+	stmt->type = OFC_PARSE_STMT_IO_CLOSE;
+	return ofc_parse_stmt__io(
 		src, ptr, debug,
 		OFC_PARSE_KEYWORD_CLOSE, false, true,
 		stmt);
-	if (i == 0) return 0;
-
-	stmt->type = OFC_PARSE_STMT_IO_CLOSE;
-	return i;
 }
 
 unsigned ofc_parse_stmt_io_encode(
@@ -319,14 +314,11 @@ unsigned ofc_parse_stmt_io_encode(
 	ofc_parse_debug_t* debug,
 	ofc_parse_stmt_t* stmt)
 {
-	unsigned i = ofc_parse_stmt__io(
+	stmt->type = OFC_PARSE_STMT_IO_ENCODE;
+	return ofc_parse_stmt__io(
 		src, ptr, debug,
 		OFC_PARSE_KEYWORD_ENCODE, true, true,
 		stmt);
-	if (i == 0) return 0;
-
-	stmt->type = OFC_PARSE_STMT_IO_ENCODE;
-	return i;
 }
 
 unsigned ofc_parse_stmt_io_decode(
@@ -334,14 +326,11 @@ unsigned ofc_parse_stmt_io_decode(
 	ofc_parse_debug_t* debug,
 	ofc_parse_stmt_t* stmt)
 {
-	unsigned i = ofc_parse_stmt__io(
+	stmt->type = OFC_PARSE_STMT_IO_DECODE;
+	return ofc_parse_stmt__io(
 		src, ptr, debug,
 		OFC_PARSE_KEYWORD_DECODE, true, true,
 		stmt);
-	if (i == 0) return 0;
-
-	stmt->type = OFC_PARSE_STMT_IO_DECODE;
-	return i;
 }
 
 static unsigned ofc_parse_stmt_io__print_type_accept(
