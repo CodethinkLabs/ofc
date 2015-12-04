@@ -190,63 +190,14 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_position(
 			return NULL;
 		}
 
-		const ofc_sema_type_t* etype
-			= ofc_sema_expr_type(s.io_position.err);
-		if (!etype)
+		if (!ofc_sema_io_check_label(
+			scope, stmt, ca_err->name.base,
+			ca_err->name.size, false,
+			s.io_position.err, NULL))
 		{
 			ofc_sema_expr_delete(s.io_position.unit);
 			ofc_sema_expr_delete(s.io_position.iostat);
 			ofc_sema_expr_delete(s.io_position.err);
-			return NULL;
-		}
-
-		if (ofc_sema_type_is_integer(etype))
-		{
-			const ofc_sema_typeval_t* err_label
-				= ofc_sema_expr_constant(s.io_position.err);
-			if (err_label)
-			{
-				int64_t fl64 = 0;
-				if (!ofc_sema_typeval_get_integer(
-					err_label, &fl64) || (fl64 < 0))
-				{
-					ofc_sema_scope_error(scope, stmt->src,
-						"ERR label expression must be a positive INTEGER in %s", name);
-					ofc_sema_expr_delete(s.io_position.unit);
-					ofc_sema_expr_delete(s.io_position.iostat);
-					ofc_sema_expr_delete(s.io_position.err);
-					return NULL;
-				}
-
-				unsigned ulabel = (unsigned) fl64;
-
-				if (((int64_t) ulabel) != fl64)
-				{
-					ofc_sema_expr_delete(s.io_position.unit);
-					ofc_sema_expr_delete(s.io_position.iostat);
-					ofc_sema_expr_delete(s.io_position.err);
-					return NULL;
-				}
-
-				const ofc_sema_label_t* label
-					= ofc_sema_label_map_find(scope->label, ulabel);
-				if (!label)
-				{
-					ofc_sema_scope_error(scope, stmt->src,
-						"ERR label expression not defined in %s", name);
-					ofc_sema_expr_delete(s.io_position.unit);
-					ofc_sema_expr_delete(s.io_position.iostat);
-					ofc_sema_expr_delete(s.io_position.err);
-					return NULL;
-				}
-			}
-		}
-		else
-		{
-			ofc_sema_scope_error(scope, stmt->src,
-				"ERR must be a label in %s", name);
-			ofc_sema_expr_delete(s.io_position.unit);
-			ofc_sema_expr_delete(s.io_position.iostat);
 			return NULL;
 		}
 	}

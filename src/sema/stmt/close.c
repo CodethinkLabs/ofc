@@ -194,35 +194,11 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_close(
 			return NULL;
 		}
 
-		const ofc_sema_type_t* etype
-			= ofc_sema_expr_type(s.io_close.err);
-		if (!etype)
+		if (!ofc_sema_io_check_label(
+			scope, stmt, ca_err->name.base,
+			ca_err->name.size, false,
+			s.io_close.err, NULL))
 		{
-			ofc_sema_stmt_io_close__cleanup(s);
-			return NULL;
-		}
-
-		if (ofc_sema_type_is_integer(etype))
-		{
-			const ofc_sema_typeval_t* err_label
-				= ofc_sema_expr_constant(s.io_close.err);
-			if (err_label)
-			{
-				int64_t fl64 = 0;
-				if (!ofc_sema_typeval_get_integer(
-					err_label, &fl64) || (fl64 < 0))
-				{
-					ofc_sema_scope_error(scope, stmt->src,
-						"ERR label expression must be a positive INTEGER in CLOSE");
-					ofc_sema_stmt_io_close__cleanup(s);
-					return NULL;
-				}
-			}
-		}
-		else
-		{
-			ofc_sema_scope_error(scope, stmt->src,
-				"ERR must be a label in CLOSE");
 			ofc_sema_stmt_io_close__cleanup(s);
 			return NULL;
 		}
