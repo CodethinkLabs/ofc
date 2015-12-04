@@ -417,32 +417,18 @@ static bool ofc_sema_decl__decl(
 			ofc_sema_expr_t* init_expr
 				= ofc_sema_expr(scope, pdecl->init_expr);
 			if (!init_expr)
-			{
-				ofc_sema_decl_delete(decl);
 				return false;
-			}
 
 			bool initialized = ofc_sema_decl_init(
 				scope, decl, init_expr);
 			ofc_sema_expr_delete(init_expr);
 
 			if (!initialized)
-			{
-				ofc_sema_decl_delete(decl);
 				return false;
-			}
 		}
 		else if (pdecl->init_clist)
 		{
 			/* TODO - CList initializer resolution. */
-			ofc_sema_decl_delete(decl);
-			return false;
-		}
-
-		if (!ofc_sema_decl_list_add(
-			scope->decl, decl))
-		{
-			ofc_sema_decl_delete(decl);
 			return false;
 		}
 	}
