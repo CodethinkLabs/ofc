@@ -67,7 +67,7 @@ $(TARGETS): $(FRONTEND)
 	@$(realpath $(FRONTEND)) $@ > /dev/null
 
 $(VG_TARGETS) : %.vg : % $(FRONTEND_DEBUG)
-	valgrind -v --leak-check=full --errors-for-leak-kinds=all --track-origins=yes --error-exitcode=1 $(realpath $(FRONTEND_DEBUG)) $^ > $@ 2>&1
+	valgrind -v --leak-check=full --errors-for-leak-kinds=all --track-origins=yes --error-exitcode=1 $(realpath $(FRONTEND_DEBUG)) $(patsubst %.vg, %, $@) > $@ 2>&1
 
 valgrind: $(VG_TARGETS)
 
