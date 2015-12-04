@@ -633,8 +633,11 @@ bool ofc_sema_decl_init(
 			return false;
 		}
 	}
+	else
+	{
+		decl->init = tv;
+	}
 
-	decl->init = tv;
 	return true;
 }
 
