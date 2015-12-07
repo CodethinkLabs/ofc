@@ -366,8 +366,8 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 		{
 			ofc_sema_scope_error(scope, a->src,
 				"Incompatible types (%s, %s) in operator %s",
-				ofc_parse_type_str_rep(at->type),
-				ofc_parse_type_str_rep(bt->type),
+				ofc_sema_type_str_rep(at),
+				ofc_sema_type_str_rep(bt),
 				ofc_parse_operator_str_rep(op));
 			ofc_sema_expr_delete(bs);
 			ofc_sema_expr_delete(as);
@@ -453,12 +453,13 @@ static ofc_sema_expr_t* ofc_sema_expr__unary(
 	ofc_sema_expr_t* as = ofc_sema_expr(scope, a);
 	if (!as) return NULL;
 
-	if (!ofc_sema_expr_type_allowed(
-		type, ofc_sema_expr_type(as)))
+	const ofc_sema_type_t* at
+		= ofc_sema_expr_type(as);
+	if (!ofc_sema_expr_type_allowed(type, at))
 	{
 		ofc_sema_scope_error(scope, a->src,
 			"Can't use type %s in operator %s",
-			ofc_parse_type_str_rep(a->type),
+			ofc_sema_type_str_rep(at),
 			ofc_parse_operator_str_rep(op));
 		ofc_sema_expr_delete(as);
 		return NULL;
