@@ -106,7 +106,7 @@ ofc_sema_arg_list_t* ofc_sema_arg_list_stmt_func(
 			return NULL;
 		}
 
-		if (!range || range->is_slice || !range->first
+		if (range->is_slice || !range->first
 			|| range->last || range->stride)
 		{
 			ofc_sema_scope_error(scope, range->src,
