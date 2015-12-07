@@ -51,7 +51,7 @@ cppcheck:
 	@cppcheck --enable=all --force $(SRC) > /dev/null
 
 scan:
-	@clang $(CFLAGS) -Weverything -o tempfile $(SRC) $(LDFLAGS) > /dev/null
+	@clang $(CFLAGS) -Weverything -Wno-reserved-id-macro -Wno-padded -Wno-zero-length-array -o tempfile $(SRC) $(LDFLAGS) > /dev/null
 	@rm tempfile
 
 scan-cc:
