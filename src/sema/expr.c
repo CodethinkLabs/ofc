@@ -1421,10 +1421,24 @@ bool ofc_sema_expr_print(
 	switch (expr->type)
 	{
 		case OFC_SEMA_EXPR_CONSTANT:
-			return ofc_sema_typeval_print(cs, expr->constant);
+			if (!ofc_sema_typeval_print(cs, expr->constant))
+				return false;
+			if (expr->brackets)
+			{
+				if (!ofc_colstr_atomic_writef(cs, ")"))
+					return false;
+			}
+			return true;
 
 		case OFC_SEMA_EXPR_LHS:
-			return ofc_sema_lhs_print(cs, expr->lhs);
+			if (!ofc_sema_lhs_print(cs, expr->lhs))
+				return false;
+			if (expr->brackets)
+			{
+				if (!ofc_colstr_atomic_writef(cs, ")"))
+					return false;
+			}
+			return true;
 
 		case OFC_SEMA_EXPR_CAST:
 			{
@@ -1475,15 +1489,22 @@ bool ofc_sema_expr_print(
 	if (expr->type >= OFC_SEMA_EXPR_COUNT)
 		return false;
 
-	if (!ofc_sema_expr_print(cs, expr->a))
-		return false;
-	if (!ofc_colstr_atomic_writef(cs, " %s ",
-		ofc_sema_expr__operator[expr->type]))
-			return false;
 	if (expr->b)
 	{
-		if (!ofc_sema_expr_print(cs, expr->b))
-			return false;
+		/* Print binary expression */
+		if (!ofc_sema_expr_print(cs, expr->a)
+			|| !ofc_colstr_atomic_writef(cs, " %s ",
+					ofc_sema_expr__operator[expr->type])
+			|| !ofc_sema_expr_print(cs, expr->b))
+				return false;
+	}
+	else
+	{
+		/* Print unary expression */
+		if (!ofc_colstr_atomic_writef(cs, " %s ",
+				ofc_sema_expr__operator[expr->type])
+			|| !ofc_sema_expr_print(cs, expr->a))
+				return false;
 	}
 
 	if (expr->brackets)
