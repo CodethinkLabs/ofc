@@ -52,9 +52,12 @@ ofc_hashmap_t* ofc_hashmap_create(
 			sizeof(ofc_hashmap_t));
 	if (!map) return NULL;
 
-	map->hash        = (hash ? hash : (void*)ofc_hashmap__hash);
-	map->key_compare = (key_compare ? key_compare : (void*)ofc_hashmap__key_compare);
-	map->item_key    = (item_key ? item_key : (void*)ofc_hashmap__item_key);
+	map->hash        = (hash ? hash
+		: (ofc_hashmap_hash_f)ofc_hashmap__hash);
+	map->key_compare = (key_compare ? key_compare
+		: (ofc_hashmap_key_compare_f)ofc_hashmap__key_compare);
+	map->item_key    = (item_key ? item_key
+		: (ofc_hashmap_item_key_f)ofc_hashmap__item_key);
 	map->item_delete = item_delete;
 
 	unsigned i;
