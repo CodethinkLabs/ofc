@@ -22,6 +22,7 @@ BINDIR = $(PREFIX)/bin
 TEST_DIR = tests
 TARGETS = $(sort $(wildcard $(TEST_DIR)/*.f $(TEST_DIR)/*.f77 $(TEST_DIR)/*.f90 $(TEST_DIR)/*.FOR))
 VG_TARGETS = $(addsuffix .vg, $(TARGETS))
+VGO_TARGETS = $(addsuffix .vgo, $(TARGETS))
 
 all : $(FRONTEND)
 
@@ -37,7 +38,8 @@ $(OBJ_DEBUG) : %.debug.o : %.c
 debug: $(FRONTEND_DEBUG)
 
 clean:
-	rm -f $(FRONTEND) $(FRONTEND_DEBUG) $(OBJ) $(OBJ_DEBUG) $(DEB) $(DEB_DEBUG) $(VG_TARGETS)
+	rm -f $(FRONTEND) $(FRONTEND_DEBUG) $(OBJ) $(OBJ_DEBUG) \
+	$(DEB) $(DEB_DEBUG) $(VG_TARGETS) $(VGO_TARGETS)
 
 install: $(FRONTEND)
 	install $(FRONTEND) $(BINDIR)
@@ -69,7 +71,12 @@ $(TARGETS): $(FRONTEND)
 $(VG_TARGETS) : %.vg : % $(FRONTEND_DEBUG)
 	valgrind -v --leak-check=full --errors-for-leak-kinds=all --track-origins=yes --error-exitcode=1 $(realpath $(FRONTEND_DEBUG)) $(patsubst %.vg, %, $@) > $@ 2>&1
 
+$(VGO_TARGETS) : %.vgo : % $(FRONTEND)
+	valgrind -v --leak-check=full --errors-for-leak-kinds=all --error-exitcode=1 $(realpath $(FRONTEND)) $(patsubst %.vgo, %, $@) > $@ 2>&1
+
 valgrind: $(VG_TARGETS)
+
+valgrind-optimized: $(VGO_TARGETS)
 
 loc:
 	@wc -l $(SRC)
