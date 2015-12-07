@@ -1,14 +1,16 @@
 #include <ofc/sema.h>
 #include <math.h>
 #include <tgmath.h>
+#include <ofc/noopt.h>
 
 #ifdef complex
 /* Remove macro from complex.h */
 #undef complex
 #endif
 
-
-static ofc_sema_typeval_t* ofc_sema_typeval__alloc(
+/* TODO - Remove NO_OPT, once we find a better workaround
+          for the compiler error. */
+static ofc_sema_typeval_t* NO_OPT ofc_sema_typeval__alloc(
 	const ofc_sema_typeval_t typeval)
 {
 	ofc_sema_typeval_t* alloc_typeval =
@@ -1348,13 +1350,10 @@ ofc_sema_typeval_t* ofc_sema_typeval_multiply(
 			break;
 		case OFC_SEMA_TYPE_INTEGER:
 		case OFC_SEMA_TYPE_BYTE:
-			{
-				int64_t r = a->integer * b->integer;
-				if ((b->integer != 0)
-					&& ((r / b->integer) != a->integer))
-					return NULL;
-				tv.integer = r;
-			}
+			tv.integer = a->integer * b->integer;
+			if ((b->integer != 0)
+				&& ((tv.integer / b->integer) != a->integer))
+				return NULL;
 			break;
 		default:
 			return NULL;
