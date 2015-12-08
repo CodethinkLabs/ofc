@@ -443,6 +443,8 @@ static bool ofc_sema_decl__decl(
 		}
 		else if (pdecl->init_clist)
 		{
+			ofc_sema_scope_error(scope, lhs->src,
+				"CList initializers not yet supported");
 			/* TODO - CList initializer resolution. */
 			return false;
 		}
