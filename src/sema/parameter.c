@@ -116,28 +116,18 @@ bool ofc_sema_parameter(
 	if (count == 0)
 		return false;
 
-	ofc_sema_parameter_t* param[count];
-
 	unsigned i;
 	for (i = 0; i < count; i++)
 	{
-		param[i] = ofc_sema_parameter_assign(
-			scope, stmt->parameter.list->assign[i]);
-		if (!param[i])
-		{
-			unsigned j;
-			for (j = 0; j < i; j++)
-				ofc_sema_parameter_delete(param[j]);
-			return false;
-		}
-	}
+		ofc_sema_parameter_t* param
+			= ofc_sema_parameter_assign(
+				scope, stmt->parameter.list->assign[i]);
+		if (!param) return false;
 
-	for (i = 0; i < count; i++)
-	{
-		if (!ofc_hashmap_add(scope->parameter, param[i]))
+		if (!ofc_hashmap_add(scope->parameter, param))
 		{
-			/* This should never happen. */
-			abort();
+			ofc_sema_parameter_delete(param);
+			return false;
 		}
 	}
 
