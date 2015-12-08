@@ -235,8 +235,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 		{
 			const ofc_sema_label_t* label;
 			if (!ofc_sema_io_check_label(
-				scope, stmt, ca_format->name.base,
-				ca_format->name.size, true,
+				scope, stmt, true,
 				s.io_write.format_expr, &label))
 			{
 				ofc_sema_stmt_io_write__cleanup(s);

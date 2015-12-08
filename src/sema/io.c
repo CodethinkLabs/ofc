@@ -346,7 +346,6 @@ bool ofc_sema_io_format_iolist_compare(
 bool ofc_sema_io_check_label(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt,
-	const char* name, unsigned name_size,
 	bool is_format, ofc_sema_expr_t* expr,
 	const ofc_sema_label_t** label_dst)
 {
@@ -368,7 +367,7 @@ bool ofc_sema_io_check_label(
 				label, &fl64) || (fl64 < 0))
 			{
 				ofc_sema_scope_error(scope, stmt->src,
-					"'%.*s' label expression must be a positive INTEGER", name_size, name);
+					"Label expression must be a positive INTEGER");
 				return false;
 			}
 
@@ -384,7 +383,7 @@ bool ofc_sema_io_check_label(
 				if (!label_ret)
 				{
 					ofc_sema_scope_error(scope, stmt->src,
-						"'%.*s' label expression not defined", name_size, name);
+						"Label %d expression not defined", ulabel);
 					return false;
 				}
 			}
@@ -392,13 +391,13 @@ bool ofc_sema_io_check_label(
 		else
 		{
 			ofc_sema_scope_warning(scope, stmt->src,
-				"Using a variable for '%.*s' label is deprecated", name_size, name);
+				"Using a variable for a label is deprecated");
 		}
 	}
 	else
 	{
 		ofc_sema_scope_error(scope, stmt->src,
-			"'%.*s' must be a label", name_size, name);
+			"Expected label in IO argument");
 		return false;
 	}
 

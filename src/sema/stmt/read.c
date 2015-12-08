@@ -257,8 +257,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 		{
 			const ofc_sema_label_t* label;
 			if (!ofc_sema_io_check_label(
-				scope, stmt, ca_format->name.base,
-				ca_format->name.size, true,
+				scope, stmt, true,
 				s.io_read.format_expr, &label))
 			{
 				ofc_sema_stmt_io_read__cleanup(s);
@@ -373,8 +372,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 		}
 
 		if (!ofc_sema_io_check_label(
-			scope, stmt, ca_end->name.base,
-			ca_end->name.size, false,
+			scope, stmt, false,
 			s.io_read.end, NULL))
 		{
 			ofc_sema_stmt_io_read__cleanup(s);
@@ -393,8 +391,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 		}
 
 		if (!ofc_sema_io_check_label(
-			scope, stmt, ca_eor->name.base,
-			ca_eor->name.size, false,
+			scope, stmt, false,
 			s.io_read.eor, NULL))
 		{
 			ofc_sema_stmt_io_read__cleanup(s);
@@ -413,8 +410,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 		}
 
 		if (!ofc_sema_io_check_label(
-			scope, stmt, ca_err->name.base,
-			ca_err->name.size, false,
+			scope, stmt, false,
 			s.io_read.err, NULL))
 		{
 			ofc_sema_stmt_io_read__cleanup(s);
