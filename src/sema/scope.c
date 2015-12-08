@@ -377,11 +377,19 @@ static bool ofc_sema_scope__body(
 		switch (stmt->type)
 		{
 			case OFC_PARSE_STMT_INCLUDE:
-				/* TODO - Handle this at a lower level to handle
-				          ordering better. */
-				if (!ofc_sema_scope__body(
-					scope, stmt->include.include))
-					return false;
+				{
+					/* TODO - Handle this at a lower level to handle
+							  ordering better. */
+
+					/* TODO - Think of a better way to track src. */
+					const ofc_sparse_t* src = scope->src;
+					scope->src = stmt->include.src;
+					bool success = ofc_sema_scope__body(
+						scope, stmt->include.include);
+					scope->src = src;
+					if (!success)
+						return false;
+				}
 				break;
 
 			case OFC_PARSE_STMT_FORMAT:
