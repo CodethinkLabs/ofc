@@ -65,133 +65,147 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 	ofc_parse_call_arg_t* ca_eor     = NULL;
 	ofc_parse_call_arg_t* ca_size    = NULL;
 
-	unsigned i;
-	for (i = 0; i < stmt->io.params->count; i++)
+	if (stmt->io.has_brakets)
 	{
-		ofc_parse_call_arg_t* param
-			= stmt->io.params->call_arg[i];
-		if (!param) continue;
-
-		if (ofc_str_ref_empty(param->name))
+		unsigned i;
+		for (i = 0; i < stmt->io.params->count; i++)
 		{
-			if (i >= 2)
-			{
-				ofc_sema_scope_error(scope, param->src,
-					"Un-named parameter %u has no meaning in READ.", i);
-				return NULL;
-			}
+			ofc_parse_call_arg_t* param
+				= stmt->io.params->call_arg[i];
+			if (!param) continue;
 
-			if (i == 0)
+			if (ofc_str_ref_empty(param->name))
 			{
-				ca_unit = param;
-			}
-			else
-			{
-				if (!ca_unit)
+				if (i >= 2)
 				{
 					ofc_sema_scope_error(scope, param->src,
-						"Un-named format parameter only valid after UNIT in READ.");
+						"Un-named parameter %u has no meaning in READ.", i);
+					return NULL;
+				}
+
+				if (i == 0)
+				{
+					ca_unit = param;
+				}
+				else
+				{
+					if (!ca_unit)
+					{
+						ofc_sema_scope_error(scope, param->src,
+							"Un-named format parameter only valid after UNIT in READ.");
+						return NULL;
+					}
+
+					ca_format = param;
+				}
+			}
+			else if (ofc_str_ref_equal_strz_ci(param->name, "UNIT"))
+			{
+				if (ca_unit)
+				{
+					ofc_sema_scope_error(scope, param->src,
+						"Re-definition of UNIT in READ.");
+					return NULL;
+				}
+
+				ca_unit = param;
+			}
+			else if (ofc_str_ref_equal_strz_ci(param->name, "FMT"))
+			{
+				if (ca_format)
+				{
+					ofc_sema_scope_error(scope, param->src,
+						"Re-definition of FMT in READ.");
 					return NULL;
 				}
 
 				ca_format = param;
 			}
-		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "UNIT"))
-		{
-			if (ca_unit)
+			else if (ofc_str_ref_equal_strz_ci(param->name, "IOSTAT"))
+			{
+				if (ca_iostat)
+				{
+					ofc_sema_scope_error(scope, param->src,
+						"Re-definition of IOSTAT in READ.");
+					return NULL;
+				}
+
+				ca_iostat = param;
+			}
+			else if (ofc_str_ref_equal_strz_ci(param->name, "REC"))
+			{
+				if (ca_rec)
+				{
+					ofc_sema_scope_error(scope, param->src,
+						"Re-definition of REC in READ.");
+					return NULL;
+				}
+
+				ca_rec = param;
+			}
+			else if (ofc_str_ref_equal_strz_ci(param->name, "ERR"))
+			{
+				if (ca_err)
+				{
+					ofc_sema_scope_error(scope, param->src,
+						"Re-definition of ERR in READ.");
+					return NULL;
+				}
+
+				ca_err = param;
+			}
+			else if (ofc_str_ref_equal_strz_ci(param->name, "ADVANCE"))
+			{
+				if (ca_advance)
+				{
+					ofc_sema_scope_error(scope, param->src,
+						"Re-definition of ADVANCE in READ.");
+					return NULL;
+				}
+
+				ca_advance = param;
+			}
+			else if (ofc_str_ref_equal_strz_ci(param->name, "END"))
+			{
+				if (ca_end)
+				{
+					ofc_sema_scope_error(scope, param->src,
+						"Re-definition of END in READ.");
+					return NULL;
+				}
+
+				ca_end = param;
+			}
+			else if (ofc_str_ref_equal_strz_ci(param->name, "SIZE"))
+			{
+				if (ca_size)
+				{
+					ofc_sema_scope_error(scope, param->src,
+						"Re-definition of SIZE in READ.");
+					return NULL;
+				}
+
+				ca_size = param;
+			}
+			else
 			{
 				ofc_sema_scope_error(scope, param->src,
-					"Re-definition of UNIT in READ.");
+					"Unrecognized paramater %u name '%.*s' in READ.",
+					i, param->name.size, param->name.base);
 				return NULL;
 			}
-
-			ca_unit = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "FMT"))
-		{
-			if (ca_format)
-			{
-				ofc_sema_scope_error(scope, param->src,
-					"Re-definition of FMT in READ.");
-				return NULL;
-			}
 
-			ca_format = param;
-		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "IOSTAT"))
+		if (!ca_unit)
 		{
-			if (ca_iostat)
-			{
-				ofc_sema_scope_error(scope, param->src,
-					"Re-definition of IOSTAT in READ.");
-				return NULL;
-			}
-
-			ca_iostat = param;
-		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "REC"))
-		{
-			if (ca_rec)
-			{
-				ofc_sema_scope_error(scope, param->src,
-					"Re-definition of REC in READ.");
-				return NULL;
-			}
-
-			ca_rec = param;
-		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "ERR"))
-		{
-			if (ca_err)
-			{
-				ofc_sema_scope_error(scope, param->src,
-					"Re-definition of ERR in READ.");
-				return NULL;
-			}
-
-			ca_err = param;
-		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "ADVANCE"))
-		{
-			if (ca_advance)
-			{
-				ofc_sema_scope_error(scope, param->src,
-					"Re-definition of ADVANCE in READ.");
-				return NULL;
-			}
-
-			ca_advance = param;
-		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "END"))
-		{
-			if (ca_end)
-			{
-				ofc_sema_scope_error(scope, param->src,
-					"Re-definition of END in READ.");
-				return NULL;
-			}
-
-			ca_end = param;
-		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "SIZE"))
-		{
-			if (ca_size)
-			{
-				ofc_sema_scope_error(scope, param->src,
-					"Re-definition of SIZE in READ.");
-				return NULL;
-			}
-
-			ca_size = param;
-		}
-		else
-		{
-			ofc_sema_scope_error(scope, param->src,
-				"Unrecognized paramater %u name '%.*s' in READ.",
-				i, param->name.size, param->name.base);
+			ofc_sparse_ref_error(stmt->src,
+				"No UNIT defined in READ.");
 			return NULL;
 		}
+	}
+	else
+	{
+		ca_format = stmt->io.params->call_arg[0];
 	}
 
 	if (ca_unit && (ca_unit->type == OFC_PARSE_CALL_ARG_ASTERISK))
@@ -223,7 +237,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 			return NULL;
 		}
 	}
-	else
+	else if (ca_unit)
 	{
 		ofc_sparse_ref_error(stmt->src,
 			"UNIT must be an INTEGER or CHARACTER "

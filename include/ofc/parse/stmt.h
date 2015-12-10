@@ -215,6 +215,7 @@ struct ofc_parse_stmt_s
 		struct
 		{
 			ofc_parse_call_arg_list_t* params;
+			bool                       has_brakets;
 			ofc_parse_expr_list_t*     iolist;
 		} io;
 

@@ -63,6 +63,7 @@ static unsigned ofc_parse_stmt__io(
 		src, ptr, debug, keyword);
 	if (i == 0) return 0;
 
+	stmt->io.has_brakets = false;
 	stmt->io.params = NULL;
 	if (ptr[i] == '(')
 	{
@@ -80,6 +81,7 @@ static unsigned ofc_parse_stmt__io(
 			ofc_parse_debug_rewind(debug, dpos);
 			return 0;
 		}
+		stmt->io.has_brakets = true;
 	}
 	else if (force_brackets)
 	{
@@ -284,7 +286,7 @@ unsigned ofc_parse_stmt_io_read(
 	stmt->type = OFC_PARSE_STMT_IO_READ;
 	return ofc_parse_stmt__io(
 		src, ptr, debug,
-		OFC_PARSE_KEYWORD_READ, true, true,
+		OFC_PARSE_KEYWORD_READ, true, false,
 		stmt);
 }
 
