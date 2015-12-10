@@ -7,8 +7,8 @@ SRC_DIR = . prep parse sema reformat parse/stmt sema/stmt
 SRC_DIR_BASE = $(addprefix $(BASE),$(SRC_DIR))
 LDFLAGS = -lm
 CFLAGS_COMMON = -Wall -Wextra -Werror -MD -MP -I include
-CFLAGS = -O3 $(CFLAGS_COMMON)
-CFLAGS_DEBUG = -O0 -g $(CFLAGS_COMMON)
+CFLAGS += -O3 $(CFLAGS_COMMON)
+CFLAGS_DEBUG += -O0 -g $(CFLAGS_COMMON)
 
 SRC = $(foreach dir, $(SRC_DIR_BASE), $(wildcard $(dir)/*.c))
 OBJ = $(patsubst %.c, %.o, $(SRC))
