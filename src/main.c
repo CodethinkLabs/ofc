@@ -154,6 +154,7 @@ int main(int argc, const char* argv[])
 	if (argc < 2)
 	{
 		fprintf(stderr, "Error: Expected source path\n");
+		print_usage(argv[0]);
 		return EXIT_FAILURE;
 	}
 
