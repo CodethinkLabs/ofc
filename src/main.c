@@ -81,17 +81,14 @@ args_e get_options(char* arg, int* num)
 	{
 		if (strcmp(option[0], "fixed") == 0)
 		{
-			printf("Select form type, %s, %s \n", option[1], option[0]);
 			return FIXED_FORM;
 		}
 		else if (strcmp(option[0], "free") == 0)
 		{
-			printf("Select form type, %s, %s \n", option[1], option[0]);
 			return FREE_FORM;
 		}
 		else if (strcmp(option[0], "tab") == 0)
 		{
-			printf("Select form type, %s, %s \n", option[1], option[0]);
 			return TAB_FORM;
 		}
 		else
@@ -108,7 +105,6 @@ args_e get_options(char* arg, int* num)
 		int width = strtol(option[2], (char **)NULL, 10);
 		if (width >= 0)
 		{
-			printf("Select tab width %s\n", option[2]);
 			*num = width;
 			return TAB_WIDTH;
 		}
@@ -122,7 +118,6 @@ args_e get_options(char* arg, int* num)
 	else if ((count == 1) && ((strcmp(option[0], "debug") == 0)
 		|| (strcmp(option[0], "d") == 0)))
 	{
-			printf("Select debug\n");
 			return DEBUG;
 	}
 	/* Parse -columns-n, -c-n */
@@ -132,7 +127,6 @@ args_e get_options(char* arg, int* num)
 		int col = strtol(option[1], (char **)NULL, 10);
 		if (col > 0)
 		{
-			printf("Select columns %s\n", option[1]);
 			*num = col;
 			return COLUMNS;
 		}
@@ -146,7 +140,6 @@ args_e get_options(char* arg, int* num)
 	else if ((count == 2) && (strcmp(option[0], "case") == 0)
 		&& (strcmp(option[1], "sen") == 0))
 	{
-		printf("Select case sensitivity\n");
 		return CASE_SEN;
 	}
 	else
