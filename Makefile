@@ -81,6 +81,6 @@ valgrind-optimized: $(VGO_TARGETS)
 loc:
 	@wc -l $(SRC)
 
--include $(DEB)
+-include $(DEB) $(DEB_DEBUG)
 
 .PHONY : all clean install uninstall debug cppcheck scan scan-cc scan-build check tests $(TARGETS) loc valgrind
