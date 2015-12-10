@@ -19,15 +19,13 @@
 
 typedef struct
 {
-	const ofc_sparse_t* src;
-	const char*     ptr;
-
-	char* message;
+	ofc_sparse_ref_t ref;
+	char*            message;
 } ofc_parse_debug_msg_t;
 
 struct ofc_parse_debug_s
 {
-	unsigned            count, max;
+	unsigned                count, max;
 	ofc_parse_debug_msg_t** message;
 };
 
@@ -102,7 +100,7 @@ void ofc_parse_debug_print(const ofc_parse_debug_t* stack)
 			= stack->message[i];
 		if (!message) continue;
 
-		ofc_sparse_warning(message->src, message->ptr,
+		ofc_sparse_ref_warning(message->ref,
 			"%s", message->message);
 	}
 }
@@ -112,7 +110,7 @@ void ofc_parse_debug_print(const ofc_parse_debug_t* stack)
 
 static void ofc_parse_debug_message(
 	ofc_parse_debug_t* stack,
-	const ofc_sparse_t* src, const char* ptr,
+	ofc_sparse_ref_t ref,
 	const char* format, va_list args)
 {
 	/* Error reporting is critical, if it fails we just abort. */
@@ -125,8 +123,7 @@ static void ofc_parse_debug_message(
 			sizeof(ofc_parse_debug_msg_t));
 	if (!message) abort();
 
-	message->src = src;
-	message->ptr = ptr;
+	message->ref = ref;
 
 	va_list largs;
 	va_copy(largs, args);
@@ -156,13 +153,13 @@ static void ofc_parse_debug_message(
 
 void ofc_parse_debug_warning(
 	ofc_parse_debug_t* stack,
-	const ofc_sparse_t* src, const char* ptr,
+	const ofc_sparse_ref_t ref,
 	const char* format, ...)
 {
 	va_list args;
 	va_start(args, format);
 	ofc_parse_debug_message(
-		stack, src, ptr,
+		stack, ref,
 		format, args);
 	va_end(args);
 }

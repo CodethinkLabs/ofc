@@ -60,7 +60,8 @@ static unsigned ofc_parse_decl_attr(
 		{
 			if (attr->is_static)
 			{
-				ofc_parse_debug_warning(debug, src, &ptr[i],
+				ofc_parse_debug_warning(debug,
+					ofc_sparse_ref(src, &ptr[i], l),
 					"Duplicate definition of STATIC decl attribute");
 			}
 
@@ -76,7 +77,8 @@ static unsigned ofc_parse_decl_attr(
 		{
 			if (attr->is_automatic)
 			{
-				ofc_parse_debug_warning(debug, src, &ptr[i],
+				ofc_parse_debug_warning(debug,
+					ofc_sparse_ref(src, &ptr[i], l),
 					"Duplicate definition of AUTOMATIC decl attribute");
 			}
 
@@ -92,7 +94,8 @@ static unsigned ofc_parse_decl_attr(
 		{
 			if (attr->is_volatile)
 			{
-				ofc_parse_debug_warning(debug, src, &ptr[i],
+				ofc_parse_debug_warning(debug,
+					ofc_sparse_ref(src, &ptr[i], l),
 					"Duplicate definition of VOLATILE decl attribute");
 			}
 
@@ -216,7 +219,7 @@ ofc_parse_type_t* ofc_parse_type(
 			&type.count_var);
 		if (l == 0)
 		{
-			ofc_sparse_error(src, &ptr[i],
+			ofc_sparse_error_ptr(src, &ptr[i],
 				"Expected count expression or value for character");
 			return NULL;
 		}
@@ -229,17 +232,18 @@ ofc_parse_type_t* ofc_parse_type(
 			src, &ptr[i], debug, &type.kind);
 		if (l == 0)
 		{
-			ofc_sparse_error(src, &ptr[i],
+			ofc_sparse_error_ptr(src, &ptr[i],
 				"Expected kind value after asterisk in type specifier");
 			return NULL;
 		}
-		i += l;
 
 		if (type.kind == 0)
 		{
-			ofc_parse_debug_warning(debug, src, &ptr[i],
+			ofc_parse_debug_warning(debug,
+				ofc_sparse_ref(src, &ptr[i], l),
 				"Kind value must be non-zero, using default");
 		}
+		i += l;
 	}
 
 	type.params = NULL;

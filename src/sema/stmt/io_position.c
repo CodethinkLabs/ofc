@@ -117,7 +117,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_position(
 
 	if (!ca_unit)
 	{
-		ofc_sema_scope_error(scope, stmt->src,
+		ofc_sparse_ref_error(stmt->src,
 			"No UNIT defined in %s.", name);
 		return NULL;
 	}
@@ -134,7 +134,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_position(
 
 		if (!ofc_sema_type_is_integer(etype))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"UNIT must be of type INTEGER in %s", name);
 			ofc_sema_expr_delete(s.io_position.unit);
 			return NULL;
@@ -142,7 +142,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_position(
 
 		if (!ofc_sema_expr_validate_uint(s.io_position.unit))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				   "UNIT must be a positive INTEGER in %s", name);
 			ofc_sema_expr_delete(s.io_position.unit);
 			return NULL;
@@ -150,7 +150,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_position(
 	}
 	else
 	{
-		ofc_sema_scope_error(scope, stmt->src,
+		ofc_sparse_ref_error(stmt->src,
 			"UNIT must be an INTEGER expression in %s", name);
 		return NULL;
 	}
@@ -167,7 +167,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_position(
 
 		if (s.io_position.iostat->type != OFC_SEMA_EXPR_LHS)
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"IOSTAT must be of a variable in %s", name);
 			ofc_sema_expr_delete(s.io_position.unit);
 			ofc_sema_expr_delete(s.io_position.iostat);
@@ -185,7 +185,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_position(
 
 		if (!ofc_sema_type_is_integer(etype))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"IOSTAT must be of type INTEGER in %s", name);
 			ofc_sema_expr_delete(s.io_position.unit);
 			ofc_sema_expr_delete(s.io_position.iostat);

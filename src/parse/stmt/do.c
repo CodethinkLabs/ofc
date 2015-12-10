@@ -81,7 +81,7 @@ unsigned ofc_parse_stmt__do_while_block(
 		OFC_PARSE_KEYWORD_DO, false);
 	if (len == 0)
 	{
-		ofc_sparse_error(src, &ptr[i],
+		ofc_sparse_error_ptr(src, &ptr[i],
 			"Invalid statement in DO WHILE body");
 
 		ofc_parse_stmt_list_delete(
@@ -326,7 +326,7 @@ unsigned ofc_parse_stmt__do_block(
 		OFC_PARSE_KEYWORD_DO, false);
 	if (len == 0)
 	{
-		ofc_sparse_error(src, &ptr[i],
+		ofc_sparse_error_ptr(src, &ptr[i],
 			"Invalid statement in DO body");
 
 		ofc_parse_stmt_list_delete(

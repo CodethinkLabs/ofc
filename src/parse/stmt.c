@@ -576,15 +576,15 @@ ofc_parse_stmt_t* ofc_parse_stmt(
 			return NULL;
 		}
 
-		ofc_parse_debug_warning(
-			debug, src, &ptr[i],
+		ofc_parse_debug_warning(debug,
+			ofc_sparse_ref(src, &ptr[i], 0),
 			"Expected newline or semicolon after statement");
 		ofc_parse_stmt__cleanup(stmt);
 		return NULL;
 	}
 	i += l;
 
-	stmt.src = ofc_str_ref(ptr, i);
+	stmt.src = ofc_sparse_ref(src, ptr, i);
 
 	ofc_parse_stmt_t* astmt
 		= ofc_parse_stmt__alloc(stmt);

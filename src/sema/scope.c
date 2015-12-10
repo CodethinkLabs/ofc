@@ -168,7 +168,7 @@ static bool ofc_sema_scope__subroutine(
 	{
 		if (!ofc_sema_decl_is_subroutine(decl))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"Can't redefine variable as SUBROUTINE");
 			return false;
 		}
@@ -250,7 +250,7 @@ static bool ofc_sema_scope__function(
 			scope, stmt->program.name);
 		if (!spec)
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"No IMPLICIT type matches FUNCTION name");
 			return false;
 		}
@@ -270,14 +270,14 @@ static bool ofc_sema_scope__function(
 	{
 		if (!ofc_sema_decl_is_function(decl))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"Can't redeclare used variable as FUNCTION");
 			return false;
 		}
 		else if (!ofc_sema_type_compare(rtype,
 			ofc_sema_decl_base_type(decl)))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"Conflicting definitions of FUNCTION return type");
 			return false;
 		}
@@ -472,7 +472,7 @@ static bool ofc_sema_scope__body(
 			case OFC_PARSE_STMT_UNION:
 			case OFC_PARSE_STMT_MAP:
 			case OFC_PARSE_STMT_RECORD:
-				ofc_sema_scope_error(scope, stmt->src,
+				ofc_sparse_ref_error(stmt->src,
 					"Unsupported statement");
 				/* TODO - Support these statements. */
 				return false;
@@ -482,7 +482,7 @@ static bool ofc_sema_scope__body(
 				{
 					case OFC_SEMA_SCOPE_GLOBAL:
 					case OFC_SEMA_SCOPE_BLOCK_DATA:
-						ofc_sema_scope_error(scope, stmt->src,
+						ofc_sparse_ref_error(stmt->src,
 							"Unexpected executable statement in scope.");
 						return false;
 					default:
@@ -646,7 +646,7 @@ ofc_sema_scope_t* ofc_sema_scope_stmt_func(
 	ofc_sema_spec_delete(spec);
 	if (!decl)
 	{
-		ofc_sema_scope_error(scope, stmt->src,
+		ofc_sparse_ref_error(stmt->src,
 			"No IMPLICIT rule matches statement function name.");
 		return NULL;
 	}
@@ -964,7 +964,7 @@ void ofc_sema_scope_error(
 
 	va_list args;
 	va_start(args, format);
-	ofc_sparse_error_va(scope->src, pos.base, format, args);
+	ofc_sparse_error_va(scope->src, pos, format, args);
 	va_end(args);
 }
 
@@ -977,7 +977,7 @@ void ofc_sema_scope_warning(
 
 	va_list args;
 	va_start(args, format);
-	ofc_sparse_warning_va(scope->src, pos.base, format, args);
+	ofc_sparse_warning_va(scope->src, pos, format, args);
 	va_end(args);
 }
 

@@ -119,7 +119,7 @@ static unsigned ofc_parse_stmt__io(
 	{
 		if (!has_iolist)
 		{
-			ofc_sparse_error(src, &ptr[i],
+			ofc_sparse_error(src, ofc_str_ref(&ptr[i], len),
 				"%s statement can't have iolist",
 				ofc_parse_keyword_name(keyword));
 			ofc_parse_call_arg_list_delete(
@@ -138,7 +138,7 @@ static unsigned ofc_parse_stmt__io(
 		if (!ofc_is_end_statement(
 			&ptr[i], NULL))
 		{
-			ofc_sparse_error(src, &ptr[i],
+			ofc_sparse_error_ptr(src, &ptr[i],
 				"Expected end of %s statement",
 				ofc_parse_keyword_name(keyword));
 			ofc_parse_call_arg_list_delete(
@@ -415,7 +415,7 @@ unsigned ofc_parse_stmt_io_print_type(
 
 	if (toupper(ptr[0]) != 'P')
 	{
-		ofc_parse_debug_warning(debug, src, ptr,
+		ofc_parse_debug_warning(debug, ofc_sparse_ref(src, ptr, i),
 			"Use of TYPE as an IO statement is deprecated and ambiguous"
 			", PRINT is preferred");
 		stmt->type = OFC_PARSE_STMT_IO_TYPE;

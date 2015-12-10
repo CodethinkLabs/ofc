@@ -259,7 +259,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 
 	if (!ca_unit)
 	{
-		ofc_sema_scope_error(scope, stmt->src,
+		ofc_sparse_ref_error(stmt->src,
 			"No UNIT defined in OPEN.");
 		return NULL;
 	}
@@ -280,7 +280,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 
 		if (!ofc_sema_type_is_integer(etype))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"UNIT must be of type INTEGER in OPEN");
 			ofc_sema_stmt_io_open__cleanup(s);
 			return NULL;
@@ -288,7 +288,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 
 		if (!ofc_sema_expr_validate_uint(s.io_open.unit))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				   "UNIT must be a positive INTEGER in OPEN");
 			ofc_sema_stmt_io_open__cleanup(s);
 			return NULL;
@@ -296,7 +296,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 	}
 	else
 	{
-		ofc_sema_scope_error(scope, stmt->src,
+		ofc_sparse_ref_error(stmt->src,
 			"UNIT must be an INTEGER expression in OPEN");
 		return NULL;
 	}
@@ -321,7 +321,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 
 		if (etype->type != OFC_SEMA_TYPE_CHARACTER)
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"ACCESS must be a CHARACTER expression in OPEN");
 			ofc_sema_stmt_io_open__cleanup(s);
 			return NULL;
@@ -339,7 +339,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 
 				if (!ca_recl)
 				{
-					ofc_sema_scope_error(scope, stmt->src,
+					ofc_sparse_ref_error(stmt->src,
 						"Direct ACCESS must have a RECL specifier in OPEN");
 					ofc_sema_stmt_io_open__cleanup(s);
 					return NULL;
@@ -347,7 +347,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 			}
 			else if (!ofc_typeval_character_equal_strz_ci(constant, "SEQUENTIAL"))
 			{
-				ofc_sema_scope_error(scope, stmt->src,
+				ofc_sparse_ref_error(stmt->src,
 					"ACCESS must be 'SEQUENTIAL' or 'DIRECT' in OPEN");
 				ofc_sema_stmt_io_open__cleanup(s);
 				return NULL;
@@ -375,7 +375,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 
 		if (etype->type != OFC_SEMA_TYPE_CHARACTER)
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"ACTION must be a CHARACTER expression in OPEN");
 			ofc_sema_stmt_io_open__cleanup(s);
 			return NULL;
@@ -399,7 +399,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 			}
 			else
 			{
-				ofc_sema_scope_error(scope, stmt->src,
+				ofc_sparse_ref_error(stmt->src,
 					"ACTION must be 'READ', 'WRITE' or 'READWRITE' in OPEN");
 				ofc_sema_stmt_io_open__cleanup(s);
 				return NULL;
@@ -427,7 +427,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 
 		if (etype->type != OFC_SEMA_TYPE_CHARACTER)
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"FORM must be a CHARACTER expression in OPEN");
 			ofc_sema_stmt_io_open__cleanup(s);
 			return NULL;
@@ -447,7 +447,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 			}
 			else
 			{
-				ofc_sema_scope_error(scope, stmt->src,
+				ofc_sparse_ref_error(stmt->src,
 					"FORM must be 'FORMATTED' or 'UNFORMATTED' in OPEN");
 				ofc_sema_stmt_io_open__cleanup(s);
 				return NULL;
@@ -458,7 +458,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 	if (ca_blank
 		&& (s.io_open.format_type != OFC_SEMA_CALL_ARG_FORMATTED))
 	{
-		ofc_sema_scope_error(scope, stmt->src,
+		ofc_sparse_ref_error(stmt->src,
 			"BLANK can only be specified for formatted I/O in OPEN");
 		ofc_sema_stmt_io_open__cleanup(s);
 		return NULL;
@@ -483,7 +483,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 
 		if (etype->type != OFC_SEMA_TYPE_CHARACTER)
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"BLANK must be a CHARACTER expression in OPEN");
 			ofc_sema_stmt_io_open__cleanup(s);
 			return NULL;
@@ -499,7 +499,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 			}
 			else if (!ofc_typeval_character_equal_strz_ci(constant, "NULL"))
 			{
-				ofc_sema_scope_error(scope, stmt->src,
+				ofc_sparse_ref_error(stmt->src,
 					"BLANK must be 'NULL' or 'ZERO' in OPEN");
 				ofc_sema_stmt_io_open__cleanup(s);
 				return NULL;
@@ -510,7 +510,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 	if (ca_delim
 		&& (s.io_open.format_type != OFC_SEMA_CALL_ARG_FORMATTED))
 	{
-		ofc_sema_scope_error(scope, stmt->src,
+		ofc_sparse_ref_error(stmt->src,
 			"DELIM can only be specified for formatted I/O in OPEN");
 		ofc_sema_stmt_io_open__cleanup(s);
 		return NULL;
@@ -535,7 +535,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 
 		if (etype->type != OFC_SEMA_TYPE_CHARACTER)
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"DELIM must be a CHARACTER expression in OPEN");
 			ofc_sema_stmt_io_open__cleanup(s);
 			return NULL;
@@ -555,7 +555,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 			}
 			else if (!ofc_typeval_character_equal_strz_ci(constant, "NONE"))
 			{
-				ofc_sema_scope_error(scope, stmt->src,
+				ofc_sparse_ref_error(stmt->src,
 					"DELIM must be 'NULL' or 'ZERO' in OPEN");
 				ofc_sema_stmt_io_open__cleanup(s);
 				return NULL;
@@ -602,7 +602,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 
 		if (etype->type != OFC_SEMA_TYPE_CHARACTER)
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"STATUS must be a CHARACTER expression in OPEN");
 			ofc_sema_stmt_io_open__cleanup(s);
 			return NULL;
@@ -634,7 +634,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 			}
 			else
 			{
-				ofc_sema_scope_error(scope, stmt->src,
+				ofc_sparse_ref_error(stmt->src,
 					"STATUS must be 'UNKNOWN', 'REPLACE', 'OLD', 'NEW' or 'SCRATCH' in OPEN");
 				ofc_sema_stmt_io_open__cleanup(s);
 				return NULL;
@@ -644,7 +644,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 
 	if (ca_file && (s.io_open.file_type == OFC_SEMA_CALL_ARG_SCRATCH))
 	{
-		ofc_sema_scope_error(scope, stmt->src,
+		ofc_sparse_ref_error(stmt->src,
 			"FILE can only be specified for non scratch files in OPEN");
 		ofc_sema_stmt_io_open__cleanup(s);
 		return NULL;
@@ -669,7 +669,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 
 		if (etype->type != OFC_SEMA_TYPE_CHARACTER)
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"FILE must be a CHARACTER expression in OPEN");
 			ofc_sema_stmt_io_open__cleanup(s);
 			return NULL;
@@ -688,7 +688,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 
 		if (s.io_open.iostat->type != OFC_SEMA_EXPR_LHS)
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"IOSTAT must be a variable in OPEN");
 			ofc_sema_stmt_io_open__cleanup(s);
 			return NULL;
@@ -704,7 +704,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 
 		if (!ofc_sema_type_is_integer(etype))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"IOSTAT must be of type INTEGER in OPEN");
 			ofc_sema_stmt_io_open__cleanup(s);
 			return NULL;
@@ -713,7 +713,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 
 	if (ca_pad && (s.io_open.format_type != OFC_SEMA_CALL_ARG_FORMATTED))
 	{
-		ofc_sema_scope_error(scope, stmt->src,
+		ofc_sparse_ref_error(stmt->src,
 			"PAD can only be specified for formatted I/O in OPEN");
 		ofc_sema_stmt_io_open__cleanup(s);
 		return NULL;
@@ -738,7 +738,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 
 		if (etype->type != OFC_SEMA_TYPE_CHARACTER)
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"PAD must be a CHARACTER expression in OPEN");
 			ofc_sema_stmt_io_open__cleanup(s);
 			return NULL;
@@ -754,7 +754,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 			}
 			else if (!ofc_typeval_character_equal_strz_ci(constant, "YES"))
 			{
-				ofc_sema_scope_error(scope, stmt->src,
+				ofc_sparse_ref_error(stmt->src,
 					"PAD must be 'YES' or 'NO' in OPEN");
 				ofc_sema_stmt_io_open__cleanup(s);
 				return NULL;
@@ -764,7 +764,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 
 	if (ca_position && (s.io_open.access_type != OFC_SEMA_CALL_ARG_SEQUENTIAL))
 	{
-		ofc_sema_scope_error(scope, stmt->src,
+		ofc_sparse_ref_error(stmt->src,
 			"POSITION can only be specified for files with sequential access in OPEN");
 		ofc_sema_stmt_io_open__cleanup(s);
 		return NULL;
@@ -789,7 +789,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 
 		if (etype->type != OFC_SEMA_TYPE_CHARACTER)
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"POSITION must be a CHARACTER expression in OPEN");
 			ofc_sema_stmt_io_open__cleanup(s);
 			return NULL;
@@ -809,7 +809,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 			}
 			else if (!ofc_typeval_character_equal_strz_ci(constant, "ASIS"))
 			{
-				ofc_sema_scope_error(scope, stmt->src,
+				ofc_sparse_ref_error(stmt->src,
 					"POSITION must be 'REWIND', 'APPEND' or 'ASIS' in OPEN");
 				ofc_sema_stmt_io_open__cleanup(s);
 				return NULL;
@@ -833,7 +833,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 
 		if (!ofc_sema_type_is_integer(etype))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"RECL must be of type INTEGER in OPEN");
 			ofc_sema_stmt_io_open__cleanup(s);
 			return NULL;
@@ -851,7 +851,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 			{
 				if (evalue64 < 0)
 				{
-					ofc_sema_scope_error(scope, stmt->src,
+					ofc_sparse_ref_error(stmt->src,
 						"RECL must be a positive INTEGER in OPEN");
 					ofc_sema_stmt_io_open__cleanup(s);
 					return NULL;

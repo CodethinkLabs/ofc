@@ -34,7 +34,7 @@ bool ofc_sema_stmt_decl_attr(
 		if (decl)
 		{
 			/* TODO - Apply attributes to decl. */
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"Declaration attributes must be specified prior to use");
 			return false;
 		}
@@ -44,7 +44,7 @@ bool ofc_sema_stmt_decl_attr(
 				scope, decl_name);
 		if (!spec)
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"No declaration for '%.*s' and no valid IMPLICIT rule",
 				decl_name.size, decl_name.base);
 			return false;
@@ -55,14 +55,14 @@ bool ofc_sema_stmt_decl_attr(
 			case OFC_PARSE_STMT_DECL_ATTR_AUTOMATIC:
 				if (spec->is_static)
 				{
-					ofc_sema_scope_error(scope, stmt->src,
+					ofc_sparse_ref_error(stmt->src,
 						"Specifying '%.*s' as STATIC and AUTOMATIC",
 						decl_name.size, decl_name.base);
 					return false;
 				}
 				if (spec->is_automatic)
 				{
-					ofc_sema_scope_warning(scope, stmt->src,
+					ofc_sparse_ref_warning(stmt->src,
 						"Re-declaring '%.*s' as AUTOMATIC",
 						decl_name.size, decl_name.base);
 				}
@@ -71,14 +71,14 @@ bool ofc_sema_stmt_decl_attr(
 			case OFC_PARSE_STMT_DECL_ATTR_STATIC:
 				if (spec->is_automatic)
 				{
-					ofc_sema_scope_error(scope, stmt->src,
+					ofc_sparse_ref_error(stmt->src,
 						"Specifying '%.*s' as AUTOMATIC and STATIC",
 						decl_name.size, decl_name.base);
 					return false;
 				}
 				if (spec->is_static)
 				{
-					ofc_sema_scope_warning(scope, stmt->src,
+					ofc_sparse_ref_warning(stmt->src,
 						"Re-declaring '%.*s' as STATIC",
 						decl_name.size, decl_name.base);
 				}
@@ -87,7 +87,7 @@ bool ofc_sema_stmt_decl_attr(
 			case OFC_PARSE_STMT_DECL_ATTR_VOLATILE:
 				if (spec->is_volatile)
 				{
-					ofc_sema_scope_warning(scope, stmt->src,
+					ofc_sparse_ref_warning(stmt->src,
 						"Re-declaring '%.*s' as VOLATILE",
 						decl_name.size, decl_name.base);
 				}
@@ -96,14 +96,14 @@ bool ofc_sema_stmt_decl_attr(
 			case OFC_PARSE_STMT_DECL_ATTR_EXTERNAL:
 				if (spec->is_intrinsic)
 				{
-					ofc_sema_scope_error(scope, stmt->src,
+					ofc_sparse_ref_error(stmt->src,
 						"Specifying '%.*s' as INTRINSIC and EXTERNAL",
 						decl_name.size, decl_name.base);
 					return false;
 				}
 				if (spec->is_external)
 				{
-					ofc_sema_scope_warning(scope, stmt->src,
+					ofc_sparse_ref_warning(stmt->src,
 						"Re-declaring '%.*s' as EXTERNAL",
 						decl_name.size, decl_name.base);
 				}
@@ -112,14 +112,14 @@ bool ofc_sema_stmt_decl_attr(
 			case OFC_PARSE_STMT_DECL_ATTR_INTRINSIC:
 				if (spec->is_external)
 				{
-					ofc_sema_scope_error(scope, stmt->src,
+					ofc_sparse_ref_error(stmt->src,
 						"Specifying '%.*s' as EXTERNAL and INTRINSIC",
 						decl_name.size, decl_name.base);
 					return false;
 				}
 				if (spec->is_intrinsic)
 				{
-					ofc_sema_scope_warning(scope, stmt->src,
+					ofc_sparse_ref_warning(stmt->src,
 						"Re-declaring '%.*s' as INTRINSIC",
 						decl_name.size, decl_name.base);
 				}

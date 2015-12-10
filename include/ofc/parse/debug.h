@@ -32,8 +32,8 @@ void ofc_parse_debug_print(const ofc_parse_debug_t* stack);
 
 void ofc_parse_debug_warning(
 	ofc_parse_debug_t* stack,
-	const ofc_sparse_t* src, const char* ptr,
+	ofc_sparse_ref_t ref,
 	const char* format, ...)
-	__attribute__ ((format (printf, 4, 5)));
+	__attribute__ ((format (printf, 3, 4)));
 
 #endif

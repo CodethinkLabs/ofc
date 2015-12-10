@@ -59,7 +59,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_assign(
 		= ofc_sema_decl_type(s.assign.dest);
 	if (!ofc_sema_type_is_integer(dtype))
 	{
-		ofc_sema_scope_error(scope, stmt->src,
+		ofc_sparse_ref_error(stmt->src,
 			"ASSIGN destination must be of type INTEGER.");
 		return NULL;
 	}

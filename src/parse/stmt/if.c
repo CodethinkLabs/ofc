@@ -184,7 +184,7 @@ static unsigned ofc_parse_stmt_if__then(
 			OFC_PARSE_KEYWORD_IF, false);
 		if (len == 0)
 		{
-			ofc_sparse_error(src, &ptr[i],
+			ofc_sparse_error_ptr(src, &ptr[i],
 				"Invalid statement in %s body",
 				(has_else ? "ELSE" : "IF THEN"));
 

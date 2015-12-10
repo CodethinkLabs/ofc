@@ -38,7 +38,8 @@ static unsigned ofc_parse_implicit__mask(
 
 		if (end < start)
 		{
-			ofc_parse_debug_warning(debug, src, ptr,
+			ofc_parse_debug_warning(debug,
+				ofc_sparse_ref(src, ptr, len),
 				"Implicit character rule backwards");
 
 			unsigned swap = start;
@@ -47,7 +48,8 @@ static unsigned ofc_parse_implicit__mask(
 
 		if (end == start)
 		{
-			ofc_parse_debug_warning(debug, src, ptr,
+			ofc_parse_debug_warning(debug,
+				ofc_sparse_ref(src, ptr, len),
 				"Implicit rule has redundant range");
 		}
 	}
@@ -89,7 +91,8 @@ static unsigned ofc_parse_implicit__mask_list(
 
 	if (m == 0)
 	{
-		ofc_parse_debug_warning(debug, src, ptr,
+		ofc_parse_debug_warning(debug,
+			ofc_sparse_ref(src, ptr, i),
 			"Implicit rule is empty");
 	}
 

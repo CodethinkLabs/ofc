@@ -34,7 +34,7 @@ ofc_parse_stmt_list_t* ofc_parse_file(const ofc_sparse_t* src)
 
 	if (ptr[len] != '\0')
 	{
-		ofc_sparse_error(src, &ptr[len],
+		ofc_sparse_error(src, ofc_str_ref(&ptr[len], 0),
 			"Expected end of input");
 		ofc_parse_stmt_list_delete(list);
 		return NULL;

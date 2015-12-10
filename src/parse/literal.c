@@ -58,7 +58,8 @@ static unsigned ofc_parse_literal__base(
 	{
 		if (quoted)
 		{
-			ofc_parse_debug_warning(debug, src, &ptr[i],
+			ofc_parse_debug_warning(debug,
+				ofc_sparse_ref(src, &ptr[i], 1),
 				"Valid digit expected in BOZ literal");
 		}
 		return 0;
@@ -74,7 +75,8 @@ static unsigned ofc_parse_literal__base(
 			if (((nv / base) != v)
 				|| ((nv % base) != d))
 			{
-				ofc_parse_debug_warning(debug, src, ptr,
+				ofc_parse_debug_warning(debug,
+					ofc_sparse_ref(src, ptr, i),
 					"Literal value exceeds 64-bit size");
 				return 0;
 			}
@@ -84,7 +86,8 @@ static unsigned ofc_parse_literal__base(
 
 	if (quoted && (ptr[i++] != quote))
 	{
-		ofc_parse_debug_warning(debug, src, &ptr[i],
+		ofc_parse_debug_warning(debug,
+			ofc_sparse_ref(src, &ptr[i], 1),
 			"Invalid character in BOZ literal");
 		return 0;
 	}
@@ -311,7 +314,7 @@ ofc_string_t* ofc_parse_character(
 	}
 	if (ptr[i++] != quote)
 	{
-		ofc_sparse_error(src, ptr, "Unterminated string");
+		ofc_sparse_error_ptr(src, ptr, "Unterminated string");
 		return NULL;
 	}
 
@@ -324,7 +327,7 @@ ofc_string_t* ofc_parse_character(
 			|| (pptr[j] == '\n')
 			|| (pptr[j] == '\0'))
 		{
-			ofc_sparse_error(src, ptr,
+			ofc_sparse_error_ptr(src, ptr,
 				"Unexpected end of line in character constant");
 			return NULL;
 		}
@@ -411,7 +414,9 @@ ofc_string_t* ofc_parse_character(
 
 				/* '\x' where x is any other character */
 				default:
-					ofc_parse_debug_warning(debug, src, ptr,
+					/* TODO - Point to actual unknown escape sequence. */
+					ofc_parse_debug_warning(debug,
+						ofc_sparse_ref(src, ptr, i),
 						"Unknown escape sequence in string"
 						", ignoring escape character");
 					break;
@@ -553,7 +558,8 @@ unsigned ofc_parse_literal_number(
 
 	if (kind_ambiguous)
 	{
-		ofc_parse_debug_warning(debug, src, ptr,
+		ofc_parse_debug_warning(debug,
+			ofc_sparse_ref(src, ptr, i),
 			"Kind is ambiguous, ignoring exponent kind");
 	}
 

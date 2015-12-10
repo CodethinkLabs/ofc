@@ -122,7 +122,8 @@ unsigned ofc_parse_ident(
 
 	if (!ofc_sparse_sequential(src, ptr, i))
 	{
-		ofc_parse_debug_warning(debug, src, ptr,
+		ofc_parse_debug_warning(debug,
+			ofc_sparse_ref(src, ptr, i),
 			"Unexpected whitespace within identifier '%.*s'",
 			i, ptr);
 	}
@@ -138,7 +139,8 @@ unsigned ofc_parse_name(
 {
 	if (strncasecmp(ptr, "END", 3) == 0)
 	{
-		ofc_parse_debug_warning(debug, src, ptr,
+		ofc_parse_debug_warning(debug,
+			ofc_sparse_ref(src, ptr, 3),
 			"Using END at the beginning of an identifier is incompatible with Fortran 90");
 	}
 
@@ -240,7 +242,8 @@ unsigned ofc_parse_keyword_named(
 
 		if (entirely_sequential && !space_optional)
 		{
-			ofc_parse_debug_warning(debug, src, ptr,
+			ofc_parse_debug_warning(debug,
+				ofc_sparse_ref(src, &ptr[space], 0),
 				"Expected a space between keywords '%.*s' and '%.*s'",
 				space, ptr, remain, &ptr[space]);
 		}
@@ -248,7 +251,8 @@ unsigned ofc_parse_keyword_named(
 
 	if (unexpected_space)
 	{
-		ofc_parse_debug_warning(debug, src, ptr,
+		ofc_parse_debug_warning(debug,
+			ofc_sparse_ref(src, ptr, len),
 			"Unexpected space in %s keyword", kwstr);
 	}
 
@@ -260,7 +264,8 @@ unsigned ofc_parse_keyword_named(
 		if ((nlen > 0) && ofc_sparse_sequential(
 			src, &ptr[len - 1], 2))
 		{
-			ofc_parse_debug_warning(debug, src, &ptr[len],
+			ofc_parse_debug_warning(debug,
+				ofc_sparse_ref(src, &ptr[len], 0),
 				"Expected whitespace between %s and name", kwstr);
 		}
 
@@ -281,7 +286,8 @@ unsigned ofc_parse_keyword_named(
 		}
 		else
 		{
-			ofc_parse_debug_warning(debug, src, &ptr[len],
+			ofc_parse_debug_warning(debug,
+				ofc_sparse_ref(src, &ptr[len], 0),
 				"Expected whitespace between %s and %s", kwstr,
 				(is_number ? "number" : "identifier"));
 		}
@@ -343,7 +349,8 @@ unsigned ofc_parse_keyword_end_named(
 	if (name && !ofc_str_ref_empty(kname)
 		&& !ofc_str_ref_equal(*name, kname))
 	{
-		ofc_parse_debug_warning(debug, src, &ptr[i],
+		ofc_parse_debug_warning(debug,
+			ofc_sparse_ref(src, kname.base, kname.size),
 			"END %s name '%.*s' doesn't match %s name '%.*s'",
 			ofc_parse_keyword__name[keyword],
 			kname.size, kname.base,
@@ -353,7 +360,8 @@ unsigned ofc_parse_keyword_end_named(
 
 	if (!ofc_sparse_sequential(src, ptr, 3))
 	{
-		ofc_parse_debug_warning(debug, src, ptr,
+		ofc_parse_debug_warning(debug,
+			ofc_sparse_ref(src, ptr, 3),
 			"Unexpected space in END keyword");
 	}
 

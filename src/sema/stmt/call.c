@@ -50,7 +50,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_call(
 	}
 	else if (!ofc_sema_decl_is_subroutine(s.call.subroutine))
 	{
-		ofc_sema_scope_error(scope, stmt->src,
+		ofc_sparse_ref_error(stmt->src,
 			"CALL target must be a valid SUBROUTINE");
 		return NULL;
 	}
@@ -74,7 +74,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_call(
 
 			if (!ofc_str_ref_empty(arg->name))
 			{
-				ofc_sema_scope_error(scope, stmt->src,
+				ofc_sparse_ref_error(stmt->src,
 					"CALL arguments musn't be named");
 				ofc_sema_expr_list_delete(s.call.args);
 				return NULL;
@@ -86,7 +86,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_call(
 				case OFC_PARSE_CALL_ARG_RETURN:
 					break;
 				default:
-					ofc_sema_scope_error(scope, stmt->src,
+					ofc_sparse_ref_error(stmt->src,
 						"CALL arguments must be an expression or return label");
 					ofc_sema_expr_list_delete(s.call.args);
 					return NULL;

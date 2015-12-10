@@ -34,7 +34,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_return(
 			scope, stmt->stop_pause_return.value);
 		if (!ofc_sema_expr_validate_uint(s.alt_return))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"Alternate RETURN value must be a positive INTEGER");
 			ofc_sema_expr_delete(s.alt_return);
 			return NULL;

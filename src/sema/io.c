@@ -366,7 +366,7 @@ bool ofc_sema_io_check_label(
 			if (!ofc_sema_typeval_get_integer(
 				label, &fl64) || (fl64 < 0))
 			{
-				ofc_sema_scope_error(scope, stmt->src,
+				ofc_sparse_ref_error(stmt->src,
 					"Label expression must be a positive INTEGER");
 				return false;
 			}
@@ -382,7 +382,7 @@ bool ofc_sema_io_check_label(
 					scope->label, ulabel);
 				if (!label_ret)
 				{
-					ofc_sema_scope_error(scope, stmt->src,
+					ofc_sparse_ref_error(stmt->src,
 						"Label %d expression not defined", ulabel);
 					return false;
 				}
@@ -390,13 +390,13 @@ bool ofc_sema_io_check_label(
 		}
 		else
 		{
-			ofc_sema_scope_warning(scope, stmt->src,
+			ofc_sparse_ref_warning(stmt->src,
 				"Using a variable for a label is deprecated");
 		}
 	}
 	else
 	{
-		ofc_sema_scope_error(scope, stmt->src,
+		ofc_sparse_ref_error(stmt->src,
 			"Expected label in IO argument");
 		return false;
 	}

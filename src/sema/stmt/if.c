@@ -27,13 +27,13 @@ ofc_sema_stmt_t* ofc_sema_stmt_if__computed(
 	if (!stmt->if_comp.label
 		|| (stmt->if_comp.label->count < 3))
 	{
-		ofc_sema_scope_error(scope, stmt->src,
+		ofc_sparse_ref_error(stmt->src,
 			"Not enough targets in arithmetic IF statement.");
 		return NULL;
 	}
 	else if (stmt->if_comp.label->count > 3)
 	{
-		ofc_sema_scope_error(scope, stmt->src,
+		ofc_sparse_ref_error(stmt->src,
 			"Too many targets in arithmetic IF statement.");
 		return NULL;
 	}
@@ -192,7 +192,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_if__then(
 	}
 	else
 	{
-		ofc_sema_scope_warning(scope, stmt->src,
+		ofc_sparse_ref_warning(stmt->src,
 			"Empty IF THEN block");
 	}
 

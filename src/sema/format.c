@@ -124,7 +124,7 @@ bool ofc_sema_format(
 
 	if (stmt->label == 0)
 	{
-		ofc_sema_scope_warning(scope, stmt->src,
+		ofc_sparse_ref_warning(stmt->src,
 			"FORMAT statement without a label has no effect"
 			" and will be ignored");
 		return true;
@@ -135,7 +135,7 @@ bool ofc_sema_format(
 	if (!format) return false;
 
 	if (!ofc_sema_label_map_add_format(
-		scope, stmt, scope->label,
+		stmt, scope->label,
 		stmt->label, format))
 	{
 		ofc_sema_format_delete(format);

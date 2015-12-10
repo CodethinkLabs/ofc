@@ -99,7 +99,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_print(
 		{
 			/* TODO - Support INTEGER array formats. */
 
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"Format (FMT) must be a label or character string in PRINT");
 			ofc_sema_expr_delete(s.io_print.format_expr);
 			return NULL;

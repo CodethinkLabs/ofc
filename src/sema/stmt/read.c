@@ -216,7 +216,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 			&& (!ofc_sema_type_is_integer(etype)
 				|| !ofc_sema_expr_validate_uint(s.io_read.unit)))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				   "UNIT must be a positive INTEGER "
 				   "or a CHARACTER expression in READ");
 			ofc_sema_stmt_io_read__cleanup(s);
@@ -225,7 +225,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 	}
 	else
 	{
-		ofc_sema_scope_error(scope, stmt->src,
+		ofc_sparse_ref_error(stmt->src,
 			"UNIT must be an INTEGER or CHARACTER "
 			"expression, or asterisk in READ");
 		return NULL;
@@ -266,7 +266,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 
 			if (label && label->type != OFC_SEMA_LABEL_FORMAT)
 			{
-				ofc_sema_scope_error(scope, stmt->src,
+				ofc_sparse_ref_error(stmt->src,
 					"Label expression must be a FORMAT statement in READ");
 				ofc_sema_stmt_io_read__cleanup(s);
 				return NULL;
@@ -282,7 +282,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 		{
 			/* TODO - Support INTEGER array formats. */
 
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"Format (FMT) must be a label or character string in READ");
 			ofc_sema_stmt_io_read__cleanup(s);
 			return NULL;
@@ -290,7 +290,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 	}
 	else if (ca_format)
 	{
-		ofc_sema_scope_error(scope, stmt->src,
+		ofc_sparse_ref_error(stmt->src,
 			"Format (FMT) must be an INTEGER expression or asterisk in READ");
 		ofc_sema_stmt_io_read__cleanup(s);
 		return NULL;
@@ -298,14 +298,14 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 
 	if (ca_advance && s.io_read.stdout)
 	{
-		ofc_sema_scope_error(scope, stmt->src,
+		ofc_sparse_ref_error(stmt->src,
 			"ADVANCE specifier can only be used with an external UNIT in READ");
 		ofc_sema_stmt_io_read__cleanup(s);
 		return NULL;
 	}
 	else if (ca_advance && (!ca_format || s.io_read.format_ldio))
 	{
-		ofc_sema_scope_error(scope, stmt->src,
+		ofc_sparse_ref_error(stmt->src,
 			"ADVANCE specifier can only be used with a formatted input in READ");
 		ofc_sema_stmt_io_read__cleanup(s);
 		return NULL;
@@ -330,7 +330,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 
 		if (etype->type != OFC_SEMA_TYPE_CHARACTER)
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"ADVANCE must be a CHARACTER expression in READ");
 			ofc_sema_stmt_io_read__cleanup(s);
 			return NULL;
@@ -353,7 +353,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 			}
 			else if (strcasecmp(advance_str, "YES") != 0)
 			{
-				ofc_sema_scope_error(scope, stmt->src,
+				ofc_sparse_ref_error(stmt->src,
 					"ADVANCE must be 'YES' or 'NO' in READ");
 				ofc_sema_stmt_io_read__cleanup(s);
 				return NULL;
@@ -430,7 +430,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 
 		if (s.io_read.iostat->type != OFC_SEMA_EXPR_LHS)
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"IOSTAT must be a variable in READ");
 			ofc_sema_stmt_io_read__cleanup(s);
 			return NULL;
@@ -446,7 +446,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 
 		if (!ofc_sema_type_is_integer(etype))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"IOSTAT must be of type INTEGER in READ");
 			ofc_sema_stmt_io_read__cleanup(s);
 			return NULL;
@@ -455,7 +455,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 
 	if (ca_rec && (s.io_read.format_ldio || ca_end))
 	{
-		ofc_sema_scope_error(scope, stmt->src,
+		ofc_sparse_ref_error(stmt->src,
 			"REC specifier not compatible with END,"
 			" NML or list-directed data transfer in READ");
 		ofc_sema_stmt_io_read__cleanup(s);
@@ -481,7 +481,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 
 		if (!ofc_sema_type_is_integer(etype))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"REC must be of type INTEGER in READ");
 			ofc_sema_stmt_io_read__cleanup(s);
 			return NULL;
@@ -490,7 +490,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 
 	if (ca_size && s.io_read.is_advancing)
 	{
-		ofc_sema_scope_error(scope, stmt->src,
+		ofc_sparse_ref_error(stmt->src,
 			"SIZE not compatible with advancing formatted "
 			"sequential data transfer in READ");
 		ofc_sema_stmt_io_read__cleanup(s);
@@ -500,7 +500,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 	{
 		if (s.io_read.size->type != OFC_SEMA_EXPR_LHS)
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"SIZE must be a variable in READ");
 			ofc_sema_stmt_io_read__cleanup(s);
 			return NULL;
@@ -520,7 +520,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 
 		if (!ofc_sema_type_is_integer(etype))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"SIZE must be of type INTEGER in READ");
 			ofc_sema_stmt_io_read__cleanup(s);
 			return NULL;

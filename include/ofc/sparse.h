@@ -56,22 +56,64 @@ char* ofc_sparse_include_path(
 	const ofc_sparse_t* sparse, const char* path);
 
 
+#include <ofc/str_ref.h>
+
+typedef struct
+{
+	const ofc_sparse_t* sparse;
+	ofc_str_ref_t       string;
+} ofc_sparse_ref_t;
+
+static inline ofc_sparse_ref_t ofc_sparse_ref(
+	const ofc_sparse_t* sparse, const char* ptr, unsigned size)
+{
+	return (ofc_sparse_ref_t)
+	{
+		.sparse = sparse,
+		.string = (ofc_str_ref_t){ .base = ptr, .size = size }
+	};
+}
+
+static inline ofc_sparse_ref_t ofc_sparse_ref_strz(
+	const ofc_sparse_t* sparse, const char* strz)
+	{ return ofc_sparse_ref(sparse, strz, (strz ? strlen(strz) : 0)); }
+
+
 #include <stdarg.h>
 
 void ofc_sparse_error_va(
-	const ofc_sparse_t* sparse, const char* ptr,
+	const ofc_sparse_t* sparse, ofc_str_ref_t ref,
 	const char* format, va_list args);
 void ofc_sparse_warning_va(
-	const ofc_sparse_t* sparse, const char* ptr,
+	const ofc_sparse_t* sparse, ofc_str_ref_t ref,
 	const char* format, va_list args);
 
 void ofc_sparse_error(
-	const ofc_sparse_t* sparse, const char* ptr,
+	const ofc_sparse_t* sparse, ofc_str_ref_t ref,
 	const char* format, ...)
 	__attribute__ ((format (printf, 3, 4)));
 void ofc_sparse_warning(
+	const ofc_sparse_t* sparse, ofc_str_ref_t ref,
+	const char* format, ...)
+	__attribute__ ((format (printf, 3, 4)));
+
+
+void ofc_sparse_error_ptr(
 	const ofc_sparse_t* sparse, const char* ptr,
 	const char* format, ...)
 	__attribute__ ((format (printf, 3, 4)));
+void ofc_sparse_warning_ptr(
+	const ofc_sparse_t* sparse, const char* ptr,
+	const char* format, ...)
+	__attribute__ ((format (printf, 3, 4)));
+
+void ofc_sparse_ref_error(
+	ofc_sparse_ref_t ref,
+	const char* format, ...)
+	__attribute__ ((format (printf, 2, 3)));
+void ofc_sparse_ref_warning(
+	ofc_sparse_ref_t ref,
+	const char* format, ...)
+	__attribute__ ((format (printf, 2, 3)));
 
 #endif

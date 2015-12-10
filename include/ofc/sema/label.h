@@ -59,7 +59,7 @@ void ofc_sema_label_map_delete(
 	ofc_sema_label_map_t* label_map);
 
 bool ofc_sema_label_map_add_stmt(
-	const ofc_sema_scope_t* scope, const ofc_parse_stmt_t* stmt,
+	const ofc_parse_stmt_t* stmt,
 	ofc_sema_label_map_t* map, unsigned label, unsigned offset);
 
 ofc_sema_format_label_list_t* ofc_sema_format_label_list_create(void);
@@ -75,7 +75,7 @@ bool ofc_sema_format_label_list_print(
 bool ofc_sema_format_label_print(ofc_colstr_t* cs,
 	ofc_sema_label_t* label);
 bool ofc_sema_label_map_add_format(
-	const ofc_sema_scope_t* scope, const ofc_parse_stmt_t* stmt,
+	const ofc_parse_stmt_t* stmt,
 	ofc_sema_label_map_t* map, unsigned label,
 	ofc_sema_format_t* format);
 const ofc_sema_label_t* ofc_sema_label_map_find(

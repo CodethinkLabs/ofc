@@ -121,7 +121,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_close(
 
 	if (!ca_unit)
 	{
-		ofc_sema_scope_error(scope, stmt->src,
+		ofc_sparse_ref_error(stmt->src,
 			"No UNIT defined in CLOSE.");
 		return NULL;
 	}
@@ -142,7 +142,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_close(
 
 		if (!ofc_sema_type_is_integer(etype))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"UNIT must be of type INTEGER in CLOSE");
 			ofc_sema_stmt_io_close__cleanup(s);
 			return NULL;
@@ -150,7 +150,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_close(
 
 		if (!ofc_sema_expr_validate_uint(s.io_close.unit))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"UNIT must be a positive INTEGER in CLOSE");
 			ofc_sema_stmt_io_close__cleanup(s);
 			return NULL;
@@ -158,7 +158,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_close(
 	}
 	else
 	{
-		ofc_sema_scope_error(scope, stmt->src,
+		ofc_sparse_ref_error(stmt->src,
 			"UNIT must be an INTEGER expression in CLOSE");
 		return NULL;
 	}
@@ -175,7 +175,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_close(
 
 		if (s.io_close.iostat->type != OFC_SEMA_EXPR_LHS)
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"IOSTAT must be of a variable in CLOSE");
 			ofc_sema_stmt_io_close__cleanup(s);
 			return NULL;
@@ -191,7 +191,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_close(
 
 		if (!ofc_sema_type_is_integer(etype))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"IOSTAT must be of type INTEGER in CLOSE");
 			ofc_sema_stmt_io_close__cleanup(s);
 			return NULL;
@@ -238,7 +238,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_close(
 
 		if (etype->type != OFC_SEMA_TYPE_CHARACTER)
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"STATUS must be a CHARACTER expression in CLOSE");
 			ofc_sema_stmt_io_close__cleanup(s);
 			return NULL;
@@ -258,7 +258,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_close(
 			}
 			else
 			{
-				ofc_sema_scope_error(scope, stmt->src,
+				ofc_sparse_ref_error(stmt->src,
 					"STATUS must be 'DELETE' or 'KEEP' in CLOSE");
 				ofc_sema_stmt_io_close__cleanup(s);
 				return NULL;

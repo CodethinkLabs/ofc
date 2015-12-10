@@ -145,7 +145,7 @@ void ofc_sema_label_map_delete(
 }
 
 bool ofc_sema_label_map_add_stmt(
-	const ofc_sema_scope_t* scope, const ofc_parse_stmt_t* stmt,
+	const ofc_parse_stmt_t* stmt,
 	ofc_sema_label_map_t* map, unsigned label, unsigned offset)
 {
 	if (!map || !map->label || !map->offset)
@@ -155,14 +155,14 @@ bool ofc_sema_label_map_add_stmt(
 		= ofc_hashmap_find(map->label, &label);
 	if (duplicate)
 	{
-		ofc_sema_scope_error(scope, stmt->src,
+		ofc_sparse_ref_error(stmt->src,
 			"Re-definition of label %d", label);
 		return false;
 	}
 
 	if (label == 0)
 	{
-		ofc_sema_scope_warning(scope, stmt->src,
+		ofc_sparse_ref_warning(stmt->src,
 			"Label zero isn't supported in standard Fortran");
 	}
 
@@ -188,7 +188,7 @@ bool ofc_sema_label_map_add_stmt(
 }
 
 bool ofc_sema_label_map_add_format(
-	const ofc_sema_scope_t* scope, const ofc_parse_stmt_t* stmt,
+	const ofc_parse_stmt_t* stmt,
 	ofc_sema_label_map_t* map, unsigned label,
 	ofc_sema_format_t* format)
 {
@@ -200,14 +200,14 @@ bool ofc_sema_label_map_add_format(
 		= ofc_hashmap_find(map->label, &label);
 	if (duplicate)
 	{
-		ofc_sema_scope_error(scope, stmt->src,
+		ofc_sparse_ref_error(stmt->src,
 			"Re-definition of label %d", label);
 		return false;
 	}
 
 	if (label == 0)
 	{
-		ofc_sema_scope_warning(scope, stmt->src,
+		ofc_sparse_ref_warning(stmt->src,
 			"Label zero isn't supported in standard Fortran");
 	}
 

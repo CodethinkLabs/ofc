@@ -162,7 +162,7 @@ ofc_sema_stmt_t* ofc_sema_stmt(
 			break;
 
 		default:
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"Unsuported statement");
 			break;
 	}
@@ -183,7 +183,7 @@ bool ofc_sema_stmt_scoped(
 		if (ofc_sema_label_map_find(
 			scope->label, stmt->label))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"Duplicate label definition");
 			return false;
 		}
@@ -199,7 +199,7 @@ bool ofc_sema_stmt_scoped(
 	if ((s->type == OFC_SEMA_STMT_CONTINUE)
 		&& (stmt->label == 0))
 	{
-		ofc_sema_scope_warning(scope, stmt->src,
+		ofc_sparse_ref_warning(stmt->src,
 			"Unlabelled CONTINUE statement has no effect");
 		ofc_sema_stmt_delete(s);
 		return true;
@@ -218,7 +218,7 @@ bool ofc_sema_stmt_scoped(
 
 	if (stmt->label != 0)
 	{
-		if (!ofc_sema_label_map_add_stmt(scope, stmt,
+		if (!ofc_sema_label_map_add_stmt(stmt,
 			scope->label, stmt->label, offset))
 		{
 			/* This should never happen. */

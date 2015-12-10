@@ -167,7 +167,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 
 	if (!ca_unit)
 	{
-		ofc_sema_scope_error(scope, stmt->src,
+		ofc_sparse_ref_error(stmt->src,
 			"No UNIT defined in WRITE.");
 		return NULL;
 	}
@@ -194,7 +194,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 			&& (!ofc_sema_type_is_integer(etype)
 				|| !ofc_sema_expr_validate_uint(s.io_write.unit)))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				   "UNIT must be a positive INTEGER "
 				   "or a CHARACTER expression in WRITE");
 			ofc_sema_stmt_io_write__cleanup(s);
@@ -203,7 +203,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 	}
 	else
 	{
-		ofc_sema_scope_error(scope, stmt->src,
+		ofc_sparse_ref_error(stmt->src,
 			"UNIT must be an INTEGER or CHARACTER "
 			"expression, or asterisk in WRITE");
 		return NULL;
@@ -244,7 +244,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 
 			if (label && label->type != OFC_SEMA_LABEL_FORMAT)
 			{
-				ofc_sema_scope_error(scope, stmt->src,
+				ofc_sparse_ref_error(stmt->src,
 					"Label expression must be a FORMAT statement in WRITE");
 				ofc_sema_stmt_io_write__cleanup(s);
 				return NULL;
@@ -260,7 +260,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 		{
 			/* TODO - Support INTEGER array formats. */
 
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"Format (FMT) must be a label or character string in WRITE");
 			ofc_sema_stmt_io_write__cleanup(s);
 			return NULL;
@@ -268,7 +268,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 	}
 	else if (ca_format)
 	{
-		ofc_sema_scope_error(scope, stmt->src,
+		ofc_sparse_ref_error(stmt->src,
 			"Format (FMT) must be an INTEGER expression or asterisk in WRITE");
 		ofc_sema_stmt_io_write__cleanup(s);
 		return NULL;
@@ -276,14 +276,14 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 
 	if (ca_advance && s.io_write.stdout)
 	{
-		ofc_sema_scope_error(scope, stmt->src,
+		ofc_sparse_ref_error(stmt->src,
 			"ADVANCE specifier can only be used with an external UNIT in WRITE");
 		ofc_sema_stmt_io_write__cleanup(s);
 		return NULL;
 	}
 	else if (ca_advance && (!ca_format || s.io_write.format_ldio))
 	{
-		ofc_sema_scope_error(scope, stmt->src,
+		ofc_sparse_ref_error(stmt->src,
 			"ADVANCE specifier can only be used with a formatted input in WRITE");
 		ofc_sema_stmt_io_write__cleanup(s);
 		return NULL;
@@ -308,7 +308,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 
 		if (etype->type != OFC_SEMA_TYPE_CHARACTER)
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"ADVANCE must be a CHARACTER expression in WRITE");
 			ofc_sema_stmt_io_write__cleanup(s);
 			return NULL;
@@ -331,7 +331,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 			}
 			else if (strcasecmp(advance_str, "YES") != 0)
 			{
-				ofc_sema_scope_error(scope, stmt->src,
+				ofc_sparse_ref_error(stmt->src,
 					"ADVANCE must be 'YES' or 'NO' in WRITE");
 				ofc_sema_stmt_io_write__cleanup(s);
 				return NULL;
@@ -351,7 +351,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 
 		if (s.io_write.iostat->type != OFC_SEMA_EXPR_LHS)
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"IOSTAT must be a variable in WRITE");
 			ofc_sema_stmt_io_write__cleanup(s);
 			return NULL;
@@ -367,7 +367,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 
 		if (!ofc_sema_type_is_integer(etype))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"IOSTAT must be of type INTEGER in WRITE");
 			ofc_sema_stmt_io_write__cleanup(s);
 			return NULL;
@@ -376,7 +376,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 
 	if (ca_rec && s.io_write.format_ldio)
 	{
-		ofc_sema_scope_error(scope, stmt->src,
+		ofc_sparse_ref_error(stmt->src,
 			"REC specifier not compatible with namelist"
 			" or list-directed data transfer in WRITE");
 		ofc_sema_stmt_io_write__cleanup(s);
@@ -402,7 +402,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 
 		if (!ofc_sema_type_is_integer(etype))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"REC must be of type INTEGER in WRITE");
 			ofc_sema_stmt_io_write__cleanup(s);
 			return NULL;
@@ -456,13 +456,13 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 		{
 			if (iolist_len < data_desc_count)
 			{
-				ofc_sema_scope_warning(scope, stmt->src,
+				ofc_sparse_ref_warning(stmt->src,
 					"IO list shorter than FORMAT list,"
 					" last FORMAT data descriptors will be ignored");
 			}
 			else if (fmod(iolist_len, data_desc_count) != 0)
 			{
-				ofc_sema_scope_warning(scope, stmt->src,
+				ofc_sparse_ref_warning(stmt->src,
 					"IO list length is not a multiple of FORMAT list length");
 			}
 
@@ -488,12 +488,12 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 		}
 		else if (iolist_len > 0)
 		{
-			ofc_sema_scope_warning(scope, stmt->src,
+			ofc_sparse_ref_warning(stmt->src,
 				"No data edit descriptors in FORMAT list");
 		}
 		else if (data_desc_count > 0)
 		{
-			ofc_sema_scope_warning(scope, stmt->src,
+			ofc_sparse_ref_warning(stmt->src,
 				"No IO list in PRINT statement");
 		}
 

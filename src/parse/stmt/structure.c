@@ -98,7 +98,7 @@ static unsigned ofc_parse_stmt__structure(
 			src, &ptr[i], debug, keyword, false);
 		if (len == 0)
 		{
-			ofc_sparse_error(src, &ptr[i],
+			ofc_sparse_error_ptr(src, &ptr[i],
 				"Invalid statement in %s body",
 				ofc_parse_keyword_name(keyword));
 

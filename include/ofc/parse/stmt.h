@@ -96,7 +96,7 @@ struct ofc_parse_stmt_s
 
 	unsigned label;
 
-	ofc_str_ref_t src;
+	ofc_sparse_ref_t src;
 
 	union
 	{

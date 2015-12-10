@@ -416,13 +416,13 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_inquire(
 
 	if (!ca_unit && !ca_file)
 	{
-		ofc_sema_scope_error(scope, stmt->src,
+		ofc_sparse_ref_error(stmt->src,
 			"No UNIT or FILE defined in INQUIRE.");
 		return NULL;
 	}
 	else if (ca_unit && ca_file)
 	{
-		ofc_sema_scope_error(scope, stmt->src,
+		ofc_sparse_ref_error(stmt->src,
 			"UNIT and FILE can't be specified at the same time in INQUIRE.");
 		return NULL;
 	}
@@ -443,7 +443,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_inquire(
 
 		if (!ofc_sema_type_is_integer(etype))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"UNIT must be of type INTEGER in INQUIRE");
 			ofc_sema_stmt_io_inquire__cleanup(s);
 			return NULL;
@@ -451,7 +451,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_inquire(
 
 		if (!ofc_sema_expr_validate_uint(s.io_inquire.unit))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				   "UNIT must be a positive INTEGER in INQUIRE");
 			ofc_sema_stmt_io_inquire__cleanup(s);
 			return NULL;
@@ -459,7 +459,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_inquire(
 	}
 	else if (ca_unit)
 	{
-		ofc_sema_scope_error(scope, stmt->src,
+		ofc_sparse_ref_error(stmt->src,
 			"UNIT must be an INTEGER expression in INQUIRE");
 		return NULL;
 	}
@@ -484,7 +484,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_inquire(
 
 		if (!ofc_sema_type_is_character(etype))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"ACCESS must be a CHARACTER variable in INQUIRE");
 			ofc_sema_stmt_io_inquire__cleanup(s);
 			return NULL;
@@ -511,7 +511,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_inquire(
 
 		if (!ofc_sema_type_is_character(etype))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"ACTION must be a CHARACTER variable in INQUIRE");
 			ofc_sema_stmt_io_inquire__cleanup(s);
 			return NULL;
@@ -538,7 +538,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_inquire(
 
 		if (!ofc_sema_type_is_character(etype))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"BLANK must be a CHARACTER variable in INQUIRE");
 			ofc_sema_stmt_io_inquire__cleanup(s);
 			return NULL;
@@ -565,7 +565,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_inquire(
 
 		if (!ofc_sema_type_is_character(etype))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"DELIM must be a CHARACTER variable in INQUIRE");
 			ofc_sema_stmt_io_inquire__cleanup(s);
 			return NULL;
@@ -592,7 +592,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_inquire(
 
 		if (!ofc_sema_type_is_character(etype))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"DIRECT must be a CHARACTER variable in INQUIRE");
 			ofc_sema_stmt_io_inquire__cleanup(s);
 			return NULL;
@@ -637,7 +637,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_inquire(
 		}
 		if (!ofc_sema_type_is_logical(etype))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"EXIST must be a LOGICAL variable in INQUIRE");
 			ofc_sema_stmt_io_inquire__cleanup(s);
 			return NULL;
@@ -664,7 +664,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_inquire(
 
 		if (!ofc_sema_type_is_character(etype))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"FILE must be a CHARACTER expression in INQUIRE");
 			ofc_sema_stmt_io_inquire__cleanup(s);
 			return NULL;
@@ -691,7 +691,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_inquire(
 
 		if (!ofc_sema_type_is_character(etype))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"FORM must be a CHARACTER variable in INQUIRE");
 			ofc_sema_stmt_io_inquire__cleanup(s);
 			return NULL;
@@ -718,7 +718,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_inquire(
 
 		if (!ofc_sema_type_is_character(etype))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"FORMATTED must be a CHARACTER variable in INQUIRE");
 			ofc_sema_stmt_io_inquire__cleanup(s);
 			return NULL;
@@ -745,7 +745,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_inquire(
 
 		if (!ofc_sema_type_is_integer(etype))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"IOSTAT must be of type INTEGER in INQUIRE");
 			ofc_sema_stmt_io_inquire__cleanup(s);
 			return NULL;
@@ -772,7 +772,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_inquire(
 
 		if (!ofc_sema_type_is_character(etype))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"NAME must be a CHARACTER variable in INQUIRE");
 			ofc_sema_stmt_io_inquire__cleanup(s);
 			return NULL;
@@ -799,7 +799,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_inquire(
 
 		if (!ofc_sema_type_is_logical(etype))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"NAMED must be a LOGICAL variable in INQUIRE");
 			ofc_sema_stmt_io_inquire__cleanup(s);
 			return NULL;
@@ -826,7 +826,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_inquire(
 
 		if (!ofc_sema_type_is_integer(etype))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"NEXTREC must be of type INTEGER in INQUIRE");
 			ofc_sema_stmt_io_inquire__cleanup(s);
 			return NULL;
@@ -853,7 +853,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_inquire(
 
 		if (!ofc_sema_type_is_integer(etype))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"NUMBER must be an INTEGER variable in INQUIRE");
 			ofc_sema_stmt_io_inquire__cleanup(s);
 			return NULL;
@@ -880,7 +880,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_inquire(
 
 		if (!ofc_sema_type_is_logical(etype))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"OPENED must be a LOGICAL variable in INQUIRE");
 			ofc_sema_stmt_io_inquire__cleanup(s);
 			return NULL;
@@ -907,7 +907,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_inquire(
 
 		if (!ofc_sema_type_is_character(etype))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"PAD must be a CHARACTER variable in INQUIRE");
 			ofc_sema_stmt_io_inquire__cleanup(s);
 			return NULL;
@@ -934,7 +934,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_inquire(
 
 		if (!ofc_sema_type_is_character(etype))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"POSITION must be a CHARACTER variable in INQUIRE");
 			ofc_sema_stmt_io_inquire__cleanup(s);
 			return NULL;
@@ -961,7 +961,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_inquire(
 
 		if (!ofc_sema_type_is_character(etype))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"READ must be a CHARACTER variable in INQUIRE");
 			ofc_sema_stmt_io_inquire__cleanup(s);
 			return NULL;
@@ -988,7 +988,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_inquire(
 
 		if (!ofc_sema_type_is_character(etype))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"READWRITE must be a CHARACTER variable in INQUIRE");
 			ofc_sema_stmt_io_inquire__cleanup(s);
 			return NULL;
@@ -1015,7 +1015,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_inquire(
 
 		if (!ofc_sema_type_is_integer(etype))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"RECL must be an INTEGER variable in INQUIRE");
 			ofc_sema_stmt_io_inquire__cleanup(s);
 			return NULL;
@@ -1042,7 +1042,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_inquire(
 
 		if (!ofc_sema_type_is_character(etype))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"SEQUENTIAL must be a CHARACTER variable in INQUIRE");
 			ofc_sema_stmt_io_inquire__cleanup(s);
 			return NULL;
@@ -1069,7 +1069,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_inquire(
 
 		if (!ofc_sema_type_is_character(etype))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"UNFORMATTED must be a CHARACTER variable in INQUIRE");
 			ofc_sema_stmt_io_inquire__cleanup(s);
 			return NULL;
@@ -1096,7 +1096,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_inquire(
 
 		if (!ofc_sema_type_is_character(etype))
 		{
-			ofc_sema_scope_error(scope, stmt->src,
+			ofc_sparse_ref_error(stmt->src,
 				"WRITE must be a CHARACTER variable in INQUIRE");
 			ofc_sema_stmt_io_inquire__cleanup(s);
 			return NULL;

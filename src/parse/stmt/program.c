@@ -39,7 +39,8 @@ unsigned ofc_parse_stmt_program__body(
 	}
 	else
 	{
-		ofc_parse_debug_warning(debug, src, &ptr[i],
+		ofc_parse_debug_warning(debug,
+			ofc_sparse_ref(src, &ptr[i], 0),
 			"Empty %s body", ofc_parse_keyword_name(keyword));
 	}
 
@@ -49,7 +50,7 @@ unsigned ofc_parse_stmt_program__body(
 		&stmt->program.name);
 	if (len == 0)
 	{
-		ofc_sparse_error(src, &ptr[i],
+		ofc_sparse_error_ptr(src, &ptr[i],
 			"Invalid statement in %s body",
 			ofc_parse_keyword_name(keyword));
 		ofc_parse_stmt_list_delete(stmt->program.body);

@@ -189,7 +189,8 @@ unsigned ofc_parse_operator(
 	if ((size > 1) && !ofc_sparse_sequential(
 		src, ptr, size))
 	{
-		ofc_parse_debug_warning(debug, src, ptr,
+		ofc_parse_debug_warning(debug,
+			ofc_sparse_ref(src, ptr, size),
 			"Operators shouldn't contain whitespace");
 	}
 

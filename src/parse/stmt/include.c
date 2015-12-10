@@ -61,7 +61,8 @@ unsigned ofc_parse_stmt_include(
 
 	if (!stmt->include.file)
 	{
-		ofc_sparse_error(src, ptr, "Can't open include file '%s'", rpath);
+		ofc_sparse_error(src, ofc_str_ref(ptr, i),
+			"Can't open include file '%s'", rpath);
 		free(rpath);
 		return 0;
 	}

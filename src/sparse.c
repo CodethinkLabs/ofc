@@ -412,43 +412,84 @@ static const char* ofc_sparse__file_pointer(
 }
 
 void ofc_sparse_error_va(
-	const ofc_sparse_t* sparse, const char* ptr,
+	const ofc_sparse_t* sparse, ofc_str_ref_t ref,
 	const char* format, va_list args)
 {
 	const ofc_file_t* file = ofc_sparse__file(sparse);
 	const char*       fsol = NULL;
-	const char*       fptr = ofc_sparse__file_pointer(sparse, ptr, &fsol);
+	const char*       fptr = ofc_sparse__file_pointer(sparse, ref.base, &fsol);
 
 	ofc_file_error_va(file, fsol, fptr, format, args);
 }
 
 void ofc_sparse_warning_va(
-	const ofc_sparse_t* sparse, const char* ptr,
+	const ofc_sparse_t* sparse, ofc_str_ref_t ref,
 	const char* format, va_list args)
 {
 	const ofc_file_t* file = ofc_sparse__file(sparse);
 	const char*       fsol = NULL;
-	const char*       fptr = ofc_sparse__file_pointer(sparse, ptr, &fsol);
+	const char*       fptr = ofc_sparse__file_pointer(sparse, ref.base, &fsol);
 
 	ofc_file_warning_va(file, fsol, fptr, format, args);
 }
 
 void ofc_sparse_error(
-	const ofc_sparse_t* sparse, const char* ptr,
+	const ofc_sparse_t* sparse, ofc_str_ref_t ref,
 	const char* format, ...)
 {
 	va_list args;
 	va_start(args, format);
-	ofc_sparse_error_va(sparse, ptr, format, args);
+	ofc_sparse_error_va(sparse, ref, format, args);
 	va_end(args);
 }
 
 void ofc_sparse_warning(
+	const ofc_sparse_t* sparse, ofc_str_ref_t ref,
+	const char* format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	ofc_sparse_warning_va(sparse, ref, format, args);
+	va_end(args);
+}
+
+void ofc_sparse_error_ptr(
 	const ofc_sparse_t* sparse, const char* ptr,
 	const char* format, ...)
 {
 	va_list args;
 	va_start(args, format);
-	ofc_sparse_warning_va(sparse, ptr, format, args);
+	ofc_sparse_error_va(sparse, ofc_str_ref(ptr, 0), format, args);
+	va_end(args);
+}
+
+void ofc_sparse_warning_ptr(
+	const ofc_sparse_t* sparse, const char* ptr,
+	const char* format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	ofc_sparse_warning_va(sparse, ofc_str_ref(ptr, 0), format, args);
+	va_end(args);
+}
+
+
+void ofc_sparse_ref_error(
+	ofc_sparse_ref_t ref,
+	const char* format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	ofc_sparse_error_va(ref.sparse, ref.string, format, args);
+	va_end(args);
+}
+
+void ofc_sparse_ref_warning(
+	ofc_sparse_ref_t ref,
+	const char* format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	ofc_sparse_warning_va(ref.sparse, ref.string, format, args);
 	va_end(args);
 }
