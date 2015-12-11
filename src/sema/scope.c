@@ -1081,7 +1081,7 @@ bool ofc_sema_scope_print(
 	return true;
 }
 
-ofc_sema_scope_list_t* ofc_sema_scope_list_create()
+ofc_sema_scope_list_t* ofc_sema_scope_list_create(void)
 {
 	ofc_sema_scope_list_t* list
 		= (ofc_sema_scope_list_t*)malloc(

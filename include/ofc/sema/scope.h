@@ -138,7 +138,7 @@ bool ofc_sema_scope_print(
 	ofc_colstr_t* cs, unsigned indent,
 	const ofc_sema_scope_t* scope);
 
-ofc_sema_scope_list_t* ofc_sema_scope_list_create();
+ofc_sema_scope_list_t* ofc_sema_scope_list_create(void);
 
 bool ofc_sema_scope_list_add(
 	ofc_sema_scope_list_t* list,

@@ -100,7 +100,7 @@ static uint8_t ofc_sema_label_offset__hash(const unsigned* offset)
 	return (*offset & 0xFF);
 }
 
-ofc_sema_label_map_t* ofc_sema_label_map_create()
+ofc_sema_label_map_t* ofc_sema_label_map_create(void)
 {
 	ofc_sema_label_map_t* map
 		= (ofc_sema_label_map_t*)malloc(

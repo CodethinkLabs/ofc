@@ -54,7 +54,7 @@ typedef struct
 	ofc_sema_format_label_list_t* format;
 } ofc_sema_label_map_t;
 
-ofc_sema_label_map_t* ofc_sema_label_map_create();
+ofc_sema_label_map_t* ofc_sema_label_map_create(void);
 void ofc_sema_label_map_delete(
 	ofc_sema_label_map_t* label_map);
 
