@@ -18,7 +18,7 @@
 
 
 struct entry {
-    char *keyword;
+    const char *keyword;
     int key_val;
 };
 
