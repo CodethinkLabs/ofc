@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include <ofc/parse.h>
+#include "ofc/parse.h"
 
 
 unsigned ofc_parse_stmt_decl(

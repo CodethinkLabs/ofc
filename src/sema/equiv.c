@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include <ofc/sema.h>
+#include "ofc/sema.h"
 
 
 static uint8_t ofc_sema_equiv__hash(const ofc_sema_decl_t* decl)

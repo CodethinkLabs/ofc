@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include <ofc/sema.h>
+#include "ofc/sema.h"
 
 void ofc_sema_stmt_io_inquire__cleanup(
 	ofc_sema_stmt_t s)

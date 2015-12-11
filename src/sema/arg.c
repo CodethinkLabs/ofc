@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include <ofc/sema.h>
+#include "ofc/sema.h"
 
 static ofc_sema_arg_list_t* ofc_sema_arg_list__create(unsigned count)
 {

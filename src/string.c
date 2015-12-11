@@ -19,7 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <ofc/string.h>
+#include "ofc/string.h"
 
 ofc_string_t* ofc_string_create(const char* base, unsigned size)
 {

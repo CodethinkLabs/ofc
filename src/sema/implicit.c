@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include <ofc/sema.h>
+#include "ofc/sema.h"
 
 struct ofc_sema_implicit_s
 {

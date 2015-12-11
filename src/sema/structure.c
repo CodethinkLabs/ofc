@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#include <ofc/hashmap.h>
-#include <ofc/sema.h>
+#include "ofc/hashmap.h"
+#include "ofc/sema.h"
 
 
 void ofc_sema_structure__delete_locked(ofc_sema_structure_t* structure)

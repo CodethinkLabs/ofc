@@ -17,8 +17,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <ofc/fctype.h>
-#include <ofc/sparse.h>
+#include "ofc/fctype.h"
+#include "ofc/sparse.h"
 
 
 typedef struct

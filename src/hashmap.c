@@ -16,7 +16,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <ofc/hashmap.h>
+#include "ofc/hashmap.h"
 
 typedef struct ofc_hashmap__entry_s ofc_hashmap__entry_t;
 

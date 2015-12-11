@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include <ofc/sema.h>
+#include "ofc/sema.h"
 
 
 ofc_sema_common_t* ofc_sema_common_create(

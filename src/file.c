@@ -21,8 +21,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include <ofc/fctype.h>
-#include <ofc/file.h>
+#include "ofc/fctype.h"
+#include "ofc/file.h"
 
 
 struct ofc_file_s

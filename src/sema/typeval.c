@@ -20,8 +20,8 @@
 #undef complex
 #endif
 
-#include <ofc/noopt.h>
-#include <ofc/sema.h>
+#include "ofc/noopt.h"
+#include "ofc/sema.h"
 
 
 /* TODO - Remove NO_OPT, once we find a better workaround

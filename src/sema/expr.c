@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include <ofc/sema.h>
+#include "ofc/sema.h"
 
 
 const ofc_sema_typeval_t* ofc_sema_expr_constant(

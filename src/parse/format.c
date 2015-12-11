@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <ofc/parse.h>
+#include "ofc/parse.h"
 
 
 typedef struct

@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include <ofc/sema.h>
+#include "ofc/sema.h"
 
 static void ofc_sema_label__delete(
 	ofc_sema_label_t* label)

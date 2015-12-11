@@ -15,7 +15,7 @@
 
 #include <math.h>
 
-#include <ofc/sema.h>
+#include "ofc/sema.h"
 
 void ofc_sema_stmt_io_write__cleanup(
 	ofc_sema_stmt_t s)

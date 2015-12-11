@@ -15,7 +15,7 @@
 
 #include <string.h>
 
-#include <ofc/sema.h>
+#include "ofc/sema.h"
 
 static ofc_hashmap_t* ofc_sema_type__map = NULL;
 

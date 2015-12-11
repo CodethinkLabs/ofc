@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include <ofc/parse.h>
+#include "ofc/parse.h"
 
 
 ofc_parse_assign_t* ofc_parse_assign(

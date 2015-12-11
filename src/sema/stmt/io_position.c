@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include <ofc/sema.h>
+#include "ofc/sema.h"
 
 ofc_sema_stmt_t* ofc_sema_stmt_io_position(
 	ofc_sema_scope_t* scope,

@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include <ofc/parse.h>
+#include "ofc/parse.h"
 
 static unsigned ofc_parse_stmt__return(
 	const ofc_sparse_t* src, const char* ptr,

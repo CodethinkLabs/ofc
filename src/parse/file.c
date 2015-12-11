@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include <ofc/parse.h>
+#include "ofc/parse.h"
 
 
 ofc_parse_stmt_list_t* ofc_parse_file(const ofc_sparse_t* src)

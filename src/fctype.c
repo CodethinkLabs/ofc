@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include <ofc/fctype.h>
+#include "ofc/fctype.h"
 
 bool ofc_is_vspace(char c)
 {

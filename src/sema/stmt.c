@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include <ofc/sema.h>
+#include "ofc/sema.h"
 
 bool ofc_sema_stmt_assignment_print(ofc_colstr_t* cs,
 	const ofc_sema_stmt_t* stmt);
