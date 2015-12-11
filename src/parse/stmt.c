@@ -932,6 +932,4 @@ bool ofc_parse_stmt_list_contains_error(
 
 	return (list->stmt[list->count - 1]->type
 		== OFC_PARSE_STMT_ERROR);
-
-	return false;
 }
