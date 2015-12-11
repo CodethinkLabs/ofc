@@ -171,8 +171,8 @@ static unsigned ofc_prep_unformat__fixed_form_label(
 static unsigned ofc_prep_unformat__free_form_label(
 	const ofc_file_t* file, const char* src, unsigned* label)
 {
-  if (!src)
-	  return 0;
+	if (!src)
+		return 0;
 
 	unsigned label_value = 0;
 	unsigned i;
@@ -338,7 +338,7 @@ static unsigned ofc_prep_unformat__free_form_code(
 
 	if (*continuation && (*src == '&'))
 	{
-		 src += 1;
+		src += 1;
 		*col += 1;
 	}
 

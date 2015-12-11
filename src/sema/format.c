@@ -148,7 +148,7 @@ bool ofc_sema_format(
 bool ofc_sema_format_print(ofc_colstr_t* cs,
 	ofc_sema_format_t* format)
 {
-    if (!cs || !format)
+	if (!cs || !format)
 		return false;
 
 	if (!ofc_colstr_atomic_writef(cs, "FORMAT ("))

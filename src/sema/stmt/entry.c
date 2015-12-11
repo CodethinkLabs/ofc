@@ -44,5 +44,5 @@ ofc_sema_stmt_t* ofc_sema_stmt_entry(
 		return NULL;
 	}
 
-    return as;
+	return as;
 }

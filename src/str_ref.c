@@ -58,7 +58,7 @@ ofc_str_ref_t ofc_str_ref_bridge(
 		|| (end.size == 0))
 		return start;
 
-    ofc_str_ref_t result =
+	ofc_str_ref_t result =
 	{
 		.base = start.base,
 		.size = ((uintptr_t)end.base - (uintptr_t)start.base) + end.size

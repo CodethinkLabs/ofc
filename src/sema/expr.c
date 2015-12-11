@@ -1045,7 +1045,7 @@ bool ofc_sema_expr_validate_uint(
 
 	const ofc_sema_typeval_t* tv
 		= ofc_sema_expr_constant(expr);
-    if (tv)
+	if (tv)
 	{
 		int64_t v;
 		bool has_val = ofc_sema_typeval_get_integer(tv, &v);
@@ -1464,7 +1464,7 @@ bool ofc_sema_expr_print(
 	ofc_colstr_t* cs,
 	const ofc_sema_expr_t* expr)
 {
-    if (!cs || !expr) return false;
+	if (!cs || !expr) return false;
 
 	if (expr->brackets)
 	{

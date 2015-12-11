@@ -47,7 +47,7 @@ bool ofc_sema_stmt_dimension(
 			return false;
 		}
 
-        ofc_str_ref_t base_name;
+		ofc_str_ref_t base_name;
 		if (!ofc_parse_lhs_base_name(
 			*lhs, &base_name))
 			return false;

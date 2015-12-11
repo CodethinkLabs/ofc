@@ -191,7 +191,7 @@ bool ofc_sema_structure_size(
 	if (!structure)
 		return false;
 
-    unsigned total = 0, max = 0;
+	unsigned total = 0, max = 0;
 	unsigned i;
 	for (i = 0; i < structure->member.count; i++)
 	{
@@ -218,7 +218,7 @@ bool ofc_sema_structure_elem_count(
 		|| (structure->member.count == 0))
 		return false;
 
-    unsigned total = 0, max = 0;
+	unsigned total = 0, max = 0;
 	unsigned i;
 	for (i = 0; i < structure->member.count; i++)
 	{

@@ -606,7 +606,7 @@ bool ofc_sema_stmt_list_print(
 	if (!cs || !stmt_list)
 		return false;
 
-    unsigned i;
+	unsigned i;
 	for (i = 0; i < stmt_list->count; i++)
 	{
 		const ofc_sema_label_t* label

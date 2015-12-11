@@ -75,7 +75,7 @@ void ofc_parse_common_group_delete(
 		return;
 
 	ofc_parse_lhs_list_delete(group->names);
-    free(group);
+	free(group);
 }
 
 bool ofc_parse_common_group_print(

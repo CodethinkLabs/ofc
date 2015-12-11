@@ -863,7 +863,7 @@ bool ofc_sema_type_cast_is_lossless(
 	if (ofc_sema_type_compare(base, target))
 		return true;
 
-    switch (base->type)
+	switch (base->type)
 	{
 		case OFC_SEMA_TYPE_INTEGER:
 			switch (target->type)
@@ -949,7 +949,7 @@ bool ofc_sema_type_print(
 	ofc_colstr_t* cs,
 	const ofc_sema_type_t* type)
 {
-    if (!cs || !type) return false;
+	if (!cs || !type) return false;
 
 	return ofc_colstr_atomic_writef(cs, "%.*s",
 		ofc_sema_type__name[type->type]);
