@@ -241,7 +241,7 @@ static unsigned ofc_parse_expr__primary(
 	{
 		unsigned dpos = ofc_parse_debug_position(debug);
 		ofc_parse_expr_t expr_brackets;
-		unsigned len = ofc_parse__expr(
+		len = ofc_parse__expr(
 			src, &ptr[1], debug, &expr_brackets);
 		if (len > 0)
 		{

@@ -166,12 +166,12 @@ ofc_parse_type_t* ofc_parse_type(
 	unsigned j;
 	for (j = 0; ofc_parse_type__keyword_map[j].type != OFC_PARSE_TYPE_NONE; j++)
 	{
-		unsigned len = ofc_parse_keyword(src, &ptr[i], debug,
+		unsigned kw_len = ofc_parse_keyword(src, &ptr[i], debug,
 			ofc_parse_type__keyword_map[j].keyword);
-		if (len == 0) continue;
+		if (kw_len == 0) continue;
 
 		type.type = ofc_parse_type__keyword_map[j].type;
-		i += len;
+		i += kw_len;
 		break;
 	}
 

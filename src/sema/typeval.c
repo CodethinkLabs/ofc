@@ -189,7 +189,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 
 		for (; (i < size) && isdigit(ptr[i]); i++)
 		{
-			unsigned digit = (ptr[i] - '0');
+			digit = (ptr[i] - '0');
 			unsigned nkind = (kind * 10) + digit;
 			if ((nkind / 10) != kind)
 			{
