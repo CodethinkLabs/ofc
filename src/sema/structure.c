@@ -17,7 +17,7 @@
 #include <ofc/hashmap.h>
 
 
-void ofc_sema_structure__delete_locked(ofc_sema_structure_t* structure)
+static void ofc_sema_structure__delete_locked(ofc_sema_structure_t* structure)
 {
 	if (!structure)
 		return;

@@ -817,7 +817,7 @@ bool ofc_sema_typeval_compare(
 
 
 
-unsigned ofc_sema_typeval_size(
+static unsigned ofc_sema_typeval_size(
 	const ofc_sema_typeval_t* typeval)
 {
 	if (!typeval)

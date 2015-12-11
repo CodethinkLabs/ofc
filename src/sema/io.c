@@ -284,7 +284,7 @@ ofc_parse_format_desc_list_t* ofc_sema_io_data_format(
 	return format_list;
 }
 
-unsigned ofc_sema_io__data_format_count_helper(
+static unsigned ofc_sema_io__data_format_count_helper(
 	const ofc_parse_format_desc_list_t* format_src)
 {
 	if (!format_src) return 0;

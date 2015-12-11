@@ -24,7 +24,7 @@
 #include <ofc/sema.h>
 
 
-void print_usage(const char* name)
+static void print_usage(const char* name)
 {
 	printf("%s [OPTIONS] FILE\n", name);
 	printf("Options:\n");
@@ -35,7 +35,7 @@ void print_usage(const char* name)
 	printf("  -case-sen                             selects case sensitivity, defaults to false\n");
 }
 
-const char *get_file_ext(const char *path) {
+static const char *get_file_ext(const char *path) {
 	if (!path)
 		return NULL;
 
@@ -63,7 +63,7 @@ typedef enum
 	INVALID
 } args_e;
 
-args_e get_options(char* arg, int* num)
+static args_e get_options(char* arg, int* num)
 {
 	char* option[4];
 	char* token = strtok(arg, "-");

@@ -69,7 +69,7 @@ static ofc_parse_pointer_t* ofc_parse_pointer(
 	return pointer;
 }
 
-bool ofc_parse_pointer_print(
+static bool ofc_parse_pointer_print(
 	ofc_colstr_t* cs, const ofc_parse_pointer_t* pointer)
 {
 	if (!pointer)

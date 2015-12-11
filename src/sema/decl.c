@@ -961,6 +961,7 @@ static const ofc_str_ref_t* ofc_sema_decl__key(
 	return (decl ? &decl->name : NULL);
 }
 
+static ofc_sema_decl_list_t* ofc_sema_decl_list__create(
 bool ofc_sema_decl_list__remap(
 	ofc_sema_decl_list_t* list)
 {
@@ -975,7 +976,6 @@ bool ofc_sema_decl_list__remap(
 	return (list->map != NULL);
 }
 
-ofc_sema_decl_list_t* ofc_sema_decl_list__create(
 	bool case_sensitive, bool is_ref)
 {
 	ofc_sema_decl_list_t* list
