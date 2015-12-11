@@ -585,7 +585,7 @@ bool ofc_sema_lhs_init_array(
 		return true;
 
 	/* TODO - Support initializing array slices. */
-    if (lhs->type == OFC_SEMA_LHS_ARRAY_SLICE)
+	if (lhs->type == OFC_SEMA_LHS_ARRAY_SLICE)
 		return false;
 
 	if (lhs->type != OFC_SEMA_LHS_DECL)
@@ -623,7 +623,7 @@ bool ofc_sema_lhs_compare(
 	if (!a || !b)
 		return false;
 
-    if (a == b)
+	if (a == b)
 		return true;
 
 	if (a->type != b->type)

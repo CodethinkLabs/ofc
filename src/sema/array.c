@@ -447,7 +447,7 @@ bool ofc_sema_array_index_offset(
 	const ofc_sema_array_index_t* index,
 	unsigned* offset)
 {
-    if (!scope || !decl || !index
+	if (!scope || !decl || !index
 		|| (index->dimensions == 0))
 		return false;
 

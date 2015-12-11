@@ -59,7 +59,7 @@ unsigned ofc_parse_stmt_parameter(
 bool ofc_parse_stmt_parameter_print(
 	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt)
 {
-    if (!stmt)
+	if (!stmt)
 		return false;
 
 	return (ofc_colstr_atomic_writef(cs, "PARAMETER")

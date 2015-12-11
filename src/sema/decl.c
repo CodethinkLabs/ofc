@@ -263,7 +263,7 @@ ofc_sema_decl_t* ofc_sema_decl_implicit_lhs(
 		*lhs, &base_name))
 		return NULL;
 
-    switch (lhs->type)
+	switch (lhs->type)
 	{
 		case OFC_PARSE_LHS_VARIABLE:
 			break;
@@ -595,7 +595,7 @@ bool ofc_sema_decl_init(
 		return false;
 	}
 
-    const ofc_sema_typeval_t* ctv
+	const ofc_sema_typeval_t* ctv
 		= ofc_sema_expr_constant(init);
 	if (!ctv)
 	{
@@ -964,7 +964,7 @@ static const ofc_str_ref_t* ofc_sema_decl__key(
 bool ofc_sema_decl_list__remap(
 	ofc_sema_decl_list_t* list)
 {
-    if (!list)
+	if (!list)
 		return false;
 
 	if (list->map)
@@ -1053,7 +1053,7 @@ bool ofc_sema_decl_list_add(
 		list, decl->name))
 		return false;
 
-    ofc_sema_decl_t** ndecl
+	ofc_sema_decl_t** ndecl
 		= (ofc_sema_decl_t**)realloc(list->decl,
 			(sizeof(ofc_sema_decl_t*) * (list->count + 1)));
 	if (!ndecl) return false;
@@ -1080,7 +1080,7 @@ bool ofc_sema_decl_list_add_ref(
 		list, decl->name))
 		return false;
 
-    const ofc_sema_decl_t** ndecl
+	const ofc_sema_decl_t** ndecl
 		= (const ofc_sema_decl_t**)realloc(list->decl_ref,
 			(sizeof(const ofc_sema_decl_t*) * (list->count + 1)));
 	if (!ndecl) return false;

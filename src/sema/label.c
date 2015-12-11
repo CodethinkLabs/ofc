@@ -287,7 +287,7 @@ bool ofc_sema_format_label_list_add(
 {
 	if (!list || !format) return false;
 
-    ofc_sema_label_t** nformat
+	ofc_sema_label_t** nformat
 		= (ofc_sema_label_t**)realloc(list->format,
 			(sizeof(ofc_sema_label_t*) * (list->count + 1)));
 	if (!nformat) return false;

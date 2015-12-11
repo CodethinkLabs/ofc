@@ -48,7 +48,7 @@ const char *get_file_ext(const char *path) {
 		else if (path[i] == '.')
 			dot = &path[i];
 	}
-  return (dot ? &dot[1] : NULL);
+	return (dot ? &dot[1] : NULL);
 }
 
 typedef enum

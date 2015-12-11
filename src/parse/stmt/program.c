@@ -368,7 +368,7 @@ bool ofc_parse_stmt_program_print(
 	if (!ofc_colstr_atomic_writef(cs, "%s", kwstr))
 				return false;
 
-    if (!ofc_str_ref_empty(stmt->program.name))
+	if (!ofc_str_ref_empty(stmt->program.name))
 	{
 		if (!ofc_colstr_atomic_writef(cs, " ")
 			|| !ofc_str_ref_print(cs, stmt->program.name))

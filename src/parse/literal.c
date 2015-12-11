@@ -226,7 +226,7 @@ ofc_string_t* ofc_parse_hollerith(
 	if (toupper(ptr[i]) != 'H')
 		return NULL;
 
-    char s[holl_len + 1];
+	char s[holl_len + 1];
 
 	const char* pptr
 		= ofc_sparse_parent_pointer(src, &ptr[i]);
@@ -253,9 +253,9 @@ ofc_string_t* ofc_parse_hollerith(
 			s[holl_pos++] = ' ';
 	}
 
-    s[holl_pos] = '\0';
+	s[holl_pos] = '\0';
 
-    ofc_string_t* string
+	ofc_string_t* string
 		= ofc_string_create(s, holl_len);
 	if (!string) return NULL;
 

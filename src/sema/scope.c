@@ -628,7 +628,7 @@ ofc_sema_scope_t* ofc_sema_scope_stmt_func(
 		*(stmt->assignment->name), &base_name))
 		return NULL;
 
-    ofc_sema_decl_t* decl
+	ofc_sema_decl_t* decl
 		= ofc_sema_scope_decl_find_modify(scope, base_name, true);
 	if (decl) return NULL;
 
@@ -1100,7 +1100,7 @@ bool ofc_sema_scope_list_add(
 {
 	if (!list || !scope) return false;
 
-    ofc_sema_scope_t** nscope
+	ofc_sema_scope_t** nscope
 		= (ofc_sema_scope_t**)realloc(list->scope,
 			(sizeof(ofc_sema_scope_t*) * (list->count + 1)));
 	if (!nscope) return false;

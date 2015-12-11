@@ -71,7 +71,7 @@ unsigned ofc_parse_debug_position(const ofc_parse_debug_t* stack)
 void ofc_parse_debug_rewind(
 	ofc_parse_debug_t* stack, unsigned position)
 {
-    if (!stack)
+	if (!stack)
 		return;
 
 	unsigned i;
