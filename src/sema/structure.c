@@ -92,45 +92,6 @@ bool ofc_sema_structure_append(
 	return true;
 }
 
-
-const ofc_sema_structure_t* ofc_sema_structure__key(
-	const ofc_sema_structure_t* structure)
-{
-	return structure;
-}
-
-ofc_hashmap_t* ofc_sema_structure__map = NULL;
-
-bool ofc_sema_structure_complete(
-	ofc_sema_structure_t* structure)
-{
-	if (!structure)
-		return false;
-
-	if (structure->locked)
-		return true;
-
-	if (!ofc_sema_structure__map)
-	{
-		ofc_sema_structure__map = ofc_hashmap_create(
-			(void*)ofc_sema_structure_hash,
-			(void*)ofc_sema_structure_compare,
-			(void*)ofc_sema_structure__key,
-			(void*)ofc_sema_structure__delete_locked);
-		if (!ofc_sema_structure__map)
-			return false;
-	}
-
-	if (!ofc_hashmap_add(
-		ofc_sema_structure__map,
-		structure))
-		return false;
-
-	structure->locked = true;
-	return true;
-}
-
-
 uint8_t ofc_sema_structure_hash(
 	const ofc_sema_structure_t* structure)
 {

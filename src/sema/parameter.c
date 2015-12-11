@@ -176,15 +176,3 @@ const ofc_sema_typeval_t* ofc_sema_parameter_get(
 {
 	return (parameter ? parameter->typeval : NULL);
 }
-
-
-bool ofc_sema_parameter_integer(
-	const ofc_sema_parameter_t* parameter,
-	int64_t* value)
-{
-	if (!parameter)
-		return false;
-
-	return ofc_sema_typeval_get_integer(
-		parameter->typeval, value);
-}
