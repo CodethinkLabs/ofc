@@ -23,7 +23,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_position(
 		|| !stmt->io.params)
 		return NULL;
 
-	char* name;
+	const char* name;
 	ofc_sema_stmt_t s;
 
 	switch (stmt->type)
