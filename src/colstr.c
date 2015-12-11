@@ -13,10 +13,11 @@
  * limitations under the License.
  */
 
-#include <ofc/colstr.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+
+#include <ofc/colstr.h>
 
 
 struct ofc_colstr_s

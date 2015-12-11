@@ -13,10 +13,11 @@
  * limitations under the License.
  */
 
-#include <ofc/parse.h>
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
+
+#include <ofc/parse.h>
 
 
 typedef struct

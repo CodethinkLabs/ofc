@@ -13,9 +13,10 @@
  * limitations under the License.
  */
 
-#include <ofc/label_table.h>
-#include <stdlib.h>
 #include <stdint.h>
+#include <stdlib.h>
+
+#include <ofc/label_table.h>
 
 typedef struct label_s label_t;
 

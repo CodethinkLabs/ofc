@@ -13,9 +13,10 @@
  * limitations under the License.
  */
 
-#include <ofc/parse.h>
 #include <ctype.h>
 #include <string.h>
+
+#include <ofc/parse.h>
 
 static const char* ofc_parse_type__name[] =
 {

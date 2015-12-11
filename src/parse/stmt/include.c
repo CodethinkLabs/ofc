@@ -13,10 +13,11 @@
  * limitations under the License.
  */
 
-#include <ofc/parse/file.h>
-#include <ofc/file.h>
-#include <ofc/prep.h>
 #include <string.h>
+
+#include <ofc/file.h>
+#include <ofc/parse/file.h>
+#include <ofc/prep.h>
 
 
 unsigned ofc_parse_stmt_include(

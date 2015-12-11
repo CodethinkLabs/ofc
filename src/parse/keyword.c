@@ -13,9 +13,10 @@
  * limitations under the License.
  */
 
-#include <ofc/parse.h>
-#include <string.h>
 #include <ctype.h>
+#include <string.h>
+
+#include <ofc/parse.h>
 
 
 

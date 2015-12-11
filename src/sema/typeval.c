@@ -13,15 +13,16 @@
  * limitations under the License.
  */
 
-#include <ofc/sema.h>
 #include <math.h>
 #include <tgmath.h>
-#include <ofc/noopt.h>
-
 #ifdef complex
 /* Remove macro from complex.h */
 #undef complex
 #endif
+
+#include <ofc/noopt.h>
+#include <ofc/sema.h>
+
 
 /* TODO - Remove NO_OPT, once we find a better workaround
           for the compiler error. */

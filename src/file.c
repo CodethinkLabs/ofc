@@ -13,15 +13,16 @@
  * limitations under the License.
  */
 
-#include <ofc/file.h>
-#include <ofc/fctype.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdint.h>
-#include <unistd.h>
 #include <fcntl.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
+#include <unistd.h>
+
+#include <ofc/fctype.h>
+#include <ofc/file.h>
 
 
 struct ofc_file_s

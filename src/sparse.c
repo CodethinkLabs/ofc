@@ -13,11 +13,12 @@
  * limitations under the License.
  */
 
-#include <ofc/sparse.h>
-#include <ofc/fctype.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
+
+#include <ofc/fctype.h>
+#include <ofc/sparse.h>
 
 
 typedef struct

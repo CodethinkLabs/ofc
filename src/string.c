@@ -13,12 +13,13 @@
  * limitations under the License.
  */
 
-#include <ofc/string.h>
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
-#include <stdbool.h>
-#include <stdarg.h>
+
+#include <ofc/string.h>
 
 ofc_string_t* ofc_string_create(const char* base, unsigned size)
 {

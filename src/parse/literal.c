@@ -13,10 +13,11 @@
  * limitations under the License.
  */
 
-#include <ofc/parse.h>
-#include <string.h>
 #include <ctype.h>
 #include <math.h>
+#include <string.h>
+
+#include <ofc/parse.h>
 
 
 static bool is_base_digit(

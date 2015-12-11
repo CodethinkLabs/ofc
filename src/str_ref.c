@@ -13,10 +13,11 @@
  * limitations under the License.
  */
 
-#include <ofc/str_ref.h>
-#include <string.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <string.h>
+
+#include <ofc/str_ref.h>
 
 
 bool ofc_str_ref_empty(const ofc_str_ref_t ref)

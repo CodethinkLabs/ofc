@@ -13,8 +13,9 @@
  * limitations under the License.
  */
 
-#include <ofc/parse.h>
 #include <string.h>
+
+#include <ofc/parse.h>
 
 static const char* ofc_parse_operator__name[] =
 {

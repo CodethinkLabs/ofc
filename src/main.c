@@ -13,14 +13,14 @@
  * limitations under the License.
  */
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 #include <ofc/file.h>
-#include <ofc/prep.h>
 #include <ofc/parse/file.h>
+#include <ofc/prep.h>
 #include <ofc/sema.h>
 
 

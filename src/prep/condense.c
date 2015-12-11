@@ -13,9 +13,10 @@
  * limitations under the License.
  */
 
-#include <ofc/prep.h>
-#include <ofc/fctype.h>
 #include <stdlib.h>
+
+#include <ofc/fctype.h>
+#include <ofc/prep.h>
 
 
 ofc_sparse_t* ofc_prep_condense(ofc_sparse_t* unformat)
