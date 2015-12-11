@@ -970,7 +970,7 @@ bool ofc_sema_decl_list__remap(
 	return (list->map != NULL);
 }
 
-ofc_sema_decl_list_t* ofc_sema_decl_list__create(
+static ofc_sema_decl_list_t* ofc_sema_decl_list__create(
 	bool case_sensitive, bool is_ref)
 {
 	ofc_sema_decl_list_t* list

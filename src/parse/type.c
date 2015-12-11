@@ -111,7 +111,7 @@ static unsigned ofc_parse_decl_attr(
 	return i;
 }
 
-ofc_parse_type_t* ofc_parse_type__alloc(ofc_parse_type_t type)
+static ofc_parse_type_t* ofc_parse_type__alloc(ofc_parse_type_t type)
 {
 	ofc_parse_type_t* atype
 		= (ofc_parse_type_t*)malloc(
@@ -122,7 +122,7 @@ ofc_parse_type_t* ofc_parse_type__alloc(ofc_parse_type_t type)
 	return atype;
 }
 
-void ofc_parse_type__cleanup(
+static void ofc_parse_type__cleanup(
 	ofc_parse_type_t type)
 {
 	ofc_parse_expr_delete(type.count_expr);

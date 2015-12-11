@@ -45,7 +45,7 @@ struct ofc_sparse_s
 
 
 
-ofc_sparse_t* ofc_sparse__create(
+static ofc_sparse_t* ofc_sparse__create(
 	ofc_file_t* file, ofc_sparse_t* parent)
 {
 	ofc_sparse_t* sparse
