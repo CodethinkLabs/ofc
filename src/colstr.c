@@ -398,7 +398,6 @@ static bool ofc_colstr_atomic_write__oversized(
 	while (size > 0)
 	{
 		cstr->base[cstr->size++] = '\n';
-		unsigned i;
 		for (i = 0; i < 5; i++)
 			cstr->base[cstr->size++] = ' ';
 

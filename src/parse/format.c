@@ -114,10 +114,10 @@ ofc_parse_format_desc_t* ofc_parse_format_desc(
 	{
 		i += 1;
 
-		unsigned l;
+		unsigned k;
 		desc->repeat = ofc_parse_format_desc_list(
-			src, &ptr[i], debug, &l);
-		if (desc->repeat) i += l;
+			src, &ptr[i], debug, &k);
+		if (desc->repeat) i += k;
 
 		desc->neg  = negative;
 		desc->n    = (n == 0 ? 1 : n);
