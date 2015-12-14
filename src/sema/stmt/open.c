@@ -67,8 +67,6 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 	s.io_open.padding       = OFC_SEMA_CALL_ARG_PAD_YES;
 	s.io_open.position_type = OFC_SEMA_CALL_ARG_ASIS;
 	s.io_open.file_type     = OFC_SEMA_CALL_ARG_UNKNOWN;
-	/* Default is processor dependant */
-	s.io_open.action_type   = OFC_SEMA_CALL_ARG_COUNT;
 
 	ofc_parse_call_arg_t* ca_unit     = NULL;
 	ofc_parse_call_arg_t* ca_access   = NULL;

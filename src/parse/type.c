@@ -111,7 +111,7 @@ static unsigned ofc_parse_decl_attr(
 	return i;
 }
 
-ofc_parse_type_t* ofc_parse_type__alloc(ofc_parse_type_t type)
+static ofc_parse_type_t* ofc_parse_type__alloc(ofc_parse_type_t type)
 {
 	ofc_parse_type_t* atype
 		= (ofc_parse_type_t*)malloc(
@@ -122,7 +122,7 @@ ofc_parse_type_t* ofc_parse_type__alloc(ofc_parse_type_t type)
 	return atype;
 }
 
-void ofc_parse_type__cleanup(
+static void ofc_parse_type__cleanup(
 	ofc_parse_type_t type)
 {
 	ofc_parse_expr_delete(type.count_expr);
@@ -166,12 +166,12 @@ ofc_parse_type_t* ofc_parse_type(
 	unsigned j;
 	for (j = 0; ofc_parse_type__keyword_map[j].type != OFC_PARSE_TYPE_NONE; j++)
 	{
-		unsigned len = ofc_parse_keyword(src, &ptr[i], debug,
+		unsigned kw_len = ofc_parse_keyword(src, &ptr[i], debug,
 			ofc_parse_type__keyword_map[j].keyword);
-		if (len == 0) continue;
+		if (kw_len == 0) continue;
 
 		type.type = ofc_parse_type__keyword_map[j].type;
-		i += len;
+		i += kw_len;
 		break;
 	}
 
