@@ -369,8 +369,6 @@ static bool ofc_sema_scope__body(
 			continue;
 		}
 
-		ofc_sparse_ref_warning(stmt->src, "BONK");
-
 		switch (stmt->type)
 		{
 			case OFC_PARSE_STMT_INCLUDE:
