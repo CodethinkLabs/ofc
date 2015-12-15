@@ -171,7 +171,7 @@ static ofc_parse_lhs_t* ofc_parse_lhs__array(
 	i += l;
 
 	lhs.type   = OFC_PARSE_LHS_ARRAY;
-	lhs.src    = ofc_str_ref(ptr, i);
+	lhs.src    = ofc_sparse_ref(src, ptr, i);
 	lhs.parent = NULL;
 
 	ofc_parse_lhs_t* alhs
@@ -217,7 +217,7 @@ static ofc_parse_lhs_t* ofc_parse_lhs__star_len(
 		&lhs.star_len.var);
 	if (i == 0) return NULL;
 
-	lhs.src = ofc_str_ref(ptr, i);
+	lhs.src = ofc_sparse_ref(src, ptr, i);
 
 	ofc_parse_lhs_t* alhs
 		= ofc_parse_lhs__alloc(lhs);
@@ -281,7 +281,7 @@ static ofc_parse_lhs_t* ofc_parse_lhs__member(
 	if (l == 0) return NULL;
 	i += l;
 
-	lhs.src = ofc_str_ref(ptr, i);
+	lhs.src = ofc_sparse_ref(src, ptr, i);
 
 	ofc_parse_lhs_t* alhs
 		= ofc_parse_lhs__alloc(lhs);
@@ -319,7 +319,7 @@ static ofc_parse_lhs_t* ofc_parse__lhs(
 		lhs.type = OFC_PARSE_LHS_IMPLICIT_DO;
 	}
 
-	lhs.src = ofc_str_ref(ptr, i);
+	lhs.src = ofc_sparse_ref(src, ptr, i);
 
 	ofc_parse_lhs_t* alhs
 		= ofc_parse_lhs__alloc(lhs);
@@ -342,7 +342,7 @@ static ofc_parse_lhs_t* ofc_parse__lhs(
 			if (child_lhs)
 			{
 				i += l;
-				alhs->src = ofc_str_ref(ptr, i);
+				alhs->src = ofc_sparse_ref(src, ptr, i);
 				alhs = child_lhs;
 				continue;
 			}
@@ -355,7 +355,7 @@ static ofc_parse_lhs_t* ofc_parse__lhs(
 			if (child_lhs)
 			{
 				i += l;
-				alhs->src = ofc_str_ref(ptr, i);
+				alhs->src = ofc_sparse_ref(src, ptr, i);
 				alhs = child_lhs;
 				continue;
 			}
@@ -366,7 +366,7 @@ static ofc_parse_lhs_t* ofc_parse__lhs(
 		if (child_lhs)
 		{
 			i += l;
-			alhs->src = ofc_str_ref(ptr, i);
+			alhs->src = ofc_sparse_ref(src, ptr, i);
 			alhs = child_lhs;
 			continue;
 		}
@@ -444,7 +444,7 @@ bool ofc_parse_lhs_print(
 	switch (lhs->type)
 	{
 		case OFC_PARSE_LHS_VARIABLE:
-			return ofc_str_ref_print(cs, lhs->variable);
+			return ofc_sparse_ref_print(cs, lhs->variable);
 		case OFC_PARSE_LHS_ARRAY:
 			if (!ofc_parse_lhs_print(
 				cs, lhs->parent, is_decl))
@@ -480,11 +480,11 @@ bool ofc_parse_lhs_print(
 		case OFC_PARSE_LHS_MEMBER_TYPE:
 			return (ofc_parse_lhs_print(cs, lhs->parent, is_decl)
 				&& ofc_colstr_atomic_writef(cs, "%%")
-				&& ofc_str_ref_print(cs, lhs->member.name));
+				&& ofc_sparse_ref_print(cs, lhs->member.name));
 		case OFC_PARSE_LHS_MEMBER_STRUCTURE:
 			return (ofc_parse_lhs_print(cs, lhs->parent, is_decl)
 				&& ofc_colstr_atomic_writef(cs, ".")
-				&& ofc_str_ref_print(cs, lhs->member.name));
+				&& ofc_sparse_ref_print(cs, lhs->member.name));
 		case OFC_PARSE_LHS_IMPLICIT_DO:
 			return ofc_parse_implicit_do_print(
 				cs, lhs->implicit_do);
@@ -510,7 +510,7 @@ static bool ofc_parse_lhs_print__not_decl(
 
 bool ofc_parse_lhs_base_name(
 	const ofc_parse_lhs_t lhs,
-	ofc_str_ref_t* name)
+	ofc_sparse_ref_t* name)
 {
 	if (lhs.type == OFC_PARSE_LHS_VARIABLE)
 	{

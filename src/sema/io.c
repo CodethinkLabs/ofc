@@ -74,10 +74,10 @@ bool ofc_sema_io_compare_types(
 				= ofc_sema_format_desc_type(desc);
 
 			ofc_sema_expr_t* cast
-				= ofc_sema_expr_cast(scope, *expr, dtype);
+				= ofc_sema_expr_cast(*expr, dtype);
 			if (!cast)
 			{
-				ofc_sema_scope_warning(scope, (*expr)->src,
+				ofc_sparse_ref_warning((*expr)->src,
 					"Trying to format a %s output  with a %s FORMAT descriptor",
 					ofc_sema_format_str_rep(desc->type),
 					ofc_sema_type_str_rep(type));
@@ -90,7 +90,7 @@ bool ofc_sema_io_compare_types(
 		else if ((desc->type == OFC_PARSE_FORMAT_DESC_CHARACTER)
 			&& (type->kind != 1))
 		{
-			ofc_sema_scope_error(scope, (*expr)->src,
+			ofc_sparse_ref_error((*expr)->src,
 				"CHARACTER type KIND not supported in %s",
 				(stmt->type == OFC_PARSE_STMT_IO_WRITE ? "WRITE" : "PRINT"));
 		}

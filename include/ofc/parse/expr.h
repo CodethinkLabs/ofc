@@ -32,7 +32,7 @@ struct ofc_parse_expr_s
 {
 	ofc_parse_expr_e type;
 
-	ofc_str_ref_t src;
+	ofc_sparse_ref_t src;
 
 	union
 	{

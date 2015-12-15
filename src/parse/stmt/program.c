@@ -72,19 +72,21 @@ unsigned ofc_parse_stmt_program(
 {
 	unsigned dpos = ofc_parse_debug_position(debug);
 
-	stmt->program.name = OFC_STR_REF_EMPTY;
+	stmt->program.name = OFC_SPARSE_REF_EMPTY;
 	unsigned i = ofc_parse_keyword_named(
 		src, ptr, debug,
 		OFC_PARSE_KEYWORD_PROGRAM,
 		&stmt->program.name);
 	if (i == 0) return 0;
 
-	if (!ofc_str_ref_empty(stmt->program.name))
+	if (!ofc_sparse_ref_empty(stmt->program.name))
 	{
 		ofc_lang_opts_t opts = ofc_sparse_lang_opts(src);
 		if (opts.case_sensitive
-			? ofc_str_ref_equal(stmt->program.name, ofc_parse_stmt_program__current)
-			: ofc_str_ref_equal_ci(stmt->program.name, ofc_parse_stmt_program__current))
+			? ofc_str_ref_equal(stmt->program.name.string,
+				ofc_parse_stmt_program__current)
+			: ofc_str_ref_equal_ci(stmt->program.name.string,
+				ofc_parse_stmt_program__current))
 		{
 			stmt->type = OFC_PARSE_STMT_EMPTY;
 			return i;
@@ -100,7 +102,7 @@ unsigned ofc_parse_stmt_program(
 	i += len;
 
 	ofc_str_ref_t prev_program_name = ofc_parse_stmt_program__current;
-	ofc_parse_stmt_program__current = stmt->program.name;
+	ofc_parse_stmt_program__current = stmt->program.name.string;
 
 	len = ofc_parse_stmt_program__body(
 		src, &ptr[i], debug,
@@ -130,7 +132,7 @@ unsigned ofc_parse_stmt_subroutine(
 {
 	unsigned dpos = ofc_parse_debug_position(debug);
 
-	stmt->program.name = OFC_STR_REF_EMPTY;
+	stmt->program.name = OFC_SPARSE_REF_EMPTY;
 	unsigned i = ofc_parse_keyword_named(
 		src, ptr, debug,
 		OFC_PARSE_KEYWORD_SUBROUTINE,
@@ -193,7 +195,7 @@ unsigned ofc_parse_stmt_function(
 	stmt->program.type = ofc_parse_type(
 		src, ptr, debug, &i);
 
-	stmt->program.name = OFC_STR_REF_EMPTY;
+	stmt->program.name = OFC_SPARSE_REF_EMPTY;
 	unsigned len = ofc_parse_keyword_named(
 		src, &ptr[i], debug, OFC_PARSE_KEYWORD_FUNCTION,
 		&stmt->program.name);
@@ -268,19 +270,21 @@ unsigned ofc_parse_stmt_block_data(
 {
 	unsigned dpos = ofc_parse_debug_position(debug);
 
-	stmt->program.name = OFC_STR_REF_EMPTY;
+	stmt->program.name = OFC_SPARSE_REF_EMPTY;
 	unsigned i = ofc_parse_keyword_named(
 		src, ptr, debug,
 		OFC_PARSE_KEYWORD_BLOCK_DATA,
 		&stmt->program.name);
 	if (i == 0) return 0;
 
-	if (!ofc_str_ref_empty(stmt->program.name))
+	if (!ofc_sparse_ref_empty(stmt->program.name))
 	{
 		ofc_lang_opts_t opts = ofc_sparse_lang_opts(src);
 		if (opts.case_sensitive
-			? ofc_str_ref_equal(stmt->program.name, ofc_parse_stmt_block_data__current)
-			: ofc_str_ref_equal_ci(stmt->program.name, ofc_parse_stmt_block_data__current))
+			? ofc_str_ref_equal(stmt->program.name.string,
+				ofc_parse_stmt_block_data__current)
+			: ofc_str_ref_equal_ci(stmt->program.name.string,
+				ofc_parse_stmt_block_data__current))
 		{
 			stmt->type = OFC_PARSE_STMT_EMPTY;
 			return i;
@@ -296,7 +300,7 @@ unsigned ofc_parse_stmt_block_data(
 	i += len;
 
 	ofc_str_ref_t prev_block_data_name = ofc_parse_stmt_block_data__current;
-	ofc_parse_stmt_block_data__current = stmt->program.name;
+	ofc_parse_stmt_block_data__current = stmt->program.name.string;
 
 	len = ofc_parse_stmt_program__body(
 		src, &ptr[i], debug,
@@ -368,10 +372,10 @@ bool ofc_parse_stmt_program_print(
 	if (!ofc_colstr_atomic_writef(cs, "%s", kwstr))
 				return false;
 
-	if (!ofc_str_ref_empty(stmt->program.name))
+	if (!ofc_sparse_ref_empty(stmt->program.name))
 	{
 		if (!ofc_colstr_atomic_writef(cs, " ")
-			|| !ofc_str_ref_print(cs, stmt->program.name))
+			|| !ofc_sparse_ref_print(cs, stmt->program.name))
 			return false;
 	}
 
@@ -407,10 +411,10 @@ bool ofc_parse_stmt_program_print(
 	if (!ofc_colstr_atomic_writef(cs, "END %s", kwstr))
 		return false;
 
-	if (!ofc_str_ref_empty(stmt->program.name))
+	if (!ofc_sparse_ref_empty(stmt->program.name))
 	{
 		if (!ofc_colstr_atomic_writef(cs, " ")
-			|| !ofc_str_ref_print(cs, stmt->program.name))
+			|| !ofc_sparse_ref_print(cs, stmt->program.name))
 			return false;
 	}
 

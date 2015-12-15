@@ -35,7 +35,7 @@ bool ofc_sema_stmt_common(
 
 		ofc_sema_common_t* common
 			= ofc_sema_scope_common_find_create(
-				scope, group->group);
+				scope, group->group.string);
 		if (!common) return false;
 
 		unsigned i;
@@ -45,7 +45,7 @@ bool ofc_sema_stmt_common(
 				= group->names->lhs[i];
 			if (!lhs) continue;
 
-			ofc_str_ref_t base_name;
+			ofc_sparse_ref_t base_name;
 			if (!ofc_parse_lhs_base_name(
 				*lhs, &base_name))
 				return false;
@@ -57,7 +57,7 @@ bool ofc_sema_stmt_common(
 					scope, lhs->array.index);
 				if (!array)
 				{
-					ofc_sema_scope_error(scope, lhs->src,
+					ofc_sparse_ref_error(lhs->src,
 						"Invalid array index in COMMON list");
 					return false;
 				}
@@ -72,7 +72,7 @@ bool ofc_sema_stmt_common(
 
 			if (lhs->type != OFC_PARSE_LHS_VARIABLE)
 			{
-				ofc_sema_scope_error(scope, lhs->src,
+				ofc_sparse_ref_error(lhs->src,
 					"Invalid entry in COMMON list");
 				ofc_sema_array_delete(array);
 				return false;
@@ -90,7 +90,7 @@ bool ofc_sema_stmt_common(
 			if (spec->common
 				&& (spec->common != common))
 			{
-				ofc_sema_scope_error(scope, lhs->src,
+				ofc_sparse_ref_error(lhs->src,
 					"Specifier used in multiple COMMON blocks");
 				ofc_sema_array_delete(array);
 				return false;
@@ -105,7 +105,7 @@ bool ofc_sema_stmt_common(
 					ofc_sema_array_delete(array);
 					if (conflict)
 					{
-						ofc_sema_scope_error(scope, lhs->src,
+						ofc_sparse_ref_error(lhs->src,
 							"Conflicting array definition in COMMON list");
 						return false;
 					}

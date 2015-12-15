@@ -18,7 +18,7 @@
 
 typedef struct
 {
-	ofc_str_ref_t         group; /* May be empty. */
+	ofc_sparse_ref_t      group; /* May be empty. */
 	ofc_parse_lhs_list_t* names;
 } ofc_parse_common_group_t;
 

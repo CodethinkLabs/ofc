@@ -84,7 +84,7 @@ static ofc_parse_array_range_t* ofc_parse_array__range(
 		return NULL;
 	}
 
-	range->src = ofc_str_ref(ptr, i);
+	range->src = ofc_sparse_ref(src, ptr, i);
 
 	range->is_slice = is_slice;
 	range->first    = first;

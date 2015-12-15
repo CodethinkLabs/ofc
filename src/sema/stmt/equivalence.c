@@ -51,14 +51,14 @@ bool ofc_sema_stmt_equivalence(
 				ofc_sema_lhs_type(base),
 				ofc_sema_lhs_type(elhs)))
 			{
-				ofc_sema_scope_warning(scope, elhs->src,
+				ofc_sparse_ref_warning(elhs->src,
 					"EQUIVALENCE types don't match.");
 			}
 
 			if (!ofc_sema_equiv(base, elhs))
 			{
 				/* TODO - Better error messages for this in 'sema/equiv.c'. */
-				ofc_sema_scope_warning(scope, base->src,
+				ofc_sparse_ref_warning(base->src,
 					"EQUIVALENCE statement causes collision.");
 
 				ofc_sema_lhs_delete(elhs);

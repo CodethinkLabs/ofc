@@ -56,13 +56,16 @@ char* ofc_sparse_include_path(
 	const ofc_sparse_t* sparse, const char* path);
 
 
-#include <ofc/str_ref.h>
+#include "ofc/str_ref.h"
 
 typedef struct
 {
 	const ofc_sparse_t* sparse;
 	ofc_str_ref_t       string;
 } ofc_sparse_ref_t;
+
+#define OFC_SPARSE_REF_EMPTY (ofc_sparse_ref_t){ \
+	.sparse = NULL, .string = { .base = NULL, .size = 0 } }
 
 static inline ofc_sparse_ref_t ofc_sparse_ref(
 	const ofc_sparse_t* sparse, const char* ptr, unsigned size)
@@ -74,9 +77,20 @@ static inline ofc_sparse_ref_t ofc_sparse_ref(
 	};
 }
 
+static inline bool ofc_sparse_ref_empty(ofc_sparse_ref_t ref)
+	{ return (!ref.sparse || ofc_str_ref_empty(ref.string)); }
+
 static inline ofc_sparse_ref_t ofc_sparse_ref_strz(
 	const ofc_sparse_t* sparse, const char* strz)
 	{ return ofc_sparse_ref(sparse, strz, (strz ? strlen(strz) : 0)); }
+
+bool ofc_sparse_ref_bridge(
+	ofc_sparse_ref_t a, ofc_sparse_ref_t b,
+	ofc_sparse_ref_t* c);
+
+static inline bool ofc_sparse_ref_print(
+	ofc_colstr_t* cs, ofc_sparse_ref_t ref)
+	{ return ofc_str_ref_print(cs, ref.string); }
 
 
 #include <stdarg.h>

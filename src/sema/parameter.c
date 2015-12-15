@@ -56,17 +56,17 @@ ofc_sema_parameter_t* ofc_sema_parameter_assign(
 	if (assign->name->type
 		!= OFC_PARSE_LHS_VARIABLE)
 	{
-		ofc_sema_scope_error(scope, assign->src,
+		ofc_sparse_ref_error(assign->src,
 			"Expected parameter name");
 		return NULL;
 	}
 
 	const ofc_sema_parameter_t* exists
 		= ofc_hashmap_find(scope->parameter,
-			&assign->name->variable);
+			&assign->name->variable.string);
 	if (exists)
 	{
-		ofc_sema_scope_error(scope, assign->src,
+		ofc_sparse_ref_error(assign->src,
 			"Duplicate PARAMETER definition");
 		return NULL;
 	}
@@ -75,7 +75,7 @@ ofc_sema_parameter_t* ofc_sema_parameter_assign(
 		= ofc_sema_expr(scope, assign->init);
 	if (!expr)
 	{
-		ofc_sema_scope_error(scope, assign->src,
+		ofc_sparse_ref_error(assign->src,
 			"Invalid PARAMETER expression");
 		return NULL;
 	}
@@ -87,14 +87,14 @@ ofc_sema_parameter_t* ofc_sema_parameter_assign(
 	ofc_sema_expr_delete(expr);
 	if (!typeval)
 	{
-		ofc_sema_scope_error(scope, assign->src,
+		ofc_sparse_ref_error(assign->src,
 			"Failed to resolve PARAMETER value");
 		return NULL;
 	}
 
 	ofc_sema_parameter_t* param
 		= ofc_sema_parameter_create(
-			assign->name->variable, typeval);
+			assign->name->variable.string, typeval);
 	if (!param)
 	{
 		ofc_sema_typeval_delete(typeval);

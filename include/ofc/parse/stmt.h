@@ -111,7 +111,7 @@ struct ofc_parse_stmt_s
 
 		struct
 		{
-			ofc_str_ref_t              name;
+			ofc_sparse_ref_t           name;
 			ofc_parse_call_arg_list_t* args;
 		} call_entry;
 
@@ -142,8 +142,8 @@ struct ofc_parse_stmt_s
 
 		struct
 		{
-			unsigned        count;
-			ofc_str_ref_t** name;
+			unsigned           count;
+			ofc_sparse_ref_t** name;
 		} decl_attr;
 
 		ofc_parse_pointer_list_t* pointer;
@@ -208,7 +208,7 @@ struct ofc_parse_stmt_s
 
 		struct
 		{
-			ofc_str_ref_t          name;
+			ofc_sparse_ref_t       name;
 			ofc_parse_stmt_list_t* block;
 		} structure;
 
@@ -247,15 +247,15 @@ struct ofc_parse_stmt_s
 
 		struct
 		{
-			unsigned      label;
-			ofc_str_ref_t variable;
+			unsigned         label;
+			ofc_sparse_ref_t variable;
 		} assign;
 
 		struct
 		{
 			/* type is only set for functions. */
 			ofc_parse_type_t*          type;
-			ofc_str_ref_t              name;
+			ofc_sparse_ref_t           name;
 			/* args is only set for functions and subroutines. */
 			ofc_parse_call_arg_list_t* args;
 			ofc_parse_stmt_list_t*     body;

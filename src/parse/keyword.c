@@ -112,7 +112,7 @@ static const char* ofc_parse_keyword__name[] =
 unsigned ofc_parse_ident(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
-	ofc_str_ref_t* ident)
+	ofc_sparse_ref_t* ident)
 {
 	if (!isalpha(ptr[0])
 		&& (ptr[0] != '_'))
@@ -129,14 +129,14 @@ unsigned ofc_parse_ident(
 			i, ptr);
 	}
 
-	if (ident) *ident = ofc_str_ref(ptr, i);
+	if (ident) *ident = ofc_sparse_ref(src, ptr, i);
 	return i;
 }
 
 unsigned ofc_parse_name(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
-	ofc_str_ref_t* name)
+	ofc_sparse_ref_t* name)
 {
 	if (strncasecmp(ptr, "END", 3) == 0)
 	{
@@ -148,19 +148,19 @@ unsigned ofc_parse_name(
 	return ofc_parse_ident(src, ptr, debug, name);
 }
 
-ofc_str_ref_t* ofc_parse_name_alloc(
+ofc_sparse_ref_t* ofc_parse_name_alloc(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
 	unsigned* len)
 {
-	ofc_str_ref_t name;
+	ofc_sparse_ref_t name;
 	unsigned i = ofc_parse_name(
 		src, ptr, debug, &name);
 	if (i == 0) return NULL;
 
-	ofc_str_ref_t* aname
-		= (ofc_str_ref_t*)malloc(
-			sizeof(ofc_str_ref_t));
+	ofc_sparse_ref_t* aname
+		= (ofc_sparse_ref_t*)malloc(
+			sizeof(ofc_sparse_ref_t));
 	if (!aname) return NULL;
 	*aname = name;
 
@@ -181,7 +181,7 @@ unsigned ofc_parse_keyword_named(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
 	ofc_parse_keyword_e keyword,
-	ofc_str_ref_t* name)
+	ofc_sparse_ref_t* name)
 {
 	if (keyword >= OFC_PARSE_KEYWORD_COUNT)
 		return 0;
@@ -311,7 +311,7 @@ unsigned ofc_parse_keyword_end_named(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
 	ofc_parse_keyword_e keyword, bool force,
-	ofc_str_ref_t* name)
+	ofc_sparse_ref_t* name)
 {
 	if (keyword >= OFC_PARSE_KEYWORD_COUNT)
 		return 0;
@@ -323,7 +323,7 @@ unsigned ofc_parse_keyword_end_named(
 
 	unsigned warn_end_kw_space = 0;
 
-	ofc_str_ref_t kname = OFC_STR_REF_EMPTY;
+	ofc_sparse_ref_t kname = OFC_SPARSE_REF_EMPTY;
 	unsigned len = ofc_parse_keyword_named(
 		src, &ptr[i], debug, keyword,
 		(name ? &kname : NULL));
@@ -347,16 +347,15 @@ unsigned ofc_parse_keyword_end_named(
 	if (!ofc_is_end_statement(&ptr[i], &len))
 		return 0;
 
-	if (name && !ofc_str_ref_empty(kname)
-		&& !ofc_str_ref_equal(*name, kname))
+	if (name && !ofc_sparse_ref_empty(kname)
+		&& !ofc_str_ref_equal(name->string, kname.string))
 	{
-		ofc_parse_debug_warning(debug,
-			ofc_sparse_ref(src, kname.base, kname.size),
+		ofc_parse_debug_warning(debug, kname,
 			"END %s name '%.*s' doesn't match %s name '%.*s'",
 			ofc_parse_keyword__name[keyword],
-			kname.size, kname.base,
+			kname.string.size, kname.string.base,
 			ofc_parse_keyword__name[keyword],
-			name->size, name->base);
+			name->string.size, name->string.base);
 	}
 
 	if (!ofc_sparse_sequential(src, ptr, 3))

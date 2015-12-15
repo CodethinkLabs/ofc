@@ -107,13 +107,13 @@ typedef enum
 unsigned ofc_parse_ident(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
-	ofc_str_ref_t* ident);
+	ofc_sparse_ref_t* ident);
 
 unsigned ofc_parse_name(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
-	ofc_str_ref_t* name);
-ofc_str_ref_t* ofc_parse_name_alloc(
+	ofc_sparse_ref_t* name);
+ofc_sparse_ref_t* ofc_parse_name_alloc(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
 	unsigned* len);
@@ -131,7 +131,7 @@ unsigned ofc_parse_keyword_named(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
 	ofc_parse_keyword_e keyword,
-	ofc_str_ref_t* name);
+	ofc_sparse_ref_t* name);
 
 unsigned ofc_parse_keyword_end(
 	const ofc_sparse_t* src, const char* ptr,
@@ -142,6 +142,6 @@ unsigned ofc_parse_keyword_end_named(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
 	ofc_parse_keyword_e keyword, bool force,
-	ofc_str_ref_t* name);
+	ofc_sparse_ref_t* name);
 
 #endif

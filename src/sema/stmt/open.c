@@ -91,11 +91,11 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 			= stmt->io.params->call_arg[i];
 		if (!param) continue;
 
-		if (ofc_str_ref_empty(param->name))
+		if (ofc_sparse_ref_empty(param->name))
 		{
 			if (i >= 1)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Un-named parameter %u has no meaning in OPEN.", i);
 				return NULL;
 			}
@@ -105,143 +105,143 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 				ca_unit = param;
 			}
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "UNIT"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "UNIT"))
 		{
 			if (ca_unit)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of UNIT in OPEN.");
 				return NULL;
 			}
 
 			ca_unit = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "ACCESS"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "ACCESS"))
 		{
 			if (ca_access)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of ACCESS in OPEN.");
 				return NULL;
 			}
 
 			ca_access = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "ACTION"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "ACTION"))
 		{
 			if (ca_action)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of ACTION in OPEN.");
 				return NULL;
 			}
 
 			ca_action = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "BLANK"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "BLANK"))
 		{
 			if (ca_blank)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of BLANK in OPEN.");
 				return NULL;
 			}
 
 			ca_blank = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "DELIM"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "DELIM"))
 		{
 			if (ca_delim)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of DELIM in OPEN.");
 				return NULL;
 			}
 
 			ca_delim = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "ERR"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "ERR"))
 		{
 			if (ca_err)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of ERR in OPEN.");
 				return NULL;
 			}
 
 			ca_err = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "FILE"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "FILE"))
 		{
 			if (ca_file)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of FILE in OPEN.");
 				return NULL;
 			}
 
 			ca_file = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "FORM"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "FORM"))
 		{
 			if (ca_form)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of FORM in OPEN.");
 				return NULL;
 			}
 
 			ca_form = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "IOSTAT"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "IOSTAT"))
 		{
 			if (ca_iostat)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of IOSTAT in OPEN.");
 				return NULL;
 			}
 
 			ca_iostat = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "PAD"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "PAD"))
 		{
 			if (ca_pad)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of PAD in OPEN.");
 				return NULL;
 			}
 
 			ca_pad = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "POSITION"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "POSITION"))
 		{
 			if (ca_position)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of POSITION in OPEN.");
 				return NULL;
 			}
 
 			ca_position = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "RECL"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "RECL"))
 		{
 			if (ca_recl)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of RECL in OPEN.");
 				return NULL;
 			}
 
 			ca_recl = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "STATUS"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "STATUS"))
 		{
 			if (ca_status)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of STATUS in OPEN.");
 				return NULL;
 			}
@@ -250,9 +250,9 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 		}
 		else
 		{
-			ofc_sema_scope_error(scope, param->src,
+			ofc_sparse_ref_error(param->src,
 				"Unrecognized paramater %u name '%.*s' in OPEN.",
-				i, param->name.size, param->name.base);
+				i, param->name.string.size, param->name.string.base);
 			return NULL;
 		}
 	}

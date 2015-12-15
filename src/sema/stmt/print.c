@@ -57,7 +57,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_print(
 				if (!ofc_sema_typeval_get_integer(
 					format_label, &fl64) || (fl64 < 0))
 				{
-					ofc_sema_scope_error(scope, stmt->io_print.format->src,
+					ofc_sparse_ref_error(stmt->io_print.format->src,
 						"Format label expression must be a positive INTEGER in PRINT");
 					ofc_sema_expr_delete(s.io_print.format_expr);
 					return NULL;
@@ -76,7 +76,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_print(
 						scope->label, ulabel);
 				if (!label)
 				{
-					ofc_sema_scope_error(scope, stmt->io_print.format->src,
+					ofc_sparse_ref_error(stmt->io_print.format->src,
 						"Format label expression not defined in PRINT");
 					ofc_sema_expr_delete(s.io_print.format_expr);
 					return NULL;
@@ -84,7 +84,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_print(
 
 				if (label->type != OFC_SEMA_LABEL_FORMAT)
 				{
-					ofc_sema_scope_error(scope, stmt->io_print.format->src,
+					ofc_sparse_ref_error(stmt->io_print.format->src,
 						"Label expression must be a FORMAT statement in PRINT");
 					ofc_sema_expr_delete(s.io_print.format_expr);
 					return NULL;
@@ -135,13 +135,13 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_print(
 		{
 			if (iolist_len < data_desc_count)
 			{
-				ofc_sema_scope_warning(scope, stmt->io_print.format->src,
+				ofc_sparse_ref_warning(stmt->io_print.format->src,
 					"IO list shorter than FORMAT list,"
 					" last FORMAT data descriptors will be ignored");
 			}
 			else if (fmod(iolist_len, data_desc_count) != 0)
 			{
-				ofc_sema_scope_warning(scope, stmt->io_print.format->src,
+				ofc_sparse_ref_warning(stmt->io_print.format->src,
 					"IO list length is not a multiple of FORMAT list length");
 			}
 
@@ -169,12 +169,12 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_print(
 		}
 		else if (iolist_len > 0)
 		{
-			ofc_sema_scope_warning(scope, stmt->io_print.format->src,
+			ofc_sparse_ref_warning(stmt->io_print.format->src,
 				"No data edit descriptors in FORMAT list");
 		}
 		else if (data_desc_count > 0)
 		{
-			ofc_sema_scope_warning(scope, stmt->io_print.format->src,
+			ofc_sparse_ref_warning(stmt->io_print.format->src,
 				"No IO list in PRINT statement");
 		}
 	}

@@ -18,7 +18,7 @@
 
 typedef struct
 {
-	ofc_str_ref_t     src;
+	ofc_sparse_ref_t  src;
 
 	ofc_parse_lhs_t*  name;
 	ofc_parse_expr_t* init;

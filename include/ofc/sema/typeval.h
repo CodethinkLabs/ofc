@@ -20,9 +20,9 @@ typedef struct
 {
     const ofc_sema_type_t* type;
 
-	ofc_str_ref_t src;
+	ofc_sparse_ref_t src;
 
-	union
+	struct
 	{
 		bool        logical;
 		int64_t     integer;
@@ -39,9 +39,8 @@ typedef struct
 } ofc_sema_typeval_t;
 
 ofc_sema_typeval_t* ofc_sema_typeval_unsigned(
-	unsigned value, ofc_str_ref_t ref);
+	unsigned value, ofc_sparse_ref_t ref);
 ofc_sema_typeval_t* ofc_sema_typeval_literal(
-	const ofc_sema_scope_t* scope,
 	const ofc_parse_literal_t* literal,
 	const ofc_sema_type_t* type);
 void ofc_sema_typeval_delete(
@@ -54,7 +53,6 @@ bool ofc_sema_typeval_compare(
 ofc_sema_typeval_t* ofc_sema_typeval_copy(
 	const ofc_sema_typeval_t* typeval);
 ofc_sema_typeval_t* ofc_sema_typeval_cast(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* typeval,
 	const ofc_sema_type_t* type);
 
@@ -81,73 +79,55 @@ const ofc_sema_typeval_t* tv, const char* strz);
 
 
 ofc_sema_typeval_t* ofc_sema_typeval_power(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b);
 ofc_sema_typeval_t* ofc_sema_typeval_multiply(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b);
 ofc_sema_typeval_t* ofc_sema_typeval_concat(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b);
 ofc_sema_typeval_t* ofc_sema_typeval_divide(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b);
 ofc_sema_typeval_t* ofc_sema_typeval_add(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b);
 ofc_sema_typeval_t* ofc_sema_typeval_subtract(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b);
 ofc_sema_typeval_t* ofc_sema_typeval_negate(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a);
 ofc_sema_typeval_t* ofc_sema_typeval_eq(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b);
 ofc_sema_typeval_t* ofc_sema_typeval_ne(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b);
 ofc_sema_typeval_t* ofc_sema_typeval_lt(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b);
 ofc_sema_typeval_t* ofc_sema_typeval_le(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b);
 ofc_sema_typeval_t* ofc_sema_typeval_gt(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b);
 ofc_sema_typeval_t* ofc_sema_typeval_ge(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b);
 ofc_sema_typeval_t* ofc_sema_typeval_not(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a);
 ofc_sema_typeval_t* ofc_sema_typeval_and(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b);
 ofc_sema_typeval_t* ofc_sema_typeval_or(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b);
 ofc_sema_typeval_t* ofc_sema_typeval_eqv(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b);
 ofc_sema_typeval_t* ofc_sema_typeval_neqv(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b);
 

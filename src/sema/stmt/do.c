@@ -34,8 +34,7 @@ static bool ofc_sema_stmt__loop_control(
 		= ofc_sema_lhs_type(*sema_iter);
 	if (!ofc_sema_type_is_scalar(dtype))
 	{
-		ofc_sema_scope_error(
-			scope, parse_init->name->src,
+		ofc_sparse_ref_error(parse_init->name->src,
 			"DO loop iterator must be a scalar type.");
 		ofc_sema_lhs_delete(*sema_iter);
 		return false;
@@ -43,8 +42,7 @@ static bool ofc_sema_stmt__loop_control(
 
 	if (!ofc_sema_type_is_integer(dtype))
 	{
-		ofc_sema_scope_warning(
-			scope, parse_init->name->src,
+		ofc_sparse_ref_warning(parse_init->name->src,
 			"Using REAL in DO loop iterator.");
 	}
 
@@ -60,15 +58,13 @@ static bool ofc_sema_stmt__loop_control(
 		ofc_sema_expr_type(*sema_init)))
 	{
 		ofc_sema_expr_t* cast
-			= ofc_sema_expr_cast(
-				scope, *sema_init, dtype);
+			= ofc_sema_expr_cast(*sema_init, dtype);
 		if (!cast)
 		{
 			const ofc_sema_type_t* expr_type
 				= ofc_sema_expr_type(*sema_init);
-			ofc_sema_scope_error(scope,
-				parse_init->init->src,
-					"Expression type %s doesn't match lhs type %s",
+			ofc_sparse_ref_error(parse_init->init->src,
+				"Expression type %s doesn't match lhs type %s",
 				ofc_sema_type_str_rep(expr_type),
 				ofc_sema_type_str_rep(dtype));
 			ofc_sema_expr_delete(*sema_init);
@@ -91,15 +87,13 @@ static bool ofc_sema_stmt__loop_control(
 		ofc_sema_expr_type(*sema_last)))
 	{
 		ofc_sema_expr_t* cast
-			= ofc_sema_expr_cast(
-				scope, *sema_last, dtype);
+			= ofc_sema_expr_cast(*sema_last, dtype);
 		if (!cast)
 		{
 			const ofc_sema_type_t* expr_type =
 				ofc_sema_expr_type(*sema_last);
-			ofc_sema_scope_error(scope,
-				parse_last->src,
-					"Expression type %s doesn't match lhs type %s",
+			ofc_sparse_ref_error(parse_last->src,
+				"Expression type %s doesn't match lhs type %s",
 				ofc_sema_type_str_rep(expr_type),
 				ofc_sema_type_str_rep(dtype));
 			ofc_sema_expr_delete(*sema_init);
@@ -127,15 +121,13 @@ static bool ofc_sema_stmt__loop_control(
 			ofc_sema_expr_type(*sema_step)))
 		{
 			ofc_sema_expr_t* cast
-				= ofc_sema_expr_cast(
-					scope, *sema_step, dtype);
+				= ofc_sema_expr_cast(*sema_step, dtype);
 			if (!cast)
 			{
 				const ofc_sema_type_t* expr_type =
 					ofc_sema_expr_type(*sema_step);
-				ofc_sema_scope_error(scope,
-					parse_step->src,
-						"Expression type %s doesn't match lhs type %s",
+				ofc_sparse_ref_error(parse_step->src,
+					"Expression type %s doesn't match lhs type %s",
 					ofc_sema_type_str_rep(expr_type),
 					ofc_sema_type_str_rep(dtype));
 				ofc_sema_expr_delete(*sema_step);
@@ -293,7 +285,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_do_while__label(
 		= ofc_sema_expr_type(s.do_while.cond);
 	if (!ofc_sema_type_is_logical(type))
 	{
-		ofc_sema_scope_error(scope, stmt->do_while.cond->src,
+		ofc_sparse_ref_error(stmt->do_while.cond->src,
 			"IF condition type must be LOGICAL.");
 
 		ofc_sema_expr_delete(s.do_while.cond);
@@ -332,7 +324,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_do_while__block(
 		= ofc_sema_expr_type(s.do_while_block.cond);
 	if (!ofc_sema_type_is_logical(type))
 	{
-		ofc_sema_scope_error(scope, stmt->do_while_block.cond->src,
+		ofc_sparse_ref_error(stmt->do_while_block.cond->src,
 			"IF condition type must be LOGICAL.");
 
 		ofc_sema_expr_delete(s.do_while_block.cond);

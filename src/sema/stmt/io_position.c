@@ -59,11 +59,11 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_position(
 			= stmt->io.params->call_arg[i];
 		if (!param) continue;
 
-		if (ofc_str_ref_empty(param->name))
+		if (ofc_sparse_ref_empty(param->name))
 		{
 			if (i >= 1)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Un-named parameter %u has no meaning in %s.", i, name);
 				return NULL;
 			}
@@ -73,33 +73,33 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_position(
 				ca_unit = param;
 			}
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "UNIT"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "UNIT"))
 		{
 			if (ca_unit)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of UNIT in %s.", name);
 				return NULL;
 			}
 
 			ca_unit = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "IOSTAT"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "IOSTAT"))
 		{
 			if (ca_iostat)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of IOSTAT in %s.", name);
 				return NULL;
 			}
 
 			ca_iostat = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "ERR"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "ERR"))
 		{
 			if (ca_err)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of ERR in %s.", name);
 				return NULL;
 			}
@@ -108,9 +108,9 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_position(
 		}
 		else
 		{
-			ofc_sema_scope_error(scope, param->src,
+			ofc_sparse_ref_error(param->src,
 				"Unrecognized paramater %u name '%.*s' in %s.",
-				i, param->name.size, param->name.base, name);
+				i, param->name.string.size, param->name.string.base, name);
 			return NULL;
 		}
 	}

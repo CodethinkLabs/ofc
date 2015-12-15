@@ -25,7 +25,7 @@ ofc_parse_common_group_t* ofc_parse_common_group(
 
 	unsigned i = 0;
 
-	ofc_str_ref_t group = OFC_STR_REF_EMPTY;
+	ofc_sparse_ref_t group = OFC_SPARSE_REF_EMPTY;
 	if (ptr[i] == '/')
 	{
 		i += 1;
@@ -87,8 +87,8 @@ bool ofc_parse_common_group_print(
 	if (!ofc_colstr_atomic_writef(cs, "/"))
 		return false;
 
-	if (!ofc_str_ref_empty(group->group)
-		&& !ofc_str_ref_print(cs, group->group))
+	if (!ofc_sparse_ref_empty(group->group)
+		&& !ofc_sparse_ref_print(cs, group->group))
 		return false;
 
 	if (!ofc_colstr_atomic_writef(cs, "/"))

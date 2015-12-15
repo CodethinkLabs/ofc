@@ -31,7 +31,7 @@ static bool ofc_sema_equiv__equal(
 	return (a == b);
 }
 
-static void* ofc_sema_equiv__key(
+static ofc_sema_decl_t* ofc_sema_equiv__key(
 	const ofc_sema_lhs_t* lhs)
 {
 	return (lhs ? lhs->decl : NULL);

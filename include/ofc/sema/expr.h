@@ -51,7 +51,7 @@ struct ofc_sema_expr_s
 {
 	ofc_sema_expr_e type;
 
-	ofc_str_ref_t src;
+	ofc_sparse_ref_t src;
 
 	ofc_sema_typeval_t* constant;
 
@@ -103,7 +103,6 @@ ofc_sema_expr_t* ofc_sema_expr_brackets(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_expr_t* expr);
 ofc_sema_expr_t* ofc_sema_expr_cast(
-	const ofc_sema_scope_t* scope,
 	ofc_sema_expr_t* expr,
 	const ofc_sema_type_t* type);
 ofc_sema_expr_t* ofc_sema_expr_alt_return(

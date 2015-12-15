@@ -29,7 +29,7 @@ bool ofc_sema_implicit_set(
 	ofc_sema_spec_t spec, char c);
 ofc_sema_spec_t* ofc_sema_implicit_apply(
 	const ofc_sema_implicit_t* implicit,
-	ofc_str_ref_t              name,
+	ofc_sparse_ref_t           name,
 	const ofc_sema_spec_t*     spec);
 
 bool ofc_sema_implicit(

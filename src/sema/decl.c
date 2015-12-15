@@ -51,7 +51,7 @@ ofc_sema_decl_t* ofc_sema_decl_create(
 
 static ofc_sema_decl_t* ofc_sema_decl__spec(
 	ofc_sema_scope_t*       scope,
-	ofc_str_ref_t           name,
+	ofc_sparse_ref_t        name,
 	const ofc_sema_spec_t*  spec,
 	const ofc_sema_array_t* array,
 	bool                    is_procedure,
@@ -65,7 +65,7 @@ static ofc_sema_decl_t* ofc_sema_decl__spec(
 		|| spec->is_intrinsic || spec->is_external))
 	{
 		/* TODO - Work out if VOLATILE should be allowed. */
-		ofc_sema_scope_error(scope, name,
+		ofc_sparse_ref_error(name,
 			"COMMON block entries can't have declaration attributes.");
 		return NULL;
 	}
@@ -74,21 +74,21 @@ static ofc_sema_decl_t* ofc_sema_decl__spec(
 	{
 		if (spec->is_static)
 		{
-			ofc_sema_scope_error(scope, name,
+			ofc_sparse_ref_error(name,
 				"Procedures cannot be STATIC");
 			return NULL;
 		}
 
 		if (spec->is_automatic)
 		{
-			ofc_sema_scope_error(scope, name,
+			ofc_sparse_ref_error(name,
 				"Procedures cannot be AUTOMATIC");
 			return NULL;
 		}
 
 		if (spec->is_volatile)
 		{
-			ofc_sema_scope_error(scope, name,
+			ofc_sparse_ref_error(name,
 				"Procedures cannot be VOLATILE");
 			return NULL;
 		}
@@ -96,7 +96,7 @@ static ofc_sema_decl_t* ofc_sema_decl__spec(
 		if (spec->is_intrinsic
 			&& spec->is_external)
 		{
-			ofc_sema_scope_error(scope, name,
+			ofc_sparse_ref_error(name,
 				"A procedure cannot be INTRINSIC and EXTERNAL");
 			return NULL;
 		}
@@ -108,7 +108,7 @@ static ofc_sema_decl_t* ofc_sema_decl__spec(
 				|| (spec->len > 0)
 				|| spec->len_var)
 			{
-				ofc_sema_scope_error(scope, name,
+				ofc_sparse_ref_error(name,
 					"A SUBROUTINE cannot have a specified type");
 				return NULL;
 			}
@@ -118,14 +118,14 @@ static ofc_sema_decl_t* ofc_sema_decl__spec(
 	{
 		if (spec->is_intrinsic)
 		{
-			ofc_sema_scope_error(scope, name,
+			ofc_sparse_ref_error(name,
 				"Only procedures may be INTRINSIC");
 			return NULL;
 		}
 
 		if (spec->is_external)
 		{
-			ofc_sema_scope_error(scope, name,
+			ofc_sparse_ref_error(name,
 				"Only procedures may be EXTERNAL");
 			return NULL;
 		}
@@ -133,7 +133,7 @@ static ofc_sema_decl_t* ofc_sema_decl__spec(
 		if (spec->is_static
 			&& spec->is_automatic)
 		{
-			ofc_sema_scope_error(scope, name,
+			ofc_sparse_ref_error(name,
 				"Declaration cannot be AUTOMATIC and STATIC");
 			return NULL;
 		}
@@ -146,12 +146,12 @@ static ofc_sema_decl_t* ofc_sema_decl__spec(
 			if (!ofc_sema_array_compare(
 				array, spec->array))
 			{
-				ofc_sema_scope_error(scope, name,
+				ofc_sparse_ref_error(name,
 					"Conflicting array dimensions in declaration");
 				return NULL;
 			}
 
-			ofc_sema_scope_warning(scope, name,
+			ofc_sparse_ref_warning(name,
 				"Repetition of array dimensions in declaration");
 		}
 
@@ -177,7 +177,7 @@ static ofc_sema_decl_t* ofc_sema_decl__spec(
 	}
 
 	ofc_sema_decl_t* decl
-		= ofc_sema_decl_create(type, name);
+		= ofc_sema_decl_create(type, name.string);
 	if (!decl) return NULL;
 
 	decl->is_static    = spec->is_static;
@@ -208,7 +208,7 @@ static ofc_sema_decl_t* ofc_sema_decl__spec(
 
 ofc_sema_decl_t* ofc_sema_decl_spec(
 	ofc_sema_scope_t*       scope,
-	ofc_str_ref_t           name,
+	ofc_sparse_ref_t        name,
 	const ofc_sema_spec_t*  spec,
 	const ofc_sema_array_t* array)
 {
@@ -218,7 +218,7 @@ ofc_sema_decl_t* ofc_sema_decl_spec(
 
 ofc_sema_decl_t* ofc_sema_decl_implicit(
 	ofc_sema_scope_t*       scope,
-	ofc_str_ref_t           name,
+	ofc_sparse_ref_t        name,
 	const ofc_sema_array_t* array)
 {
 	ofc_sema_spec_t* spec
@@ -258,7 +258,7 @@ ofc_sema_decl_t* ofc_sema_decl_implicit_lhs(
 		return NULL;
 
 	ofc_sema_array_t* array = NULL;
-	ofc_str_ref_t base_name;
+	ofc_sparse_ref_t base_name;
 	if (!ofc_parse_lhs_base_name(
 		*lhs, &base_name))
 		return NULL;
@@ -286,7 +286,7 @@ ofc_sema_decl_t* ofc_sema_decl_implicit_lhs(
 
 ofc_sema_decl_t* ofc_sema_decl_function(
 	ofc_sema_scope_t*       scope,
-	ofc_str_ref_t           name,
+	ofc_sparse_ref_t        name,
 	const ofc_sema_spec_t*  spec)
 {
 	return ofc_sema_decl__spec(
@@ -295,7 +295,7 @@ ofc_sema_decl_t* ofc_sema_decl_function(
 
 ofc_sema_decl_t* ofc_sema_decl_subroutine(
 	ofc_sema_scope_t* scope,
-	ofc_str_ref_t     name)
+	ofc_sparse_ref_t  name)
 {
 	ofc_sema_spec_t* spec
 		= ofc_sema_scope_spec_find_final(
@@ -324,7 +324,7 @@ static bool ofc_sema_decl__decl(
 		{
 			if (spec.len > 0)
 			{
-				ofc_sema_scope_warning(scope, lhs->src,
+				ofc_sparse_ref_warning(lhs->src,
 					"Overriding specified star length in %s list",
 					(is_decl ? "decl" : "specifier"));
 			}
@@ -344,7 +344,7 @@ static bool ofc_sema_decl__decl(
 
 			if (!resolved)
 			{
-				ofc_sema_scope_error(scope, lhs->src,
+				ofc_sparse_ref_error(lhs->src,
 					"Star length must be a positive whole integer");
 				return false;
 			}
@@ -352,7 +352,7 @@ static bool ofc_sema_decl__decl(
 			if (spec.len_var
 				|| ((spec.len > 0) && (spec.len != star_len)))
 			{
-				ofc_sema_scope_warning(scope, lhs->src,
+				ofc_sparse_ref_warning(lhs->src,
 					"Overriding specified star length in %s list",
 					(is_decl ? "decl" : "specifier"));
 			}
@@ -406,7 +406,7 @@ static bool ofc_sema_decl__decl(
 
 	ofc_sema_decl_t* decl
 		= ofc_sema_scope_decl_find_modify(
-			scope, spec.name, true);
+			scope, spec.name.string, true);
 	bool exist = (decl != NULL);
 
 	if (is_decl)
@@ -415,7 +415,7 @@ static bool ofc_sema_decl__decl(
 		{
 			/* TODO - Handle redeclarations which match original. */
 
-			ofc_sema_scope_error(scope, lhs->src,
+			ofc_sparse_ref_error(lhs->src,
 				"Redeclaration of declared variable");
 			ofc_sema_array_delete(spec.array);
 			return false;
@@ -435,7 +435,7 @@ static bool ofc_sema_decl__decl(
 				return false;
 
 			bool initialized = ofc_sema_decl_init(
-				scope, decl, init_expr);
+				decl, init_expr);
 			ofc_sema_expr_delete(init_expr);
 
 			if (!initialized)
@@ -443,7 +443,7 @@ static bool ofc_sema_decl__decl(
 		}
 		else if (pdecl->init_clist)
 		{
-			ofc_sema_scope_error(scope, lhs->src,
+			ofc_sparse_ref_error(lhs->src,
 				"CList initializers not yet supported");
 			/* TODO - CList initializer resolution. */
 			return false;
@@ -455,7 +455,7 @@ static bool ofc_sema_decl__decl(
 		{
 			/* TODO - Handle specifications which are compatible. */
 
-			ofc_sema_scope_error(scope, lhs->src,
+			ofc_sparse_ref_error(lhs->src,
 				"Specification of declared variable");
 			ofc_sema_array_delete(spec.array);
 			return false;
@@ -580,7 +580,6 @@ void ofc_sema_decl_delete(
 
 
 bool ofc_sema_decl_init(
-	const ofc_sema_scope_t* scope,
 	ofc_sema_decl_t* decl,
 	const ofc_sema_expr_t* init)
 {
@@ -590,7 +589,7 @@ bool ofc_sema_decl_init(
 
 	if (decl->used)
 	{
-		ofc_sema_scope_error(scope, init->src,
+		ofc_sparse_ref_error(init->src,
 			"Can't initialize declaration after use");
 		return false;
 	}
@@ -599,7 +598,7 @@ bool ofc_sema_decl_init(
 		= ofc_sema_expr_constant(init);
 	if (!ctv)
 	{
-		ofc_sema_scope_error(scope, init->src,
+		ofc_sparse_ref_error(init->src,
 			"Initializer element not constant");
 		return false;
 	}
@@ -607,14 +606,14 @@ bool ofc_sema_decl_init(
 	if (ofc_sema_decl_is_composite(decl))
 	{
 		/* TODO - Support F90 "(/ 0, 1 /)" array initializers. */
-		ofc_sema_scope_error(scope, init->src,
+		ofc_sparse_ref_error(init->src,
 			"Can't initialize non-scalar declaration with expression");
 		return false;
 	}
 
 	ofc_sema_typeval_t* tv
 		= ofc_sema_typeval_cast(
-			scope, ctv, decl->type);
+			ctv, decl->type);
 	if (!tv) return false;
 
 	if (decl->init)
@@ -625,13 +624,13 @@ bool ofc_sema_decl_init(
 
 		if (redecl)
 		{
-			ofc_sema_scope_warning(scope, init->src,
+			ofc_sparse_ref_warning(init->src,
 				"Duplicate initialization");
 		}
 		else
 		{
 			/* TODO - Convert to assignment. */
-			ofc_sema_scope_error(scope, init->src,
+			ofc_sparse_ref_error(init->src,
 				"Conflicting initializaters");
 			return false;
 		}
@@ -645,7 +644,6 @@ bool ofc_sema_decl_init(
 }
 
 bool ofc_sema_decl_init_offset(
-	const ofc_sema_scope_t* scope,
 	ofc_sema_decl_t* decl,
 	unsigned offset,
 	const ofc_sema_expr_t* init)
@@ -656,7 +654,7 @@ bool ofc_sema_decl_init_offset(
 
 	if (decl->used)
 	{
-		ofc_sema_scope_error(scope, init->src,
+		ofc_sparse_ref_error(init->src,
 			"Can't initialize declaration after use");
 		return false;
 	}
@@ -668,13 +666,13 @@ bool ofc_sema_decl_init_offset(
 	{
 		if (offset == 0)
 			return ofc_sema_decl_init(
-				scope, decl, init);
+				decl, init);
 		return false;
 	}
 
 	if (decl->init_array)
 	{
-		ofc_sema_scope_warning(scope, init->src,
+		ofc_sparse_ref_warning(init->src,
 			"Initializing array in multiple statements");
 	}
 
@@ -682,14 +680,14 @@ bool ofc_sema_decl_init_offset(
 	if (!ofc_sema_decl_elem_count(
 		decl, &elem_count))
 	{
-		ofc_sema_scope_error(scope, init->src,
+		ofc_sparse_ref_error(init->src,
 			"Can't initialize element in array of unknown size");
 		return false;
 	}
 
 	if (offset >= elem_count)
 	{
-		ofc_sema_scope_warning(scope, init->src,
+		ofc_sparse_ref_warning(init->src,
 			"Initializer destination out-of-bounds");
 		return false;
 	}
@@ -709,13 +707,13 @@ bool ofc_sema_decl_init_offset(
 		= ofc_sema_expr_constant(init);
 	if (!ctv)
 	{
-		ofc_sema_scope_error(scope, init->src,
+		ofc_sparse_ref_error(init->src,
 			"Array initializer element not constant.");
 		return false;
 	}
 
 	ofc_sema_typeval_t* tv = ofc_sema_typeval_cast(
-		scope, ctv, ofc_sema_type_base(decl->type));
+		ctv, ofc_sema_type_base(decl->type));
 	if (!tv) return false;
 
 	if (decl->init_array[offset])
@@ -726,13 +724,13 @@ bool ofc_sema_decl_init_offset(
 
 		if (!equal)
 		{
-			ofc_sema_scope_error(scope, init->src,
+			ofc_sparse_ref_error(init->src,
 				"Re-initialization of array element"
 				" with different value");
 			return false;
 		}
 
-		ofc_sema_scope_warning(scope, init->src,
+		ofc_sparse_ref_warning(init->src,
 			"Re-initialization of array element");
 	}
 	else
@@ -744,7 +742,6 @@ bool ofc_sema_decl_init_offset(
 }
 
 bool ofc_sema_decl_init_array(
-	const ofc_sema_scope_t* scope,
 	ofc_sema_decl_t* decl,
 	const ofc_sema_array_t* array,
 	unsigned count,
@@ -759,7 +756,7 @@ bool ofc_sema_decl_init_array(
 
 	if (decl->used)
 	{
-		ofc_sema_scope_error(scope, init[0]->src,
+		ofc_sparse_ref_error(init[0]->src,
 			"Can't initialize declaration after use");
 		return false;
 	}
@@ -771,13 +768,13 @@ bool ofc_sema_decl_init_array(
 	{
 		if (!array && (count == 1))
 			return ofc_sema_decl_init(
-				scope, decl, init[0]);
+				decl, init[0]);
 		return false;
 	}
 
 	if (decl->init_array)
 	{
-		ofc_sema_scope_warning(scope, init[0]->src,
+		ofc_sparse_ref_warning(init[0]->src,
 			"Initializing arrays in multiple statements.");
 	}
 
@@ -785,7 +782,7 @@ bool ofc_sema_decl_init_array(
 	if (!ofc_sema_type_elem_count(
 		decl->type, &elem_count))
 	{
-		ofc_sema_scope_error(scope, init[0]->src,
+		ofc_sparse_ref_error(init[0]->src,
 			"Can't initialize array of unknown size");
 		return false;
 	}
@@ -806,7 +803,7 @@ bool ofc_sema_decl_init_array(
 	{
 		if (count > elem_count)
 		{
-			ofc_sema_scope_warning(scope, init[0]->src,
+			ofc_sparse_ref_warning(init[0]->src,
 				"Array initializer too large, truncating.");
 			count = elem_count;
 		}
@@ -818,13 +815,13 @@ bool ofc_sema_decl_init_array(
 				= ofc_sema_expr_constant(init[i]);
 			if (!ctv)
 			{
-				ofc_sema_scope_error(scope, init[i]->src,
+				ofc_sparse_ref_error(init[i]->src,
 					"Array initializer element not constant.");
 				return false;
 			}
 
 			ofc_sema_typeval_t* tv = ofc_sema_typeval_cast(
-				scope, ctv, ofc_sema_type_base(decl->type));
+				ctv, ofc_sema_type_base(decl->type));
 			if (!tv) return false;
 
 			if (decl->init_array[i])
@@ -835,13 +832,13 @@ bool ofc_sema_decl_init_array(
 
 				if (!equal)
 				{
-					ofc_sema_scope_error(scope, init[i]->src,
+					ofc_sparse_ref_error(init[i]->src,
 						"Re-initialization of array element"
 						" with different value");
 					return false;
 				}
 
-				ofc_sema_scope_warning(scope, init[i]->src,
+				ofc_sparse_ref_warning(init[i]->src,
 					"Re-initialization of array element");
 			}
 			else
@@ -969,8 +966,6 @@ bool ofc_sema_decl_list__remap(
 
 	if (list->map)
 		ofc_hashmap_delete(list->map);
-
-
 
 	return (list->map != NULL);
 }

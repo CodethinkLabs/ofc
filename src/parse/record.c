@@ -80,7 +80,7 @@ static bool ofc_parse_record_print(
 		return false;
 
 	return (ofc_colstr_atomic_writef(cs, "/")
-		&& ofc_str_ref_print(cs, record->structure)
+		&& ofc_sparse_ref_print(cs, record->structure)
 		&& ofc_colstr_atomic_writef(cs, "/ ")
 		&& ofc_parse_lhs_print(cs, record->name, true));
 }

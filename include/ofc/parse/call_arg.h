@@ -25,10 +25,10 @@ typedef enum
 
 typedef struct
 {
-	ofc_str_ref_t src;
+	ofc_sparse_ref_t src;
 
 	ofc_parse_call_arg_e type;
-	ofc_str_ref_t        name;
+	ofc_sparse_ref_t     name;
 	ofc_parse_expr_t*    expr;
 } ofc_parse_call_arg_t;
 

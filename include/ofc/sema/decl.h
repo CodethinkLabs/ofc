@@ -67,12 +67,12 @@ ofc_sema_decl_t* ofc_sema_decl_create(
 
 ofc_sema_decl_t* ofc_sema_decl_spec(
 	ofc_sema_scope_t*       scope,
-	ofc_str_ref_t           name,
+	ofc_sparse_ref_t        name,
 	const ofc_sema_spec_t*  spec,
 	const ofc_sema_array_t* array);
 ofc_sema_decl_t* ofc_sema_decl_implicit(
 	ofc_sema_scope_t*       scope,
-	ofc_str_ref_t           name,
+	ofc_sparse_ref_t        name,
 	const ofc_sema_array_t* array);
 ofc_sema_decl_t* ofc_sema_decl_implicit_lhs(
 	ofc_sema_scope_t*       scope,
@@ -80,11 +80,11 @@ ofc_sema_decl_t* ofc_sema_decl_implicit_lhs(
 
 ofc_sema_decl_t* ofc_sema_decl_function(
 	ofc_sema_scope_t*       scope,
-	ofc_str_ref_t           name,
+	ofc_sparse_ref_t        name,
 	const ofc_sema_spec_t*  spec);
 ofc_sema_decl_t* ofc_sema_decl_subroutine(
 	ofc_sema_scope_t* scope,
-	ofc_str_ref_t     name);
+	ofc_sparse_ref_t  name);
 
 bool ofc_sema_decl(
 	ofc_sema_scope_t* scope,
@@ -93,16 +93,13 @@ void ofc_sema_decl_delete(
 	ofc_sema_decl_t* decl);
 
 bool ofc_sema_decl_init(
-	const ofc_sema_scope_t* scope,
 	ofc_sema_decl_t* decl,
 	const ofc_sema_expr_t* init);
 bool ofc_sema_decl_init_offset(
-	const ofc_sema_scope_t* scope,
 	ofc_sema_decl_t* decl,
 	unsigned offset,
 	const ofc_sema_expr_t* init);
 bool ofc_sema_decl_init_array(
-	const ofc_sema_scope_t* scope,
 	ofc_sema_decl_t* decl,
 	const ofc_sema_array_t* array,
 	unsigned count,

@@ -181,7 +181,7 @@ ofc_parse_type_t* ofc_parse_type(
 		return NULL;
 	}
 
-	type.type_name  = OFC_STR_REF_EMPTY;
+	type.type_name  = OFC_SPARSE_REF_EMPTY;
 	type.count_expr = NULL;
 	type.count_var  = false;
 	type.kind       = 0;
@@ -264,7 +264,7 @@ ofc_parse_type_t* ofc_parse_type(
 		}
 	}
 
-	type.src = ofc_str_ref(ptr, i);
+	type.src = ofc_sparse_ref(src, ptr, i);
 
 	ofc_parse_type_t* atype
 		= ofc_parse_type__alloc(type);
@@ -307,7 +307,7 @@ bool ofc_parse_type_print(
 	{
 		if (!ofc_colstr_atomic_writef(cs, " ")
 			|| !ofc_colstr_atomic_writef(cs, "(")
-			|| !ofc_str_ref_print(cs, type->type_name)
+			|| !ofc_sparse_ref_print(cs, type->type_name)
 			|| !ofc_colstr_atomic_writef(cs, ")"))
 			return false;
 	}
@@ -359,7 +359,7 @@ bool ofc_parse_type_print_f77(
 	{
 		if (!ofc_colstr_atomic_writef(cs, " ")
 			|| !ofc_colstr_atomic_writef(cs, "(")
-			|| !ofc_str_ref_print(cs, type->type_name)
+			|| !ofc_sparse_ref_print(cs, type->type_name)
 			|| !ofc_colstr_atomic_writef(cs, ")"))
 			return false;
 	}

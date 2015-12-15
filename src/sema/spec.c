@@ -19,7 +19,7 @@
 
 const ofc_sema_spec_t OFC_SEMA_SPEC_DEFAULT =
 {
-	.name          = OFC_STR_REF_EMPTY,
+	.name          = OFC_SPARSE_REF_EMPTY,
 	.type_implicit = true,
 	.kind          = 0,
 	.len           = 0,
@@ -37,7 +37,7 @@ const ofc_sema_spec_t OFC_SEMA_SPEC_DEFAULT =
 
 
 ofc_sema_spec_t* ofc_sema_spec_create(
-	ofc_str_ref_t name)
+	ofc_sparse_ref_t name)
 {
 	ofc_sema_spec_t* spec
 		= (ofc_sema_spec_t*)malloc(
@@ -103,7 +103,7 @@ ofc_sema_spec_t* ofc_sema_spec(
 	{
 		if (s.len_var)
 		{
-			ofc_sema_scope_error(scope, ptype->src,
+			ofc_sparse_ref_error(ptype->src,
 				"Type LEN specified as both fixed and variable");
 			return NULL;
 		}
@@ -116,14 +116,14 @@ ofc_sema_spec_t* ofc_sema_spec(
 
 		if (!resolved)
 		{
-			ofc_sema_scope_error(scope, ptype->count_expr->src,
+			ofc_sparse_ref_error(ptype->count_expr->src,
 				"Type LEN expression couldn't be resolved");
 			return NULL;
 		}
 
 		if (s.len == 0)
 		{
-			ofc_sema_scope_error(scope, ptype->count_expr->src,
+			ofc_sparse_ref_error(ptype->count_expr->src,
 				"Type LEN must be greater than zero");
 			return NULL;
 		}
@@ -137,14 +137,14 @@ ofc_sema_spec_t* ofc_sema_spec(
 		{
 			/* TODO - Handle unnamed kind, len */
 			if (ofc_str_ref_equal_strz_ci(
-				ptype->params->call_arg[i]->name, "LEN"))
+				ptype->params->call_arg[i]->name.string, "LEN"))
 			{
 				if (ptype->params->call_arg[i]->type
 					== OFC_PARSE_CALL_ARG_ASTERISK)
 				{
 					if (s.len > 0)
 					{
-						ofc_sema_scope_error(scope, ptype->src,
+						ofc_sparse_ref_error(ptype->src,
 							"Type LEN specified as both fixed and variable");
 						return NULL;
 					}
@@ -166,21 +166,21 @@ ofc_sema_spec_t* ofc_sema_spec(
 					ofc_sema_expr_delete(expr);
 					if (!resolved)
 					{
-						ofc_sema_scope_error(scope, ptype->src,
+						ofc_sparse_ref_error(ptype->src,
 							"Type LEN expression couldn't be resolved.");
 						return NULL;
 					}
 
 					if (len == 0)
 					{
-						ofc_sema_scope_error(scope, ptype->src,
+						ofc_sparse_ref_error(ptype->src,
 							"Type LEN paramater must be greater than zero.");
 						return NULL;
 					}
 
 					if (s.len_var)
 					{
-						ofc_sema_scope_error(scope, ptype->src,
+						ofc_sparse_ref_error(ptype->src,
 							"Type LEN specified as both fixed and variable");
 						return NULL;
 					}
@@ -188,12 +188,12 @@ ofc_sema_spec_t* ofc_sema_spec(
 					{
 						if(s.len != len)
 						{
-							ofc_sema_scope_error(scope, ptype->src,
+							ofc_sparse_ref_error(ptype->src,
 								"Conflicting type LEN specifications");
 							return NULL;
 						}
 
-						ofc_sema_scope_warning(scope, ptype->src,
+						ofc_sparse_ref_warning(ptype->src,
 							"Multiple type LEN specifications");
 					}
 
@@ -201,7 +201,7 @@ ofc_sema_spec_t* ofc_sema_spec(
 				}
 			}
 			else if (ofc_str_ref_equal_strz_ci(
-				ptype->params->call_arg[i]->name, "KIND"))
+				ptype->params->call_arg[i]->name.string, "KIND"))
 			{
 				if (ptype->params->call_arg[i]->type
 					!= OFC_PARSE_CALL_ARG_EXPR)
@@ -216,14 +216,14 @@ ofc_sema_spec_t* ofc_sema_spec(
 				ofc_sema_expr_delete(expr);
 				if (!resolved)
 				{
-					ofc_sema_scope_error(scope, ptype->src,
+					ofc_sparse_ref_error(ptype->src,
 						"Type KIND expression couldn't be resolved.");
 					return NULL;
 				}
 
 				if (kind == 0)
 				{
-					ofc_sema_scope_error(scope, ptype->src,
+					ofc_sparse_ref_error(ptype->src,
 						"Type KIND paramater must be greater than zero.");
 					return NULL;
 				}
@@ -232,12 +232,12 @@ ofc_sema_spec_t* ofc_sema_spec(
 				{
 					if(s.kind != kind)
 					{
-						ofc_sema_scope_error(scope, ptype->src,
+						ofc_sparse_ref_error(ptype->src,
 							"Conflicting type KIND specifications");
 						return NULL;
 					}
 
-					ofc_sema_scope_warning(scope, ptype->src,
+					ofc_sparse_ref_warning(ptype->src,
 						"Multiple type KIND specifications");
 				}
 
@@ -245,7 +245,7 @@ ofc_sema_spec_t* ofc_sema_spec(
 			}
 			else
 			{
-				ofc_sema_scope_error(scope, ptype->src,
+				ofc_sparse_ref_error(ptype->src,
 					"Unknown parameter in type.");
 				return NULL;
 			}
@@ -256,7 +256,7 @@ ofc_sema_spec_t* ofc_sema_spec(
 	{
 		if (s.type != OFC_SEMA_TYPE_CHARACTER)
 		{
-			ofc_sema_scope_error(scope, ptype->src,
+			ofc_sparse_ref_error(ptype->src,
 					"LEN parameter only supported for CHARACTER type.");
 			return NULL;
 		}
@@ -346,7 +346,7 @@ void ofc_sema_spec_delete(
 static const ofc_str_ref_t* ofc_sema_spec__name(
 	const ofc_sema_spec_t* spec)
 {
-	return (spec ? &spec->name : NULL);
+	return (spec ? &spec->name.string : NULL);
 }
 
 ofc_hashmap_t* ofc_sema_spec_map_create(

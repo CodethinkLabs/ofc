@@ -18,8 +18,8 @@
 
 typedef struct
 {
-	ofc_str_ref_t name;
-	ofc_str_ref_t target;
+	ofc_sparse_ref_t name;
+	ofc_sparse_ref_t target;
 } ofc_parse_pointer_t;
 
 typedef struct

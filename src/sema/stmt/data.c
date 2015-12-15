@@ -111,13 +111,13 @@ static bool ofc_sema_stmt__data(
 	unsigned count = lhs_count;
 	if (expr_count < lhs_count)
 	{
-		ofc_sema_scope_warning(scope, lhs[0]->src,
+		ofc_sparse_ref_warning(lhs[0]->src,
 			"Not enough initializer elements in DATA statement");
 		count = expr_count;
 	}
 	else if (expr_count > lhs_count)
 	{
-		ofc_sema_scope_warning(scope, expr[0]->src,
+		ofc_sparse_ref_warning(expr[0]->src,
 			"Too many initializer elements in DATA statement, ignoring");
 	}
 
@@ -134,17 +134,16 @@ static bool ofc_sema_stmt__data(
 
 			if (elhs[i]->type == OFC_SEMA_LHS_ARRAY_SLICE)
 			{
-				ofc_sema_scope_error(scope, elhs[i]->src,
+				ofc_sparse_ref_error(elhs[i]->src,
 					"Array slice initializers not yet supported");
 				success = false;
 			}
 			else
 			{
 				if (!ofc_sema_lhs_init_array(
-					scope, elhs[i], NULL,
-					elem_count, &eexpr[i]))
+					elhs[i], NULL, elem_count, &eexpr[i]))
 				{
-					ofc_sema_scope_error(scope, elhs[i]->src,
+					ofc_sparse_ref_error(elhs[i]->src,
 						"Invalid array LHS in DATA statement");
 					success = false;
 				}
@@ -157,7 +156,7 @@ static bool ofc_sema_stmt__data(
 			if (!ofc_sema_lhs_init(
 				scope, elhs[i], eexpr[i]))
 			{
-				ofc_sema_scope_error(scope, elhs[i]->src,
+				ofc_sparse_ref_error(elhs[i]->src,
 					"Invalid LHS in DATA statement");
 				success = false;
 			}

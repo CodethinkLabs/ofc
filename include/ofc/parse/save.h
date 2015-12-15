@@ -22,7 +22,7 @@ typedef struct
 	union
 	{
 		ofc_parse_lhs_t* lhs;
-		ofc_str_ref_t    common;
+		ofc_sparse_ref_t common;
 	};
 } ofc_parse_save_t;
 

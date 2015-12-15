@@ -44,8 +44,6 @@ struct ofc_sema_scope_s
 
 	const ofc_lang_opts_t* lang_opts;
 
-	const ofc_sparse_t* src;
-
 	ofc_sema_scope_e     type;
 	ofc_str_ref_t        name;
 	ofc_sema_arg_list_t* args;
@@ -72,7 +70,6 @@ struct ofc_sema_scope_s
 
 ofc_sema_scope_t* ofc_sema_scope_global(
 	const ofc_lang_opts_t* lang_opts,
-	const ofc_sparse_t*    src,
 	const ofc_parse_stmt_list_t* list);
 
 ofc_sema_scope_t* ofc_sema_scope_program(
@@ -104,9 +101,9 @@ ofc_lang_opts_t ofc_sema_scope_get_lang_opts(
 	const ofc_sema_scope_t* scope);
 
 ofc_sema_spec_t* ofc_sema_scope_spec_modify(
-	ofc_sema_scope_t* scope, ofc_str_ref_t name);
+	ofc_sema_scope_t* scope, ofc_sparse_ref_t name);
 ofc_sema_spec_t* ofc_sema_scope_spec_find_final(
-	const ofc_sema_scope_t* scope, ofc_str_ref_t name);
+	const ofc_sema_scope_t* scope, ofc_sparse_ref_t name);
 
 const ofc_sema_decl_t* ofc_sema_scope_decl_find(
 	const ofc_sema_scope_t* scope, ofc_str_ref_t name, bool local);
@@ -124,15 +121,6 @@ bool ofc_sema_scope_parameter_add(
 
 ofc_sema_common_t* ofc_sema_scope_common_find_create(
 	ofc_sema_scope_t* scope, ofc_str_ref_t name);
-
-void ofc_sema_scope_error(
-	const ofc_sema_scope_t* scope, ofc_str_ref_t pos,
-	const char* format, ...)
-	__attribute__ ((format (printf, 3, 4)));
-void ofc_sema_scope_warning(
-	const ofc_sema_scope_t* scope, ofc_str_ref_t pos,
-	const char* format, ...)
-	__attribute__ ((format (printf, 3, 4)));
 
 bool ofc_sema_scope_print(
 	ofc_colstr_t* cs, unsigned indent,

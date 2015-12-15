@@ -18,7 +18,7 @@
 
 struct ofc_sema_spec_s
 {
-	ofc_str_ref_t name;
+	ofc_sparse_ref_t name;
 
 	bool            type_implicit;
 	ofc_sema_type_e type;
@@ -42,7 +42,7 @@ struct ofc_sema_spec_s
 
 const ofc_sema_spec_t OFC_SEMA_SPEC_DEFAULT;
 
-ofc_sema_spec_t* ofc_sema_spec_create(ofc_str_ref_t name);
+ofc_sema_spec_t* ofc_sema_spec_create(ofc_sparse_ref_t name);
 ofc_sema_spec_t* ofc_sema_spec(
 	ofc_sema_scope_t*       scope,
 	const ofc_parse_type_t* ptype);

@@ -151,7 +151,7 @@ bool ofc_parse_stmt_decl_attr_print(
 			(i == 0 ? " " : ", ")))
 			return false;
 
-		if (!ofc_str_ref_print(cs,
+		if (!ofc_sparse_ref_print(cs,
 			*(stmt->decl_attr.name[i])))
 			return false;
 	}

@@ -368,6 +368,26 @@ char* ofc_sparse_include_path(
 
 
 
+bool ofc_sparse_ref_bridge(
+	ofc_sparse_ref_t a, ofc_sparse_ref_t b,
+	ofc_sparse_ref_t* c)
+{
+	c->sparse = a.sparse;
+
+	if (ofc_sparse_ref_empty(a))
+		c->string = b.string;
+	else if (ofc_sparse_ref_empty(b))
+		c->string = a.string;
+	else if (a.sparse != b.sparse)
+		return false;
+	else
+		c->string = ofc_str_ref_bridge(a.string, b.string);
+
+	return true;
+}
+
+
+
 static const char* ofc_sparse__file_pointer(
 	const ofc_sparse_t* sparse, const char* ptr,
 	const char** sol)

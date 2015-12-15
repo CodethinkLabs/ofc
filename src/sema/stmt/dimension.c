@@ -34,7 +34,7 @@ bool ofc_sema_stmt_dimension(
 
 		if (lhs->type != OFC_PARSE_LHS_ARRAY)
 		{
-			ofc_sema_scope_error(scope, lhs->src,
+			ofc_sparse_ref_error(lhs->src,
 				"DIMENSION entry must contain array dimensions.");
 			return false;
 		}
@@ -42,22 +42,22 @@ bool ofc_sema_stmt_dimension(
 		if (!lhs->parent
 			|| (lhs->parent->type != OFC_PARSE_LHS_VARIABLE))
 		{
-			ofc_sema_scope_error(scope, lhs->src,
+			ofc_sparse_ref_error(lhs->src,
 				"Invalid array layout in DIMENSION");
 			return false;
 		}
 
-		ofc_str_ref_t base_name;
+		ofc_sparse_ref_t base_name;
 		if (!ofc_parse_lhs_base_name(
 			*lhs, &base_name))
 			return false;
 
 		const ofc_sema_decl_t* decl
 			= ofc_sema_scope_decl_find(
-				scope, base_name, true);
+				scope, base_name.string, true);
 		if (decl)
 		{
-			ofc_sema_scope_error(scope, lhs->src,
+			ofc_sparse_ref_error(lhs->src,
 				"Can't modify dimensions of declaration after use");
 			return false;
 		}
@@ -67,10 +67,9 @@ bool ofc_sema_stmt_dimension(
 				scope, base_name);
 		if (!spec)
 		{
-			ofc_str_ref_t n = base_name;
-			ofc_sema_scope_error(scope, lhs->src,
+			ofc_sparse_ref_error(lhs->src,
 				"No declaration for '%.*s' and no valid IMPLICIT rule.",
-				n.size, n.base);
+				base_name.string.size, base_name.string.base);
 			return false;
 		}
 
@@ -87,12 +86,12 @@ bool ofc_sema_stmt_dimension(
 
 			if (conflict)
 			{
-				ofc_sema_scope_error(scope, lhs->src,
+				ofc_sparse_ref_error(lhs->src,
 					"Conflicting array dimension specifications");
 				return false;
 			}
 
-			ofc_sema_scope_warning(scope, lhs->src,
+			ofc_sparse_ref_warning(lhs->src,
 				"Multiple array dimension specifications");
 		}
 		else

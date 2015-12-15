@@ -149,7 +149,7 @@ static ofc_sema_lhs_t* ofc_sema_lhs_substring(
 
 		if (ifirst < 0)
 		{
-			ofc_sema_scope_error(scope, lhs->src,
+			ofc_sparse_ref_error(lhs->src,
 				"First index in character substring must be 1 or greater");
 
 			if (last != first)
@@ -160,7 +160,7 @@ static ofc_sema_lhs_t* ofc_sema_lhs_substring(
 
 		if (ilast < ifirst)
 		{
-			ofc_sema_scope_error(scope, lhs->src,
+			ofc_sparse_ref_error(lhs->src,
 				"Last index in character substring must be greater than first");
 
 			if (last != first)
@@ -172,7 +172,7 @@ static ofc_sema_lhs_t* ofc_sema_lhs_substring(
 		if ((lhs->data_type->len > 0)
 			&& (ilast > lhs->data_type->len))
 		{
-			ofc_sema_scope_warning(scope, lhs->src,
+			ofc_sparse_ref_warning(lhs->src,
 				"Last index in character substring out-of-bounds");
 		}
 
@@ -217,9 +217,9 @@ static ofc_sema_lhs_t* ofc_sema_lhs_substring(
 
 static ofc_sema_lhs_t* ofc_sema_lhs_member(
 	ofc_sema_lhs_t* lhs,
-	ofc_str_ref_t member)
+	ofc_sparse_ref_t member)
 {
-	if (!lhs || ofc_str_ref_empty(member))
+	if (!lhs || ofc_sparse_ref_empty(member))
 		return NULL;
 
 	/* TODO - Implement. */
@@ -238,13 +238,13 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 	switch (lhs->type)
 	{
 		case OFC_PARSE_LHS_IMPLICIT_DO:
-			ofc_sema_scope_error(scope, lhs->src,
+			ofc_sparse_ref_error(lhs->src,
 				"Can't resolve implicit do to single %s.",
 				(is_expr ? "primary expression": "LHS"));
 			return NULL;
 
 		case OFC_PARSE_LHS_STAR_LEN:
-			ofc_sema_scope_error(scope, lhs->src,
+			ofc_sparse_ref_error(lhs->src,
 				"Can't resolve star length to %s.",
 				(is_expr ? "primary expression": "LHS"));
 			return NULL;
@@ -262,7 +262,7 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 					|| (parent->data_type->type
 						!= OFC_SEMA_TYPE_STRUCTURE))
 				{
-					ofc_sema_scope_error(scope, lhs->src,
+					ofc_sparse_ref_error(lhs->src,
 						"Attempting to dereference member of a variable"
 						" that's not a structure.");
 					ofc_sema_lhs_delete(parent);
@@ -292,7 +292,7 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 					if (!ofc_sema_type_is_character(
 						parent->data_type))
 					{
-						ofc_sema_scope_error(scope, lhs->src,
+						ofc_sparse_ref_error(lhs->src,
 							"Attempting to index a variable that's not an array");
 						ofc_sema_lhs_delete(parent);
 						return NULL;
@@ -362,24 +362,24 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 	ofc_sema_decl_t* decl;
 	if ((root->type == OFC_SEMA_SCOPE_FUNCTION)
 		&& (ofc_sema_scope_get_lang_opts(root).case_sensitive
-			? ofc_str_ref_equal(lhs->variable, root->name)
-			: ofc_str_ref_equal_ci(lhs->variable, root->name)))
+			? ofc_str_ref_equal(lhs->variable.string, root->name)
+			: ofc_str_ref_equal_ci(lhs->variable.string, root->name)))
 	{
 		/* Special case for FUNCTION return value. */
 
 		decl = ofc_sema_scope_decl_find_modify(
-			scope, lhs->variable, true);
+			scope, lhs->variable.string, true);
 		if (!decl)
 		{
 			decl = ofc_sema_scope_decl_find_modify(
-				root, lhs->variable, true);
+				root, lhs->variable.string, true);
 		}
 
 		if (!decl)
 		{
 			ofc_sema_decl_t* fdecl
 				= ofc_sema_scope_decl_find_modify(
-					root, lhs->variable, false);
+					root, lhs->variable.string, false);
 			if (!fdecl)
 			{
 				/* This should never happen. */
@@ -388,7 +388,7 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 
 			const ofc_sema_type_t* rtype
 				= ofc_sema_decl_base_type(fdecl);
-			decl = ofc_sema_decl_create(rtype, lhs->variable);
+			decl = ofc_sema_decl_create(rtype, lhs->variable.string);
 			if (!decl) return NULL;
 
 			if (!ofc_sema_decl_list_add(
@@ -402,24 +402,24 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 	else
 	{
 		decl = ofc_sema_scope_decl_find_modify(
-			scope, lhs->variable, false);
+			scope, lhs->variable.string, false);
 		if (!decl)
 		{
 			decl = ofc_sema_decl_implicit_lhs(
 				scope, lhs);
 			if (!decl)
 			{
-				ofc_sema_scope_error(scope, lhs->src,
+				ofc_sparse_ref_error(lhs->src,
 					"No declaration for '%.*s' and no valid IMPLICIT rule.",
-					lhs->variable.size, lhs->variable.base);
+					lhs->variable.string.size, lhs->variable.string.base);
 				return NULL;
 			}
 
 			if (is_expr && !ofc_sema_decl_is_procedure(decl))
 			{
-				ofc_sema_scope_warning(scope, lhs->src,
+				ofc_sparse_ref_warning(lhs->src,
 					"Referencing uninitialized variable '%.*s' in expression.",
-					lhs->variable.size, lhs->variable.base);
+					lhs->variable.string.size, lhs->variable.string.base);
 			}
 		}
 	}
@@ -456,7 +456,7 @@ ofc_sema_lhs_t* ofc_sema_lhs_from_expr(
 
 	if (expr->type != OFC_PARSE_EXPR_VARIABLE)
 	{
-		ofc_sema_scope_error(scope, expr->src,
+		ofc_sparse_ref_error(expr->src,
 			"Attempting to convert to lhs and expression that is not an lhs");
 		return NULL;
 	}
@@ -549,7 +549,7 @@ bool ofc_sema_lhs_init(
 	{
 		case OFC_SEMA_LHS_DECL:
 			return ofc_sema_decl_init(
-				scope, decl, init);
+				decl, init);
 
 		case OFC_SEMA_LHS_ARRAY_INDEX:
 		{
@@ -559,7 +559,7 @@ bool ofc_sema_lhs_init(
 				return false;
 
 			return ofc_sema_decl_init_offset(
-				scope, decl, offset, init);
+				decl, offset, init);
 		}
 
 		/* TODO - Initialize all LHS types. */
@@ -572,7 +572,6 @@ bool ofc_sema_lhs_init(
 }
 
 bool ofc_sema_lhs_init_array(
-	const ofc_sema_scope_t* scope,
 	ofc_sema_lhs_t* lhs,
 	const ofc_sema_array_t* array,
 	unsigned count,
@@ -592,7 +591,7 @@ bool ofc_sema_lhs_init_array(
 		return false;
 
 	return ofc_sema_decl_init_array(
-		scope, ofc_sema_lhs_decl(lhs),
+		ofc_sema_lhs_decl(lhs),
 		array, count, init);
 }
 

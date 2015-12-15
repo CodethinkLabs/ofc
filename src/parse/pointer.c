@@ -76,9 +76,9 @@ bool ofc_parse_pointer_print(
 		return false;
 
 	return (ofc_colstr_atomic_writef(cs, "(")
-		&& ofc_str_ref_print(cs, pointer->name)
+		&& ofc_sparse_ref_print(cs, pointer->name)
 		&& ofc_colstr_atomic_writef(cs, ", ")
-		&& ofc_str_ref_print(cs, pointer->target)
+		&& ofc_sparse_ref_print(cs, pointer->target)
 		&& ofc_colstr_atomic_writef(cs, ")"));
 }
 

@@ -56,7 +56,7 @@ ofc_sema_array_t* ofc_sema_array(
 				scope, index->range[i]->first);
 			if (!expr)
 			{
-				ofc_sema_scope_error(scope,
+				ofc_sparse_ref_error(
 					index->range[i]->first->src,
 					"Invalid array base expression");
 				ofc_sema_array_delete(array);
@@ -71,7 +71,7 @@ ofc_sema_array_t* ofc_sema_array(
 				int64_t d;
 				if (!ofc_sema_typeval_get_integer(ctv, &d))
 				{
-					ofc_sema_scope_error(scope,
+					ofc_sparse_ref_error(
 						index->range[i]->first->src,
 						"Failed to resolve array base");
 					ofc_sema_expr_delete(expr);
@@ -82,7 +82,7 @@ ofc_sema_array_t* ofc_sema_array(
 				seg->first = d;
 				if ((int64_t)seg->first != d)
 				{
-					ofc_sema_scope_error(scope,
+					ofc_sparse_ref_error(
 						index->range[i]->first->src,
 						"Array base out-of-range");
 					ofc_sema_expr_delete(expr);
@@ -99,7 +99,7 @@ ofc_sema_array_t* ofc_sema_array(
 				scope, index->range[i]->last);
 			if (!expr)
 			{
-				ofc_sema_scope_error(scope,
+				ofc_sparse_ref_error(
 					index->range[i]->last->src,
 					"Invalid array last expression");
 				ofc_sema_array_delete(array);
@@ -114,7 +114,7 @@ ofc_sema_array_t* ofc_sema_array(
 				int64_t d;
 				if (!ofc_sema_typeval_get_integer(ctv, &d))
 				{
-					ofc_sema_scope_error(scope,
+					ofc_sparse_ref_error(
 						index->range[i]->last->src,
 						"Failed to resolve array last");
 					ofc_sema_expr_delete(expr);
@@ -125,7 +125,7 @@ ofc_sema_array_t* ofc_sema_array(
 				seg->last = d;
 				if ((int64_t)seg->last != d)
 				{
-					ofc_sema_scope_error(scope,
+					ofc_sparse_ref_error(
 						index->range[i]->last->src,
 						"Array last out-of-range");
 					ofc_sema_expr_delete(expr);
@@ -136,7 +136,7 @@ ofc_sema_array_t* ofc_sema_array(
 				if (!seg->first_var
 					&& (seg->first > seg->last))
 				{
-					ofc_sema_scope_error(scope,
+					ofc_sparse_ref_error(
 						index->range[i]->first->src,
 						"Array last must be greater than base");
 					ofc_sema_expr_delete(expr);
@@ -359,7 +359,7 @@ ofc_sema_array_index_t* ofc_sema_array_index(
 
 		if (!ofc_sema_type_is_scalar(type))
 		{
-			ofc_sema_scope_error(scope, expr->src,
+			ofc_sparse_ref_error(expr->src,
 				"Array index type must be scalar.");
 			ofc_sema_array_index_delete(ai);
 			return NULL;
@@ -368,7 +368,7 @@ ofc_sema_array_index_t* ofc_sema_array_index(
 		if (!ofc_sema_type_is_integer(type))
 		{
 			ofc_sema_expr_t* cast
-				= ofc_sema_expr_cast(scope, expr,
+				= ofc_sema_expr_cast(expr,
 					ofc_sema_type_integer_default());
 			if (!cast)
 			{
@@ -386,7 +386,7 @@ ofc_sema_array_index_t* ofc_sema_array_index(
 			int64_t idx;
 			if (!ofc_sema_typeval_get_integer(ctv, &idx))
 			{
-				ofc_sema_scope_error(scope, expr->src,
+				ofc_sparse_ref_error(expr->src,
 					"Array index must resolve as integer");
 				ofc_sema_array_index_delete(ai);
 				return NULL;
@@ -394,12 +394,12 @@ ofc_sema_array_index_t* ofc_sema_array_index(
 
 			if (idx < array->segment[i].first)
 			{
-				ofc_sema_scope_warning(scope, expr->src,
+				ofc_sparse_ref_warning(expr->src,
 					"Array index out-of-bounds (underflow)");
 			}
 			else if (idx > array->segment[i].last)
 			{
-				ofc_sema_scope_warning(scope, expr->src,
+				ofc_sparse_ref_warning(expr->src,
 					"Array index out-of-bounds (overflow)");
 			}
 		}
@@ -454,7 +454,7 @@ bool ofc_sema_array_index_offset(
 	if (!ofc_sema_type_is_array(decl->type))
 	{
 		/* TODO - Positional error. */
-		ofc_sema_scope_error(scope, OFC_STR_REF_EMPTY,
+		ofc_sparse_ref_error(OFC_SPARSE_REF_EMPTY,
 			"Can't index non-array type");
 		return false;
 	}
@@ -467,7 +467,7 @@ bool ofc_sema_array_index_offset(
 		!= array->dimensions)
 	{
 		/* TODO - Positional error. */
-		ofc_sema_scope_error(scope, OFC_STR_REF_EMPTY,
+		ofc_sparse_ref_error(OFC_SPARSE_REF_EMPTY,
 			"Index dimensions don't match array");
 		return false;
 	}
@@ -489,20 +489,20 @@ bool ofc_sema_array_index_offset(
 		if (!ofc_sema_typeval_get_integer(
 			ofc_sema_expr_constant(expr), &so))
 		{
-			ofc_sema_scope_error(scope, expr->src,
+			ofc_sparse_ref_error(expr->src,
 				"Failed to resolve array index");
 			return false;
 		}
 
 		if (so < dims.first)
 		{
-			ofc_sema_scope_error(scope, expr->src,
+			ofc_sparse_ref_error(expr->src,
 				"Array index out-of-range, too low");
 			return false;
 		}
 		else if (so > dims.last)
 		{
-			ofc_sema_scope_error(scope, expr->src,
+			ofc_sparse_ref_error(expr->src,
 				"Array index out-of-range, too high");
 			return false;
 		}

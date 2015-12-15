@@ -31,7 +31,7 @@ static unsigned ofc_parse_stmt__structure(
 			src, ptr, debug, keyword);
 		if (i == 0) return 0;
 
-		stmt->structure.name = OFC_STR_REF_EMPTY;
+		stmt->structure.name = OFC_SPARSE_REF_EMPTY;
 
 		if (keyword == OFC_PARSE_KEYWORD_STRUCTURE)
 		{
@@ -262,11 +262,11 @@ bool ofc_parse_stmt_structure_print(
 	if (!ofc_colstr_atomic_writef(cs, "%s", kwstr))
 		return false;
 
-	if (!ofc_str_ref_empty(stmt->structure.name))
+	if (!ofc_sparse_ref_empty(stmt->structure.name))
 	{
 		if (!ofc_colstr_atomic_writef(cs, " ")
 			|| (slash && !ofc_colstr_atomic_writef(cs, "/"))
-			|| !ofc_str_ref_print(cs, stmt->structure.name)
+			|| !ofc_sparse_ref_print(cs, stmt->structure.name)
 			|| (slash && !ofc_colstr_atomic_writef(cs, "/")))
 			return false;
 	}

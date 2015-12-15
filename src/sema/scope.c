@@ -78,7 +78,6 @@ static bool ofc_sema_scope__add_child(
 static ofc_sema_scope_t* ofc_sema_scope__create(
 	ofc_sema_scope_t*      parent,
 	const ofc_lang_opts_t* lang_opts,
-	const ofc_sparse_t*    src,
 	ofc_sema_scope_e       type)
 {
 	ofc_sema_scope_t* scope
@@ -92,10 +91,6 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 	scope->lang_opts = lang_opts;
 	if (!scope->lang_opts && parent)
 		scope->lang_opts = parent->lang_opts;
-
-	scope->src = src;
-	if (!scope->src && parent)
-		scope->src = parent->src;
 
 	ofc_lang_opts_t opts = ofc_sema_scope_get_lang_opts(scope);
 
@@ -157,13 +152,13 @@ static bool ofc_sema_scope__subroutine(
 		|| (stmt->type != OFC_PARSE_STMT_SUBROUTINE))
 		return false;
 
-	ofc_str_ref_t name = stmt->program.name;
-	if (ofc_str_ref_empty(name))
+	ofc_sparse_ref_t name = stmt->program.name;
+	if (ofc_sparse_ref_empty(name))
 		return false;
 
 	ofc_sema_decl_t* decl
 		= ofc_sema_scope_decl_find_modify(
-			scope, name, true);
+			scope, name.string, true);
 	if (decl)
 	{
 		if (!ofc_sema_decl_is_subroutine(decl))
@@ -179,7 +174,7 @@ static bool ofc_sema_scope__subroutine(
 			= ofc_sema_type_subroutine();
 		if (!stype) return false;
 
-		decl = ofc_sema_decl_create(stype, name);
+		decl = ofc_sema_decl_create(stype, name.string);
 		if (!decl) return false;
 
 		if (!ofc_sema_decl_list_add(
@@ -192,15 +187,15 @@ static bool ofc_sema_scope__subroutine(
 
 
 	ofc_sema_scope_t* sub_scope
-		= ofc_sema_scope__create(scope, NULL, NULL,
+		= ofc_sema_scope__create(scope, NULL,
 			OFC_SEMA_SCOPE_SUBROUTINE);
 	if (!sub_scope) return false;
-	sub_scope->name = name;
+	sub_scope->name = name.string;
 
 	if (stmt->program.args)
 	{
 		sub_scope->args = ofc_sema_arg_list(
-			scope, stmt->program.args);
+			stmt->program.args);
 		if (!sub_scope->args)
 		{
 			ofc_sema_scope_delete(sub_scope);
@@ -233,8 +228,8 @@ static bool ofc_sema_scope__function(
 		|| (stmt->type != OFC_PARSE_STMT_FUNCTION))
 		return false;
 
-	ofc_str_ref_t name = stmt->program.name;
-	if (ofc_str_ref_empty(name))
+	ofc_sparse_ref_t name = stmt->program.name;
+	if (ofc_sparse_ref_empty(name))
 		return false;
 
 	ofc_sema_spec_t* spec;
@@ -265,7 +260,7 @@ static bool ofc_sema_scope__function(
 
 	ofc_sema_decl_t* decl
 		= ofc_sema_scope_decl_find_modify(
-			scope, name, true);
+			scope, name.string, true);
 	if (decl)
 	{
 		if (!ofc_sema_decl_is_function(decl))
@@ -284,7 +279,7 @@ static bool ofc_sema_scope__function(
 	}
 	else
 	{
-		decl = ofc_sema_decl_create(ftype, name);
+		decl = ofc_sema_decl_create(ftype, name.string);
 		if (!decl) return false;
 
 		if (!ofc_sema_decl_list_add(
@@ -296,15 +291,15 @@ static bool ofc_sema_scope__function(
 	}
 
 	ofc_sema_scope_t* func_scope
-		= ofc_sema_scope__create(scope, NULL, NULL,
+		= ofc_sema_scope__create(scope, NULL,
 			OFC_SEMA_SCOPE_FUNCTION);
 	if (!func_scope) return false;
-	func_scope->name = name;
+	func_scope->name = name.string;
 
 	if (stmt->program.args)
 	{
 		func_scope->args = ofc_sema_arg_list(
-			scope, stmt->program.args);
+			stmt->program.args);
 		if (!func_scope->args)
 		{
 			ofc_sema_scope_delete(func_scope);
@@ -374,6 +369,8 @@ static bool ofc_sema_scope__body(
 			continue;
 		}
 
+		ofc_sparse_ref_warning(stmt->src, "BONK");
+
 		switch (stmt->type)
 		{
 			case OFC_PARSE_STMT_INCLUDE:
@@ -381,13 +378,8 @@ static bool ofc_sema_scope__body(
 					/* TODO - Handle this at a lower level to handle
 							  ordering better. */
 
-					/* TODO - Think of a better way to track src. */
-					const ofc_sparse_t* src = scope->src;
-					scope->src = stmt->include.src;
-					bool success = ofc_sema_scope__body(
-						scope, stmt->include.include);
-					scope->src = src;
-					if (!success)
+					if (!ofc_sema_scope__body(
+						scope, stmt->include.include))
 						return false;
 				}
 				break;
@@ -554,7 +546,6 @@ static bool ofc_sema_scope__body(
 
 ofc_sema_scope_t* ofc_sema_scope_global(
 	const ofc_lang_opts_t* lang_opts,
-	const ofc_sparse_t* src,
 	const ofc_parse_stmt_list_t* list)
 {
 	if (!list)
@@ -562,7 +553,7 @@ ofc_sema_scope_t* ofc_sema_scope_global(
 
 	ofc_sema_scope_t* scope
 		= ofc_sema_scope__create(
-			NULL, lang_opts, src, OFC_SEMA_SCOPE_GLOBAL);
+			NULL, lang_opts, OFC_SEMA_SCOPE_GLOBAL);
 	if (!scope) return NULL;
 
 	scope->lang_opts = lang_opts;
@@ -586,10 +577,10 @@ ofc_sema_scope_t* ofc_sema_scope_program(
 
 	ofc_sema_scope_t* program
 		= ofc_sema_scope__create(
-			scope, NULL, NULL, OFC_SEMA_SCOPE_PROGRAM);
+			scope, NULL, OFC_SEMA_SCOPE_PROGRAM);
 	if (!program) return NULL;
 
-	program->name = stmt->program.name;
+	program->name = stmt->program.name.string;
 
 	if (!ofc_sema_scope__body(
 		program, stmt->program.body))
@@ -623,13 +614,14 @@ ofc_sema_scope_t* ofc_sema_scope_stmt_func(
 		|| (stmt->assignment->name->parent->type != OFC_PARSE_LHS_VARIABLE))
 		return NULL;
 
-	ofc_str_ref_t base_name;
+	ofc_sparse_ref_t base_name;
 	if (!ofc_parse_lhs_base_name(
 		*(stmt->assignment->name), &base_name))
 		return NULL;
 
 	ofc_sema_decl_t* decl
-		= ofc_sema_scope_decl_find_modify(scope, base_name, true);
+		= ofc_sema_scope_decl_find_modify(
+			scope, base_name.string, true);
 	if (decl) return NULL;
 
 	ofc_sema_spec_t* spec
@@ -653,15 +645,14 @@ ofc_sema_scope_t* ofc_sema_scope_stmt_func(
 
 	ofc_sema_scope_t* func
 		= ofc_sema_scope__create(
-			scope, NULL, NULL, OFC_SEMA_SCOPE_STMT_FUNC);
+			scope, NULL, OFC_SEMA_SCOPE_STMT_FUNC);
 	if (!func) return NULL;
 
 	const ofc_parse_array_index_t* index
 		= stmt->assignment->name->array.index;
 	if (index && (index->count > 0))
 	{
-		func->args = ofc_sema_arg_list_stmt_func(
-			scope, index);
+		func->args = ofc_sema_arg_list_stmt_func(index);
 		if (!func->args)
 		{
 			ofc_sema_scope_delete(func);
@@ -696,7 +687,7 @@ ofc_sema_scope_t* ofc_sema_scope_if(
 
 	ofc_sema_scope_t* if_scope
 		= ofc_sema_scope__create(
-			scope, NULL, NULL, OFC_SEMA_SCOPE_IF);
+			scope, NULL, OFC_SEMA_SCOPE_IF);
 	if (!if_scope) return NULL;
 
 	if (!ofc_sema_scope__body(if_scope, block))
@@ -716,7 +707,7 @@ ofc_sema_scope_t* ofc_sema_scope_implicit_do(
 
 	ofc_sema_scope_t* id_scope
 		= ofc_sema_scope__create(
-			scope, NULL, NULL, OFC_SEMA_SCOPE_IMPLICIT_DO);
+			scope, NULL, OFC_SEMA_SCOPE_IMPLICIT_DO);
 	if (!id_scope) return NULL;
 
 	return id_scope;
@@ -732,10 +723,10 @@ ofc_sema_scope_t* ofc_sema_scope_block_data(
 
 	ofc_sema_scope_t* block_data
 		= ofc_sema_scope__create(
-			scope, NULL, NULL, OFC_SEMA_SCOPE_BLOCK_DATA);
+			scope, NULL, OFC_SEMA_SCOPE_BLOCK_DATA);
 	if (!block_data) return NULL;
 
-	block_data->name = stmt->program.name;
+	block_data->name = stmt->program.name.string;
 
 	if (!ofc_sema_scope__body(
 		block_data, stmt->program.body))
@@ -813,19 +804,19 @@ static ofc_sema_spec_t* ofc_sema_scope_spec__find(
 }
 
 ofc_sema_spec_t* ofc_sema_scope_spec_modify(
-	ofc_sema_scope_t* scope, ofc_str_ref_t name)
+	ofc_sema_scope_t* scope, ofc_sparse_ref_t name)
 {
-	if (!scope || ofc_str_ref_empty(name))
+	if (!scope || ofc_sparse_ref_empty(name))
 		return NULL;
 
 	ofc_sema_spec_t* spec
 		= ofc_hashmap_find_modify(
-			scope->spec, &name);
+			scope->spec, &name.string);
 	if (spec) return spec;
 
 	ofc_sema_spec_t* parent
 		= ofc_sema_scope_spec__find(
-			scope, name);
+			scope, name.string);
 
 	spec = (parent
 		? ofc_sema_spec_copy(parent)
@@ -847,11 +838,11 @@ ofc_sema_spec_t* ofc_sema_scope_spec_modify(
 }
 
 ofc_sema_spec_t* ofc_sema_scope_spec_find_final(
-	const ofc_sema_scope_t* scope, ofc_str_ref_t name)
+	const ofc_sema_scope_t* scope, ofc_sparse_ref_t name)
 {
 	ofc_sema_spec_t* spec
 		= ofc_sema_scope_spec__find(
-			scope, name);
+			scope, name.string);
 
 	return ofc_sema_implicit_apply(
 		scope->implicit, name, spec);
@@ -954,32 +945,6 @@ bool ofc_sema_scope_parameter_add(
 }
 
 
-
-void ofc_sema_scope_error(
-	const ofc_sema_scope_t* scope, ofc_str_ref_t pos,
-	const char* format, ...)
-{
-	if (!scope)
-		return;
-
-	va_list args;
-	va_start(args, format);
-	ofc_sparse_error_va(scope->src, pos, format, args);
-	va_end(args);
-}
-
-void ofc_sema_scope_warning(
-	const ofc_sema_scope_t* scope, ofc_str_ref_t pos,
-	const char* format, ...)
-{
-	if (!scope)
-		return;
-
-	va_list args;
-	va_start(args, format);
-	ofc_sparse_warning_va(scope->src, pos, format, args);
-	va_end(args);
-}
 
 static bool ofc_sema_scope_body__print(
 	ofc_colstr_t* cs, unsigned indent,

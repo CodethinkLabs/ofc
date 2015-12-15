@@ -26,13 +26,13 @@ ofc_sema_stmt_t* ofc_sema_stmt_entry(
 
 	ofc_sema_stmt_t s;
 	s.type = OFC_SEMA_STMT_ENTRY;
-	s.entry.name = stmt->call_entry.name;
+	s.entry.name = stmt->call_entry.name.string;
 	s.entry.args = NULL;
 
 	if (stmt->call_entry.args)
 	{
 		s.entry.args = ofc_sema_arg_list(
-			scope, stmt->call_entry.args);
+			stmt->call_entry.args);
 		if (!s.entry.args) return NULL;
 	}
 

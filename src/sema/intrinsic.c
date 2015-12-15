@@ -281,8 +281,7 @@ const ofc_sema_intrinsic_t* ofc_sema_intrinsic(
 }
 
 ofc_sema_expr_list_t* ofc_sema_intrinsic_cast(
-	const ofc_sema_scope_t* scope,
-	ofc_str_ref_t src,
+	ofc_sparse_ref_t src,
 	const ofc_sema_intrinsic_t* intrinsic,
 	ofc_sema_expr_list_t* args)
 {
@@ -299,7 +298,7 @@ ofc_sema_expr_list_t* ofc_sema_intrinsic_cast(
 
 	if (args->count < intrinsic->op->arg_min)
 	{
-		ofc_sema_scope_error(scope, src,
+		ofc_sparse_ref_error(src,
 			"Not enough arguments for intrinsic function.");
 		ofc_sema_expr_list_delete(args);
 		return NULL;
@@ -307,7 +306,7 @@ ofc_sema_expr_list_t* ofc_sema_intrinsic_cast(
 	if ((intrinsic->op->arg_max != 0)
 		&& (args->count > intrinsic->op->arg_max))
 	{
-		ofc_sema_scope_error(scope, src,
+		ofc_sparse_ref_error(src,
 			"Too many arguments for intrinsic function.");
 		ofc_sema_expr_list_delete(args);
 		return NULL;
@@ -396,7 +395,7 @@ ofc_sema_expr_list_t* ofc_sema_intrinsic_cast(
 
 		if (!valid)
 		{
-			ofc_sema_scope_warning(scope, args->expr[i]->src,
+			ofc_sparse_ref_warning(args->expr[i]->src,
 				"Incorrect argument type for intrinsic.");
 		}
 
@@ -412,10 +411,10 @@ ofc_sema_expr_list_t* ofc_sema_intrinsic_cast(
 		{
 			ofc_sema_expr_t* cast
 				= ofc_sema_expr_cast(
-					scope, args->expr[i], ptype);
+					args->expr[i], ptype);
 			if (!cast)
 			{
-				ofc_sema_scope_error(scope, args->expr[i]->src,
+				ofc_sparse_ref_error(args->expr[i]->src,
 					"Incompatible argument type for intrinsic.");
 				ofc_sema_expr_list_delete(args);
 				return NULL;

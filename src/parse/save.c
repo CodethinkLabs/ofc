@@ -84,7 +84,7 @@ bool ofc_parse_save_print(
 
 	if (save->is_common)
 		return (ofc_colstr_atomic_writef(cs, "/")
-			&& ofc_str_ref_print(cs, save->common)
+			&& ofc_sparse_ref_print(cs, save->common)
 			&& ofc_colstr_atomic_writef(cs, "/"));
 
 	return ofc_parse_lhs_print(cs, save->lhs, false);

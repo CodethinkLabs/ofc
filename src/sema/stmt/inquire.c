@@ -116,11 +116,11 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_inquire(
 			= stmt->io.params->call_arg[i];
 		if (!param) continue;
 
-		if (ofc_str_ref_empty(param->name))
+		if (ofc_sparse_ref_empty(param->name))
 		{
 			if (i >= 1)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Un-named parameter %u has no meaning in INQUIRE.", i);
 				return NULL;
 			}
@@ -130,275 +130,275 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_inquire(
 				ca_unit = param;
 			}
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "UNIT"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "UNIT"))
 		{
 			if (ca_unit)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of UNIT in INQUIRE.");
 				return NULL;
 			}
 
 			ca_unit = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "ACCESS"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "ACCESS"))
 		{
 			if (ca_access)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of ACCESS in INQUIRE.");
 				return NULL;
 			}
 
 			ca_access = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "ACTION"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "ACTION"))
 		{
 			if (ca_action)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of ACTION in INQUIRE.");
 				return NULL;
 			}
 
 			ca_action = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "BLANK"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "BLANK"))
 		{
 			if (ca_blank)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of BLANK in INQUIRE.");
 				return NULL;
 			}
 
 			ca_blank = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "DELIM"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "DELIM"))
 		{
 			if (ca_delim)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of DELIM in INQUIRE.");
 				return NULL;
 			}
 
 			ca_delim = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "DIRECT"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "DIRECT"))
 		{
 			if (ca_direct)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of DIRECT in INQUIRE.");
 				return NULL;
 			}
 
 			ca_direct = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "ERR"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "ERR"))
 		{
 			if (ca_err)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of ERR in INQUIRE.");
 				return NULL;
 			}
 
 			ca_err = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "EXIST"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "EXIST"))
 		{
 			if (ca_exist)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of EXIST in INQUIRE.");
 				return NULL;
 			}
 
 			ca_exist = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "FILE"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "FILE"))
 		{
 			if (ca_file)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of FILE in INQUIRE.");
 				return NULL;
 			}
 
 			ca_file = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "FORM"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "FORM"))
 		{
 			if (ca_form)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of FORM in INQUIRE.");
 				return NULL;
 			}
 
 			ca_form = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "FORMATTED"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "FORMATTED"))
 		{
 			if (ca_formatted)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of FORMATTED in INQUIRE.");
 				return NULL;
 			}
 
 			ca_formatted = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "IOSTAT"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "IOSTAT"))
 		{
 			if (ca_iostat)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of IOSTAT in INQUIRE.");
 				return NULL;
 			}
 
 			ca_iostat = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "NAME"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "NAME"))
 		{
 			if (ca_name)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of NAME in INQUIRE.");
 				return NULL;
 			}
 
 			ca_name = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "NAMED"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "NAMED"))
 		{
 			if (ca_named)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of NAMED in INQUIRE.");
 				return NULL;
 			}
 
 			ca_named = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "NEXTREC"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "NEXTREC"))
 		{
 			if (ca_nextrec)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of NEXTREC in INQUIRE.");
 				return NULL;
 			}
 
 			ca_nextrec = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "NUMBER"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "NUMBER"))
 		{
 			if (ca_number)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of NUMBER in INQUIRE.");
 				return NULL;
 			}
 
 			ca_number = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "OPENED"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "OPENED"))
 		{
 			if (ca_opened)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of OPENED in INQUIRE.");
 				return NULL;
 			}
 
 			ca_opened = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "PAD"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "PAD"))
 		{
 			if (ca_pad)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of PAD in INQUIRE.");
 				return NULL;
 			}
 
 			ca_pad = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "POSITION"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "POSITION"))
 		{
 			if (ca_position)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of POSITION in INQUIRE.");
 				return NULL;
 			}
 
 			ca_position = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "READ"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "READ"))
 		{
 			if (ca_read)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of READ in INQUIRE.");
 				return NULL;
 			}
 
 			ca_read = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "READWRITE"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "READWRITE"))
 		{
 			if (ca_readwrite)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of READWRITE in INQUIRE.");
 				return NULL;
 			}
 
 			ca_readwrite = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "RECL"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "RECL"))
 		{
 			if (ca_recl)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of RECL in INQUIRE.");
 				return NULL;
 			}
 
 			ca_recl = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "SEQUENTIAL"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "SEQUENTIAL"))
 		{
 			if (ca_sequential)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of SEQUENTIAL in INQUIRE.");
 				return NULL;
 			}
 
 			ca_sequential = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "UNFORMATTED"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "UNFORMATTED"))
 		{
 			if (ca_unformatted)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of UNFORMATTED in INQUIRE.");
 				return NULL;
 			}
 
 			ca_unformatted = param;
 		}
-		else if (ofc_str_ref_equal_strz_ci(param->name, "WRITE"))
+		else if (ofc_str_ref_equal_strz_ci(param->name.string, "WRITE"))
 		{
 			if (ca_write)
 			{
-				ofc_sema_scope_error(scope, param->src,
+				ofc_sparse_ref_error(param->src,
 					"Re-definition of WRITE in INQUIRE.");
 				return NULL;
 			}
@@ -407,9 +407,9 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_inquire(
 		}
 		else
 		{
-			ofc_sema_scope_error(scope, param->src,
+			ofc_sparse_ref_error(param->src,
 				"Unrecognized paramater %u name '%.*s' in INQUIRE.",
-				i, param->name.size, param->name.base);
+				i, param->name.string.size, param->name.string.base);
 			return NULL;
 		}
 	}
@@ -452,7 +452,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_inquire(
 		if (!ofc_sema_expr_validate_uint(s.io_inquire.unit))
 		{
 			ofc_sparse_ref_error(stmt->src,
-				   "UNIT must be a positive INTEGER in INQUIRE");
+			   "UNIT must be a positive INTEGER in INQUIRE");
 			ofc_sema_stmt_io_inquire__cleanup(s);
 			return NULL;
 		}

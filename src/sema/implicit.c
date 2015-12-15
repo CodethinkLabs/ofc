@@ -99,11 +99,11 @@ bool ofc_sema_implicit_set(
 
 ofc_sema_spec_t* ofc_sema_implicit_apply(
 	const ofc_sema_implicit_t* implicit,
-	ofc_str_ref_t              name,
+	ofc_sparse_ref_t           name,
 	const ofc_sema_spec_t*     spec)
 {
-	if (!implicit || ofc_str_ref_empty(name)
-		|| !isalpha(name.base[0]))
+	if (!implicit || ofc_sparse_ref_empty(name)
+		|| !isalpha(name.string.base[0]))
 		return NULL;
 
 	ofc_sema_spec_t* copy = (spec
@@ -112,7 +112,7 @@ ofc_sema_spec_t* ofc_sema_implicit_apply(
 	if (!copy) return NULL;
 
 	const ofc_sema_spec_t* i
-		= &implicit->spec[toupper(name.base[0]) - 'A'];
+		= &implicit->spec[toupper(name.string.base[0]) - 'A'];
 
 	if (copy->type_implicit)
 	{

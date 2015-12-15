@@ -26,11 +26,11 @@ bool ofc_sema_stmt_decl_attr(
 	unsigned i;
 	for (i = 0; i < stmt->decl_attr.count; i++)
 	{
-		ofc_str_ref_t decl_name = *stmt->decl_attr.name[i];
+		ofc_sparse_ref_t decl_name = *stmt->decl_attr.name[i];
 
 		const ofc_sema_decl_t* decl
 			= ofc_sema_scope_decl_find(
-				scope, decl_name, true);
+				scope, decl_name.string, true);
 		if (decl)
 		{
 			/* TODO - Apply attributes to decl. */
@@ -46,7 +46,7 @@ bool ofc_sema_stmt_decl_attr(
 		{
 			ofc_sparse_ref_error(stmt->src,
 				"No declaration for '%.*s' and no valid IMPLICIT rule",
-				decl_name.size, decl_name.base);
+				decl_name.string.size, decl_name.string.base);
 			return false;
 		}
 
@@ -57,14 +57,14 @@ bool ofc_sema_stmt_decl_attr(
 				{
 					ofc_sparse_ref_error(stmt->src,
 						"Specifying '%.*s' as STATIC and AUTOMATIC",
-						decl_name.size, decl_name.base);
+						decl_name.string.size, decl_name.string.base);
 					return false;
 				}
 				if (spec->is_automatic)
 				{
 					ofc_sparse_ref_warning(stmt->src,
 						"Re-declaring '%.*s' as AUTOMATIC",
-						decl_name.size, decl_name.base);
+						decl_name.string.size, decl_name.string.base);
 				}
 				spec->is_automatic = true;
 				break;
@@ -73,14 +73,14 @@ bool ofc_sema_stmt_decl_attr(
 				{
 					ofc_sparse_ref_error(stmt->src,
 						"Specifying '%.*s' as AUTOMATIC and STATIC",
-						decl_name.size, decl_name.base);
+						decl_name.string.size, decl_name.string.base);
 					return false;
 				}
 				if (spec->is_static)
 				{
 					ofc_sparse_ref_warning(stmt->src,
 						"Re-declaring '%.*s' as STATIC",
-						decl_name.size, decl_name.base);
+						decl_name.string.size, decl_name.string.base);
 				}
 				spec->is_static = true;
 				break;
@@ -89,7 +89,7 @@ bool ofc_sema_stmt_decl_attr(
 				{
 					ofc_sparse_ref_warning(stmt->src,
 						"Re-declaring '%.*s' as VOLATILE",
-						decl_name.size, decl_name.base);
+						decl_name.string.size, decl_name.string.base);
 				}
 				spec->is_volatile = true;
 				break;
@@ -98,14 +98,14 @@ bool ofc_sema_stmt_decl_attr(
 				{
 					ofc_sparse_ref_error(stmt->src,
 						"Specifying '%.*s' as INTRINSIC and EXTERNAL",
-						decl_name.size, decl_name.base);
+						decl_name.string.size, decl_name.string.base);
 					return false;
 				}
 				if (spec->is_external)
 				{
 					ofc_sparse_ref_warning(stmt->src,
 						"Re-declaring '%.*s' as EXTERNAL",
-						decl_name.size, decl_name.base);
+						decl_name.string.size, decl_name.string.base);
 				}
 				spec->is_external = true;
 				break;
@@ -114,14 +114,14 @@ bool ofc_sema_stmt_decl_attr(
 				{
 					ofc_sparse_ref_error(stmt->src,
 						"Specifying '%.*s' as EXTERNAL and INTRINSIC",
-						decl_name.size, decl_name.base);
+						decl_name.string.size, decl_name.string.base);
 					return false;
 				}
 				if (spec->is_intrinsic)
 				{
 					ofc_sparse_ref_warning(stmt->src,
 						"Re-declaring '%.*s' as INTRINSIC",
-						decl_name.size, decl_name.base);
+						decl_name.string.size, decl_name.string.base);
 				}
 				spec->is_intrinsic = true;
 				break;

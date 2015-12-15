@@ -660,7 +660,7 @@ unsigned ofc_parse_literal(
 	if (len == 0)
 		return 0;
 
-	l.src = ofc_str_ref(ptr, len);
+	l.src = ofc_sparse_ref(src, ptr, len);
 
 	*literal = l;
 	return len;

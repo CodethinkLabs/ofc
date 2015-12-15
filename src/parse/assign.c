@@ -56,7 +56,7 @@ ofc_parse_assign_t* ofc_parse_assign(
 		return NULL;
 	}
 
-	assign->src  = ofc_str_ref(ptr, i);
+	assign->src  = ofc_sparse_ref(src, ptr, i);
 	assign->name = name;
 	assign->init = init;
 

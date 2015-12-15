@@ -123,26 +123,22 @@ static bool ofc_sema_expr_type_allowed(
 
 
 static ofc_sema_typeval_t* ofc_sema_typeval_negate__faux_binary(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b)
 {
 	(void)b;
-	return ofc_sema_typeval_negate(scope, a);
+	return ofc_sema_typeval_negate(a);
 }
 
 static ofc_sema_typeval_t* ofc_sema_typeval_not__faux_binary(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b)
 {
-	(void)scope;
 	(void)b;
-	return ofc_sema_typeval_not(scope, a);
+	return ofc_sema_typeval_not(a);
 }
 
 static ofc_sema_typeval_t* (*ofc_sema_expr__resolve[])(
-	const ofc_sema_scope_t*,
 	const ofc_sema_typeval_t*,
 	const ofc_sema_typeval_t*) =
 {
@@ -190,7 +186,7 @@ static ofc_sema_expr_t* ofc_sema_expr__create(
 
 	expr->type = type;
 
-	expr->src = OFC_STR_REF_EMPTY;
+	expr->src = OFC_SPARSE_REF_EMPTY;
 
 	expr->constant = NULL;
 
@@ -251,7 +247,6 @@ static ofc_sema_expr_e ofc_sema_expr__binary_map[] =
 };
 
 ofc_sema_expr_t* ofc_sema_expr_cast(
-	const ofc_sema_scope_t* scope,
 	ofc_sema_expr_t* expr,
 	const ofc_sema_type_t* type)
 {
@@ -266,7 +261,7 @@ ofc_sema_expr_t* ofc_sema_expr_cast(
 	if (ofc_sema_expr_is_constant(expr))
 	{
 		cast->constant = ofc_sema_typeval_cast(
-			scope, expr->constant, type);
+			expr->constant, type);
 		if (!cast->constant)
 		{
 			ofc_sema_expr_delete(cast);
@@ -276,7 +271,7 @@ ofc_sema_expr_t* ofc_sema_expr_cast(
 	else if (!ofc_sema_type_cast_is_lossless(
 		ofc_sema_expr_type(expr), type))
 	{
-		ofc_sema_scope_warning(scope, expr->src,
+		ofc_sparse_ref_warning(expr->src,
 			"Implicit cast may be lossy.");
 	}
 
@@ -338,7 +333,7 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 
 	if (!ofc_sema_expr_type_allowed(type, at))
 	{
-		ofc_sema_scope_error(scope, a->src,
+		ofc_sparse_ref_error(a->src,
 			"Can't use type %s in operator '%s'",
 			ofc_sema_type_str_rep(at),
 			ofc_parse_operator_str_rep(op));
@@ -364,7 +359,7 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 
 	if (!ofc_sema_expr_type_allowed(type, bt))
 	{
-		ofc_sema_scope_error(scope, a->src,
+		ofc_sparse_ref_error(a->src,
 			"Can't use type %s in operator '%s'",
 			ofc_sema_type_str_rep(bt),
 			ofc_parse_operator_str_rep(op));
@@ -379,7 +374,7 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 			= ofc_sema_type_promote(at, bt);
 		if (!ptype)
 		{
-			ofc_sema_scope_error(scope, a->src,
+			ofc_sparse_ref_error(a->src,
 				"Incompatible types (%s, %s) in operator %s",
 				ofc_sema_type_str_rep(at),
 				ofc_sema_type_str_rep(bt),
@@ -394,8 +389,7 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 		if (!ofc_sema_type_compare(at, ptype))
 		{
 			ofc_sema_expr_t* cast
-				= ofc_sema_expr_cast(
-					scope, as, ptype);
+				= ofc_sema_expr_cast(as, ptype);
 			if (!cast)
 			{
 				ofc_sema_expr_delete(bs);
@@ -408,8 +402,7 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 		if (!ofc_sema_type_compare(bt, ptype))
 		{
 			ofc_sema_expr_t* cast
-				= ofc_sema_expr_cast(
-					scope, bs, ptype);
+				= ofc_sema_expr_cast(bs, ptype);
 			if (!cast)
 			{
 				ofc_sema_expr_delete(bs);
@@ -434,13 +427,18 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 		&& ofc_sema_expr__resolve[type])
 	{
 		expr->constant = ofc_sema_expr__resolve[type](
-			scope, as->constant, bs->constant);
+			as->constant, bs->constant);
 	}
 
 	expr->a = as;
 	expr->b = bs;
 
-	expr->src = ofc_str_ref_bridge(as->src, bs->src);
+	if (!ofc_sparse_ref_bridge(
+		as->src, bs->src, &expr->src))
+	{
+		ofc_sema_expr_delete(expr);
+		return NULL;
+	}
 
 	return expr;
 }
@@ -472,7 +470,7 @@ static ofc_sema_expr_t* ofc_sema_expr__unary(
 		= ofc_sema_expr_type(as);
 	if (!ofc_sema_expr_type_allowed(type, at))
 	{
-		ofc_sema_scope_error(scope, a->src,
+		ofc_sparse_ref_error(a->src,
 			"Can't use type %s in operator %s",
 			ofc_sema_type_str_rep(at),
 			ofc_parse_operator_str_rep(op));
@@ -492,7 +490,7 @@ static ofc_sema_expr_t* ofc_sema_expr__unary(
 		&& ofc_sema_expr__resolve[type])
 	{
 		expr->constant = ofc_sema_expr__resolve[type](
-			scope, as->constant, NULL);
+			as->constant, NULL);
 	}
 
 	expr->a = as;
@@ -501,12 +499,11 @@ static ofc_sema_expr_t* ofc_sema_expr__unary(
 }
 
 static ofc_sema_expr_t* ofc_sema_expr__literal(
-	const ofc_sema_scope_t* scope,
 	const ofc_parse_literal_t* literal)
 {
 	ofc_sema_typeval_t* tv
 		= ofc_sema_typeval_literal(
-			scope, literal, NULL);
+			literal, NULL);
 	if (!tv) return NULL;
 
 	ofc_sema_expr_t* expr
@@ -531,7 +528,8 @@ static ofc_sema_expr_t* ofc_sema_expr__parameter(
 		return false;
 
 	const ofc_sema_parameter_t* param
-		= ofc_hashmap_find(scope->parameter, &name->variable);
+		= ofc_hashmap_find(scope->parameter,
+			&name->variable.string);
 	if (!param) return NULL;
 
 	const ofc_sema_typeval_t* ctv
@@ -569,7 +567,7 @@ static ofc_sema_expr_t* ofc_sema_expr__intrinsic(
 		|| !name->parent
 		|| (name->parent->type != OFC_PARSE_LHS_VARIABLE))
 	{
-		ofc_sema_scope_error(scope, name->src,
+		ofc_sparse_ref_error(name->src,
 			"Invalid invocation of INTRINSIC function.");
 		return NULL;
 	}
@@ -613,7 +611,7 @@ static ofc_sema_expr_t* ofc_sema_expr__intrinsic(
 		}
 
 		args = ofc_sema_intrinsic_cast(
-			scope, name->src, intrinsic, args);
+			name->src, intrinsic, args);
 		if (!args) return NULL;
 	}
 
@@ -628,7 +626,14 @@ static ofc_sema_expr_t* ofc_sema_expr__intrinsic(
 
 	expr->intrinsic = intrinsic;
 	expr->args      = args;
-	expr->src       = ofc_str_ref_bridge(name->parent->src, name->src);
+
+	if (!ofc_sparse_ref_bridge(
+		name->parent->src, name->src,
+		&expr->src))
+	{
+		ofc_sema_expr_delete(expr);
+		return NULL;
+	}
 
 	return expr;
 }
@@ -646,7 +651,7 @@ static ofc_sema_expr_t* ofc_sema_expr__function(
 		|| !name->parent
 		|| (name->parent->type != OFC_PARSE_LHS_VARIABLE))
 	{
-		ofc_sema_scope_error(scope, name->src,
+		ofc_sparse_ref_error(name->src,
 			"Invalid invocation of function.");
 		return NULL;
 	}
@@ -663,7 +668,7 @@ static ofc_sema_expr_t* ofc_sema_expr__function(
 			? (acount != fscope->args->count)
 			: (acount != 0))
 		{
-			ofc_sema_scope_error(scope, name->src,
+			ofc_sparse_ref_error(name->src,
 				"Incorrect number of arguments in function call.");
 			return NULL;
 		}
@@ -722,7 +727,13 @@ static ofc_sema_expr_t* ofc_sema_expr__function(
 
 	expr->function = decl;
 	expr->args     = args;
-	expr->src      = ofc_str_ref_bridge(name->parent->src, name->src);
+
+	if (!ofc_sparse_ref_bridge(
+		name->parent->src, name->src, &expr->src))
+	{
+		ofc_sema_expr_delete(expr);
+		return NULL;
+	}
 
 	return expr;
 }
@@ -760,16 +771,16 @@ static ofc_sema_expr_t* ofc_sema_expr__variable(
 		= ofc_sema_expr__parameter(scope, name);
 	if (expr) return expr;
 
-	ofc_str_ref_t base_name;
+	ofc_sparse_ref_t base_name;
 	if (!ofc_parse_lhs_base_name(
 		*name, &base_name))
 		return NULL;
 
 	const ofc_sema_intrinsic_t* intrinsic
-		= ofc_sema_intrinsic(scope, base_name);
+		= ofc_sema_intrinsic(scope, base_name.string);
 	const ofc_sema_decl_t* decl
 		= ofc_sema_scope_decl_find(
-			scope, base_name, false);
+			scope, base_name.string, false);
 
 	if (intrinsic && !decl
 		&& (name->type == OFC_PARSE_LHS_ARRAY))
@@ -855,7 +866,7 @@ ofc_sema_expr_t* ofc_sema_expr(
 	{
 		case OFC_PARSE_EXPR_CONSTANT:
 			return ofc_sema_expr__literal(
-				scope, &expr->literal);
+				&expr->literal);
 		case OFC_PARSE_EXPR_VARIABLE:
 			return ofc_sema_expr__variable(
 				scope, expr->variable);
@@ -1207,7 +1218,7 @@ ofc_sema_expr_list_t* ofc_sema_expr_list_implicit_do(
 		= ofc_sema_parameter_type(param);
 	if (!ofc_sema_type_is_scalar(dtype))
 	{
-		ofc_sema_scope_error(scope, id->init->name->src,
+		ofc_sparse_ref_error(id->init->name->src,
 			"Implicit do loop iterator must be a scalar type.");
 		ofc_sema_scope_delete(idscope);
 		return NULL;
@@ -1215,9 +1226,8 @@ ofc_sema_expr_list_t* ofc_sema_expr_list_implicit_do(
 
 	if (!ofc_sema_type_is_integer(dtype))
 	{
-		ofc_sema_scope_warning(scope,
-			id->init->name->src,
-				"Using REAL in implicit do loop iterator..");
+		ofc_sparse_ref_warning(id->init->name->src,
+			"Using REAL in implicit do loop iterator..");
 	}
 
 	ofc_sema_expr_t* limit
@@ -1232,14 +1242,12 @@ ofc_sema_expr_list_t* ofc_sema_expr_list_implicit_do(
 		ofc_sema_expr_type(limit)))
 	{
 		ofc_sema_expr_t* cast
-			= ofc_sema_expr_cast(
-				scope, limit, dtype);
+			= ofc_sema_expr_cast(limit, dtype);
 		if (!cast)
 		{
 			const ofc_sema_type_t* expr_type =
 				ofc_sema_expr_type(limit);
-			ofc_sema_scope_error(scope,
-				id->limit->src,
+			ofc_sparse_ref_error(id->limit->src,
 					"Expression type %s doesn't match iterator type %s",
 				ofc_sema_type_str_rep(expr_type),
 				ofc_sema_type_str_rep(dtype));
@@ -1267,15 +1275,13 @@ ofc_sema_expr_list_t* ofc_sema_expr_list_implicit_do(
 			ofc_sema_expr_type(step)))
 		{
 			ofc_sema_expr_t* cast
-				= ofc_sema_expr_cast(
-					scope, step, dtype);
+				= ofc_sema_expr_cast(step, dtype);
 			if (!cast)
 			{
 				const ofc_sema_type_t* expr_type =
 					ofc_sema_expr_type(step);
-				ofc_sema_scope_error(scope,
-					id->step->src,
-						"Expression type %s doesn't match iterator type %s",
+				ofc_sparse_ref_error(id->step->src,
+					"Expression type %s doesn't match iterator type %s",
 					ofc_sema_type_str_rep(expr_type),
 					ofc_sema_type_str_rep(dtype));
 				ofc_sema_expr_delete(step);
@@ -1298,7 +1304,7 @@ ofc_sema_expr_list_t* ofc_sema_expr_list_implicit_do(
 		}
 
 		step->constant
-			= ofc_sema_typeval_unsigned(1, OFC_STR_REF_EMPTY);
+			= ofc_sema_typeval_unsigned(1, OFC_SPARSE_REF_EMPTY);
 		if(!step->constant)
 		{
 			ofc_sema_expr_delete(step);
@@ -1311,8 +1317,7 @@ ofc_sema_expr_list_t* ofc_sema_expr_list_implicit_do(
 			ofc_sema_expr_type(step)))
 		{
 			ofc_sema_expr_t* cast
-				= ofc_sema_expr_cast(
-					scope, step, dtype);
+				= ofc_sema_expr_cast(step, dtype);
 			if (!cast)
 			{
 				ofc_sema_expr_delete(step);
@@ -1336,7 +1341,7 @@ ofc_sema_expr_list_t* ofc_sema_expr_list_implicit_do(
 	}
 
 	ofc_sema_typeval_t* value
-		= ofc_sema_typeval_le(idscope,
+		= ofc_sema_typeval_le(
 			param->typeval, limit->constant);
 	if (!value)
 	{
@@ -1389,11 +1394,11 @@ ofc_sema_expr_list_t* ofc_sema_expr_list_implicit_do(
 		}
 
 		param->typeval
-			= ofc_sema_typeval_add(idscope,
+			= ofc_sema_typeval_add(
 				param->typeval, step->constant);
 
 		value = ofc_sema_typeval_le(
-			idscope, param->typeval, limit->constant);
+			param->typeval, limit->constant);
 		if (!value)
 		{
 			ofc_sema_expr_delete(step);

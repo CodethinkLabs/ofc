@@ -28,7 +28,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_call(
 	s.type = OFC_SEMA_STMT_CALL;
 
 	s.call.subroutine = ofc_sema_scope_decl_find(
-		scope, stmt->call_entry.name, false);
+		scope, stmt->call_entry.name.string, false);
 	if (!s.call.subroutine)
 	{
 		const ofc_sema_type_t* type
@@ -36,7 +36,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_call(
 
 		ofc_sema_decl_t* decl
 			= ofc_sema_decl_create(
-				type, stmt->call_entry.name);
+				type, stmt->call_entry.name.string);
 		if (!decl) return NULL;
 
 		if (!ofc_sema_decl_list_add(
@@ -72,7 +72,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_call(
 				return NULL;
 			}
 
-			if (!ofc_str_ref_empty(arg->name))
+			if (!ofc_sparse_ref_empty(arg->name))
 			{
 				ofc_sparse_ref_error(stmt->src,
 					"CALL arguments musn't be named");

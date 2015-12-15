@@ -35,11 +35,11 @@ struct ofc_parse_lhs_s
 {
 	ofc_parse_lhs_e type;
 
-	ofc_str_ref_t src;
+	ofc_sparse_ref_t src;
 
 	union
 	{
-		ofc_str_ref_t variable;
+		ofc_sparse_ref_t variable;
 
 		struct
 		{
@@ -54,7 +54,7 @@ struct ofc_parse_lhs_s
 
 				struct
 				{
-					ofc_str_ref_t name;
+					ofc_sparse_ref_t name;
 				} member;
 
 				struct
@@ -98,7 +98,7 @@ bool ofc_parse_lhs_print(
 
 bool ofc_parse_lhs_base_name(
 	const ofc_parse_lhs_t lhs,
-	ofc_str_ref_t* name);
+	ofc_sparse_ref_t* name);
 
 bool ofc_parse_lhs_possible_function_call(
 	const ofc_parse_lhs_t lhs);

@@ -88,7 +88,6 @@ static bool is_base_digit(
 }
 
 static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
-	const ofc_sema_scope_t* scope,
 	const ofc_parse_literal_t* literal,
 	const ofc_sema_type_t* type)
 {
@@ -174,7 +173,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 
 	if (out_of_range)
 	{
-		ofc_sema_scope_error(scope, literal->src,
+		ofc_sparse_ref_error(literal->src,
 			"Out of range for compiler");
 		return NULL;
 	}
@@ -194,7 +193,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 			unsigned nkind = (kind * 10) + digit;
 			if ((nkind / 10) != kind)
 			{
-				ofc_sema_scope_error(scope, literal->src,
+				ofc_sparse_ref_error(literal->src,
 					"Kind out of range");
 				return NULL;
 			}
@@ -206,7 +205,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 		if (ofc_sema_type_size(type, &tkind)
 			&& (tkind != kind))
 		{
-			ofc_sema_scope_error(scope, literal->src,
+			ofc_sparse_ref_error(literal->src,
 				"Expected kind doesn't match literal kind");
 			return NULL;
 		}
@@ -221,7 +220,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 
 	if (is_byte && (kind > 1))
 	{
-		ofc_sema_scope_error(scope, literal->src,
+		ofc_sparse_ref_error(literal->src,
 			"Byte can never have a KIND above 1");
 		return NULL;
 	}
@@ -240,7 +239,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 
 	if (!ofc_sema_typeval__in_range(&typeval))
 	{
-		ofc_sema_scope_error(scope, literal->src,
+		ofc_sparse_ref_error(literal->src,
 			"Out of range for type");
 		return NULL;
 	}
@@ -252,7 +251,6 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 
 
 static bool ofc_sema_typeval__real(
-	const ofc_sema_scope_t* scope,
 	const ofc_parse_literal_t* literal,
 	ofc_str_ref_t number, unsigned  ikind,
 	long double*  value , unsigned* okind)
@@ -356,7 +354,7 @@ static bool ofc_sema_typeval__real(
 			unsigned nkind = (ukind * 10) + digit;
 			if ((nkind / 10) != ukind)
 			{
-				ofc_sema_scope_error(scope, literal->src,
+				ofc_sparse_ref_error(literal->src,
 					"Kind out of range");
 				return false;
 			}
@@ -367,7 +365,7 @@ static bool ofc_sema_typeval__real(
 		if ((kind != 0)
 			&& (kind != ukind))
 		{
-			ofc_sema_scope_error(scope, literal->src,
+			ofc_sparse_ref_error(literal->src,
 				"Kinds specified in exponent and F90 style don't agree");
 			return false;
 		}
@@ -377,7 +375,7 @@ static bool ofc_sema_typeval__real(
 
 	if ((ikind != 0) && (ikind != kind))
 	{
-		ofc_sema_scope_error(scope, literal->src,
+		ofc_sparse_ref_error(literal->src,
 			"Expected kind doesn't match literal kind");
 		return false;
 	}
@@ -385,7 +383,7 @@ static bool ofc_sema_typeval__real(
 
 	if (kind > sizeof(*value))
 	{
-		ofc_sema_scope_error(scope, literal->src,
+		ofc_sparse_ref_error(literal->src,
 			"REAL kind too large for us to handle");
 		return false;
 	}
@@ -402,7 +400,6 @@ static bool ofc_sema_typeval__real(
 }
 
 static ofc_sema_typeval_t* ofc_sema_typeval__real_literal(
-	const ofc_sema_scope_t* scope,
 	const ofc_parse_literal_t* literal,
 	const ofc_sema_type_t* type)
 {
@@ -423,7 +420,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__real_literal(
 
 	unsigned kind = 0;
 	if (!ofc_sema_typeval__real(
-		scope, literal, literal->number, tkind,
+		literal, literal->number, tkind,
 		&typeval.real, &kind))
 		return NULL;
 
@@ -445,7 +442,6 @@ static ofc_sema_typeval_t* ofc_sema_typeval__real_literal(
 }
 
 static ofc_sema_typeval_t* ofc_sema_typeval__complex_literal(
-	const ofc_sema_scope_t* scope,
 	const ofc_parse_literal_t* literal,
 	const ofc_sema_type_t* type)
 {
@@ -467,10 +463,10 @@ static ofc_sema_typeval_t* ofc_sema_typeval__complex_literal(
 	unsigned ikind = 0;
 
 	if (!ofc_sema_typeval__real(
-		scope, literal, literal->complex.real, tkind,
+		literal, literal->complex.real, tkind,
 		&typeval.complex.real, &rkind)
 		|| !ofc_sema_typeval__real(
-			scope, literal, literal->complex.imaginary, tkind,
+			literal, literal->complex.imaginary, tkind,
 			&typeval.complex.imaginary, &ikind))
 		return NULL;
 
@@ -494,7 +490,6 @@ static ofc_sema_typeval_t* ofc_sema_typeval__complex_literal(
 }
 
 static ofc_sema_typeval_t* ofc_sema_typeval__character_literal(
-	const ofc_sema_scope_t* scope,
 	const ofc_parse_literal_t* literal,
 	const ofc_sema_type_t* type)
 {
@@ -534,14 +529,14 @@ static ofc_sema_typeval_t* ofc_sema_typeval__character_literal(
 	{
 		if (type->kind > 1)
 		{
-			ofc_sema_scope_error(scope, literal->src,
+			ofc_sparse_ref_error(literal->src,
 				"Wide strings not supported");
 			return NULL;
 		}
 
 		if (!ofc_sema_type_size(type, &size))
 		{
-			ofc_sema_scope_error(scope, literal->src,
+			ofc_sparse_ref_error(literal->src,
 				"Can't create variable length constant");
 			return NULL;
 		}
@@ -581,7 +576,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__character_literal(
 			memcpy(
 				typeval.character,
 				literal->string->base, size);
-			ofc_sema_scope_warning(scope, literal->src,
+			ofc_sparse_ref_warning(literal->src,
 				"String truncated");
 		}
 		else
@@ -597,7 +592,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__character_literal(
 				unsigned ssize = (size - offset);
 				memset(&typeval.character[offset], ' ', ssize);
 
-				ofc_sema_scope_warning(scope, literal->src,
+				ofc_sparse_ref_warning(literal->src,
 					"String padded");
 			}
 		}
@@ -662,7 +657,6 @@ static ofc_sema_typeval_t* ofc_sema_typeval__logical_literal(
 }
 
 static ofc_sema_typeval_t* ofc_sema_typeval__byte_literal(
-	const ofc_sema_scope_t* scope,
 	const ofc_parse_literal_t* literal,
 	const ofc_sema_type_t* type)
 {
@@ -680,13 +674,13 @@ static ofc_sema_typeval_t* ofc_sema_typeval__byte_literal(
 		case OFC_PARSE_LITERAL_OCTAL:
 		case OFC_PARSE_LITERAL_HEX:
 			return ofc_sema_typeval__integer_literal(
-				scope, literal, type);
+				literal, type);
 		case OFC_PARSE_LITERAL_LOGICAL:
 			return ofc_sema_typeval__logical_literal(
 				literal, type);
 		case OFC_PARSE_LITERAL_CHARACTER:
 			return ofc_sema_typeval__character_literal(
-				scope, literal, type);
+				literal, type);
 		default:
 			break;
 	}
@@ -696,7 +690,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__byte_literal(
 
 
 ofc_sema_typeval_t* ofc_sema_typeval_unsigned(
-	unsigned value, ofc_str_ref_t ref)
+	unsigned value, ofc_sparse_ref_t ref)
 {
 	unsigned kind = 4;
 	if ((value >> 31) != 0)
@@ -720,7 +714,6 @@ ofc_sema_typeval_t* ofc_sema_typeval_unsigned(
 
 
 ofc_sema_typeval_t* ofc_sema_typeval_literal(
-	const ofc_sema_scope_t* scope,
 	const ofc_parse_literal_t* literal,
 	const ofc_sema_type_t* type)
 {
@@ -729,12 +722,12 @@ ofc_sema_typeval_t* ofc_sema_typeval_literal(
 	if (!type)
 	{
 		ofc_sema_typeval_t* typeval = NULL;
-		if (!typeval) typeval = ofc_sema_typeval__integer_literal(scope, literal, type);
-		if (!typeval) typeval = ofc_sema_typeval__real_literal(scope, literal, type);
+		if (!typeval) typeval = ofc_sema_typeval__integer_literal(literal, type);
+		if (!typeval) typeval = ofc_sema_typeval__real_literal(literal, type);
 		if (!typeval) typeval = ofc_sema_typeval__logical_literal(literal, type);
-		if (!typeval) typeval = ofc_sema_typeval__complex_literal(scope, literal, type);
+		if (!typeval) typeval = ofc_sema_typeval__complex_literal(literal, type);
 		/* Byte can never be auto-detected. */
-		if (!typeval) typeval = ofc_sema_typeval__character_literal(scope, literal, type);
+		if (!typeval) typeval = ofc_sema_typeval__character_literal(literal, type);
 
 		return typeval;
 	}
@@ -744,15 +737,15 @@ ofc_sema_typeval_t* ofc_sema_typeval_literal(
 		case OFC_SEMA_TYPE_LOGICAL:
 			return ofc_sema_typeval__logical_literal(literal, type);
 		case OFC_SEMA_TYPE_INTEGER:
-			return ofc_sema_typeval__integer_literal(scope, literal, type);
+			return ofc_sema_typeval__integer_literal(literal, type);
 		case OFC_SEMA_TYPE_REAL:
-			return ofc_sema_typeval__real_literal(scope, literal, type);
+			return ofc_sema_typeval__real_literal(literal, type);
 		case OFC_SEMA_TYPE_COMPLEX:
-			return ofc_sema_typeval__complex_literal(scope, literal, type);
+			return ofc_sema_typeval__complex_literal(literal, type);
 		case OFC_SEMA_TYPE_BYTE:
-			return ofc_sema_typeval__byte_literal(scope, literal, type);
+			return ofc_sema_typeval__byte_literal(literal, type);
 		case OFC_SEMA_TYPE_CHARACTER:
-			return ofc_sema_typeval__character_literal(scope, literal, type);
+			return ofc_sema_typeval__character_literal(literal, type);
 
 		default:
 			return NULL;
@@ -864,7 +857,6 @@ ofc_sema_typeval_t* ofc_sema_typeval_copy(
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_cast(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* typeval,
 	const ofc_sema_type_t* type)
 {
@@ -875,6 +867,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 
 	ofc_sema_typeval_t tv;
 	tv.type = type;
+	tv.src  = typeval->src;
 
 	if ((type->type == OFC_SEMA_TYPE_CHARACTER)
 		&& (typeval->type->type == OFC_SEMA_TYPE_CHARACTER))
@@ -885,7 +878,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 
 		if (typeval->type->kind > type->kind)
 		{
-			ofc_sema_scope_error(scope, typeval->src,
+			ofc_sparse_ref_error(typeval->src,
 				"Can't cast CHARACTER to a smaller kind.");
 			return NULL;
 		}
@@ -973,7 +966,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 
 	if (large_literal)
 	{
-		ofc_sema_scope_error(scope, typeval->src,
+		ofc_sparse_ref_error(typeval->src,
 			"Literal too large for compiler");
 		return NULL;
 	}
@@ -1116,7 +1109,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 
 	if (invalid_cast)
 	{
-		ofc_sema_scope_error(scope, typeval->src,
+		ofc_sparse_ref_error(typeval->src,
 			"Can't cast %s to %s",
 			ofc_sema_type_str_rep(typeval->type),
 			ofc_sema_type_str_rep(type));
@@ -1125,7 +1118,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 
 	if (lossy_cast)
 	{
-		ofc_sema_scope_warning(scope, typeval->src,
+		ofc_sparse_ref_warning(typeval->src,
 			"Cast from %s to %s was lossy",
 			ofc_sema_type_str_rep(typeval->type),
 			ofc_sema_type_str_rep(type));
@@ -1171,8 +1164,7 @@ bool ofc_sema_typeval_get_integer(
 				ofc_sema_type_integer_default());
 
 		ofc_sema_typeval_t* tv
-			= ofc_sema_typeval_cast(
-				NULL, typeval, ptype);
+			= ofc_sema_typeval_cast(typeval, ptype);
 		if (!tv) return false;
 
 		if (integer)
@@ -1279,12 +1271,9 @@ bool ofc_typeval_character_equal_strz_ci(
 
 
 ofc_sema_typeval_t* ofc_sema_typeval_power(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b)
 {
-	(void)scope;
-
 	if (!a || !a->type
 		|| !b || !b->type
 		|| !ofc_sema_type_compare(
@@ -1293,6 +1282,10 @@ ofc_sema_typeval_t* ofc_sema_typeval_power(
 
 	ofc_sema_typeval_t tv;
 	tv.type = a->type;
+
+	if (!ofc_sparse_ref_bridge(
+		a->src, b->src, &tv.src))
+		return NULL;
 
 	switch (a->type->type)
 	{
@@ -1338,12 +1331,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_power(
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_multiply(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b)
 {
-	(void)scope;
-
 	if (!a || !a->type
 		|| !b || !b->type
 		|| !ofc_sema_type_compare(
@@ -1352,6 +1342,10 @@ ofc_sema_typeval_t* ofc_sema_typeval_multiply(
 
 	ofc_sema_typeval_t tv;
 	tv.type = a->type;
+
+	if (!ofc_sparse_ref_bridge(
+		a->src, b->src, &tv.src))
+		return NULL;
 
 	switch (a->type->type)
 	{
@@ -1379,12 +1373,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_multiply(
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_concat(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b)
 {
-	(void)scope;
-
 	if (!a || !a->type
 		|| !b || !b->type
 		|| (a->type->type != OFC_SEMA_TYPE_CHARACTER)
@@ -1407,6 +1398,10 @@ ofc_sema_typeval_t* ofc_sema_typeval_concat(
 		a->type->kind, len);
 	if (!tv.type) return NULL;
 
+	if (!ofc_sparse_ref_bridge(
+		a->src, b->src, &tv.src))
+		return NULL;
+
 	tv.character = (char*)malloc(sizeof(char) * len);
 	if (!tv.character) return NULL;
 
@@ -1420,7 +1415,6 @@ ofc_sema_typeval_t* ofc_sema_typeval_concat(
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_divide(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b)
 {
@@ -1432,6 +1426,10 @@ ofc_sema_typeval_t* ofc_sema_typeval_divide(
 
 	ofc_sema_typeval_t tv;
 	tv.type = a->type;
+
+	if (!ofc_sparse_ref_bridge(
+		a->src, b->src, &tv.src))
+		return NULL;
 
 	switch (a->type->type)
 	{
@@ -1454,7 +1452,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_divide(
 		case OFC_SEMA_TYPE_BYTE:
 			if (b->integer == 0)
 			{
-				ofc_sema_scope_error(scope, a->src,
+				ofc_sparse_ref_error(a->src,
 					"Divide by zero");
 				return NULL;
 			}
@@ -1468,12 +1466,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_divide(
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_add(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b)
 {
-	(void)scope;
-
 	if (!a || !a->type
 		|| !b || !b->type
 		|| !ofc_sema_type_compare(
@@ -1482,6 +1477,10 @@ ofc_sema_typeval_t* ofc_sema_typeval_add(
 
 	ofc_sema_typeval_t tv;
 	tv.type = a->type;
+
+	if (!ofc_sparse_ref_bridge(
+		a->src, b->src, &tv.src))
+		return NULL;
 
 	switch (a->type->type)
 	{
@@ -1506,12 +1505,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_add(
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_subtract(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b)
 {
-	(void)scope;
-
 	if (!a || !a->type
 		|| !b || !b->type
 		|| !ofc_sema_type_compare(
@@ -1520,6 +1516,10 @@ ofc_sema_typeval_t* ofc_sema_typeval_subtract(
 
 	ofc_sema_typeval_t tv;
 	tv.type = a->type;
+
+	if (!ofc_sparse_ref_bridge(
+		a->src, b->src, &tv.src))
+		return NULL;
 
 	switch (a->type->type)
 	{
@@ -1544,7 +1544,6 @@ ofc_sema_typeval_t* ofc_sema_typeval_subtract(
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_negate(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a)
 {
 	if (!a || !a->type)
@@ -1552,6 +1551,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_negate(
 
 	ofc_sema_typeval_t tv;
 	tv.type = a->type;
+	tv.src  = a->src;
 
 	switch (a->type->type)
 	{
@@ -1567,7 +1567,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_negate(
 			tv.integer = -a->integer;
 			if (-tv.integer != a->integer)
 			{
-				ofc_sema_scope_error(scope, a->src,
+				ofc_sparse_ref_error(a->src,
 					"Overflow in constant negate");
 				return NULL;
 			}
@@ -1580,12 +1580,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_negate(
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_eq(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b)
 {
-	(void)scope;
-
 	if (!a || !a->type
 		|| !b || !b->type
 		|| !ofc_sema_type_compare(
@@ -1595,6 +1592,10 @@ ofc_sema_typeval_t* ofc_sema_typeval_eq(
 	ofc_sema_typeval_t tv;
 	tv.type = ofc_sema_type_create_primitive(
 		OFC_SEMA_TYPE_LOGICAL, 0);
+
+	if (!ofc_sparse_ref_bridge(
+		a->src, b->src, &tv.src))
+		return NULL;
 
 	if (a->type->type == OFC_SEMA_TYPE_CHARACTER)
 	{
@@ -1635,12 +1636,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_eq(
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_ne(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b)
 {
-	(void)scope;
-
 	if (!a || !a->type
 		|| !b || !b->type
 		|| !ofc_sema_type_compare(
@@ -1650,6 +1648,10 @@ ofc_sema_typeval_t* ofc_sema_typeval_ne(
 	ofc_sema_typeval_t tv;
 	tv.type = ofc_sema_type_create_primitive(
 		OFC_SEMA_TYPE_LOGICAL, 0);
+
+	if (!ofc_sparse_ref_bridge(
+		a->src, b->src, &tv.src))
+		return NULL;
 
 	if (a->type->type == OFC_SEMA_TYPE_CHARACTER)
 	{
@@ -1690,11 +1692,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_ne(
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_lt(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b)
 {
-	(void)scope;
 	if (!a || !a->type
 		|| !b || !b->type
 		|| !ofc_sema_type_compare(
@@ -1704,6 +1704,10 @@ ofc_sema_typeval_t* ofc_sema_typeval_lt(
 	ofc_sema_typeval_t tv;
 	tv.type = ofc_sema_type_create_primitive(
 		OFC_SEMA_TYPE_LOGICAL, 0);
+
+	if (!ofc_sparse_ref_bridge(
+		a->src, b->src, &tv.src))
+		return NULL;
 
 	if (a->type->type == OFC_SEMA_TYPE_CHARACTER)
 	{
@@ -1756,12 +1760,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_lt(
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_le(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b)
 {
-	(void)scope;
-
 	if (!a || !a->type
 		|| !b || !b->type
 		|| !ofc_sema_type_compare(
@@ -1771,6 +1772,10 @@ ofc_sema_typeval_t* ofc_sema_typeval_le(
 	ofc_sema_typeval_t tv;
 	tv.type = ofc_sema_type_create_primitive(
 		OFC_SEMA_TYPE_LOGICAL, 0);
+
+	if (!ofc_sparse_ref_bridge(
+		a->src, b->src, &tv.src))
+		return NULL;
 
 	if (a->type->type == OFC_SEMA_TYPE_CHARACTER)
 	{
@@ -1823,22 +1828,22 @@ ofc_sema_typeval_t* ofc_sema_typeval_le(
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_gt(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b)
 {
-	(void)scope;
-
 	if (!a || !a->type
 		|| !b || !b->type
 		|| !ofc_sema_type_compare(
 			a->type, b->type))
 		return NULL;
 
-
 	ofc_sema_typeval_t tv;
 	tv.type = ofc_sema_type_create_primitive(
 		OFC_SEMA_TYPE_LOGICAL, 0);
+
+	if (!ofc_sparse_ref_bridge(
+		a->src, b->src, &tv.src))
+		return NULL;
 
 	if (a->type->type == OFC_SEMA_TYPE_CHARACTER)
 	{
@@ -1891,12 +1896,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_gt(
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_ge(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b)
 {
-	(void)scope;
-
 	if (!a || !a->type
 		|| !b || !b->type
 		|| !ofc_sema_type_compare(
@@ -1906,6 +1908,10 @@ ofc_sema_typeval_t* ofc_sema_typeval_ge(
 	ofc_sema_typeval_t tv;
 	tv.type = ofc_sema_type_create_primitive(
 		OFC_SEMA_TYPE_LOGICAL, 0);
+
+	if (!ofc_sparse_ref_bridge(
+		a->src, b->src, &tv.src))
+		return NULL;
 
 	if (a->type->type == OFC_SEMA_TYPE_CHARACTER)
 	{
@@ -1958,16 +1964,14 @@ ofc_sema_typeval_t* ofc_sema_typeval_ge(
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_not(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a)
 {
-	(void)scope;
-
 	if (!a || !a->type)
 		return NULL;
 
 	ofc_sema_typeval_t tv;
 	tv.type = a->type;
+	tv.src  = a->src;
 
 	switch (a->type->type)
 	{
@@ -1985,12 +1989,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_not(
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_and(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b)
 {
-	(void)scope;
-
 	if (!a || !a->type
 		|| !b || !b->type
 		|| !ofc_sema_type_compare(
@@ -1999,6 +2000,10 @@ ofc_sema_typeval_t* ofc_sema_typeval_and(
 
 	ofc_sema_typeval_t tv;
 	tv.type = a->type;
+
+	if (!ofc_sparse_ref_bridge(
+		a->src, b->src, &tv.src))
+		return NULL;
 
 	switch (a->type->type)
 	{
@@ -2017,12 +2022,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_and(
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_or(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b)
 {
-	(void)scope;
-
 	if (!a || !a->type
 		|| !b || !b->type
 		|| !ofc_sema_type_compare(
@@ -2031,6 +2033,10 @@ ofc_sema_typeval_t* ofc_sema_typeval_or(
 
 	ofc_sema_typeval_t tv;
 	tv.type = a->type;
+
+	if (!ofc_sparse_ref_bridge(
+		a->src, b->src, &tv.src))
+		return NULL;
 
 	switch (a->type->type)
 	{
@@ -2049,11 +2055,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_or(
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_eqv(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b)
 {
-	(void)scope;
 	if (!a || !a->type
 		|| !b || !b->type
 		|| !ofc_sema_type_compare(
@@ -2063,6 +2067,10 @@ ofc_sema_typeval_t* ofc_sema_typeval_eqv(
 	ofc_sema_typeval_t tv;
 	tv.type = ofc_sema_type_create_primitive(
 		OFC_SEMA_TYPE_LOGICAL, 0);
+
+	if (!ofc_sparse_ref_bridge(
+		a->src, b->src, &tv.src))
+		return NULL;
 
 	switch (a->type->type)
 	{
@@ -2080,12 +2088,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_eqv(
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_neqv(
-	const ofc_sema_scope_t* scope,
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b)
 {
-	(void)scope;
-
 	if (!a || !a->type
 		|| !b || !b->type
 		|| !ofc_sema_type_compare(
@@ -2095,6 +2100,10 @@ ofc_sema_typeval_t* ofc_sema_typeval_neqv(
 	ofc_sema_typeval_t tv;
 	tv.type = ofc_sema_type_create_primitive(
 		OFC_SEMA_TYPE_LOGICAL, 0);
+
+	if (!ofc_sparse_ref_bridge(
+		a->src, b->src, &tv.src))
+		return NULL;
 
 	switch (a->type->type)
 	{

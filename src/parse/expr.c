@@ -183,7 +183,7 @@ static unsigned ofc_parse_expr__literal(
 	if (len == 0) return 0;
 
 	expr->type = OFC_PARSE_EXPR_CONSTANT;
-	expr->src  = ofc_str_ref(ptr, len);
+	expr->src  = ofc_sparse_ref(src, ptr, len);
 	return len;
 }
 
@@ -197,7 +197,7 @@ static unsigned ofc_parse_expr__integer(
 	if (len == 0) return 0;
 
 	expr->type = OFC_PARSE_EXPR_CONSTANT;
-	expr->src  = ofc_str_ref(ptr, len);
+	expr->src  = ofc_sparse_ref(src, ptr, len);
 	return len;
 }
 
@@ -215,7 +215,7 @@ static unsigned ofc_parse_expr__integer_variable(
 	if (!expr->variable) return 0;
 
 	expr->type = OFC_PARSE_EXPR_VARIABLE;
-	expr->src  = ofc_str_ref(ptr, len);
+	expr->src  = ofc_sparse_ref(src, ptr, len);
 	return len;
 }
 
@@ -233,7 +233,7 @@ static unsigned ofc_parse_expr__primary(
 	if (expr->variable)
 	{
 		expr->type = OFC_PARSE_EXPR_VARIABLE;
-		expr->src = ofc_str_ref(ptr, len);
+		expr->src  = ofc_sparse_ref(src, ptr, len);
 		return len;
 	}
 
@@ -263,7 +263,7 @@ static unsigned ofc_parse_expr__primary(
 					return 0;
 				}
 				expr->type = OFC_PARSE_EXPR_BRACKETS;
-				expr->src = ofc_str_ref(ptr, len);
+				expr->src  = ofc_sparse_ref(src, ptr, len);
 				return len;
 			}
 		}
@@ -308,7 +308,7 @@ static unsigned ofc_parse_expr__unary(
 	}
 
 	expr->type = OFC_PARSE_EXPR_UNARY;
-	expr->src = ofc_str_ref(ptr, (op_len + a_len));
+	expr->src  = ofc_sparse_ref(src, ptr, (op_len + a_len));
 
 	expr->unary.operator = op;
 
@@ -356,7 +356,7 @@ static void ofc_parse_expr__cull_right_ambig_point(
 			if (expr->literal.type == OFC_PARSE_LITERAL_NUMBER)
 			{
 				expr->literal.number.size -= 1;
-				expr->src.size            -= 1;
+				expr->src.string.size     -= 1;
 			}
 			break;
 		case OFC_PARSE_EXPR_UNARY:
@@ -414,8 +414,14 @@ static unsigned ofc_parse_expr__binary_at_or_below_b(
 	ofc_parse_expr_t c;
 
 	c.type = OFC_PARSE_EXPR_BINARY;
-	c.src  = ofc_str_ref_bridge(a.src, b.src);
 	c.binary.operator = op;
+
+	if (!ofc_sparse_ref_bridge(
+		a.src, b.src, &c.src))
+	{
+		ofc_parse_expr__cleanup(b);
+		return 0;
+	}
 
 	c.binary.a = ofc_parse_expr__alloc(a);
 	if (!c.binary.a)

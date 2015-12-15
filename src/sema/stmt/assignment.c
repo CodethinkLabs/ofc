@@ -35,7 +35,7 @@ bool ofc_sema_stmt_is_stmt_func(
 			!= OFC_PARSE_LHS_VARIABLE))
 		return false;
 
-	ofc_str_ref_t base_name;
+	ofc_sparse_ref_t base_name;
 	if (!ofc_parse_lhs_base_name(
 		*(stmt->assignment->name), &base_name))
 		return NULL;
@@ -52,7 +52,7 @@ bool ofc_sema_stmt_is_stmt_func(
 
 	const ofc_sema_decl_t* decl
 		= ofc_sema_scope_decl_find(
-			scope, base_name, false);
+			scope, base_name.string, false);
 	return (decl == NULL);
 }
 
@@ -83,7 +83,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_assignment(
 	{
 		ofc_sema_expr_t* cast
 			= ofc_sema_expr_cast(
-				scope, s.assignment.expr, dtype);
+				s.assignment.expr, dtype);
 		if (!cast)
 		{
 			const ofc_sema_type_t* expr_type =

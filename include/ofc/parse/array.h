@@ -18,7 +18,7 @@
 
 typedef struct
 {
-	ofc_str_ref_t src;
+	ofc_sparse_ref_t src;
 
 	bool              is_slice;
 	ofc_parse_expr_t* first;

@@ -18,8 +18,8 @@
 
 typedef struct
 {
-	ofc_str_ref_t     structure;
-	ofc_parse_lhs_t*  name;
+	ofc_sparse_ref_t structure;
+	ofc_parse_lhs_t* name;
 } ofc_parse_record_t;
 
 typedef struct

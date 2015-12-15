@@ -52,7 +52,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_stop_pause(
 		{
 			if (!ofc_sema_type_is_integer(type))
 			{
-				ofc_sema_scope_error(scope, expr->src,
+				ofc_sparse_ref_error(expr->src,
 					"STOP/PAUSE code must be a string or an integer");
 				ofc_sema_expr_delete(expr);
 				return NULL;
@@ -64,7 +64,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_stop_pause(
 				if (!ofc_sema_expr_resolve_uint(expr, &v)
 					|| (v >= 100000))
 				{
-					ofc_sema_scope_warning(scope, expr->src,
+					ofc_sparse_ref_warning(expr->src,
 						"STOP/PAUSE code should be a positive integer"
 						" less than 5 digits long");
 				}

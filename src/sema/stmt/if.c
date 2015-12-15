@@ -51,7 +51,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_if__computed(
 
 	if (!ofc_sema_type_is_scalar(type))
 	{
-		ofc_sema_scope_error(scope, stmt->if_stmt.cond->src,
+		ofc_sparse_ref_error(stmt->if_stmt.cond->src,
 			"IF condition must be a scalar type.");
 
 		ofc_sema_expr_delete(s.if_comp.cond);
@@ -73,7 +73,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_if__computed(
 
 		if (!ofc_sema_expr_validate_uint(label))
 		{
-			ofc_sema_scope_error(scope, label->src,
+			ofc_sparse_ref_error(label->src,
 				"Target label must be a positive INTEGER.");
 
 			ofc_sema_expr_delete(label);
@@ -125,7 +125,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_if__statement(
 		= ofc_sema_expr_type(s.if_stmt.cond);
 	if (!ofc_sema_type_is_logical(type))
 	{
-		ofc_sema_scope_error(scope, stmt->if_stmt.cond->src,
+		ofc_sparse_ref_error(stmt->if_stmt.cond->src,
 			"IF condition type must be LOGICAL.");
 
 		ofc_sema_expr_delete(s.if_stmt.cond);
@@ -172,7 +172,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_if__then(
 		= ofc_sema_expr_type(s.if_then.cond);
 	if (!ofc_sema_type_is_logical(type))
 	{
-		ofc_sema_scope_error(scope, stmt->if_stmt.cond->src,
+		ofc_sparse_ref_error(stmt->if_stmt.cond->src,
 			"IF condition type must be LOGICAL.");
 
 		ofc_sema_expr_delete(s.if_then.cond);

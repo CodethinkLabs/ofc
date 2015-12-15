@@ -28,7 +28,7 @@ static ofc_sema_stmt_t* ofc_sema_stmt_go_to__assigned(
 
 	if (!ofc_sema_expr_validate_uint(s.go_to.label))
 	{
-		ofc_sema_scope_error(scope, s.go_to.label->src,
+		ofc_sparse_ref_error(s.go_to.label->src,
 			"GO TO target must be a positive integer.");
 		ofc_sema_expr_delete(s.go_to.label);
 		return NULL;
@@ -50,7 +50,7 @@ static ofc_sema_stmt_t* ofc_sema_stmt_go_to__assigned(
 
 		if (!ofc_sema_expr_is_constant(expr))
 		{
-			ofc_sema_scope_error(scope, expr->src,
+			ofc_sparse_ref_error(expr->src,
 				"Assigned GO TO allow list entry must be constant.");
 			ofc_sema_expr_list_delete(s.go_to.allow);
 			ofc_sema_expr_delete(s.go_to.label);
@@ -59,7 +59,7 @@ static ofc_sema_stmt_t* ofc_sema_stmt_go_to__assigned(
 
 		if (!ofc_sema_expr_validate_uint(expr))
 		{
-			ofc_sema_scope_error(scope, expr->src,
+			ofc_sparse_ref_error(expr->src,
 				"Assigned GO TO allow list entry must be a positive INTEGER.");
 			ofc_sema_expr_list_delete(s.go_to.allow);
 			ofc_sema_expr_delete(s.go_to.label);
@@ -90,14 +90,14 @@ static ofc_sema_stmt_t* ofc_sema_stmt_go_to__assigned(
 
 		if (!match)
 		{
-			ofc_sema_scope_error(scope, s.go_to.label->src,
+			ofc_sparse_ref_error(s.go_to.label->src,
 				"Assigned GO TO target not in allow list.");
 			ofc_sema_expr_list_delete(s.go_to.allow);
 			ofc_sema_expr_delete(s.go_to.label);
 			return NULL;
 		}
 
-		ofc_sema_scope_warning(scope, s.go_to.label->src,
+		ofc_sparse_ref_warning(s.go_to.label->src,
 			"Using assigned GO TO for a constant label makes little sense.");
 	}
 
@@ -127,7 +127,7 @@ static ofc_sema_stmt_t* ofc_sema_stmt_go_to__computed(
 		= ofc_sema_expr_type(s.go_to_comp.cond);
 	if (!ofc_sema_type_is_scalar(type))
 	{
-		ofc_sema_scope_error(scope, s.go_to_comp.cond->src,
+		ofc_sparse_ref_error(s.go_to_comp.cond->src,
 			"Computed GO TO value must be scalar.");
 		ofc_sema_expr_delete(s.go_to_comp.cond);
 		return NULL;
@@ -136,8 +136,7 @@ static ofc_sema_stmt_t* ofc_sema_stmt_go_to__computed(
 	if (!ofc_sema_type_is_integer(type))
 	{
 		ofc_sema_expr_t* cast
-			= ofc_sema_expr_cast(
-				scope, s.go_to_comp.cond,
+			= ofc_sema_expr_cast(s.go_to_comp.cond,
 				ofc_sema_type_integer_default());
 		if (!cast)
 		{
@@ -163,13 +162,13 @@ static ofc_sema_stmt_t* ofc_sema_stmt_go_to__computed(
 
 		if (!ofc_sema_expr_is_constant(expr))
 		{
-			ofc_sema_scope_warning(scope, expr->src,
+			ofc_sparse_ref_warning(expr->src,
 				"Computed GO TO label list entry should be constant.");
 		}
 
 		if (!ofc_sema_expr_validate_uint(expr))
 		{
-			ofc_sema_scope_error(scope, expr->src,
+			ofc_sparse_ref_error(expr->src,
 				"Computed GO TO label list entry must be a positive INTEGER.");
 			ofc_sema_expr_list_delete(s.go_to_comp.label);
 			ofc_sema_expr_delete(s.go_to_comp.cond);
@@ -179,7 +178,7 @@ static ofc_sema_stmt_t* ofc_sema_stmt_go_to__computed(
 
 	if (ofc_sema_expr_is_constant(s.go_to_comp.cond))
 	{
-		ofc_sema_scope_warning(scope, s.go_to_comp.cond->src,
+		ofc_sparse_ref_warning(s.go_to_comp.cond->src,
 			"Using computed GO TO for a constant value makes little sense.");
 	}
 
@@ -223,7 +222,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_go_to(
 
 	if (!ofc_sema_expr_validate_uint(s.go_to.label))
 	{
-		ofc_sema_scope_error(scope, s.go_to.label->src,
+		ofc_sparse_ref_error(s.go_to.label->src,
 			"GO TO target must be a positive integer");
 		ofc_sema_expr_delete(s.go_to.label);
 		return NULL;
@@ -231,7 +230,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_go_to(
 
 	if (!ofc_sema_expr_is_constant(s.go_to.label))
 	{
-		ofc_sema_scope_warning(scope, s.go_to.label->src,
+		ofc_sparse_ref_warning(s.go_to.label->src,
 			"Should use assigned GO TO when target isn't a constant label");
 	}
 

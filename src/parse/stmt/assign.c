@@ -66,5 +66,5 @@ bool ofc_parse_stmt_assign_print(
 		return false;
 
 	return (ofc_colstr_atomic_writef(cs, "ASSIGN %u TO ", stmt->assign.label)
-		&& ofc_str_ref_print(cs, stmt->assign.variable));
+		&& ofc_sparse_ref_print(cs, stmt->assign.variable));
 }

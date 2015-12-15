@@ -35,7 +35,6 @@ static ofc_sema_arg_list_t* ofc_sema_arg_list__create(unsigned count)
 }
 
 ofc_sema_arg_list_t* ofc_sema_arg_list(
-	const ofc_sema_scope_t* scope,
 	const ofc_parse_call_arg_list_t* plist)
 {
 	if (!plist)
@@ -56,9 +55,9 @@ ofc_sema_arg_list_t* ofc_sema_arg_list(
 			return NULL;
 		}
 
-		if (!ofc_str_ref_empty(arg->name))
+		if (!ofc_sparse_ref_empty(arg->name))
 		{
-			ofc_sema_scope_error(scope, arg->src,
+			ofc_sparse_ref_error(arg->src,
 				"Named parameters not valid as FUNCTION arguments");
 			ofc_sema_arg_list_delete(list);
 			return NULL;
@@ -71,7 +70,7 @@ ofc_sema_arg_list_t* ofc_sema_arg_list(
 				|| !arg->expr->variable
 				|| (arg->expr->variable->type != OFC_PARSE_LHS_VARIABLE))
 			{
-				ofc_sema_scope_error(scope, arg->src,
+				ofc_sparse_ref_error(arg->src,
 					"Dummy arguments can only be names");
 				ofc_sema_arg_list_delete(list);
 				return NULL;
@@ -85,11 +84,11 @@ ofc_sema_arg_list_t* ofc_sema_arg_list(
 		else if (arg->type == OFC_PARSE_CALL_ARG_ASTERISK)
 		{
 			list->arg[i].alt_return = true;
-			list->arg[i].name = OFC_STR_REF_EMPTY;
+			list->arg[i].name = OFC_SPARSE_REF_EMPTY;
 		}
 		else
 		{
-			ofc_sema_scope_error(scope, arg->src,
+			ofc_sparse_ref_error(arg->src,
 				"Dummy arguments can only be names or asterisks");
 			ofc_sema_arg_list_delete(list);
 			return NULL;
@@ -100,7 +99,6 @@ ofc_sema_arg_list_t* ofc_sema_arg_list(
 }
 
 ofc_sema_arg_list_t* ofc_sema_arg_list_stmt_func(
-	const ofc_sema_scope_t* scope,
 	const ofc_parse_array_index_t* index)
 {
 	if (!index)
@@ -124,7 +122,7 @@ ofc_sema_arg_list_t* ofc_sema_arg_list_stmt_func(
 		if (range->is_slice || !range->first
 			|| range->last || range->stride)
 		{
-			ofc_sema_scope_error(scope, range->src,
+			ofc_sparse_ref_error(range->src,
 				"Invalid argument in statement function");
 			ofc_sema_arg_list_delete(list);
 			return NULL;
@@ -136,7 +134,7 @@ ofc_sema_arg_list_t* ofc_sema_arg_list_stmt_func(
 			|| !expr->variable
 			|| (expr->variable->type != OFC_PARSE_LHS_VARIABLE))
 		{
-			ofc_sema_scope_error(scope, range->src,
+			ofc_sparse_ref_error(range->src,
 				"Statement function's argument list"
 				" must only contain argument names.");
 			ofc_sema_arg_list_delete(list);
@@ -147,7 +145,7 @@ ofc_sema_arg_list_t* ofc_sema_arg_list_stmt_func(
 			|| !expr->variable
 			|| (expr->variable->type != OFC_PARSE_LHS_VARIABLE))
 		{
-			ofc_sema_scope_error(scope, range->src,
+			ofc_sparse_ref_error(range->src,
 				"Dummy arguments can only be names");
 			ofc_sema_arg_list_delete(list);
 			return NULL;

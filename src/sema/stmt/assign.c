@@ -22,12 +22,12 @@ ofc_sema_stmt_t* ofc_sema_stmt_assign(
 {
 	if (!scope || !stmt
 		|| (stmt->type != OFC_PARSE_STMT_ASSIGN)
-		|| ofc_str_ref_empty(stmt->assign.variable))
+		|| ofc_sparse_ref_empty(stmt->assign.variable))
 		return false;
 
 	ofc_sema_stmt_t s;
 	s.assign.dest = ofc_sema_scope_decl_find(
-		scope, stmt->assign.variable, false);
+		scope, stmt->assign.variable.string, false);
 	if (!s.assign.dest)
 	{
 		ofc_sema_spec_t* spec = ofc_sema_scope_spec_modify(
@@ -38,7 +38,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_assign(
 		{
 			if (!spec->type_implicit)
 			{
-				ofc_sema_scope_warning(scope, stmt->assign.variable,
+				ofc_sparse_ref_warning(stmt->assign.variable,
 					"IMPLICIT declaration of variable in ASSIGN destination"
 					" as non-INTEGER makes no sense, declaring as INTEGER.");
 			}

@@ -29,10 +29,10 @@ static ofc_parse_call_arg_t* ofc_parse__call_arg(
 	unsigned dpos = ofc_parse_debug_position(debug);
 
 	unsigned i = 0;
-	call_arg->name = OFC_STR_REF_EMPTY;
+	call_arg->name = OFC_SPARSE_REF_EMPTY;
 	if (named)
 	{
-		ofc_str_ref_t ident;
+		ofc_sparse_ref_t ident;
 		unsigned l = ofc_parse_ident(
 			src, &ptr[i], debug, &ident);
 		if ((l > 0) && (ptr[i + l] == '='))
@@ -76,7 +76,7 @@ static ofc_parse_call_arg_t* ofc_parse__call_arg(
 		call_arg->type = OFC_PARSE_CALL_ARG_EXPR;
 	}
 
-	call_arg->src = ofc_str_ref(ptr, i);
+	call_arg->src = ofc_sparse_ref(src, ptr, i);
 
 	if (len) *len = i;
 	return call_arg;
@@ -128,9 +128,9 @@ bool ofc_parse_call_arg_print(
 	if (!call_arg)
 		return false;
 
-	if (!ofc_str_ref_empty(call_arg->name))
+	if (!ofc_sparse_ref_empty(call_arg->name))
 	{
-		if (!ofc_str_ref_print(cs, call_arg->name)
+		if (!ofc_sparse_ref_print(cs, call_arg->name)
 			|| !ofc_colstr_atomic_writef(cs, "="))
 			return false;
 	}
