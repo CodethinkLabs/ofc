@@ -415,7 +415,30 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 				return NULL;
 			}
 
-			if (is_expr && !ofc_sema_decl_is_procedure(decl))
+			bool is_argument = false;
+			if (scope->args != NULL)
+			{
+				/* TODO - Store args in hashmap. */
+				unsigned i;
+				for (i = 0; !is_argument && (i < scope->args->count); i++)
+				{
+					ofc_sema_arg_t arg = scope->args->arg[i];
+
+					if (arg.alt_return)
+						continue;
+
+					ofc_lang_opts_t opts
+						= ofc_sema_scope_get_lang_opts(scope);
+
+					is_argument = (opts.case_sensitive
+						? ofc_str_ref_equal(arg.name.string, lhs->variable.string)
+						: ofc_str_ref_equal_ci(arg.name.string, lhs->variable.string));
+				}
+			}
+
+			if (is_expr
+				&& !ofc_sema_decl_is_procedure(decl)
+				&& !is_argument)
 			{
 				ofc_sparse_ref_warning(lhs->src,
 					"Referencing uninitialized variable '%.*s' in expression.",
