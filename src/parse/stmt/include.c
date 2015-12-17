@@ -83,19 +83,3 @@ unsigned ofc_parse_stmt_include(
 	stmt->type = OFC_PARSE_STMT_INCLUDE;
 	return i;
 }
-
-bool ofc_parse_stmt_include_print(
-	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt)
-{
-	if (!stmt)
-		return false;
-
-	/* TODO - Print included code? */
-
-	const char* path = ofc_file_get_path(
-		stmt->include.file);
-	if (!path) return false;
-
-	return ofc_colstr_writef(
-		cs, "INCLUDE \'%s\'", path);
-}

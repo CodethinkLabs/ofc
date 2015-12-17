@@ -611,8 +611,6 @@ void ofc_parse_stmt_delete(
 
 
 
-bool ofc_parse_stmt_include_print(
-	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt);
 bool ofc_parse_stmt_program_print(
 	ofc_colstr_t* cs, unsigned indent,
 	const ofc_parse_stmt_t* stmt);
@@ -681,8 +679,7 @@ bool ofc_parse_stmt_print(
 	switch(stmt->type)
 	{
 		case OFC_PARSE_STMT_INCLUDE:
-			if (!ofc_parse_stmt_include_print(cs, stmt))
-				return false;
+			/* We no longer print INCLUDEs since the content is printed. */
 			break;
 
 		case OFC_PARSE_STMT_PROGRAM:
