@@ -23,7 +23,8 @@
 unsigned ofc_parse_stmt_include(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
-	ofc_parse_stmt_t* stmt)
+	ofc_parse_stmt_t* stmt,
+	ofc_parse_stmt_list_t* list)
 {
 	unsigned dpos = ofc_parse_debug_position(debug);
 
@@ -70,10 +71,10 @@ unsigned ofc_parse_stmt_include(
 	free(rpath);
 
 	stmt->include.src = ofc_prep(stmt->include.file);
-	stmt->include.include = ofc_parse_file(stmt->include.src);
-	if (!stmt->include.include)
+
+	if (!ofc_parse_file_include(
+		stmt->include.src, list, debug))
 	{
-		ofc_parse_stmt_list_delete(stmt->include.include);
 		ofc_sparse_delete(stmt->include.src);
 		ofc_file_delete(stmt->include.file);
 		return 0;

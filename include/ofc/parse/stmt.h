@@ -19,7 +19,7 @@
 
 typedef struct
 {
-	unsigned           count;
+	unsigned           count, size;
 	ofc_parse_stmt_t** stmt;
 } ofc_parse_stmt_list_t;
 
@@ -102,9 +102,8 @@ struct ofc_parse_stmt_s
 	{
 		struct
 		{
-			ofc_file_t*            file;
-			ofc_sparse_t*          src;
-			ofc_parse_stmt_list_t* include;
+			ofc_file_t*   file;
+			ofc_sparse_t* src;
 		} include;
 
 		ofc_parse_implicit_list_t* implicit;
@@ -265,6 +264,7 @@ struct ofc_parse_stmt_s
 
 
 ofc_parse_stmt_t* ofc_parse_stmt(
+	ofc_parse_stmt_list_t* list,
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
 	unsigned* len);
@@ -275,11 +275,17 @@ bool ofc_parse_stmt_print(
 	ofc_colstr_t* cs, unsigned indent,
 	const ofc_parse_stmt_t* stmt);
 
+bool ofc_parse_stmt_sublist(
+	ofc_parse_stmt_list_t* list,
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	unsigned* len);
 ofc_parse_stmt_list_t* ofc_parse_stmt_list(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
 	unsigned* len);
 
+ofc_parse_stmt_list_t* ofc_parse_stmt_list_create(void);
 void ofc_parse_stmt_list_delete(
 	ofc_parse_stmt_list_t* list);
 

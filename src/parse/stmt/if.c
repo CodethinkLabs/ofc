@@ -39,7 +39,7 @@ static unsigned ofc_parse_stmt_if__statement(
 {
 	unsigned i;
 	stmt->if_stmt.stmt = ofc_parse_stmt(
-		src, ptr, debug, &i);
+		NULL, src, ptr, debug, &i);
 	if (!stmt->if_stmt.stmt)
 		return 0;
 
@@ -104,7 +104,7 @@ static unsigned ofc_parse_stmt_if__then(
 		i += len;
 
 		ofc_parse_stmt_t* stmt_else
-			= ofc_parse_stmt(src, &ptr[i], debug, &len);
+			= ofc_parse_stmt(NULL, src, &ptr[i], debug, &len);
 		if (stmt_else
 			&& (stmt_else->type != OFC_PARSE_STMT_IF_THEN))
 		{

@@ -18,6 +18,11 @@
 
 #include <ofc/parse.h>
 
+bool ofc_parse_file_include(
+	const ofc_sparse_t*    src,
+	ofc_parse_stmt_list_t* list,
+	ofc_parse_debug_t*     debug);
+
 ofc_parse_stmt_list_t* ofc_parse_file(const ofc_sparse_t* src);
 
 bool ofc_parse_file_print(

@@ -18,7 +18,8 @@
 unsigned ofc_parse_stmt_include(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
-	ofc_parse_stmt_t* stmt);
+	ofc_parse_stmt_t* stmt,
+	ofc_parse_stmt_list_t* list);
 unsigned ofc_parse_stmt_program(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
@@ -237,7 +238,6 @@ static void ofc_parse_stmt__cleanup(
 	switch (stmt.type)
 	{
 		case OFC_PARSE_STMT_INCLUDE:
-			ofc_parse_stmt_list_delete(stmt.include.include);
 			ofc_sparse_delete(stmt.include.src);
 			ofc_file_delete(stmt.include.file);
 			break;
@@ -399,6 +399,7 @@ static ofc_parse_stmt_t* ofc_parse_stmt__alloc(
 
 
 ofc_parse_stmt_t* ofc_parse_stmt(
+	ofc_parse_stmt_list_t* list,
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
 	unsigned* len)
@@ -480,7 +481,7 @@ ofc_parse_stmt_t* ofc_parse_stmt(
 			if (i == 0) i = ofc_parse_stmt_if(src, ptr, debug, &stmt);
 			if (i == 0) i = ofc_parse_stmt_decl_attr_intrinsic(src, ptr, debug, &stmt);
 			if (i == 0) i = ofc_parse_stmt_io_inquire(src, ptr, debug, &stmt);
-			if (i == 0) i = ofc_parse_stmt_include(src, ptr, debug, &stmt);
+			if (i == 0) i = ofc_parse_stmt_include(src, ptr, debug, &stmt, list);
 			break;
 
 		case 'M':
@@ -831,10 +832,73 @@ bool ofc_parse_stmt_print(
 
 
 
+bool ofc_parse_stmt_sublist(
+	ofc_parse_stmt_list_t* list,
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	unsigned* len)
+{
+	if (!list)
+		return false;
+
+	unsigned i = 0;
+	while (true)
+	{
+		unsigned slen;
+		ofc_parse_stmt_t* stmt = ofc_parse_stmt(
+			list, src, &ptr[i], debug, &slen);
+		if (!stmt) break;
+		i += slen;
+
+		if (list->count >= list->size)
+		{
+			unsigned nsize = (list->size << 1);
+			if (nsize == 0) nsize = 16;
+
+			ofc_parse_stmt_t** nstmt
+				= (ofc_parse_stmt_t**)realloc(list->stmt,
+					(nsize * sizeof(ofc_parse_stmt_t*)));
+			if (!nstmt)
+			{
+				ofc_parse_stmt_delete(stmt);
+				return false;
+			}
+			list->stmt = nstmt;
+			list->size = nsize;
+		}
+
+		list->stmt[list->count++] = stmt;
+
+		if (stmt->type == OFC_PARSE_STMT_ERROR)
+			break;
+	}
+
+	if (len) *len = i;
+	return true;
+}
+
 ofc_parse_stmt_list_t* ofc_parse_stmt_list(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
 	unsigned* len)
+{
+	ofc_parse_stmt_list_t* list
+		= ofc_parse_stmt_list_create();
+	if (!list) return NULL;
+
+	if (!ofc_parse_stmt_sublist(
+		list, src, ptr, debug, len))
+	{
+		ofc_parse_stmt_list_delete(list);
+		return NULL;
+	}
+
+	return list;
+}
+
+
+
+ofc_parse_stmt_list_t* ofc_parse_stmt_list_create(void)
 {
 	ofc_parse_stmt_list_t* list
 		= (ofc_parse_stmt_list_t*)malloc(
@@ -842,48 +906,10 @@ ofc_parse_stmt_list_t* ofc_parse_stmt_list(
 	if (!list) return NULL;
 
 	list->count = 0;
+	list->size  = 0;
 	list->stmt = NULL;
-
-	unsigned i = ofc_parse_list(
-		src, ptr, debug, '\0',
-		&list->count, (void***)&list->stmt,
-		(void*)ofc_parse_stmt,
-		(void*)ofc_parse_stmt_delete);
-	if (i == 0)
-	{
-		free(list);
-		return NULL;
-	}
-
-	unsigned j;
-	for (j = 0; j < (list->count - 1); j++)
-	{
-		if (!list->stmt[j])
-			continue;
-
-		if (list->stmt[j]->type
-			== OFC_PARSE_STMT_ERROR)
-		{
-			unsigned k;
-			for (k = (j + 1); k < list->count; k++)
-			{
-				ofc_parse_stmt_delete(list->stmt[k]);
-				list->stmt[k] = NULL;
-			}
-			list->count = (j + 1);
-
-			ofc_parse_stmt_t** nstmt
-				= (ofc_parse_stmt_t**)realloc(list->stmt,
-					(sizeof(ofc_parse_stmt_t*) * list->count));
-			if (nstmt) list->stmt = nstmt;
-		}
-	}
-
-	if (len) *len = i;
 	return list;
 }
-
-
 
 void ofc_parse_stmt_list_delete(
 	ofc_parse_stmt_list_t* list)
@@ -891,9 +917,10 @@ void ofc_parse_stmt_list_delete(
 	if (!list)
 		return;
 
-	ofc_parse_list_delete(
-		list->count, (void**)list->stmt,
-		(void*)ofc_parse_stmt_delete);
+	unsigned i;
+	for (i = 0; i < list->count; i++)
+		ofc_parse_stmt_delete(list->stmt[i]);
+	free(list->stmt);
 	free(list);
 }
 
