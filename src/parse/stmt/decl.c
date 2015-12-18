@@ -29,13 +29,13 @@ unsigned ofc_parse_stmt_decl(
 	if (!stmt->decl.type)
 		return 0;
 
-	if ((ptr[i + 0] == ':')
-		&& (ptr[i + 1] == ':'))
-		i += 2;
+	bool is_f90 = ((ptr[i + 0] == ':')
+		&& (ptr[i + 1] == ':'));
+	if (is_f90) i += 2;
 
 	unsigned l;
 	stmt->decl.decl = ofc_parse_decl_list(
-		src, &ptr[i], debug, &l);
+		src, &ptr[i], is_f90, debug, &l);
 	if (!stmt->decl.decl)
 	{
 		ofc_parse_type_delete(stmt->decl.type);

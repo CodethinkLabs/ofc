@@ -16,8 +16,9 @@
 #include "ofc/parse.h"
 
 
-ofc_parse_decl_t* ofc_parse_decl(
+static ofc_parse_decl_t* ofc_parse__decl(
 	const ofc_sparse_t* src, const char* ptr,
+	bool is_f90,
 	ofc_parse_debug_t* debug,
 	unsigned* len)
 {
@@ -37,14 +38,15 @@ ofc_parse_decl_t* ofc_parse_decl(
 
 	decl->init_expr  = NULL;
 	decl->init_clist = NULL;
-	if (ptr[i] == '=')
+
+	if (is_f90 && (ptr[i] == '='))
 	{
 		unsigned l;
 		decl->init_expr = ofc_parse_expr(
 			src, &ptr[i + 1], debug, &l);
 		if (decl->init_expr) i += (l + 1);
 	}
-	else if (ptr[i] == '/')
+	else if (!is_f90 && (ptr[i] == '/'))
 	{
 		unsigned l;
 		decl->init_clist = ofc_parse_clist(
@@ -54,6 +56,24 @@ ofc_parse_decl_t* ofc_parse_decl(
 
 	if (len) *len = i;
 	return decl;
+}
+
+ofc_parse_decl_t* ofc_parse_decl(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	unsigned* len)
+{
+	return ofc_parse__decl(
+		src, ptr, false, debug, len);
+}
+
+ofc_parse_decl_t* ofc_parse_decl_f90(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	unsigned* len)
+{
+	return ofc_parse__decl(
+		src, ptr, true, debug, len);
 }
 
 void ofc_parse_decl_delete(
@@ -99,6 +119,7 @@ bool ofc_parse_decl_print(
 
 ofc_parse_decl_list_t* ofc_parse_decl_list(
 	const ofc_sparse_t* src, const char* ptr,
+	bool is_f90,
 	ofc_parse_debug_t* debug,
 	unsigned* len)
 {
@@ -113,7 +134,7 @@ ofc_parse_decl_list_t* ofc_parse_decl_list(
 	unsigned i = ofc_parse_list(
 		src, ptr, debug, ',',
 		&list->count, (void***)&list->decl,
-		(void*)ofc_parse_decl,
+		(void*)(is_f90 ? ofc_parse_decl_f90 : ofc_parse_decl),
 		(void*)ofc_parse_decl_delete);
 	if (i == 0)
 	{

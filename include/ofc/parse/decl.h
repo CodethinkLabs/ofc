@@ -35,6 +35,10 @@ ofc_parse_decl_t* ofc_parse_decl(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
 	unsigned* len);
+ofc_parse_decl_t* ofc_parse_decl_f90(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	unsigned* len);
 void ofc_parse_decl_delete(
 	ofc_parse_decl_t* decl);
 bool ofc_parse_decl_print(
@@ -42,6 +46,7 @@ bool ofc_parse_decl_print(
 
 ofc_parse_decl_list_t* ofc_parse_decl_list(
 	const ofc_sparse_t* src, const char* ptr,
+	bool is_f90,
 	ofc_parse_debug_t* debug,
 	unsigned* len);
 void ofc_parse_decl_list_delete(
