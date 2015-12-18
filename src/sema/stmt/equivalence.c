@@ -24,17 +24,46 @@ bool ofc_sema_stmt_equivalence(
 		|| (stmt->type != OFC_PARSE_STMT_EQUIVALENCE))
 		return false;
 
+	if (stmt->label != 0)
+	{
+		ofc_sparse_ref_warning(stmt->src,
+			"EQUIVALENCE statements can't be labelled, ignoring.");
+	}
+
 	unsigned g;
 	for (g = 0; g < stmt->equivalence.count; g++)
 	{
 		const ofc_parse_lhs_list_t* list
 			= stmt->equivalence.group[g];
-		if (!list || (list->count <= 1))
+		if (!list || (list->count == 0))
 			continue;
 
 		ofc_sema_lhs_t* base
 			= ofc_sema_lhs(scope, list->lhs[0]);
 		if (!base) return false;
+
+		if (list->count < 2)
+		{
+			ofc_sparse_ref_warning(base->src,
+				"EQUIVALENCE groups should contain more than 1 entry.");
+			ofc_sema_lhs_delete(base);
+			continue;
+		}
+
+		ofc_sema_equiv_t* equiv
+			= ofc_sema_equiv_create();
+		if (!equiv)
+		{
+			ofc_sema_lhs_delete(base);
+			return false;
+		}
+
+		if (!ofc_sema_equiv_add(equiv, base))
+		{
+			ofc_sema_equiv_delete(equiv);
+			ofc_sema_lhs_delete(base);
+			return false;
+		}
 
 		unsigned i;
 		for (i = 1; i < list->count; i++)
@@ -43,7 +72,7 @@ bool ofc_sema_stmt_equivalence(
 				= ofc_sema_lhs(scope, list->lhs[i]);
 			if (!elhs)
 			{
-				ofc_sema_lhs_delete(base);
+				ofc_sema_equiv_delete(equiv);
 				return false;
 			}
 
@@ -55,21 +84,23 @@ bool ofc_sema_stmt_equivalence(
 					"EQUIVALENCE types don't match.");
 			}
 
-			if (!ofc_sema_equiv(base, elhs))
+			if (!ofc_sema_equiv_add(equiv, elhs))
 			{
 				/* TODO - Better error messages for this in 'sema/equiv.c'. */
 				ofc_sparse_ref_warning(base->src,
 					"EQUIVALENCE statement causes collision.");
 
 				ofc_sema_lhs_delete(elhs);
-				ofc_sema_lhs_delete(base);
+				ofc_sema_equiv_delete(equiv);
 				return false;
 			}
-
-			ofc_sema_lhs_delete(elhs);
 		}
 
-		ofc_sema_lhs_delete(base);
+		if (!ofc_sema_scope_equiv_add(scope, equiv))
+		{
+			ofc_sema_equiv_delete(equiv);
+			return false;
+		}
 	}
 
 	return true;

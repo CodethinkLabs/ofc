@@ -33,12 +33,10 @@ void ofc_sema_scope_delete(
 
 	ofc_sema_common_map_delete(scope->common);
 	ofc_hashmap_delete(scope->spec);
-	ofc_sema_decl_list_delete(
-		scope->decl);
-	ofc_hashmap_delete(
-		scope->parameter);
-	ofc_sema_label_map_delete(
-		scope->label);
+	ofc_sema_decl_list_delete(scope->decl);
+	ofc_sema_equiv_list_delete(scope->equiv);
+	ofc_hashmap_delete(scope->parameter);
+	ofc_sema_label_map_delete(scope->label);
 	switch (scope->type)
 	{
 		case OFC_SEMA_SCOPE_STMT_FUNC:
@@ -106,6 +104,7 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 	scope->common    = NULL;
 	scope->spec      = ofc_sema_spec_map_create(opts.case_sensitive);
 	scope->decl      = ofc_sema_decl_list_create(opts.case_sensitive);
+	scope->equiv     = ofc_sema_equiv_list_create();
 	scope->parameter = ofc_sema_parameter_map_create(opts.case_sensitive);
 	scope->label     = ofc_sema_label_map_create();
 
@@ -129,8 +128,11 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 	}
 
 	if (!scope->implicit
+		|| !scope->spec
 		|| !scope->decl
-		|| !scope->parameter)
+		|| !scope->equiv
+		|| !scope->parameter
+		|| !scope->label)
 	{
 		ofc_sema_scope_delete(scope);
 		return NULL;
@@ -841,6 +843,18 @@ ofc_sema_spec_t* ofc_sema_scope_spec_find_final(
 
 
 
+bool ofc_sema_scope_equiv_add(
+	ofc_sema_scope_t* scope, ofc_sema_equiv_t* equiv)
+{
+	if (!scope)
+		return false;
+
+	return ofc_sema_equiv_list_add(
+		scope->equiv, equiv);
+}
+
+
+
 const ofc_sema_decl_t* ofc_sema_scope_decl_find(
 	const ofc_sema_scope_t* scope, ofc_str_ref_t name, bool local)
 {
@@ -941,23 +955,13 @@ static bool ofc_sema_scope_body__print(
 	ofc_colstr_t* cs, unsigned indent,
 	const ofc_sema_scope_t* scope)
 {
-	if (!cs
-		|| !scope
-		|| !scope->decl
-		|| !scope->stmt
-		|| !scope->label
-		|| !scope->label->format)
+	if (!cs || !scope)
 		return false;
 
-	if (!ofc_sema_decl_list_print(cs,
-			indent, scope->decl)
-		|| !ofc_sema_stmt_list_print(cs,
-			indent, scope->label, scope->stmt)
-		|| !ofc_sema_format_label_list_print(cs,
-			indent, scope->label->format))
-		return false;
-
-	return true;
+	return (ofc_sema_decl_list_print(cs, indent, scope->decl)
+		&& ofc_sema_equiv_list_print(cs, indent, scope->equiv)
+		&& ofc_sema_stmt_list_print(cs, indent, scope->label, scope->stmt)
+		&& ofc_sema_format_label_list_print(cs, indent, scope->label->format));
 }
 
 bool ofc_sema_scope_print(

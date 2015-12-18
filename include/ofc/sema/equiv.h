@@ -20,16 +20,35 @@ typedef struct
 {
 	unsigned         count;
 	ofc_sema_lhs_t** lhs;
-	ofc_hashmap_t*   map;
-
-	unsigned refcnt;
 } ofc_sema_equiv_t;
 
-bool ofc_sema_equiv(
-	ofc_sema_lhs_t* a,
-	ofc_sema_lhs_t* b);
-
+ofc_sema_equiv_t* ofc_sema_equiv_create(void);
 void ofc_sema_equiv_delete(
 	ofc_sema_equiv_t* equiv);
+
+bool ofc_sema_equiv_add(
+	ofc_sema_equiv_t* equiv, ofc_sema_lhs_t* lhs);
+
+bool ofc_sema_equiv_print(
+	ofc_colstr_t* cs, const ofc_sema_equiv_t* equiv);
+
+
+typedef struct
+{
+	unsigned           count;
+	ofc_sema_equiv_t** equiv;
+} ofc_sema_equiv_list_t;
+
+ofc_sema_equiv_list_t* ofc_sema_equiv_list_create(void);
+void ofc_sema_equiv_list_delete(
+	ofc_sema_equiv_list_t* list);
+
+bool ofc_sema_equiv_list_add(
+	ofc_sema_equiv_list_t* list,
+	ofc_sema_equiv_t* equiv);
+
+bool ofc_sema_equiv_list_print(
+	ofc_colstr_t* cs, unsigned indent,
+	const ofc_sema_equiv_list_t* list);
 
 #endif

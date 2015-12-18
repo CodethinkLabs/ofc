@@ -56,6 +56,7 @@ struct ofc_sema_scope_s
 	ofc_sema_common_map_t* common;
 	ofc_hashmap_t*         spec;
 	ofc_sema_decl_list_t*  decl;
+	ofc_sema_equiv_list_t* equiv;
 	ofc_hashmap_t*         parameter;
 	ofc_sema_label_map_t*  label;
 	/* namelist_list_map */
@@ -104,6 +105,9 @@ ofc_sema_spec_t* ofc_sema_scope_spec_modify(
 	ofc_sema_scope_t* scope, ofc_sparse_ref_t name);
 ofc_sema_spec_t* ofc_sema_scope_spec_find_final(
 	const ofc_sema_scope_t* scope, ofc_sparse_ref_t name);
+
+bool ofc_sema_scope_equiv_add(
+	ofc_sema_scope_t* scope, ofc_sema_equiv_t* equiv);
 
 const ofc_sema_decl_t* ofc_sema_scope_decl_find(
 	const ofc_sema_scope_t* scope, ofc_str_ref_t name, bool local);
