@@ -1136,7 +1136,9 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs, bool print_type,
 
 		if (ofc_sema_type_is_array(type))
 		{
-			if (!ofc_colstr_atomic_writef(cs, ", DIMENSION")
+			if (!ofc_colstr_atomic_writef(cs, ",")
+				|| !ofc_colstr_atomic_writef(cs, " ")
+				|| !ofc_colstr_atomic_writef(cs, "DIMENSION")
 				|| !ofc_sema_array_print(cs, type->array))
 				return false;
 		}
@@ -1149,15 +1151,50 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs, bool print_type,
 		decl->name.size, decl->name.base))
 			return false;
 
-	if (ofc_sema_type_is_array(decl->type))
+	if (ofc_sema_decl_has_initializer(decl))
 	{
-
-	}
-	else if (decl->init)
-	{
-		if (!ofc_colstr_atomic_writef(cs, " = ")
-			|| !ofc_sema_typeval_print(cs, decl->init))
+		if (!ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_colstr_atomic_writef(cs, "=")
+			|| !ofc_colstr_atomic_writef(cs, " "))
 			return false;
+
+		if (ofc_sema_type_is_composite(decl->type))
+		{
+			if (!ofc_colstr_atomic_writef(cs, "(/")
+				|| !ofc_colstr_atomic_writef(cs, " "))
+				return false;
+
+			unsigned count;
+			if (!ofc_sema_decl_elem_count(decl, &count))
+				return false;
+
+			unsigned i;
+			for (i = 0; i < count; i++)
+			{
+				if (i > 0)
+				{
+					if (!ofc_colstr_atomic_writef(cs, ",")
+						|| !ofc_colstr_atomic_writef(cs, " "))
+						return false;
+				}
+
+				if (!ofc_sema_typeval_print(
+					cs, decl->init_array[i]))
+				{
+					/* TODO - Handle printing partial initializers. */
+					return false;
+				}
+			}
+
+			if (!ofc_colstr_atomic_writef(cs, "/)")
+				|| !ofc_colstr_atomic_writef(cs, " "))
+				return false;
+		}
+		else
+		{
+			if (!ofc_sema_typeval_print(cs, decl->init))
+				return false;
+		}
 	}
 
 	return true;
