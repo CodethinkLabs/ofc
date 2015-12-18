@@ -1115,41 +1115,47 @@ const ofc_hashmap_t* ofc_sema_decl_list_map(
 	return (list ? list->map : NULL);
 }
 
-bool ofc_sema_decl_print(ofc_colstr_t* cs, bool print_type,
+bool ofc_sema_decl_print_name(ofc_colstr_t* cs,
 	const ofc_sema_decl_t* decl)
 {
-	if (!cs || !decl) return false;
+	if (!decl)
+		return false;
 
-	if (print_type)
+	return ofc_colstr_atomic_writef(cs, "%.*s",
+		decl->name.size, decl->name.base);
+}
+
+bool ofc_sema_decl_print(ofc_colstr_t* cs,
+	const ofc_sema_decl_t* decl)
+{
+	if (!decl) return false;
+
+	const ofc_sema_type_t* type = decl->type;
+	if (ofc_sema_decl_is_procedure(decl))
+		type = type->subtype;
+
+	if (!type) return false;
+
+	/* TODO - Handle POINTER and STRUCTURE declarations. */
+
+	if (!ofc_colstr_atomic_writef(cs, "%s",
+		ofc_sema_type_str_rep(type)))
+		return false;
+
+	if (ofc_sema_type_is_array(type))
 	{
-		const ofc_sema_type_t* type = decl->type;
-		if (ofc_sema_decl_is_procedure(decl))
-			type = type->subtype;
-
-		if (!type) return false;
-
-		/* TODO - Handle POINTER and STRUCTURE declarations. */
-
-		if (!ofc_colstr_atomic_writef(cs, "%s",
-			ofc_sema_type_str_rep(type)))
-			return false;
-
-		if (ofc_sema_type_is_array(type))
-		{
-			if (!ofc_colstr_atomic_writef(cs, ",")
-				|| !ofc_colstr_atomic_writef(cs, " ")
-				|| !ofc_colstr_atomic_writef(cs, "DIMENSION")
-				|| !ofc_sema_array_print(cs, type->array))
-				return false;
-		}
-
-		if (!ofc_colstr_atomic_writef(cs, " :: "))
+		if (!ofc_colstr_atomic_writef(cs, ",")
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_colstr_atomic_writef(cs, "DIMENSION")
+			|| !ofc_sema_array_print(cs, type->array))
 			return false;
 	}
 
-	if (!ofc_colstr_atomic_writef(cs, "%.*s",
-		decl->name.size, decl->name.base))
-			return false;
+	if (!ofc_colstr_atomic_writef(cs, " :: "))
+		return false;
+
+	if (!ofc_sema_decl_print_name(cs, decl))
+		return false;
 
 	if (ofc_sema_decl_has_initializer(decl))
 	{
@@ -1211,9 +1217,8 @@ bool ofc_sema_decl_list_print(
 	for (i = 0; i < decl_list->count; i++)
 	{
 		if (!ofc_colstr_newline(cs, indent, NULL)
-			|| !ofc_sema_decl_print(cs, true,
-				decl_list->decl[i]))
-					return false;
+			|| !ofc_sema_decl_print(cs, decl_list->decl[i]))
+			return false;
 	}
 
 	return true;

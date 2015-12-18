@@ -740,7 +740,7 @@ bool ofc_sema_lhs_print(
 	switch(lhs->type)
 	{
 		case OFC_SEMA_LHS_DECL:
-			if (!ofc_sema_decl_print(cs, false, lhs->decl))
+			if (!ofc_sema_decl_print_name(cs, lhs->decl))
 				return false;
 			break;
 

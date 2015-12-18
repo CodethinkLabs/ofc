@@ -1530,7 +1530,7 @@ bool ofc_sema_expr_print(
 			return true;
 
 		case OFC_SEMA_EXPR_FUNCTION:
-			if (!ofc_sema_decl_print(cs, false, expr->function)
+			if (!ofc_sema_decl_print_name(cs, expr->function)
 				|| !ofc_colstr_atomic_writef(cs, "(")
 				|| !ofc_sema_expr_list_print(cs, expr->args)
 				|| !ofc_colstr_atomic_writef(cs, ")"))

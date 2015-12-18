@@ -86,7 +86,7 @@ bool ofc_sema_stmt_assign_print(
 		|| !ofc_colstr_atomic_writef(cs, " ")
 		|| !ofc_colstr_atomic_writef(cs, "TO")
 		|| !ofc_colstr_atomic_writef(cs, " ")
-		|| !ofc_sema_decl_print(cs, false, stmt->assign.dest))
+		|| !ofc_sema_decl_print_name(cs, stmt->assign.dest))
 		return false;
 
 	return true;
