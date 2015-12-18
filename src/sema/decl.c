@@ -1186,8 +1186,8 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs, bool print_type,
 				}
 			}
 
-			if (!ofc_colstr_atomic_writef(cs, "/)")
-				|| !ofc_colstr_atomic_writef(cs, " "))
+			if (!ofc_colstr_atomic_writef(cs, " ")
+				|| !ofc_colstr_atomic_writef(cs, "/)"))
 				return false;
 		}
 		else
