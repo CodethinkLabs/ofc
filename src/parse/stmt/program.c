@@ -88,6 +88,10 @@ unsigned ofc_parse_stmt_program(
 			: ofc_str_ref_equal_ci(stmt->program.name.string,
 				ofc_parse_stmt_program__current))
 		{
+			ofc_parse_debug_warning(
+				debug, ofc_sparse_ref(src, ptr, 0),
+				"Re-definition of PROGRAM");
+
 			stmt->type = OFC_PARSE_STMT_EMPTY;
 			return i;
 		}
@@ -286,6 +290,10 @@ unsigned ofc_parse_stmt_block_data(
 			: ofc_str_ref_equal_ci(stmt->program.name.string,
 				ofc_parse_stmt_block_data__current))
 		{
+			ofc_parse_debug_warning(
+				debug, ofc_sparse_ref(src, ptr, 0),
+				"Re-definition of BLOCK DATA");
+
 			stmt->type = OFC_PARSE_STMT_EMPTY;
 			return i;
 		}
