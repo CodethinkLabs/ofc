@@ -650,11 +650,7 @@ static ofc_sema_expr_t* ofc_sema_expr__function(
 		|| (name->type != OFC_PARSE_LHS_ARRAY)
 		|| !name->parent
 		|| (name->parent->type != OFC_PARSE_LHS_VARIABLE))
-	{
-		ofc_sparse_ref_error(name->src,
-			"Invalid invocation of function.");
 		return NULL;
-	}
 
 	/* TODO - Defer checking of arguments for a later pass? */
 	const ofc_sema_scope_t* fscope = decl->func;
@@ -844,6 +840,11 @@ static ofc_sema_expr_t* ofc_sema_expr__variable(
 
 			expr = ofc_sema_expr__function(
 				scope, name, fdecl);
+			if (!expr)
+			{
+				ofc_sparse_ref_error(name->src,
+					"Invalid invocation of function");
+			}
 		}
 		else
 		{
