@@ -109,6 +109,22 @@ static const char* ofc_parse_keyword__name[] =
 
 
 
+bool ofc_str_ref_begins_with_keyword(ofc_str_ref_t ref)
+{
+	unsigned i;
+	for (i = 0; ofc_parse_keyword__name[i]; i++)
+	{
+		unsigned len = strlen(ofc_parse_keyword__name[i]);
+		if (len > ref.size) continue;
+
+		if (strncasecmp(ref.base,
+			ofc_parse_keyword__name[i], len) == 0)
+			return true;
+	}
+
+	return false;
+}
+
 unsigned ofc_parse_ident(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,

@@ -18,15 +18,21 @@
 
 ofc_sema_decl_t* ofc_sema_decl_create(
 	const ofc_sema_type_t* type,
-	ofc_str_ref_t name)
+	ofc_sparse_ref_t name)
 {
+	if (ofc_str_ref_begins_with_keyword(name.string))
+	{
+		ofc_sparse_ref_warning(name,
+			"Symbol name begins with langauge keyword");
+	}
+
 	ofc_sema_decl_t* decl
 		= (ofc_sema_decl_t*)malloc(
 			sizeof(ofc_sema_decl_t));
 	if (!decl) return NULL;
 
 	decl->type = type;
-	decl->name = name;
+	decl->name = name.string;
 	decl->func = NULL;
 
 	if (ofc_sema_type_is_composite(type))
@@ -177,7 +183,7 @@ static ofc_sema_decl_t* ofc_sema_decl__spec(
 	}
 
 	ofc_sema_decl_t* decl
-		= ofc_sema_decl_create(type, name.string);
+		= ofc_sema_decl_create(type, name);
 	if (!decl) return NULL;
 
 	decl->is_static    = spec->is_static;

@@ -176,7 +176,7 @@ static bool ofc_sema_scope__subroutine(
 			= ofc_sema_type_subroutine();
 		if (!stype) return false;
 
-		decl = ofc_sema_decl_create(stype, name.string);
+		decl = ofc_sema_decl_create(stype, name);
 		if (!decl) return false;
 
 		if (!ofc_sema_decl_list_add(
@@ -281,7 +281,7 @@ static bool ofc_sema_scope__function(
 	}
 	else
 	{
-		decl = ofc_sema_decl_create(ftype, name.string);
+		decl = ofc_sema_decl_create(ftype, name);
 		if (!decl) return false;
 
 		if (!ofc_sema_decl_list_add(

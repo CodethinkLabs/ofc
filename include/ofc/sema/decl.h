@@ -63,7 +63,7 @@ struct ofc_sema_decl_list_s
 
 ofc_sema_decl_t* ofc_sema_decl_create(
 	const ofc_sema_type_t* type,
-	ofc_str_ref_t name);
+	ofc_sparse_ref_t name);
 
 ofc_sema_decl_t* ofc_sema_decl_spec(
 	ofc_sema_scope_t*       scope,

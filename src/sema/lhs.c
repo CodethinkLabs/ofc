@@ -388,7 +388,7 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 
 			const ofc_sema_type_t* rtype
 				= ofc_sema_decl_base_type(fdecl);
-			decl = ofc_sema_decl_create(rtype, lhs->variable.string);
+			decl = ofc_sema_decl_create(rtype, lhs->variable);
 			if (!decl) return NULL;
 
 			if (!ofc_sema_decl_list_add(

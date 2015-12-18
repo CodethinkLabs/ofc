@@ -36,7 +36,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_call(
 
 		ofc_sema_decl_t* decl
 			= ofc_sema_decl_create(
-				type, stmt->call_entry.name.string);
+				type, stmt->call_entry.name);
 		if (!decl) return NULL;
 
 		if (!ofc_sema_decl_list_add(
