@@ -223,6 +223,72 @@ static ofc_sema_expr_t* ofc_sema_expr__create(
 	return expr;
 }
 
+ofc_sema_expr_t* ofc_sema_expr_copy(
+	const ofc_sema_expr_t* expr)
+{
+	if (!expr) return NULL;
+
+	ofc_sema_expr_t* copy
+		= ofc_sema_expr__create(expr->type);
+	if (!copy) return NULL;
+
+	copy->src = expr->src;
+
+	copy->brackets = expr->brackets;
+
+	if (expr->constant)
+	{
+		copy->constant = ofc_sema_typeval_copy(expr->constant);
+		if (!copy->constant)
+		{
+			ofc_sema_expr_delete(copy);
+			return NULL;
+		}
+	}
+
+	bool success = true;
+	switch (copy->type)
+	{
+		case OFC_SEMA_EXPR_CONSTANT:
+			break;
+
+		case OFC_SEMA_EXPR_LHS:
+			copy->lhs = ofc_sema_lhs_reference(expr->lhs);
+			break;
+
+		case OFC_SEMA_EXPR_CAST:
+			copy->cast.type = expr->cast.type;
+			copy->cast.expr = ofc_sema_expr_copy(expr->cast.expr);
+			break;
+
+		case OFC_SEMA_EXPR_INTRINSIC:
+			copy->intrinsic = expr->intrinsic;
+			copy->args      = ofc_sema_expr_list_copy(expr->args);
+			break;
+
+		case OFC_SEMA_EXPR_FUNCTION:
+			copy->function = expr->function;
+			copy->args     = ofc_sema_expr_list_copy(expr->args);
+			break;
+
+		case OFC_SEMA_EXPR_ALT_RETURN:
+			copy->alt_return.expr = ofc_sema_expr_copy(expr->alt_return.expr);
+			break;
+
+		default:
+			copy->a = ofc_sema_expr_copy(expr->a);
+			copy->b = ofc_sema_expr_copy(expr->b);
+			break;
+	}
+
+	if (!success)
+	{
+		ofc_sema_expr_delete(copy);
+		return NULL;
+	}
+
+	return copy;
+}
 
 /* Map parse operators to sema expr type. */
 static ofc_sema_expr_e ofc_sema_expr__binary_map[] =
@@ -1149,6 +1215,28 @@ void ofc_sema_expr_list_delete(
 	free(list);
 }
 
+ofc_sema_expr_list_t* ofc_sema_expr_list_copy(
+	ofc_sema_expr_list_t* list)
+{
+	if (!list) return NULL;
+
+	ofc_sema_expr_list_t* copy
+		= (ofc_sema_expr_list_t*)malloc(
+			sizeof(ofc_sema_expr_list_t)
+			+ (sizeof(ofc_sema_expr_t) * list->count));
+	if (!copy) return NULL;
+
+	copy->count = list->count;
+
+	unsigned i;
+	for (i = 0; i < copy->count; i++)
+	{
+		copy->expr[i] = ofc_sema_expr_copy(list->expr[i]);
+	}
+
+	return copy;
+}
+
 bool ofc_sema_expr_list_add(
 	ofc_sema_expr_list_t* list,
 	ofc_sema_expr_t* expr)
@@ -1187,6 +1275,70 @@ unsigned ofc_sema_expr_list_count(
 	const ofc_sema_expr_list_t* list)
 {
 	return (list ? list->count : 0);
+}
+
+bool ofc_sema_expr_list_elem_count(
+	const ofc_sema_expr_list_t* list, unsigned* count)
+{
+	if (!list) return false;
+
+	unsigned len = 0;
+	unsigned i;
+	for (i = 0; i < list->count; i++)
+	{
+		ofc_sema_expr_t* expr
+			= list->expr[i];
+
+		const ofc_sema_type_t* type
+			= ofc_sema_expr_type(expr);
+
+		unsigned elem_count;
+		if (!ofc_sema_type_elem_count(
+			type, &elem_count))
+			return false;
+		len += elem_count;
+	}
+
+	if (count) *count = len;
+	return true;
+}
+
+ofc_sema_expr_t* ofc_sema_expr_list_elem_get(
+	const ofc_sema_expr_list_t* list, unsigned offset)
+{
+	if (!list)
+		return NULL;
+
+	unsigned e = offset;
+	unsigned i;
+	for (i = 0; i < list->count; i++)
+	{
+		ofc_sema_expr_t* expr
+			= list->expr[i];
+
+		const ofc_sema_type_t* type
+			= ofc_sema_expr_type(expr);
+
+		unsigned elem_count;
+		if (!ofc_sema_type_elem_count(
+			type, &elem_count))
+			return NULL;
+
+		if (e < elem_count)
+		{
+			if (elem_count == 1)
+				return ofc_sema_expr_copy(expr);
+
+			/* TODO - Get sub-element from array, structure, complex? */
+			return NULL;
+		}
+		else
+		{
+			e -= elem_count;
+		}
+	}
+
+	return NULL;
 }
 
 ofc_sema_expr_list_t* ofc_sema_expr_list_implicit_do(

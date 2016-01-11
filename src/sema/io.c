@@ -151,38 +151,6 @@ ofc_sema_expr_list_t* ofc_sema_iolist(
 	return sema_iolist;
 }
 
-unsigned ofc_sema_iolist_count(
-	ofc_sema_expr_list_t* iolist)
-{
-	if (!iolist) return 0;
-
-	unsigned iolist_len = 0;
-	unsigned i = 0;
-	for (i = 0; i < iolist->count; i++)
-	{
-		ofc_sema_expr_t* expr
-			= iolist->expr[i];
-
-		const ofc_sema_type_t* type
-			= ofc_sema_expr_type(expr);
-		if (!type) return -1;
-
-		if (ofc_sema_type_is_array(type)
-			|| ofc_sema_type_is_structure(type))
-		{
-			unsigned elem_count = 0;
-			ofc_sema_type_elem_count(type, &elem_count);
-			iolist_len += elem_count;
-		}
-		else
-		{
-			iolist_len++;
-		}
-	}
-
-	return iolist_len;
-}
-
 static bool ofc_sema_io__data_format_helper(
 	ofc_parse_format_desc_list_t* format_list,
 	const ofc_parse_format_desc_list_t* format_src,

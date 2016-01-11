@@ -445,9 +445,10 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 		}
 
 		/* Count elements in iolist */
-		unsigned iolist_len
-			= ofc_sema_iolist_count(
-				s.io_write.iolist);
+		unsigned iolist_len = 0;
+		if (!ofc_sema_expr_list_elem_count(
+			s.io_write.iolist, &iolist_len))
+			return NULL;
 
 
 		unsigned data_desc_count
