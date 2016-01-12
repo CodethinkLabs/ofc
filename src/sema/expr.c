@@ -1331,7 +1331,11 @@ bool ofc_sema_expr_list_add_list(
 	unsigned i;
 	for (i = 0; i < blist->count; i++)
 	{
-		if (!ofc_sema_expr_list_add(alist, blist->expr[i]))
+		ofc_sema_expr_t* expr
+			= ofc_sema_expr_copy(blist->expr[i]);
+		if (!expr) return false;
+
+		if (!ofc_sema_expr_list_add(alist, expr))
 			return false;
 	}
 
@@ -1580,7 +1584,7 @@ ofc_sema_expr_list_t* ofc_sema_expr_list_implicit_do(
 		return NULL;
 	}
 
-	while(value->logical)
+	while (value->logical)
 	{
 		if (id->dlist->type == OFC_PARSE_LHS_IMPLICIT_DO)
 		{
@@ -1593,16 +1597,22 @@ ofc_sema_expr_list_t* ofc_sema_expr_list_implicit_do(
 				ofc_sema_expr_delete(limit);
 				ofc_sema_expr_list_delete(list);
 				ofc_sema_scope_delete(idscope);
+				ofc_sema_typeval_delete(value);
 				return NULL;
 			}
 
-			if (!ofc_sema_expr_list_add_list(list, implicit_do))
+			bool success = ofc_sema_expr_list_add_list(
+				list, implicit_do);
+			ofc_sema_expr_list_delete(implicit_do);
+
+			if (!success)
 			{
 				ofc_sema_expr_delete(step);
 				ofc_sema_expr_delete(limit);
 				ofc_sema_expr_list_delete(list);
-				ofc_sema_expr_list_delete(implicit_do);
+
 				ofc_sema_scope_delete(idscope);
+				ofc_sema_typeval_delete(value);
 				return NULL;
 			}
 		}
@@ -1617,14 +1627,18 @@ ofc_sema_expr_list_t* ofc_sema_expr_list_implicit_do(
 				ofc_sema_expr_delete(limit);
 				ofc_sema_expr_list_delete(list);
 				ofc_sema_scope_delete(idscope);
+				ofc_sema_typeval_delete(value);
 				return NULL;
 			}
 		}
 
-		param->typeval
+		ofc_sema_typeval_t* ntv
 			= ofc_sema_typeval_add(
 				param->typeval, step->constant);
+		ofc_sema_typeval_delete(param->typeval);
+		param->typeval = ntv;
 
+		ofc_sema_typeval_delete(value);
 		value = ofc_sema_typeval_le(
 			param->typeval, limit->constant);
 		if (!value)
@@ -1633,9 +1647,15 @@ ofc_sema_expr_list_t* ofc_sema_expr_list_implicit_do(
 			ofc_sema_expr_delete(limit);
 			ofc_sema_scope_delete(idscope);
 			ofc_sema_expr_list_delete(list);
+			ofc_sema_typeval_delete(value);
 			return NULL;
 		}
 	}
+
+	ofc_sema_expr_delete(step);
+	ofc_sema_expr_delete(limit);
+	ofc_sema_scope_delete(idscope);
+	ofc_sema_typeval_delete(value);
 
 	return list;
 }

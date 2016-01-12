@@ -119,11 +119,14 @@ ofc_sema_expr_list_t* ofc_sema_iolist(
 			ofc_sema_expr_list_t* implicit_do
 				= ofc_sema_expr_list_implicit_do(
 					scope, parse_expr->variable->implicit_do);
-			if (!ofc_sema_expr_list_add_list(sema_iolist, implicit_do))
+
+			bool success = ofc_sema_expr_list_add_list(
+				sema_iolist, implicit_do);
+			ofc_sema_expr_list_delete(implicit_do);
+			if (!success)
 			{
 				ofc_parse_expr_delete(parse_expr);
 				ofc_sema_expr_list_delete(sema_iolist);
-				ofc_sema_expr_list_delete(implicit_do);
 				return NULL;
 			}
 		}
