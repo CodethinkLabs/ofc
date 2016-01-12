@@ -894,7 +894,7 @@ ofc_sema_lhs_t* ofc_sema_lhs_list_elem_get(
 		return NULL;
 
 	unsigned i, o;
-	for (i = 0, o = 0; (i < list->count) && (o < offset); i++)
+	for (i = 0, o = 0; (i < list->count) && (o <= offset); i++)
 	{
 		unsigned e;
 		if (!ofc_sema_lhs_elem_count(list->lhs[i], &e))
@@ -911,6 +911,8 @@ ofc_sema_lhs_t* ofc_sema_lhs_list_elem_get(
 			/* TODO - Properly handle composite lhs types. */
 			return NULL;
 		}
+
+		o += e;
 	}
 
 	return NULL;
@@ -934,9 +936,9 @@ bool ofc_sema_lhs_list_init(
 	for (i = 0; i < e; i++)
 	{
 		ofc_sema_lhs_t* lhs_elem
-			= ofc_sema_lhs_list_elem_get(lhs, e);
+			= ofc_sema_lhs_list_elem_get(lhs, i);
 		ofc_sema_expr_t* init_elem
-			= ofc_sema_expr_list_elem_get(init, e);
+			= ofc_sema_expr_list_elem_get(init, i);
 
 		bool success = ofc_sema_lhs_init(
 			scope, lhs_elem, init_elem);
