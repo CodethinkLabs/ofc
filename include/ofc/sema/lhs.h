@@ -83,7 +83,6 @@ void ofc_sema_lhs_delete(
 	ofc_sema_lhs_t* lhs);
 
 bool ofc_sema_lhs_init(
-	const ofc_sema_scope_t* scope,
 	ofc_sema_lhs_t* lhs,
 	const ofc_sema_expr_t* init);
 bool ofc_sema_lhs_init_array(
@@ -132,7 +131,6 @@ ofc_sema_lhs_t* ofc_sema_lhs_list_elem_get(
 	const ofc_sema_lhs_list_t* list, unsigned offset);
 
 bool ofc_sema_lhs_list_init(
-	const ofc_sema_scope_t* scope,
 	ofc_sema_lhs_list_t* lhs,
 	const ofc_sema_expr_list_t* init);
 

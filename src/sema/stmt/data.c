@@ -47,7 +47,7 @@ static bool ofc_sema_stmt__data(
 	}
 
 	bool success = ofc_sema_lhs_list_init(
-		scope, lhs_list, expr_list);
+		lhs_list, expr_list);
 	ofc_sema_expr_list_delete(expr_list);
 	ofc_sema_lhs_list_delete(lhs_list);
 

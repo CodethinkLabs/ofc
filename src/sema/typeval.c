@@ -689,12 +689,33 @@ static ofc_sema_typeval_t* ofc_sema_typeval__byte_literal(
 }
 
 
-ofc_sema_typeval_t* ofc_sema_typeval_unsigned(
+ofc_sema_typeval_t* ofc_sema_typeval_create_unsigned(
 	unsigned value, ofc_sparse_ref_t ref)
 {
 	unsigned kind = 4;
 	if ((value >> 31) != 0)
 		kind = 8;
+
+	const ofc_sema_type_t* type
+		= ofc_sema_type_create_primitive(
+			OFC_SEMA_TYPE_INTEGER, kind);
+	if (!type) return NULL;
+
+	ofc_sema_typeval_t* typeval
+		= (ofc_sema_typeval_t*)malloc(
+			sizeof(ofc_sema_typeval_t));
+	if (!typeval) return NULL;
+
+	typeval->type = type;
+	typeval->integer = value;
+	typeval->src = ref;
+	return typeval;
+}
+
+ofc_sema_typeval_t* ofc_sema_typeval_create_integer(
+	int value, ofc_sparse_ref_t ref)
+{
+	unsigned kind = 4;
 
 	const ofc_sema_type_t* type
 		= ofc_sema_type_create_primitive(

@@ -441,17 +441,67 @@ void ofc_sema_array_index_delete(
 }
 
 
+ofc_sema_array_index_t* ofc_sema_array_index_from_offset(
+	const ofc_sema_decl_t* decl, unsigned offset)
+{
+	if (!ofc_sema_decl_is_array(decl))
+		return NULL;
+
+	ofc_sema_array_t* array
+		= decl->type->array;
+	if (!array) return NULL;
+
+	unsigned i;
+	for (i = 0; i < array->dimensions; i++)
+	{
+		if (array->segment[i].first_var
+			|| array->segment[i].last_var)
+			return NULL;
+	}
+
+	int idx[array->dimensions];
+	for (i = 0; i < array->dimensions; i++)
+	{
+		unsigned count = 1 + (array->segment[i].last
+			- array->segment[i].first);
+
+		idx[i] = array->segment[i].first + (offset % count);
+		offset /= count;
+	}
+
+	ofc_sema_array_index_t* index
+		= (ofc_sema_array_index_t*)malloc(sizeof(ofc_sema_array_index_t)
+				+ (array->dimensions * sizeof(ofc_sema_expr_t*)));
+	if (!index) return NULL;
+
+	bool success = true;
+	index->dimensions = array->dimensions;
+	for (i = 0; i < array->dimensions; i++)
+	{
+		index->index[i] = ofc_sema_expr_integer(idx[i]);
+
+		if (!index->index[i])
+			success = false;
+	}
+
+	if (!success)
+	{
+		ofc_sema_array_index_delete(index);
+		return NULL;
+	}
+
+	return index;
+}
+
 bool ofc_sema_array_index_offset(
-	const ofc_sema_scope_t*       scope,
 	const ofc_sema_decl_t*        decl,
 	const ofc_sema_array_index_t* index,
 	unsigned* offset)
 {
-	if (!scope || !decl || !index
-		|| (index->dimensions == 0))
+	if (!index || (index->dimensions == 0))
 		return false;
 
-	if (!ofc_sema_type_is_array(decl->type))
+	if (!ofc_sema_decl_is_array(decl))
 	{
 		/* TODO - Positional error. */
 		ofc_sparse_ref_error(OFC_SPARSE_REF_EMPTY,

@@ -38,8 +38,10 @@ typedef struct
 	};
 } ofc_sema_typeval_t;
 
-ofc_sema_typeval_t* ofc_sema_typeval_unsigned(
+ofc_sema_typeval_t* ofc_sema_typeval_create_unsigned(
 	unsigned value, ofc_sparse_ref_t ref);
+ofc_sema_typeval_t* ofc_sema_typeval_create_integer(
+	int value, ofc_sparse_ref_t ref);
 ofc_sema_typeval_t* ofc_sema_typeval_literal(
 	const ofc_parse_literal_t* literal,
 	const ofc_sema_type_t* type);

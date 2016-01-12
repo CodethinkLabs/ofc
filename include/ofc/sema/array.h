@@ -70,8 +70,10 @@ ofc_sema_array_index_t* ofc_sema_array_index(
 void ofc_sema_array_index_delete(
 	ofc_sema_array_index_t* index);
 
+ofc_sema_array_index_t* ofc_sema_array_index_from_offset(
+	const ofc_sema_decl_t* decl, unsigned offset);
+
 bool ofc_sema_array_index_offset(
-	const ofc_sema_scope_t*       scope,
 	const ofc_sema_decl_t*        decl,
 	const ofc_sema_array_index_t* index,
 	unsigned* offset);

@@ -381,6 +381,23 @@ ofc_sema_expr_t* ofc_sema_expr_alt_return(
 	return alt_return;
 }
 
+ofc_sema_expr_t* ofc_sema_expr_integer(int value)
+{
+	ofc_sema_expr_t* expr
+		= ofc_sema_expr__create(OFC_SEMA_EXPR_CONSTANT);
+	if (!expr) return NULL;
+
+	expr->constant = ofc_sema_typeval_create_integer(
+		value, OFC_SPARSE_REF_EMPTY);
+	if (!expr->constant)
+	{
+		ofc_sema_expr_delete(expr);
+		return NULL;
+	}
+
+	return expr;
+}
+
 static ofc_sema_expr_t* ofc_sema_expr__binary(
 	ofc_sema_scope_t* scope,
 	ofc_parse_operator_e op,
@@ -1507,8 +1524,8 @@ ofc_sema_expr_list_t* ofc_sema_expr_list_implicit_do(
 			return NULL;
 		}
 
-		step->constant
-			= ofc_sema_typeval_unsigned(1, OFC_SPARSE_REF_EMPTY);
+		step->constant = ofc_sema_typeval_create_unsigned(
+			1, OFC_SPARSE_REF_EMPTY);
 		if(!step->constant)
 		{
 			ofc_sema_expr_delete(step);

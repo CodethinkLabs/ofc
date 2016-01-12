@@ -20,13 +20,20 @@ static ofc_sema_lhs_t* ofc_sema_lhs_index(
 	ofc_sema_lhs_t* lhs,
 	ofc_sema_array_index_t* index)
 {
-	if (!lhs || !index)
+	if (!index)
+		return NULL;
+
+	if (!ofc_sema_lhs_reference(lhs))
 		return NULL;
 
 	ofc_sema_lhs_t* alhs
 		= (ofc_sema_lhs_t*)malloc(
 			sizeof(ofc_sema_lhs_t));
-	if (!alhs) return NULL;
+	if (!alhs)
+	{
+		ofc_sema_lhs_delete(lhs);
+		return NULL;
+	}
 
 	alhs->type      = OFC_SEMA_LHS_ARRAY_INDEX;
 	alhs->src       = lhs->src;
@@ -42,12 +49,19 @@ static ofc_sema_lhs_t* ofc_sema_lhs_slice(
 	ofc_sema_lhs_t* lhs,
 	ofc_sema_array_slice_t* slice)
 {
-	if (!lhs || !slice)
+	if (!slice)
+		return NULL;
+
+	if (!ofc_sema_lhs_reference(lhs))
 		return NULL;
 
 	ofc_sema_array_t* array
 		= ofc_sema_array_slice_dims(slice);
-	if (!array) return NULL;
+	if (!array)
+	{
+		ofc_sema_lhs_delete(lhs);
+		return NULL;
+	}
 
 	const ofc_sema_type_t* base_type
 		= lhs->data_type;
@@ -57,6 +71,7 @@ static ofc_sema_lhs_t* ofc_sema_lhs_slice(
 			base_type, array);
 	if (!type)
 	{
+		ofc_sema_lhs_delete(lhs);
 		ofc_sema_array_delete(array);
 		return NULL;
 	}
@@ -64,7 +79,11 @@ static ofc_sema_lhs_t* ofc_sema_lhs_slice(
 	ofc_sema_lhs_t* alhs
 		= (ofc_sema_lhs_t*)malloc(
 			sizeof(ofc_sema_lhs_t));
-	if (!alhs) return NULL;
+	if (!alhs)
+	{
+		ofc_sema_lhs_delete(lhs);
+		return NULL;
+	}
 
 	alhs->type      = OFC_SEMA_LHS_ARRAY_SLICE;
 	alhs->src       = lhs->src;
@@ -81,19 +100,32 @@ static ofc_sema_lhs_t* ofc_sema_lhs_substring(
 	ofc_sema_lhs_t* lhs,
 	const ofc_parse_array_index_t* index)
 {
-	if (!lhs || !index
+	if (!ofc_sema_lhs_reference(lhs))
+		return NULL;
+
+	if (!index
 		|| (index->count != 1)
 		|| !lhs->data_type)
+	{
+		ofc_sema_lhs_delete(lhs);
 		return NULL;
+	}
 
 	const ofc_parse_array_range_t* range
 		= index->range[0];
 	if (!range || range->stride)
+	{
+		ofc_sema_lhs_delete(lhs);
 		return NULL;
+	}
 
 	ofc_sema_expr_t* first
 		= ofc_sema_expr(scope, range->first);
-	if (range->first && !first) return NULL;
+	if (range->first && !first)
+	{
+		ofc_sema_lhs_delete(lhs);
+		return NULL;
+	}
 
 	ofc_sema_expr_t* last = NULL;
 	if (range->last)
@@ -101,6 +133,7 @@ static ofc_sema_lhs_t* ofc_sema_lhs_substring(
 		last = ofc_sema_expr(scope, range->last);
 		if (!last)
 		{
+			ofc_sema_lhs_delete(lhs);
 			ofc_sema_expr_delete(first);
 			return NULL;
 		}
@@ -121,6 +154,7 @@ static ofc_sema_lhs_t* ofc_sema_lhs_substring(
 
 		if ((first && !first_ctv) || !last_ctv)
 		{
+			ofc_sema_lhs_delete(lhs);
 			if (last != first)
 				ofc_sema_expr_delete(last);
 			ofc_sema_expr_delete(first);
@@ -131,6 +165,7 @@ static ofc_sema_lhs_t* ofc_sema_lhs_substring(
 		if (first && !ofc_sema_typeval_get_integer(
 			first_ctv, &ifirst))
 		{
+			ofc_sema_lhs_delete(lhs);
 			if (last != first)
 				ofc_sema_expr_delete(last);
 			ofc_sema_expr_delete(first);
@@ -141,6 +176,7 @@ static ofc_sema_lhs_t* ofc_sema_lhs_substring(
 		if (!ofc_sema_typeval_get_integer(
 			last_ctv, &ilast))
 		{
+			ofc_sema_lhs_delete(lhs);
 			if (last != first)
 				ofc_sema_expr_delete(last);
 			ofc_sema_expr_delete(first);
@@ -152,6 +188,7 @@ static ofc_sema_lhs_t* ofc_sema_lhs_substring(
 			ofc_sparse_ref_error(lhs->src,
 				"First index in character substring must be 1 or greater");
 
+			ofc_sema_lhs_delete(lhs);
 			if (last != first)
 				ofc_sema_expr_delete(last);
 			ofc_sema_expr_delete(first);
@@ -163,6 +200,7 @@ static ofc_sema_lhs_t* ofc_sema_lhs_substring(
 			ofc_sparse_ref_error(lhs->src,
 				"Last index in character substring must be greater than first");
 
+			ofc_sema_lhs_delete(lhs);
 			if (last != first)
 				ofc_sema_expr_delete(last);
 			ofc_sema_expr_delete(first);
@@ -180,6 +218,7 @@ static ofc_sema_lhs_t* ofc_sema_lhs_substring(
 		len = ilen;
 		if ((int64_t)len != ilen)
 		{
+			ofc_sema_lhs_delete(lhs);
 			if (last != first)
 				ofc_sema_expr_delete(last);
 			ofc_sema_expr_delete(first);
@@ -192,6 +231,7 @@ static ofc_sema_lhs_t* ofc_sema_lhs_substring(
 			lhs->data_type->kind, len);
 	if (!type)
 	{
+		ofc_sema_lhs_delete(lhs);
 		if (last != first)
 			ofc_sema_expr_delete(last);
 		ofc_sema_expr_delete(first);
@@ -201,7 +241,11 @@ static ofc_sema_lhs_t* ofc_sema_lhs_substring(
 	ofc_sema_lhs_t* alhs
 		= (ofc_sema_lhs_t*)malloc(
 			sizeof(ofc_sema_lhs_t));
-	if (!alhs) return NULL;
+	if (!alhs)
+	{
+		ofc_sema_lhs_delete(lhs);
+		return NULL;
+	}
 
 	alhs->type            = OFC_SEMA_LHS_SUBSTRING;
 	alhs->src             = lhs->src;
@@ -219,10 +263,18 @@ static ofc_sema_lhs_t* ofc_sema_lhs_member(
 	ofc_sema_lhs_t* lhs,
 	ofc_sparse_ref_t member)
 {
-	if (!lhs || ofc_sparse_ref_empty(member))
+	if (!ofc_sema_lhs_reference(lhs))
 		return NULL;
 
+	if (ofc_sparse_ref_empty(member))
+	{
+		ofc_sema_lhs_delete(lhs);
+		return NULL;
+	}
+
 	/* TODO - Implement. */
+
+	ofc_sema_lhs_delete(lhs);
 	return NULL;
 }
 
@@ -495,6 +547,80 @@ ofc_sema_lhs_t* ofc_sema_lhs_in_expr(
 		scope, lhs, true);
 }
 
+static ofc_sema_lhs_t* ofc_sema_lhs__offset(
+	ofc_sema_lhs_t* lhs, unsigned offset)
+{
+	if (!lhs)
+		return NULL;
+
+	switch (lhs->type)
+	{
+		case OFC_SEMA_LHS_DECL:
+		case OFC_SEMA_LHS_ARRAY_INDEX:
+		case OFC_SEMA_LHS_STRUCTURE_MEMBER:
+			if (ofc_sema_decl_is_procedure(lhs->decl))
+				return NULL;
+
+			if (ofc_sema_decl_is_composite(lhs->decl))
+			{
+				if (ofc_sema_decl_is_array(lhs->decl))
+				{
+					const ofc_sema_type_t* base_type
+						= ofc_sema_type_base(ofc_sema_decl_type(lhs->decl));
+
+					unsigned base_count;
+					if (!ofc_sema_type_elem_count(
+						base_type, &base_count))
+						return NULL;
+
+					unsigned base_offset = (offset % base_count);
+
+					ofc_sema_array_index_t* index
+						= ofc_sema_array_index_from_offset(
+							lhs->decl, (offset / base_count));
+					if (!index) return NULL;
+
+					ofc_sema_lhs_t* nlhs = ofc_sema_lhs_index(lhs, index);
+					if (!nlhs)
+					{
+						ofc_sema_array_index_delete(index);
+						return NULL;
+					}
+
+					ofc_sema_lhs_t* rlhs
+						= ofc_sema_lhs__offset(nlhs, base_offset);
+					ofc_sema_lhs_delete(nlhs);
+					return rlhs;
+				}
+
+				/* TODO - Handle structures. */
+				return NULL;
+			}
+
+			if (offset != 0)
+				return NULL;
+			if (!ofc_sema_lhs_reference(lhs))
+				return NULL;
+			return lhs;
+
+		case OFC_SEMA_LHS_ARRAY_SLICE:
+			/* TODO - Convert offset to index and treat as index. */
+			break;
+
+		case OFC_SEMA_LHS_SUBSTRING:
+			if (offset != 0)
+				return NULL;
+			if (!ofc_sema_lhs_reference(lhs))
+				return NULL;
+			return lhs;
+
+		default:
+			break;
+	}
+
+	return NULL;
+}
+
 bool ofc_sema_lhs_reference(
 	ofc_sema_lhs_t* lhs)
 {
@@ -558,7 +684,6 @@ void ofc_sema_lhs_delete(
 
 
 bool ofc_sema_lhs_init(
-	const ofc_sema_scope_t* scope,
 	ofc_sema_lhs_t* lhs,
 	const ofc_sema_expr_t* init)
 {
@@ -578,7 +703,7 @@ bool ofc_sema_lhs_init(
 		{
 			unsigned offset;
 			if (!ofc_sema_array_index_offset(
-				scope, decl, lhs->index, &offset))
+				decl, lhs->index, &offset))
 				return false;
 
 			return ofc_sema_decl_init_offset(
@@ -902,14 +1027,8 @@ ofc_sema_lhs_t* ofc_sema_lhs_list_elem_get(
 
 		if (offset < (o + e))
 		{
-			if (e == 1)
-			{
-				return (ofc_sema_lhs_reference(list->lhs[i])
-					? list->lhs[i] : NULL);
-			}
-
-			/* TODO - Properly handle composite lhs types. */
-			return NULL;
+			return ofc_sema_lhs__offset(
+				list->lhs[i], (offset - o));
 		}
 
 		o += e;
@@ -920,7 +1039,6 @@ ofc_sema_lhs_t* ofc_sema_lhs_list_elem_get(
 
 
 bool ofc_sema_lhs_list_init(
-	const ofc_sema_scope_t* scope,
 	ofc_sema_lhs_list_t* lhs,
 	const ofc_sema_expr_list_t* init)
 {
@@ -941,7 +1059,7 @@ bool ofc_sema_lhs_list_init(
 			= ofc_sema_expr_list_elem_get(init, i);
 
 		bool success = ofc_sema_lhs_init(
-			scope, lhs_elem, init_elem);
+			lhs_elem, init_elem);
 
 		ofc_sema_lhs_delete(lhs_elem);
 		ofc_sema_expr_delete(init_elem);

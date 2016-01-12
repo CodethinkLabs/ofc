@@ -111,6 +111,7 @@ ofc_sema_expr_t* ofc_sema_expr_cast(
 	const ofc_sema_type_t* type);
 ofc_sema_expr_t* ofc_sema_expr_alt_return(
 	ofc_sema_expr_t* expr);
+ofc_sema_expr_t* ofc_sema_expr_integer(int value);
 void ofc_sema_expr_delete(
 	ofc_sema_expr_t* expr);
 
