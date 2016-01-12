@@ -1197,7 +1197,7 @@ ofc_sema_expr_list_t* ofc_sema_expr_list(
 }
 
 ofc_sema_expr_list_t* ofc_sema_expr_list_clist(
-	ofc_sema_scope_t* scope,
+	ofc_sema_scope_t*        scope,
 	const ofc_parse_clist_t* clist)
 {
 	if (!clist)

@@ -143,6 +143,9 @@ bool ofc_sema_expr_resolve_uint(
 ofc_sema_expr_list_t* ofc_sema_expr_list(
 	ofc_sema_scope_t*            scope,
 	const ofc_parse_expr_list_t* list);
+ofc_sema_expr_list_t* ofc_sema_expr_list_clist(
+	ofc_sema_scope_t*        scope,
+	const ofc_parse_clist_t* clist);
 ofc_sema_expr_list_t* ofc_sema_expr_list_create(void);
 void ofc_sema_expr_list_delete(
 	ofc_sema_expr_list_t* list);
