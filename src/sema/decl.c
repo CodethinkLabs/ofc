@@ -676,12 +676,6 @@ bool ofc_sema_decl_init_offset(
 		return false;
 	}
 
-	if (decl->init_array)
-	{
-		ofc_sparse_ref_warning(init->src,
-			"Initializing array in multiple statements");
-	}
-
 	unsigned elem_count;
 	if (!ofc_sema_decl_elem_count(
 		decl, &elem_count))
