@@ -57,6 +57,8 @@ const ofc_sema_type_t* ofc_sema_type_spec(
 
 const char* ofc_sema_type_str_rep(
 	const ofc_sema_type_t* type);
+const char* ofc_sema_type_enum_str_rep(
+	const ofc_sema_type_e type_enum);
 const char* ofc_sema_type_str_cast_rep(
 	const ofc_sema_type_t* type);
 

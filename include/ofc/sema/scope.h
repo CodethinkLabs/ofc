@@ -54,7 +54,7 @@ struct ofc_sema_scope_s
 	ofc_sema_implicit_t*  implicit;
 
 	ofc_sema_common_map_t* common;
-	ofc_hashmap_t*         spec;
+	ofc_sema_spec_map_t*   spec;
 	ofc_sema_decl_list_t*  decl;
 	ofc_sema_equiv_list_t* equiv;
 	ofc_hashmap_t*         parameter;
@@ -135,6 +135,9 @@ ofc_sema_scope_list_t* ofc_sema_scope_list_create(void);
 bool ofc_sema_scope_list_add(
 	ofc_sema_scope_list_t* list,
 	ofc_sema_scope_t* scope);
+bool ofc_sema_scope_list_print(
+	ofc_colstr_t* cs, unsigned indent,
+	const ofc_sema_scope_list_t* list);
 void ofc_sema_scope_list_delete(
 	ofc_sema_scope_list_t* list);
 

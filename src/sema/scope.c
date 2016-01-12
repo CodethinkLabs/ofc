@@ -32,11 +32,12 @@ void ofc_sema_scope_delete(
 		scope->implicit);
 
 	ofc_sema_common_map_delete(scope->common);
-	ofc_hashmap_delete(scope->spec);
+	ofc_sema_spec_map_delete(scope->spec);
 	ofc_sema_decl_list_delete(scope->decl);
 	ofc_sema_equiv_list_delete(scope->equiv);
 	ofc_hashmap_delete(scope->parameter);
 	ofc_sema_label_map_delete(scope->label);
+
 	switch (scope->type)
 	{
 		case OFC_SEMA_SCOPE_STMT_FUNC:
@@ -495,7 +496,7 @@ static bool ofc_sema_scope__body(
 				if (common->decl[j])
 					continue;
 
-				const ofc_sema_spec_t* spec
+				ofc_sema_spec_t* spec
 					= common->spec[j];
 				if (!spec) return false;
 
@@ -651,6 +652,16 @@ ofc_sema_scope_t* ofc_sema_scope_stmt_func(
 			ofc_sema_scope_delete(func);
 			return false;
 		}
+
+		/* Mark argument names as used specifiers. */
+		unsigned i;
+		for (i = 0; i < index->count; i++)
+		{
+			ofc_sema_spec_t* spec
+				= ofc_sema_scope_spec_modify(
+					scope, index->range[i]->src);
+			if (spec) spec->used = true;
+		}
 	}
 
 	func->expr = ofc_sema_expr(
@@ -791,7 +802,7 @@ static ofc_sema_spec_t* ofc_sema_scope_spec__find(
 	ofc_sema_spec_t* n;
 	const ofc_sema_scope_t* s;
 	for (s = scope, n = NULL; s && !n;
-		n = ofc_hashmap_find_modify(s->spec, &name), s = s->parent);
+		n = ofc_hashmap_find_modify(s->spec->map, &name), s = s->parent);
 
 	return n;
 }
@@ -804,7 +815,7 @@ ofc_sema_spec_t* ofc_sema_scope_spec_modify(
 
 	ofc_sema_spec_t* spec
 		= ofc_hashmap_find_modify(
-			scope->spec, &name.string);
+			scope->spec->map, &name.string);
 	if (spec) return spec;
 
 	ofc_sema_spec_t* parent
@@ -820,7 +831,7 @@ ofc_sema_spec_t* ofc_sema_scope_spec_modify(
 	/* Don't inherit COMMON block reference. */
 	spec->common = NULL;
 
-	if (!ofc_hashmap_add(
+	if (!ofc_sema_spec_map_add(
 		scope->spec, spec))
 	{
 		ofc_sema_spec_delete(spec);
@@ -950,6 +961,21 @@ bool ofc_sema_scope_parameter_add(
 }
 
 
+static bool ofc_sema_scope_child__print(
+	ofc_colstr_t* cs, unsigned indent,
+	const ofc_sema_scope_list_t* list)
+{
+	if (!cs || !list)
+		return false;
+
+    unsigned i;
+	for (i = 0; i < list->count; i++)
+	{
+		if (!ofc_sema_scope_print(cs, indent, list->scope[i]))
+			return false;
+	}
+	return true;
+}
 
 static bool ofc_sema_scope_body__print(
 	ofc_colstr_t* cs, unsigned indent,
@@ -958,7 +984,9 @@ static bool ofc_sema_scope_body__print(
 	if (!cs || !scope)
 		return false;
 
-	return (ofc_sema_decl_list_print(cs, indent, scope->decl)
+	return (ofc_sema_spec_list_print(cs, indent, scope->spec->list)
+		&& ofc_sema_decl_list_print(cs, indent, scope->decl)
+		&& ofc_sema_decl_list_function_print(cs, indent, scope->decl)
 		&& ofc_sema_equiv_list_print(cs, indent, scope->equiv)
 		&& ofc_sema_stmt_list_print(cs, indent, scope->label, scope->stmt)
 		&& ofc_sema_format_label_list_print(cs, indent, scope->label->format));
@@ -968,21 +996,12 @@ bool ofc_sema_scope_print(
 	ofc_colstr_t* cs, unsigned indent,
 	const ofc_sema_scope_t* scope)
 {
-	const char* kwstr;
+	const char* kwstr = NULL;
 	bool has_args = false;
-	unsigned i;
 	switch (scope->type)
 	{
 		case OFC_SEMA_SCOPE_GLOBAL:
-			if (!scope->child) return false;
-
-			for (i = 0; i < scope->child->count; i++)
-			{
-				if (!ofc_sema_scope_print(
-					cs, indent, scope->child->scope[i]))
-						return false;
-			}
-			return true;
+			break;
 		case OFC_SEMA_SCOPE_PROGRAM:
 			kwstr = "PROGRAM";
 			break;
@@ -999,44 +1018,59 @@ bool ofc_sema_scope_print(
 			break;
 		case OFC_SEMA_SCOPE_IF:
 			return ofc_sema_scope_body__print(cs, indent, scope);
+		case OFC_SEMA_SCOPE_STMT_FUNC:
+			return ofc_sema_expr_print(cs, scope->expr);
+		case OFC_SEMA_SCOPE_IMPLICIT_DO:
+			return false;
 
 		default:
 			return false;
 	}
 
-	if (!ofc_colstr_newline(cs, indent, NULL)
-		|| !ofc_colstr_atomic_writef(cs, "%s ", kwstr))
-		return false;
-
-	if (scope->name.base)
+	if (kwstr)
 	{
-		if (!ofc_colstr_atomic_writef(cs, "%.*s",
-			scope->name.size, scope->name.base))
+		if (!ofc_colstr_newline(cs, indent, NULL))
+			return false;
+
+		if (!ofc_colstr_atomic_writef(cs, "%s ", kwstr))
+			return false;
+
+		if (scope->name.base)
+		{
+			if (!ofc_colstr_atomic_writef(cs, "%.*s",
+				scope->name.size, scope->name.base))
+					return false;
+		}
+
+		if (has_args)
+		{
+			if (!ofc_colstr_atomic_writef(cs, "(")
+				|| !ofc_sema_arg_list_print(cs, scope->args)
+				|| !ofc_colstr_atomic_writef(cs, ")"))
 				return false;
-	}
-
-	if (has_args)
-	{
-		if (!ofc_colstr_atomic_writef(cs, "("))
-			return false;
-		/* TODO - arg list printing. */
-		if (!ofc_colstr_atomic_writef(cs, ")"))
-			return false;
+		}
 	}
 
 	if (!ofc_sema_scope_body__print(cs, indent, scope))
 		return false;
 
-	if (!ofc_colstr_newline(cs, indent, NULL)
-		|| !ofc_colstr_atomic_writef(cs, "END %s ", kwstr))
-		return false;
-
-	if (scope->name.base)
+	if (kwstr)
 	{
-		if (!ofc_colstr_atomic_writef(cs, "%.*s",
-			scope->name.size, scope->name.base))
-				return false;
+		if (!ofc_colstr_newline(cs, indent, NULL)
+			|| !ofc_colstr_atomic_writef(cs, "END %s ", kwstr))
+			return false;
+
+		if (scope->name.base)
+		{
+			if (!ofc_colstr_atomic_writef(cs, "%.*s",
+				scope->name.size, scope->name.base))
+					return false;
+		}
 	}
+
+	if (scope->child
+		&& !ofc_sema_scope_child__print(cs, indent, scope->child))
+		return false;
 
 	return true;
 }
@@ -1067,6 +1101,23 @@ bool ofc_sema_scope_list_add(
 	list->scope = nscope;
 
 	list->scope[list->count++] = scope;
+	return true;
+}
+
+bool ofc_sema_scope_list_print(
+	ofc_colstr_t* cs, unsigned indent,
+	const ofc_sema_scope_list_t* list)
+{
+	if (!list)
+		return false;
+
+	unsigned i;
+	for (i = 0; i < list->count; i++)
+	{
+		if (!ofc_sema_scope_print(cs,
+			indent, list->scope[i]))
+			return false;
+	}
 	return true;
 }
 

@@ -60,6 +60,16 @@ const char* ofc_sema_type_str_rep(
 	return ofc_sema_type__name[type->type];
 }
 
+const char* ofc_sema_type_enum_str_rep(
+	const ofc_sema_type_e type_enum)
+{
+	if (type_enum >= OFC_SEMA_TYPE_COUNT
+		|| type_enum < 0)
+			return "<UNDEFINED>";
+
+	return ofc_sema_type__name[type_enum];
+}
+
 const char* ofc_sema_type_str_cast_rep(
 	const ofc_sema_type_t* type)
 {

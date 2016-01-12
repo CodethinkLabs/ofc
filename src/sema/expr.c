@@ -1808,7 +1808,7 @@ bool ofc_sema_expr_print(
 	else
 	{
 		/* Print unary expression */
-		if (!ofc_colstr_atomic_writef(cs, " %s ",
+		if (!ofc_colstr_atomic_writef(cs, "%s ",
 				ofc_sema_expr__operator[expr->type])
 			|| !ofc_sema_expr_print(cs, expr->a))
 				return false;

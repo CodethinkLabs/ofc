@@ -160,6 +160,27 @@ ofc_sema_arg_list_t* ofc_sema_arg_list_stmt_func(
 	return list;
 }
 
+bool ofc_sema_arg_list_print(
+	ofc_colstr_t* cs,
+	const ofc_sema_arg_list_t* list)
+{
+	if (!cs || !list)
+		return false;
+
+	unsigned i;
+	for (i = 0; i < list->count; i++)
+	{
+		if (!ofc_sparse_ref_print(cs, list->arg[i].name))
+			return false;
+
+		if (i < (list->count - 1)
+			&& !ofc_colstr_atomic_writef(cs, ", "))
+			return false;
+	}
+
+	return true;
+}
+
 void ofc_sema_arg_list_delete(
 	ofc_sema_arg_list_t* list)
 {

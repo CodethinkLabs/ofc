@@ -332,6 +332,38 @@ ofc_sema_spec_t* ofc_sema_spec_copy(
 	return copy;
 }
 
+bool ofc_sema_spec_print(
+	ofc_colstr_t* cs,
+	unsigned indent,
+	ofc_sema_spec_t* spec)
+{
+	if (!spec)
+		return false;
+
+	/* Ignore specifiers that are never used. */
+	if (!spec->used)
+		return true;
+
+	if (spec->type_implicit)
+	{
+		/* TODO - Print spec attributes. */
+	}
+	else
+	{
+		if (!ofc_colstr_newline(cs, indent, NULL)
+			|| !ofc_colstr_atomic_writef(cs, "%s",
+				ofc_sema_type_enum_str_rep(spec->type))
+			/* TODO - Print more spec attributes. */
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_colstr_atomic_writef(cs, "::")
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_sparse_ref_print(cs, spec->name))
+			return false;
+	}
+
+	return true;
+}
+
 void ofc_sema_spec_delete(
 	ofc_sema_spec_t* spec)
 {
@@ -349,10 +381,63 @@ static const ofc_str_ref_t* ofc_sema_spec__name(
 	return (spec ? &spec->name.string : NULL);
 }
 
-ofc_hashmap_t* ofc_sema_spec_map_create(
+static ofc_sema_spec_list_t* ofc_sema_spec_list_create()
+{
+	ofc_sema_spec_list_t* list
+		= (ofc_sema_spec_list_t*)malloc(
+			sizeof(ofc_sema_spec_list_t));
+	if (!list) return NULL;
+
+	list->count  = 0;
+	list->spec = NULL;
+
+	return list;
+}
+
+bool ofc_sema_spec_list_print(
+	ofc_colstr_t* cs, unsigned indent,
+	const ofc_sema_spec_list_t* list)
+{
+	if (!cs || !list)
+		return false;
+
+	unsigned i;
+	for (i = 0; i < list->count; i++)
+	{
+		if (!ofc_sema_spec_print(
+			cs, indent, list->spec[i]))
+			return false;
+	}
+
+	return true;
+}
+
+static void ofc_sema_spec_list_delete(
+	ofc_sema_spec_list_t* list)
+{
+	if (!list)
+		return;
+
+	if (list->spec)
+	{
+		unsigned i;
+		for (i = 0; i < list->count; i++)
+			ofc_sema_spec_delete(list->spec[i]);
+		free(list->spec);
+	}
+
+	free(list);
+}
+
+ofc_sema_spec_map_t* ofc_sema_spec_map_create(
 	bool case_sensitive)
 {
-	return ofc_hashmap_create(
+	ofc_sema_spec_map_t* map
+		= (ofc_sema_spec_map_t*)malloc(
+			sizeof(ofc_sema_spec_map_t));
+	if (!map) return NULL;
+
+	map->map = ofc_hashmap_create(
 		(void*)(case_sensitive
 			? ofc_str_ref_ptr_hash
 			: ofc_str_ref_ptr_hash_ci),
@@ -360,5 +445,48 @@ ofc_hashmap_t* ofc_sema_spec_map_create(
 			? ofc_str_ref_ptr_equal
 			: ofc_str_ref_ptr_equal_ci),
 		(void*)ofc_sema_spec__name,
-		(void*)ofc_sema_spec_delete);
+		NULL);
+
+	map->list = ofc_sema_spec_list_create();
+
+	if (!map->map || !map->list)
+	{
+		ofc_sema_spec_map_delete(map);
+		return NULL;
+	}
+
+	return map;
+}
+
+bool ofc_sema_spec_map_add(
+	ofc_sema_spec_map_t* map,
+	ofc_sema_spec_t* spec)
+{
+	if (!map || !map->list || !spec)
+		return false;
+
+	ofc_sema_spec_t** nspec
+		= (ofc_sema_spec_t**)realloc(map->list->spec,
+			(sizeof(ofc_sema_spec_t*) * (map->list->count + 1)));
+	if (!nspec) return false;
+	map->list->spec = nspec;
+
+	if (!ofc_hashmap_add(map->map, spec))
+		return false;
+
+	map->list->spec[map->list->count++] = spec;
+
+	return true;
+}
+
+void ofc_sema_spec_map_delete(
+	ofc_sema_spec_map_t* map)
+{
+	if (!map)
+		return;
+
+	ofc_sema_spec_list_delete(map->list);
+	ofc_hashmap_delete(map->map);
+
+	free(map);
 }

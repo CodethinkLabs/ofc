@@ -33,6 +33,9 @@ ofc_sema_arg_list_t* ofc_sema_arg_list(
 	const ofc_parse_call_arg_list_t* plist);
 ofc_sema_arg_list_t* ofc_sema_arg_list_stmt_func(
 	const ofc_parse_array_index_t* index);
+bool ofc_sema_arg_list_print(
+	ofc_colstr_t* cs,
+	const ofc_sema_arg_list_t* list);
 void ofc_sema_arg_list_delete(
 	ofc_sema_arg_list_t* list);
 

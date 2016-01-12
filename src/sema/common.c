@@ -46,7 +46,7 @@ void ofc_sema_common_delete(
 
 bool ofc_sema_common_add(
 	ofc_sema_common_t*     common,
-	const ofc_sema_spec_t* spec)
+	ofc_sema_spec_t* spec)
 {
 	if (!common || !spec)
 		return false;
@@ -57,8 +57,8 @@ bool ofc_sema_common_add(
 	if (!ndecl) return false;
 	common->decl = ndecl;
 
-	const ofc_sema_spec_t** nspec
-		= (const ofc_sema_spec_t**)realloc(common->spec,
+	ofc_sema_spec_t** nspec
+		= realloc(common->spec,
 			sizeof(const ofc_sema_spec_t*) * (common->count + 1));
 	if (!nspec) return false;
 	common->spec = nspec;

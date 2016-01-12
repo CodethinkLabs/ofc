@@ -58,7 +58,7 @@ ofc_sema_decl_t* ofc_sema_decl_create(
 static ofc_sema_decl_t* ofc_sema_decl__spec(
 	ofc_sema_scope_t*       scope,
 	ofc_sparse_ref_t        name,
-	const ofc_sema_spec_t*  spec,
+	ofc_sema_spec_t*        spec,
 	const ofc_sema_array_t* array,
 	bool                    is_procedure,
 	bool                    is_function)
@@ -215,7 +215,7 @@ static ofc_sema_decl_t* ofc_sema_decl__spec(
 ofc_sema_decl_t* ofc_sema_decl_spec(
 	ofc_sema_scope_t*       scope,
 	ofc_sparse_ref_t        name,
-	const ofc_sema_spec_t*  spec,
+	ofc_sema_spec_t*        spec,
 	const ofc_sema_array_t* array)
 {
 	return ofc_sema_decl__spec(
@@ -291,9 +291,9 @@ ofc_sema_decl_t* ofc_sema_decl_implicit_lhs(
 
 
 ofc_sema_decl_t* ofc_sema_decl_function(
-	ofc_sema_scope_t*       scope,
-	ofc_sparse_ref_t        name,
-	const ofc_sema_spec_t*  spec)
+	ofc_sema_scope_t*  scope,
+	ofc_sparse_ref_t   name,
+	ofc_sema_spec_t*   spec)
 {
 	return ofc_sema_decl__spec(
 		scope, name, spec, NULL, true, true);
@@ -1059,6 +1059,7 @@ bool ofc_sema_decl_list_add(
 		return false;
 
 	list->decl[list->count++] = decl;
+
 	return true;
 }
 
@@ -1206,6 +1207,40 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 	return true;
 }
 
+bool ofc_sema_decl_list_function_print(
+	ofc_colstr_t* cs, unsigned indent,
+	const ofc_sema_decl_list_t* decl_list)
+{
+    if (!cs || !decl_list)
+		return false;
+
+	unsigned i;
+	for (i = 0; i < decl_list->count; i++)
+	{
+		ofc_sema_decl_t* decl = decl_list->decl[i];
+		if (decl->func)
+		{
+			if (!ofc_colstr_newline(cs, indent, NULL)
+				|| !ofc_colstr_atomic_writef(cs, "%.*s(",
+					decl->name.size, decl->name.base)
+				|| !ofc_sema_arg_list_print(cs,
+					decl->func->args)
+				|| !ofc_colstr_atomic_writef(cs, ")"))
+				return false;
+
+			if (decl->func->type == OFC_SEMA_SCOPE_STMT_FUNC
+				? !ofc_colstr_atomic_writef(cs, " = ")
+				: !ofc_colstr_atomic_writef(cs, "\n"))
+				return false;
+
+			if (!ofc_sema_scope_print(cs, indent, decl->func))
+				return false;
+		}
+	}
+
+	return true;
+}
+
 bool ofc_sema_decl_list_print(
 	ofc_colstr_t* cs, unsigned indent,
 	const ofc_sema_decl_list_t* decl_list)
@@ -1217,7 +1252,8 @@ bool ofc_sema_decl_list_print(
 	for (i = 0; i < decl_list->count; i++)
 	{
 		if (!ofc_colstr_newline(cs, indent, NULL)
-			|| !ofc_sema_decl_print(cs, decl_list->decl[i]))
+			|| !ofc_sema_decl_print(cs,
+				decl_list->decl[i]))
 			return false;
 	}
 

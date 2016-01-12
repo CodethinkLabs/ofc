@@ -36,9 +36,25 @@ struct ofc_sema_spec_s
 	bool is_intrinsic;
 	bool is_external;
 
+	bool used;
+
 	ofc_sema_common_t* common;
 	unsigned           common_offset;
 };
+
+struct ofc_sema_spec_list_s
+{
+	unsigned count;
+	ofc_sema_spec_t** spec;
+};
+
+typedef struct
+{
+	/* map cannot delete specifiers,
+	   list should be used for clean up */
+	ofc_hashmap_t*        map;
+	ofc_sema_spec_list_t* list;
+}ofc_sema_spec_map_t;
 
 const ofc_sema_spec_t OFC_SEMA_SPEC_DEFAULT;
 
@@ -48,10 +64,23 @@ ofc_sema_spec_t* ofc_sema_spec(
 	const ofc_parse_type_t* ptype);
 ofc_sema_spec_t* ofc_sema_spec_copy(
 	const ofc_sema_spec_t* spec);
+bool ofc_sema_spec_print(
+	ofc_colstr_t* cs,
+	unsigned indent,
+	ofc_sema_spec_t* spec);
 void ofc_sema_spec_delete(
 	ofc_sema_spec_t* spec);
 
-ofc_hashmap_t* ofc_sema_spec_map_create(
+bool ofc_sema_spec_list_print(
+	ofc_colstr_t* cs, unsigned indent,
+	const ofc_sema_spec_list_t* list);
+
+ofc_sema_spec_map_t* ofc_sema_spec_map_create(
 	bool case_sensitive);
+bool ofc_sema_spec_map_add(
+	ofc_sema_spec_map_t* map,
+	ofc_sema_spec_t* spec);
+void ofc_sema_spec_map_delete(
+	ofc_sema_spec_map_t* map);
 
 #endif
