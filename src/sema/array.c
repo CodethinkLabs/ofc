@@ -392,12 +392,14 @@ ofc_sema_array_index_t* ofc_sema_array_index(
 				return NULL;
 			}
 
-			if (idx < array->segment[i].first)
+			if (!array->segment[i].first_var
+				&& (idx < array->segment[i].first))
 			{
 				ofc_sparse_ref_warning(expr->src,
 					"Array index out-of-bounds (underflow)");
 			}
-			else if (idx > array->segment[i].last)
+			else if (!array->segment[i].last_var
+				&& (idx > array->segment[i].last))
 			{
 				ofc_sparse_ref_warning(expr->src,
 					"Array index out-of-bounds (overflow)");
