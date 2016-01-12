@@ -786,3 +786,170 @@ bool ofc_sema_lhs_print(
 
 	return true;
 }
+
+
+ofc_sema_lhs_list_t* ofc_sema_lhs_list(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_lhs_list_t* plist)
+{
+	if (!plist)
+		return NULL;
+
+	ofc_sema_lhs_list_t* list
+		= (ofc_sema_lhs_list_t*)malloc(
+			sizeof(ofc_sema_lhs_list_t));
+	if (!list) return NULL;
+
+	list->count = 0;
+	list->lhs = (ofc_sema_lhs_t**)malloc(
+		plist->count * sizeof(ofc_sema_lhs_t*));
+	if (!list->lhs)
+	{
+		free(list);
+		return NULL;
+	}
+
+	unsigned i;
+	for (i = 0; i < plist->count; i++)
+	{
+		list->lhs[i] = ofc_sema_lhs(
+			scope, plist->lhs[i]);
+		if (!list->lhs[i])
+		{
+			ofc_sema_lhs_list_delete(list);
+			return NULL;
+		}
+
+		list->count++;
+	}
+
+	return list;
+}
+
+ofc_sema_lhs_list_t* ofc_sema_lhs_list_create(void)
+{
+	ofc_sema_lhs_list_t* list
+		= (ofc_sema_lhs_list_t*)malloc(
+			sizeof(ofc_sema_lhs_list_t));
+	if (!list) return NULL;
+
+	list->count = 0;
+	list->lhs   = NULL;
+	return list;
+}
+
+void ofc_sema_lhs_list_delete(ofc_sema_lhs_list_t* list)
+{
+	if (!list)
+		return;
+
+	unsigned i;
+	for (i = 0; i < list->count; i++)
+		ofc_sema_lhs_delete(list->lhs[i]);
+	free(list->lhs);
+
+	free(list);
+}
+
+bool ofc_sema_lhs_list_add(
+	ofc_sema_lhs_list_t* list,
+	ofc_sema_lhs_t* lhs)
+{
+	if (!list || !lhs)
+		return false;
+
+	ofc_sema_lhs_t** nlhs
+		= (ofc_sema_lhs_t**)realloc(list->lhs,
+			((list->count + 1) * sizeof(ofc_sema_lhs_t*)));
+	if (!nlhs) return false;
+	list->lhs = nlhs;
+
+	list->lhs[list->count++] = lhs;
+	return true;
+}
+
+bool ofc_sema_lhs_list_elem_count(
+	const ofc_sema_lhs_list_t* list, unsigned* count)
+{
+	if (!list)
+		return false;
+
+	unsigned i, c;
+	for (i = 0, c = 0; i < list->count; i++)
+	{
+		unsigned e;
+		if (!ofc_sema_lhs_elem_count(list->lhs[i], &e))
+			return false;
+		c += e;
+	}
+
+	if (count) *count = c;
+	return true;
+}
+
+ofc_sema_lhs_t* ofc_sema_lhs_list_elem_get(
+	const ofc_sema_lhs_list_t* list, unsigned offset)
+{
+	if (!list)
+		return NULL;
+
+	unsigned i, o;
+	for (i = 0, o = 0; (i < list->count) && (o < offset); i++)
+	{
+		unsigned e;
+		if (!ofc_sema_lhs_elem_count(list->lhs[i], &e))
+			return NULL;
+
+		if (offset < (o + e))
+		{
+			if (e == 1)
+			{
+				return (ofc_sema_lhs_reference(list->lhs[i])
+					? list->lhs[i] : NULL);
+			}
+
+			/* TODO - Properly handle composite lhs types. */
+			return NULL;
+		}
+	}
+
+	return NULL;
+}
+
+
+bool ofc_sema_lhs_list_init(
+	const ofc_sema_scope_t* scope,
+	ofc_sema_lhs_list_t* lhs,
+	const ofc_sema_expr_list_t* init)
+{
+	unsigned lhs_count;
+	unsigned init_count;
+	if (!ofc_sema_lhs_list_elem_count(lhs, &lhs_count)
+		|| !ofc_sema_expr_list_elem_count(init, &init_count))
+		return false;
+
+	unsigned e = (lhs_count < init_count ? lhs_count : init_count);
+
+	unsigned i;
+	for (i = 0; i < e; i++)
+	{
+		ofc_sema_lhs_t* lhs_elem
+			= ofc_sema_lhs_list_elem_get(lhs, e);
+		ofc_sema_expr_t* init_elem
+			= ofc_sema_expr_list_elem_get(init, e);
+
+		bool success = ofc_sema_lhs_init(
+			scope, lhs_elem, init_elem);
+
+		ofc_sema_lhs_delete(lhs_elem);
+		ofc_sema_expr_delete(init_elem);
+
+		if (!success)
+		{
+			/* TODO - Fail atomically? */
+			return false;
+		}
+	}
+
+	return true;
+}

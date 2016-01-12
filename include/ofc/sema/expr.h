@@ -57,6 +57,8 @@ struct ofc_sema_expr_s
 
 	bool brackets;
 
+	unsigned repeat;
+
 	union
 	{
 		ofc_sema_lhs_t* lhs;
