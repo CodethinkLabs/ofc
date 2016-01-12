@@ -253,7 +253,12 @@ ofc_sema_expr_t* ofc_sema_expr_copy(
 			break;
 
 		case OFC_SEMA_EXPR_LHS:
-			copy->lhs = ofc_sema_lhs_reference(expr->lhs);
+			if (!ofc_sema_lhs_reference(expr->lhs))
+			{
+				ofc_sema_expr_delete(copy);
+				return NULL;
+			}
+			copy->lhs = expr->lhs;
 			break;
 
 		case OFC_SEMA_EXPR_CAST:
