@@ -122,10 +122,10 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_print(
 
 	/* Count elements in iolist */
 	unsigned iolist_len = 0;
-	if (!ofc_sema_expr_list_elem_count(
-		s.io_print.iolist, &iolist_len))
+	if (s.io_print.iolist
+		&& !ofc_sema_expr_list_elem_count(
+			s.io_print.iolist, &iolist_len))
 		return NULL;
-
 
 	if (s.io_print.format)
 	{
