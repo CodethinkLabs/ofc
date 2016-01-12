@@ -238,6 +238,8 @@ ofc_sema_expr_t* ofc_sema_expr_copy(
 
 	copy->brackets = expr->brackets;
 
+	copy->repeat = expr->repeat;
+
 	if (expr->constant)
 	{
 		copy->constant = ofc_sema_typeval_copy(expr->constant);
@@ -266,25 +268,30 @@ ofc_sema_expr_t* ofc_sema_expr_copy(
 		case OFC_SEMA_EXPR_CAST:
 			copy->cast.type = expr->cast.type;
 			copy->cast.expr = ofc_sema_expr_copy(expr->cast.expr);
+			success = (copy->cast.expr != NULL);
 			break;
 
 		case OFC_SEMA_EXPR_INTRINSIC:
 			copy->intrinsic = expr->intrinsic;
 			copy->args      = ofc_sema_expr_list_copy(expr->args);
+			success = (copy->args != NULL);
 			break;
 
 		case OFC_SEMA_EXPR_FUNCTION:
 			copy->function = expr->function;
 			copy->args     = ofc_sema_expr_list_copy(expr->args);
+			success = (copy->args != NULL);
 			break;
 
 		case OFC_SEMA_EXPR_ALT_RETURN:
 			copy->alt_return.expr = ofc_sema_expr_copy(expr->alt_return.expr);
+			success = (copy->alt_return.expr != NULL);
 			break;
 
 		default:
 			copy->a = ofc_sema_expr_copy(expr->a);
 			copy->b = ofc_sema_expr_copy(expr->b);
+			success = (copy->a && (!expr->b || (copy->b != NULL)));
 			break;
 	}
 

@@ -353,11 +353,7 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 					ofc_sema_lhs_t* slhs
 						= ofc_sema_lhs_substring(
 							scope, parent, lhs->array.index);
-					if (!slhs)
-					{
-						ofc_sema_lhs_delete(parent);
-						return NULL;
-					}
+					ofc_sema_lhs_delete(parent);
 					return slhs;
 				}
 
@@ -369,9 +365,9 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 				{
 					ofc_sema_lhs_t* slhs
 						= ofc_sema_lhs_index(parent, index);
+					ofc_sema_lhs_delete(parent);
 					if (!slhs)
 					{
-						ofc_sema_lhs_delete(parent);
 						ofc_sema_array_index_delete(index);
 						return NULL;
 					}
@@ -392,9 +388,9 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 
 				ofc_sema_lhs_t* slhs
 					= ofc_sema_lhs_slice(parent, slice);
+				ofc_sema_lhs_delete(parent);
 				if (!slhs)
 				{
-					ofc_sema_lhs_delete(parent);
 					ofc_sema_array_slice_delete(slice);
 					return NULL;
 				}
@@ -558,50 +554,49 @@ static ofc_sema_lhs_t* ofc_sema_lhs__offset(
 		case OFC_SEMA_LHS_DECL:
 		case OFC_SEMA_LHS_ARRAY_INDEX:
 		case OFC_SEMA_LHS_STRUCTURE_MEMBER:
-			if (ofc_sema_decl_is_procedure(lhs->decl))
+			if (ofc_sema_type_is_procedure(lhs->data_type))
 				return NULL;
 
-			if (ofc_sema_decl_is_composite(lhs->decl))
+			if (!ofc_sema_type_is_composite(lhs->data_type))
 			{
-				if (ofc_sema_decl_is_array(lhs->decl))
-				{
-					const ofc_sema_type_t* base_type
-						= ofc_sema_type_base(ofc_sema_decl_type(lhs->decl));
-
-					unsigned base_count;
-					if (!ofc_sema_type_elem_count(
-						base_type, &base_count))
-						return NULL;
-
-					unsigned base_offset = (offset % base_count);
-
-					ofc_sema_array_index_t* index
-						= ofc_sema_array_index_from_offset(
-							lhs->decl, (offset / base_count));
-					if (!index) return NULL;
-
-					ofc_sema_lhs_t* nlhs = ofc_sema_lhs_index(lhs, index);
-					if (!nlhs)
-					{
-						ofc_sema_array_index_delete(index);
-						return NULL;
-					}
-
-					ofc_sema_lhs_t* rlhs
-						= ofc_sema_lhs__offset(nlhs, base_offset);
-					ofc_sema_lhs_delete(nlhs);
-					return rlhs;
-				}
-
-				/* TODO - Handle structures. */
-				return NULL;
+				if (offset != 0)
+					return NULL;
+				return lhs;
 			}
 
-			if (offset != 0)
-				return NULL;
-			if (!ofc_sema_lhs_reference(lhs))
-				return NULL;
-			return lhs;
+			if (ofc_sema_type_is_array(lhs->data_type))
+			{
+				const ofc_sema_type_t* base_type
+					= ofc_sema_type_base(lhs->data_type);
+
+				unsigned base_count;
+				if (!ofc_sema_type_elem_count(
+					base_type, &base_count))
+					return NULL;
+
+				unsigned base_offset = (offset % base_count);
+
+				ofc_sema_array_index_t* index
+					= ofc_sema_array_index_from_offset(
+						lhs->decl, (offset / base_count));
+				if (!index) return NULL;
+
+				ofc_sema_lhs_t* nlhs = ofc_sema_lhs_index(lhs, index);
+				if (!nlhs)
+				{
+					ofc_sema_array_index_delete(index);
+					return NULL;
+				}
+
+				ofc_sema_lhs_t* rlhs
+					= ofc_sema_lhs__offset(nlhs, base_offset);
+				if (rlhs != nlhs)
+					ofc_sema_lhs_delete(nlhs);
+				return rlhs;
+			}
+
+			/* TODO - Handle structures. */
+			break;
 
 		case OFC_SEMA_LHS_ARRAY_SLICE:
 			/* TODO - Convert offset to index and treat as index. */
@@ -610,8 +605,6 @@ static ofc_sema_lhs_t* ofc_sema_lhs__offset(
 		case OFC_SEMA_LHS_SUBSTRING:
 			if (offset != 0)
 				return NULL;
-			if (!ofc_sema_lhs_reference(lhs))
-				return NULL;
 			return lhs;
 
 		default:
@@ -619,6 +612,34 @@ static ofc_sema_lhs_t* ofc_sema_lhs__offset(
 	}
 
 	return NULL;
+}
+
+static ofc_sema_lhs_t* ofc_sema_lhs__offset_ref(
+	ofc_sema_lhs_t* lhs, unsigned offset)
+{
+    if (!lhs)
+		return NULL;
+
+	switch (lhs->type)
+	{
+		case OFC_SEMA_LHS_DECL:
+		case OFC_SEMA_LHS_ARRAY_INDEX:
+		case OFC_SEMA_LHS_STRUCTURE_MEMBER:
+		case OFC_SEMA_LHS_SUBSTRING:
+			if (ofc_sema_type_is_composite(lhs->data_type))
+				break;
+
+			if (ofc_sema_type_is_procedure(lhs->data_type)
+				|| (offset != 0)
+				|| !ofc_sema_lhs_reference(lhs))
+				return NULL;
+			return lhs;
+
+		default:
+			break;
+	}
+
+	return ofc_sema_lhs__offset(lhs, offset);
 }
 
 bool ofc_sema_lhs_reference(
@@ -1027,7 +1048,7 @@ ofc_sema_lhs_t* ofc_sema_lhs_list_elem_get(
 
 		if (offset < (o + e))
 		{
-			return ofc_sema_lhs__offset(
+			return ofc_sema_lhs__offset_ref(
 				list->lhs[i], (offset - o));
 		}
 
