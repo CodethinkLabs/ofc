@@ -345,9 +345,12 @@ static void ofc_parse_stmt__cleanup(
 		case OFC_PARSE_STMT_RECORD:
 			ofc_parse_record_list_delete(stmt.record);
 			break;
+		case OFC_PARSE_STMT_IO_READ:
+			ofc_parse_call_arg_list_delete(stmt.io_read.params);
+			ofc_parse_lhs_list_delete(stmt.io_read.iolist);
+			break;
 		case OFC_PARSE_STMT_IO_REWIND:
 		case OFC_PARSE_STMT_IO_BACKSPACE:
-		case OFC_PARSE_STMT_IO_READ:
 		case OFC_PARSE_STMT_IO_WRITE:
 		case OFC_PARSE_STMT_IO_END_FILE:
 		case OFC_PARSE_STMT_IO_CLOSE:

@@ -33,6 +33,7 @@ typedef struct ofc_sema_spec_list_s         ofc_sema_spec_list_t;
 typedef struct ofc_sema_decl_list_s         ofc_sema_decl_list_t;
 typedef struct ofc_sema_expr_list_s         ofc_sema_expr_list_t;
 typedef struct ofc_sema_stmt_list_s         ofc_sema_stmt_list_t;
+typedef struct ofc_sema_lhs_list_s          ofc_sema_lhs_list_t;
 typedef struct ofc_sema_format_label_list_s ofc_sema_format_label_list_t;
 
 #include <ofc/sema/array.h>

@@ -61,11 +61,11 @@ struct ofc_sema_lhs_s
 	unsigned refcnt;
 };
 
-typedef struct
+struct ofc_sema_lhs_list_s
 {
 	unsigned         count;
 	ofc_sema_lhs_t** lhs;
-} ofc_sema_lhs_list_t;
+};
 
 
 ofc_sema_lhs_t* ofc_sema_lhs(
@@ -123,7 +123,12 @@ ofc_sema_lhs_list_t* ofc_sema_lhs_list(
 ofc_sema_lhs_list_t* ofc_sema_lhs_list_create(void);
 void ofc_sema_lhs_list_delete(ofc_sema_lhs_list_t* list);
 
-bool ofc_sema_lhs_list_add(ofc_sema_lhs_list_t* list, ofc_sema_lhs_t* lhs);
+bool ofc_sema_lhs_list_add(
+	ofc_sema_lhs_list_t* list,
+	ofc_sema_lhs_t*      lhs);
+bool ofc_sema_lhs_list_add_list(
+	ofc_sema_lhs_list_t* alist,
+	ofc_sema_lhs_list_t* blist);
 
 bool ofc_sema_lhs_list_elem_count(
 	const ofc_sema_lhs_list_t* list, unsigned* count);
@@ -133,5 +138,8 @@ ofc_sema_lhs_t* ofc_sema_lhs_list_elem_get(
 bool ofc_sema_lhs_list_init(
 	ofc_sema_lhs_list_t* lhs,
 	const ofc_sema_expr_list_t* init);
+
+ofc_sema_lhs_list_t* ofc_sema_lhs_list_implicit_do(
+	ofc_sema_scope_t* scope, ofc_parse_implicit_do_t* id);
 
 #endif

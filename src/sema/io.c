@@ -21,12 +21,13 @@
 bool ofc_sema_io_compare_types(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt,
+	const ofc_sema_lhs_t* lhs,
 	ofc_sema_expr_t** expr,
 	const ofc_sema_type_t* type,
 	ofc_parse_format_desc_list_t* format_list,
 	unsigned* offset)
 {
-	if (!type || !format_list || !expr)
+	if (!type || !format_list || (!lhs && !expr))
 		return false;
 
 	/* Compare base type of array for each
@@ -45,7 +46,7 @@ bool ofc_sema_io_compare_types(
 		for (j = 0; j < array_count; j++)
 		{
 			if (!ofc_sema_io_compare_types(
-				scope, stmt, expr, type, format_list, offset))
+				scope, stmt, lhs, expr, type, format_list, offset))
 				return false;
 		}
 	}
@@ -56,7 +57,7 @@ bool ofc_sema_io_compare_types(
 		for (j = 0; j < type->structure->member.count; j++)
 		{
 			if (!ofc_sema_io_compare_types(
-				scope, stmt, expr, type->structure->member.type[j],
+				scope, stmt, lhs, expr, type->structure->member.type[j],
 				format_list, offset))
 				return false;
 		}
@@ -70,21 +71,31 @@ bool ofc_sema_io_compare_types(
 
 		if (!ofc_sema_compare_desc_expr_type(desc->type, type->type))
 		{
-			const ofc_sema_type_t* dtype
-				= ofc_sema_format_desc_type(desc);
-
-			ofc_sema_expr_t* cast
-				= ofc_sema_expr_cast(*expr, dtype);
-			if (!cast)
+			if (!expr)
 			{
-				ofc_sparse_ref_warning((*expr)->src,
+				ofc_sparse_ref_warning(lhs->src,
 					"Trying to format a %s output  with a %s FORMAT descriptor",
 					ofc_sema_format_str_rep(desc->type),
 					ofc_sema_type_str_rep(type));
 			}
 			else
 			{
-				*expr = cast;
+				const ofc_sema_type_t* dtype
+					= ofc_sema_format_desc_type(desc);
+
+				ofc_sema_expr_t* cast
+					= ofc_sema_expr_cast(*expr, dtype);
+				if (!cast)
+				{
+					ofc_sparse_ref_warning((*expr)->src,
+						"Trying to format a %s output  with a %s FORMAT descriptor",
+						ofc_sema_format_str_rep(desc->type),
+						ofc_sema_type_str_rep(type));
+				}
+				else
+				{
+					*expr = cast;
+				}
 			}
 		}
 		else if ((desc->type == OFC_PARSE_FORMAT_DESC_CHARACTER)
@@ -99,9 +110,9 @@ bool ofc_sema_io_compare_types(
 	return true;
 }
 
-ofc_sema_expr_list_t* ofc_sema_iolist(
+ofc_sema_expr_list_t* ofc_sema_output_list(
 	ofc_sema_scope_t* scope,
-	ofc_parse_expr_list_t* parse_iolist)
+	const ofc_parse_expr_list_t* parse_iolist)
 {
 	ofc_sema_expr_list_t* sema_iolist
 		= ofc_sema_expr_list_create();
@@ -110,7 +121,7 @@ ofc_sema_expr_list_t* ofc_sema_iolist(
 	unsigned i;
 	for (i = 0; i < parse_iolist->count; i++)
 	{
-		ofc_parse_expr_t* parse_expr
+		const ofc_parse_expr_t* parse_expr
 			= parse_iolist->expr[i];
 
 		if ((parse_expr->type == OFC_PARSE_EXPR_VARIABLE)
@@ -125,7 +136,6 @@ ofc_sema_expr_list_t* ofc_sema_iolist(
 			ofc_sema_expr_list_delete(implicit_do);
 			if (!success)
 			{
-				ofc_parse_expr_delete(parse_expr);
 				ofc_sema_expr_list_delete(sema_iolist);
 				return NULL;
 			}
@@ -136,16 +146,65 @@ ofc_sema_expr_list_t* ofc_sema_iolist(
 				scope, parse_expr);
 			if (!expr)
 			{
-				ofc_parse_expr_delete(parse_expr);
 				ofc_sema_expr_list_delete(sema_iolist);
 				return NULL;
 			}
 
 			if (!ofc_sema_expr_list_add(sema_iolist, expr))
 			{
-				ofc_parse_expr_delete(parse_expr);
 				ofc_sema_expr_delete(expr);
 				ofc_sema_expr_list_delete(sema_iolist);
+				return NULL;
+			}
+		}
+	}
+
+	return sema_iolist;
+}
+
+ofc_sema_lhs_list_t* ofc_sema_input_list(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_lhs_list_t* parse_iolist)
+{
+	ofc_sema_lhs_list_t* sema_iolist
+		= ofc_sema_lhs_list_create();
+	if (!sema_iolist) return NULL;
+
+	unsigned i;
+	for (i = 0; i < parse_iolist->count; i++)
+	{
+		const ofc_parse_lhs_t* parse_lhs
+			= parse_iolist->lhs[i];
+
+		if (parse_lhs->type == OFC_PARSE_LHS_IMPLICIT_DO)
+		{
+			ofc_sema_lhs_list_t* implicit_do
+				= ofc_sema_lhs_list_implicit_do(
+					scope, parse_lhs->implicit_do);
+
+			bool success = ofc_sema_lhs_list_add_list(
+				sema_iolist, implicit_do);
+			ofc_sema_lhs_list_delete(implicit_do);
+			if (!success)
+			{
+				ofc_sema_lhs_list_delete(sema_iolist);
+				return NULL;
+			}
+		}
+		else
+		{
+			ofc_sema_lhs_t* lhs = ofc_sema_lhs(
+				scope, parse_lhs);
+			if (!lhs)
+			{
+				ofc_sema_lhs_list_delete(sema_iolist);
+				return NULL;
+			}
+
+			if (!ofc_sema_lhs_list_add(sema_iolist, lhs))
+			{
+				ofc_sema_lhs_delete(lhs);
+				ofc_sema_lhs_list_delete(sema_iolist);
 				return NULL;
 			}
 		}
@@ -300,13 +359,35 @@ bool ofc_sema_io_format_iolist_compare(
 			= ofc_sema_expr_type(*expr);
 
 		if (!ofc_sema_io_compare_types(
-			scope, stmt, expr, type, format_list, &offset))
+			scope, stmt, NULL, expr, type, format_list, &offset))
 			return false;
 	}
 
 	return true;
 }
 
+bool ofc_sema_io_format_input_list_compare(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt,
+	ofc_parse_format_desc_list_t* format_list,
+	ofc_sema_lhs_list_t* iolist)
+{
+	if (!format_list || !iolist) return false;
+
+	unsigned i, offset = 0;
+	for (i = 0; i < iolist->count; i++)
+	{
+		const ofc_sema_type_t* type
+			= ofc_sema_lhs_type(iolist->lhs[i]);
+
+		if (!ofc_sema_io_compare_types(
+			scope, stmt, iolist->lhs[i], NULL,
+			type, format_list, &offset))
+			return false;
+	}
+
+	return true;
+}
 
 bool ofc_sema_io_check_label(
 	ofc_sema_scope_t* scope,

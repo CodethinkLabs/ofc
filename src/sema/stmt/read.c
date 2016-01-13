@@ -13,6 +13,8 @@
  * limitations under the License.
  */
 
+#include <math.h>
+
 #include "ofc/sema.h"
 
 void ofc_sema_stmt_io_read__cleanup(
@@ -35,7 +37,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 {
 	if (!scope || !stmt
 		|| (stmt->type != OFC_PARSE_STMT_IO_READ)
-		|| !stmt->io.params)
+		|| !stmt->io_read.params)
 		return NULL;
 
 	ofc_sema_stmt_t s;
@@ -65,13 +67,13 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 	ofc_parse_call_arg_t* ca_eor     = NULL;
 	ofc_parse_call_arg_t* ca_size    = NULL;
 
-	if (stmt->io.has_brakets)
+	if (stmt->io_read.has_brakets)
 	{
 		unsigned i;
-		for (i = 0; i < stmt->io.params->count; i++)
+		for (i = 0; i < stmt->io_read.params->count; i++)
 		{
 			ofc_parse_call_arg_t* param
-				= stmt->io.params->call_arg[i];
+				= stmt->io_read.params->call_arg[i];
 			if (!param) continue;
 
 			if (ofc_sparse_ref_empty(param->name))
@@ -205,7 +207,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 	}
 	else
 	{
-		ca_format = stmt->io.params->call_arg[0];
+		ca_format = stmt->io_read.params->call_arg[0];
 	}
 
 	if (ca_unit && (ca_unit->type == OFC_PARSE_CALL_ARG_ASTERISK))
@@ -539,6 +541,78 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 			ofc_sema_stmt_io_read__cleanup(s);
 			return NULL;
 		}
+	}
+
+	if (s.io_read.format)
+	{
+		/* Check iolist */
+		if (stmt->io_read.iolist)
+		{
+			s.io_read.iolist
+				= ofc_sema_input_list(
+					scope, stmt->io_read.iolist);
+			if (!s.io_read.iolist)
+			{
+				ofc_sema_stmt_io_read__cleanup(s);
+				return NULL;
+			}
+		}
+
+		/* Count elements in iolist */
+		unsigned iolist_len = 0;
+		if (s.io_read.iolist
+			&& !ofc_sema_lhs_list_elem_count(
+				s.io_read.iolist, &iolist_len))
+			return NULL;
+
+		unsigned data_desc_count
+			= ofc_sema_io_data_format_count(s.io_read.format);
+
+		if ((data_desc_count > 0) && (iolist_len > 0))
+		{
+			if (iolist_len < data_desc_count)
+			{
+				ofc_sparse_ref_warning(stmt->src,
+					"IO list shorter than FORMAT list,"
+					" last FORMAT data descriptors will be ignored");
+			}
+			else if (fmod(iolist_len, data_desc_count) != 0)
+			{
+				ofc_sparse_ref_warning(stmt->src,
+					"IO list length is not a multiple of FORMAT list length");
+			}
+
+			/* Create a format list of same length as iolist
+			 * with only data edit descriptors  */
+			ofc_parse_format_desc_list_t* format_list
+				= ofc_sema_io_data_format(s.io_read.format, iolist_len);
+			if (!format_list)
+			{
+				ofc_sema_stmt_io_read__cleanup(s);
+				return NULL;
+			}
+
+			/* Compare iolist with format */
+			bool fail = !ofc_sema_io_format_input_list_compare(
+				scope, stmt, format_list, s.io_read.iolist);
+			ofc_parse_format_desc_list_delete(format_list);
+			if (fail)
+			{
+				ofc_sema_stmt_io_read__cleanup(s);
+				return NULL;
+			}
+		}
+		else if (iolist_len > 0)
+		{
+			ofc_sparse_ref_warning(stmt->src,
+				"No data edit descriptors in FORMAT list");
+		}
+		else if (data_desc_count > 0)
+		{
+			ofc_sparse_ref_warning(stmt->src,
+				"No IO list in READ statement");
+		}
+
 	}
 
 	ofc_sema_stmt_t* as

@@ -130,7 +130,7 @@ struct ofc_sema_stmt_s
 			ofc_sema_expr_t* eor;
 			ofc_sema_expr_t* size;
 
-			ofc_sema_expr_list_t* iolist;
+			ofc_sema_lhs_list_t* iolist;
 		} io_read;
 
 		struct

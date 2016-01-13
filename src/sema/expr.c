@@ -1008,6 +1008,27 @@ ofc_sema_expr_t* ofc_sema_expr_brackets(
 	return expr_bracket;
 }
 
+ofc_sema_expr_t* ofc_sema_expr_wrap_lhs(
+	ofc_sema_lhs_t* lhs)
+{
+	if (!lhs) return NULL;
+
+	ofc_sema_expr_t* expr
+		= ofc_sema_expr__create(OFC_SEMA_EXPR_LHS);
+	if (!expr) return NULL;
+
+	if (!ofc_sema_lhs_reference(lhs))
+	{
+		ofc_sema_expr_delete(expr);
+		return NULL;
+	}
+
+	expr->lhs = lhs;
+	expr->src = expr->lhs->src;
+
+	return expr;
+}
+
 void ofc_sema_expr_delete(
 	ofc_sema_expr_t* expr)
 {
@@ -1596,7 +1617,7 @@ ofc_sema_expr_list_t* ofc_sema_expr_list_implicit_do(
 		{
 			ofc_sema_expr_list_t* implicit_do
 				= ofc_sema_expr_list_implicit_do(
-					scope, id->dlist->implicit_do);
+					idscope, id->dlist->implicit_do);
 			if (!implicit_do)
 			{
 				ofc_sema_expr_delete(step);

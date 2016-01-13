@@ -1014,6 +1014,26 @@ bool ofc_sema_lhs_list_add(
 	return true;
 }
 
+bool ofc_sema_lhs_list_add_list(
+	ofc_sema_lhs_list_t* alist,
+	ofc_sema_lhs_list_t* blist)
+{
+	if (!alist || !blist)
+		return false;
+
+	unsigned i;
+	for (i = 0; i < blist->count; i++)
+	{
+		if (!ofc_sema_lhs_reference(blist->lhs[i]))
+			return false;
+
+		if (!ofc_sema_lhs_list_add(alist, blist->lhs[i]))
+			return false;
+	}
+
+	return true;
+}
+
 bool ofc_sema_lhs_list_elem_count(
 	const ofc_sema_lhs_list_t* list, unsigned* count)
 {
@@ -1093,4 +1113,233 @@ bool ofc_sema_lhs_list_init(
 	}
 
 	return true;
+}
+
+ofc_sema_lhs_list_t* ofc_sema_lhs_list_implicit_do(
+	ofc_sema_scope_t* scope, ofc_parse_implicit_do_t* id)
+{
+	if (!scope || !id)
+		return NULL;
+
+	ofc_sema_scope_t* idscope
+		= ofc_sema_scope_implicit_do(scope);
+	if (!idscope)
+		return NULL;
+
+	ofc_sema_parameter_t* param
+		= ofc_sema_parameter_assign(idscope, id->init);
+	if (!param)
+	{
+		ofc_sema_scope_delete(idscope);
+		return NULL;
+	}
+
+	if (!ofc_sema_scope_parameter_add(idscope, param))
+	{
+		ofc_sema_parameter_delete(param);
+		ofc_sema_scope_delete(idscope);
+		return NULL;
+	}
+
+	const ofc_sema_type_t* dtype
+		= ofc_sema_parameter_type(param);
+	if (!ofc_sema_type_is_scalar(dtype))
+	{
+		ofc_sparse_ref_error(id->init->name->src,
+			"Implicit do loop iterator must be a scalar type.");
+		ofc_sema_scope_delete(idscope);
+		return NULL;
+	}
+
+	if (!ofc_sema_type_is_integer(dtype))
+	{
+		ofc_sparse_ref_warning(id->init->name->src,
+			"Using REAL in implicit do loop iterator..");
+	}
+
+	ofc_sema_expr_t* limit
+		= ofc_sema_expr(scope, id->limit);
+	if (!limit)
+	{
+		ofc_sema_scope_delete(idscope);
+		return NULL;
+	}
+
+	if (!ofc_sema_type_compare(dtype,
+		ofc_sema_expr_type(limit)))
+	{
+		ofc_sema_expr_t* cast
+			= ofc_sema_expr_cast(limit, dtype);
+		if (!cast)
+		{
+			const ofc_sema_type_t* expr_type =
+				ofc_sema_expr_type(limit);
+			ofc_sparse_ref_error(id->limit->src,
+					"Expression type %s doesn't match iterator type %s",
+				ofc_sema_type_str_rep(expr_type),
+				ofc_sema_type_str_rep(dtype));
+			ofc_sema_expr_delete(limit);
+			ofc_sema_scope_delete(idscope);
+			return NULL;
+		}
+		limit = cast;
+	}
+
+	ofc_sema_expr_t* step = NULL;
+
+	if (id->step)
+	{
+		step = ofc_sema_expr(
+			scope, id->step);
+		if (!step)
+		{
+			ofc_sema_expr_delete(limit);
+			ofc_sema_scope_delete(idscope);
+			return NULL;
+		}
+
+		if (!ofc_sema_type_compare(dtype,
+			ofc_sema_expr_type(step)))
+		{
+			ofc_sema_expr_t* cast
+				= ofc_sema_expr_cast(step, dtype);
+			if (!cast)
+			{
+				const ofc_sema_type_t* expr_type =
+					ofc_sema_expr_type(step);
+				ofc_sparse_ref_error(id->step->src,
+					"Expression type %s doesn't match iterator type %s",
+					ofc_sema_type_str_rep(expr_type),
+					ofc_sema_type_str_rep(dtype));
+				ofc_sema_expr_delete(step);
+				ofc_sema_expr_delete(limit);
+				ofc_sema_scope_delete(idscope);
+				return NULL;
+			}
+			step = cast;
+		}
+	}
+	else
+	{
+		step = ofc_sema_expr_integer(1);
+		if (!step)
+		{
+			ofc_sema_expr_delete(limit);
+			ofc_sema_scope_delete(idscope);
+			return NULL;
+		}
+
+		if (!ofc_sema_type_compare(dtype,
+			ofc_sema_expr_type(step)))
+		{
+			ofc_sema_expr_t* cast
+				= ofc_sema_expr_cast(step, dtype);
+			if (!cast)
+			{
+				ofc_sema_expr_delete(step);
+				ofc_sema_expr_delete(limit);
+				ofc_sema_scope_delete(idscope);
+				return NULL;
+			}
+
+			step = cast;
+		}
+	}
+
+	ofc_sema_lhs_list_t* list
+		= ofc_sema_lhs_list_create();
+	if (!list)
+	{
+		ofc_sema_expr_delete(step);
+		ofc_sema_expr_delete(limit);
+		ofc_sema_scope_delete(idscope);
+		return NULL;
+	}
+
+	ofc_sema_typeval_t* value
+		= ofc_sema_typeval_le(
+			param->typeval, limit->constant);
+	if (!value)
+	{
+		ofc_sema_expr_delete(step);
+		ofc_sema_expr_delete(limit);
+		ofc_sema_scope_delete(idscope);
+		ofc_sema_lhs_list_delete(list);
+		return NULL;
+	}
+
+	while (value->logical)
+	{
+		if (id->dlist->type == OFC_PARSE_LHS_IMPLICIT_DO)
+		{
+			ofc_sema_lhs_list_t* implicit_do
+				= ofc_sema_lhs_list_implicit_do(
+					idscope, id->dlist->implicit_do);
+			if (!implicit_do)
+			{
+				ofc_sema_expr_delete(step);
+				ofc_sema_expr_delete(limit);
+				ofc_sema_lhs_list_delete(list);
+				ofc_sema_scope_delete(idscope);
+				ofc_sema_typeval_delete(value);
+				return NULL;
+			}
+
+			bool success = ofc_sema_lhs_list_add_list(
+				list, implicit_do);
+			ofc_sema_lhs_list_delete(implicit_do);
+
+			if (!success)
+			{
+				ofc_sema_expr_delete(step);
+				ofc_sema_expr_delete(limit);
+				ofc_sema_lhs_list_delete(list);
+
+				ofc_sema_scope_delete(idscope);
+				ofc_sema_typeval_delete(value);
+				return NULL;
+			}
+		}
+		else
+		{
+			ofc_sema_lhs_t* lhs
+				= ofc_sema_lhs(
+					idscope, id->dlist);
+			if (!ofc_sema_lhs_list_add(list, lhs))
+			{
+				ofc_sema_expr_delete(step);
+				ofc_sema_expr_delete(limit);
+				ofc_sema_lhs_list_delete(list);
+				ofc_sema_scope_delete(idscope);
+				ofc_sema_typeval_delete(value);
+				return NULL;
+			}
+		}
+
+		ofc_sema_typeval_t* ntv
+			= ofc_sema_typeval_add(
+				param->typeval, step->constant);
+		ofc_sema_typeval_delete(param->typeval);
+		param->typeval = ntv;
+
+		ofc_sema_typeval_delete(value);
+		value = ofc_sema_typeval_le(
+			param->typeval, limit->constant);
+		if (!value)
+		{
+			ofc_sema_expr_delete(step);
+			ofc_sema_expr_delete(limit);
+			ofc_sema_scope_delete(idscope);
+			ofc_sema_lhs_list_delete(list);
+			ofc_sema_typeval_delete(value);
+			return NULL;
+		}
+	}
+
+	ofc_sema_expr_delete(step);
+	ofc_sema_expr_delete(limit);
+	ofc_sema_scope_delete(idscope);
+	ofc_sema_typeval_delete(value);
+
+	return list;
 }

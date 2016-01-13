@@ -156,6 +156,7 @@ static unsigned ofc_parse_stmt__io(
 	return i;
 }
 
+
 bool ofc_parse_stmt_io_print(
 	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt)
 {
@@ -277,19 +278,6 @@ unsigned ofc_parse_stmt_io_backspace(
 		stmt);
 }
 
-unsigned ofc_parse_stmt_io_read(
-	const ofc_sparse_t* src, const char* ptr,
-	ofc_parse_debug_t* debug,
-	ofc_parse_stmt_t* stmt)
-{
-	/* TODO - Handle unbracketed READ statements */
-	stmt->type = OFC_PARSE_STMT_IO_READ;
-	return ofc_parse_stmt__io(
-		src, ptr, debug,
-		OFC_PARSE_KEYWORD_READ, true, false,
-		stmt);
-}
-
 unsigned ofc_parse_stmt_io_write(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
@@ -348,6 +336,94 @@ unsigned ofc_parse_stmt_io_decode(
 		src, ptr, debug,
 		OFC_PARSE_KEYWORD_DECODE, true, true,
 		stmt);
+}
+
+unsigned ofc_parse_stmt_io_read(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_stmt_t* stmt)
+{
+	/* TODO - Handle unbracketed READ statements */
+	stmt->type = OFC_PARSE_STMT_IO_READ;
+
+	unsigned dpos = ofc_parse_debug_position(debug);
+
+	unsigned i = ofc_parse_keyword(
+		src, ptr, debug, OFC_PARSE_KEYWORD_READ);
+	if (i == 0) return 0;
+
+	stmt->io_read.has_brakets = false;
+	stmt->io_read.params = NULL;
+	if (ptr[i] == '(')
+	{
+		i += 1;
+
+		unsigned len;
+		stmt->io_read.params = ofc_parse_call_arg_list_named(
+			src, &ptr[i], debug, &len);
+		if (stmt->io_read.params) i += len;
+
+		if (ptr[i++] != ')')
+		{
+			ofc_parse_call_arg_list_delete(
+				stmt->io_read.params);
+			ofc_parse_debug_rewind(debug, dpos);
+			return 0;
+		}
+		stmt->io_read.has_brakets = true;
+	}
+	else
+	{
+		unsigned len;
+		ofc_parse_call_arg_t* unit
+			= ofc_parse_call_arg(src, &ptr[i], debug, &len);
+		if (!unit)
+		{
+			ofc_parse_debug_rewind(debug, dpos);
+			return 0;
+		}
+		i += len;
+
+		if (ptr[i] == ',')
+			i += 1;
+
+		stmt->io_read.params = ofc_parse_call_arg_list_wrap(unit);
+		if (!stmt->io_read.params)
+		{
+			ofc_parse_call_arg_delete(unit);
+			ofc_parse_debug_rewind(debug, dpos);
+			return 0;
+		}
+	}
+
+	stmt->io_read.iolist = NULL;
+	unsigned len = 0;
+	stmt->io_read.iolist = ofc_parse_lhs_list(
+		src, &ptr[i], debug, &len);
+
+	if (stmt->io_read.iolist)
+	{
+		i += len;
+
+		/* We're only sure it's an IO statement if there's an IO list,
+		   otherwise this could be an implicit FUNCTION call. */
+		if (!ofc_is_end_statement(
+			&ptr[i], NULL))
+		{
+			ofc_sparse_error_ptr(src, &ptr[i],
+				"Expected end of %s statement",
+				ofc_parse_keyword_name(OFC_PARSE_KEYWORD_READ));
+			ofc_parse_call_arg_list_delete(
+				stmt->io_read.params);
+			ofc_parse_lhs_list_delete(
+				stmt->io_read.iolist);
+
+			stmt->type = OFC_PARSE_STMT_ERROR;
+			return i;
+		}
+	}
+
+	return i;
 }
 
 static unsigned ofc_parse_stmt_io__print_type_accept(

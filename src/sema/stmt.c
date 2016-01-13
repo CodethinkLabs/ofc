@@ -278,7 +278,7 @@ void ofc_sema_stmt_delete(
 				stmt->io_read.eor);
 			ofc_sema_expr_delete(
 				stmt->io_read.size);
-			ofc_sema_expr_list_delete(
+			ofc_sema_lhs_list_delete(
 				stmt->io_read.iolist);
 			break;
 		case OFC_SEMA_STMT_IO_PRINT:

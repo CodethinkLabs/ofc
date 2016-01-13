@@ -435,7 +435,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 		if (stmt->io.iolist)
 		{
 			s.io_write.iolist
-				= ofc_sema_iolist(
+				= ofc_sema_output_list(
 					scope, stmt->io.iolist);
 			if (!s.io_write.iolist)
 			{
@@ -496,7 +496,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 		else if (data_desc_count > 0)
 		{
 			ofc_sparse_ref_warning(stmt->src,
-				"No IO list in PRINT statement");
+				"No IO list in WRITE statement");
 		}
 
 	}

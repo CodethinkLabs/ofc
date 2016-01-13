@@ -227,6 +227,13 @@ struct ofc_parse_stmt_s
 
 		struct
 		{
+			ofc_parse_call_arg_list_t* params;
+			bool                       has_brakets;
+			ofc_parse_lhs_list_t*      iolist;
+		} io_read;
+
+		struct
+		{
 			ofc_parse_define_file_arg_list_t* args;
 		} io_define_file;
 
