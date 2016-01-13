@@ -624,9 +624,15 @@ static ofc_sema_expr_t* ofc_sema_expr__parameter(
 	if (!name || (name->type != OFC_PARSE_LHS_VARIABLE))
 		return false;
 
-	const ofc_sema_parameter_t* param
-		= ofc_hashmap_find(scope->parameter,
+	const ofc_sema_parameter_t* param;
+	const ofc_sema_scope_t* pscope;
+	for (param = NULL, pscope = scope;
+		pscope && !param; pscope = pscope->parent)
+	{
+		param = ofc_hashmap_find(
+			pscope->parameter,
 			&name->variable.string);
+	}
 	if (!param) return NULL;
 
 	const ofc_sema_typeval_t* ctv
