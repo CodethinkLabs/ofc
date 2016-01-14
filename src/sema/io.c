@@ -230,7 +230,7 @@ static bool ofc_sema_io__data_format_helper_body(
 		   We are an element closer to have length iolist_len. */
 
 		unsigned i;
-		for (i = 0; i < desc->n; i++)
+		for (i = 0; (i < desc->n) && (*iolist_len > 0); i++)
 		{
 			size_t nsize = (sizeof(ofc_parse_format_desc_t*)
 				* (format_list->count + 1));
@@ -255,7 +255,7 @@ static bool ofc_sema_io__data_format_helper_body(
 		   the function again for the sub-format-list. */
 
 		unsigned i;
-		for (i = 0; i < desc->n; i++)
+		for (i = 0; (i < desc->n)  && (*iolist_len > 0); i++)
 		{
 			if (!ofc_sema_io__data_format_helper_r(
 				format_list, desc->repeat, iolist_len))
