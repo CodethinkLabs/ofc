@@ -146,6 +146,8 @@ ofc_sema_expr_list_t* ofc_sema_output_list(
 				scope, parse_expr);
 			if (!expr)
 			{
+				ofc_sparse_ref_error(parse_expr->src,
+					"Bad expression in output list");
 				ofc_sema_expr_list_delete(sema_iolist);
 				return NULL;
 			}
@@ -197,6 +199,8 @@ ofc_sema_lhs_list_t* ofc_sema_input_list(
 				scope, parse_lhs);
 			if (!lhs)
 			{
+				ofc_sparse_ref_error(parse_lhs->src,
+					"Bad variable in input list");
 				ofc_sema_lhs_list_delete(sema_iolist);
 				return NULL;
 			}
