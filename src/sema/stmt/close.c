@@ -275,3 +275,30 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_close(
 	}
 	return as;
 }
+
+bool ofc_sema_stmt_io_close_print(
+	ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt)
+{
+	if (!cs || !stmt || stmt->type != OFC_SEMA_STMT_IO_CLOSE)
+		return false;
+
+	if (!ofc_colstr_atomic_writef(cs, "CLOSE")
+		|| !ofc_colstr_atomic_writef(cs, " ")
+		|| !ofc_colstr_atomic_writef(cs, "(")
+		|| !ofc_sema_expr_print(cs, stmt->io_close.unit))
+		return false;
+
+	if (stmt->io_close.iostat
+		&& (!ofc_colstr_atomic_writef(cs, ",")
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_sema_expr_print(cs,stmt->io_close.iostat)))
+		return false;
+
+	/* TODO - err and status */
+
+	if (!ofc_colstr_atomic_writef(cs, ")"))
+		return false;
+
+	return true;
+}

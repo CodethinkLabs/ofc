@@ -190,3 +190,42 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_print(
 
 	return as;
 }
+
+bool ofc_sema_stmt_print_print(
+	ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt)
+{
+	if (!cs || !stmt || stmt->type != OFC_SEMA_STMT_IO_PRINT)
+		return false;
+
+	if (!ofc_colstr_atomic_writef(cs, "PRINT")
+		|| !ofc_colstr_atomic_writef(cs, " "))
+		return false;
+
+	if (stmt->io_print.format_asterisk)
+	{
+		if (!ofc_colstr_atomic_writef(cs, "*"))
+			return false;
+	}
+	else if (stmt->io_print.format)
+	{
+        if (!ofc_sema_format_print(cs, stmt->io_print.format))
+			return false;
+	}
+	else if (stmt->io_print.format_expr)
+	{
+		if (!ofc_sema_expr_print(cs, stmt->io_print.format_expr))
+			return false;
+	}
+	else
+	{	/* No valid format option for the print statement */
+		return false;
+	}
+
+	if (!ofc_colstr_atomic_writef(cs, ",")
+		|| !ofc_colstr_atomic_writef(cs, " ")
+		|| !ofc_sema_expr_list_print(cs, stmt->io_print.iolist))
+		return false;
+
+	return true;
+}

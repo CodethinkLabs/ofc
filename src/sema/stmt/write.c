@@ -514,12 +514,13 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 static bool ofc_sema_stmt_write__print_optional(
 	ofc_colstr_t* cs, const ofc_sema_expr_t* expr)
 {
-	if (!cs || !expr) return false;
+	if (!cs || !expr)
+		return false;
 
-	if (!ofc_colstr_atomic_writef(cs, ", "))
+	if (!ofc_colstr_atomic_writef(cs, ", ")
+		|| !ofc_sema_expr_print(cs, expr))
 		return false;
-	if (!ofc_sema_expr_print(cs, expr))
-		return false;
+
 	return true;
 }
 
@@ -529,9 +530,9 @@ bool ofc_sema_stmt_write_print(ofc_colstr_t* cs,
 	if (!cs || (stmt->type != OFC_SEMA_STMT_WRITE))
 		return false;
 
-	if (!ofc_colstr_atomic_writef(cs, "WRITE"))
-		return false;
-	if (!ofc_colstr_atomic_writef(cs, "("))
+	if (!ofc_colstr_atomic_writef(cs, "WRITE")
+		|| !ofc_colstr_atomic_writef(cs, " ")
+		|| !ofc_colstr_atomic_writef(cs, "("))
 		return false;
 
 	if (stmt->io_write.stdout)
@@ -543,12 +544,13 @@ bool ofc_sema_stmt_write_print(ofc_colstr_t* cs,
 	{
 		if (!ofc_sema_expr_print(cs,
 			stmt->io_write.unit))
-				return false;
+			return false;
 	}
 
 	if (stmt->io_write.format_ldio)
 	{
-		if (!ofc_colstr_atomic_writef(cs, ", "))
+		if (!ofc_colstr_atomic_writef(cs, ",")
+			|| !!ofc_colstr_atomic_writef(cs, " "))
 			return false;
 		if (!ofc_colstr_atomic_writef(cs, "*"))
 			return false;
@@ -557,26 +559,26 @@ bool ofc_sema_stmt_write_print(ofc_colstr_t* cs,
 	{
 		if (!ofc_sema_stmt_write__print_optional(
 			cs,	stmt->io_write.format_expr))
-				return false;
+			return false;
 	}
 
 	if (stmt->io_write.iostat)
 	{
 		if (!ofc_sema_stmt_write__print_optional(
 			cs, stmt->io_write.iostat))
-				return false;
+			return false;
 	}
 	if (stmt->io_write.rec)
 	{
 		if (!ofc_sema_stmt_write__print_optional(
 			cs,	stmt->io_write.rec))
-				return false;
+			return false;
 	}
 	if (stmt->io_write.err)
 	{
 		if (!ofc_sema_stmt_write__print_optional(
 			cs,	stmt->io_write.err))
-				return false;
+			return false;
 	}
 
 	if (!ofc_colstr_atomic_writef(cs, ")"))
@@ -584,13 +586,13 @@ bool ofc_sema_stmt_write_print(ofc_colstr_t* cs,
 
 	if (stmt->io_write.iolist)
 	{
-		if (!ofc_colstr_atomic_writef(cs, " "))
+		if (!ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_sema_expr_list_print(cs,
+				stmt->io_write.iolist))
 			return false;
-
-		if (!ofc_sema_expr_list_print(cs,
-			stmt->io_write.iolist))
-				return false;
 	}
+
+	/* TODO - Handle advance */
 
 	return true;
 }

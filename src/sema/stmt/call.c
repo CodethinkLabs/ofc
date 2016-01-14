@@ -133,3 +133,25 @@ ofc_sema_stmt_t* ofc_sema_stmt_call(
 
 	return as;
 }
+
+bool ofc_sema_stmt_call_print(
+	ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt)
+{
+	if (!cs || (stmt->type != OFC_SEMA_STMT_CALL))
+		return false;
+
+	if (!ofc_colstr_atomic_writef(cs, "CALL")
+		|| !ofc_colstr_atomic_writef(cs, " ")
+		|| !ofc_sema_decl_print_name(cs, stmt->call.subroutine))
+		return false;
+
+	if (stmt->call.args
+		&& (!ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_colstr_atomic_writef(cs, "(")
+			|| !ofc_sema_expr_list_print(cs, stmt->call.args)
+			|| !ofc_colstr_atomic_writef(cs, ")")))
+		return false;
+
+	return true;
+}

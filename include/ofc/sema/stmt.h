@@ -45,6 +45,9 @@ typedef enum
 	OFC_SEMA_STMT_RETURN,
 	OFC_SEMA_STMT_ENTRY,
 
+	/* Enum order must mach ofc_sema_stmt__name array
+       in src/sema/stmt.c for error printing. */
+
 	OFC_SEMA_STMT_COUNT
 } ofc_sema_stmt_e;
 

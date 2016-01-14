@@ -17,6 +17,8 @@
 
 bool ofc_sema_stmt_assignment_print(ofc_colstr_t* cs,
 	const ofc_sema_stmt_t* stmt);
+bool ofc_sema_stmt_read_print(ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt);
 bool ofc_sema_stmt_write_print(ofc_colstr_t* cs,
 	const ofc_sema_stmt_t* stmt);
 bool ofc_sema_stmt_if_comp_print(ofc_colstr_t* cs,
@@ -42,6 +44,20 @@ bool ofc_sema_go_to_computed_print(ofc_colstr_t* cs,
 bool ofc_sema_stmt_stop_pause_print(ofc_colstr_t* cs,
 	const ofc_sema_stmt_t* stmt);
 bool ofc_sema_stmt_assign_print(ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt);
+bool ofc_sema_stmt_call_print(ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt);
+bool ofc_sema_stmt_io_position_print(ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt);
+bool ofc_sema_stmt_io_close_print(ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt);
+bool ofc_sema_stmt_print_print(ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt);
+bool ofc_sema_stmt_io_open_print(ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt);
+bool ofc_sema_stmt_io_inquire_print(ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt);
+bool ofc_sema_stmt_return_print(ofc_colstr_t* cs,
 	const ofc_sema_stmt_t* stmt);
 
 
@@ -551,8 +567,31 @@ bool ofc_sema_stmt_print(
 		case OFC_SEMA_STMT_ASSIGNMENT:
 			return ofc_sema_stmt_assignment_print(cs, stmt);
 
+		case OFC_SEMA_STMT_ASSIGN:
+			return ofc_sema_stmt_assign_print(cs, stmt);
+
 		case OFC_SEMA_STMT_WRITE:
 			return ofc_sema_stmt_write_print(cs, stmt);
+
+		case OFC_SEMA_STMT_IO_READ:
+			return ofc_sema_stmt_read_print(cs, stmt);
+
+		case OFC_SEMA_STMT_IO_PRINT:
+			return ofc_sema_stmt_print_print(cs, stmt);
+
+		case OFC_SEMA_STMT_IO_REWIND:
+		case OFC_SEMA_STMT_IO_END_FILE:
+		case OFC_SEMA_STMT_IO_BACKSPACE:
+			return ofc_sema_stmt_io_position_print(cs, stmt);
+
+		case OFC_SEMA_STMT_IO_OPEN:
+			return ofc_sema_stmt_io_open_print(cs, stmt);
+
+		case OFC_SEMA_STMT_IO_CLOSE:
+			return ofc_sema_stmt_io_close_print(cs, stmt);
+
+		case OFC_SEMA_STMT_IO_INQUIRE:
+			return ofc_sema_stmt_io_inquire_print(cs, stmt);
 
 		case OFC_SEMA_STMT_CONTINUE:
 			return ofc_colstr_atomic_writef(cs, "CONTINUE");
@@ -588,14 +627,61 @@ bool ofc_sema_stmt_print(
 		case OFC_SEMA_STMT_DO_WHILE_BLOCK:
 			return ofc_sema_stmt_do_while_block_print(cs, stmt);
 
-		case OFC_SEMA_STMT_ASSIGN:
-			return ofc_sema_stmt_assign_print(cs, stmt);
+		case OFC_SEMA_STMT_CALL:
+			return ofc_sema_stmt_call_print(cs, stmt);
+
+		case OFC_SEMA_STMT_RETURN:
+			return ofc_sema_stmt_return_print(cs, stmt);
+
+		case OFC_SEMA_STMT_ENTRY:
+			break;
 
 		default:
 			break;
 	}
 
 	return false;
+}
+
+static const char* ofc_sema_stmt__name[] =
+{
+	"ASSIGNMENT",
+	"ASSIGN",
+	"WRITE",
+	"IO_READ",
+	"IO_PRINT",
+	"IO_REWIND",
+	"IO_END_FILE",
+	"IO_BACKSPACE",
+	"IO_OPEN",
+	"IO_CLOSE",
+	"IO_INQUIRE",
+	"CONTINUE",
+	"IF_COMPUTED",
+	"IF_STATEMENT",
+	"IF_THEN",
+	"STOP",
+	"PAUSE",
+	"GO_TO",
+	"GO_TO_COMPUTED",
+	"DO_LABEL",
+	"DO_BLOCK",
+	"DO_WHILE",
+	"DO_WHILE_BLOCK",
+	"CALL",
+	"RETURN",
+	"ENTRY",
+
+	NULL
+};
+
+static const char* ofc_sema_stmt__str_rep(
+	const ofc_sema_stmt_t* stmt)
+{
+	if (!stmt || (stmt->type >= OFC_SEMA_STMT_COUNT))
+		return "<ERROR: SEMA STATEMENT NOT MATCHED>";
+
+	return ofc_sema_stmt__name[stmt->type];
 }
 
 bool ofc_sema_stmt_list_print(
@@ -625,7 +711,11 @@ bool ofc_sema_stmt_list_print(
 
 		if (!ofc_sema_stmt_print(cs, indent,
 			stmt_list->stmt[i]))
+		{
+			fprintf(stderr, "\nError: Failed to print statement: %s",
+				ofc_sema_stmt__str_rep(stmt_list->stmt[i]));
 			return false;
+		}
 	}
 	return true;
 }

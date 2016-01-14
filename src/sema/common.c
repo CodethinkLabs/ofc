@@ -107,12 +107,50 @@ bool ofc_sema_common_save(
 }
 
 
+bool ofc_sema_common_print(
+	ofc_colstr_t* cs,
+	unsigned indent,
+	const ofc_sema_common_t* common)
+{
+	if (!cs || !common)
+		return false;
+
+	if (!ofc_colstr_newline(cs, indent, NULL)
+		|| !ofc_colstr_atomic_writef(cs, "COMMON")
+		|| !ofc_colstr_atomic_writef(cs, " "))
+		return false;
+
+	if (!ofc_str_ref_empty(common->name))
+	{
+		if (!ofc_colstr_atomic_writef(cs, "/")
+			|| !ofc_str_ref_print(cs, common->name)
+			|| !ofc_colstr_atomic_writef(cs, "/"))
+			return false;
+	}
+
+	unsigned i;
+	for (i = 0; i < common->count; i++)
+	{
+		if (i > 0)
+		{
+			if (!ofc_colstr_atomic_writef(cs, ",")
+				|| !ofc_colstr_atomic_writef(cs, " "))
+			return false;
+		}
+
+		if (!ofc_sema_decl_print_name(
+			cs, common->decl[i]))
+			return false;
+	}
+
+	return true;
+}
+
 static const ofc_str_ref_t* ofc_sema_common__key(
 	const ofc_sema_common_t* common)
 {
 	return (common ? &common->name : NULL);
 }
-
 
 ofc_sema_common_map_t* ofc_sema_common_map_create(
 	bool case_sensitive)
@@ -189,5 +227,24 @@ bool ofc_sema_common_map_add(
 		return false;
 
 	map->common[map->count++] = common;
+	return true;
+}
+
+bool ofc_sema_common_map_print(
+	ofc_colstr_t* cs,
+	unsigned indent,
+	const ofc_sema_common_map_t* map)
+{
+	if (!cs || !map)
+		return false;
+
+	unsigned i;
+	for (i = 0; i < map->count; i++)
+	{
+		if (!ofc_sema_common_print(
+			cs, indent, map->common[i]))
+			return false;
+	}
+
 	return true;
 }

@@ -984,12 +984,48 @@ static bool ofc_sema_scope_body__print(
 	if (!cs || !scope)
 		return false;
 
-	return (ofc_sema_spec_list_print(cs, indent, scope->spec->list)
-		&& ofc_sema_decl_list_print(cs, indent, scope->decl)
-		&& ofc_sema_decl_list_function_print(cs, indent, scope->decl)
-		&& ofc_sema_equiv_list_print(cs, indent, scope->equiv)
-		&& ofc_sema_stmt_list_print(cs, indent, scope->label, scope->stmt)
-		&& ofc_sema_format_label_list_print(cs, indent, scope->label->format));
+	/* TODO - Use scope error printing preferably with source location. */
+
+	if (!ofc_sema_spec_list_print(cs, indent, scope->spec->list))
+	{
+		fprintf(stderr, "\nError: Failed to print spec list");
+		return false;
+	}
+	if (!ofc_sema_decl_list_print(cs, indent, scope->decl))
+	{
+		fprintf(stderr, "\nError: Failed to print decl list");
+		return false;
+	}
+	if (!ofc_sema_decl_list_stmt_func_print(cs, indent, scope->decl))
+	{
+		fprintf(stderr, "\nError: Failed to print stmt func list");
+		return false;
+	}
+
+	if (scope->common
+		&& !ofc_sema_common_map_print(cs, indent, scope->common))
+	{
+		fprintf(stderr, "\nError: Failed to print common map");
+		return false;
+	}
+
+	if (!ofc_sema_equiv_list_print(cs, indent, scope->equiv))
+	{
+		fprintf(stderr, "\nError: Failed to print equiv list");
+		return false;
+	}
+	if (!ofc_sema_stmt_list_print(cs, indent, scope->label, scope->stmt))
+	{
+		fprintf(stderr, "\nError: Failed to print stmt list");
+		return false;
+	}
+	if (!ofc_sema_format_label_list_print(cs, indent, scope->label->format))
+	{
+		fprintf(stderr, "\nError: Failed to print format label list");
+		return false;
+	}
+
+	return true;
 }
 
 bool ofc_sema_scope_print(
@@ -997,7 +1033,6 @@ bool ofc_sema_scope_print(
 	const ofc_sema_scope_t* scope)
 {
 	const char* kwstr = NULL;
-	bool has_args = false;
 	switch (scope->type)
 	{
 		case OFC_SEMA_SCOPE_GLOBAL:
@@ -1007,11 +1042,9 @@ bool ofc_sema_scope_print(
 			break;
 		case OFC_SEMA_SCOPE_SUBROUTINE:
 			kwstr = "SUBROUTINE";
-			has_args = true;
 			break;
 		case OFC_SEMA_SCOPE_FUNCTION:
 			kwstr = "FUNCTION";
-			has_args = true;
 			break;
 		case OFC_SEMA_SCOPE_BLOCK_DATA:
 			kwstr = "BLOCK DATA";
@@ -1029,8 +1062,13 @@ bool ofc_sema_scope_print(
 
 	if (kwstr)
 	{
-		if (!ofc_colstr_newline(cs, indent, NULL))
-			return false;
+		if (scope->type != OFC_SEMA_SCOPE_FUNCTION)
+		{
+			/* Decl function printing will handle the new lines
+			   as we need to specify the return type. */
+			if (!ofc_colstr_newline(cs, indent, NULL))
+				return false;
+		}
 
 		if (!ofc_colstr_atomic_writef(cs, "%s ", kwstr))
 			return false;
@@ -1042,16 +1080,15 @@ bool ofc_sema_scope_print(
 					return false;
 		}
 
-		if (has_args)
-		{
-			if (!ofc_colstr_atomic_writef(cs, "(")
+		if (scope->args
+			&& (!ofc_colstr_atomic_writef(cs, "(")
 				|| !ofc_sema_arg_list_print(cs, scope->args)
-				|| !ofc_colstr_atomic_writef(cs, ")"))
-				return false;
-		}
+				|| !ofc_colstr_atomic_writef(cs, ")")))
+			return false;
 	}
 
-	if (!ofc_sema_scope_body__print(cs, indent, scope))
+	if ((scope->type != OFC_SEMA_SCOPE_GLOBAL)
+		&& !ofc_sema_scope_body__print(cs, indent, scope))
 		return false;
 
 	if (kwstr)
@@ -1071,6 +1108,12 @@ bool ofc_sema_scope_print(
 	if (scope->child
 		&& !ofc_sema_scope_child__print(cs, indent, scope->child))
 		return false;
+
+	if (!ofc_sema_decl_list_procedure_print(cs, indent, scope->decl))
+	{
+		fprintf(stderr, "\nError: Failed to print procedure list");
+		return false;
+	}
 
 	return true;
 }

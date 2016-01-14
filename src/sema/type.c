@@ -29,8 +29,8 @@ static const char* ofc_sema_type__name[] =
 	"CHARACTER",
 	"STRUCTURE",
 	"POINTER",
-	"SUBROUTINE",
 	"FUNCTION",
+	"SUBROUTINE",
 
 	NULL
 };
@@ -959,8 +959,12 @@ bool ofc_sema_type_print(
 	ofc_colstr_t* cs,
 	const ofc_sema_type_t* type)
 {
-	if (!cs || !type) return false;
+	if (!cs || !type)
+		return false;
 
-	return ofc_colstr_atomic_writef(cs, "%.*s",
+	if (type->type >= OFC_SEMA_TYPE_COUNT)
+		return false;
+
+	return ofc_colstr_atomic_writef(cs, "%s",
 		ofc_sema_type__name[type->type]);
 }

@@ -1112,3 +1112,92 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_inquire(
 	}
 	return as;
 }
+
+static bool ofc_sema_inquire_print_elem(
+	ofc_colstr_t* cs,
+	bool* first,
+	const ofc_sema_lhs_t* elem)
+{
+	if (!cs || !first || !elem)
+		return false;
+
+	if (!*first)
+	{
+		if (!ofc_colstr_atomic_writef(cs, ",")
+			|| !ofc_colstr_atomic_writef(cs, " "))
+			return false;
+	}
+	else
+	{
+		*first = false;
+	}
+
+	return ofc_sema_lhs_print(cs, elem);
+}
+
+bool ofc_sema_stmt_io_inquire_print(
+	ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt)
+{
+	if (!cs || !stmt
+		|| stmt->type != OFC_SEMA_STMT_IO_INQUIRE)
+		return false;
+
+	if (!ofc_colstr_atomic_writef(cs, "INQUIRE")
+		|| !ofc_colstr_atomic_writef(cs, " ")
+		|| !ofc_colstr_atomic_writef(cs, "("))
+		return false;
+
+	bool first = true;
+
+    if (stmt->io_inquire.access)
+		if (!ofc_sema_inquire_print_elem(cs, &first, stmt->io_inquire.access))      return false;
+	if (stmt->io_inquire.action)
+		if (!ofc_sema_inquire_print_elem(cs, &first, stmt->io_inquire.action))      return false;
+	if (stmt->io_inquire.blank)
+		if (!ofc_sema_inquire_print_elem(cs, &first, stmt->io_inquire.blank))       return false;
+	if (stmt->io_inquire.delim)
+		if (!ofc_sema_inquire_print_elem(cs, &first, stmt->io_inquire.delim))       return false;
+	if (stmt->io_inquire.direct)
+		if (!ofc_sema_inquire_print_elem(cs, &first, stmt->io_inquire.direct))      return false;
+	if (stmt->io_inquire.exist)
+		if (!ofc_sema_inquire_print_elem(cs, &first, stmt->io_inquire.exist))       return false;
+	if (stmt->io_inquire.form)
+		if (!ofc_sema_inquire_print_elem(cs, &first, stmt->io_inquire.form))        return false;
+	if (stmt->io_inquire.formatted)
+		if (!ofc_sema_inquire_print_elem(cs, &first, stmt->io_inquire.formatted))   return false;
+	if (stmt->io_inquire.iostat)
+		if (!ofc_sema_inquire_print_elem(cs, &first, stmt->io_inquire.iostat))      return false;
+	if (stmt->io_inquire.name)
+		if (!ofc_sema_inquire_print_elem(cs, &first, stmt->io_inquire.name))        return false;
+	if (stmt->io_inquire.named)
+		if (!ofc_sema_inquire_print_elem(cs, &first, stmt->io_inquire.named))       return false;
+	if (stmt->io_inquire.nextrec)
+		if (!ofc_sema_inquire_print_elem(cs, &first, stmt->io_inquire.nextrec))     return false;
+	if (stmt->io_inquire.number)
+		if (!ofc_sema_inquire_print_elem(cs, &first, stmt->io_inquire.number))      return false;
+	if (stmt->io_inquire.opened)
+		if (!ofc_sema_inquire_print_elem(cs, &first, stmt->io_inquire.opened))      return false;
+	if (stmt->io_inquire.pad)
+		if (!ofc_sema_inquire_print_elem(cs, &first, stmt->io_inquire.pad))         return false;
+	if (stmt->io_inquire.position)
+		if (!ofc_sema_inquire_print_elem(cs, &first, stmt->io_inquire.position))    return false;
+	if (stmt->io_inquire.read)
+		if (!ofc_sema_inquire_print_elem(cs, &first, stmt->io_inquire.read))        return false;
+	if (stmt->io_inquire.readwrite)
+		if (!ofc_sema_inquire_print_elem(cs, &first, stmt->io_inquire.readwrite))   return false;
+	if (stmt->io_inquire.recl)
+		if (!ofc_sema_inquire_print_elem(cs, &first, stmt->io_inquire.recl))        return false;
+	if (stmt->io_inquire.sequential)
+		if (!ofc_sema_inquire_print_elem(cs, &first, stmt->io_inquire.sequential))  return false;
+	if (stmt->io_inquire.unformatted)
+		if (!ofc_sema_inquire_print_elem(cs, &first, stmt->io_inquire.unformatted)) return false;
+	if (stmt->io_inquire.write)
+		if (!ofc_sema_inquire_print_elem(cs, &first, stmt->io_inquire.write))       return false;
+
+	if (!ofc_colstr_atomic_writef(cs, ")"))
+		return false;
+
+	return true;
+}
+

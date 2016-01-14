@@ -871,3 +871,29 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 	}
 	return as;
 }
+
+bool ofc_sema_stmt_io_open_print(
+	ofc_colstr_t* cs,
+	ofc_sema_stmt_t* stmt)
+{
+	if (!cs || !stmt || stmt->type != OFC_SEMA_STMT_IO_OPEN)
+		return false;
+
+	if (!ofc_colstr_atomic_writef(cs, "OPEN")
+		|| !ofc_colstr_atomic_writef(cs, " ")
+		|| !ofc_colstr_atomic_writef(cs, "(")
+		|| !ofc_sema_expr_print(cs, stmt->io_open.unit))
+		return false;
+
+	if (stmt->io_open.iostat
+		&& (!ofc_colstr_atomic_writef(cs, ",")
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_sema_expr_print(cs,stmt->io_open.iostat)))
+		return false;
+
+	if (!ofc_colstr_atomic_writef(cs, ")"))
+		return false;
+
+	return true;
+
+}

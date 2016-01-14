@@ -52,6 +52,11 @@ bool ofc_sema_common_define(
 bool ofc_sema_common_save(
 	ofc_sema_common_t* common);
 
+bool ofc_sema_common_print(
+	ofc_colstr_t* cs,
+	unsigned indent,
+	const ofc_sema_common_t* common);
+
 
 ofc_sema_common_map_t* ofc_sema_common_map_create(
 	bool case_sensitive);
@@ -65,4 +70,8 @@ bool ofc_sema_common_map_add(
 	ofc_sema_common_map_t* map,
 	ofc_sema_common_t* common);
 
+bool ofc_sema_common_map_print(
+	ofc_colstr_t* cs,
+	unsigned indent,
+	const ofc_sema_common_map_t* map);
 #endif

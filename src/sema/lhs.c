@@ -434,12 +434,12 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 				/* This should never happen. */
 				return NULL;
 			}
-			fdecl->is_return = true;
 
 			const ofc_sema_type_t* rtype
 				= ofc_sema_decl_base_type(fdecl);
 			decl = ofc_sema_decl_create(rtype, lhs->variable);
 			if (!decl) return NULL;
+			decl->is_return = true;
 
 			if (!ofc_sema_decl_list_add(
 				root->decl, decl))
@@ -1364,3 +1364,27 @@ ofc_sema_lhs_list_t* ofc_sema_lhs_list_implicit_do(
 	return ofc_sema_lhs_list__implicit_do(
 		scope, scope, id);
 }
+
+
+bool ofc_sema_lhs_list_print(
+	ofc_colstr_t* cs,
+	const ofc_sema_lhs_list_t* lhs_list)
+{
+	if (!cs || !lhs_list) return false;
+
+	unsigned i;
+	for (i = 0; i < lhs_list->count; i++)
+	{
+		if (!ofc_sema_lhs_print(cs, lhs_list->lhs[i]))
+			return false;
+
+		if ((lhs_list->count > 1)
+			&& (i < lhs_list->count - 1))
+		{
+			if (!ofc_colstr_atomic_writef(cs, ", "))
+				return false;
+		}
+	}
+	return true;
+}
+

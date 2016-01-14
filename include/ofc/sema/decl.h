@@ -191,7 +191,10 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 bool ofc_sema_decl_print_name(ofc_colstr_t* cs,
 	const ofc_sema_decl_t* decl);
 
-bool ofc_sema_decl_list_function_print(
+bool ofc_sema_decl_list_stmt_func_print(
+	ofc_colstr_t* cs, unsigned indent,
+	const ofc_sema_decl_list_t* decl_list);
+bool ofc_sema_decl_list_procedure_print(
 	ofc_colstr_t* cs, unsigned indent,
 	const ofc_sema_decl_list_t* decl_list);
 

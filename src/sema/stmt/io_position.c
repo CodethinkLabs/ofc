@@ -227,3 +227,18 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_position(
 	}
 	return as;
 }
+
+bool ofc_sema_stmt_io_position_print(
+	ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt)
+{
+	if (!cs || !stmt)
+		return false;
+
+	if ((stmt->type != OFC_SEMA_STMT_IO_REWIND)
+		|| (stmt->type != OFC_SEMA_STMT_IO_END_FILE)
+		|| (stmt->type != OFC_SEMA_STMT_IO_BACKSPACE))
+		return false;
+
+	return true;
+}

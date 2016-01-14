@@ -51,3 +51,21 @@ ofc_sema_stmt_t* ofc_sema_stmt_return(
 
 	return as;
 }
+
+bool ofc_sema_stmt_return_print(
+	ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt)
+{
+	if (!cs || !stmt || (stmt->type != OFC_SEMA_STMT_RETURN))
+		return false;
+
+	if (!ofc_colstr_atomic_writef(cs, "RETURN"))
+		return false;
+
+	if (stmt->alt_return
+		&& (!ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_sema_expr_print(cs, stmt->alt_return)))
+		return false;
+
+	return true;
+}

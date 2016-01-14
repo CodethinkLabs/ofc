@@ -1383,13 +1383,15 @@ bool ofc_sema_decl_print_name(ofc_colstr_t* cs,
 bool ofc_sema_decl_print(ofc_colstr_t* cs,
 	const ofc_sema_decl_t* decl)
 {
-	if (!decl) return false;
+	if (!decl)
+		return false;
 
 	const ofc_sema_type_t* type = decl->type;
-	if (ofc_sema_decl_is_procedure(decl))
+	if (ofc_sema_decl_is_function(decl))
 		type = type->subtype;
 
-	if (!type) return false;
+	if (!type)
+		return false;
 
 	/* TODO - Handle POINTER and STRUCTURE declarations. */
 
@@ -1471,7 +1473,36 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 	return true;
 }
 
-bool ofc_sema_decl_list_function_print(
+bool ofc_sema_decl_list_stmt_func_print(
+	ofc_colstr_t* cs, unsigned indent,
+	const ofc_sema_decl_list_t* decl_list)
+{
+    if (!cs || !decl_list)
+		return false;
+
+	unsigned i;
+	for (i = 0; i < decl_list->count; i++)
+	{
+		ofc_sema_decl_t* decl = decl_list->decl[i];
+		if (decl->func
+			&& (decl->func->type == OFC_SEMA_SCOPE_STMT_FUNC))
+		{
+			if (!ofc_colstr_newline(cs, indent, NULL)
+				|| !ofc_colstr_atomic_writef(cs, "%.*s(",
+					decl->name.size, decl->name.base)
+				|| !ofc_sema_arg_list_print(cs,
+					decl->func->args)
+				|| !ofc_colstr_atomic_writef(cs, ")")
+				|| !ofc_colstr_atomic_writef(cs, " = ")
+				|| !ofc_sema_scope_print(cs, indent, decl->func))
+				return false;
+		}
+	}
+
+	return true;
+}
+
+bool ofc_sema_decl_list_procedure_print(
 	ofc_colstr_t* cs, unsigned indent,
 	const ofc_sema_decl_list_t* decl_list)
 {
@@ -1484,26 +1515,27 @@ bool ofc_sema_decl_list_function_print(
 		ofc_sema_decl_t* decl = decl_list->decl[i];
 		if (decl->func)
 		{
-			if (!ofc_colstr_newline(cs, indent, NULL)
-				|| !ofc_colstr_atomic_writef(cs, "%.*s(",
-					decl->name.size, decl->name.base)
-				|| !ofc_sema_arg_list_print(cs,
-					decl->func->args)
-				|| !ofc_colstr_atomic_writef(cs, ")"))
-				return false;
-
-			if (decl->func->type == OFC_SEMA_SCOPE_STMT_FUNC
-				? !ofc_colstr_atomic_writef(cs, " = ")
-				: !ofc_colstr_atomic_writef(cs, "\n"))
-				return false;
-
-			if (!ofc_sema_scope_print(cs, indent, decl->func))
-				return false;
+			if (decl->func->type == OFC_SEMA_SCOPE_SUBROUTINE)
+			{
+				if (!ofc_colstr_newline(cs, indent, NULL)
+					|| !ofc_sema_scope_print(cs, indent, decl->func))
+					return false;
+			}
+			else if (decl->func->type == OFC_SEMA_SCOPE_FUNCTION)
+			{
+				if (!ofc_colstr_newline(cs, indent, NULL)
+					|| !ofc_colstr_newline(cs, indent, NULL)
+					|| !ofc_sema_type_print(cs, decl->type->subtype)
+					|| !ofc_colstr_atomic_writef(cs, " ")
+					|| !ofc_sema_scope_print(cs, indent, decl->func))
+					return false;
+			}
 		}
 	}
 
 	return true;
 }
+
 
 bool ofc_sema_decl_list_print(
 	ofc_colstr_t* cs, unsigned indent,
@@ -1515,6 +1547,12 @@ bool ofc_sema_decl_list_print(
 	unsigned i;
 	for (i = 0; i < decl_list->count; i++)
 	{
+		/* We have assumed we do not want a decl printed for a subroutine
+		   but this may change.  For now skip it in printing. */
+		if (ofc_sema_decl_is_subroutine(decl_list->decl[i])
+			|| decl_list->decl[i]->is_return)
+			continue;
+
 		if (!ofc_colstr_newline(cs, indent, NULL)
 			|| !ofc_sema_decl_print(cs,
 				decl_list->decl[i]))
