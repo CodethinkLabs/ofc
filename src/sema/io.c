@@ -213,67 +213,105 @@ ofc_sema_lhs_list_t* ofc_sema_input_list(
 	return sema_iolist;
 }
 
+static bool ofc_sema_io__data_format_helper_r(
+	ofc_parse_format_desc_list_t* format_list,
+	const ofc_parse_format_desc_list_t* format_src,
+	unsigned* iolist_len);
+
+static bool ofc_sema_io__data_format_helper_body(
+	ofc_parse_format_desc_list_t* format_list,
+	ofc_parse_format_desc_t* desc,
+	unsigned* iolist_len)
+{
+	if (ofc_parse_format_is_data_desc(desc))
+	{
+		/* If it's a data descriptor, we add it to the list
+		   and call the function again to the next offset
+		   We are an element closer to have length iolist_len. */
+
+		unsigned i;
+		for (i = 0; i < desc->n; i++)
+		{
+			size_t nsize = (sizeof(ofc_parse_format_desc_t*)
+				* (format_list->count + 1));
+			ofc_parse_format_desc_t** ndesc
+				= (ofc_parse_format_desc_t**)realloc(
+					format_list->desc, nsize);
+			if (!ndesc) return false;
+
+			ofc_parse_format_desc_t* cdesc
+				= ofc_parse_format_desc_copy(desc);
+			if (!cdesc) return false;
+
+			format_list->desc = ndesc;
+			format_list->desc[format_list->count++] = cdesc;
+
+			(*iolist_len)--;
+		}
+	}
+	else if (desc->type == OFC_PARSE_FORMAT_DESC_REPEAT)
+	{
+		/* If the descriptor is of type repeat, we call
+		   the function again for the sub-format-list. */
+
+		unsigned i;
+		for (i = 0; i < desc->n; i++)
+		{
+			if (!ofc_sema_io__data_format_helper_r(
+				format_list, desc->repeat, iolist_len))
+				return false;
+		}
+	}
+	else
+	{
+		/* If it's a different type, we ignore it
+		   and continue with the next offset. */
+	}
+
+	return true;
+}
+
+static bool ofc_sema_io__data_format_helper_r(
+	ofc_parse_format_desc_list_t* format_list,
+	const ofc_parse_format_desc_list_t* format_src,
+	unsigned* iolist_len)
+{
+	unsigned offset;
+	for (offset = 0; (*iolist_len > 0)
+		&& (offset < format_src->count); offset++)
+	{
+		if (!ofc_sema_io__data_format_helper_body(
+			format_list, format_src->desc[offset], iolist_len))
+			return false;
+	}
+
+	return true;
+}
+
 static bool ofc_sema_io__data_format_helper(
 	ofc_parse_format_desc_list_t* format_list,
 	const ofc_parse_format_desc_list_t* format_src,
-	unsigned* iolist_len, unsigned* offset)
+	unsigned iolist_len)
 {
-	if (!format_list || !format_src) return false;
+	if (!format_list || !format_src)
+		return false;
 
-	/* If *iolist_len == 0 then
-	 * format_list has iolist_len length*/
-	for (; *iolist_len > 0; (*offset)++)
+	unsigned offset;
+	unsigned remain;
+	for (offset = 0, remain = iolist_len; remain > 0; offset++)
 	{
-		if (format_src->count <= *offset) *offset = 0;
-
-		ofc_parse_format_desc_t* desc
-			= format_src->desc[*offset];
-
-		if (ofc_parse_format_is_data_desc(desc))
+		if (offset >= format_src->count)
 		{
-			/* If it's a data descriptor, we add it to the list
-			   and call the function again to the next offset
-			   We are an element closer to have length iolist_len. */
-
-			unsigned i;
-			for (i = 0; i < desc->n; i++)
-			{
-				size_t nsize = (sizeof(ofc_parse_format_desc_t*)
-					* (format_list->count + 1));
-				ofc_parse_format_desc_t** ndesc
-					= (ofc_parse_format_desc_t**)realloc(
-						format_list->desc, nsize);
-				if (!ndesc) return false;
-
-				ofc_parse_format_desc_t* cdesc
-					= ofc_parse_format_desc_copy(desc);
-				if (!cdesc) return false;
-
-				format_list->desc = ndesc;
-				format_list->desc[format_list->count++] = cdesc;
-
-				(*iolist_len)--;
-			}
+			/* If we didn't see a data descriptor
+			   then stop iterating. */
+			if (remain == iolist_len)
+				break;
+			offset = 0;
 		}
-		else if (desc->type == OFC_PARSE_FORMAT_DESC_REPEAT)
-		{
-			/* If the descriptor is of type repeat, we call
-			   the function again for the sub-format-list. */
 
-			unsigned i;
-			for (i = 0; i < desc->n; i++)
-			{
-				unsigned repeat_offset = 0;
-				if (!ofc_sema_io__data_format_helper(
-					format_list, desc->repeat, iolist_len, &repeat_offset))
-					return false;
-			}
-		}
-		else
-		{
-			/* If it's a different type, we ignore it
-			   and continue with the next offset. */
-		}
+		if (!ofc_sema_io__data_format_helper_body(
+			format_list, format_src->desc[offset], &remain))
+			return false;
 	}
 
 	return true;
@@ -292,11 +330,8 @@ ofc_parse_format_desc_list_t* ofc_sema_io_data_format(
 	format_list->count = 0;
 	format_list->desc = NULL;
 
-	unsigned i = iolist_len;
-	unsigned offset = 0;
-
 	if (!ofc_sema_io__data_format_helper(
-		format_list, format->src, &i, &offset))
+		format_list, format->src, iolist_len))
 	{
 		ofc_parse_format_desc_list_delete(format_list);
 		return NULL;
