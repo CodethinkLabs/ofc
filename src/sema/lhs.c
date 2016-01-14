@@ -1110,6 +1110,8 @@ bool ofc_sema_lhs_list_init(
 		if (!success)
 		{
 			/* TODO - Fail atomically? */
+			ofc_sparse_ref_error(init_elem->src,
+				"Invalid initializer");
 			return false;
 		}
 	}
