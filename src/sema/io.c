@@ -296,7 +296,17 @@ static bool ofc_sema_io__data_format_helper(
 	if (!format_list || !format_src)
 		return false;
 
+	/* This is to handle "forced reversion"
+	   http://www.obliquity.com/computer/fortran/format.html */
+	unsigned repeat_from = 0;
 	unsigned offset;
+	for (offset = 0; offset < format_src->count; offset++)
+	{
+		if (format_src->desc[offset]->type
+			== OFC_PARSE_FORMAT_DESC_REPEAT)
+			repeat_from = offset;
+	}
+
 	unsigned remain;
 	for (offset = 0, remain = iolist_len; remain > 0; offset++)
 	{
@@ -306,7 +316,13 @@ static bool ofc_sema_io__data_format_helper(
 			   then stop iterating. */
 			if (remain == iolist_len)
 				break;
-			offset = 0;
+
+			offset = repeat_from;
+
+			/* Reset the original length to the current length
+			   so we can detect if there's no data descriptor
+			   after the repeat_from offset. */
+			iolist_len = remain;
 		}
 
 		if (!ofc_sema_io__data_format_helper_body(
