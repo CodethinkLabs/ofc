@@ -281,6 +281,7 @@ static ofc_sema_lhs_t* ofc_sema_lhs_member(
 
 static ofc_sema_lhs_t* ofc_sema__lhs(
 	ofc_sema_scope_t* scope,
+	ofc_sema_scope_t* decl_scope,
 	const ofc_parse_lhs_t* lhs,
 	bool is_expr)
 {
@@ -304,8 +305,8 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 		case OFC_PARSE_LHS_MEMBER_TYPE:
 		case OFC_PARSE_LHS_MEMBER_STRUCTURE:
 			{
-				ofc_sema_lhs_t* parent
-					= ofc_sema_lhs(scope, lhs->parent);
+				ofc_sema_lhs_t* parent = ofc_sema__lhs(
+					scope, decl_scope, lhs->parent, false);
 				if (!parent) return NULL;
 
 				/* TODO - Check dereference type against structure type. */
@@ -335,8 +336,8 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 
 		case OFC_PARSE_LHS_ARRAY:
 			{
-				ofc_sema_lhs_t* parent
-					= ofc_sema_lhs(scope, lhs->parent);
+				ofc_sema_lhs_t* parent = ofc_sema__lhs(
+					scope, decl_scope, lhs->parent, false);
 				if (!parent) return NULL;
 
 				if (!ofc_sema_type_is_array(parent->data_type))
@@ -454,7 +455,7 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 		if (!decl)
 		{
 			decl = ofc_sema_decl_implicit_lhs(
-				scope, lhs);
+				decl_scope, lhs);
 			if (!decl)
 			{
 				ofc_sparse_ref_error(lhs->src,
@@ -516,7 +517,7 @@ ofc_sema_lhs_t* ofc_sema_lhs(
 	const ofc_parse_lhs_t* lhs)
 {
 	return ofc_sema__lhs(
-		scope, lhs, false);
+		scope, scope, lhs, false);
 }
 
 ofc_sema_lhs_t* ofc_sema_lhs_from_expr(
@@ -537,10 +538,11 @@ ofc_sema_lhs_t* ofc_sema_lhs_from_expr(
 
 ofc_sema_lhs_t* ofc_sema_lhs_in_expr(
 	ofc_sema_scope_t* scope,
+	ofc_sema_scope_t* decl_scope,
 	const ofc_parse_lhs_t* lhs)
 {
 	return ofc_sema__lhs(
-		scope, lhs, true);
+		scope, decl_scope, lhs, true);
 }
 
 static ofc_sema_lhs_t* ofc_sema_lhs__offset(
@@ -1302,9 +1304,8 @@ ofc_sema_lhs_list_t* ofc_sema_lhs_list_implicit_do(
 		}
 		else
 		{
-			ofc_sema_lhs_t* lhs
-				= ofc_sema_lhs(
-					idscope, id->dlist);
+			ofc_sema_lhs_t* lhs = ofc_sema__lhs(
+				idscope, scope, id->dlist, false);
 			if (!ofc_sema_lhs_list_add(list, lhs))
 			{
 				ofc_sema_expr_delete(step);

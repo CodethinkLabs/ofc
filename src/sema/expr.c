@@ -407,6 +407,7 @@ ofc_sema_expr_t* ofc_sema_expr_integer(int value)
 
 static ofc_sema_expr_t* ofc_sema_expr__binary(
 	ofc_sema_scope_t* scope,
+	ofc_sema_scope_t* decl_scope,
 	ofc_parse_operator_e op,
 	const ofc_parse_expr_t* a,
 	const ofc_parse_expr_t* b)
@@ -417,7 +418,8 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 	ofc_sema_expr_e type
 		= ofc_sema_expr__binary_map[op];
 
-	ofc_sema_expr_t* as = ofc_sema_expr(scope, a);
+	ofc_sema_expr_t* as = ofc_sema_expr_ds(
+		scope, decl_scope, a);
 	if (!as) return NULL;
 
 	const ofc_sema_type_t* at
@@ -438,7 +440,8 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 		return NULL;
 	}
 
-	ofc_sema_expr_t* bs = ofc_sema_expr(scope, b);
+	ofc_sema_expr_t* bs = ofc_sema_expr_ds(
+		scope, decl_scope, b);
 	if (!bs)
 	{
 		ofc_sema_expr_delete(as);
@@ -542,6 +545,7 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 
 static ofc_sema_expr_t* ofc_sema_expr__unary(
 	ofc_sema_scope_t* scope,
+	ofc_sema_scope_t* decl_scope,
 	ofc_parse_operator_e op,
 	const ofc_parse_expr_t* a)
 {
@@ -549,7 +553,7 @@ static ofc_sema_expr_t* ofc_sema_expr__unary(
 	switch (op)
 	{
 		case OFC_PARSE_OPERATOR_ADD:
-			return ofc_sema_expr(scope, a);
+			return ofc_sema_expr_ds(scope, decl_scope, a);
 		case OFC_PARSE_OPERATOR_SUBTRACT:
 			type = OFC_SEMA_EXPR_NEGATE;
 			break;
@@ -560,7 +564,8 @@ static ofc_sema_expr_t* ofc_sema_expr__unary(
 			return NULL;
 	}
 
-	ofc_sema_expr_t* as = ofc_sema_expr(scope, a);
+	ofc_sema_expr_t* as = ofc_sema_expr_ds(
+		scope, decl_scope, a);
 	if (!as) return NULL;
 
 	const ofc_sema_type_t* at
@@ -839,13 +844,14 @@ static ofc_sema_expr_t* ofc_sema_expr__function(
 
 static ofc_sema_expr_t* ofc_sema_expr__lhs(
 	ofc_sema_scope_t* scope,
+	ofc_sema_scope_t* decl_scope,
 	const ofc_parse_lhs_t* name)
 {
 	if (!name)
 		return NULL;
 
 	ofc_sema_lhs_t* lhs = ofc_sema_lhs_in_expr(
-		(ofc_sema_scope_t*)scope, name);
+		scope, decl_scope, name);
 	if (!lhs) return NULL;
 
 	ofc_sema_expr_t* expr
@@ -864,6 +870,7 @@ static ofc_sema_expr_t* ofc_sema_expr__lhs(
 
 static ofc_sema_expr_t* ofc_sema_expr__variable(
 	ofc_sema_scope_t* scope,
+	ofc_sema_scope_t* decl_scope,
 	const ofc_parse_lhs_t* name)
 {
 	ofc_sema_expr_t* expr
@@ -895,7 +902,8 @@ static ofc_sema_expr_t* ofc_sema_expr__variable(
 		if (!expr)
 		{
 			/* FUNCTION types are only valid as arguments. */
-			expr = ofc_sema_expr__lhs(scope, name);
+			expr = ofc_sema_expr__lhs(
+				scope, decl_scope, name);
 		}
 	}
 	else
@@ -951,7 +959,8 @@ static ofc_sema_expr_t* ofc_sema_expr__variable(
 		}
 		else
 		{
-			expr = ofc_sema_expr__lhs(scope, name);
+			expr = ofc_sema_expr__lhs(
+				scope, decl_scope, name);
 		}
 	}
 
@@ -959,8 +968,27 @@ static ofc_sema_expr_t* ofc_sema_expr__variable(
 }
 
 
-ofc_sema_expr_t* ofc_sema_expr(
+static ofc_sema_expr_t* ofc_sema_expr__brackets(
 	ofc_sema_scope_t* scope,
+	ofc_sema_scope_t* decl_scope,
+	const ofc_parse_expr_t* expr)
+{
+	if (!scope || !expr)
+		return NULL;
+
+	ofc_sema_expr_t* expr_bracket
+		= ofc_sema_expr_ds(scope, decl_scope, expr);
+
+	if (!expr_bracket)
+		return NULL;
+
+	expr_bracket->brackets = true;
+	return expr_bracket;
+}
+
+ofc_sema_expr_t* ofc_sema_expr_ds(
+	ofc_sema_scope_t* scope,
+	ofc_sema_scope_t* decl_scope,
 	const ofc_parse_expr_t* expr)
 {
 	if (!expr)
@@ -973,16 +1001,20 @@ ofc_sema_expr_t* ofc_sema_expr(
 				&expr->literal);
 		case OFC_PARSE_EXPR_VARIABLE:
 			return ofc_sema_expr__variable(
-				scope, expr->variable);
+				scope, decl_scope,
+				expr->variable);
 		case OFC_PARSE_EXPR_BRACKETS:
-			return ofc_sema_expr_brackets(
-				scope, expr->brackets.expr);
+			return ofc_sema_expr__brackets(
+				scope, decl_scope,
+				expr->brackets.expr);
 		case OFC_PARSE_EXPR_UNARY:
 			return ofc_sema_expr__unary(
-				scope, expr->unary.operator, expr->unary.a);
+				scope, decl_scope,
+				expr->unary.operator,
+				expr->unary.a);
 		case OFC_PARSE_EXPR_BINARY:
 			return ofc_sema_expr__binary(
-				scope, expr->binary.operator,
+				scope, decl_scope, expr->binary.operator,
 				expr->binary.a, expr->binary.b);
 		default:
 			break;
@@ -991,21 +1023,11 @@ ofc_sema_expr_t* ofc_sema_expr(
 	return NULL;
 }
 
-ofc_sema_expr_t* ofc_sema_expr_brackets(
+ofc_sema_expr_t* ofc_sema_expr(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_expr_t* expr)
 {
-	if (!scope || !expr)
-		return NULL;
-
-	ofc_sema_expr_t* expr_bracket
-		= ofc_sema_expr(scope, expr);
-
-	if (!expr_bracket)
-		return NULL;
-
-	expr_bracket->brackets = true;
-	return expr_bracket;
+	return ofc_sema_expr_ds(scope, scope, expr);
 }
 
 ofc_sema_expr_t* ofc_sema_expr_wrap_lhs(
@@ -1647,7 +1669,7 @@ ofc_sema_expr_list_t* ofc_sema_expr_list_implicit_do(
 		{
 			ofc_sema_expr_t* expr
 				= ofc_sema_expr__lhs(
-					idscope, id->dlist);
+					idscope, scope, id->dlist);
 			if (!ofc_sema_expr_list_add(list, expr))
 			{
 				ofc_sema_expr_delete(step);

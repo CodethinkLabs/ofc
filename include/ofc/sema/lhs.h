@@ -76,6 +76,7 @@ ofc_sema_lhs_t* ofc_sema_lhs_from_expr(
 	ofc_parse_expr_t* expr);
 ofc_sema_lhs_t* ofc_sema_lhs_in_expr(
 	ofc_sema_scope_t* scope,
+	ofc_sema_scope_t* decl_scope,
 	const ofc_parse_lhs_t* lhs);
 bool ofc_sema_lhs_reference(
 	ofc_sema_lhs_t* lhs);

@@ -101,8 +101,9 @@ struct ofc_sema_expr_list_s
 ofc_sema_expr_t* ofc_sema_expr(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_expr_t* expr);
-ofc_sema_expr_t* ofc_sema_expr_brackets(
+ofc_sema_expr_t* ofc_sema_expr_ds(
 	ofc_sema_scope_t* scope,
+	ofc_sema_scope_t* decl_scope,
 	const ofc_parse_expr_t* expr);
 ofc_sema_expr_t* ofc_sema_expr_copy(
 	const ofc_sema_expr_t* expr);
