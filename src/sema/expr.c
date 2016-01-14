@@ -1023,6 +1023,40 @@ ofc_sema_expr_t* ofc_sema_expr_ds(
 	return NULL;
 }
 
+static ofc_sema_expr_t* ofc_sema_expr__repeat(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_expr_t* expr)
+{
+	if ((expr->type != OFC_PARSE_EXPR_BINARY)
+		|| (expr->binary.operator != OFC_PARSE_OPERATOR_MULTIPLY))
+		return NULL;
+
+	ofc_sema_expr_t* rexpr
+		= ofc_sema_expr(scope, expr->binary.a);
+	unsigned repeat;
+	bool success = ofc_sema_expr_resolve_uint(rexpr, &repeat);
+	ofc_sema_expr_delete(rexpr);
+	if (!success) return NULL;
+
+	ofc_sema_expr_t* e
+		= ofc_sema_expr(scope, expr->binary.b);
+	if (!e) return NULL;
+
+	e->repeat = repeat;
+	return e;
+}
+
+ofc_sema_expr_t* ofc_sema_expr_repeat(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_expr_t* expr)
+{
+	if (!expr) return NULL;
+	ofc_sema_expr_t* e
+		= ofc_sema_expr__repeat(scope, expr);
+	if (!e) e = ofc_sema_expr(scope, expr);
+	return e;
+}
+
 ofc_sema_expr_t* ofc_sema_expr(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_expr_t* expr)
@@ -1270,8 +1304,8 @@ ofc_sema_expr_list_t* ofc_sema_expr_list(
 }
 
 ofc_sema_expr_list_t* ofc_sema_expr_list_clist(
-	ofc_sema_scope_t*        scope,
-	const ofc_parse_clist_t* clist)
+	ofc_sema_scope_t*            scope,
+	const ofc_parse_expr_list_t* clist)
 {
 	if (!clist)
 		return NULL;
@@ -1283,16 +1317,13 @@ ofc_sema_expr_list_t* ofc_sema_expr_list_clist(
 	unsigned i;
 	for (i = 0; i < clist->count; i++)
 	{
-		ofc_sema_expr_t* expr = ofc_sema_expr(
-			scope, clist->entry[i]->expr);
+		ofc_sema_expr_t* expr = ofc_sema_expr_repeat(
+			scope, clist->expr[i]);
 		if (!expr)
 		{
 			ofc_sema_expr_list_delete(slist);
 			return NULL;
 		}
-
-		if (clist->entry[i]->repeat > 1)
-			expr->repeat *= clist->entry[i]->repeat;
 
 		if (!ofc_sema_expr_list_add(slist, expr))
 		{

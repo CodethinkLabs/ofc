@@ -703,6 +703,32 @@ ofc_parse_expr_list_t* ofc_parse_expr_list(
 	return list;
 }
 
+ofc_parse_expr_list_t* ofc_parse_expr_clist(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	unsigned* len)
+{
+	unsigned i = 0;
+	if (ptr[i++] != '/')
+		return NULL;
+
+	unsigned l;
+	ofc_parse_expr_list_t* clist
+		= ofc_parse_expr_list(
+			src, &ptr[i], debug, &l);
+	if (!clist) return NULL;
+	i += l;
+
+	if (ptr[i++] != '/')
+	{
+		ofc_parse_expr_list_delete(clist);
+		return NULL;
+	}
+
+	if (len) *len = i;
+	return clist;
+}
+
 void ofc_parse_expr_list_delete(
 	ofc_parse_expr_list_t* list)
 {

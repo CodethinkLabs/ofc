@@ -17,8 +17,8 @@
 
 static bool ofc_sema_stmt__data(
 	ofc_sema_scope_t* scope,
-	const ofc_parse_lhs_list_t* nlist,
-	const ofc_parse_clist_t*   clist)
+	const ofc_parse_lhs_list_t*  nlist,
+	const ofc_parse_expr_list_t* clist)
 {
 	ofc_sema_lhs_list_t* lhs_list
 		= ofc_sema_input_list(scope, nlist);
@@ -42,7 +42,7 @@ static bool ofc_sema_stmt__data(
 	}
 	else if (expr_count > lhs_count)
 	{
-		ofc_sparse_ref_warning(clist->entry[0]->expr->src,
+		ofc_sparse_ref_warning(clist->expr[0]->src,
 			"Too many initializer elements in DATA statement, ignoring excess");
 	}
 

@@ -20,8 +20,8 @@ typedef struct
 {
 	ofc_parse_lhs_t*   lhs;
 
-	ofc_parse_expr_t*  init_expr;
-	ofc_parse_clist_t* init_clist;
+	ofc_parse_expr_t*      init_expr;
+	ofc_parse_expr_list_t* init_clist;
 } ofc_parse_decl_t;
 
 typedef struct

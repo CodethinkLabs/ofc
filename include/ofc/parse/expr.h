@@ -96,6 +96,10 @@ ofc_parse_expr_list_t* ofc_parse_expr_list(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
 	unsigned* len);
+ofc_parse_expr_list_t* ofc_parse_expr_clist(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	unsigned* len);
 void ofc_parse_expr_list_delete(
 	ofc_parse_expr_list_t* list);
 

@@ -16,138 +16,16 @@
 #include "ofc/parse.h"
 
 
-static ofc_parse_clist_entry_t* ofc_parse_clist_entry(
-	const ofc_sparse_t* src, const char* ptr,
-	ofc_parse_debug_t* debug,
-	unsigned* len)
-{
-	unsigned dpos = ofc_parse_debug_position(debug);
-
-	ofc_parse_clist_entry_t* entry
-		= (ofc_parse_clist_entry_t*)malloc(
-			sizeof(ofc_parse_clist_entry_t));
-	if (!entry) return NULL;
-
-	unsigned i = ofc_parse_unsigned(
-		src, ptr, debug, &entry->repeat);
-	if ((i > 0) && (ptr[i] == '*'))
-	{
-		i += 1;
-	}
-	else
-	{
-		entry->repeat = 0;
-		i = 0;
-		ofc_parse_debug_rewind(debug, dpos);
-	}
-
-	unsigned l;
-	entry->expr = ofc_parse_expr(
-		src, &ptr[i], debug, &l);
-	if (!entry->expr)
-	{
-		free(entry);
-		ofc_parse_debug_rewind(debug, dpos);
-		return NULL;
-	}
-	i += l;
-
-	if (len) *len = i;
-	return entry;
-}
-
-static void ofc_parse_clist_entry_delete(
-	ofc_parse_clist_entry_t* entry)
+static void ofc_parse_data_entry_delete(
+	ofc_parse_data_entry_t* entry)
 {
 	if (!entry)
 		return;
 
-	ofc_parse_expr_delete(entry->expr);
+	ofc_parse_lhs_list_delete(entry->nlist);
+	ofc_parse_expr_list_delete(entry->clist);
 	free(entry);
 }
-
-static bool ofc_parse_clist_entry_print(
-	ofc_colstr_t* cs, const ofc_parse_clist_entry_t* entry)
-{
-	if (!entry)
-		return false;
-
-	if ((entry->repeat > 1)
-		&& !ofc_colstr_atomic_writef(cs, "%u*", entry->repeat))
-		return false;
-
-	return ofc_parse_expr_print(cs, entry->expr);
-}
-
-
-
-ofc_parse_clist_t* ofc_parse_clist(
-	const ofc_sparse_t* src, const char* ptr,
-	ofc_parse_debug_t* debug,
-	unsigned* len)
-{
-	unsigned dpos = ofc_parse_debug_position(debug);
-
-	unsigned i = 0;
-	if (ptr[i++] != '/')
-		return NULL;
-
-	ofc_parse_clist_t* list
-		= (ofc_parse_clist_t*)malloc(
-			sizeof(ofc_parse_clist_t));
-	if (!list) return NULL;
-
-	list->count = 0;
-	list->entry = NULL;
-
-	unsigned l = ofc_parse_list(
-		src, &ptr[i], debug, ',',
-		&list->count, (void***)&list->entry,
-		(void*)ofc_parse_clist_entry,
-		(void*)ofc_parse_clist_entry_delete);
-	if (l == 0)
-	{
-		/* clist may not be empty. */
-		free(list);
-		return NULL;
-	}
-	i += l;
-
-	if (ptr[i++] != '/')
-	{
-		ofc_parse_clist_delete(list);
-		ofc_parse_debug_rewind(debug, dpos);
-		return NULL;
-	}
-
-	if (len) *len = i;
-	return list;
-}
-
-void ofc_parse_clist_delete(
-	ofc_parse_clist_t* list)
-{
-	if (!list)
-		return;
-
-	ofc_parse_list_delete(
-		list->count, (void**)list->entry,
-		(void*)ofc_parse_clist_entry_delete);
-	free(list);
-}
-
-bool ofc_parse_clist_print(
-	ofc_colstr_t* cs, const ofc_parse_clist_t* list)
-{
-	if (!list)
-		return false;
-
-	return ofc_parse_list_print(cs,
-		list->count, (const void**)list->entry,
-		(void*)ofc_parse_clist_entry_print);
-}
-
-
 
 static ofc_parse_data_entry_t* ofc_parse_data_entry(
 	const ofc_sparse_t* src, const char* ptr,
@@ -171,7 +49,7 @@ static ofc_parse_data_entry_t* ofc_parse_data_entry(
 	}
 
 	unsigned l;
-	entry->clist = ofc_parse_clist(
+	entry->clist = ofc_parse_expr_clist(
 		src, &ptr[i], debug, &l);
 	if (!entry->clist)
 	{
@@ -186,17 +64,6 @@ static ofc_parse_data_entry_t* ofc_parse_data_entry(
 	return entry;
 }
 
-static void ofc_parse_data_entry_delete(
-	ofc_parse_data_entry_t* entry)
-{
-	if (!entry)
-		return;
-
-	ofc_parse_lhs_list_delete(entry->nlist);
-	ofc_parse_clist_delete(entry->clist);
-	free(entry);
-}
-
 static bool ofc_parse_data_entry_print(
 	ofc_colstr_t* cs, const ofc_parse_data_entry_t* entry)
 {
@@ -205,7 +72,7 @@ static bool ofc_parse_data_entry_print(
 
 	return (ofc_parse_lhs_list_print(cs, entry->nlist, false)
 		&& ofc_colstr_atomic_writef(cs, "/")
-		&& ofc_parse_clist_print(cs, entry->clist)
+		&& ofc_parse_expr_list_print(cs, entry->clist)
 		&& ofc_colstr_atomic_writef(cs, "/"));
 }
 

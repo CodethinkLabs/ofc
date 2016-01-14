@@ -49,7 +49,7 @@ static ofc_parse_decl_t* ofc_parse__decl(
 	else if (!is_f90 && (ptr[i] == '/'))
 	{
 		unsigned l;
-		decl->init_clist = ofc_parse_clist(
+		decl->init_clist = ofc_parse_expr_clist(
 			src, &ptr[i], debug, &l);
 		if (decl->init_clist) i += l;
 	}
@@ -83,7 +83,7 @@ void ofc_parse_decl_delete(
 		return;
 
 	ofc_parse_expr_delete(decl->init_expr);
-	ofc_parse_clist_delete(decl->init_clist);
+	ofc_parse_expr_list_delete(decl->init_clist);
 
 	ofc_parse_lhs_delete(decl->lhs);
 	free(decl);
@@ -107,7 +107,7 @@ bool ofc_parse_decl_print(
 	else if (decl->init_clist)
 	{
 		if (!ofc_colstr_atomic_writef(cs, "/")
-			|| !ofc_parse_clist_print(
+			|| !ofc_parse_expr_list_print(
 				cs, decl->init_clist)
 			|| !ofc_colstr_atomic_writef(cs, "/"))
 			return false;
