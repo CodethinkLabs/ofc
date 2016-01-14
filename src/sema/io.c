@@ -163,30 +163,31 @@ static bool ofc_sema_io__data_format_helper(
 
 	/* If *iolist_len == 0 then
 	 * format_list has iolist_len length*/
-	if (*iolist_len > 0)
+	for (; *iolist_len > 0; (*offset)++)
 	{
 		if (format_src->count <= *offset) *offset = 0;
 
 		ofc_parse_format_desc_t* desc
 			= format_src->desc[*offset];
 
-		/* If it's a data descriptor, we add it to the list
-		 * and call the function again to the next offset
-		 * We are an element closer to have length iolist_len
-		 */
 		if (ofc_parse_format_is_data_desc(desc))
 		{
+			/* If it's a data descriptor, we add it to the list
+			   and call the function again to the next offset
+			   We are an element closer to have length iolist_len. */
+
 			unsigned i;
 			for (i = 0; i < desc->n; i++)
 			{
+				size_t nsize = (sizeof(ofc_parse_format_desc_t*)
+					* (format_list->count + 1));
 				ofc_parse_format_desc_t** ndesc
-					= (ofc_parse_format_desc_t**)realloc(format_list->desc,
-						(sizeof(ofc_parse_format_desc_t*) * (format_list->count + 1)));
+					= (ofc_parse_format_desc_t**)realloc(
+						format_list->desc, nsize);
 				if (!ndesc) return false;
 
 				ofc_parse_format_desc_t* cdesc
-					= ofc_parse_format_desc_copy(
-						format_src->desc[*offset]);
+					= ofc_parse_format_desc_copy(desc);
 				if (!cdesc) return false;
 
 				format_list->desc = ndesc;
@@ -194,17 +195,12 @@ static bool ofc_sema_io__data_format_helper(
 
 				(*iolist_len)--;
 			}
-
-			(*offset)++;
-
-			if (!ofc_sema_io__data_format_helper(
-				format_list, format_src, iolist_len, offset))
-				return false;
 		}
-		/* If the descriptor is of type repeat, we call
-		 * the function again for the sub-format-list */
 		else if (desc->type == OFC_PARSE_FORMAT_DESC_REPEAT)
 		{
+			/* If the descriptor is of type repeat, we call
+			   the function again for the sub-format-list. */
+
 			unsigned i;
 			for (i = 0; i < desc->n; i++)
 			{
@@ -214,15 +210,10 @@ static bool ofc_sema_io__data_format_helper(
 					return false;
 			}
 		}
-		/* If it's a different type, we ignore it
-		 * and continue with the next offset */
 		else
 		{
-			(*offset)++;
-
-			if (!ofc_sema_io__data_format_helper(
-				format_list, format_src, iolist_len, offset))
-				return false;
+			/* If it's a different type, we ignore it
+			   and continue with the next offset. */
 		}
 	}
 
