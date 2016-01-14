@@ -1119,8 +1119,10 @@ bool ofc_sema_lhs_list_init(
 	return true;
 }
 
-ofc_sema_lhs_list_t* ofc_sema_lhs_list_implicit_do(
-	ofc_sema_scope_t* scope, ofc_parse_implicit_do_t* id)
+static ofc_sema_lhs_list_t* ofc_sema_lhs_list__implicit_do(
+	ofc_sema_scope_t* scope,
+	ofc_sema_scope_t* decl_scope,
+	ofc_parse_implicit_do_t* id)
 {
 	if (!scope || !id)
 		return NULL;
@@ -1277,8 +1279,8 @@ ofc_sema_lhs_list_t* ofc_sema_lhs_list_implicit_do(
 		if (id->dlist->type == OFC_PARSE_LHS_IMPLICIT_DO)
 		{
 			ofc_sema_lhs_list_t* implicit_do
-				= ofc_sema_lhs_list_implicit_do(
-					idscope, id->dlist->implicit_do);
+				= ofc_sema_lhs_list__implicit_do(
+					idscope, decl_scope, id->dlist->implicit_do);
 			if (!implicit_do)
 			{
 				ofc_sema_expr_delete(step);
@@ -1307,7 +1309,7 @@ ofc_sema_lhs_list_t* ofc_sema_lhs_list_implicit_do(
 		else
 		{
 			ofc_sema_lhs_t* lhs = ofc_sema__lhs(
-				idscope, scope, id->dlist, false);
+				idscope, decl_scope, id->dlist, false);
 			if (!ofc_sema_lhs_list_add(list, lhs))
 			{
 				ofc_sema_expr_delete(step);
@@ -1345,4 +1347,11 @@ ofc_sema_lhs_list_t* ofc_sema_lhs_list_implicit_do(
 	ofc_sema_typeval_delete(value);
 
 	return list;
+}
+
+ofc_sema_lhs_list_t* ofc_sema_lhs_list_implicit_do(
+	ofc_sema_scope_t* scope, ofc_parse_implicit_do_t* id)
+{
+	return ofc_sema_lhs_list__implicit_do(
+		scope, scope, id);
 }
