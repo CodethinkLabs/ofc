@@ -44,8 +44,8 @@ ofc with no source file.
 ### Tree Printing
 Currently tree printing is excluded from the main binary, to enable it, do:
 
-    CFLAGS=-DOFC_SEMA_PRINT make -B
-    CFLAGS=-DOFC_PARSE_PRINT make -B
+    CFLAGS=-DOFC_PRINT_SEMA make -B
+    CFLAGS=-DOFC_PRINT_PARSE make -B
 
 You'll usually only want to select parse or semantic printing.
 
@@ -55,7 +55,7 @@ You'll usually only want to select parse or semantic printing.
 ### Test Suite
 We run a test suite including the NIST F77 tests using:
 
-    make test
+    make tests
 
 Not all of these tests currently pass semantic analysis, we're working on this.
 
