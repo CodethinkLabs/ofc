@@ -55,7 +55,7 @@ You'll usually only want to select parse or semantic printing.
 ### Test Suite
 We run a test suite including the NIST F77 tests using:
 
-    make test
+    make tests
 
 Not all of these tests currently pass semantic analysis, we're working on this.
 
