@@ -733,6 +733,13 @@ bool ofc_sema_lhs_init(
 				decl, offset, init);
 		}
 
+		case OFC_SEMA_LHS_SUBSTRING:
+			/* TODO - Handle nested substrings. */
+			return ofc_sema_decl_init_substring(
+				decl, init,
+				lhs->substring.first,
+				lhs->substring.last);
+
 		/* TODO - Initialize all LHS types. */
 
 		default:
@@ -842,6 +849,7 @@ ofc_sema_decl_t* ofc_sema_lhs_decl(
 		case OFC_SEMA_LHS_ARRAY_INDEX:
 		case OFC_SEMA_LHS_ARRAY_SLICE:
 		case OFC_SEMA_LHS_STRUCTURE_MEMBER:
+		case OFC_SEMA_LHS_SUBSTRING:
 			return ofc_sema_lhs_decl(lhs->parent);
 
 		default:

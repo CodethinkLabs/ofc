@@ -18,6 +18,23 @@
 
 #include <ofc/hashmap.h>
 
+typedef struct
+{
+	bool is_substring;
+
+	union
+	__attribute__((__packed__))
+	{
+		ofc_sema_typeval_t* tv;
+
+		struct
+		{
+			char* string;
+			bool* mask;
+		} substring;
+	};
+} ofc_sema_decl_init_t;
+
 struct ofc_sema_decl_s
 {
 	const ofc_sema_type_t* type;
@@ -27,8 +44,8 @@ struct ofc_sema_decl_s
 	union
 	__attribute__((__packed__))
 	{
-		ofc_sema_typeval_t*  init;
-		ofc_sema_typeval_t** init_array;
+		ofc_sema_decl_init_t  init;
+		ofc_sema_decl_init_t* init_array;
 	};
 
     bool is_static;
@@ -107,6 +124,12 @@ bool ofc_sema_decl_init_array(
 bool ofc_sema_decl_init_func(
 	ofc_sema_decl_t* decl,
 	ofc_sema_scope_t* func);
+
+bool ofc_sema_decl_init_substring(
+	ofc_sema_decl_t* decl,
+	const ofc_sema_expr_t* init,
+	const ofc_sema_expr_t* first,
+	const ofc_sema_expr_t* last);
 
 bool ofc_sema_decl_size(
 	const ofc_sema_decl_t* decl,
