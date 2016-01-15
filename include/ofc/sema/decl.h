@@ -56,6 +56,8 @@ struct ofc_sema_decl_s
 
 	bool is_target;
 
+	bool is_return;
+
 	ofc_sema_equiv_t* equiv;
 
 	bool used;

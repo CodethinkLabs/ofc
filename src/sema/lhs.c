@@ -434,6 +434,7 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 				/* This should never happen. */
 				return NULL;
 			}
+			fdecl->is_return = true;
 
 			const ofc_sema_type_t* rtype
 				= ofc_sema_decl_base_type(fdecl);
