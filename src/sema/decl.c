@@ -67,6 +67,7 @@ ofc_sema_decl_t* ofc_sema_decl_create(
 	decl->is_volatile  = false;
 	decl->is_automatic = false;
 	decl->is_target    = false;
+	decl->is_return    = false;
 
 	decl->used = false;
 	return decl;
