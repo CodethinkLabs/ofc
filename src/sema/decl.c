@@ -636,6 +636,12 @@ bool ofc_sema_decl_init(
 		return false;
 	}
 
+	if (decl->init.is_substring)
+	{
+		return ofc_sema_decl_init_substring(
+			decl, init, NULL, NULL);
+	}
+
 	ofc_sema_typeval_t* tv
 		= ofc_sema_typeval_cast(
 			ctv, decl->type);
@@ -924,9 +930,15 @@ bool ofc_sema_decl_init_substring(
 		|| !first || !last)
 		return false;
 
+	if (decl->used)
+	{
+		ofc_sparse_ref_error(init->src,
+			"Can't initialize declaration after use");
+		return false;
+	}
+
 	const ofc_sema_type_t* type
 		= ofc_sema_decl_type(decl);
-
 	if (!decl->init.is_substring
 		&& (decl->init.tv != NULL))
 	{
@@ -968,6 +980,11 @@ bool ofc_sema_decl_init_substring(
 			"Failed to resolve substring last index");
 		return false;
 	}
+
+	if (!decl->init.is_substring
+		&& (ufirst == 1)
+		&& (ulast == type->len))
+		return ofc_sema_decl_init(decl, init);
 
 	if (ufirst > ulast)
 	{
