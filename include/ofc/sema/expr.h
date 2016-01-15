@@ -131,10 +131,6 @@ uint8_t ofc_sema_expr_hash(
 const ofc_sema_type_t* ofc_sema_expr_type(
 	const ofc_sema_expr_t* expr);
 
-ofc_sema_typeval_t* ofc_sema_expr_resolve(
-	const ofc_sema_scope_t* scope,
-	const ofc_sema_expr_t* expr);
-
 const ofc_sema_typeval_t* ofc_sema_expr_constant(
 	const ofc_sema_expr_t* expr);
 bool ofc_sema_expr_is_constant(
