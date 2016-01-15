@@ -953,15 +953,16 @@ bool ofc_sema_decl_init_substring(
 		return false;
 	}
 
-    unsigned ufirst, ulast;
-	if (!ofc_sema_expr_resolve_uint(first, &ufirst))
+    unsigned ufirst = 1;
+	if (first && !ofc_sema_expr_resolve_uint(first, &ufirst))
 	{
 		ofc_sparse_ref_error(first->src,
 			"Failed to resolve substring first index");
 		return false;
 	}
 
-	if (!ofc_sema_expr_resolve_uint(last, &ulast))
+	unsigned ulast = type->len;
+	if (last && !ofc_sema_expr_resolve_uint(last, &ulast))
 	{
 		ofc_sparse_ref_error(last->src,
 			"Failed to resolve substring last index");
