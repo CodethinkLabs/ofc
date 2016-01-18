@@ -634,12 +634,16 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 }
 
 static bool ofc_sema_stmt_read__print_optional(
-	ofc_colstr_t* cs, const ofc_sema_expr_t* expr)
+	ofc_colstr_t* cs, const char* name,
+	const ofc_sema_expr_t* expr)
 {
 	if (!cs || !expr)
 		return false;
 
-	if (!ofc_colstr_atomic_writef(cs, ", ")
+	if (!ofc_colstr_atomic_writef(cs, ",")
+		|| !ofc_colstr_atomic_writef(cs, " ")
+		|| !ofc_colstr_atomic_writef(cs, name)
+		|| !ofc_colstr_atomic_writef(cs, "= ")
 		|| !ofc_sema_expr_print(cs, expr))
 		return false;
 
@@ -680,26 +684,26 @@ bool ofc_sema_stmt_read_print(ofc_colstr_t* cs,
 	else if (stmt->io_read.formatted)
 	{
 		if (!ofc_sema_stmt_read__print_optional(
-			cs,	stmt->io_read.format_expr))
+			cs,	"FMT", stmt->io_read.format_expr))
 			return false;
 	}
 
 	if (stmt->io_read.iostat)
 	{
 		if (!ofc_sema_stmt_read__print_optional(
-			cs, stmt->io_read.iostat))
+			cs, "IOSTAT", stmt->io_read.iostat))
 			return false;
 	}
 	if (stmt->io_read.rec)
 	{
 		if (!ofc_sema_stmt_read__print_optional(
-			cs,	stmt->io_read.rec))
+			cs, "REC", stmt->io_read.rec))
 			return false;
 	}
 	if (stmt->io_read.err)
 	{
 		if (!ofc_sema_stmt_read__print_optional(
-			cs,	stmt->io_read.err))
+			cs,	"ERR", stmt->io_read.err))
 			return false;
 	}
 
