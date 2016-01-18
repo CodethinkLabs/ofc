@@ -644,7 +644,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_inquire(
 		}
 	}
 
-	else if (ca_file)
+	if (ca_file)
 	{
 		s.io_inquire.file = ofc_sema_expr(
 			scope, ca_file->expr);
