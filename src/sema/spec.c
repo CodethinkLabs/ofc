@@ -346,6 +346,24 @@ bool ofc_sema_spec_print(
 	if (!spec)
 		return false;
 
+	if (spec->is_intrinsic)
+	{
+		if (!ofc_colstr_newline(cs, indent, NULL)
+			|| !ofc_colstr_atomic_writef(cs, "INTRINSIC")
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_sparse_ref_print(cs, spec->name))
+			return false;
+	}
+
+	if (spec->is_external)
+	{
+		if (!ofc_colstr_newline(cs, indent, NULL)
+			|| !ofc_colstr_atomic_writef(cs, "EXTERNAL")
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_sparse_ref_print(cs, spec->name))
+			return false;
+	}
+
 	/* Ignore specifiers that are never used. */
 	if (!spec->used)
 		return true;
