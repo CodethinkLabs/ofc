@@ -114,8 +114,10 @@ struct ofc_sema_stmt_s
 
 		struct
 		{
+			bool has_brakets;
+
 			ofc_sema_expr_t* unit;
-			bool             stdout;
+			bool             stdin;
 
 			/* TODO - Namelist. */
 			ofc_sema_expr_t*   format_expr;

@@ -42,8 +42,9 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 
 	ofc_sema_stmt_t s;
 	s.type = OFC_SEMA_STMT_IO_READ;
+	s.io_read.has_brakets  = stmt->io_read.has_brakets;
 	s.io_read.unit         = NULL;
-	s.io_read.stdout       = false;
+	s.io_read.stdin        = false;
 	s.io_read.format_expr  = NULL;
 	s.io_read.format       = NULL;
 	s.io_read.format_ldio  = false;
@@ -212,7 +213,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 
 	if (ca_unit && (ca_unit->type == OFC_PARSE_CALL_ARG_ASTERISK))
 	{
-		s.io_read.stdout = true;
+		s.io_read.stdin = true;
 	}
 	else if (ca_unit && (ca_unit->type == OFC_PARSE_CALL_ARG_EXPR))
 	{
@@ -245,6 +246,10 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 			"UNIT must be an INTEGER or CHARACTER "
 			"expression, or asterisk in READ");
 		return NULL;
+	}
+	else
+	{
+		s.io_read.stdin = true;
 	}
 
 	if (ca_format && (ca_format->type == OFC_PARSE_CALL_ARG_ASTERISK))
@@ -312,7 +317,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 		return NULL;
 	}
 
-	if (ca_advance && s.io_read.stdout)
+	if (ca_advance && s.io_read.stdin)
 	{
 		ofc_sparse_ref_error(stmt->src,
 			"ADVANCE specifier can only be used with an external UNIT in READ");
@@ -645,58 +650,83 @@ bool ofc_sema_stmt_read_print(ofc_colstr_t* cs,
 		return false;
 
 	if (!ofc_colstr_atomic_writef(cs, "READ")
-		|| !ofc_colstr_atomic_writef(cs, " ")
-		|| !ofc_colstr_atomic_writef(cs, "("))
+		|| !ofc_colstr_atomic_writef(cs, " "))
 		return false;
 
-	if (stmt->io_read.stdout)
+	if (stmt->io_read.has_brakets)
 	{
-		if (!ofc_colstr_atomic_writef(cs, "*"))
+		if (!ofc_colstr_atomic_writef(cs, "("))
+			return false;
+
+		if (stmt->io_read.stdin)
+		{
+			if (!ofc_colstr_atomic_writef(cs, "*"))
+				return false;
+		}
+		else
+		{
+			if (!ofc_sema_expr_print(cs,
+				stmt->io_read.unit))
+				return false;
+		}
+
+		if (stmt->io_read.format_ldio)
+		{
+			if (!ofc_colstr_atomic_writef(cs, ",")
+				|| !ofc_colstr_atomic_writef(cs, " "))
+				return false;
+			if (!ofc_colstr_atomic_writef(cs, "*"))
+				return false;
+		}
+		else
+		{
+			if (!ofc_sema_stmt_read__print_optional(
+				cs,	stmt->io_read.format_expr))
+				return false;
+		}
+
+		if (stmt->io_read.iostat)
+		{
+			if (!ofc_sema_stmt_read__print_optional(
+				cs, stmt->io_read.iostat))
+				return false;
+		}
+		if (stmt->io_read.rec)
+		{
+			if (!ofc_sema_stmt_read__print_optional(
+				cs,	stmt->io_read.rec))
+				return false;
+		}
+		if (stmt->io_read.err)
+		{
+			if (!ofc_sema_stmt_read__print_optional(
+				cs,	stmt->io_read.err))
+				return false;
+		}
+
+		if (!ofc_colstr_atomic_writef(cs, ")"))
 			return false;
 	}
 	else
 	{
-		if (!ofc_sema_expr_print(cs,
-			stmt->io_read.unit))
-			return false;
-	}
+		if (stmt->io_read.format_ldio)
+		{
+			if (!ofc_colstr_atomic_writef(cs, "*"))
+				return false;
+		}
+		else
+		{
+			if (!ofc_sema_stmt_read__print_optional(
+				cs,	stmt->io_read.format_expr))
+				return false;
+		}
 
-	if (stmt->io_read.format_ldio)
-	{
-		if (!ofc_colstr_atomic_writef(cs, ",")
-			|| !ofc_colstr_atomic_writef(cs, " "))
+		if (stmt->io_read.iolist)
+		{
+			if (!ofc_colstr_atomic_writef(cs, ","))
 			return false;
-		if (!ofc_colstr_atomic_writef(cs, "*"))
-			return false;
+		}
 	}
-	else
-	{
-		if (!ofc_sema_stmt_read__print_optional(
-			cs,	stmt->io_read.format_expr))
-			return false;
-	}
-
-	if (stmt->io_read.iostat)
-	{
-		if (!ofc_sema_stmt_read__print_optional(
-			cs, stmt->io_read.iostat))
-			return false;
-	}
-	if (stmt->io_read.rec)
-	{
-		if (!ofc_sema_stmt_read__print_optional(
-			cs,	stmt->io_read.rec))
-			return false;
-	}
-	if (stmt->io_read.err)
-	{
-		if (!ofc_sema_stmt_read__print_optional(
-			cs,	stmt->io_read.err))
-			return false;
-	}
-
-	if (!ofc_colstr_atomic_writef(cs, ")"))
-		return false;
 
 	if (stmt->io_read.iolist)
 	{
