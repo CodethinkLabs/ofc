@@ -110,6 +110,10 @@ static const ofc_sema_intrinsic_op_t ofc_sema_intrinsic__op_list[] =
 	{ "DSQRT", 1, 1, IT_SAME, IT_DEF_DOUBLE  },
 	{ "CSQRT", 1, 1, IT_SAME, IT_DEF_COMPLEX },
 
+	{ "EXP" , 1, 1, IT_SAME, IT_ANY },
+	{ "DEXP", 1, 1, IT_SAME, IT_ANY },
+	{ "CEXP", 1, 1, IT_SAME, IT_ANY },
+
 	{ "LOG" , 1, 1, IT_SAME, IT_ANY         },
 	{ "ALOG", 1, 1, IT_SAME, IT_DEF_REAL    },
 	{ "DLOG", 1, 1, IT_SAME, IT_DEF_DOUBLE  },
