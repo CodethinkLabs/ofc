@@ -422,6 +422,13 @@ bool ofc_sema_array_index_print(
 	unsigned i;
 	for (i = 0; i < index->dimensions; i++)
 	{
+		if (i > 0)
+		{
+			if (!ofc_colstr_atomic_writef(cs, ",")
+				|| !ofc_colstr_atomic_writef(cs, " "))
+				return false;
+		}
+
 		if (!ofc_sema_expr_print(cs, index->index[i]))
 			return false;
 	}
