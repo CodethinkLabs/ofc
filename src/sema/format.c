@@ -153,7 +153,7 @@ bool ofc_sema_format_print(ofc_colstr_t* cs,
 
 	if (!ofc_colstr_atomic_writef(cs, "FORMAT ("))
 		return false;
-	if (!ofc_parse_format_desc_list_print(
+	if (format->src && !ofc_parse_format_desc_list_print(
 		cs, format->src))
 			return false;
 	if (!ofc_colstr_atomic_writef(cs, ")"))
