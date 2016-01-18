@@ -153,7 +153,8 @@ bool ofc_sema_decl_is_procedure(
 	const ofc_sema_decl_t* decl);
 
 bool ofc_sema_decl_has_initializer(
-	const ofc_sema_decl_t* decl);
+	const ofc_sema_decl_t* decl,
+	bool* complete);
 
 const ofc_sema_type_t* ofc_sema_decl_type(
 	const ofc_sema_decl_t* decl);
