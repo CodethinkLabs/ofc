@@ -670,21 +670,6 @@ ofc_sema_scope_t* ofc_sema_scope_stmt_func(
 			ofc_sema_scope_delete(func);
 			return false;
 		}
-
-		/* Mark argument names as used specifiers. */
-		unsigned i;
-		for (i = 0; i < index->count; i++)
-		{
-			ofc_sema_spec_t* spec
-				= ofc_sema_scope_spec_modify(
-					scope, index->range[i]->src);
-			if (!spec)
-			{
-				ofc_sema_scope_delete(func);
-				return false;
-			}
-			spec->used = true;
-		}
 	}
 
 	func->expr = ofc_sema_expr(
