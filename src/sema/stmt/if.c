@@ -209,6 +209,24 @@ ofc_sema_stmt_t* ofc_sema_stmt_if__then(
 		}
 	}
 
+	if (stmt->if_then.end_if_has_label)
+	{
+		ofc_sema_scope_t* ls
+			= s.if_then.scope_else;
+		if (!ls) ls = s.if_then.scope_then;
+
+		if (!ofc_sema_label_map_add_stmt(
+			stmt, ls->label,
+			stmt->if_then.end_if_label,
+			ofc_sema_stmt_list_count(ls->stmt)))
+		{
+			ofc_sema_expr_delete(s.if_then.cond);
+			ofc_sema_scope_delete(s.if_then.scope_then);
+			ofc_sema_scope_delete(s.if_then.scope_else);
+			return NULL;
+		}
+	}
+
 	ofc_sema_stmt_t* as = ofc_sema_stmt_alloc(s);
 	if (!as)
 	{
@@ -312,7 +330,16 @@ bool ofc_sema_stmt_if_then_print(
 					return false;
 	}
 
-	if (!ofc_colstr_newline(cs, indent, NULL)
+	const ofc_sema_scope_t* ls
+		= stmt->if_then.scope_else;
+	if (!ls) ls = stmt->if_then.scope_then;
+	const ofc_sema_label_t* label
+		= ofc_sema_label_map_find_offset(
+			ls->label, ofc_sema_stmt_list_count(ls->stmt));
+	const unsigned* ulabel = NULL;
+	if (label) ulabel = &label->number;
+
+	if (!ofc_colstr_newline(cs, indent, ulabel)
 		|| !ofc_colstr_atomic_writef(cs, "END IF"))
 		return false;
 

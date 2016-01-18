@@ -26,7 +26,7 @@ void ofc_colstr_delete(ofc_colstr_t* cstr);
 
 bool ofc_colstr_newline(
 	ofc_colstr_t* cstr, unsigned indent,
-	unsigned* label);
+	const unsigned* label);
 
 #include <stdarg.h>
 

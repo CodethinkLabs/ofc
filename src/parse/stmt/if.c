@@ -196,6 +196,10 @@ static unsigned ofc_parse_stmt_if__then(
 			stmt->type = OFC_PARSE_STMT_ERROR;
 			return i;
 		}
+
+		stmt->if_then.end_if_has_label = ofc_sparse_label_find(
+			src, &ptr[i], &stmt->if_then.end_if_label);
+
 		i += len;
 	}
 

@@ -96,7 +96,7 @@ static bool ofc_colstr__enlarge(
 
 bool ofc_colstr_newline(
 	ofc_colstr_t* cstr, unsigned indent,
-	unsigned* label)
+	const unsigned* label)
 {
 	bool first = (cstr->size == 0);
 

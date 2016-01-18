@@ -175,6 +175,9 @@ struct ofc_parse_stmt_s
 			ofc_parse_expr_t*      cond;
 			ofc_parse_stmt_list_t* block_then;
 			ofc_parse_stmt_list_t* block_else;
+
+			bool end_if_has_label;
+			unsigned end_if_label;
 		} if_then;
 
 		struct
