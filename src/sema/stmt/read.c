@@ -47,6 +47,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 	s.io_read.format_expr  = NULL;
 	s.io_read.format       = NULL;
 	s.io_read.format_ldio  = false;
+	s.io_read.formatted    = false;
 	s.io_read.iostat       = NULL;
 	s.io_read.rec          = NULL;
 	s.io_read.err          = NULL;
@@ -254,9 +255,12 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 	if (ca_format && (ca_format->type == OFC_PARSE_CALL_ARG_ASTERISK))
 	{
 		s.io_read.format_ldio = true;
+		s.io_read.formatted   = true;
 	}
 	else if (ca_format&& (ca_format->type == OFC_PARSE_CALL_ARG_EXPR))
 	{
+		s.io_read.formatted   = true;
+
 		s.io_read.format_expr = ofc_sema_expr(
 			scope, ca_format->expr);
 		if (!s.io_read.format_expr)
@@ -673,7 +677,7 @@ bool ofc_sema_stmt_read_print(ofc_colstr_t* cs,
 		if (!ofc_colstr_atomic_writef(cs, "*"))
 			return false;
 	}
-	else
+	else if (stmt->io_read.formatted)
 	{
 		if (!ofc_sema_stmt_read__print_optional(
 			cs,	stmt->io_read.format_expr))
