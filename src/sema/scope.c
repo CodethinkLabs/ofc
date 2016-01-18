@@ -1118,11 +1118,21 @@ bool ofc_sema_scope_print(
 					return false;
 		}
 
-		if (scope->args
-			&& (!ofc_colstr_atomic_writef(cs, "(")
-				|| !ofc_sema_arg_list_print(cs, scope->args)
-				|| !ofc_colstr_atomic_writef(cs, ")")))
-			return false;
+		switch (scope->type)
+		{
+			case OFC_SEMA_SCOPE_FUNCTION:
+			case OFC_SEMA_SCOPE_SUBROUTINE:
+			case OFC_SEMA_SCOPE_STMT_FUNC:
+				if (!ofc_colstr_atomic_writef(cs, "("))
+					return false;
+				if (scope->args && !ofc_sema_arg_list_print(cs, scope->args))
+					return false;
+				if (!ofc_colstr_atomic_writef(cs, ")"))
+					return false;
+				break;
+			default:
+				break;
+		}
 	}
 
 	if ((scope->type != OFC_SEMA_SCOPE_GLOBAL)
