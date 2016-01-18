@@ -170,8 +170,16 @@ bool ofc_sema_arg_list_print(
 	unsigned i;
 	for (i = 0; i < list->count; i++)
 	{
-		if (!ofc_sparse_ref_print(cs, list->arg[i].name))
-			return false;
+		if (list->arg[i].alt_return)
+		{
+			if (!ofc_colstr_atomic_writef(cs, "*"))
+				return false;
+		}
+		else
+		{
+			if (!ofc_sparse_ref_print(cs, list->arg[i].name))
+				return false;
+		}
 
 		if (i < (list->count - 1)
 			&& !ofc_colstr_atomic_writef(cs, ", "))
