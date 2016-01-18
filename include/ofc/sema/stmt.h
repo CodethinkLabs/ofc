@@ -101,6 +101,7 @@ struct ofc_sema_stmt_s
 			ofc_sema_expr_t*   format_expr;
 			ofc_sema_format_t* format;
 			bool               format_ldio;
+			bool               formatted;
 
 			ofc_sema_expr_t* iostat;
 			ofc_sema_expr_t* rec;
