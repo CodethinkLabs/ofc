@@ -255,12 +255,8 @@ bool ofc_sema_stmt_if_print(
 		|| !ofc_sema_expr_print(cs, stmt->if_stmt.cond)
 		|| !ofc_colstr_atomic_writef(cs, ")")
 		|| !ofc_colstr_atomic_writef(cs, " ")
-		|| !ofc_colstr_atomic_writef(cs, "THEN")
-		|| !ofc_colstr_atomic_writef(cs, " ")
 		|| !ofc_sema_stmt_print(cs, indent,
-			stmt->if_stmt.stmt)
-		|| !ofc_colstr_newline(cs, indent, NULL)
-		|| !ofc_colstr_atomic_writef(cs, "END IF"))
+			stmt->if_stmt.stmt))
 		return false;
 
 	return true;
