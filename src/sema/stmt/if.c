@@ -303,7 +303,10 @@ bool ofc_sema_stmt_if_then_print(
 
 	if (stmt->if_then.scope_else)
 	{
-		if (!ofc_colstr_atomic_writef(cs, "ELSE")
+		/* TODO - ELSE IF could print on the same line for neatness
+			but this works for now. */
+		if (!ofc_colstr_newline(cs, indent, NULL)
+			|| !ofc_colstr_atomic_writef(cs, "ELSE")
 			|| !ofc_sema_scope_print(cs, (indent + 1),
 				stmt->if_then.scope_else))
 					return false;
