@@ -554,7 +554,7 @@ bool ofc_sema_stmt_write_print(ofc_colstr_t* cs,
 	if (stmt->io_write.format_ldio)
 	{
 		if (!ofc_colstr_atomic_writef(cs, ",")
-			|| !!ofc_colstr_atomic_writef(cs, " "))
+			|| !ofc_colstr_atomic_writef(cs, " "))
 			return false;
 		if (!ofc_colstr_atomic_writef(cs, "*"))
 			return false;
