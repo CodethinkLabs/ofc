@@ -965,6 +965,26 @@ bool ofc_sema_type_print(
 	if (type->type >= OFC_SEMA_TYPE_COUNT)
 		return false;
 
-	return ofc_colstr_atomic_writef(cs, "%s",
-		ofc_sema_type__name[type->type]);
+	if (!ofc_colstr_atomic_writef(cs, "%s",
+		ofc_sema_type__name[type->type]))
+		return false;
+
+	if ((type->type == OFC_SEMA_TYPE_CHARACTER)
+		&& (type->len != 1))
+	{
+		if (!ofc_colstr_atomic_writef(cs, "("))
+			return false;
+
+		if (type->len == 0
+			? !ofc_colstr_atomic_writef(cs, "*")
+			: !ofc_colstr_atomic_writef(cs, "%u", type->len))
+			return false;
+
+		if (!ofc_colstr_atomic_writef(cs, ")"))
+			return false;
+	}
+
+	/* TODO - Print KIND. */
+
+	return true;
 }
