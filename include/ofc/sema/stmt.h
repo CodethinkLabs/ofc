@@ -114,8 +114,6 @@ struct ofc_sema_stmt_s
 
 		struct
 		{
-			bool has_brakets;
-
 			ofc_sema_expr_t* unit;
 			bool             stdin;
 
