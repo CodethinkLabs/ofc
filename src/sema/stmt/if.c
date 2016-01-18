@@ -250,19 +250,17 @@ bool ofc_sema_stmt_if_print(
 	if (!cs || !stmt) return false;
 
 	if (!ofc_colstr_atomic_writef(cs, "IF")
+		|| !ofc_colstr_atomic_writef(cs, " ")
 		|| !ofc_colstr_atomic_writef(cs, "(")
 		|| !ofc_sema_expr_print(cs, stmt->if_stmt.cond)
 		|| !ofc_colstr_atomic_writef(cs, ")")
 		|| !ofc_colstr_atomic_writef(cs, " ")
 		|| !ofc_colstr_atomic_writef(cs, "THEN")
-		|| !ofc_colstr_newline(cs, indent, NULL)
-		|| !ofc_colstr_atomic_writef(cs, "  ")
+		|| !ofc_colstr_atomic_writef(cs, " ")
 		|| !ofc_sema_stmt_print(cs, indent,
 			stmt->if_stmt.stmt)
 		|| !ofc_colstr_newline(cs, indent, NULL)
-		|| !ofc_colstr_atomic_writef(cs, "END")
-		|| !ofc_colstr_atomic_writef(cs, " ")
-		|| !ofc_colstr_atomic_writef(cs, "IF"))
+		|| !ofc_colstr_atomic_writef(cs, "END IF"))
 		return false;
 
 	return true;
@@ -274,9 +272,11 @@ bool ofc_sema_stmt_if_comp_print(ofc_colstr_t* cs,
 	if (!cs || !stmt) return false;
 
 	if (!ofc_colstr_atomic_writef(cs, "IF")
+		|| !ofc_colstr_atomic_writef(cs, " ")
 		|| !ofc_colstr_atomic_writef(cs, "(")
 		|| !ofc_sema_expr_print(cs, stmt->if_comp.cond)
-		|| !ofc_colstr_atomic_writef(cs, ") ")
+		|| !ofc_colstr_atomic_writef(cs, ")")
+		|| !ofc_colstr_atomic_writef(cs, " ")
 		|| !ofc_sema_expr_list_print(cs, stmt->if_comp.label))
 		return false;
 
@@ -290,15 +290,17 @@ bool ofc_sema_stmt_if_then_print(
 	if (!cs || !stmt) return false;
 
 	if (!ofc_colstr_atomic_writef(cs, "IF")
+		|| !ofc_colstr_atomic_writef(cs, " ")
 		|| !ofc_colstr_atomic_writef(cs, "(")
 		|| !ofc_sema_expr_print(cs, stmt->if_then.cond)
 		|| !ofc_colstr_atomic_writef(cs, ")")
+		|| !ofc_colstr_atomic_writef(cs, " ")
 		|| !ofc_colstr_atomic_writef(cs, "THEN"))
 		return false;
 
 	if (stmt->if_then.scope_then)
 	{
-		if (!ofc_sema_scope_print(cs, indent + 1,
+		if (!ofc_sema_scope_print(cs, (indent + 1),
 			stmt->if_then.scope_then))
 				return false;
 	}
@@ -306,15 +308,13 @@ bool ofc_sema_stmt_if_then_print(
 	if (stmt->if_then.scope_else)
 	{
 		if (!ofc_colstr_atomic_writef(cs, "ELSE")
-			|| !ofc_sema_scope_print(cs, indent + 1,
+			|| !ofc_sema_scope_print(cs, (indent + 1),
 				stmt->if_then.scope_else))
 					return false;
 	}
 
 	if (!ofc_colstr_newline(cs, indent, NULL)
-		|| !ofc_colstr_atomic_writef(cs, "END")
-		|| !ofc_colstr_atomic_writef(cs, " ")
-		|| !ofc_colstr_atomic_writef(cs, "IF"))
+		|| !ofc_colstr_atomic_writef(cs, "END IF"))
 		return false;
 
 	return true;
