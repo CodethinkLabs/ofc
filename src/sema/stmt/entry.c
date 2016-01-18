@@ -46,3 +46,22 @@ ofc_sema_stmt_t* ofc_sema_stmt_entry(
 
 	return as;
 }
+
+bool ofc_sema_stmt_entry_print(
+	ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt)
+{
+	if ((!cs || !stmt)
+		|| (stmt->type != OFC_SEMA_STMT_ENTRY))
+		return false;
+
+	if (!ofc_colstr_atomic_writef(cs, "ENTRY")
+		|| !ofc_colstr_atomic_writef(cs, " ")
+		|| !ofc_str_ref_print(cs, stmt->entry.name)
+		|| !ofc_colstr_atomic_writef(cs, "(")
+		|| !ofc_sema_arg_list_print(cs, stmt->entry.args)
+		|| !ofc_colstr_atomic_writef(cs, ")"))
+		return false;
+
+	return true;
+}

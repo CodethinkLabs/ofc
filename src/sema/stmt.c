@@ -59,6 +59,8 @@ bool ofc_sema_stmt_io_inquire_print(ofc_colstr_t* cs,
 	const ofc_sema_stmt_t* stmt);
 bool ofc_sema_stmt_return_print(ofc_colstr_t* cs,
 	const ofc_sema_stmt_t* stmt);
+bool ofc_sema_stmt_entry_print(ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt);
 
 
 
