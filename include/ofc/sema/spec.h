@@ -67,12 +67,14 @@ ofc_sema_spec_t* ofc_sema_spec_copy(
 bool ofc_sema_spec_print(
 	ofc_colstr_t* cs,
 	unsigned indent,
-	ofc_sema_spec_t* spec);
+	const ofc_sema_scope_t* scope,
+	const ofc_sema_spec_t* spec);
 void ofc_sema_spec_delete(
 	ofc_sema_spec_t* spec);
 
 bool ofc_sema_spec_list_print(
 	ofc_colstr_t* cs, unsigned indent,
+	const ofc_sema_scope_t* scope,
 	const ofc_sema_spec_list_t* list);
 
 ofc_sema_spec_map_t* ofc_sema_spec_map_create(

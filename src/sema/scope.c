@@ -660,7 +660,12 @@ ofc_sema_scope_t* ofc_sema_scope_stmt_func(
 			ofc_sema_spec_t* spec
 				= ofc_sema_scope_spec_modify(
 					scope, index->range[i]->src);
-			if (spec) spec->used = true;
+			if (!spec)
+			{
+				ofc_sema_scope_delete(func);
+				return false;
+			}
+			spec->used = true;
 		}
 	}
 
@@ -986,7 +991,7 @@ static bool ofc_sema_scope_body__print(
 
 	/* TODO - Use scope error printing preferably with source location. */
 
-	if (!ofc_sema_spec_list_print(cs, indent, scope->spec->list))
+	if (!ofc_sema_spec_list_print(cs, indent, scope, scope->spec->list))
 	{
 		fprintf(stderr, "\nError: Failed to print spec list");
 		return false;

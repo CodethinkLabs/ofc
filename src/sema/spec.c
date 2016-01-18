@@ -335,7 +335,8 @@ ofc_sema_spec_t* ofc_sema_spec_copy(
 bool ofc_sema_spec_print(
 	ofc_colstr_t* cs,
 	unsigned indent,
-	ofc_sema_spec_t* spec)
+	const ofc_sema_scope_t* scope,
+	const ofc_sema_spec_t* spec)
 {
 	if (!spec)
 		return false;
@@ -344,24 +345,36 @@ bool ofc_sema_spec_print(
 	if (!spec->used)
 		return true;
 
+	ofc_sema_type_e stype = spec->type;
 	if (spec->type_implicit)
 	{
-		/* TODO - Print spec attributes. */
-	}
-	else
-	{
-		if (!ofc_colstr_newline(cs, indent, NULL)
-			|| !ofc_colstr_atomic_writef(cs, "%s",
-				ofc_sema_type_enum_str_rep(spec->type))
-			/* TODO - Print more spec attributes. */
-			|| !ofc_colstr_atomic_writef(cs, " ")
-			|| !ofc_colstr_atomic_writef(cs, "::")
-			|| !ofc_colstr_atomic_writef(cs, " ")
-			|| !ofc_sparse_ref_print(cs, spec->name))
-			return false;
+		ofc_sema_spec_t* final
+			= ofc_sema_scope_spec_find_final(
+				scope, spec->name);
+		if (!final) return false;
+
+		stype = final->type;
+		ofc_sema_spec_delete(final);
 	}
 
-	return true;
+	const ofc_sema_type_t* type;
+	switch (stype)
+	{
+		case OFC_SEMA_TYPE_CHARACTER:
+			type = ofc_sema_type_create_character(spec->kind, spec->len);
+			break;
+		default:
+			type = ofc_sema_type_create_primitive(stype, spec->kind);
+			break;
+	}
+
+	return (ofc_colstr_newline(cs, indent, NULL)
+		&& ofc_sema_type_print(cs, type)
+		/* TODO - Print more spec attributes. */
+		&& ofc_colstr_atomic_writef(cs, " ")
+		&& ofc_colstr_atomic_writef(cs, "::")
+		&& ofc_colstr_atomic_writef(cs, " ")
+		&& ofc_sparse_ref_print(cs, spec->name));
 }
 
 void ofc_sema_spec_delete(
@@ -396,6 +409,7 @@ static ofc_sema_spec_list_t* ofc_sema_spec_list_create()
 
 bool ofc_sema_spec_list_print(
 	ofc_colstr_t* cs, unsigned indent,
+	const ofc_sema_scope_t* scope,
 	const ofc_sema_spec_list_t* list)
 {
 	if (!cs || !list)
@@ -405,7 +419,7 @@ bool ofc_sema_spec_list_print(
 	for (i = 0; i < list->count; i++)
 	{
 		if (!ofc_sema_spec_print(
-			cs, indent, list->spec[i]))
+			cs, indent, scope, list->spec[i]))
 			return false;
 	}
 
