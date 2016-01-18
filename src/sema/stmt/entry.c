@@ -59,7 +59,8 @@ bool ofc_sema_stmt_entry_print(
 		|| !ofc_colstr_atomic_writef(cs, " ")
 		|| !ofc_str_ref_print(cs, stmt->entry.name)
 		|| !ofc_colstr_atomic_writef(cs, "(")
-		|| !ofc_sema_arg_list_print(cs, stmt->entry.args)
+		|| (stmt->entry.args && !ofc_sema_arg_list_print(cs,
+			stmt->entry.args))
 		|| !ofc_colstr_atomic_writef(cs, ")"))
 		return false;
 

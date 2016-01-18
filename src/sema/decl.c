@@ -1592,8 +1592,8 @@ bool ofc_sema_decl_list_stmt_func_print(
 			if (!ofc_colstr_newline(cs, indent, NULL)
 				|| !ofc_colstr_atomic_writef(cs, "%.*s(",
 					decl->name.size, decl->name.base)
-				|| !ofc_sema_arg_list_print(cs,
-					decl->func->args)
+				|| (decl->func->args && !ofc_sema_arg_list_print(cs,
+					decl->func->args))
 				|| !ofc_colstr_atomic_writef(cs, ")")
 				|| !ofc_colstr_atomic_writef(cs, " = ")
 				|| !ofc_sema_scope_print(cs, indent, decl->func))
