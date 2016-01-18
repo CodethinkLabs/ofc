@@ -636,7 +636,7 @@ bool ofc_sema_stmt_print(
 			return ofc_sema_stmt_return_print(cs, stmt);
 
 		case OFC_SEMA_STMT_ENTRY:
-			break;
+			return ofc_sema_stmt_entry_print(cs, stmt);
 
 		default:
 			break;
