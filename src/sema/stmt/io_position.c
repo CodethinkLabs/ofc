@@ -235,9 +235,58 @@ bool ofc_sema_stmt_io_position_print(
 	if (!cs || !stmt)
 		return false;
 
-	if ((stmt->type != OFC_SEMA_STMT_IO_REWIND)
-		|| (stmt->type != OFC_SEMA_STMT_IO_END_FILE)
-		|| (stmt->type != OFC_SEMA_STMT_IO_BACKSPACE))
+	switch (stmt->type)
+	{
+		case OFC_SEMA_STMT_IO_REWIND:
+			if (!ofc_colstr_atomic_writef(cs, "REWIND"))
+				return false;
+			break;
+		case OFC_SEMA_STMT_IO_END_FILE:
+			if (!ofc_colstr_atomic_writef(cs, "END FILE"))
+				return false;
+			break;
+		case OFC_SEMA_STMT_IO_BACKSPACE:
+			if (!ofc_colstr_atomic_writef(cs, "BACKSPACE"))
+				return false;
+			break;
+
+		default:
+			return false;
+	}
+
+	if (!ofc_colstr_atomic_writef(cs, " ")
+		|| !ofc_colstr_atomic_writef(cs, "("))
+		return false;
+
+	if (stmt->io_position.unit)
+	{
+		if (!ofc_colstr_atomic_writef(cs, "UNIT")
+			|| !ofc_colstr_atomic_writef(cs, "=")
+			|| !ofc_sema_expr_print(cs, stmt->io_position.unit))
+			return false;
+	}
+
+	if (stmt->io_position.iostat)
+	{
+		if (!ofc_colstr_atomic_writef(cs, ",")
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_colstr_atomic_writef(cs, "IOSTAT")
+			|| !ofc_colstr_atomic_writef(cs, "=")
+			|| !ofc_sema_expr_print(cs, stmt->io_position.iostat))
+			return false;
+	}
+
+	if (stmt->io_position.err)
+	{
+		if (!ofc_colstr_atomic_writef(cs, ",")
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_colstr_atomic_writef(cs, "ERR")
+			|| !ofc_colstr_atomic_writef(cs, "=")
+			|| !ofc_sema_expr_print(cs, stmt->io_position.err))
+			return false;
+	}
+
+	if (!ofc_colstr_atomic_writef(cs, ")"))
 		return false;
 
 	return true;

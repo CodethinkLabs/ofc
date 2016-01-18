@@ -87,4 +87,5 @@ bool ofc_sema_io_check_label(
 	const ofc_parse_stmt_t* stmt,
 	bool is_format, ofc_sema_expr_t* expr,
 	const ofc_sema_label_t** label_dst);
+
 #endif

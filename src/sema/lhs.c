@@ -1370,7 +1370,8 @@ bool ofc_sema_lhs_list_print(
 	ofc_colstr_t* cs,
 	const ofc_sema_lhs_list_t* lhs_list)
 {
-	if (!cs || !lhs_list) return false;
+	if (!cs || !lhs_list)
+		return false;
 
 	unsigned i;
 	for (i = 0; i < lhs_list->count; i++)

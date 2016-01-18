@@ -701,7 +701,7 @@ bool ofc_sema_stmt_read_print(ofc_colstr_t* cs,
 	if (stmt->io_read.iolist)
 	{
 		if (!ofc_colstr_atomic_writef(cs, " ")
-			|| ofc_sema_lhs_list_print(cs,
+			|| !ofc_sema_lhs_list_print(cs,
 				stmt->io_read.iolist))
 			return false;
 	}

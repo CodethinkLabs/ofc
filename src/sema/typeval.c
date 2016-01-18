@@ -2191,7 +2191,7 @@ bool ofc_sema_typeval_print(ofc_colstr_t*cs,
 			return true;
 
 		case OFC_SEMA_TYPE_CHARACTER:
-			return ofc_colstr_atomic_writef(cs, "%.*s",
+			return ofc_colstr_atomic_writef(cs, "\"%.*s\"",
 				typeval->type->len, typeval->character);
 
 		case OFC_SEMA_TYPE_STRUCTURE:
