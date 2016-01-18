@@ -210,8 +210,8 @@ static ofc_sema_decl_t* ofc_sema_decl__spec(
 	decl->is_intrinsic = spec->is_intrinsic;
 	decl->is_external  = spec->is_external;
 
-	if (!ofc_sema_decl_list_add(
-		scope->decl, decl))
+	if (!ofc_sema_scope_decl_add(
+		scope, decl))
 	{
 		ofc_sema_decl_delete(decl);
 		return NULL;
@@ -547,7 +547,7 @@ bool ofc_sema_decl(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt)
 {
-	if (!stmt || !scope || !scope->decl
+	if (!stmt || !scope
 		|| !stmt->decl.type || !stmt->decl.decl
 		|| (stmt->type != OFC_PARSE_STMT_DECL))
 		return false;

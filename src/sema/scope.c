@@ -102,12 +102,33 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 	if (!scope->implicit)
 		scope->implicit = ofc_sema_implicit_create();
 
+	bool is_root = ofc_sema_scope_is_root(scope);
+
+	/* Implicit Do is special, it's not root but it has decls. */
+	if (type == OFC_SEMA_SCOPE_IMPLICIT_DO)
+		is_root = true;
+
 	scope->common    = NULL;
-	scope->spec      = ofc_sema_spec_map_create(opts.case_sensitive);
-	scope->decl      = ofc_sema_decl_list_create(opts.case_sensitive);
-	scope->equiv     = ofc_sema_equiv_list_create();
-	scope->parameter = ofc_sema_parameter_map_create(opts.case_sensitive);
-	scope->label     = ofc_sema_label_map_create();
+	scope->spec      = NULL;
+	scope->decl      = NULL;
+	scope->equiv     = NULL;
+	scope->parameter = NULL;
+
+	bool alloc_fail = false;
+	if (is_root)
+	{
+		scope->spec      = ofc_sema_spec_map_create(opts.case_sensitive);
+		scope->decl      = ofc_sema_decl_list_create(opts.case_sensitive);
+		scope->equiv     = ofc_sema_equiv_list_create();
+		scope->parameter = ofc_sema_parameter_map_create(opts.case_sensitive);
+
+		alloc_fail = (!scope->spec
+			|| !scope->decl
+			|| !scope->equiv
+			|| !scope->parameter);
+	}
+
+	scope->label = ofc_sema_label_map_create();
 
 	scope->external = false;
 	scope->intrinsic = false;
@@ -129,10 +150,7 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 	}
 
 	if (!scope->implicit
-		|| !scope->spec
-		|| !scope->decl
-		|| !scope->equiv
-		|| !scope->parameter
+		|| alloc_fail
 		|| !scope->label)
 	{
 		ofc_sema_scope_delete(scope);
@@ -180,8 +198,8 @@ static bool ofc_sema_scope__subroutine(
 		decl = ofc_sema_decl_create(stype, name);
 		if (!decl) return false;
 
-		if (!ofc_sema_decl_list_add(
-			scope->decl, decl))
+		if (!ofc_sema_scope_decl_add(
+			scope, decl))
 		{
 			ofc_sema_decl_delete(decl);
 			return false;
@@ -285,8 +303,8 @@ static bool ofc_sema_scope__function(
 		decl = ofc_sema_decl_create(ftype, name);
 		if (!decl) return false;
 
-		if (!ofc_sema_decl_list_add(
-			scope->decl, decl))
+		if (!ofc_sema_scope_decl_add(
+			scope, decl))
 		{
 			ofc_sema_decl_delete(decl);
 			return false;
@@ -804,6 +822,10 @@ static ofc_sema_spec_t* ofc_sema_scope_spec__find(
 	if (!scope)
 		return NULL;
 
+	if (!scope->spec)
+		return ofc_sema_scope_spec__find(
+			scope->parent, name);
+
 	ofc_sema_spec_t* n;
 	const ofc_sema_scope_t* s;
 	for (s = scope, n = NULL; s && !n;
@@ -817,6 +839,10 @@ ofc_sema_spec_t* ofc_sema_scope_spec_modify(
 {
 	if (!scope || ofc_sparse_ref_empty(name))
 		return NULL;
+
+	if (!scope->spec)
+		return ofc_sema_scope_spec_modify(
+			scope->parent, name);
 
 	ofc_sema_spec_t* spec
 		= ofc_hashmap_find_modify(
@@ -865,11 +891,29 @@ bool ofc_sema_scope_equiv_add(
 	if (!scope)
 		return false;
 
+	if (!scope->equiv)
+		return ofc_sema_scope_equiv_add(
+			scope->parent, equiv);
+
 	return ofc_sema_equiv_list_add(
 		scope->equiv, equiv);
 }
 
 
+
+bool ofc_sema_scope_decl_add(
+	ofc_sema_scope_t* scope, ofc_sema_decl_t* decl)
+{
+	if (!scope || !decl)
+		return false;
+
+	if (!scope->decl)
+		return ofc_sema_scope_decl_add(
+			scope->parent, decl);
+
+	return ofc_sema_decl_list_add(
+		scope->decl, decl);
+}
 
 const ofc_sema_decl_t* ofc_sema_scope_decl_find(
 	const ofc_sema_scope_t* scope, ofc_str_ref_t name, bool local)
@@ -919,18 +963,9 @@ ofc_sema_common_t* ofc_sema_scope_common_find_create(
 	ofc_sema_common_t* common = NULL;
 	if (!scope->common)
 	{
-		switch (scope->type)
-		{
-			case OFC_SEMA_SCOPE_GLOBAL:
-			case OFC_SEMA_SCOPE_PROGRAM:
-			case OFC_SEMA_SCOPE_SUBROUTINE:
-			case OFC_SEMA_SCOPE_FUNCTION:
-			case OFC_SEMA_SCOPE_BLOCK_DATA:
-				break;
-			default:
-				/* TODO - Error: Can't declare common block here. */
-				return NULL;
-		}
+		if (!ofc_sema_scope_is_root(scope))
+			return ofc_sema_scope_common_find_create(
+				scope->parent, name);
 
 		scope->common = ofc_sema_common_map_create(
 			opts.case_sensitive);
@@ -962,6 +997,13 @@ bool ofc_sema_scope_parameter_add(
 	ofc_sema_scope_t* scope,
 	ofc_sema_parameter_t* param)
 {
+	if (!scope)
+		return false;
+
+	if (!scope->parameter)
+		return ofc_sema_scope_parameter_add(
+			scope->parent, param);
+
 	return ofc_hashmap_add(scope->parameter, param);
 }
 
@@ -991,17 +1033,20 @@ static bool ofc_sema_scope_body__print(
 
 	/* TODO - Use scope error printing preferably with source location. */
 
-	if (!ofc_sema_spec_list_print(cs, indent, scope, scope->spec->list))
+	if (scope->spec
+		&& !ofc_sema_spec_list_print(cs, indent, scope, scope->spec->list))
 	{
 		fprintf(stderr, "\nError: Failed to print spec list");
 		return false;
 	}
-	if (!ofc_sema_decl_list_print(cs, indent, scope->decl))
+	if (scope->decl
+		&& !ofc_sema_decl_list_print(cs, indent, scope->decl))
 	{
 		fprintf(stderr, "\nError: Failed to print decl list");
 		return false;
 	}
-	if (!ofc_sema_decl_list_stmt_func_print(cs, indent, scope->decl))
+	if (scope->decl
+		&& !ofc_sema_decl_list_stmt_func_print(cs, indent, scope->decl))
 	{
 		fprintf(stderr, "\nError: Failed to print stmt func list");
 		return false;
@@ -1014,17 +1059,20 @@ static bool ofc_sema_scope_body__print(
 		return false;
 	}
 
-	if (!ofc_sema_equiv_list_print(cs, indent, scope->equiv))
+	if (scope->equiv
+		&& !ofc_sema_equiv_list_print(cs, indent, scope->equiv))
 	{
 		fprintf(stderr, "\nError: Failed to print equiv list");
 		return false;
 	}
-	if (!ofc_sema_stmt_list_print(cs, indent, scope->label, scope->stmt))
+	if (scope->stmt
+		&& !ofc_sema_stmt_list_print(cs, indent, scope->label, scope->stmt))
 	{
 		fprintf(stderr, "\nError: Failed to print stmt list");
 		return false;
 	}
-	if (!ofc_sema_format_label_list_print(cs, indent, scope->label->format))
+	if (scope->label
+		&& !ofc_sema_format_label_list_print(cs, indent, scope->label->format))
 	{
 		fprintf(stderr, "\nError: Failed to print format label list");
 		return false;

@@ -39,8 +39,8 @@ ofc_sema_stmt_t* ofc_sema_stmt_call(
 				type, stmt->call_entry.name);
 		if (!decl) return NULL;
 
-		if (!ofc_sema_decl_list_add(
-			scope->decl, decl))
+		if (!ofc_sema_scope_decl_add(
+			scope, decl))
 		{
 			ofc_sema_decl_delete(decl);
 			return NULL;

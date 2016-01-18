@@ -109,6 +109,8 @@ ofc_sema_spec_t* ofc_sema_scope_spec_find_final(
 bool ofc_sema_scope_equiv_add(
 	ofc_sema_scope_t* scope, ofc_sema_equiv_t* equiv);
 
+bool ofc_sema_scope_decl_add(
+	ofc_sema_scope_t* scope, ofc_sema_decl_t* decl);
 const ofc_sema_decl_t* ofc_sema_scope_decl_find(
 	const ofc_sema_scope_t* scope, ofc_str_ref_t name, bool local);
 ofc_sema_decl_t* ofc_sema_scope_decl_find_modify(
