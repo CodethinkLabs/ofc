@@ -551,21 +551,21 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 		}
 	}
 
+	/* Check iolist */
+	if (stmt->io_read.iolist)
+	{
+		s.io_read.iolist
+			= ofc_sema_input_list(
+				scope, stmt->io_read.iolist);
+		if (!s.io_read.iolist)
+		{
+			ofc_sema_stmt_io_read__cleanup(s);
+			return NULL;
+		}
+	}
+
 	if (s.io_read.format)
 	{
-		/* Check iolist */
-		if (stmt->io_read.iolist)
-		{
-			s.io_read.iolist
-				= ofc_sema_input_list(
-					scope, stmt->io_read.iolist);
-			if (!s.io_read.iolist)
-			{
-				ofc_sema_stmt_io_read__cleanup(s);
-				return NULL;
-			}
-		}
-
 		/* Count elements in iolist */
 		unsigned iolist_len = 0;
 		if (s.io_read.iolist
@@ -706,6 +706,24 @@ bool ofc_sema_stmt_read_print(ofc_colstr_t* cs,
 			cs,	"ERR", stmt->io_read.err))
 			return false;
 	}
+	if (stmt->io_read.eor)
+	{
+		if (!ofc_sema_stmt_read__print_optional(
+			cs,	"EOR", stmt->io_read.eor))
+			return false;
+	}
+	if (stmt->io_read.end)
+	{
+		if (!ofc_sema_stmt_read__print_optional(
+			cs,	"END", stmt->io_read.end))
+			return false;
+	}
+	if (stmt->io_read.size)
+	{
+		if (!ofc_sema_stmt_read__print_optional(
+			cs,	"SIZE", stmt->io_read.size))
+			return false;
+	}
 
 	if (!ofc_colstr_atomic_writef(cs, ")"))
 		return false;
@@ -718,8 +736,6 @@ bool ofc_sema_stmt_read_print(ofc_colstr_t* cs,
 				stmt->io_read.iolist))
 			return false;
 	}
-
-	/* TODO - read eor, end, size */
 
 	return true;
 }
