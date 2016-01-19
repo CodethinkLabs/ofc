@@ -40,14 +40,14 @@ ofc_sema_implicit_t* ofc_sema_implicit_create(void)
 	integer.type_implicit = false;
 
 	unsigned i;
-	for (i = 0; i < 7; i++)
+	for (i = 0; i < ('I' - 'A'); i++)
 		implicit->spec[i] = real;
 
 	/* I, J, K, L, M, N */
-	for (; i < 14; i++)
+	for (; i <= ('N' - 'A'); i++)
 		implicit->spec[i] = integer;
 
-	for (; i < 26; i++)
+	for (; i <= ('Z' - 'A'); i++)
 		implicit->spec[i] = real;
 
 	return implicit;
