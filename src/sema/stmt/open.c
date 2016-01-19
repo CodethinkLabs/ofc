@@ -872,6 +872,23 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 	return as;
 }
 
+static bool ofc_sema_stmt_open__print_optional(
+	ofc_colstr_t* cs, const char* name,
+	const ofc_sema_expr_t* expr)
+{
+	if (!cs || !expr)
+		return false;
+
+	if (!ofc_colstr_atomic_writef(cs, ",")
+		|| !ofc_colstr_atomic_writef(cs, " ")
+		|| !ofc_colstr_atomic_writef(cs, name)
+		|| !ofc_colstr_atomic_writef(cs, "= ")
+		|| !ofc_sema_expr_print(cs, expr))
+		return false;
+
+	return true;
+}
+
 bool ofc_sema_stmt_io_open_print(
 	ofc_colstr_t* cs,
 	ofc_sema_stmt_t* stmt)
@@ -885,11 +902,78 @@ bool ofc_sema_stmt_io_open_print(
 		|| !ofc_sema_expr_print(cs, stmt->io_open.unit))
 		return false;
 
-	if (stmt->io_open.iostat
-		&& (!ofc_colstr_atomic_writef(cs, ",")
-			|| !ofc_colstr_atomic_writef(cs, " ")
-			|| !ofc_sema_expr_print(cs,stmt->io_open.iostat)))
-		return false;
+	if (stmt->io_open.access)
+	{
+		if (!ofc_sema_stmt_open__print_optional(
+			cs, "ACCESS", stmt->io_open.access))
+			return false;
+	}
+	if (stmt->io_open.action)
+	{
+		if (!ofc_sema_stmt_open__print_optional(
+			cs, "ACTION", stmt->io_open.action))
+			return false;
+	}
+	if (stmt->io_open.blank)
+	{
+		if (!ofc_sema_stmt_open__print_optional(
+			cs, "BLANK", stmt->io_open.blank))
+			return false;
+	}
+	if (stmt->io_open.delim)
+	{
+		if (!ofc_sema_stmt_open__print_optional(
+			cs, "DELIM", stmt->io_open.delim))
+			return false;
+	}
+	if (stmt->io_open.err)
+	{
+		if (!ofc_sema_stmt_open__print_optional(
+			cs, "ERR", stmt->io_open.err))
+			return false;
+	}
+	if (stmt->io_open.file)
+	{
+		if (!ofc_sema_stmt_open__print_optional(
+			cs, "FILE", stmt->io_open.file))
+			return false;
+	}
+	if (stmt->io_open.form)
+	{
+		if (!ofc_sema_stmt_open__print_optional(
+			cs, "FORM", stmt->io_open.form))
+			return false;
+	}
+	if (stmt->io_open.iostat)
+	{
+		if (!ofc_sema_stmt_open__print_optional(
+			cs, "IOSTAT", stmt->io_open.iostat))
+			return false;
+	}
+	if (stmt->io_open.pad)
+	{
+		if (!ofc_sema_stmt_open__print_optional(
+			cs, "PAD", stmt->io_open.pad))
+			return false;
+	}
+	if (stmt->io_open.position)
+	{
+		if (!ofc_sema_stmt_open__print_optional(
+			cs, "POSITION", stmt->io_open.position))
+			return false;
+	}
+	if (stmt->io_open.recl)
+	{
+		if (!ofc_sema_stmt_open__print_optional(
+			cs, "RECL", stmt->io_open.recl))
+			return false;
+	}
+	if (stmt->io_open.status)
+	{
+		if (!ofc_sema_stmt_open__print_optional(
+			cs, "STATUS", stmt->io_open.status))
+			return false;
+	}
 
 	if (!ofc_colstr_atomic_writef(cs, ")"))
 		return false;
