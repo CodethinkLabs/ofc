@@ -214,41 +214,26 @@ ofc_sema_stmt_t* ofc_sema_stmt_do__block(
 		return NULL;
 
 
-	s.do_block.block = NULL;
+	s.do_block.scope = NULL;
 	if (stmt->do_block.block)
 	{
-		s.do_block.block = ofc_sema_stmt_list_create();
-		if (!s.do_block.block)
+		s.do_block.scope
+			= ofc_sema_scope_do(
+				scope, stmt->do_block.block);
+
+		if (!s.do_block.scope)
 		{
 			ofc_sema_expr_delete(s.do_block.init);
 			ofc_sema_expr_delete(s.do_block.last);
 			ofc_sema_expr_delete(s.do_block.step);
 			return NULL;
 		}
-
-		unsigned i;
-		for (i = 0; i < stmt->do_block.block->count; i++)
-		{
-			ofc_sema_stmt_t* stat = ofc_sema_stmt(
-				scope, stmt->do_block.block->stmt[i]);
-
-			if (!ofc_sema_stmt_list_add(
-				s.do_block.block, stat))
-			{
-				ofc_sema_stmt_delete(stat);
-				ofc_sema_stmt_list_delete(s.do_block.block);
-				ofc_sema_expr_delete(s.do_block.init);
-				ofc_sema_expr_delete(s.do_block.last);
-				ofc_sema_expr_delete(s.do_block.step);
-				return NULL;
-			}
-		}
 	}
 
 	ofc_sema_stmt_t* as = ofc_sema_stmt_alloc(s);
 	if (!as)
 	{
-		ofc_sema_stmt_list_delete(s.do_block.block);
+		ofc_sema_scope_delete(s.do_block.scope);
 		ofc_sema_expr_delete(s.do_block.init);
 		ofc_sema_expr_delete(s.do_block.last);
 		ofc_sema_expr_delete(s.do_block.step);
@@ -331,39 +316,24 @@ ofc_sema_stmt_t* ofc_sema_stmt_do_while__block(
 		return NULL;
 	}
 
-	s.do_while_block.block = NULL;
+	s.do_while_block.scope = NULL;
 	if (stmt->do_while_block.block)
 	{
+		s.do_while_block.scope
+			= ofc_sema_scope_do(
+				scope, stmt->do_while_block.block);
 
-		s.do_while_block.block = ofc_sema_stmt_list_create();
-
-		if (!s.do_while_block.block)
+		if (!s.do_while_block.scope)
 		{
 			ofc_sema_expr_delete(s.do_while_block.cond);
 			return NULL;
-		}
-
-		unsigned i;
-		for (i = 0; i < stmt->do_while_block.block->count; i++)
-		{
-			ofc_sema_stmt_t* stat = ofc_sema_stmt(
-				scope, stmt->do_while_block.block->stmt[i]);
-
-			if (!ofc_sema_stmt_list_add(
-				s.do_while_block.block, stat))
-			{
-				ofc_sema_stmt_delete(stat);
-				ofc_sema_expr_delete(s.do_while_block.cond);
-				ofc_sema_stmt_list_delete(s.do_while_block.block);
-				return NULL;
-			}
 		}
 	}
 
 	ofc_sema_stmt_t* as = ofc_sema_stmt_alloc(s);
 	if (!as)
 	{
-		ofc_sema_stmt_list_delete(s.do_while_block.block);
+		ofc_sema_scope_delete(s.do_while_block.scope);
 		ofc_sema_expr_delete(s.do_while_block.cond);
 		return NULL;
 	}
@@ -457,8 +427,7 @@ bool ofc_sema_stmt_do_block_print(
 		if (!ofc_sema_expr_print(cs, stmt->do_block.step))
 			return false;
 	}
-	if (!ofc_sema_stmt_list_print(cs, indent, NULL,
-		stmt->do_block.block))
+	if (!ofc_sema_scope_print(cs, indent, stmt->do_block.scope))
 		return false;
 	if (!ofc_colstr_atomic_writef(cs, "END DO"))
 		return false;
@@ -494,8 +463,7 @@ bool ofc_sema_stmt_do_while_block_print(
 		return false;
 	if (!ofc_sema_expr_print(cs, stmt->do_while_block.cond))
 		return false;
-	if (!ofc_sema_stmt_list_print(cs, indent, NULL,
-		stmt->do_while_block.block))
+	if (!ofc_sema_scope_print(cs, indent, stmt->do_while_block.scope))
 		return false;
 	if (!ofc_colstr_atomic_writef(cs, "END DO"))
 		return false;

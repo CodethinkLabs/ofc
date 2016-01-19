@@ -696,7 +696,8 @@ ofc_sema_scope_t* ofc_sema_scope_if(
 	ofc_sema_scope_t* if_scope
 		= ofc_sema_scope__create(
 			scope, NULL, OFC_SEMA_SCOPE_IF);
-	if (!if_scope) return NULL;
+	if (!if_scope)
+		return NULL;
 
 	if (!ofc_sema_scope__body(if_scope, block))
 	{
@@ -705,6 +706,28 @@ ofc_sema_scope_t* ofc_sema_scope_if(
 	}
 
 	return if_scope;
+}
+
+ofc_sema_scope_t* ofc_sema_scope_do(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_list_t* block)
+{
+	if (!scope || !block)
+		return NULL;
+
+	ofc_sema_scope_t* do_scope
+		= ofc_sema_scope__create(
+			scope, NULL, OFC_SEMA_SCOPE_DO);
+	if(!do_scope)
+		return NULL;
+
+	if (!ofc_sema_scope__body(do_scope, block))
+	{
+		ofc_sema_scope_delete(do_scope);
+		return NULL;
+	}
+
+	return do_scope;
 }
 
 ofc_sema_scope_t* ofc_sema_scope_implicit_do(
@@ -1070,6 +1093,7 @@ bool ofc_sema_scope_print(
 			kwstr = "BLOCK DATA";
 			break;
 		case OFC_SEMA_SCOPE_IF:
+		case OFC_SEMA_SCOPE_DO:
 			return ofc_sema_scope_body__print(cs, indent, scope);
 		case OFC_SEMA_SCOPE_STMT_FUNC:
 			return ofc_sema_expr_print(cs, scope->expr);

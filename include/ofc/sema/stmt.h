@@ -254,11 +254,11 @@ struct ofc_sema_stmt_s
 
 		struct
 		{
-			ofc_sema_lhs_t*       iter;
-			ofc_sema_expr_t*      init;
-			ofc_sema_expr_t*      last;
-			ofc_sema_expr_t*      step;
-			ofc_sema_stmt_list_t* block;
+			ofc_sema_lhs_t*   iter;
+			ofc_sema_expr_t*  init;
+			ofc_sema_expr_t*  last;
+			ofc_sema_expr_t*  step;
+			ofc_sema_scope_t* scope;
 		} do_block;
 
 		struct
@@ -269,8 +269,8 @@ struct ofc_sema_stmt_s
 
 		struct
 		{
-			ofc_sema_expr_t*      cond;
-			ofc_sema_stmt_list_t* block;
+			ofc_sema_expr_t*  cond;
+			ofc_sema_scope_t* scope;
 		} do_while_block;
 
 		struct

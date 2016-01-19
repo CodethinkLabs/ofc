@@ -463,8 +463,8 @@ void ofc_sema_stmt_delete(
 				stmt->do_block.last);
 			ofc_sema_expr_delete(
 				stmt->do_block.step);
-			ofc_sema_stmt_list_delete(
-				stmt->do_block.block);
+			ofc_sema_scope_delete(
+				stmt->do_block.scope);
 			break;
 		case OFC_SEMA_STMT_DO_WHILE:
 			ofc_sema_expr_delete(
@@ -475,8 +475,8 @@ void ofc_sema_stmt_delete(
 		case OFC_SEMA_STMT_DO_WHILE_BLOCK:
 			ofc_sema_expr_delete(
 				stmt->do_while_block.cond);
-			ofc_sema_stmt_list_delete(
-				stmt->do_while_block.block);
+			ofc_sema_scope_delete(
+				stmt->do_while_block.scope);
 			break;
 		case OFC_SEMA_STMT_CALL:
 			ofc_sema_expr_list_delete(
