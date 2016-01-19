@@ -78,6 +78,9 @@ ofc_sema_lhs_t* ofc_sema_lhs_in_expr(
 	ofc_sema_scope_t* scope,
 	ofc_sema_scope_t* decl_scope,
 	const ofc_parse_lhs_t* lhs);
+ofc_sema_lhs_t* ofc_sema_lhs_local(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_lhs_t* lhs);
 bool ofc_sema_lhs_reference(
 	ofc_sema_lhs_t* lhs);
 void ofc_sema_lhs_delete(
@@ -91,6 +94,11 @@ bool ofc_sema_lhs_init_array(
 	const ofc_sema_array_t* array,
 	unsigned count,
 	const ofc_sema_expr_t** init);
+
+bool ofc_sema_lhs_is_parameter(
+	const ofc_sema_lhs_t* lhs);
+ofc_sema_typeval_t* ofc_sema_lhs_parameter(
+	const ofc_sema_lhs_t* lhs);
 
 bool ofc_sema_lhs_mark_used(
 	ofc_sema_lhs_t* lhs);

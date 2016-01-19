@@ -622,45 +622,6 @@ static ofc_sema_expr_t* ofc_sema_expr__literal(
 	return expr;
 }
 
-static ofc_sema_expr_t* ofc_sema_expr__parameter(
-	const ofc_sema_scope_t* scope,
-	const ofc_parse_lhs_t* name)
-{
-	if (!name || (name->type != OFC_PARSE_LHS_VARIABLE))
-		return false;
-
-	const ofc_sema_parameter_t* param;
-	const ofc_sema_scope_t* pscope;
-	for (param = NULL, pscope = scope;
-		pscope && !param; pscope = pscope->parent)
-	{
-		param = ofc_hashmap_find(
-			pscope->parameter,
-			&name->variable.string);
-	}
-	if (!param) return NULL;
-
-	const ofc_sema_typeval_t* ctv
-		= ofc_sema_parameter_get(param);
-	if (!ctv) return NULL;
-
-	ofc_sema_expr_t* expr
-		= ofc_sema_expr__create(
-			OFC_SEMA_EXPR_CONSTANT);
-	if (!expr) return NULL;
-
-	expr->constant
-		= ofc_sema_typeval_copy(ctv);
-	if (!expr->constant)
-	{
-		ofc_sema_expr_delete(expr);
-		return NULL;
-	}
-
-	expr->src = name->src;
-	return expr;
-}
-
 static ofc_sema_expr_t* ofc_sema_expr__intrinsic(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_lhs_t* name,
@@ -863,6 +824,17 @@ static ofc_sema_expr_t* ofc_sema_expr__lhs(
 		return NULL;
 	}
 
+	if (ofc_sema_lhs_is_parameter(lhs))
+	{
+		expr->constant
+			= ofc_sema_lhs_parameter(lhs);
+		if (!expr->constant)
+		{
+			ofc_sema_lhs_delete(lhs);
+			return NULL;
+		}
+	}
+
 	expr->lhs = lhs;
 	expr->src = name->src;
 	return expr;
@@ -873,10 +845,6 @@ static ofc_sema_expr_t* ofc_sema_expr__variable(
 	ofc_sema_scope_t* decl_scope,
 	const ofc_parse_lhs_t* name)
 {
-	ofc_sema_expr_t* expr
-		= ofc_sema_expr__parameter(scope, name);
-	if (expr) return expr;
-
 	ofc_sparse_ref_t base_name;
 	if (!ofc_parse_lhs_base_name(
 		*name, &base_name))
@@ -888,6 +856,7 @@ static ofc_sema_expr_t* ofc_sema_expr__variable(
 		= ofc_sema_scope_decl_find(
 			scope, base_name.string, false);
 
+	ofc_sema_expr_t* expr;
 	if (intrinsic && !decl
 		&& (name->type == OFC_PARSE_LHS_ARRAY))
 	{
@@ -908,7 +877,6 @@ static ofc_sema_expr_t* ofc_sema_expr__variable(
 	}
 	else
 	{
-
 		bool is_array    = false;
 		bool is_function = false;
 		if (decl)
@@ -1513,7 +1481,7 @@ static ofc_sema_expr_list_t* ofc_sema_expr_list__implicit_do(
 	if (!idscope)
 		return NULL;
 
-	ofc_sema_parameter_t* param
+	ofc_sema_decl_t* param
 		= ofc_sema_parameter_assign(idscope, id->init);
 	if (!param)
 	{
@@ -1521,15 +1489,8 @@ static ofc_sema_expr_list_t* ofc_sema_expr_list__implicit_do(
 		return NULL;
 	}
 
-	if (!ofc_sema_scope_parameter_add(idscope, param))
-	{
-		ofc_sema_parameter_delete(param);
-		ofc_sema_scope_delete(idscope);
-		return NULL;
-	}
-
 	const ofc_sema_type_t* dtype
-		= ofc_sema_parameter_type(param);
+		= ofc_sema_decl_type(param);
 	if (!ofc_sema_type_is_scalar(dtype))
 	{
 		ofc_sparse_ref_error(id->init->name->src,
@@ -1656,7 +1617,7 @@ static ofc_sema_expr_list_t* ofc_sema_expr_list__implicit_do(
 
 	ofc_sema_typeval_t* value
 		= ofc_sema_typeval_le(
-			param->typeval, limit->constant);
+			param->init.tv, limit->constant);
 	if (!value)
 	{
 		ofc_sema_expr_delete(step);
@@ -1716,13 +1677,13 @@ static ofc_sema_expr_list_t* ofc_sema_expr_list__implicit_do(
 
 		ofc_sema_typeval_t* ntv
 			= ofc_sema_typeval_add(
-				param->typeval, step->constant);
-		ofc_sema_typeval_delete(param->typeval);
-		param->typeval = ntv;
+				param->init.tv, step->constant);
+		ofc_sema_typeval_delete(param->init.tv);
+		param->init.tv = ntv;
 
 		ofc_sema_typeval_delete(value);
 		value = ofc_sema_typeval_le(
-			param->typeval, limit->constant);
+			param->init.tv, limit->constant);
 		if (!value)
 		{
 			ofc_sema_expr_delete(step);

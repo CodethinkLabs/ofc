@@ -35,7 +35,6 @@ void ofc_sema_scope_delete(
 	ofc_sema_spec_map_delete(scope->spec);
 	ofc_sema_decl_list_delete(scope->decl);
 	ofc_sema_equiv_list_delete(scope->equiv);
-	ofc_hashmap_delete(scope->parameter);
 	ofc_sema_label_map_delete(scope->label);
 
 	switch (scope->type)
@@ -112,7 +111,6 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 	scope->spec      = NULL;
 	scope->decl      = NULL;
 	scope->equiv     = NULL;
-	scope->parameter = NULL;
 
 	bool alloc_fail = false;
 	if (is_root)
@@ -120,12 +118,10 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 		scope->spec      = ofc_sema_spec_map_create(opts.case_sensitive);
 		scope->decl      = ofc_sema_decl_list_create(opts.case_sensitive);
 		scope->equiv     = ofc_sema_equiv_list_create();
-		scope->parameter = ofc_sema_parameter_map_create(opts.case_sensitive);
 
 		alloc_fail = (!scope->spec
 			|| !scope->decl
-			|| !scope->equiv
-			|| !scope->parameter);
+			|| !scope->equiv);
 	}
 
 	scope->label = ofc_sema_label_map_create();
@@ -976,20 +972,6 @@ ofc_sema_common_t* ofc_sema_scope_common_find_create(
 	}
 
 	return common;
-}
-
-bool ofc_sema_scope_parameter_add(
-	ofc_sema_scope_t* scope,
-	ofc_sema_parameter_t* param)
-{
-	if (!scope)
-		return false;
-
-	if (!scope->parameter)
-		return ofc_sema_scope_parameter_add(
-			scope->parent, param);
-
-	return ofc_hashmap_add(scope->parameter, param);
 }
 
 

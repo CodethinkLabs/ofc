@@ -74,7 +74,11 @@ ofc_sema_stmt_t* ofc_sema_stmt_assignment(
 
 	s.assignment.expr = ofc_sema_expr(
 		scope, stmt->assignment->init);
-	if (!s.assignment.expr) return NULL;
+	if (!s.assignment.expr)
+	{
+		ofc_sema_lhs_delete(s.assignment.dest);
+		return NULL;
+	}
 
 	const ofc_sema_type_t* dtype
 		= ofc_sema_lhs_type(s.assignment.dest);
@@ -93,6 +97,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_assignment(
 				ofc_sema_type_str_rep(expr_type),
 				ofc_sema_type_str_rep(dtype));
 			ofc_sema_expr_delete(s.assignment.expr);
+			ofc_sema_lhs_delete(s.assignment.dest);
 			return NULL;
 		}
 		s.assignment.expr = cast;
@@ -104,8 +109,8 @@ ofc_sema_stmt_t* ofc_sema_stmt_assignment(
 		= ofc_sema_stmt_alloc(s);
 	if (!as)
 	{
-		ofc_sema_expr_delete(
-			s.assignment.expr);
+		ofc_sema_expr_delete(s.assignment.expr);
+		ofc_sema_lhs_delete(s.assignment.dest);
 		return NULL;
 	}
 

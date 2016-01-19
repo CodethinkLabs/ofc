@@ -283,7 +283,7 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 	ofc_sema_scope_t* scope,
 	ofc_sema_scope_t* decl_scope,
 	const ofc_parse_lhs_t* lhs,
-	bool is_expr)
+	bool is_expr, bool force_local)
 {
 	if (!scope || !lhs)
 		return NULL;
@@ -306,7 +306,7 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 		case OFC_PARSE_LHS_MEMBER_STRUCTURE:
 			{
 				ofc_sema_lhs_t* parent = ofc_sema__lhs(
-					scope, decl_scope, lhs->parent, false);
+					scope, decl_scope, lhs->parent, false, force_local);
 				if (!parent) return NULL;
 
 				/* TODO - Check dereference type against structure type. */
@@ -337,7 +337,7 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 		case OFC_PARSE_LHS_ARRAY:
 			{
 				ofc_sema_lhs_t* parent = ofc_sema__lhs(
-					scope, decl_scope, lhs->parent, false);
+					scope, decl_scope, lhs->parent, false, force_local);
 				if (!parent) return NULL;
 
 				if (!ofc_sema_type_is_array(parent->data_type))
@@ -452,7 +452,7 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 	else
 	{
 		decl = ofc_sema_scope_decl_find_modify(
-			scope, lhs->variable.string, false);
+			scope, lhs->variable.string, force_local);
 		if (!decl)
 		{
 			decl = ofc_sema_decl_implicit_lhs(
@@ -497,6 +497,14 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 		}
 	}
 
+	if (!is_expr && ofc_sema_decl_is_parameter(decl))
+	{
+		/* TODO - Throw this error for PARAMETER arrays, etc. too. */
+		ofc_sparse_ref_error(lhs->src,
+			"Assignment to PARAMETER declaration");
+		return NULL;
+	}
+
 	ofc_sema_lhs_t* slhs
 		= (ofc_sema_lhs_t*)malloc(
 			sizeof(ofc_sema_lhs_t));
@@ -518,7 +526,7 @@ ofc_sema_lhs_t* ofc_sema_lhs(
 	const ofc_parse_lhs_t* lhs)
 {
 	return ofc_sema__lhs(
-		scope, scope, lhs, false);
+		scope, scope, lhs, false, false);
 }
 
 ofc_sema_lhs_t* ofc_sema_lhs_from_expr(
@@ -543,7 +551,15 @@ ofc_sema_lhs_t* ofc_sema_lhs_in_expr(
 	const ofc_parse_lhs_t* lhs)
 {
 	return ofc_sema__lhs(
-		scope, decl_scope, lhs, true);
+		scope, decl_scope, lhs, true, false);
+}
+
+ofc_sema_lhs_t* ofc_sema_lhs_local(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_lhs_t* lhs)
+{
+	return ofc_sema__lhs(
+		scope, scope, lhs, false, true);
 }
 
 static ofc_sema_lhs_t* ofc_sema_lhs__offset(
@@ -772,6 +788,61 @@ bool ofc_sema_lhs_init_array(
 	return ofc_sema_decl_init_array(
 		ofc_sema_lhs_decl(lhs),
 		array, count, init);
+}
+
+
+bool ofc_sema_lhs_is_parameter(
+	const ofc_sema_lhs_t* lhs)
+{
+	if (!lhs)
+		return false;
+
+	switch (lhs->type)
+	{
+		case OFC_SEMA_LHS_DECL:
+			return ofc_sema_decl_is_parameter(lhs->decl);
+
+		/* TODO - Calculate properly for indices, slices, substrings, etc. */
+
+		default:
+			break;
+	}
+
+	return false;
+}
+
+ofc_sema_typeval_t* ofc_sema_lhs_parameter(
+	const ofc_sema_lhs_t* lhs)
+{
+	if (!lhs)
+		return NULL;
+
+	if (lhs->type != OFC_SEMA_LHS_DECL)
+	{
+		/* TODO - Handle more complex cases like a constant index
+		          into a PARAMETER array. */
+		return NULL;
+	}
+
+	const ofc_sema_decl_t* decl = lhs->decl;
+
+	bool complete;
+	if (!decl || !decl->is_parameter
+		|| !ofc_sema_decl_has_initializer(decl, &complete)
+		|| !complete)
+		return NULL;
+
+	/* TODO - Handle PARAMETER arrays properly. */
+	if (ofc_sema_decl_is_composite(decl))
+		return NULL;
+
+	if (decl->init.is_substring)
+	{
+		/* TODO - Handle incomplete substring PARAMETERS. */
+		return NULL;
+	}
+
+	return ofc_sema_typeval_copy(decl->init.tv);
 }
 
 
@@ -1153,51 +1224,43 @@ static ofc_sema_lhs_list_t* ofc_sema_lhs_list__implicit_do(
 	if (!idscope)
 		return NULL;
 
-	ofc_sema_expr_t* init_expr
+	ofc_sema_expr_t* init
 		= ofc_sema_expr(idscope, id->init->init);
-	if (!init_expr)
-	{
-		ofc_sema_scope_delete(idscope);
-		return NULL;
-	}
-
-	if (!ofc_sema_expr_is_constant(init_expr))
-	{
-		ofc_sema_expr_delete(init_expr);
-		ofc_sema_scope_delete(idscope);
-		if (is_dynamic) *is_dynamic = true;
-		return NULL;
-	}
-
-	ofc_sema_typeval_t* init
-		= ofc_sema_typeval_copy(
-			ofc_sema_expr_constant(init_expr));
-	ofc_sema_expr_delete(init_expr);
 	if (!init)
 	{
 		ofc_sema_scope_delete(idscope);
 		return NULL;
 	}
 
-	ofc_sema_parameter_t* param
-		= ofc_sema_parameter_create(
-			id->init->name->variable.string, init);
-	if (!param)
+	if (!ofc_sema_expr_is_constant(init))
 	{
-		ofc_sema_typeval_delete(init);
+		ofc_sema_expr_delete(init);
 		ofc_sema_scope_delete(idscope);
+		if (is_dynamic) *is_dynamic = true;
 		return NULL;
 	}
 
-	if (!ofc_sema_scope_parameter_add(idscope, param))
+	ofc_sema_decl_t* param = ofc_sema_decl_implicit(
+		idscope, id->init->name->variable, NULL);
+	if (!param)
 	{
-		ofc_sema_parameter_delete(param);
+		ofc_sema_expr_delete(init);
+		ofc_sema_scope_delete(idscope);
+		return NULL;
+	}
+	param->is_parameter = true;
+
+	bool is_init = ofc_sema_decl_init(param, init);
+	ofc_sema_expr_delete(init);
+	if (!is_init)
+	{
+		ofc_sema_decl_delete(param);
 		ofc_sema_scope_delete(idscope);
 		return NULL;
 	}
 
 	const ofc_sema_type_t* dtype
-		= ofc_sema_parameter_type(param);
+		= ofc_sema_decl_type(param);
 	if (!ofc_sema_type_is_scalar(dtype))
 	{
 		ofc_sparse_ref_error(id->init->name->src,
@@ -1329,7 +1392,7 @@ static ofc_sema_lhs_list_t* ofc_sema_lhs_list__implicit_do(
 
 	ofc_sema_typeval_t* value
 		= ofc_sema_typeval_le(
-			param->typeval, limit->constant);
+			param->init.tv, limit->constant);
 	if (!value)
 	{
 		ofc_sema_expr_delete(step);
@@ -1374,7 +1437,7 @@ static ofc_sema_lhs_list_t* ofc_sema_lhs_list__implicit_do(
 		else
 		{
 			ofc_sema_lhs_t* lhs = ofc_sema__lhs(
-				idscope, decl_scope, id->dlist, false);
+				idscope, decl_scope, id->dlist, false, false);
 			if (!ofc_sema_lhs_list_add(list, lhs))
 			{
 				ofc_sema_expr_delete(step);
@@ -1388,13 +1451,13 @@ static ofc_sema_lhs_list_t* ofc_sema_lhs_list__implicit_do(
 
 		ofc_sema_typeval_t* ntv
 			= ofc_sema_typeval_add(
-				param->typeval, step->constant);
-		ofc_sema_typeval_delete(param->typeval);
-		param->typeval = ntv;
+				param->init.tv, step->constant);
+		ofc_sema_typeval_delete(param->init.tv);
+		param->init.tv = ntv;
 
 		ofc_sema_typeval_delete(value);
 		value = ofc_sema_typeval_le(
-			param->typeval, limit->constant);
+			param->init.tv, limit->constant);
 		if (!value)
 		{
 			ofc_sema_expr_delete(step);

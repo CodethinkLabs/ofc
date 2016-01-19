@@ -63,6 +63,7 @@ ofc_sema_decl_t* ofc_sema_decl_create(
 
 	decl->equiv = NULL;
 
+	decl->is_parameter = false;
 	decl->is_static    = false;
 	decl->is_volatile  = false;
 	decl->is_automatic = false;
@@ -1172,6 +1173,14 @@ bool ofc_sema_decl_is_procedure(
 {
 	return (ofc_sema_decl_is_subroutine(decl)
 		|| ofc_sema_decl_is_function(decl));
+}
+
+
+bool ofc_sema_decl_is_parameter(
+	const ofc_sema_decl_t* decl)
+{
+	if (!decl) return false;
+	return decl->is_parameter;
 }
 
 

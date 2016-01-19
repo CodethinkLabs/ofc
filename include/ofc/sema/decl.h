@@ -48,6 +48,7 @@ struct ofc_sema_decl_s
 		ofc_sema_decl_init_t* init_array;
 	};
 
+	bool is_parameter;
     bool is_static;
 	bool is_automatic;
 	bool is_volatile;
@@ -150,6 +151,9 @@ bool ofc_sema_decl_is_subroutine(
 bool ofc_sema_decl_is_function(
 	const ofc_sema_decl_t* decl);
 bool ofc_sema_decl_is_procedure(
+	const ofc_sema_decl_t* decl);
+
+bool ofc_sema_decl_is_parameter(
 	const ofc_sema_decl_t* decl);
 
 bool ofc_sema_decl_has_initializer(
