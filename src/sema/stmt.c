@@ -261,7 +261,7 @@ void ofc_sema_stmt_delete(
 			ofc_sema_lhs_delete(
 				stmt->assignment.dest);
 			break;
-		case OFC_SEMA_STMT_WRITE:
+		case OFC_SEMA_STMT_IO_WRITE:
 			ofc_sema_expr_delete(
 				stmt->io_write.unit);
 			ofc_sema_expr_delete(
@@ -572,7 +572,7 @@ bool ofc_sema_stmt_print(
 		case OFC_SEMA_STMT_ASSIGN:
 			return ofc_sema_stmt_assign_print(cs, stmt);
 
-		case OFC_SEMA_STMT_WRITE:
+		case OFC_SEMA_STMT_IO_WRITE:
 			return ofc_sema_stmt_write_print(cs, stmt);
 
 		case OFC_SEMA_STMT_IO_READ:

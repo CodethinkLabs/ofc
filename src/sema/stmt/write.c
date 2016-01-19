@@ -39,7 +39,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 		return NULL;
 
 	ofc_sema_stmt_t s;
-	s.type = OFC_SEMA_STMT_WRITE;
+	s.type = OFC_SEMA_STMT_IO_WRITE;
 	s.io_write.unit         = NULL;
 	s.io_write.stdout       = false;
 	s.io_write.format_expr  = NULL;
@@ -535,7 +535,7 @@ static bool ofc_sema_stmt_write__print_optional(
 bool ofc_sema_stmt_write_print(ofc_colstr_t* cs,
 	const ofc_sema_stmt_t* stmt)
 {
-	if (!cs || (stmt->type != OFC_SEMA_STMT_WRITE))
+	if (!cs || (stmt->type != OFC_SEMA_STMT_IO_WRITE))
 		return false;
 
 	if (!ofc_colstr_atomic_writef(cs, "WRITE")
