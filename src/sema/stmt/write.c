@@ -433,21 +433,21 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 		}
 	}
 
+	/* Check iolist */
+	if (stmt->io.iolist)
+	{
+		s.io_write.iolist
+			= ofc_sema_output_list(
+				scope, stmt->io.iolist);
+		if (!s.io_write.iolist)
+		{
+			ofc_sema_stmt_io_write__cleanup(s);
+			return NULL;
+		}
+	}
+
 	if (s.io_write.format)
 	{
-		/* Check iolist */
-		if (stmt->io.iolist)
-		{
-			s.io_write.iolist
-				= ofc_sema_output_list(
-					scope, stmt->io.iolist);
-			if (!s.io_write.iolist)
-			{
-				ofc_sema_stmt_io_write__cleanup(s);
-				return NULL;
-			}
-		}
-
 		/* Count elements in iolist */
 		unsigned iolist_len = 0;
 		if (s.io_write.iolist
@@ -516,12 +516,16 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 }
 
 static bool ofc_sema_stmt_write__print_optional(
-	ofc_colstr_t* cs, const ofc_sema_expr_t* expr)
+	ofc_colstr_t* cs, const char* name,
+	const ofc_sema_expr_t* expr)
 {
 	if (!cs || !expr)
 		return false;
 
-	if (!ofc_colstr_atomic_writef(cs, ", ")
+	if (!ofc_colstr_atomic_writef(cs, ",")
+		|| !ofc_colstr_atomic_writef(cs, " ")
+		|| !ofc_colstr_atomic_writef(cs, name)
+		|| !ofc_colstr_atomic_writef(cs, "= ")
 		|| !ofc_sema_expr_print(cs, expr))
 		return false;
 
@@ -562,26 +566,32 @@ bool ofc_sema_stmt_write_print(ofc_colstr_t* cs,
 	else if (stmt->io_write.formatted)
 	{
 		if (!ofc_sema_stmt_write__print_optional(
-			cs,	stmt->io_write.format_expr))
+			cs, "FMT", stmt->io_write.format_expr))
 			return false;
 	}
 
 	if (stmt->io_write.iostat)
 	{
 		if (!ofc_sema_stmt_write__print_optional(
-			cs, stmt->io_write.iostat))
+			cs, "IOSTAT", stmt->io_write.iostat))
 			return false;
 	}
 	if (stmt->io_write.rec)
 	{
 		if (!ofc_sema_stmt_write__print_optional(
-			cs,	stmt->io_write.rec))
+			cs,	"REC", stmt->io_write.rec))
 			return false;
 	}
 	if (stmt->io_write.err)
 	{
 		if (!ofc_sema_stmt_write__print_optional(
-			cs,	stmt->io_write.err))
+			cs,	"ERR", stmt->io_write.err))
+			return false;
+	}
+	if (stmt->io_write.advance)
+	{
+		if (!ofc_sema_stmt_write__print_optional(
+			cs,	"ADVANCE", stmt->io_write.advance))
 			return false;
 	}
 
