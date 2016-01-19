@@ -21,7 +21,7 @@ static bool ofc_sema_stmt__data(
 	const ofc_parse_expr_list_t* clist)
 {
 	ofc_sema_lhs_list_t* lhs_list
-		= ofc_sema_input_list(scope, nlist);
+		= ofc_sema_input_list(scope, nlist, NULL);
 	ofc_sema_expr_list_t* expr_list
 		= ofc_sema_expr_list_clist(scope, clist);
 

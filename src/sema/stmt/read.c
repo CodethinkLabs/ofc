@@ -554,10 +554,11 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 	/* Check iolist */
 	if (stmt->io_read.iolist)
 	{
+		bool is_dynamic = false;
 		s.io_read.iolist
 			= ofc_sema_input_list(
-				scope, stmt->io_read.iolist);
-		if (!s.io_read.iolist)
+				scope, stmt->io_read.iolist, &is_dynamic);
+		if (!s.io_read.iolist && !is_dynamic)
 		{
 			ofc_sema_stmt_io_read__cleanup(s);
 			return NULL;

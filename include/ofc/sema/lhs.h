@@ -141,7 +141,8 @@ bool ofc_sema_lhs_list_init(
 	const ofc_sema_expr_list_t* init);
 
 ofc_sema_lhs_list_t* ofc_sema_lhs_list_implicit_do(
-	ofc_sema_scope_t* scope, ofc_parse_implicit_do_t* id);
+	ofc_sema_scope_t* scope, ofc_parse_implicit_do_t* id,
+	bool* is_dynamic);
 
 bool ofc_sema_lhs_list_print(
 	ofc_colstr_t* cs,

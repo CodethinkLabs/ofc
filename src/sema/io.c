@@ -166,7 +166,8 @@ ofc_sema_expr_list_t* ofc_sema_output_list(
 
 ofc_sema_lhs_list_t* ofc_sema_input_list(
 	ofc_sema_scope_t* scope,
-	const ofc_parse_lhs_list_t* parse_iolist)
+	const ofc_parse_lhs_list_t* parse_iolist,
+	bool* is_dynamic)
 {
 	ofc_sema_lhs_list_t* sema_iolist
 		= ofc_sema_lhs_list_create();
@@ -182,7 +183,8 @@ ofc_sema_lhs_list_t* ofc_sema_input_list(
 		{
 			ofc_sema_lhs_list_t* implicit_do
 				= ofc_sema_lhs_list_implicit_do(
-					scope, parse_lhs->implicit_do);
+					scope, parse_lhs->implicit_do, is_dynamic);
+			/* TODO - Create dynamic LHS list. */
 
 			bool success = ofc_sema_lhs_list_add_list(
 				sema_iolist, implicit_do);
