@@ -1476,7 +1476,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 		if (!ofc_colstr_atomic_writef(cs, ",")
 			|| !ofc_colstr_atomic_writef(cs, " ")
 			|| !ofc_colstr_atomic_writef(cs, "DIMENSION")
-			|| !ofc_sema_array_print(cs, type->array))
+			|| !ofc_sema_array_print_brackets(cs, type->array))
 			return false;
 	}
 
@@ -1499,6 +1499,16 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 
 		if (ofc_sema_type_is_composite(decl->type))
 		{
+			bool reshape = (ofc_sema_type_is_array(decl->type)
+				&& (decl->type->array->dimensions > 1));
+
+			if (reshape)
+			{
+				if (!ofc_colstr_atomic_writef(cs, "RESHAPE")
+					|| !ofc_colstr_atomic_writef(cs, "("))
+					return false;
+			}
+
 			if (!ofc_colstr_atomic_writef(cs, "(/")
 				|| !ofc_colstr_atomic_writef(cs, " "))
 				return false;
@@ -1546,6 +1556,19 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 			if (!ofc_colstr_atomic_writef(cs, " ")
 				|| !ofc_colstr_atomic_writef(cs, "/)"))
 				return false;
+
+			if (reshape)
+			{
+				if (!ofc_colstr_atomic_writef(cs, ",")
+					|| !ofc_colstr_atomic_writef(cs, " ")
+					|| !ofc_colstr_atomic_writef(cs, "(/")
+					|| !ofc_colstr_atomic_writef(cs, " ")
+					|| !ofc_sema_array_print(cs, decl->type->array)
+					|| !ofc_colstr_atomic_writef(cs, " ")
+					|| !ofc_colstr_atomic_writef(cs, "/)")
+					|| !ofc_colstr_atomic_writef(cs, ")"))
+					return false;
+			}
 		}
 		else
 		{

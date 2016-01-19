@@ -283,9 +283,6 @@ bool ofc_sema_array_print(
 	if (!cs || !array)
 		return false;
 
-	if (!ofc_colstr_atomic_writef(cs, "("))
-		return false;
-
 	unsigned i;
 	for (i = 0; i < array->dimensions; i++)
 	{
@@ -308,7 +305,16 @@ bool ofc_sema_array_print(
 		}
 	}
 
-	return ofc_colstr_atomic_writef(cs, ")");
+	return true;
+}
+
+bool ofc_sema_array_print_brackets(
+	ofc_colstr_t* cs,
+	const ofc_sema_array_t* array)
+{
+	return (ofc_colstr_atomic_writef(cs, "(")
+		&& ofc_sema_array_print(cs, array)
+		&& ofc_colstr_atomic_writef(cs, ")"));
 }
 
 
