@@ -886,6 +886,7 @@ bool ofc_sema_lhs_print(
 		case OFC_SEMA_LHS_ARRAY_INDEX:
 		case OFC_SEMA_LHS_ARRAY_SLICE:
 		case OFC_SEMA_LHS_STRUCTURE_MEMBER:
+		case OFC_SEMA_LHS_SUBSTRING:
 			if (!ofc_sema_lhs_print(
 				cs, lhs->parent))
 				return false;
