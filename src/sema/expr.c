@@ -1819,22 +1819,12 @@ bool ofc_sema_expr_print(
 		case OFC_SEMA_EXPR_CONSTANT:
 			if (!ofc_sema_typeval_print(cs, expr->constant))
 				return false;
-			if (expr->brackets)
-			{
-				if (!ofc_colstr_atomic_writef(cs, ")"))
-					return false;
-			}
-			return true;
+			break;
 
 		case OFC_SEMA_EXPR_LHS:
 			if (!ofc_sema_lhs_print(cs, expr->lhs))
 				return false;
-			if (expr->brackets)
-			{
-				if (!ofc_colstr_atomic_writef(cs, ")"))
-					return false;
-			}
-			return true;
+			break;
 
 		case OFC_SEMA_EXPR_CAST:
 			{
@@ -1856,7 +1846,7 @@ bool ofc_sema_expr_print(
 						return false;
 				}
 			}
-			return true;
+			break;
 
 		case OFC_SEMA_EXPR_INTRINSIC:
 			if(!ofc_sema_intrinsic_print(cs, expr->intrinsic)
@@ -1864,7 +1854,7 @@ bool ofc_sema_expr_print(
 				|| !ofc_sema_expr_list_print(cs, expr->args)
 				|| !ofc_colstr_atomic_writef(cs, ")"))
 				return false;
-			return true;
+			break;
 
 		case OFC_SEMA_EXPR_FUNCTION:
 			if (!ofc_sema_decl_print_name(cs, expr->function)
@@ -1872,35 +1862,36 @@ bool ofc_sema_expr_print(
 				|| (expr->args && !ofc_sema_expr_list_print(cs, expr->args))
 				|| !ofc_colstr_atomic_writef(cs, ")"))
 				return false;
-			return true;
+			break;
 
 		case OFC_SEMA_EXPR_ALT_RETURN:
-			return (ofc_colstr_atomic_writef(cs, "*")
-				&& ofc_sema_expr_print(cs, expr->alt_return.expr));
+			if (!ofc_colstr_atomic_writef(cs, "*")
+				|| !ofc_sema_expr_print(cs, expr->alt_return.expr))
+				return false;
+			break;
 
 		default:
+			if (expr->type >= OFC_SEMA_EXPR_COUNT)
+				return false;
+
+			if (expr->b)
+			{
+				/* Print binary expression */
+				if (!ofc_sema_expr_print(cs, expr->a)
+					|| !ofc_colstr_atomic_writef(cs, " %s ",
+							ofc_sema_expr__operator[expr->type])
+					|| !ofc_sema_expr_print(cs, expr->b))
+						return false;
+			}
+			else
+			{
+				/* Print unary expression */
+				if (!ofc_colstr_atomic_writef(cs, "%s ",
+						ofc_sema_expr__operator[expr->type])
+					|| !ofc_sema_expr_print(cs, expr->a))
+						return false;
+			}
 			break;
-	}
-
-	if (expr->type >= OFC_SEMA_EXPR_COUNT)
-		return false;
-
-	if (expr->b)
-	{
-		/* Print binary expression */
-		if (!ofc_sema_expr_print(cs, expr->a)
-			|| !ofc_colstr_atomic_writef(cs, " %s ",
-					ofc_sema_expr__operator[expr->type])
-			|| !ofc_sema_expr_print(cs, expr->b))
-				return false;
-	}
-	else
-	{
-		/* Print unary expression */
-		if (!ofc_colstr_atomic_writef(cs, "%s ",
-				ofc_sema_expr__operator[expr->type])
-			|| !ofc_sema_expr_print(cs, expr->a))
-				return false;
 	}
 
 	if (expr->brackets)
