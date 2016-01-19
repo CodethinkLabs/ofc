@@ -863,6 +863,40 @@ const ofc_sema_type_t* ofc_sema_type_promote(
 	return NULL;
 }
 
+bool ofc_sema_type_cast_valid(
+	const ofc_sema_type_t* a,
+	const ofc_sema_type_t* b)
+{
+	if (!a) return false;
+	if (!b) return false;
+
+	if (a->type == b->type)
+		return true;
+
+	/* BYTE can always be cast. */
+	if ((a->type == OFC_SEMA_TYPE_BYTE)
+		|| (b->type == OFC_SEMA_TYPE_BYTE))
+		return true;
+
+	bool logical = ((a->type == OFC_SEMA_TYPE_LOGICAL)
+		|| (b->type == OFC_SEMA_TYPE_LOGICAL));
+	bool integer = ((a->type == OFC_SEMA_TYPE_INTEGER)
+		|| (b->type == OFC_SEMA_TYPE_INTEGER));
+	bool real = ((a->type == OFC_SEMA_TYPE_REAL)
+		|| (b->type == OFC_SEMA_TYPE_REAL));
+	bool complex = ((a->type == OFC_SEMA_TYPE_COMPLEX)
+		|| (b->type == OFC_SEMA_TYPE_COMPLEX));
+
+	if ((logical && integer)
+		|| (real && (logical || integer))
+		|| (complex && (real || logical || integer)))
+		return true;
+
+	/* We can't cast characters, arrays, structures or pointers. */
+
+	return false;
+}
+
 bool ofc_sema_type_cast_is_lossless(
 	const ofc_sema_type_t* base,
 	const ofc_sema_type_t* target)

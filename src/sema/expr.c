@@ -333,6 +333,9 @@ ofc_sema_expr_t* ofc_sema_expr_cast(
 	if (!type || !expr)
 		return NULL;
 
+	if (!ofc_sema_type_cast_valid(ofc_sema_expr_type(expr), type))
+		return NULL;
+
 	ofc_sema_expr_t* cast
 		= ofc_sema_expr__create(
 			OFC_SEMA_EXPR_CAST);

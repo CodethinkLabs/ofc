@@ -120,6 +120,9 @@ const ofc_sema_type_t* ofc_sema_type_base(const ofc_sema_type_t* type);
 const ofc_sema_type_t* ofc_sema_type_promote(
 	const ofc_sema_type_t* a,
 	const ofc_sema_type_t* b);
+bool ofc_sema_type_cast_valid(
+	const ofc_sema_type_t* a,
+	const ofc_sema_type_t* b);
 
 bool ofc_sema_type_cast_is_lossless(
 	const ofc_sema_type_t* base,
