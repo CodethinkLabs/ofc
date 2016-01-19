@@ -276,6 +276,23 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_close(
 	return as;
 }
 
+static bool ofc_sema_stmt_close__print_optional(
+	ofc_colstr_t* cs, const char* name,
+	const ofc_sema_expr_t* expr)
+{
+	if (!cs || !expr)
+		return false;
+
+	if (!ofc_colstr_atomic_writef(cs, ",")
+		|| !ofc_colstr_atomic_writef(cs, " ")
+		|| !ofc_colstr_atomic_writef(cs, name)
+		|| !ofc_colstr_atomic_writef(cs, "= ")
+		|| !ofc_sema_expr_print(cs, expr))
+		return false;
+
+	return true;
+}
+
 bool ofc_sema_stmt_io_close_print(
 	ofc_colstr_t* cs,
 	const ofc_sema_stmt_t* stmt)
@@ -289,13 +306,24 @@ bool ofc_sema_stmt_io_close_print(
 		|| !ofc_sema_expr_print(cs, stmt->io_close.unit))
 		return false;
 
-	if (stmt->io_close.iostat
-		&& (!ofc_colstr_atomic_writef(cs, ",")
-			|| !ofc_colstr_atomic_writef(cs, " ")
-			|| !ofc_sema_expr_print(cs,stmt->io_close.iostat)))
-		return false;
-
-	/* TODO - err and status */
+	if (stmt->io_close.err)
+	{
+		if (!ofc_sema_stmt_close__print_optional(
+			cs, "ERR", stmt->io_close.err))
+			return false;
+	}
+	if (stmt->io_close.iostat)
+	{
+		if (!ofc_sema_stmt_close__print_optional(
+			cs, "IOSTAT", stmt->io_close.iostat))
+			return false;
+	}
+	if (stmt->io_close.status)
+	{
+		if (!ofc_sema_stmt_close__print_optional(
+			cs, "STATUS", stmt->io_close.status))
+			return false;
+	}
 
 	if (!ofc_colstr_atomic_writef(cs, ")"))
 		return false;
