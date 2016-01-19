@@ -2141,6 +2141,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_neqv(
 	return ofc_sema_typeval__alloc(tv);
 }
 
+
+#include <float.h>
+
 bool ofc_sema_typeval_print(ofc_colstr_t*cs,
 	const ofc_sema_typeval_t* typeval)
 {
@@ -2162,8 +2165,14 @@ bool ofc_sema_typeval_print(ofc_colstr_t*cs,
 
 		case OFC_SEMA_TYPE_REAL:
 			{
+				if (!ofc_sparse_ref_empty(typeval->src))
+					return ofc_sparse_ref_print(cs, typeval->src);
+
+				char fmt[32];
+				sprintf(fmt, "%%.%uLG", LDBL_DIG);
+
 				char buff[64];
-				sprintf(buff, "%Lg", typeval->real);
+				sprintf(buff, fmt, typeval->real);
 
 				unsigned i;
 				for (i = 0; buff[i] != '\0'; i++)
@@ -2194,11 +2203,10 @@ bool ofc_sema_typeval_print(ofc_colstr_t*cs,
 			return ofc_colstr_writef(cs, "\"%.*s\"",
 				typeval->type->len, typeval->character);
 
-		case OFC_SEMA_TYPE_STRUCTURE:
-		case OFC_SEMA_TYPE_POINTER:
-
 		default:
-			return false;
+			break;
 
 	}
+
+	return false;
 }
