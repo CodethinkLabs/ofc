@@ -1480,6 +1480,14 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 	if (!ofc_sema_type_print(cs, type))
 		return false;
 
+	if (decl->is_parameter)
+	{
+		if (!ofc_colstr_atomic_writef(cs, ",")
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_colstr_atomic_writef(cs, " PARAMETER"))
+			return false;
+	}
+
 	if (ofc_sema_type_is_array(type))
 	{
 		if (!ofc_colstr_atomic_writef(cs, ",")

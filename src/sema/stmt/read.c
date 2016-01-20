@@ -565,7 +565,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 		}
 	}
 
-	if (s.io_read.format)
+	if (s.io_read.format && s.io_read.iolist)
 	{
 		/* Count elements in iolist */
 		unsigned iolist_len = 0;
