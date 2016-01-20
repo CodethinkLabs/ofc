@@ -35,7 +35,8 @@ bool ofc_sema_stmt_do_block_print(ofc_colstr_t* cs,
 	const ofc_sema_stmt_t* stmt);
 bool ofc_sema_stmt_do_while_print(ofc_colstr_t* cs,
 	const ofc_sema_stmt_t* stmt);
-bool ofc_sema_stmt_do_while_block_print(ofc_colstr_t* cs,
+bool ofc_sema_stmt_do_while_block_print(
+	ofc_colstr_t* cs, unsigned indent,
 	const ofc_sema_stmt_t* stmt);
 bool ofc_sema_go_to_print(ofc_colstr_t* cs,
 	const ofc_sema_stmt_t* stmt);
@@ -627,7 +628,7 @@ bool ofc_sema_stmt_print(
 			return ofc_sema_stmt_do_while_print(cs, stmt);
 
 		case OFC_SEMA_STMT_DO_WHILE_BLOCK:
-			return ofc_sema_stmt_do_while_block_print(cs, stmt);
+			return ofc_sema_stmt_do_while_block_print(cs, indent, stmt);
 
 		case OFC_SEMA_STMT_CALL:
 			return ofc_sema_stmt_call_print(cs, stmt);
