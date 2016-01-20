@@ -48,7 +48,7 @@ typedef struct
 	ofc_parse_type_e           type;
 	ofc_sparse_ref_t           type_name;
 	ofc_parse_decl_attr_t      attr;
-	unsigned                   kind;
+	unsigned                   size;
 	ofc_parse_expr_t*          count_expr;
 	bool                       count_var;
 	ofc_parse_call_arg_list_t* params;

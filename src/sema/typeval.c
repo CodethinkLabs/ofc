@@ -201,9 +201,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 			kind = nkind;
 		}
 
-		unsigned tkind;
-		if (ofc_sema_type_size(type, &tkind)
-			&& (tkind != kind))
+		if (type->kind != kind)
 		{
 			ofc_sparse_ref_error(literal->src,
 				"Expected kind doesn't match literal kind");
@@ -637,7 +635,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__logical_literal(
 	if (!typeval.type)
 	{
 		typeval.type = ofc_sema_type_create_primitive(
-			OFC_SEMA_TYPE_LOGICAL, 0);
+			OFC_SEMA_TYPE_LOGICAL, 1);
 
 		if (!typeval.type)
 		{
@@ -1612,7 +1610,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_eq(
 
 	ofc_sema_typeval_t tv;
 	tv.type = ofc_sema_type_create_primitive(
-		OFC_SEMA_TYPE_LOGICAL, 0);
+		OFC_SEMA_TYPE_LOGICAL, 1);
 
 	if (!ofc_sparse_ref_bridge(
 		a->src, b->src, &tv.src))
@@ -1668,7 +1666,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_ne(
 
 	ofc_sema_typeval_t tv;
 	tv.type = ofc_sema_type_create_primitive(
-		OFC_SEMA_TYPE_LOGICAL, 0);
+		OFC_SEMA_TYPE_LOGICAL, 1);
 
 	if (!ofc_sparse_ref_bridge(
 		a->src, b->src, &tv.src))
@@ -1724,7 +1722,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_lt(
 
 	ofc_sema_typeval_t tv;
 	tv.type = ofc_sema_type_create_primitive(
-		OFC_SEMA_TYPE_LOGICAL, 0);
+		OFC_SEMA_TYPE_LOGICAL, 1);
 
 	if (!ofc_sparse_ref_bridge(
 		a->src, b->src, &tv.src))
@@ -1792,7 +1790,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_le(
 
 	ofc_sema_typeval_t tv;
 	tv.type = ofc_sema_type_create_primitive(
-		OFC_SEMA_TYPE_LOGICAL, 0);
+		OFC_SEMA_TYPE_LOGICAL, 1);
 
 	if (!ofc_sparse_ref_bridge(
 		a->src, b->src, &tv.src))
@@ -1860,7 +1858,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_gt(
 
 	ofc_sema_typeval_t tv;
 	tv.type = ofc_sema_type_create_primitive(
-		OFC_SEMA_TYPE_LOGICAL, 0);
+		OFC_SEMA_TYPE_LOGICAL, 1);
 
 	if (!ofc_sparse_ref_bridge(
 		a->src, b->src, &tv.src))
@@ -1928,7 +1926,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_ge(
 
 	ofc_sema_typeval_t tv;
 	tv.type = ofc_sema_type_create_primitive(
-		OFC_SEMA_TYPE_LOGICAL, 0);
+		OFC_SEMA_TYPE_LOGICAL, 1);
 
 	if (!ofc_sparse_ref_bridge(
 		a->src, b->src, &tv.src))
@@ -2087,7 +2085,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_eqv(
 
 	ofc_sema_typeval_t tv;
 	tv.type = ofc_sema_type_create_primitive(
-		OFC_SEMA_TYPE_LOGICAL, 0);
+		OFC_SEMA_TYPE_LOGICAL, 1);
 
 	if (!ofc_sparse_ref_bridge(
 		a->src, b->src, &tv.src))
@@ -2120,7 +2118,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_neqv(
 
 	ofc_sema_typeval_t tv;
 	tv.type = ofc_sema_type_create_primitive(
-		OFC_SEMA_TYPE_LOGICAL, 0);
+		OFC_SEMA_TYPE_LOGICAL, 1);
 
 	if (!ofc_sparse_ref_bridge(
 		a->src, b->src, &tv.src))

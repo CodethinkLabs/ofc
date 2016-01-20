@@ -21,7 +21,7 @@ const ofc_sema_spec_t OFC_SEMA_SPEC_DEFAULT =
 {
 	.name          = OFC_SPARSE_REF_EMPTY,
 	.type_implicit = true,
-	.kind          = 0,
+	.kind          = 1,
 	.len           = 0,
 	.len_var       = false,
 	.array         = NULL,
@@ -134,7 +134,23 @@ ofc_sema_spec_t* ofc_sema_spec(
 		s.len = 1;
 	}
 
-	s.kind = ptype->kind;
+	switch (ptype->type)
+	{
+		case OFC_PARSE_TYPE_DOUBLE_PRECISION:
+		case OFC_PARSE_TYPE_DOUBLE_COMPLEX:
+			if (ptype->size != 0)
+			{
+				ofc_sparse_ref_error(ptype->count_expr->src,
+					"Can't specify size of DOUBLE type");
+				return NULL;
+			}
+			s.kind = 2;
+			break;
+		default:
+			s.kind = (ptype->size > 0 ? (3 * ptype->size) : 1);
+			break;
+	}
+
 	if (ptype->params)
 	{
 		unsigned i;
@@ -172,14 +188,14 @@ ofc_sema_spec_t* ofc_sema_spec(
 					if (!resolved)
 					{
 						ofc_sparse_ref_error(ptype->src,
-							"Type LEN expression couldn't be resolved.");
+							"Type LEN expression couldn't be resolved");
 						return NULL;
 					}
 
 					if (len == 0)
 					{
 						ofc_sparse_ref_error(ptype->src,
-							"Type LEN paramater must be greater than zero.");
+							"Type LEN paramater must be greater than zero");
 						return NULL;
 					}
 
@@ -222,18 +238,18 @@ ofc_sema_spec_t* ofc_sema_spec(
 				if (!resolved)
 				{
 					ofc_sparse_ref_error(ptype->src,
-						"Type KIND expression couldn't be resolved.");
+						"Type KIND expression couldn't be resolved");
 					return NULL;
 				}
 
 				if (kind == 0)
 				{
 					ofc_sparse_ref_error(ptype->src,
-						"Type KIND paramater must be greater than zero.");
+						"Type KIND paramater must be greater than zero");
 					return NULL;
 				}
 
-				if (s.kind > 0)
+				if (s.kind != 1)
 				{
 					if(s.kind != kind)
 					{
@@ -251,7 +267,7 @@ ofc_sema_spec_t* ofc_sema_spec(
 			else
 			{
 				ofc_sparse_ref_error(ptype->src,
-					"Unknown parameter in type.");
+					"Unknown parameter in type");
 				return NULL;
 			}
 		}
@@ -262,41 +278,20 @@ ofc_sema_spec_t* ofc_sema_spec(
 		if (s.type != OFC_SEMA_TYPE_CHARACTER)
 		{
 			ofc_sparse_ref_error(ptype->src,
-					"LEN parameter only supported for CHARACTER type.");
+					"LEN parameter only supported for CHARACTER type");
 			return NULL;
 		}
 	}
 
-	if (s.kind == 0)
+	if (s.type == OFC_SEMA_TYPE_BYTE)
 	{
-		/* TODO - Calculate this properly from lang_opts. */
-		switch (s.type)
+		if ((s.kind != 1)
+			&& (s.kind != 3))
 		{
-			case OFC_SEMA_TYPE_CHARACTER:
-			case OFC_SEMA_TYPE_BYTE:
-				s.kind = 1;
-				break;
-
-			case OFC_SEMA_TYPE_LOGICAL:
-			case OFC_SEMA_TYPE_INTEGER:
-			case OFC_SEMA_TYPE_REAL:
-			case OFC_SEMA_TYPE_COMPLEX:
-				s.kind = 4;
-				break;
-
-			default:
-				break;
+			ofc_sparse_ref_error(ptype->src,
+				"BYTE kind must represent a size of 1");
+			return NULL;
 		}
-	}
-
-	switch (ptype->type)
-	{
-		case OFC_PARSE_TYPE_DOUBLE_PRECISION:
-		case OFC_PARSE_TYPE_DOUBLE_COMPLEX:
-			s.kind *= 2;
-			break;
-		default:
-			break;
 	}
 
 	s.is_static    = ptype->attr.is_static;

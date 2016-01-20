@@ -184,7 +184,7 @@ ofc_parse_type_t* ofc_parse_type(
 	type.type_name  = OFC_SPARSE_REF_EMPTY;
 	type.count_expr = NULL;
 	type.count_var  = false;
-	type.kind       = 0;
+	type.size       = 0;
 
 	if (type.type == OFC_PARSE_TYPE_TYPE)
 	{
@@ -230,19 +230,19 @@ ofc_parse_type_t* ofc_parse_type(
 	{
 		i += 1;
 		unsigned l = ofc_parse_unsigned(
-			src, &ptr[i], debug, &type.kind);
+			src, &ptr[i], debug, &type.size);
 		if (l == 0)
 		{
 			ofc_sparse_error_ptr(src, &ptr[i],
-				"Expected kind value after asterisk in type specifier");
+				"Expected size after asterisk in type specifier");
 			return NULL;
 		}
 
-		if (type.kind == 0)
+		if (type.size == 0)
 		{
 			ofc_parse_debug_warning(debug,
 				ofc_sparse_ref(src, &ptr[i], l),
-				"Kind value must be non-zero, using default");
+				"Size must be non-zero, using default");
 		}
 		i += l;
 	}
@@ -303,6 +303,13 @@ bool ofc_parse_type_print(
 		ofc_parse_type_str_rep(type->type)))
 		return false;
 
+	if (type->size > 0)
+	{
+		if (!ofc_colstr_atomic_writef(cs, "*")
+			|| !ofc_colstr_atomic_writef(cs, "%u", type->size))
+			return false;
+	}
+
 	if (type->type == OFC_PARSE_TYPE_TYPE)
 	{
 		if (!ofc_colstr_atomic_writef(cs, " ")
@@ -312,31 +319,16 @@ bool ofc_parse_type_print(
 			return false;
 	}
 
-	if ((type->kind > 0)
-		|| type->count_expr
+	if (type->count_expr
 		|| type->count_var)
 	{
 		if (!ofc_colstr_atomic_writef(cs, " ("))
 			return false;
 
-		if ((type->kind > 0)
-			&& !ofc_colstr_atomic_writef(cs, "KIND=%u", type->kind))
+		if (!(type->count_var
+			? ofc_colstr_atomic_writef(cs, "*")
+			: ofc_parse_expr_print(cs, type->count_expr)))
 			return false;
-
-		if (type->count_expr || type->count_var)
-		{
-			if ((type->kind > 0)
-				&& !ofc_colstr_atomic_writef(cs, ", "))
-				return false;
-
-			if (!ofc_colstr_atomic_writef(cs, "LEN="))
-				return false;
-
-			if (!(type->count_var
-				? ofc_colstr_atomic_writef(cs, "*")
-				: ofc_parse_expr_print(cs, type->count_expr)))
-				return false;
-		}
 
 		if (!ofc_colstr_atomic_writef(cs, ")"))
 			return false;
@@ -363,11 +355,10 @@ bool ofc_parse_type_print_f77(
 			|| !ofc_colstr_atomic_writef(cs, ")"))
 			return false;
 	}
-
-	if ((type->type == OFC_PARSE_TYPE_CHARACTER)
+	else if ((type->type == OFC_PARSE_TYPE_CHARACTER)
 		|| (type->type == OFC_PARSE_TYPE_BYTE))
 	{
-		if (type->kind > 1)
+		if (type->size > 1)
 			return false;
 
 		if (type->count_var)
@@ -400,10 +391,10 @@ bool ofc_parse_type_print_f77(
 		if (type->count_expr || type->count_var)
 			return false;
 
-		if (type->kind > 0)
+		if (type->size > 0)
 		{
 			if (!ofc_colstr_atomic_writef(cs, "*")
-				|| !ofc_colstr_atomic_writef(cs, "%u", type->kind))
+				|| !ofc_colstr_atomic_writef(cs, "%u", type->size))
 				return false;
 		}
 	}

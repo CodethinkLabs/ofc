@@ -16,6 +16,36 @@
 #include <string.h>
 
 #include "ofc/sema.h"
+#include "ofc/target.h"
+
+
+static bool ofc_sema_type__kind_absolute(
+	unsigned kind)
+{
+	return ((kind > 0) && ((kind % 3) == 0));
+}
+
+static bool ofc_sema_type__kind_size(
+	unsigned def, unsigned kind, unsigned* size)
+{
+	if (ofc_sema_type__kind_absolute(kind))
+	{
+		if (size) *size = (kind / 3);
+		return true;
+	}
+
+	if (kind == 7)
+		return ofc_target_pointer_size_get();
+
+	if (kind & (kind - 1))
+		return false;
+
+	if (size)
+		for (*size = def; kind > 1; kind >>= 1, *size <<= 1);
+	return true;
+}
+
+
 
 static ofc_hashmap_t* ofc_sema_type__map = NULL;
 
@@ -397,7 +427,7 @@ const ofc_sema_type_t* ofc_sema_type_logical_default(void)
 	if (!logical)
 	{
 		logical = ofc_sema_type_create_primitive(
-			OFC_SEMA_TYPE_LOGICAL, 0);
+			OFC_SEMA_TYPE_LOGICAL, 1);
 	}
 
 	return logical;
@@ -410,7 +440,7 @@ const ofc_sema_type_t* ofc_sema_type_integer_default(void)
 	if (!integer)
 	{
 		integer = ofc_sema_type_create_primitive(
-			OFC_SEMA_TYPE_INTEGER, 0);
+			OFC_SEMA_TYPE_INTEGER, 1);
 	}
 
 	return integer;
@@ -423,7 +453,7 @@ const ofc_sema_type_t* ofc_sema_type_real_default(void)
 	if (!real)
 	{
 		real = ofc_sema_type_create_primitive(
-			OFC_SEMA_TYPE_REAL, 0);
+			OFC_SEMA_TYPE_REAL, 1);
 	}
 
 	return real;
@@ -440,7 +470,7 @@ const ofc_sema_type_t* ofc_sema_type_double_default(void)
 		if (!real) return NULL;
 
 		dbl = ofc_sema_type_create_primitive(
-			OFC_SEMA_TYPE_REAL, (real->kind * 2));
+			OFC_SEMA_TYPE_REAL, 2);
 	}
 
 	return dbl;
@@ -589,17 +619,20 @@ bool ofc_sema_type_size(
 	if (!type)
 		return false;
 
-	unsigned s;
+	unsigned s = 0, def = 0;
 	switch (type->type)
 	{
 		case OFC_SEMA_TYPE_LOGICAL:
-		case OFC_SEMA_TYPE_INTEGER:
-		case OFC_SEMA_TYPE_REAL:
-			s = type->kind;
+			def = ofc_target_logical_size_get();
 			break;
 
+		case OFC_SEMA_TYPE_INTEGER:
+			def = ofc_target_integer_size_get();
+			break;
+
+		case OFC_SEMA_TYPE_REAL:
 		case OFC_SEMA_TYPE_COMPLEX:
-			s = (type->kind * 2);
+			def = ofc_target_real_size_get();
 			break;
 
 		case OFC_SEMA_TYPE_BYTE:
@@ -609,7 +642,7 @@ bool ofc_sema_type_size(
 		case OFC_SEMA_TYPE_CHARACTER:
 			if (type->len == 0)
 				return false;
-			s = (type->kind * type->len);
+			def = 1;
 			break;
 
 		case OFC_SEMA_TYPE_STRUCTURE:
@@ -619,13 +652,22 @@ bool ofc_sema_type_size(
 			break;
 
 		case OFC_SEMA_TYPE_POINTER:
-			/* TODO - Do this based on target arch. */
-			s = sizeof(void*);
+			s = ofc_target_pointer_size_get();
 			break;
 
 		default:
 			return false;
 	}
+
+	if (def > 0)
+	{
+		if (!ofc_sema_type__kind_size(
+			def, type->kind, &s))
+			return false;
+	}
+
+	if (type->type == OFC_SEMA_TYPE_COMPLEX)
+		s *= 2;
 
 	if (type->array)
 	{
@@ -635,6 +677,9 @@ bool ofc_sema_type_size(
 			return false;
 		s *= count;
 	}
+
+	if (s == 0)
+		return false;
 
 	if (size) *size = s;
 	return true;
@@ -999,26 +1044,83 @@ bool ofc_sema_type_print(
 	if (type->type >= OFC_SEMA_TYPE_COUNT)
 		return false;
 
-	if (!ofc_colstr_atomic_writef(cs, "%s",
-		ofc_sema_type__name[type->type]))
-		return false;
+	bool print_double = false;
+	switch (type->type)
+	{
+		case OFC_SEMA_TYPE_REAL:
+		case OFC_SEMA_TYPE_COMPLEX:
+			print_double = (type->kind == 2);
+			break;
+		default:
+			break;
+	}
 
-	if ((type->type == OFC_SEMA_TYPE_CHARACTER)
-		&& (type->len != 1))
+	bool kind_abs = false;
+	if (print_double)
+	{
+		if (!ofc_colstr_atomic_writef(cs, "DOUBLE")
+			|| !ofc_colstr_atomic_writef(cs, " "))
+			return false;
+
+		if (!ofc_colstr_atomic_writef(cs,
+			(type->type == OFC_SEMA_TYPE_COMPLEX
+				? "COMPLEX" : "PRECISION")))
+			return false;
+	}
+	else
+	{
+		if (!ofc_colstr_atomic_writef(cs, "%s",
+			ofc_sema_type__name[type->type]))
+			return false;
+
+		kind_abs = ofc_sema_type__kind_absolute(type->kind);
+		if (kind_abs)
+		{
+			if (!ofc_colstr_atomic_writef(cs, "*")
+				|| !ofc_colstr_atomic_writef(
+					cs, "%u", (type->kind / 3)))
+				return false;
+		}
+	}
+
+	bool print_len = ((type->type == OFC_SEMA_TYPE_CHARACTER)
+		&& (type->len != 1));
+	bool print_kind = ((type->kind != 1) && !kind_abs && !print_double);
+
+	if (print_len || print_kind)
 	{
 		if (!ofc_colstr_atomic_writef(cs, "("))
 			return false;
 
-		if (type->len == 0
-			? !ofc_colstr_atomic_writef(cs, "*")
-			: !ofc_colstr_atomic_writef(cs, "%u", type->len))
-			return false;
+		if (print_kind)
+		{
+			if (!ofc_colstr_atomic_writef(cs, "KIND")
+				|| !ofc_colstr_atomic_writef(cs, "=")
+				|| !ofc_colstr_atomic_writef(cs, "%u", type->kind))
+				return false;
+
+		}
+
+		if (print_len)
+		{
+			if (print_kind)
+			{
+				if (!ofc_colstr_atomic_writef(cs, ",")
+					|| !ofc_colstr_atomic_writef(cs, " ")
+					|| !ofc_colstr_atomic_writef(cs, "LEN")
+					|| !ofc_colstr_atomic_writef(cs, "="))
+					return false;
+			}
+
+			if (type->len == 0
+				? !ofc_colstr_atomic_writef(cs, "*")
+				: !ofc_colstr_atomic_writef(cs, "%u", type->len))
+				return false;
+		}
 
 		if (!ofc_colstr_atomic_writef(cs, ")"))
 			return false;
 	}
-
-	/* TODO - Print KIND. */
 
 	return true;
 }
