@@ -811,6 +811,26 @@ bool ofc_sema_lhs_is_parameter(
 	return false;
 }
 
+bool ofc_sema_lhs_is_macro(
+	const ofc_sema_lhs_t* lhs)
+{
+	if (!lhs)
+		return false;
+
+	switch (lhs->type)
+	{
+		case OFC_SEMA_LHS_DECL:
+			return ofc_sema_decl_is_macro(lhs->decl);
+
+		/* TODO - Calculate properly for indices, slices, substrings, etc. */
+
+		default:
+			break;
+	}
+
+	return false;
+}
+
 ofc_sema_typeval_t* ofc_sema_lhs_parameter(
 	const ofc_sema_lhs_t* lhs)
 {
@@ -1249,6 +1269,7 @@ static ofc_sema_lhs_list_t* ofc_sema_lhs_list__implicit_do(
 		return NULL;
 	}
 	param->is_parameter = true;
+	param->is_macro     = true;
 
 	bool is_init = ofc_sema_decl_init(param, init);
 	ofc_sema_expr_delete(init);

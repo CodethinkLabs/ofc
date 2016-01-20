@@ -824,19 +824,27 @@ static ofc_sema_expr_t* ofc_sema_expr__lhs(
 		return NULL;
 	}
 
+	expr->lhs = lhs;
+	expr->src = name->src;
+
 	if (ofc_sema_lhs_is_parameter(lhs))
 	{
 		expr->constant
 			= ofc_sema_lhs_parameter(lhs);
 		if (!expr->constant)
 		{
-			ofc_sema_lhs_delete(lhs);
+			ofc_sema_expr_delete(expr);
 			return NULL;
+		}
+
+		if (ofc_sema_lhs_is_macro(lhs))
+		{
+			expr->lhs  = NULL;
+			expr->type = OFC_SEMA_EXPR_CONSTANT;
+			ofc_sema_lhs_delete(lhs);
 		}
 	}
 
-	expr->lhs = lhs;
-	expr->src = name->src;
 	return expr;
 }
 
@@ -1488,6 +1496,7 @@ static ofc_sema_expr_list_t* ofc_sema_expr_list__implicit_do(
 		ofc_sema_scope_delete(idscope);
 		return NULL;
 	}
+	param->is_macro = true;
 
 	const ofc_sema_type_t* dtype
 		= ofc_sema_decl_type(param);

@@ -97,6 +97,9 @@ bool ofc_sema_lhs_init_array(
 
 bool ofc_sema_lhs_is_parameter(
 	const ofc_sema_lhs_t* lhs);
+bool ofc_sema_lhs_is_macro(
+	const ofc_sema_lhs_t* lhs);
+
 ofc_sema_typeval_t* ofc_sema_lhs_parameter(
 	const ofc_sema_lhs_t* lhs);
 
