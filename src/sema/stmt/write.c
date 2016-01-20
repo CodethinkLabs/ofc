@@ -453,7 +453,22 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 		if (s.io_write.iolist
 			&& !ofc_sema_expr_list_elem_count(
 				s.io_write.iolist, &iolist_len))
+		{
+			ofc_sema_stmt_io_write__cleanup(s);
 			return NULL;
+		}
+
+		if (iolist_len > 0)
+		{
+			unsigned count = 0;
+			if (!ofc_sema_io_list_has_complex(
+				NULL, s.io_write.iolist, &count))
+			{
+				ofc_sema_stmt_io_write__cleanup(s);
+				return NULL;
+			}
+			iolist_len += count;
+		}
 
 		unsigned data_desc_count
 			= ofc_sema_io_data_format_count(s.io_write.format);

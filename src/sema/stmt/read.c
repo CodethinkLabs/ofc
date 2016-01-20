@@ -572,7 +572,22 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 		if (s.io_read.iolist
 			&& !ofc_sema_lhs_list_elem_count(
 				s.io_read.iolist, &iolist_len))
+		{
+			ofc_sema_stmt_io_read__cleanup(s);
 			return NULL;
+		}
+
+		if (iolist_len > 0)
+		{
+			unsigned count = 0;
+			if (!ofc_sema_io_list_has_complex(
+				s.io_read.iolist, NULL, &count))
+			{
+				ofc_sema_stmt_io_read__cleanup(s);
+				return NULL;
+			}
+			iolist_len += count;
+		}
 
 		unsigned data_desc_count
 			= ofc_sema_io_data_format_count(s.io_read.format);

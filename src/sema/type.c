@@ -826,6 +826,11 @@ bool ofc_sema_type_is_scalar(const ofc_sema_type_t* type)
 	return false;
 }
 
+bool ofc_sema_type_is_complex(const ofc_sema_type_t* type)
+{
+	return (type && (type->type == OFC_SEMA_TYPE_COMPLEX));
+}
+
 bool ofc_sema_type_is_logical(const ofc_sema_type_t* type)
 {
 	if (!type)

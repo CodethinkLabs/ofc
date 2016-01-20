@@ -125,7 +125,24 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_print(
 	if (s.io_print.iolist
 		&& !ofc_sema_expr_list_elem_count(
 			s.io_print.iolist, &iolist_len))
+	{
+		ofc_sema_expr_delete(s.io_print.format_expr);
+		ofc_sema_expr_list_delete(s.io_print.iolist);
 		return NULL;
+	}
+
+	if (iolist_len > 0)
+	{
+		unsigned count = 0;
+		if (!ofc_sema_io_list_has_complex(
+			NULL, s.io_print.iolist, &count))
+		{
+			ofc_sema_expr_delete(s.io_print.format_expr);
+			ofc_sema_expr_list_delete(s.io_print.iolist);
+			return NULL;
+		}
+		iolist_len += count;
+	}
 
 	if (s.io_print.format)
 	{

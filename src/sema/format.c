@@ -22,9 +22,9 @@ static bool ofc_sema__type_rule[][9] =
 	   OFC_SEMA_TYPE_STRUCTURE, OFC_SEMA_TYPE_POINTER, OFC_SEMA_TYPE_ARRAY */
 
 	{ 0, 1, 0, 0, 0, 0, 0, 0, 0 }, /* OFC_PARSE_FORMAT_DESC_INTEGER */
-	{ 0, 0, 1, 0, 0, 0, 0, 0, 0 }, /* OFC_PARSE_FORMAT_DESC_REAL */
-	{ 0, 0, 1, 0, 0, 0, 0, 0, 0 }, /* OFC_PARSE_FORMAT_DESC_D */
-	{ 0, 0, 1, 0, 0, 0, 0, 0, 0 }, /* OFC_PARSE_FORMAT_DESC_E */
+	{ 0, 0, 1, 1, 0, 0, 0, 0, 0 }, /* OFC_PARSE_FORMAT_DESC_REAL */
+	{ 0, 0, 1, 1, 0, 0, 0, 0, 0 }, /* OFC_PARSE_FORMAT_DESC_D */
+	{ 0, 0, 1, 1, 0, 0, 0, 0, 0 }, /* OFC_PARSE_FORMAT_DESC_E */
 	{ 1, 1, 1, 1, 1, 1, 0, 0, 0 }, /* OFC_PARSE_FORMAT_DESC_G */
 	{ 0, 0, 0, 0, 0, 1, 0, 0, 0 }, /* OFC_PARSE_FORMAT_DESC_CHARACTER */
 	{ 1, 0, 0, 0, 0, 0, 0, 0, 0 }, /* OFC_PARSE_FORMAT_DESC_LOGICAL */

@@ -89,4 +89,9 @@ bool ofc_sema_io_check_label(
 	bool is_format, ofc_sema_expr_t* expr,
 	const ofc_sema_label_t** label_dst);
 
+bool ofc_sema_io_list_has_complex(
+	ofc_sema_lhs_list_t* ilist,
+	ofc_sema_expr_list_t* olist,
+	unsigned* count);
+
 #endif

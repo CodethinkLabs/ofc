@@ -65,6 +65,27 @@ bool ofc_sema_io_compare_types(
 	/* If it's not array nor structure, compare types directly */
 	else
 	{
+		if (ofc_sema_type_is_complex(type))
+		{
+			unsigned j;
+			for (j = 0; j < 2; j++)
+			{
+				ofc_parse_format_desc_t* desc
+					= format_list->desc[(*offset)++];
+				if (!desc)
+					return false;
+
+				if (!ofc_sema_compare_desc_expr_type(desc->type, type->type))
+				{
+					ofc_sparse_ref_warning((!expr ? lhs->src : (*expr)->src),
+						"Trying to format a %s output  with a %s FORMAT descriptor",
+						ofc_sema_format_str_rep(desc->type),
+						ofc_sema_type_str_rep(type));
+				}
+			}
+			return true;
+		}
+
 		ofc_parse_format_desc_t* desc
 			= format_list->desc[(*offset)++];
 		if (!desc) return false;
@@ -222,6 +243,61 @@ ofc_sema_lhs_list_t* ofc_sema_input_list(
 	}
 
 	return sema_iolist;
+}
+
+bool ofc_sema_io_list_has_complex(
+	ofc_sema_lhs_list_t* ilist,
+	ofc_sema_expr_list_t* olist,
+	unsigned* count)
+{
+	if (!count) return false;
+
+	if (ilist)
+	{
+		unsigned i;
+		for (i = 0; i < ilist->count; i++)
+		{
+			const ofc_sema_type_t* type
+				= ofc_sema_lhs_type(ilist->lhs[i]);
+			if (!type) return false;
+
+			if (ofc_sema_type_is_complex(type))
+			{
+				unsigned elem_count;
+				if (!ofc_sema_type_elem_count(
+					type, &elem_count))
+					return false;
+
+				*count += elem_count;
+			}
+		}
+	}
+	else if (olist)
+	{
+		unsigned i;
+		for (i = 0; i < olist->count; i++)
+		{
+			const ofc_sema_type_t* type
+				= ofc_sema_expr_type(olist->expr[i]);
+			if (!type) return false;
+
+			if (ofc_sema_type_is_complex(type))
+			{
+				unsigned elem_count;
+				if (!ofc_sema_type_elem_count(
+					type, &elem_count))
+					return false;
+
+				*count += elem_count;
+			}
+		}
+	}
+	else
+	{
+		return false;
+	}
+
+	return true;
 }
 
 static bool ofc_sema_io__data_format_helper_r(
