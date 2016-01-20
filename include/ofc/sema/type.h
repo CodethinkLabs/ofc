@@ -94,7 +94,14 @@ uint8_t ofc_sema_type_hash(
 bool ofc_sema_type_compare(
 	const ofc_sema_type_t* a,
 	const ofc_sema_type_t* b);
+/* Compatible will pass if kinds differ but size is the same. */
+bool ofc_sema_type_compatible(
+	const ofc_sema_type_t* a,
+	const ofc_sema_type_t* b);
 
+bool ofc_sema_type_base_size(
+	const ofc_sema_type_t* type,
+	unsigned* size);
 bool ofc_sema_type_size(
 	const ofc_sema_type_t* type,
 	unsigned* size);
@@ -131,5 +138,9 @@ bool ofc_sema_type_cast_is_lossless(
 bool ofc_sema_type_print(
 	ofc_colstr_t* cs,
 	const ofc_sema_type_t* type);
+
+
+bool ofc_sema_type_kind_size(
+	unsigned def, unsigned kind, unsigned* size);
 
 #endif

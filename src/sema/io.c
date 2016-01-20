@@ -98,12 +98,17 @@ bool ofc_sema_io_compare_types(
 				}
 			}
 		}
-		else if ((desc->type == OFC_PARSE_FORMAT_DESC_CHARACTER)
-			&& (type->kind != 1))
+		else if (desc->type == OFC_PARSE_FORMAT_DESC_CHARACTER)
 		{
-			ofc_sparse_ref_error((*expr)->src,
-				"CHARACTER type KIND not supported in %s",
-				(stmt->type == OFC_PARSE_STMT_IO_WRITE ? "WRITE" : "PRINT"));
+			unsigned csize;
+			if (!ofc_sema_type_base_size(type, &csize)
+				|| (csize != 1))
+			{
+				ofc_sparse_ref_t src = (lhs ? lhs->src : (*expr)->src);
+				ofc_sparse_ref_error(src,
+					"CHARACTER type KIND not supported in %s",
+					(stmt->type == OFC_PARSE_STMT_IO_WRITE ? "WRITE" : "PRINT"));
+			}
 		}
 	}
 

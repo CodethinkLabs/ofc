@@ -1059,10 +1059,16 @@ bool ofc_sema_decl_init_substring(
 		return false;
 	}
 
+	unsigned tsize;
+	if (!ofc_sema_type_size(type, &tsize))
+	{
+		ofc_sema_typeval_delete(ctv);
+		return false;
+	}
+
 	if (!decl->init.is_substring)
 	{
-		char* string = (char*)malloc(
-			type->kind * type->len);
+		char* string = (char*)malloc(tsize);
 		if (!string)
 		{
 			ofc_sema_typeval_delete(ctv);
@@ -1087,14 +1093,17 @@ bool ofc_sema_decl_init_substring(
 		decl->init.substring.mask   = mask;
 	}
 
+	unsigned tcsize = tsize;
+	if (type->len > 0) tcsize /= type->len;
+
 	bool overlap = false;
 	unsigned i, j;
 	for (i = offset, j = 0; j < len; i++, j++)
 	{
 		if (decl->init.substring.mask[i])
 		{
-			if (memcmp(&decl->init.substring.string[i * type->kind],
-				&ctv->character[j * type->kind], type->kind) != 0)
+			if (memcmp(&decl->init.substring.string[i * tcsize],
+				&ctv->character[j * tcsize], tcsize) != 0)
 			{
 				ofc_sparse_ref_error(init->src,
 					"Re-initialization of substring,"
@@ -1107,8 +1116,8 @@ bool ofc_sema_decl_init_substring(
 		}
 		else
 		{
-			memcpy(&decl->init.substring.string[i * type->kind],
-				&ctv->character[j * type->kind], type->kind);
+			memcpy(&decl->init.substring.string[i * tcsize],
+				&ctv->character[j * tcsize], tcsize);
 			decl->init.substring.mask[i] = true;
 		}
 	}

@@ -22,6 +22,7 @@
 
 #include "ofc/noopt.h"
 #include "ofc/sema.h"
+#include "ofc/target.h"
 
 
 /* TODO - Remove NO_OPT, once we find a better workaround
@@ -201,6 +202,13 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 			kind = nkind;
 		}
 
+		if (kind == 0)
+		{
+			ofc_sparse_ref_error(literal->src,
+				"Literal kind must be non-zero");
+			return NULL;
+		}
+
 		if (type->kind != kind)
 		{
 			ofc_sparse_ref_error(literal->src,
@@ -208,6 +216,8 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 			return NULL;
 		}
 	}
+	if (kind == 0)
+		kind = 1;
 
 	if (i < size)
 	{
@@ -216,10 +226,10 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 		return NULL;
 	}
 
-	if (is_byte && (kind > 1))
+	if (is_byte && (kind != 1) && (kind != 3))
 	{
 		ofc_sparse_ref_error(literal->src,
-			"Byte can never have a KIND above 1");
+			"Byte can never have a KIND larger than 1 byte");
 		return NULL;
 	}
 
@@ -296,12 +306,13 @@ static bool ofc_sema_typeval__real(
 		switch (toupper(ptr[i++]))
 		{
 			case 'E':
+				kind = 1;
 				break;
 			case 'D':
-				kind = 8;
+				kind = 2;
 				break;
 			case 'Q':
-				kind = 16;
+				kind = 4;
 				break;
 			default:
 				return false;
@@ -379,10 +390,22 @@ static bool ofc_sema_typeval__real(
 	}
 	kind = (kind > 0 ? kind : ikind);
 
-	if (kind > sizeof(*value))
+	if (kind == 0)
+		kind = 1;
+
+	unsigned ksize;
+	if (!ofc_sema_type_kind_size(
+		ofc_target_real_size_get(), kind, &ksize))
 	{
 		ofc_sparse_ref_error(literal->src,
-			"REAL kind too large for us to handle");
+			"Invalid REAL kind in literal");
+		return false;
+	}
+
+	if (ksize > sizeof(*value))
+	{
+		ofc_sparse_ref_error(literal->src,
+			"REAL kind too large");
 		return false;
 	}
 
@@ -468,7 +491,14 @@ static ofc_sema_typeval_t* ofc_sema_typeval__complex_literal(
 			&typeval.complex.imaginary, &ikind))
 		return NULL;
 
-	unsigned kind = (rkind > ikind ? rkind : ikind);
+	unsigned rsize, isize;
+	if (!ofc_sema_type_kind_size(
+		ofc_target_real_size_get(), rkind, &rsize)
+		|| !ofc_sema_type_kind_size(
+			ofc_target_real_size_get(), ikind, &isize))
+		return NULL;
+
+	unsigned kind = (rsize > isize ? rkind : ikind);
 
 	if (!typeval.type)
 	{
@@ -525,7 +555,11 @@ static ofc_sema_typeval_t* ofc_sema_typeval__character_literal(
 
 	if (type)
 	{
-		if (type->kind > 1)
+		unsigned ksize;
+		if (!ofc_sema_type_base_size(type, &ksize))
+			return NULL;
+
+		if (ksize > 1)
 		{
 			ofc_sparse_ref_error(literal->src,
 				"Wide strings not supported");
@@ -690,9 +724,9 @@ static ofc_sema_typeval_t* ofc_sema_typeval__byte_literal(
 ofc_sema_typeval_t* ofc_sema_typeval_create_unsigned(
 	unsigned value, ofc_sparse_ref_t ref)
 {
-	unsigned kind = 4;
+	unsigned kind = 12;
 	if ((value >> 31) != 0)
-		kind = 8;
+		kind = 24;
 
 	const ofc_sema_type_t* type
 		= ofc_sema_type_create_primitive(
@@ -713,7 +747,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_create_unsigned(
 ofc_sema_typeval_t* ofc_sema_typeval_create_integer(
 	int value, ofc_sparse_ref_t ref)
 {
-	unsigned kind = 4;
+	unsigned kind = 12;
 
 	const ofc_sema_type_t* type
 		= ofc_sema_type_create_primitive(
@@ -888,44 +922,45 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 	tv.type = type;
 	tv.src  = typeval->src;
 
+	unsigned tsize, csize;
+	if (!ofc_sema_type_base_size(typeval->type, &tsize)
+		|| !ofc_sema_type_base_size(type, &csize))
+		return NULL;
+
 	if ((type->type == OFC_SEMA_TYPE_CHARACTER)
 		&& (typeval->type->type == OFC_SEMA_TYPE_CHARACTER))
 	{
-		unsigned kind = type->kind;
 		unsigned len_tval = typeval->type->len;
 		unsigned len_type = type->len;
 
-		if (typeval->type->kind > type->kind)
+		if (tsize > csize)
 		{
 			ofc_sparse_ref_error(typeval->src,
 				"Can't cast CHARACTER to a smaller kind.");
 			return NULL;
 		}
-		else if (typeval->type->kind < type->kind)
+		else if (tsize < csize)
 		{
-			tv.character = (char*)malloc(len_type * kind);
+			tv.character = (char*)malloc(len_type * csize);
 
 			unsigned wchar;
-			for (wchar = 0; wchar < len_type; wchar += kind)
+			for (wchar = 0; wchar < len_type; wchar += csize)
 			{
-				memcpy(&tv.character[wchar], typeval->character,
-					typeval->type->kind);
+				memcpy(&tv.character[wchar], typeval->character, tsize);
 
 				unsigned wchar_pad;
-				for (wchar_pad = 1; wchar_pad < kind; wchar_pad++)
-				{
+				for (wchar_pad = 1; wchar_pad < csize; wchar_pad++)
 					tv.character[wchar + wchar_pad] = '\0';
-				}
 			}
 
 			if (len_tval < len_type)
 			{
 				unsigned pad_char, pad_byte;
 				for (pad_char = len_tval; pad_char < len_type;
-					pad_char += kind)
+					pad_char += csize)
 				{
 					tv.character[pad_char] = ' ';
-					for(pad_byte = 1; pad_byte < kind; pad_byte++)
+					for(pad_byte = 1; pad_byte < csize; pad_byte++)
 					{
 						tv.character[pad_char + pad_byte] = '\0';
 					}
@@ -934,19 +969,19 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 		}
 		else
 		{
-			tv.character = (char*)malloc(len_type * kind);
+			tv.character = (char*)malloc(len_type * csize);
 
 			if (len_tval < len_type)
 			{
 				memcpy(tv.character, typeval->character,
-					(len_tval * kind));
+					(len_tval * csize));
 
 				unsigned pad_char, pad_byte;
-				for (pad_char = (len_tval * kind); pad_char < (len_type * kind);
-					pad_char += kind)
+				for (pad_char = (len_tval * csize); pad_char < (len_type * csize);
+					pad_char += csize)
 				{
 					tv.character[pad_char] = ' ';
-					for(pad_byte = 1; pad_byte < kind; pad_byte++)
+					for(pad_byte = 1; pad_byte < csize; pad_byte++)
 					{
 						tv.character[pad_char + pad_byte] = '\0';
 					}
@@ -955,7 +990,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 			else
 			{
 				memcpy(tv.character, typeval->character,
-					(len_type * kind));
+					(len_type * csize));
 			}
 		}
 
@@ -972,11 +1007,11 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 		case OFC_SEMA_TYPE_BYTE:
 			break;
 		case OFC_SEMA_TYPE_INTEGER:
-			large_literal = (type->kind > 8);
+			large_literal = (csize > 8);
 			break;
 		case OFC_SEMA_TYPE_REAL:
 		case OFC_SEMA_TYPE_COMPLEX:
-			large_literal = (type->kind > 10);
+			large_literal = (csize > 10);
 			break;
 		default:
 			invalid_cast = true;
@@ -1033,9 +1068,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 					break;
 			}
 
-			if (type->kind < 8)
+			if (csize < 8)
 			{
-				int64_t imax = 1LL << ((type->kind * 8) - 1);
+				int64_t imax = 1LL << ((csize * 8) - 1);
 				if ((tv.integer < -imax)
 					|| (tv.integer >= imax))
 				{
@@ -1260,8 +1295,12 @@ static bool ofc_typeval_character_equal__strz(
 	bool case_sensitive)
 {
 	if (!tv || !strz
-		|| !ofc_sema_type_is_character(tv->type)
-		|| (tv->type->kind != 1))
+		|| !ofc_sema_type_is_character(tv->type))
+		return false;
+
+	unsigned size;
+	if (!ofc_sema_type_base_size(tv->type, &size)
+		|| (size != 1))
 		return false;
 
 	unsigned slen = strlen(strz);
@@ -1295,7 +1334,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_power(
 {
 	if (!a || !a->type
 		|| !b || !b->type
-		|| !ofc_sema_type_compare(
+		|| !ofc_sema_type_compatible(
 			a->type, b->type))
 		return NULL;
 
@@ -1355,7 +1394,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_multiply(
 {
 	if (!a || !a->type
 		|| !b || !b->type
-		|| !ofc_sema_type_compare(
+		|| !ofc_sema_type_compatible(
 			a->type, b->type))
 		return NULL;
 
@@ -1398,8 +1437,13 @@ ofc_sema_typeval_t* ofc_sema_typeval_concat(
 	if (!a || !a->type
 		|| !b || !b->type
 		|| (a->type->type != OFC_SEMA_TYPE_CHARACTER)
-		|| (b->type->type != OFC_SEMA_TYPE_CHARACTER)
-		|| (a->type->kind != b->type->kind))
+		|| (b->type->type != OFC_SEMA_TYPE_CHARACTER))
+		return NULL;
+
+	unsigned asize, bsize;
+	if (!ofc_sema_type_base_size(a->type, &asize)
+		|| !ofc_sema_type_base_size(b->type, &bsize)
+		|| (asize != bsize))
 		return NULL;
 
 	if (a->type->len == 0)
@@ -1407,8 +1451,8 @@ ofc_sema_typeval_t* ofc_sema_typeval_concat(
 	if (b->type->len == 0)
 		return ofc_sema_typeval_copy(a);
 
-	unsigned len_a = a->type->len * a->type->kind;
-	unsigned len_b = b->type->len * b->type->kind;
+	unsigned len_a = a->type->len * asize;
+	unsigned len_b = b->type->len * bsize;
 
 	unsigned len = len_a + len_b;
 
@@ -1439,7 +1483,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_divide(
 {
 	if (!a || !a->type
 		|| !b || !b->type
-		|| !ofc_sema_type_compare(
+		|| !ofc_sema_type_compatible(
 			a->type, b->type))
 		return NULL;
 
@@ -1490,7 +1534,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_add(
 {
 	if (!a || !a->type
 		|| !b || !b->type
-		|| !ofc_sema_type_compare(
+		|| !ofc_sema_type_compatible(
 			a->type, b->type))
 		return NULL;
 
@@ -1529,7 +1573,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_subtract(
 {
 	if (!a || !a->type
 		|| !b || !b->type
-		|| !ofc_sema_type_compare(
+		|| !ofc_sema_type_compatible(
 			a->type, b->type))
 		return NULL;
 
@@ -1604,7 +1648,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_eq(
 {
 	if (!a || !a->type
 		|| !b || !b->type
-		|| !ofc_sema_type_compare(
+		|| !ofc_sema_type_compatible(
 			a->type, b->type))
 		return NULL;
 
@@ -1624,12 +1668,15 @@ ofc_sema_typeval_t* ofc_sema_typeval_eq(
 		if (a->type->len != b->type->len)
 			return NULL;
 
-		/* TODO - Support comparison of types with differing kinds. */
-		if (a->type->kind != b->type->kind)
+		/* TODO - Support comparison of types with differing character sizes. */
+		unsigned asize, bsize;
+		if (!ofc_sema_type_base_size(a->type, &asize)
+			|| !ofc_sema_type_base_size(b->type, &bsize)
+			|| (asize != bsize))
 			return NULL;
 
 		tv.logical = (memcmp(a->character, b->character,
-			(a->type->len * a->type->kind)) == 0);
+			(a->type->len * asize)) == 0);
 	}
 	else
 	{
@@ -1660,7 +1707,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_ne(
 {
 	if (!a || !a->type
 		|| !b || !b->type
-		|| !ofc_sema_type_compare(
+		|| !ofc_sema_type_compatible(
 			a->type, b->type))
 		return NULL;
 
@@ -1680,12 +1727,15 @@ ofc_sema_typeval_t* ofc_sema_typeval_ne(
 		if (a->type->len != b->type->len)
 			return NULL;
 
-		/* TODO - Support comparison of types with differing kinds. */
-		if (a->type->kind != b->type->kind)
+		/* TODO - Support comparison of types with differing character sizes. */
+		unsigned asize, bsize;
+		if (!ofc_sema_type_base_size(a->type, &asize)
+			|| !ofc_sema_type_base_size(b->type, &bsize)
+			|| (asize != bsize))
 			return NULL;
 
 		tv.logical = (memcmp(a->character, b->character,
-			(a->type->len * a->type->kind)) != 0);
+			(a->type->len * asize)) != 0);
 	}
 	else
 	{
@@ -1716,7 +1766,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_lt(
 {
 	if (!a || !a->type
 		|| !b || !b->type
-		|| !ofc_sema_type_compare(
+		|| !ofc_sema_type_compatible(
 			a->type, b->type))
 		return NULL;
 
@@ -1736,21 +1786,24 @@ ofc_sema_typeval_t* ofc_sema_typeval_lt(
 		if (a->type->len != b->type->len)
 			return NULL;
 
-		/* TODO - Support comparison of types with differing kinds. */
-		if (a->type->kind != b->type->kind)
+		/* TODO - Support comparison of types with differing character sizes. */
+		unsigned asize, bsize;
+		if (!ofc_sema_type_base_size(a->type, &asize)
+			|| !ofc_sema_type_base_size(b->type, &bsize)
+			|| (asize != bsize))
 			return NULL;
 
 		/* Strings of characters larger than 8-bytes aren't suported. */
-		if (a->type->kind > 8)
+		if (asize > 8)
 			return NULL;
 
 		tv.logical = false;
 		unsigned i, j;
-		for (i = 0, j = 0; i < a->type->len; i++, j += a->type->kind)
+		for (i = 0, j = 0; i < a->type->len; i++, j += asize)
 		{
 			uint64_t ac = 0, bc = 0;
-			memcpy(&ac, &a->character[j], a->type->kind);
-			memcpy(&bc, &b->character[j], a->type->kind);
+			memcpy(&ac, &a->character[j], asize);
+			memcpy(&bc, &b->character[j], asize);
 
 			if (ac == bc)
 				continue;
@@ -1784,7 +1837,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_le(
 {
 	if (!a || !a->type
 		|| !b || !b->type
-		|| !ofc_sema_type_compare(
+		|| !ofc_sema_type_compatible(
 			a->type, b->type))
 		return NULL;
 
@@ -1804,21 +1857,24 @@ ofc_sema_typeval_t* ofc_sema_typeval_le(
 		if (a->type->len != b->type->len)
 			return NULL;
 
-		/* TODO - Support comparison of types with differing kinds. */
-		if (a->type->kind != b->type->kind)
+		/* TODO - Support comparison of types with differing character sizes. */
+		unsigned asize, bsize;
+		if (!ofc_sema_type_base_size(a->type, &asize)
+			|| !ofc_sema_type_base_size(b->type, &bsize)
+			|| (asize != bsize))
 			return NULL;
 
 		/* Strings of characters larger than 8-bytes aren't suported. */
-		if (a->type->kind > 8)
+		if (asize > 8)
 			return NULL;
 
 		tv.logical = true;
 		unsigned i, j;
-		for (i = 0, j = 0; i < a->type->len; i++, j += a->type->kind)
+		for (i = 0, j = 0; i < a->type->len; i++, j += asize)
 		{
 			uint64_t ac = 0, bc = 0;
-			memcpy(&ac, &a->character[j], a->type->kind);
-			memcpy(&bc, &b->character[j], a->type->kind);
+			memcpy(&ac, &a->character[j], asize);
+			memcpy(&bc, &b->character[j], asize);
 
 			if (ac == bc)
 				continue;
@@ -1852,7 +1908,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_gt(
 {
 	if (!a || !a->type
 		|| !b || !b->type
-		|| !ofc_sema_type_compare(
+		|| !ofc_sema_type_compatible(
 			a->type, b->type))
 		return NULL;
 
@@ -1872,21 +1928,24 @@ ofc_sema_typeval_t* ofc_sema_typeval_gt(
 		if (a->type->len != b->type->len)
 			return NULL;
 
-		/* TODO - Support comparison of types with differing kinds. */
-		if (a->type->kind != b->type->kind)
+		/* TODO - Support comparison of types with differing character sizes. */
+		unsigned asize, bsize;
+		if (!ofc_sema_type_base_size(a->type, &asize)
+			|| !ofc_sema_type_base_size(b->type, &bsize)
+			|| (asize != bsize))
 			return NULL;
 
 		/* Strings of characters larger than 8-bytes aren't suported. */
-		if (a->type->kind > 8)
+		if (asize > 8)
 			return NULL;
 
 		tv.logical = false;
 		unsigned i, j;
-		for (i = 0, j = 0; i < a->type->len; i++, j += a->type->kind)
+		for (i = 0, j = 0; i < a->type->len; i++, j += asize)
 		{
 			uint64_t ac = 0, bc = 0;
-			memcpy(&ac, &a->character[j], a->type->kind);
-			memcpy(&bc, &b->character[j], a->type->kind);
+			memcpy(&ac, &a->character[j], asize);
+			memcpy(&bc, &b->character[j], asize);
 
 			if (ac == bc)
 				continue;
@@ -1920,7 +1979,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_ge(
 {
 	if (!a || !a->type
 		|| !b || !b->type
-		|| !ofc_sema_type_compare(
+		|| !ofc_sema_type_compatible(
 			a->type, b->type))
 		return NULL;
 
@@ -1940,21 +1999,24 @@ ofc_sema_typeval_t* ofc_sema_typeval_ge(
 		if (a->type->len != b->type->len)
 			return NULL;
 
-		/* TODO - Support comparison of types with differing kinds. */
-		if (a->type->kind != b->type->kind)
+		/* TODO - Support comparison of types with differing character sizes. */
+		unsigned asize, bsize;
+		if (!ofc_sema_type_base_size(a->type, &asize)
+			|| !ofc_sema_type_base_size(b->type, &bsize)
+			|| (asize != bsize))
 			return NULL;
 
 		/* Strings of characters larger than 8-bytes aren't suported. */
-		if (a->type->kind > 8)
+		if (asize > 8)
 			return NULL;
 
 		tv.logical = true;
 		unsigned i, j;
-		for (i = 0, j = 0; i < a->type->len; i++, j += a->type->kind)
+		for (i = 0, j = 0; i < a->type->len; i++, j += asize)
 		{
 			uint64_t ac = 0, bc = 0;
-			memcpy(&ac, &a->character[j], a->type->kind);
-			memcpy(&bc, &b->character[j], a->type->kind);
+			memcpy(&ac, &a->character[j], asize);
+			memcpy(&bc, &b->character[j], asize);
 
 			if (ac == bc)
 				continue;
@@ -2013,7 +2075,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_and(
 {
 	if (!a || !a->type
 		|| !b || !b->type
-		|| !ofc_sema_type_compare(
+		|| !ofc_sema_type_compatible(
 			a->type, b->type))
 		return NULL;
 
@@ -2046,7 +2108,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_or(
 {
 	if (!a || !a->type
 		|| !b || !b->type
-		|| !ofc_sema_type_compare(
+		|| !ofc_sema_type_compatible(
 			a->type, b->type))
 		return NULL;
 
@@ -2079,7 +2141,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_eqv(
 {
 	if (!a || !a->type
 		|| !b || !b->type
-		|| !ofc_sema_type_compare(
+		|| !ofc_sema_type_compatible(
 			a->type, b->type))
 		return NULL;
 
@@ -2112,7 +2174,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_neqv(
 {
 	if (!a || !a->type
 		|| !b || !b->type
-		|| !ofc_sema_type_compare(
+		|| !ofc_sema_type_compatible(
 			a->type, b->type))
 		return NULL;
 

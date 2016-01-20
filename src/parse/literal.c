@@ -515,7 +515,7 @@ unsigned ofc_parse_literal_number(
 		for (; isdigit(ptr[i]); i++);
 	}
 
-	unsigned k = 0;
+	unsigned k = 1;
 
 	if ((toupper(ptr[i]) == 'E')
 		|| (toupper(ptr[i]) == 'D')
@@ -532,9 +532,9 @@ unsigned ofc_parse_literal_number(
 			for (; isdigit(ptr[j]); j++);
 
 			if (toupper(ptr[j]) == 'D')
-				k = 8;
+				k = 2;
 			else if (toupper(ptr[j]) == 'Q')
-				k = 16;
+				k = 4;
 
 			i = j;
 		}
@@ -554,7 +554,7 @@ unsigned ofc_parse_literal_number(
 		if (len == 0) return 0;
 		i += len;
 
-		kind_ambiguous = ((ok > 0) && (k != ok));
+		kind_ambiguous = ((ok != 1) && (k != ok));
 	}
 
 	if (kind_ambiguous)
@@ -585,7 +585,7 @@ unsigned ofc_parse_literal_integer(
 	for (i = 1; isdigit(ptr[i]); i++);
 
 	literal->type = OFC_PARSE_LITERAL_NUMBER;
-	literal->kind = 0;
+	literal->kind = 1;
 	literal->number = ofc_str_ref(ptr, i);
 	return i;
 }
@@ -644,7 +644,7 @@ unsigned ofc_parse_literal(
 	ofc_parse_literal_t* literal)
 {
 	ofc_parse_literal_t l;
-	l.kind = 0;
+	l.kind = 1;
 
 	/* Order is important here. */
 	unsigned len = 0;
