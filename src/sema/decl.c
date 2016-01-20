@@ -1493,7 +1493,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 	{
 		if (!ofc_colstr_atomic_writef(cs, ",")
 			|| !ofc_colstr_atomic_writef(cs, " ")
-			|| !ofc_colstr_atomic_writef(cs, " PARAMETER"))
+			|| !ofc_colstr_atomic_writef(cs, "PARAMETER"))
 			return false;
 	}
 
