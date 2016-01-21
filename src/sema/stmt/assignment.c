@@ -82,7 +82,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_assignment(
 
 	const ofc_sema_type_t* dtype
 		= ofc_sema_lhs_type(s.assignment.dest);
-	if (!ofc_sema_type_compare(dtype,
+	if (!ofc_sema_type_compatible(dtype,
 		ofc_sema_expr_type(s.assignment.expr)))
 	{
 		ofc_sema_expr_t* cast

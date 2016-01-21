@@ -76,7 +76,7 @@ bool ofc_sema_stmt_equivalence(
 				return false;
 			}
 
-			if (!ofc_sema_type_compare(
+			if (!ofc_sema_type_compatible(
 				ofc_sema_lhs_type(base),
 				ofc_sema_lhs_type(elhs)))
 			{

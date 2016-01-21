@@ -472,7 +472,7 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 		return NULL;
 	}
 
-	if (!ofc_sema_type_compare(at, bt))
+	if (!ofc_sema_type_compatible(at, bt))
 	{
 		const ofc_sema_type_t* ptype
 			= ofc_sema_type_promote(at, bt);
@@ -490,7 +490,7 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 
 		/* TODO - Warn about implicit cast? */
 
-		if (!ofc_sema_type_compare(at, ptype))
+		if (!ofc_sema_type_compatible(at, ptype))
 		{
 			ofc_sema_expr_t* cast
 				= ofc_sema_expr_cast(as, ptype);
@@ -503,7 +503,7 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 			as = cast;
 		}
 
-		if (!ofc_sema_type_compare(bt, ptype))
+		if (!ofc_sema_type_compatible(bt, ptype))
 		{
 			ofc_sema_expr_t* cast
 				= ofc_sema_expr_cast(bs, ptype);
@@ -1128,7 +1128,7 @@ bool ofc_sema_expr_compare(
 			return ofc_sema_lhs_compare(a->lhs, b->lhs);
 
 		case OFC_SEMA_EXPR_CAST:
-			if (!ofc_sema_type_compare(
+			if (!ofc_sema_type_compatible(
 				a->cast.type, b->cast.type))
 				return false;
 
@@ -1526,7 +1526,7 @@ static ofc_sema_expr_list_t* ofc_sema_expr_list__implicit_do(
 		return NULL;
 	}
 
-	if (!ofc_sema_type_compare(dtype,
+	if (!ofc_sema_type_compatible(dtype,
 		ofc_sema_expr_type(limit)))
 	{
 		ofc_sema_expr_t* cast
@@ -1559,7 +1559,7 @@ static ofc_sema_expr_list_t* ofc_sema_expr_list__implicit_do(
 			return NULL;
 		}
 
-		if (!ofc_sema_type_compare(dtype,
+		if (!ofc_sema_type_compatible(dtype,
 			ofc_sema_expr_type(step)))
 		{
 			ofc_sema_expr_t* cast
@@ -1601,7 +1601,7 @@ static ofc_sema_expr_list_t* ofc_sema_expr_list__implicit_do(
 			return NULL;
 		}
 
-		if (!ofc_sema_type_compare(dtype,
+		if (!ofc_sema_type_compatible(dtype,
 			ofc_sema_expr_type(step)))
 		{
 			ofc_sema_expr_t* cast

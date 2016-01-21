@@ -390,7 +390,7 @@ ofc_sema_expr_list_t* ofc_sema_intrinsic_cast(
 			case IT_DEF_REAL:
 			case IT_DEF_DOUBLE:
 			case IT_DEF_COMPLEX:
-				valid = ofc_sema_type_compare(atype, stype);
+				valid = ofc_sema_type_compatible(atype, stype);
 				break;
 
 			default:
@@ -411,7 +411,7 @@ ofc_sema_expr_list_t* ofc_sema_intrinsic_cast(
 	{
 		const ofc_sema_type_t* atype = at[i];
 
-		if (!ofc_sema_type_compare(atype, ptype))
+		if (!ofc_sema_type_compatible(atype, ptype))
 		{
 			ofc_sema_expr_t* cast
 				= ofc_sema_expr_cast(

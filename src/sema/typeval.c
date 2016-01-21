@@ -829,7 +829,7 @@ bool ofc_sema_typeval_compare(
 	if (a == b)
 		return true;
 
-	if (!ofc_sema_type_compare(
+	if (!ofc_sema_type_compatible(
 		a->type, b->type))
 		return false;
 

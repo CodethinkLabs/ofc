@@ -1312,7 +1312,7 @@ static ofc_sema_lhs_list_t* ofc_sema_lhs_list__implicit_do(
 		return NULL;
 	}
 
-	if (!ofc_sema_type_compare(dtype,
+	if (!ofc_sema_type_compatible(dtype,
 		ofc_sema_expr_type(limit)))
 	{
 		ofc_sema_expr_t* cast
@@ -1353,7 +1353,7 @@ static ofc_sema_lhs_list_t* ofc_sema_lhs_list__implicit_do(
 			return NULL;
 		}
 
-		if (!ofc_sema_type_compare(dtype,
+		if (!ofc_sema_type_compatible(dtype,
 			ofc_sema_expr_type(step)))
 		{
 			ofc_sema_expr_t* cast
@@ -1384,7 +1384,7 @@ static ofc_sema_lhs_list_t* ofc_sema_lhs_list__implicit_do(
 			return NULL;
 		}
 
-		if (!ofc_sema_type_compare(dtype,
+		if (!ofc_sema_type_compatible(dtype,
 			ofc_sema_expr_type(step)))
 		{
 			ofc_sema_expr_t* cast

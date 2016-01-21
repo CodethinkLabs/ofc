@@ -54,7 +54,7 @@ static bool ofc_sema_stmt__loop_control(
 		return false;
 	}
 
-	if (!ofc_sema_type_compare(dtype,
+	if (!ofc_sema_type_compatible(dtype,
 		ofc_sema_expr_type(*sema_init)))
 	{
 		ofc_sema_expr_t* cast
@@ -83,7 +83,7 @@ static bool ofc_sema_stmt__loop_control(
 		return false;
 	}
 
-	if (!ofc_sema_type_compare(dtype,
+	if (!ofc_sema_type_compatible(dtype,
 		ofc_sema_expr_type(*sema_last)))
 	{
 		ofc_sema_expr_t* cast
@@ -117,7 +117,7 @@ static bool ofc_sema_stmt__loop_control(
 			return false;
 		}
 
-		if (!ofc_sema_type_compare(dtype,
+		if (!ofc_sema_type_compatible(dtype,
 			ofc_sema_expr_type(*sema_step)))
 		{
 			ofc_sema_expr_t* cast

@@ -589,6 +589,7 @@ const ofc_sema_type_t* ofc_sema_type_spec(
 
 
 static bool ofc_sema_type__compare(
+	bool compat,
 	const ofc_sema_type_t* a,
 	const ofc_sema_type_t* b)
 {
@@ -614,8 +615,8 @@ static bool ofc_sema_type__compare(
 
 		case OFC_SEMA_TYPE_POINTER:
 		case OFC_SEMA_TYPE_FUNCTION:
-			return ofc_sema_type_compare(
-				a->subtype, b->subtype);
+			return ofc_sema_type__compare(
+				compat, a->subtype, b->subtype);
 
 		case OFC_SEMA_TYPE_CHARACTER:
 			if (a->len != b->len)
@@ -629,29 +630,29 @@ static bool ofc_sema_type__compare(
 			break;
 	}
 
-	return true;
+	if (compat)
+	{
+		unsigned asize, bsize;
+		return (ofc_sema_type_base_size(a, &asize)
+			&& ofc_sema_type_base_size(b, &bsize)
+			&& (asize == bsize));
+	}
+
+	return (a->kind == b->kind);
 }
 
 bool ofc_sema_type_compare(
 	const ofc_sema_type_t* a,
 	const ofc_sema_type_t* b)
 {
-	if (!ofc_sema_type__compare(a, b))
-		return false;
-	return (a->kind == b->kind);
+	return ofc_sema_type__compare(false, a, b);
 }
 
 bool ofc_sema_type_compatible(
 	const ofc_sema_type_t* a,
 	const ofc_sema_type_t* b)
 {
-	if (!ofc_sema_type__compare(a, b))
-		return false;
-
-	unsigned asize, bsize;
-	return (ofc_sema_type_base_size(a, &asize)
-		&& ofc_sema_type_base_size(b, &bsize)
-		&& (asize == bsize));
+	return ofc_sema_type__compare(true, a, b);
 }
 
 
