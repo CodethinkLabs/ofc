@@ -363,24 +363,6 @@ bool ofc_sema_spec_print(
 	if (!spec)
 		return false;
 
-	if (spec->is_intrinsic)
-	{
-		if (!ofc_colstr_newline(cs, indent, NULL)
-			|| !ofc_colstr_atomic_writef(cs, "INTRINSIC")
-			|| !ofc_colstr_atomic_writef(cs, " ")
-			|| !ofc_sparse_ref_print(cs, spec->name))
-			return false;
-	}
-
-	if (spec->is_external)
-	{
-		if (!ofc_colstr_newline(cs, indent, NULL)
-			|| !ofc_colstr_atomic_writef(cs, "EXTERNAL")
-			|| !ofc_colstr_atomic_writef(cs, " ")
-			|| !ofc_sparse_ref_print(cs, spec->name))
-			return false;
-	}
-
 	/* Ignore specifiers that are never used. */
 	if (!spec->used)
 		return true;
@@ -408,10 +390,60 @@ bool ofc_sema_spec_print(
 			break;
 	}
 
-	return (ofc_colstr_newline(cs, indent, NULL)
-		&& ofc_sema_type_print(cs, type)
-		/* TODO - Print more spec attributes. */
-		&& ofc_colstr_atomic_writef(cs, " ")
+	if (!ofc_colstr_newline(cs, indent, NULL)
+		|| !ofc_sema_type_print(cs, type))
+		return false;
+
+	if (spec->is_external)
+	{
+		if (!ofc_colstr_atomic_writef(cs, ",")
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_colstr_atomic_writef(cs, "EXTERNAL"))
+			return false;
+	}
+
+	if (spec->is_intrinsic)
+	{
+		if (!ofc_colstr_atomic_writef(cs, ",")
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_colstr_atomic_writef(cs, "INTRINSIC"))
+			return false;
+	}
+
+	if (spec->is_volatile)
+	{
+		if (!ofc_colstr_atomic_writef(cs, ",")
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_colstr_atomic_writef(cs, "VOLATILE"))
+			return false;
+	}
+
+	if (spec->is_static)
+	{
+		if (!ofc_colstr_atomic_writef(cs, ",")
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_colstr_atomic_writef(cs, "SAVE"))
+			return false;
+	}
+
+	if (spec->is_automatic)
+	{
+		if (!ofc_colstr_atomic_writef(cs, ",")
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_colstr_atomic_writef(cs, "AUTOMATIC"))
+			return false;
+	}
+
+	if (spec->array)
+	{
+		if (!ofc_colstr_atomic_writef(cs, ",")
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_colstr_atomic_writef(cs, "DIMENSION")
+			|| !ofc_sema_array_print_brackets(cs, spec->array))
+			return false;
+	}
+
+	return (ofc_colstr_atomic_writef(cs, " ")
 		&& ofc_colstr_atomic_writef(cs, "::")
 		&& ofc_colstr_atomic_writef(cs, " ")
 		&& ofc_sparse_ref_print(cs, spec->name));
