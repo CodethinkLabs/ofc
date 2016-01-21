@@ -1496,23 +1496,88 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 		return true;
 
 	const ofc_sema_type_t* type = decl->type;
-	if (ofc_sema_decl_is_function(decl))
+	bool is_pointer = (type->type == OFC_SEMA_TYPE_POINTER);
+	if (is_pointer || ofc_sema_decl_is_function(decl))
 		type = type->subtype;
 
 	if (!type)
 		return false;
 
-	/* TODO - Handle POINTER and STRUCTURE declarations. */
+	/* We can't support nested pointer types. */
+	if (type->type == OFC_SEMA_TYPE_POINTER)
+		return false;
+
+	if (type->type == OFC_SEMA_TYPE_STRUCTURE)
+	{
+		/* TODO - Handle STRUCTURE declarations. */
+		return false;
+	}
 
 	if (!ofc_colstr_newline(cs, indent, NULL)
 		|| !ofc_sema_type_print(cs, type))
 		return false;
+
+	if (decl->is_external)
+	{
+		if (!ofc_colstr_atomic_writef(cs, ",")
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_colstr_atomic_writef(cs, "EXTERNAL"))
+			return false;
+	}
+
+	if (decl->is_intrinsic)
+	{
+		if (!ofc_colstr_atomic_writef(cs, ",")
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_colstr_atomic_writef(cs, "INTRINSIC"))
+			return false;
+	}
+
+	if (decl->is_volatile)
+	{
+		if (!ofc_colstr_atomic_writef(cs, ",")
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_colstr_atomic_writef(cs, "VOLATILE"))
+			return false;
+	}
+
+	if (decl->is_static)
+	{
+		if (!ofc_colstr_atomic_writef(cs, ",")
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_colstr_atomic_writef(cs, "SAVE"))
+			return false;
+	}
+
+	if (decl->is_automatic)
+	{
+		if (!ofc_colstr_atomic_writef(cs, ",")
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_colstr_atomic_writef(cs, "AUTOMATIC"))
+			return false;
+	}
 
 	if (decl->is_parameter)
 	{
 		if (!ofc_colstr_atomic_writef(cs, ",")
 			|| !ofc_colstr_atomic_writef(cs, " ")
 			|| !ofc_colstr_atomic_writef(cs, "PARAMETER"))
+			return false;
+	}
+
+	if (is_pointer)
+	{
+		if (!ofc_colstr_atomic_writef(cs, ",")
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_colstr_atomic_writef(cs, "POINTER"))
+			return false;
+	}
+
+	if (decl->is_target)
+	{
+		if (!ofc_colstr_atomic_writef(cs, ",")
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_colstr_atomic_writef(cs, "TARGET"))
 			return false;
 	}
 
@@ -1530,6 +1595,8 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 
 	if (!ofc_sema_decl_print_name(cs, decl))
 		return false;
+
+	/* TODO - Handle POINTER initializers. */
 
 	bool init_complete = false;
 	ofc_sema_decl_has_initializer(
