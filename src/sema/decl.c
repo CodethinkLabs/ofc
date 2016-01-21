@@ -1710,6 +1710,56 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 	return true;
 }
 
+static bool ofc_sema_decl_print_data_init__ssn(
+	ofc_colstr_t* cs,
+	const ofc_sema_decl_t* decl,
+	bool* first,
+	unsigned base, unsigned size)
+{
+	if (size == 0)
+		return true;
+
+	if (!*first)
+	{
+		if (!ofc_colstr_atomic_writef(cs, ",")
+			|| !ofc_colstr_atomic_writef(cs, " "))
+			return false;
+	}
+
+	*first = false;
+
+	return (ofc_str_ref_print(cs, decl->name)
+		&& ofc_colstr_atomic_writef(cs, "(")
+		&& ofc_colstr_atomic_writef(cs, "%u", (base + 1))
+		&& ofc_colstr_atomic_writef(cs, ":")
+		&& ofc_colstr_atomic_writef(cs, "%u", (base + size))
+		&& ofc_colstr_atomic_writef(cs, ")"));
+}
+
+
+static bool ofc_sema_decl_print_data_init__ssc(
+	ofc_colstr_t* cs,
+	char* string,
+	bool* first,
+	unsigned base, unsigned size)
+{
+	if (size == 0)
+		return true;
+
+	if (!*first)
+	{
+		if (!ofc_colstr_atomic_writef(cs, ",")
+			|| !ofc_colstr_atomic_writef(cs, " "))
+			return false;
+	}
+
+	*first = false;
+
+	return (ofc_colstr_writef(cs, "\"")
+		&& ofc_colstr_write_escaped(cs, &string[base], size)
+		&& ofc_colstr_writef(cs, "\""));
+}
+
 bool ofc_sema_decl_print_data_init(ofc_colstr_t* cs,
 	unsigned indent,
 	const ofc_sema_decl_t* decl)
@@ -1730,8 +1780,77 @@ bool ofc_sema_decl_print_data_init(ofc_colstr_t* cs,
 		|| !ofc_colstr_atomic_writef(cs, " "))
 		return false;
 
-	/* TODO - Printing partial initializers. */
-	return false;
+	if (complete)
+	{
+		/* TODO - Print complete deferred initializers. */
+		return false;
+	}
+	else if (ofc_sema_decl_is_array(decl))
+	{
+		/* TODO - Print partial array initializers. */
+		return false;
+	}
+	else if (ofc_sema_type_is_character(decl->type))
+	{
+		unsigned csize = 0;
+		ofc_sema_type_base_size(decl->type, &csize);
+		if (csize != 1)
+		{
+			/* TODO - Support strings with non-byte character size. */
+			return false;
+		}
+
+		bool first;
+		unsigned i, b, s;
+
+		for (i = 0, b = 0, s = 0, first = true;
+			i < decl->type->len; i++)
+		{
+			if (decl->init.substring.mask[i])
+			{
+				s++;
+			}
+			else
+			{
+				if (!ofc_sema_decl_print_data_init__ssn(
+					cs, decl, &first, b, s))
+					return false;
+				b = (i + 1);
+				s = 0;
+			}
+		}
+		if (!ofc_sema_decl_print_data_init__ssn(
+			cs, decl, &first, b, s))
+			return false;
+
+		if (!ofc_colstr_atomic_writef(cs, "/"))
+			return false;
+
+		for (i = 0, b = 0, s = 0, first = true;
+			i < decl->type->len; i++)
+		{
+			if (decl->init.substring.mask[i])
+			{
+				s++;
+			}
+			else
+			{
+				if (!ofc_sema_decl_print_data_init__ssc(
+					cs, decl->init.substring.string, &first, b, s))
+					return false;
+				b = (i + 1);
+				s = 0;
+			}
+		}
+		if (!ofc_sema_decl_print_data_init__ssc(
+			cs, decl->init.substring.string, &first, b, s))
+			return false;
+
+		if (!ofc_colstr_atomic_writef(cs, "/"))
+			return false;
+	}
+
+	return true;
 }
 
 bool ofc_sema_decl_list_stmt_func_print(
