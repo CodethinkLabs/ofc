@@ -85,6 +85,7 @@ const ofc_sema_type_t* ofc_sema_type_integer_default(void);
 const ofc_sema_type_t* ofc_sema_type_real_default(void);
 const ofc_sema_type_t* ofc_sema_type_double_default(void);
 const ofc_sema_type_t* ofc_sema_type_complex_default(void);
+const ofc_sema_type_t* ofc_sema_type_double_complex_default(void);
 const ofc_sema_type_t* ofc_sema_type_byte_default(void);
 const ofc_sema_type_t* ofc_sema_type_subroutine(void);
 

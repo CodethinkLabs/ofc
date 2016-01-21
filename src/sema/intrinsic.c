@@ -28,8 +28,16 @@ typedef enum
 	IT_DEF_LOGICAL,
 	IT_DEF_INTEGER,
 	IT_DEF_REAL,
-	IT_DEF_DOUBLE,
 	IT_DEF_COMPLEX,
+
+	IT_DEF_DOUBLE,
+	IT_DEF_DOUBLE_COMPLEX,
+
+	IT_DEF_HALF_INTEGER,
+
+	IT_INTEGER_1,
+	IT_INTEGER_2,
+	IT_INTEGER_4,
 
 	IT_COUNT
 } ofc_sema_intrinsic_type_e;
@@ -45,14 +53,24 @@ typedef struct
 static const ofc_sema_intrinsic_op_t ofc_sema_intrinsic__op_list[] =
 {
 	/* Casts */
-	{ "INT"  , 1, 1, IT_DEF_INTEGER, IT_ANY         },
-	{ "IFIX" , 1, 1, IT_DEF_INTEGER, IT_DEF_REAL    },
-	{ "IDINT", 1, 1, IT_DEF_INTEGER, IT_DEF_DOUBLE  },
-	{ "REAL" , 1, 1, IT_DEF_REAL   , IT_ANY         },
-	{ "FLOAT", 1, 1, IT_DEF_REAL   , IT_DEF_INTEGER },
-	{ "SNGL" , 1, 1, IT_DEF_REAL   , IT_DEF_DOUBLE  },
-	{ "DBLE" , 1, 1, IT_DEF_DOUBLE , IT_ANY         },
-	{ "CMPLX", 1, 2, IT_DEF_COMPLEX, IT_ANY         },
+	{ "INT"   , 1, 1, IT_DEF_INTEGER        , IT_ANY                },
+	{ "IFIX"  , 1, 1, IT_DEF_INTEGER        , IT_DEF_REAL           },
+	{ "IDINT" , 1, 1, IT_DEF_INTEGER        , IT_DEF_DOUBLE         },
+	{ "HFIX"  , 1, 1, IT_DEF_HALF_INTEGER   , IT_ANY                },
+	{ "INT1"  , 1, 1, IT_INTEGER_1          , IT_ANY                },
+	{ "INT2"  , 1, 1, IT_INTEGER_2          , IT_ANY                },
+	{ "INT4"  , 1, 1, IT_INTEGER_4          , IT_ANY                },
+	{ "INTC"  , 1, 1, IT_INTEGER_2          , IT_ANY                },
+	{ "JFIX"  , 1, 1, IT_INTEGER_4          , IT_ANY                },
+	{ "REAL"  , 1, 1, IT_DEF_REAL           , IT_ANY                },
+	{ "FLOAT" , 1, 1, IT_DEF_REAL           , IT_DEF_INTEGER        },
+	{ "SNGL"  , 1, 1, IT_DEF_REAL           , IT_DEF_DOUBLE         },
+	{ "DREAL" , 1, 1, IT_DEF_DOUBLE         , IT_DEF_DOUBLE_COMPLEX },
+	{ "DBLE"  , 1, 1, IT_DEF_DOUBLE         , IT_ANY                },
+	{ "DFLOAT", 1, 1, IT_DEF_DOUBLE         , IT_ANY                },
+	{ "CMPLX" , 1, 2, IT_DEF_COMPLEX        , IT_ANY                },
+	{ "DCMPLX", 1, 2, IT_DEF_DOUBLE_COMPLEX , IT_ANY                },
+	/* TODO - CHAR, ICHAR */
 
 	/* Truncation */
 	{ "AINT", 1, 1, IT_SAME, IT_REAL       },
@@ -331,12 +349,36 @@ ofc_sema_expr_list_t* ofc_sema_intrinsic_cast(
 			stype = ofc_sema_type_real_default();
 			break;
 
+		case IT_DEF_COMPLEX:
+			stype = ofc_sema_type_complex_default();
+			break;
+
 		case IT_DEF_DOUBLE:
 			stype = ofc_sema_type_double_default();
 			break;
 
-		case IT_DEF_COMPLEX:
-			stype = ofc_sema_type_complex_default();
+		case IT_DEF_DOUBLE_COMPLEX:
+			stype = ofc_sema_type_double_complex_default();
+			break;
+
+		case IT_DEF_HALF_INTEGER:
+			stype = ofc_sema_type_create_primitive(
+				OFC_SEMA_TYPE_INTEGER, 5);
+			break;
+
+		case IT_INTEGER_1:
+			stype = ofc_sema_type_create_primitive(
+				OFC_SEMA_TYPE_INTEGER, 3);
+			break;
+
+		case IT_INTEGER_2:
+			stype = ofc_sema_type_create_primitive(
+				OFC_SEMA_TYPE_INTEGER, 6);
+			break;
+
+		case IT_INTEGER_4:
+			stype = ofc_sema_type_create_primitive(
+				OFC_SEMA_TYPE_INTEGER, 12);
 			break;
 
 		default:
@@ -388,8 +430,13 @@ ofc_sema_expr_list_t* ofc_sema_intrinsic_cast(
 			case IT_DEF_LOGICAL:
 			case IT_DEF_INTEGER:
 			case IT_DEF_REAL:
-			case IT_DEF_DOUBLE:
 			case IT_DEF_COMPLEX:
+			case IT_DEF_DOUBLE:
+			case IT_DEF_DOUBLE_COMPLEX:
+			case IT_DEF_HALF_INTEGER:
+			case IT_INTEGER_1:
+			case IT_INTEGER_2:
+			case IT_INTEGER_4:
 				valid = ofc_sema_type_compatible(atype, stype);
 				break;
 
@@ -456,11 +503,30 @@ const ofc_sema_type_t* ofc_sema_intrinsic_type(
 		case IT_DEF_REAL:
 			return ofc_sema_type_real_default();
 
+		case IT_DEF_COMPLEX:
+			return ofc_sema_type_complex_default();
+
 		case IT_DEF_DOUBLE:
 			return ofc_sema_type_double_default();
 
-		case IT_DEF_COMPLEX:
-			return ofc_sema_type_complex_default();
+		case IT_DEF_DOUBLE_COMPLEX:
+			return ofc_sema_type_double_complex_default();
+
+		case IT_DEF_HALF_INTEGER:
+			return ofc_sema_type_create_primitive(
+				OFC_SEMA_TYPE_INTEGER, 5);
+
+		case IT_INTEGER_1:
+			return ofc_sema_type_create_primitive(
+				OFC_SEMA_TYPE_INTEGER, 3);
+
+		case IT_INTEGER_2:
+			return ofc_sema_type_create_primitive(
+				OFC_SEMA_TYPE_INTEGER, 6);
+
+		case IT_INTEGER_4:
+			return ofc_sema_type_create_primitive(
+				OFC_SEMA_TYPE_INTEGER, 12);
 
 		default:
 			break;

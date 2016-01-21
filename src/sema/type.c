@@ -514,6 +514,23 @@ const ofc_sema_type_t* ofc_sema_type_complex_default(void)
 	return complex;
 }
 
+const ofc_sema_type_t* ofc_sema_type_double_complex_default(void)
+{
+	static const ofc_sema_type_t* dbl_complex = NULL;
+
+	if (!dbl_complex)
+	{
+		const ofc_sema_type_t* real
+			= ofc_sema_type_real_default();
+		if (!real) return NULL;
+
+		dbl_complex = ofc_sema_type_create_primitive(
+			OFC_SEMA_TYPE_COMPLEX, 2);
+	}
+
+	return dbl_complex;
+}
+
 const ofc_sema_type_t* ofc_sema_type_byte_default(void)
 {
 	static const ofc_sema_type_t* byte = NULL;
