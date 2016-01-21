@@ -291,7 +291,9 @@ bool ofc_sema_array_print(
 
 		ofc_sema_array_dims_t dims
 			= array->segment[i];
-		if (dims.first == 1)
+		if (!dims.first_var
+			&& !dims.last_var
+			&& (dims.first == 1))
 		{
 			if (!ofc_colstr_atomic_writef(
 				cs, "%d", dims.last))
@@ -299,8 +301,17 @@ bool ofc_sema_array_print(
 		}
 		else
 		{
-			if (!ofc_colstr_atomic_writef(cs, "%d:%d",
-				dims.first, dims.last))
+			if (!dims.first_var
+				&& !ofc_colstr_atomic_writef(
+					cs, "%d", dims.first))
+				return false;
+
+			if (!ofc_colstr_atomic_writef(cs, ":"))
+				return false;
+
+			if (!dims.last_var
+				&& !ofc_colstr_atomic_writef(
+					cs, "%d", dims.last))
 				return false;
 		}
 	}
