@@ -21,7 +21,7 @@ const ofc_sema_spec_t OFC_SEMA_SPEC_DEFAULT =
 {
 	.name          = OFC_SPARSE_REF_EMPTY,
 	.type_implicit = true,
-	.kind          = 1,
+	.kind          = 0,
 	.len           = 0,
 	.len_var       = false,
 	.array         = NULL,
@@ -367,6 +367,9 @@ bool ofc_sema_spec_print(
 	if (!spec->used)
 		return true;
 
+	unsigned kind = spec->kind;
+	unsigned len  = spec->len;
+
 	ofc_sema_type_e stype = spec->type;
 	if (spec->type_implicit)
 	{
@@ -376,17 +379,21 @@ bool ofc_sema_spec_print(
 		if (!final) return false;
 
 		stype = final->type;
+		kind  = final->kind;
+		len   = final->len;
 		ofc_sema_spec_delete(final);
 	}
+
+	if (kind == 0) kind = 1;
 
 	const ofc_sema_type_t* type;
 	switch (stype)
 	{
 		case OFC_SEMA_TYPE_CHARACTER:
-			type = ofc_sema_type_create_character(spec->kind, spec->len);
+			type = ofc_sema_type_create_character(kind, len);
 			break;
 		default:
-			type = ofc_sema_type_create_primitive(stype, spec->kind);
+			type = ofc_sema_type_create_primitive(stype, kind);
 			break;
 	}
 
