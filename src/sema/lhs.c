@@ -1010,15 +1010,15 @@ bool ofc_sema_lhs_print(
 				&& !ofc_sema_expr_print(cs,
 					lhs->substring.first))
 				return false;
-			if (lhs->substring.first != lhs->substring.last)
-			{
-				if (!ofc_colstr_atomic_writef(cs, ":"))
-					return false;
-				if (lhs->substring.last
-					&& !ofc_sema_expr_print(cs,
-						lhs->substring.last))
-					return false;
-			}
+
+			if (!ofc_colstr_atomic_writef(cs, ":"))
+				return false;
+
+			if (lhs->substring.last
+				&& !ofc_sema_expr_print(cs,
+					lhs->substring.last))
+				return false;
+
 			if (!ofc_colstr_atomic_writef(cs, ")"))
 				return false;
 			break;
