@@ -71,6 +71,7 @@ ofc_sema_decl_t* ofc_sema_decl_create(
 	decl->is_automatic = false;
 	decl->is_target    = false;
 	decl->is_return    = false;
+	decl->has_spec     = false;
 
 	decl->used = false;
 	return decl;
@@ -212,6 +213,8 @@ static ofc_sema_decl_t* ofc_sema_decl__spec(
 	decl->is_volatile  = spec->is_volatile;
 	decl->is_intrinsic = spec->is_intrinsic;
 	decl->is_external  = spec->is_external;
+
+	decl->has_spec = spec->used;
 
 	if (!ofc_sema_scope_decl_add(
 		scope, decl))
@@ -1486,6 +1489,11 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 {
 	if (!decl)
 		return false;
+
+	/* If there's a used specifier we print that instead and handle
+	   initialization later using a DATA statement. */
+	if (decl->has_spec)
+		return true;
 
 	const ofc_sema_type_t* type = decl->type;
 	if (ofc_sema_decl_is_function(decl))

@@ -332,6 +332,28 @@ ofc_sema_spec_t* ofc_sema_spec_copy(
 	return copy;
 }
 
+
+bool ofc_sema_spec_mark_used(
+	ofc_sema_scope_t* scope,
+	ofc_sema_spec_t* spec)
+{
+	if (!spec)
+		return false;
+
+	if (!spec->used)
+	{
+		ofc_sema_decl_t* decl
+			= ofc_sema_scope_decl_find_modify(
+				scope, spec->name.string, true);
+		if (decl) decl->has_spec = true;
+
+		spec->used = true;
+	}
+
+	return true;
+}
+
+
 bool ofc_sema_spec_print(
 	ofc_colstr_t* cs,
 	unsigned indent,
