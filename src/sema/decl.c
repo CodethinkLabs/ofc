@@ -1644,15 +1644,16 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 					if (!ofc_colstr_writef(cs, "\""))
 						return false;
 
-					unsigned j;
-					for (j = 0; j < type->len; j++)
+					unsigned len;
+					for (len = 0; len < type->len; len++)
 					{
-						if (!decl->init_array[i].substring.mask[j])
+						if (!decl->init_array[i].substring.mask[len])
 							break;
-						if (!ofc_colstr_writef(cs, "%c",
-							decl->init_array[i].substring.string[j]))
-							return false;
 					}
+
+					if (!ofc_colstr_write_escaped(cs,
+						decl->init_array[i].substring.string, len))
+						return false;
 
 					if (!ofc_colstr_writef(cs, "\""))
 						return false;
@@ -1660,7 +1661,6 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 				else if (!ofc_sema_typeval_print(
 					cs, decl->init_array[i].tv))
 				{
-					/* TODO - Handle printing partial initializers. */
 					return false;
 				}
 			}
@@ -1689,15 +1689,16 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 				if (!ofc_colstr_writef(cs, "\""))
 					return false;
 
-				unsigned j;
-				for (j = 0; j < type->len; j++)
+				unsigned len;
+				for (len = 0; len < type->len; len++)
 				{
-					if (!decl->init.substring.mask[j])
+					if (!decl->init.substring.mask[len])
 						break;
-					if (!ofc_colstr_writef(cs, "%c",
-						decl->init.substring.string[j]))
-						return false;
 				}
+
+				if (!ofc_colstr_write_escaped(cs,
+					decl->init.substring.string, len))
+					return false;
 
 				if (!ofc_colstr_writef(cs, "\""))
 					return false;
