@@ -1788,8 +1788,108 @@ bool ofc_sema_decl_print_data_init(ofc_colstr_t* cs,
 	}
 	else if (ofc_sema_decl_is_array(decl))
 	{
-		/* TODO - Print partial array initializers. */
-		return false;
+		const ofc_sema_type_t* base_type
+			= ofc_sema_type_base(decl->type);
+
+		unsigned count;
+		if (!ofc_sema_type_elem_count(
+			base_type, &count))
+			return false;
+
+		if (count != 1)
+		{
+			/* TODO - Support more exotic arrays. */
+			return false;
+		}
+
+		if (!ofc_sema_decl_elem_count(
+			decl, &count))
+			return false;
+
+		/* TODO - Group by nlist in slices for a cleaner print. */
+
+		bool first;
+		unsigned i;
+		for (i = 0, first = true; i < count; i++)
+		{
+			if (!decl->init_array[i].is_substring
+				&& !decl->init_array[i].tv)
+				continue;
+
+			if (!first)
+			{
+				if (!ofc_colstr_atomic_writef(cs, ",")
+					|| !ofc_colstr_atomic_writef(cs, " "))
+					return false;
+			}
+			first = false;
+
+			ofc_sema_array_index_t* index
+				= ofc_sema_array_index_from_offset(decl, i);
+			if (!index) return false;
+
+			bool success = (ofc_sema_decl_print_name(cs, decl)
+				&& ofc_sema_array_index_print(cs, index));
+			ofc_sema_array_index_delete(index);
+			if (!success) return false;
+		}
+
+		if (!ofc_colstr_atomic_writef(cs, "/"))
+			return false;
+
+		/* TODO - Compress repetitions in clist for a cleaner print. */
+
+		for (i = 0, first = true; i < count; i++)
+		{
+			if (!decl->init_array[i].is_substring
+				&& !decl->init_array[i].tv)
+				continue;
+
+			if (!first)
+			{
+				if (!ofc_colstr_atomic_writef(cs, ",")
+					|| !ofc_colstr_atomic_writef(cs, " "))
+					return false;
+			}
+			first = false;
+
+			if (decl->init_array[i].is_substring)
+			{
+				bool u = false;
+				unsigned j, l;
+				for (j = 0, l = 0; j < base_type->len; j++)
+				{
+					if (decl->init_array[i].substring.mask[j])
+					{
+						if (u)
+						{
+							/* TODO - Support arrays of substrings. */
+							return false;
+						}
+						l++;
+					}
+					else
+					{
+						u = true;
+					}
+				}
+
+				if (!ofc_colstr_writef(cs, "\"")
+					|| !ofc_colstr_write_escaped(cs,
+						decl->init_array[i].substring.string, l)
+					|| !ofc_colstr_writef(cs, "\""))
+					return false;
+			}
+			else
+			{
+				if (!ofc_sema_typeval_print(
+					cs, decl->init_array[i].tv))
+					return false;
+			}
+		}
+
+		if (!ofc_colstr_atomic_writef(cs, "/"))
+			return false;
 	}
 	else if (ofc_sema_type_is_character(decl->type))
 	{
