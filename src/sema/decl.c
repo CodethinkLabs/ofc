@@ -649,15 +649,28 @@ bool ofc_sema_decl_init(
 			decl, init, NULL, NULL);
 	}
 
+	const ofc_sema_type_t* type = decl->type;
+	if (decl->is_parameter
+		&& (type->type == OFC_SEMA_TYPE_CHARACTER)
+		&& (type->len == 0))
+	{
+		const ofc_sema_type_t* ntype
+			= ofc_sema_type_create_character(
+				type->kind, ctv->type->len);
+		if (!ntype) return false;
+		type = ntype;
+	}
+
 	ofc_sema_typeval_t* tv
 		= ofc_sema_typeval_cast(
-			ctv, decl->type);
+			ctv, type);
 	if (!tv) return false;
 
 	if (decl->init.is_substring)
 	{
 		ofc_sparse_ref_error(init->src,
 			"Conflicting initializaters");
+		ofc_sema_typeval_delete(tv);
 		return false;
 	}
 	else if (decl->init.tv)
@@ -681,6 +694,7 @@ bool ofc_sema_decl_init(
 	}
 	else
 	{
+		decl->type = type;
 		decl->init.tv = tv;
 	}
 
