@@ -1154,7 +1154,7 @@ bool ofc_sema_scope_print(
 	}
 
 	if ((scope->type != OFC_SEMA_SCOPE_GLOBAL)
-		&& !ofc_sema_scope_body__print(cs, indent, scope))
+		&& !ofc_sema_scope_body__print(cs, (indent + 1), scope))
 		return false;
 
 	if (kwstr)
