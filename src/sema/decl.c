@@ -1481,6 +1481,7 @@ bool ofc_sema_decl_print_name(ofc_colstr_t* cs,
 }
 
 bool ofc_sema_decl_print(ofc_colstr_t* cs,
+	unsigned indent,
 	const ofc_sema_decl_t* decl)
 {
 	if (!decl)
@@ -1495,7 +1496,8 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 
 	/* TODO - Handle POINTER and STRUCTURE declarations. */
 
-	if (!ofc_sema_type_print(cs, type))
+	if (!ofc_colstr_newline(cs, indent, NULL)
+		|| !ofc_sema_type_print(cs, type))
 		return false;
 
 	if (decl->is_parameter)
@@ -1713,9 +1715,8 @@ bool ofc_sema_decl_list_print(
 			|| decl_list->decl[i]->is_return)
 			continue;
 
-		if (!ofc_colstr_newline(cs, indent, NULL)
-			|| !ofc_sema_decl_print(cs,
-				decl_list->decl[i]))
+		if (!ofc_sema_decl_print(cs, indent,
+			decl_list->decl[i]))
 			return false;
 	}
 
