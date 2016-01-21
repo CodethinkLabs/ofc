@@ -367,33 +367,31 @@ bool ofc_sema_spec_print(
 	if (!spec->used)
 		return true;
 
-	unsigned kind = spec->kind;
-	unsigned len  = spec->len;
-
-	ofc_sema_type_e stype = spec->type;
 	if (spec->type_implicit)
 	{
 		ofc_sema_spec_t* final
 			= ofc_sema_scope_spec_find_final(
 				scope, spec->name);
-		if (!final) return false;
 
-		stype = final->type;
-		kind  = final->kind;
-		len   = final->len;
+		bool success = ofc_sema_spec_print(
+			cs, indent, scope, final);
 		ofc_sema_spec_delete(final);
+		return success;
 	}
 
+	unsigned kind = spec->kind;
 	if (kind == 0) kind = 1;
 
 	const ofc_sema_type_t* type;
-	switch (stype)
+	switch (spec->type)
 	{
 		case OFC_SEMA_TYPE_CHARACTER:
-			type = ofc_sema_type_create_character(kind, len);
+			type = ofc_sema_type_create_character(
+				kind, spec->len);
 			break;
 		default:
-			type = ofc_sema_type_create_primitive(stype, kind);
+			type = ofc_sema_type_create_primitive(
+				spec->type, kind);
 			break;
 	}
 
