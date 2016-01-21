@@ -199,6 +199,9 @@ const ofc_hashmap_t* ofc_sema_decl_list_map(
 bool ofc_sema_decl_print(ofc_colstr_t* cs,
 	unsigned indent,
 	const ofc_sema_decl_t* decl);
+bool ofc_sema_decl_print_data_init(ofc_colstr_t* cs,
+	unsigned indent,
+	const ofc_sema_decl_t* decl);
 bool ofc_sema_decl_print_name(ofc_colstr_t* cs,
 	const ofc_sema_decl_t* decl);
 

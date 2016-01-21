@@ -1710,6 +1710,30 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 	return true;
 }
 
+bool ofc_sema_decl_print_data_init(ofc_colstr_t* cs,
+	unsigned indent,
+	const ofc_sema_decl_t* decl)
+{
+	if (!decl)
+		return false;
+
+	bool complete;
+	if (!ofc_sema_decl_has_initializer(
+		decl, &complete))
+		return true;
+
+	if (complete && !decl->has_spec)
+		return true;
+
+	if (!ofc_colstr_newline(cs, indent, NULL)
+		|| !ofc_colstr_atomic_writef(cs, "DATA")
+		|| !ofc_colstr_atomic_writef(cs, " "))
+		return false;
+
+	/* TODO - Printing partial initializers. */
+	return false;
+}
+
 bool ofc_sema_decl_list_stmt_func_print(
 	ofc_colstr_t* cs, unsigned indent,
 	const ofc_sema_decl_list_t* decl_list)
@@ -1791,6 +1815,17 @@ bool ofc_sema_decl_list_print(
 			continue;
 
 		if (!ofc_sema_decl_print(cs, indent,
+			decl_list->decl[i]))
+			return false;
+	}
+
+	for (i = 0; i < decl_list->count; i++)
+	{
+		if (ofc_sema_decl_is_subroutine(decl_list->decl[i])
+			|| decl_list->decl[i]->is_return)
+			continue;
+
+		if (!ofc_sema_decl_print_data_init(cs, indent,
 			decl_list->decl[i]))
 			return false;
 	}
