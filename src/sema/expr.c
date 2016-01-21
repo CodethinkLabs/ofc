@@ -1802,7 +1802,7 @@ bool ofc_sema_expr_print(
 
 		case OFC_SEMA_EXPR_CAST:
 			{
-				/* TODO - Should we actually print these? */
+				#ifdef OFC_PRINT_SEMA_IMPLICIT_CAST
 				const char* cast
 					= ofc_sema_type_str_cast_rep(
 						expr->cast.type);
@@ -1815,6 +1815,7 @@ bool ofc_sema_expr_print(
 						return false;
 				}
 				else
+				#endif
 				{
 					if (!ofc_sema_expr_print(cs, expr->cast.expr))
 						return false;
