@@ -76,6 +76,9 @@ unsigned ofc_parse_stmt__do_while_block(
 		i += len;
 	}
 
+	stmt->do_while_block.end_do_has_label = ofc_sparse_label_find(
+		src, &ptr[i], &stmt->do_while_block.end_do_label);
+
 	len = ofc_parse_keyword_end(
 		src, &ptr[i], debug,
 		OFC_PARSE_KEYWORD_DO, false);
@@ -320,6 +323,9 @@ unsigned ofc_parse_stmt__do_block(
 
 		i += len;
 	}
+
+	stmt->do_block.end_do_has_label = ofc_sparse_label_find(
+		src, &ptr[i], &stmt->do_block.end_do_label);
 
 	len = ofc_parse_keyword_end(
 		src, &ptr[i], debug,

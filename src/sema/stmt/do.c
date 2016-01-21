@@ -230,6 +230,24 @@ ofc_sema_stmt_t* ofc_sema_stmt_do__block(
 		}
 	}
 
+	if (stmt->do_block.end_do_has_label)
+	{
+		ofc_sema_scope_t* ls
+			= s.do_block.scope;
+
+		if (!ofc_sema_label_map_add_stmt(
+			stmt, ls->label,
+			stmt->do_block.end_do_label,
+			ofc_sema_stmt_list_count(ls->stmt)))
+		{
+			ofc_sema_scope_delete(s.do_block.scope);
+			ofc_sema_expr_delete(s.do_block.init);
+			ofc_sema_expr_delete(s.do_block.last);
+			ofc_sema_expr_delete(s.do_block.step);
+			return NULL;
+		}
+	}
+
 	ofc_sema_stmt_t* as = ofc_sema_stmt_alloc(s);
 	if (!as)
 	{
@@ -325,6 +343,22 @@ ofc_sema_stmt_t* ofc_sema_stmt_do_while__block(
 
 		if (!s.do_while_block.scope)
 		{
+			ofc_sema_expr_delete(s.do_while_block.cond);
+			return NULL;
+		}
+	}
+
+	if (stmt->do_while_block.end_do_has_label)
+	{
+		ofc_sema_scope_t* ls
+			= s.do_while_block.scope;
+
+		if (!ofc_sema_label_map_add_stmt(
+			stmt, ls->label,
+			stmt->do_while_block.end_do_label,
+			ofc_sema_stmt_list_count(ls->stmt)))
+		{
+			ofc_sema_scope_delete(s.do_while_block.scope);
 			ofc_sema_expr_delete(s.do_while_block.cond);
 			return NULL;
 		}
@@ -430,8 +464,18 @@ bool ofc_sema_stmt_do_block_print(
 			|| !ofc_sema_expr_print(cs, stmt->do_block.step))
 			return false;
 	}
-	if (!ofc_sema_scope_print(cs, indent + 1, stmt->do_block.scope)
-		|| !ofc_colstr_newline(cs, indent, NULL)
+	if (!ofc_sema_scope_print(cs, indent + 1, stmt->do_block.scope))
+		return false;
+
+	const ofc_sema_scope_t* ls
+		= stmt->do_block.scope;
+	const ofc_sema_label_t* label
+		= ofc_sema_label_map_find_offset(
+			ls->label, ofc_sema_stmt_list_count(ls->stmt));
+	const unsigned* ulabel = NULL;
+	if (label) ulabel = &label->number;
+
+	if (!ofc_colstr_newline(cs, indent, ulabel)
 		|| !ofc_colstr_atomic_writef(cs, "END DO"))
 		return false;
 
@@ -466,8 +510,18 @@ bool ofc_sema_stmt_do_while_block_print(
 		|| !ofc_sema_expr_print(cs, stmt->do_while_block.cond)
 		|| !ofc_colstr_atomic_writef(cs, ")")
 		|| !ofc_sema_scope_print(cs, indent + 1,
-			stmt->do_while_block.scope)
-		|| !ofc_colstr_newline(cs, indent, NULL)
+			stmt->do_while_block.scope))
+		return false;
+
+	const ofc_sema_scope_t* ls
+		= stmt->do_while_block.scope;
+	const ofc_sema_label_t* label
+		= ofc_sema_label_map_find_offset(
+			ls->label, ofc_sema_stmt_list_count(ls->stmt));
+	const unsigned* ulabel = NULL;
+	if (label) ulabel = &label->number;
+
+	if (!ofc_colstr_newline(cs, indent, ulabel)
 		|| !ofc_colstr_atomic_writef(cs, "END DO"))
 		return false;
 

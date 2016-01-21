@@ -194,6 +194,9 @@ struct ofc_parse_stmt_s
 			ofc_parse_expr_t*      last;
 			ofc_parse_expr_t*      step;
 			ofc_parse_stmt_list_t* block;
+
+			bool end_do_has_label;
+			unsigned end_do_label;
 		} do_block;
 
 		struct
@@ -206,6 +209,9 @@ struct ofc_parse_stmt_s
 		{
 			ofc_parse_expr_t*      cond;
 			ofc_parse_stmt_list_t* block;
+
+			bool end_do_has_label;
+			unsigned end_do_label;
 		} do_while_block;
 
 		struct
