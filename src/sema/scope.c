@@ -1045,12 +1045,6 @@ static bool ofc_sema_scope_body__print(
 		fprintf(stderr, "\nError: Failed to print decl list");
 		return false;
 	}
-	if (scope->decl
-		&& !ofc_sema_decl_list_stmt_func_print(cs, indent, scope->decl))
-	{
-		fprintf(stderr, "\nError: Failed to print stmt func list");
-		return false;
-	}
 
 	if (scope->common
 		&& !ofc_sema_common_map_print(cs, indent, scope->common))
@@ -1065,6 +1059,14 @@ static bool ofc_sema_scope_body__print(
 		fprintf(stderr, "\nError: Failed to print equiv list");
 		return false;
 	}
+
+	if (scope->decl
+		&& !ofc_sema_decl_list_stmt_func_print(cs, indent, scope->decl))
+	{
+		fprintf(stderr, "\nError: Failed to print stmt func list");
+		return false;
+	}
+
 	if (scope->stmt
 		&& !ofc_sema_stmt_list_print(cs, indent, scope->label, scope->stmt))
 	{
