@@ -2225,11 +2225,19 @@ bool ofc_sema_typeval_print(ofc_colstr_t*cs,
 
 		case OFC_SEMA_TYPE_REAL:
 			{
-				if (!ofc_sparse_ref_empty(typeval->src))
-					return ofc_sparse_ref_print(cs, typeval->src);
+				unsigned dig = LDBL_DIG;
+				unsigned size;
+				if (ofc_sema_type_size(
+					typeval->type, &size))
+				{
+					if (size < 4)
+						dig = FLT_DIG;
+					else if (size < 8)
+						dig = DBL_DIG;
+				}
 
 				char fmt[32];
-				sprintf(fmt, "%%.%uLG", LDBL_DIG);
+				sprintf(fmt, "%%.%uLG", dig);
 
 				char buff[64];
 				sprintf(buff, fmt, typeval->real);
