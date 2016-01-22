@@ -289,12 +289,16 @@ static bool ofc_sema_typeval__real(
 	{
 		i++;
 
-		long double f;
-		for (f = 0.1; (i < size) && isdigit(ptr[i]); i++, f /= 10.0)
+		long double fdivisor = 1.0;
+		long double fvalue   = 0.0;
+		for (; (i < size) && isdigit(ptr[i]); i++, fdivisor *= 10.0)
 		{
 			unsigned digit = (ptr[i] - '0');
-			*value += (digit * f);
+			fvalue *= 10;
+			fvalue += digit;
 		}
+
+		*value += (fvalue / fdivisor);
 	}
 
 	if (negate)
