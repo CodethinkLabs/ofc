@@ -63,16 +63,13 @@ static ofc_sema_lhs_t* ofc_sema_lhs_slice(
 		return NULL;
 	}
 
-	const ofc_sema_type_t* base_type
-		= lhs->data_type;
-
 	const ofc_sema_type_t* type
 		= ofc_sema_type_create_array(
-			base_type, array);
+			lhs->data_type, array);
+	ofc_sema_array_delete(array);
 	if (!type)
 	{
 		ofc_sema_lhs_delete(lhs);
-		ofc_sema_array_delete(array);
 		return NULL;
 	}
 
@@ -243,6 +240,9 @@ static ofc_sema_lhs_t* ofc_sema_lhs_substring(
 			sizeof(ofc_sema_lhs_t));
 	if (!alhs)
 	{
+		if (last != first)
+			ofc_sema_expr_delete(last);
+		ofc_sema_expr_delete(first);
 		ofc_sema_lhs_delete(lhs);
 		return NULL;
 	}
