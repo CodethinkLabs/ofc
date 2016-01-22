@@ -34,6 +34,7 @@ ofc_hashmap_t* ofc_hashmap_create(
 void ofc_hashmap_delete(ofc_hashmap_t* map);
 
 bool ofc_hashmap_add(ofc_hashmap_t* map, void* item);
+void ofc_hashmap_remove(ofc_hashmap_t* map, const void* item);
 
 const void* ofc_hashmap_find(const ofc_hashmap_t* map, const void* key);
 

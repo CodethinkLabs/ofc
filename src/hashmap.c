@@ -136,6 +136,34 @@ bool ofc_hashmap_add(ofc_hashmap_t* map, void* item)
 	return true;
 }
 
+void ofc_hashmap_remove(
+	ofc_hashmap_t* map, const void* item)
+{
+	if (!map || !item
+		|| !map->item_key
+		|| !map->hash)
+		return;
+
+	const void* key = map->item_key(item);
+	if (!key) return;
+
+	uint8_t hash = map->hash(key);
+
+	ofc_hashmap__entry_t* prev;
+	ofc_hashmap__entry_t* node;
+	for (prev = NULL, node = map->base[hash];
+		node && (node->item != item);
+		prev = node, node = node->next);
+	if (!node) return;
+
+	if (!prev)
+		map->base[hash] = node->next;
+	else
+		prev->next = node->next;
+
+	free(node);
+}
+
 
 void* ofc_hashmap_find_modify(ofc_hashmap_t* map, const void* key)
 {
