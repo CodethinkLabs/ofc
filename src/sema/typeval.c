@@ -2250,11 +2250,50 @@ bool ofc_sema_typeval_print(ofc_colstr_t*cs,
 				for (i = 0; buff[i] != '\0'; i++)
 				{
 					if ((buff[i] == '.')
-						|| (tolower(buff[i]) == 'e'))
+						|| (toupper(buff[i]) == 'E'))
 						break;
 				}
 				if (buff[i] == '\0')
 					strcat(buff, ".0");
+
+				char* kind_postfix = NULL;
+				char kind_exp = '\0';
+				switch (typeval->type->kind)
+				{
+					case 1:
+						break;
+					case 2:
+						kind_exp = 'D';
+						break;
+					case 4:
+						kind_exp = 'Q';
+						break;
+					default:
+						/* TODO - Support other kinds. */
+						return false;
+				}
+
+				if (kind_exp)
+				{
+					for (i = 0; buff[i] != '\0'; i++)
+					{
+						if (toupper(buff[i]) == 'E')
+						{
+							buff[i] = kind_exp;
+							break;
+						}
+					}
+					if (buff[i] == '\0')
+					{
+						buff[i] = kind_exp;
+						buff[i + 1] = '0';
+						buff[i + 2] = '\0';
+					}
+				}
+				else if (kind_postfix)
+				{
+					strcat(buff, kind_postfix);
+				}
 
 				return ofc_colstr_atomic_writef(cs, "%s", buff);
 			}
