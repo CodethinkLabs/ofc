@@ -63,6 +63,7 @@ struct ofc_parse_format_desc_s
 	{
 		struct
 		{
+			bool d_set;
 			unsigned w, d, e;
 		};
 

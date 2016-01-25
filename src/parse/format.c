@@ -162,12 +162,14 @@ ofc_parse_format_desc_t* ofc_parse_format_desc(
 			src, &ptr[i], debug, &w);
 	}
 
+	bool d_set = false;
 	unsigned d = 0;
 	if (map.d && (ptr[i] == '.'))
 	{
 		i += 1;
 		i += ofc_parse_unsigned(
 			src, &ptr[i], debug, &d);
+		d_set = true;
 	}
 
 	unsigned e = 0;
@@ -184,6 +186,7 @@ ofc_parse_format_desc_t* ofc_parse_format_desc(
 	desc->w = w;
 	desc->d = d;
 	desc->e = e;
+	desc->d_set = d_set;
 
 	if (len) *len = i;
 	return desc;
@@ -272,7 +275,7 @@ static bool ofc_parse_format_desc_print__w(
 }
 
 static bool ofc_parse_format_desc_print__d(
-	ofc_parse_format_desc_e type, unsigned d)
+	ofc_parse_format_desc_e type)
 {
 	switch (type)
 	{
@@ -281,11 +284,6 @@ static bool ofc_parse_format_desc_print__d(
 		case OFC_PARSE_FORMAT_DESC_E:
 		case OFC_PARSE_FORMAT_DESC_G:
 			return true;
-		case OFC_PARSE_FORMAT_DESC_INTEGER:
-		case OFC_PARSE_FORMAT_DESC_BINARY:
-		case OFC_PARSE_FORMAT_DESC_OCTAL:
-		case OFC_PARSE_FORMAT_DESC_HEX:
-			return (d > 0);
 		default:
 			break;
 	}
@@ -349,7 +347,7 @@ bool ofc_parse_format_desc_print(
 			if (ofc_parse_format_desc_print__w(desc->type, desc->w)
 				&& !ofc_colstr_atomic_writef(cs, "%u", desc->w))
 				return false;
-			if (ofc_parse_format_desc_print__d(desc->type, desc->d)
+			if ((desc->d_set || ofc_parse_format_desc_print__d(desc->type))
 				&& !ofc_colstr_atomic_writef(cs, ".%u", desc->d))
 				return false;
 			if ((desc->e > 0)
