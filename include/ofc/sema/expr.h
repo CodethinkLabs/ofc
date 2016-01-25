@@ -148,6 +148,9 @@ bool ofc_sema_expr_validate_uint(
 bool ofc_sema_expr_resolve_uint(
 	const ofc_sema_expr_t* expr,
 	unsigned* value);
+bool ofc_sema_expr_resolve_int(
+	const ofc_sema_expr_t* expr,
+	int* value);
 
 ofc_sema_expr_list_t* ofc_sema_expr_list(
 	ofc_sema_scope_t*            scope,

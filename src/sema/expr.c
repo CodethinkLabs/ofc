@@ -1298,6 +1298,26 @@ bool ofc_sema_expr_resolve_uint(
 	return true;
 }
 
+bool ofc_sema_expr_resolve_int(
+	const ofc_sema_expr_t* expr,
+	int* value)
+{
+	const ofc_sema_typeval_t* tv
+		= ofc_sema_expr_constant(expr);
+	if (!tv) return false;
+
+	int64_t i;
+	if (!ofc_sema_typeval_get_integer(tv, &i))
+		return false;
+
+	int d = i;
+	if (i != d)
+		return false;
+
+	if (value) *value = d;
+	return true;
+}
+
 
 
 ofc_sema_expr_list_t* ofc_sema_expr_list(

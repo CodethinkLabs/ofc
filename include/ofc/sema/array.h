@@ -19,8 +19,8 @@
 
 typedef struct
 {
-	int  first    , last;
-	bool first_var, last_var;
+	ofc_sema_expr_t* first;
+	ofc_sema_expr_t* last;
 } ofc_sema_array_dims_t;
 
 typedef struct
@@ -38,8 +38,6 @@ ofc_sema_array_t* ofc_sema_array_copy(
 
 void ofc_sema_array_delete(ofc_sema_array_t* array);
 
-uint8_t ofc_sema_array_hash(
-	const ofc_sema_array_t* array);
 bool ofc_sema_array_compare(
 	const ofc_sema_array_t* a,
 	const ofc_sema_array_t* b);
