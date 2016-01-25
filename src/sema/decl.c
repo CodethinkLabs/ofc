@@ -75,6 +75,8 @@ ofc_sema_decl_t* ofc_sema_decl_create(
 	decl->has_spec     = false;
 
 	decl->used = false;
+
+	decl->refcnt = 0;
 	return decl;
 }
 
@@ -587,11 +589,32 @@ bool ofc_sema_decl(
 	return true;
 }
 
+
+
+bool ofc_sema_decl_reference(
+	ofc_sema_decl_t* decl)
+{
+	if (!decl)
+		return false;
+
+	if ((decl->refcnt + 1) == 0)
+		return false;
+
+	decl->refcnt++;
+	return true;
+}
+
 void ofc_sema_decl_delete(
 	ofc_sema_decl_t* decl)
 {
 	if (!decl)
 		return;
+
+	if (decl->refcnt > 0)
+	{
+		decl->refcnt--;
+		return;
+	}
 
 	if (ofc_sema_decl_is_composite(decl))
 	{

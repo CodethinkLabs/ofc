@@ -438,8 +438,8 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 			if (!decl) return NULL;
 			decl->is_return = true;
 
-			if (!ofc_sema_decl_list_add(
-				root->decl, decl))
+			if (!ofc_sema_scope_decl_add(
+				root, decl))
 			{
 				ofc_sema_decl_delete(decl);
 				return NULL;
@@ -506,6 +506,12 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 		= (ofc_sema_lhs_t*)malloc(
 			sizeof(ofc_sema_lhs_t));
 	if (!slhs) return NULL;
+
+	if (!ofc_sema_decl_reference(decl))
+	{
+		free(slhs);
+		return NULL;
+	}
 
 	slhs->type      = OFC_SEMA_LHS_DECL;
 	slhs->src       = lhs->src;
@@ -686,6 +692,10 @@ void ofc_sema_lhs_delete(
 
 	switch (lhs->type)
 	{
+		case OFC_SEMA_LHS_DECL:
+			ofc_sema_decl_delete(lhs->decl);
+			break;
+
 		case OFC_SEMA_LHS_ARRAY_INDEX:
 		case OFC_SEMA_LHS_ARRAY_SLICE:
 		case OFC_SEMA_LHS_SUBSTRING:

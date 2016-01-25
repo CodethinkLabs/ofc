@@ -66,6 +66,8 @@ struct ofc_sema_decl_s
 	ofc_sema_equiv_t* equiv;
 
 	bool used;
+
+	unsigned refcnt;
 };
 
 struct ofc_sema_decl_list_s
@@ -88,6 +90,8 @@ struct ofc_sema_decl_list_s
 ofc_sema_decl_t* ofc_sema_decl_create(
 	const ofc_sema_type_t* type,
 	ofc_sparse_ref_t name);
+bool ofc_sema_decl_reference(
+	ofc_sema_decl_t* decl);
 
 ofc_sema_decl_t* ofc_sema_decl_spec(
 	ofc_sema_scope_t*       scope,
