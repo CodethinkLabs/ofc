@@ -303,7 +303,7 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 		case OFC_PARSE_LHS_MEMBER_STRUCTURE:
 			{
 				ofc_sema_lhs_t* parent = ofc_sema__lhs(
-					scope, decl_scope, lhs->parent, false, force_local);
+					scope, decl_scope, lhs->parent, is_expr, force_local);
 				if (!parent) return NULL;
 
 				/* TODO - Check dereference type against structure type. */
@@ -334,7 +334,7 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 		case OFC_PARSE_LHS_ARRAY:
 			{
 				ofc_sema_lhs_t* parent = ofc_sema__lhs(
-					scope, decl_scope, lhs->parent, false, force_local);
+					scope, decl_scope, lhs->parent, is_expr, force_local);
 				if (!parent) return NULL;
 
 				if (!ofc_sema_lhs_is_array(parent))
