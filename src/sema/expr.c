@@ -1101,6 +1101,56 @@ void ofc_sema_expr_delete(
 }
 
 
+const ofc_sema_array_t* ofc_sema_expr_array(
+	const ofc_sema_expr_t* expr)
+{
+	if (!expr) return NULL;
+
+	/* TODO - Support for all expressions. */
+
+	switch (expr->type)
+	{
+		case OFC_SEMA_EXPR_LHS:
+			return ofc_sema_lhs_array(expr->lhs);
+
+		case OFC_SEMA_EXPR_CAST:
+			return ofc_sema_expr_array(expr->cast.expr);
+
+		default:
+			break;
+	}
+
+	return NULL;
+}
+
+bool ofc_sema_expr_elem_count(
+	const ofc_sema_expr_t* expr,
+	unsigned* count)
+{
+	if (!expr)
+		return false;
+
+	unsigned ecount;
+	if (!ofc_sema_type_elem_count(
+		ofc_sema_expr_type(expr), &ecount))
+		return false;
+
+	const ofc_sema_array_t* array
+		= ofc_sema_expr_array(expr);
+	if (array)
+	{
+		unsigned acount;
+		if (!ofc_sema_array_total(
+			array, &acount))
+			return false;
+		ecount *= acount;
+	}
+
+	if (count) *count = ecount;
+	return true;
+}
+
+
 bool ofc_sema_expr_compare(
 	const ofc_sema_expr_t* a,
 	const ofc_sema_expr_t* b)
@@ -1420,13 +1470,21 @@ bool ofc_sema_expr_list_elem_count(
 		ofc_sema_expr_t* expr
 			= list->expr[i];
 
-		const ofc_sema_type_t* type
-			= ofc_sema_expr_type(expr);
-
 		unsigned elem_count;
-		if (!ofc_sema_type_elem_count(
-			type, &elem_count))
+		if (!ofc_sema_expr_elem_count(
+			expr, &elem_count))
 			return false;
+
+		const ofc_sema_array_t* array
+			= ofc_sema_expr_array(expr);
+		if (array)
+		{
+			unsigned acount = 1;
+			if (!ofc_sema_array_total(
+				array, &acount))
+				return false;
+			elem_count *= acount;
+		}
 
 		if (expr->repeat > 1)
 			elem_count *= expr->repeat;
@@ -1451,12 +1509,9 @@ ofc_sema_expr_t* ofc_sema_expr_list_elem_get(
 		ofc_sema_expr_t* expr
 			= list->expr[i];
 
-		const ofc_sema_type_t* type
-			= ofc_sema_expr_type(expr);
-
 		unsigned elem_count;
-		if (!ofc_sema_type_elem_count(
-			type, &elem_count))
+		if (!ofc_sema_expr_elem_count(
+			expr, &elem_count))
 			return NULL;
 
 		unsigned elem_total = elem_count;

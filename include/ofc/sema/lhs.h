@@ -41,7 +41,11 @@ struct ofc_sema_lhs_s
 
 			union
 			{
-				ofc_sema_array_slice_t* slice;
+				struct
+				{
+					ofc_sema_array_slice_t* slice;
+					ofc_sema_array_t*       dims;
+				} slice;
 
 				ofc_sema_array_index_t* index;
 
@@ -95,11 +99,15 @@ bool ofc_sema_lhs_init_array(
 	unsigned count,
 	const ofc_sema_expr_t** init);
 
+bool ofc_sema_lhs_is_array(
+	const ofc_sema_lhs_t* lhs);
 bool ofc_sema_lhs_is_parameter(
 	const ofc_sema_lhs_t* lhs);
 bool ofc_sema_lhs_is_macro(
 	const ofc_sema_lhs_t* lhs);
 
+const ofc_sema_array_t* ofc_sema_lhs_array(
+	const ofc_sema_lhs_t* lhs);
 ofc_sema_typeval_t* ofc_sema_lhs_parameter(
 	const ofc_sema_lhs_t* lhs);
 

@@ -600,7 +600,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 					"IO list shorter than FORMAT list,"
 					" last FORMAT data descriptors will be ignored");
 			}
-			else if (fmod(iolist_len, data_desc_count) != 0)
+			else if ((iolist_len % data_desc_count) != 0)
 			{
 				ofc_sparse_ref_warning(stmt->src,
 					"IO list length is not a multiple of FORMAT list length");

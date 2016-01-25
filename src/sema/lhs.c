@@ -63,16 +63,6 @@ static ofc_sema_lhs_t* ofc_sema_lhs_slice(
 		return NULL;
 	}
 
-	const ofc_sema_type_t* type
-		= ofc_sema_type_create_array(
-			lhs->data_type, array);
-	ofc_sema_array_delete(array);
-	if (!type)
-	{
-		ofc_sema_lhs_delete(lhs);
-		return NULL;
-	}
-
 	ofc_sema_lhs_t* alhs
 		= (ofc_sema_lhs_t*)malloc(
 			sizeof(ofc_sema_lhs_t));
@@ -82,12 +72,19 @@ static ofc_sema_lhs_t* ofc_sema_lhs_slice(
 		return NULL;
 	}
 
-	alhs->type      = OFC_SEMA_LHS_ARRAY_SLICE;
-	alhs->src       = lhs->src;
-	alhs->parent    = lhs;
-	alhs->slice     = slice;
-	alhs->data_type = type;
-	alhs->refcnt    = 0;
+	alhs->type        = OFC_SEMA_LHS_ARRAY_SLICE;
+	alhs->src         = lhs->src;
+	alhs->parent      = lhs;
+	alhs->data_type   = lhs->data_type;
+	alhs->refcnt      = 0;
+
+	alhs->slice.slice = slice;
+	alhs->slice.dims  = ofc_sema_array_slice_dims(slice);
+	if (!alhs->slice.dims)
+	{
+		ofc_sema_lhs_delete(alhs);
+		return NULL;
+	}
 
 	return alhs;
 }
@@ -340,7 +337,7 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 					scope, decl_scope, lhs->parent, false, force_local);
 				if (!parent) return NULL;
 
-				if (!ofc_sema_type_is_array(parent->data_type))
+				if (!ofc_sema_lhs_is_array(parent))
 				{
 					if (!ofc_sema_type_is_character(
 						parent->data_type))
@@ -360,7 +357,7 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 
 				ofc_sema_array_index_t* index
 					= ofc_sema_array_index(scope,
-						parent->data_type->array,
+						ofc_sema_lhs_array(parent),
 						lhs->array.index);
 				if (index)
 				{
@@ -379,7 +376,7 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 
 				ofc_sema_array_slice_t* slice
 					= ofc_sema_array_slice(scope,
-						parent->data_type->array,
+						ofc_sema_lhs_array(parent),
 						lhs->array.index);
 				if (!slice)
 				{
@@ -576,17 +573,10 @@ static ofc_sema_lhs_t* ofc_sema_lhs__offset(
 			if (ofc_sema_type_is_procedure(lhs->data_type))
 				return NULL;
 
-			if (!ofc_sema_type_is_composite(lhs->data_type))
-			{
-				if (offset != 0)
-					return NULL;
-				return lhs;
-			}
-
-			if (ofc_sema_type_is_array(lhs->data_type))
+			if (ofc_sema_lhs_is_array(lhs))
 			{
 				const ofc_sema_type_t* base_type
-					= ofc_sema_type_base(lhs->data_type);
+					= lhs->data_type;
 
 				unsigned base_count;
 				if (!ofc_sema_type_elem_count(
@@ -612,6 +602,13 @@ static ofc_sema_lhs_t* ofc_sema_lhs__offset(
 				if (rlhs != nlhs)
 					ofc_sema_lhs_delete(nlhs);
 				return rlhs;
+			}
+
+			if (!ofc_sema_type_is_composite(lhs->data_type))
+			{
+				if (offset != 0)
+					return NULL;
+				return lhs;
 			}
 
 			/* TODO - Handle structures. */
@@ -645,7 +642,8 @@ static ofc_sema_lhs_t* ofc_sema_lhs__offset_ref(
 		case OFC_SEMA_LHS_ARRAY_INDEX:
 		case OFC_SEMA_LHS_STRUCTURE_MEMBER:
 		case OFC_SEMA_LHS_SUBSTRING:
-			if (ofc_sema_type_is_composite(lhs->data_type))
+			if (ofc_sema_lhs_is_array(lhs)
+				|| ofc_sema_type_is_composite(lhs->data_type))
 				break;
 
 			if (ofc_sema_type_is_procedure(lhs->data_type)
@@ -706,7 +704,8 @@ void ofc_sema_lhs_delete(
 			break;
 
 		case OFC_SEMA_LHS_ARRAY_SLICE:
-			ofc_sema_array_slice_delete(lhs->slice);
+			ofc_sema_array_slice_delete(lhs->slice.slice);
+			ofc_sema_array_delete(lhs->slice.dims);
 			break;
 
 		case OFC_SEMA_LHS_SUBSTRING:
@@ -791,6 +790,32 @@ bool ofc_sema_lhs_init_array(
 }
 
 
+bool ofc_sema_lhs_is_array(
+	const ofc_sema_lhs_t* lhs)
+{
+	if (!lhs)
+		return false;
+
+	switch (lhs->type)
+	{
+		case OFC_SEMA_LHS_DECL:
+			return ofc_sema_decl_is_array(lhs->decl);
+
+		case OFC_SEMA_LHS_ARRAY_SLICE:
+			return true;
+
+		case OFC_SEMA_LHS_ARRAY_INDEX:
+		case OFC_SEMA_LHS_SUBSTRING:
+			return false;
+
+		case OFC_SEMA_LHS_STRUCTURE_MEMBER:
+		default:
+			break;
+	}
+
+	return false;
+}
+
 bool ofc_sema_lhs_is_parameter(
 	const ofc_sema_lhs_t* lhs)
 {
@@ -829,6 +854,29 @@ bool ofc_sema_lhs_is_macro(
 	}
 
 	return false;
+}
+
+
+const ofc_sema_array_t* ofc_sema_lhs_array(
+	const ofc_sema_lhs_t* lhs)
+{
+	if (!lhs)
+		return NULL;
+
+	switch (lhs->type)
+	{
+		case OFC_SEMA_LHS_DECL:
+			if (!lhs->decl) return NULL;
+			return lhs->decl->array;
+
+		case OFC_SEMA_LHS_ARRAY_SLICE:
+			return lhs->slice.dims;
+
+		default:
+			break;
+	}
+
+	return NULL;
 }
 
 ofc_sema_typeval_t* ofc_sema_lhs_parameter(
@@ -915,7 +963,7 @@ bool ofc_sema_lhs_compare(
 
 		case OFC_SEMA_LHS_ARRAY_SLICE:
 			if (!ofc_sema_array_slice_compare(
-				a->slice, b->slice))
+				a->slice.slice, b->slice.slice))
 				return false;
 			break;
 
@@ -962,8 +1010,22 @@ bool ofc_sema_lhs_elem_count(
 	unsigned* count)
 {
 	if (!lhs) return false;
-	return ofc_sema_type_elem_count(
-		lhs->data_type, count);
+
+	const ofc_sema_array_t* array
+		= ofc_sema_lhs_array(lhs);
+
+	unsigned acount = 1;
+	if (array && !ofc_sema_array_total(
+		array, &acount))
+		return false;
+
+	unsigned ecount;
+	if (!ofc_sema_type_elem_count(
+		lhs->data_type, &ecount))
+		return false;
+
+	if (count) *count = (acount * ecount);
+	return true;
 }
 
 bool ofc_sema_lhs_print(
@@ -999,7 +1061,7 @@ bool ofc_sema_lhs_print(
 			break;
 
 		case OFC_SEMA_LHS_ARRAY_SLICE:
-			if (!ofc_sema_array_slice_print(cs, lhs->slice))
+			if (!ofc_sema_array_slice_print(cs, lhs->slice.slice))
 				return false;
 			break;
 

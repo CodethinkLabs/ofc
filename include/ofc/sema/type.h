@@ -36,8 +36,6 @@ struct ofc_sema_type_s
 {
 	ofc_sema_type_e type;
 
-	ofc_sema_array_t* array;
-
 	union
 	{
 		const ofc_sema_type_t* subtype;
@@ -70,8 +68,6 @@ const ofc_sema_type_t* ofc_sema_type_create_structure(
 	const ofc_sema_structure_t* structure);
 const ofc_sema_type_t* ofc_sema_type_create_pointer(
 	ofc_sema_type_t* target);
-const ofc_sema_type_t* ofc_sema_type_create_array(
-	const ofc_sema_type_t* type, const ofc_sema_array_t* array);
 const ofc_sema_type_t* ofc_sema_type_create_function(
 	const ofc_sema_type_t* type);
 
@@ -116,7 +112,6 @@ bool ofc_sema_type_is_complex(const ofc_sema_type_t* type);
 bool ofc_sema_type_is_logical(const ofc_sema_type_t* type);
 bool ofc_sema_type_is_character(const ofc_sema_type_t* type);
 
-bool ofc_sema_type_is_array(const ofc_sema_type_t* type);
 bool ofc_sema_type_is_structure(const ofc_sema_type_t* type);
 bool ofc_sema_type_is_composite(const ofc_sema_type_t* type);
 

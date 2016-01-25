@@ -24,6 +24,7 @@ bool ofc_sema_io_compare_types(
 	const ofc_sema_lhs_t* lhs,
 	ofc_sema_expr_t** expr,
 	const ofc_sema_type_t* type,
+	const ofc_sema_array_t* array,
 	ofc_parse_format_desc_list_t* format_list,
 	unsigned* offset)
 {
@@ -33,20 +34,18 @@ bool ofc_sema_io_compare_types(
 	/* Compare base type of array for each
 	 * element of the array
 	 */
-	if (ofc_sema_type_is_array(type))
+	if (array)
 	{
 		unsigned array_count;
 		if (!ofc_sema_array_total(
-			type->array, &array_count))
+			array, &array_count))
 			return false;
-
-		type = ofc_sema_type_base(type);
 
 		unsigned j;
 		for (j = 0; j < array_count; j++)
 		{
 			if (!ofc_sema_io_compare_types(
-				scope, stmt, lhs, expr, type, format_list, offset))
+				scope, stmt, lhs, expr, type, NULL, format_list, offset))
 				return false;
 		}
 	}
@@ -57,7 +56,7 @@ bool ofc_sema_io_compare_types(
 		for (j = 0; j < type->structure->member.count; j++)
 		{
 			if (!ofc_sema_io_compare_types(
-				scope, stmt, lhs, expr, type->structure->member.type[j],
+				scope, stmt, lhs, expr, type->structure->member.type[j], NULL,
 				format_list, offset))
 				return false;
 		}
@@ -264,8 +263,8 @@ bool ofc_sema_io_list_has_complex(
 			if (ofc_sema_type_is_complex(type))
 			{
 				unsigned elem_count;
-				if (!ofc_sema_type_elem_count(
-					type, &elem_count))
+				if (!ofc_sema_lhs_elem_count(
+					ilist->lhs[i], &elem_count))
 					return false;
 
 				*count += elem_count;
@@ -284,8 +283,8 @@ bool ofc_sema_io_list_has_complex(
 			if (ofc_sema_type_is_complex(type))
 			{
 				unsigned elem_count;
-				if (!ofc_sema_type_elem_count(
-					type, &elem_count))
+				if (!ofc_sema_expr_elem_count(
+					olist->expr[i], &elem_count))
 					return false;
 
 				*count += elem_count;
@@ -495,9 +494,11 @@ bool ofc_sema_io_format_iolist_compare(
 
 		const ofc_sema_type_t* type
 			= ofc_sema_expr_type(*expr);
+		const ofc_sema_array_t* array
+			= ofc_sema_expr_array(*expr);
 
 		if (!ofc_sema_io_compare_types(
-			scope, stmt, NULL, expr, type, format_list, &offset))
+			scope, stmt, NULL, expr, type, array, format_list, &offset))
 			return false;
 	}
 
@@ -517,10 +518,12 @@ bool ofc_sema_io_format_input_list_compare(
 	{
 		const ofc_sema_type_t* type
 			= ofc_sema_lhs_type(iolist->lhs[i]);
+		const ofc_sema_array_t* array
+			= ofc_sema_lhs_array(iolist->lhs[i]);
 
 		if (!ofc_sema_io_compare_types(
 			scope, stmt, iolist->lhs[i], NULL,
-			type, format_list, &offset))
+			type, array, format_list, &offset))
 			return false;
 	}
 

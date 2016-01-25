@@ -40,6 +40,7 @@ struct ofc_sema_decl_s
 	const ofc_sema_type_t* type;
 	ofc_str_ref_t          name;
 	ofc_sema_scope_t*      func;
+	ofc_sema_array_t*      array;
 
 	union
 	__attribute__((__packed__))

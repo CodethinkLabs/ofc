@@ -47,11 +47,12 @@ ofc_sema_decl_t* ofc_sema_decl_create(
 			sizeof(ofc_sema_decl_t));
 	if (!decl) return NULL;
 
-	decl->type = type;
-	decl->name = name.string;
-	decl->func = NULL;
+	decl->type  = type;
+	decl->name  = name.string;
+	decl->func  = NULL;
+	decl->array = NULL;
 
-	if (ofc_sema_type_is_composite(type))
+	if (ofc_sema_decl_is_composite(decl))
 	{
 		decl->init_array = NULL;
 	}
@@ -183,18 +184,12 @@ static ofc_sema_decl_t* ofc_sema_decl__spec(
 				"Repetition of array dimensions in declaration");
 		}
 
-		array = NULL;
+		array = spec->array;
 	}
 
 	const ofc_sema_type_t* type
 		= ofc_sema_type_spec(spec);
 	if (!type) return NULL;
-
-	if (array)
-	{
-		type = ofc_sema_type_create_array(type, array);
-		if (!type) return NULL;
-	}
 
 	if (is_procedure)
 	{
@@ -207,6 +202,18 @@ static ofc_sema_decl_t* ofc_sema_decl__spec(
 	ofc_sema_decl_t* decl
 		= ofc_sema_decl_create(type, name);
 	if (!decl) return NULL;
+
+	if (array)
+	{
+		decl->array = ofc_sema_array_copy(array);
+		if (!decl->array)
+		{
+			ofc_sema_decl_delete(decl);
+			return NULL;
+		}
+
+		decl->init_array = NULL;
+	}
 
 	decl->is_static    = spec->is_static;
 	decl->is_automatic = spec->is_automatic;
@@ -605,6 +612,7 @@ void ofc_sema_decl_delete(
 		ofc_sema_decl_init__delete(decl->init);
 	}
 
+	ofc_sema_array_delete(decl->array);
 	ofc_sema_scope_delete(decl->func);
 	ofc_sema_equiv_delete(decl->equiv);
 	free(decl);
@@ -720,7 +728,7 @@ bool ofc_sema_decl_init_offset(
 	if (!decl->type)
 		return NULL;
 
-	if (!ofc_sema_type_is_array(decl->type))
+	if (!ofc_sema_decl_is_array(decl))
 	{
 		if (offset == 0)
 			return ofc_sema_decl_init(
@@ -768,7 +776,7 @@ bool ofc_sema_decl_init_offset(
 	}
 
 	ofc_sema_typeval_t* tv = ofc_sema_typeval_cast(
-		ctv, ofc_sema_type_base(decl->type));
+		ctv, decl->type);
 	if (!tv) return false;
 
 	if (decl->init_array[offset].is_substring)
@@ -825,7 +833,7 @@ bool ofc_sema_decl_init_array(
 	if (!decl->type)
 		return false;
 
-	if (!ofc_sema_type_is_array(decl->type))
+	if (!ofc_sema_decl_is_array(decl))
 	{
 		if (!array && (count == 1))
 			return ofc_sema_decl_init(
@@ -840,8 +848,8 @@ bool ofc_sema_decl_init_array(
 	}
 
 	unsigned elem_count;
-	if (!ofc_sema_type_elem_count(
-		decl->type, &elem_count))
+	if (!ofc_sema_decl_elem_count(
+		decl, &elem_count))
 	{
 		ofc_sparse_ref_error(init[0]->src,
 			"Can't initialize array of unknown size");
@@ -885,7 +893,7 @@ bool ofc_sema_decl_init_array(
 			}
 
 			ofc_sema_typeval_t* tv = ofc_sema_typeval_cast(
-				ctv, ofc_sema_type_base(decl->type));
+				ctv, decl->type);
 			if (!tv) return false;
 
 			if (decl->init_array[i].is_substring)
@@ -978,7 +986,7 @@ bool ofc_sema_decl_init_substring(
 		return false;
 	}
 
-	if (ofc_sema_type_is_array(type))
+	if (ofc_sema_decl_is_array(decl))
 	{
 		/* TODO - Support substrings of arrays. */
 		ofc_sparse_ref_error(init->src,
@@ -1156,8 +1164,19 @@ bool ofc_sema_decl_size(
 	unsigned* size)
 {
 	if (!decl) return false;
-	return ofc_sema_type_size(
-		decl->type, size);
+
+	unsigned acount = 1;
+	if (decl->array && !ofc_sema_array_total(
+		decl->array, &acount))
+		return false;
+
+	unsigned esize;
+	if (!ofc_sema_type_size(
+		decl->type, &esize))
+		return false;
+
+	if (size) *size = (acount * esize);
+	return true;
 }
 
 bool ofc_sema_decl_elem_count(
@@ -1165,14 +1184,25 @@ bool ofc_sema_decl_elem_count(
 	unsigned* count)
 {
 	if (!decl) return false;
-	return ofc_sema_type_elem_count(
-		decl->type, count);
+
+	unsigned acount = 1;
+	if (decl->array && !ofc_sema_array_total(
+		decl->array, &acount))
+		return false;
+
+	unsigned ecount;
+	if (!ofc_sema_type_elem_count(
+		decl->type, &ecount))
+		return false;
+
+	if (count) *count = (acount * ecount);
+	return true;
 }
 
 bool ofc_sema_decl_is_array(
 	const ofc_sema_decl_t* decl)
 {
-	return (decl && ofc_sema_type_is_array(decl->type));
+	return (decl && decl->array);
 }
 
 bool ofc_sema_decl_is_composite(
@@ -1180,7 +1210,8 @@ bool ofc_sema_decl_is_composite(
 {
 	if (!decl)
 		return false;
-	return ofc_sema_type_is_composite(decl->type);
+	return (ofc_sema_decl_is_array(decl)
+		|| ofc_sema_type_is_composite(decl->type));
 }
 
 
@@ -1274,8 +1305,8 @@ bool ofc_sema_decl_has_initializer(
 			return false;
 
 		unsigned count;
-		if (!ofc_sema_type_elem_count(
-			decl->type, &count))
+		if (!ofc_sema_decl_elem_count(
+			decl, &count))
 			return false;
 
 		bool partial = false;
@@ -1315,12 +1346,9 @@ const ofc_sema_type_t* ofc_sema_decl_type(
 const ofc_sema_type_t* ofc_sema_decl_base_type(
 	const ofc_sema_decl_t* decl)
 {
-	if (!decl)
-		return NULL;
-
-	return ofc_sema_type_base(decl->type);
+	return ofc_sema_type_base(
+		ofc_sema_decl_type(decl));
 }
-
 
 
 static const ofc_str_ref_t* ofc_sema_decl__key(
@@ -1571,7 +1599,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 			return false;
 	}
 
-	if (decl->is_parameter)
+	if (ofc_sema_decl_is_parameter(decl))
 	{
 		if (!ofc_colstr_atomic_writef(cs, ",")
 			|| !ofc_colstr_atomic_writef(cs, " ")
@@ -1595,12 +1623,12 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 			return false;
 	}
 
-	if (ofc_sema_type_is_array(type))
+	if (ofc_sema_decl_is_array(decl))
 	{
 		if (!ofc_colstr_atomic_writef(cs, ",")
 			|| !ofc_colstr_atomic_writef(cs, " ")
 			|| !ofc_colstr_atomic_writef(cs, "DIMENSION")
-			|| !ofc_sema_array_print_brackets(cs, type->array))
+			|| !ofc_sema_array_print_brackets(cs, decl->array))
 			return false;
 	}
 
@@ -1623,10 +1651,10 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 			|| !ofc_colstr_atomic_writef(cs, " "))
 			return false;
 
-		if (ofc_sema_type_is_composite(decl->type))
+		if (ofc_sema_decl_is_composite(decl))
 		{
-			bool reshape = (ofc_sema_type_is_array(decl->type)
-				&& (decl->type->array->dimensions > 1));
+			bool reshape = (ofc_sema_decl_is_array(decl)
+				&& (decl->array->dimensions > 1));
 
 			if (reshape)
 			{
@@ -1689,7 +1717,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 					|| !ofc_colstr_atomic_writef(cs, " ")
 					|| !ofc_colstr_atomic_writef(cs, "(/")
 					|| !ofc_colstr_atomic_writef(cs, " ")
-					|| !ofc_sema_array_print(cs, decl->type->array)
+					|| !ofc_sema_array_print(cs, decl->array)
 					|| !ofc_colstr_atomic_writef(cs, " ")
 					|| !ofc_colstr_atomic_writef(cs, "/)")
 					|| !ofc_colstr_atomic_writef(cs, ")"))
@@ -1802,12 +1830,9 @@ bool ofc_sema_decl_print_data_init(ofc_colstr_t* cs,
 	}
 	else if (ofc_sema_decl_is_array(decl))
 	{
-		const ofc_sema_type_t* base_type
-			= ofc_sema_type_base(decl->type);
-
 		unsigned count;
 		if (!ofc_sema_type_elem_count(
-			base_type, &count))
+			decl->type, &count))
 			return false;
 
 		if (count != 1)
@@ -1871,7 +1896,7 @@ bool ofc_sema_decl_print_data_init(ofc_colstr_t* cs,
 			{
 				bool u = false;
 				unsigned j, l;
-				for (j = 0, l = 0; j < base_type->len; j++)
+				for (j = 0, l = 0; j < decl->type->len; j++)
 				{
 					if (decl->init_array[i].substring.mask[j])
 					{
@@ -1908,7 +1933,7 @@ bool ofc_sema_decl_print_data_init(ofc_colstr_t* cs,
 	else if (ofc_sema_type_is_character(decl->type))
 	{
 		unsigned csize = 0;
-		ofc_sema_type_base_size(decl->type, &csize);
+		ofc_sema_type_size(decl->type, &csize);
 		if (csize != 1)
 		{
 			/* TODO - Support strings with non-byte character size. */

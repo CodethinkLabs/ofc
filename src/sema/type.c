@@ -154,7 +154,6 @@ static void ofc_sema_type__delete(ofc_sema_type_t* type)
 	if (!type)
 		return;
 
-	ofc_sema_array_delete(type->array);
 	free(type);
 }
 
@@ -165,8 +164,6 @@ uint8_t ofc_sema_type_hash(
 		return 0;
 
 	uint8_t hash = type->type;
-
-	hash += ofc_sema_array_hash(type->array);
 
 	switch (type->type)
 	{
@@ -211,7 +208,6 @@ static void ofc_sema_type__map_cleanup(void)
 static const ofc_sema_type_t* ofc_sema_type__create(
 	ofc_sema_type_e type,
 	unsigned kind, unsigned len,
-	const ofc_sema_array_t* array,
 	const ofc_sema_type_t* subtype,
 	const ofc_sema_structure_t* structure)
 {
@@ -259,14 +255,7 @@ static const ofc_sema_type_t* ofc_sema_type__create(
 	ofc_sema_type_t stype =
 		{
 			.type  = type,
-			.array = NULL,
 		};
-
-	if (array)
-	{
-		stype.array = ofc_sema_array_copy(array);
-		if (!stype.array) return NULL;
-	}
 
 	switch (type)
 	{
@@ -299,20 +288,12 @@ static const ofc_sema_type_t* ofc_sema_type__create(
 	const ofc_sema_type_t* gtype
 		= ofc_hashmap_find(
 			ofc_sema_type__map, &stype);
-	if (gtype)
-	{
-		ofc_sema_array_delete(stype.array);
-		return gtype;
-	}
+	if (gtype) return gtype;
 
 	ofc_sema_type_t* ntype
 		= (ofc_sema_type_t*)malloc(
 			sizeof(ofc_sema_type_t));
-	if (!ntype)
-	{
-		ofc_sema_array_delete(stype.array);
-		return NULL;
-	}
+	if (!ntype) return NULL;
 	*ntype = stype;
 
 	if (!ofc_hashmap_add(
@@ -343,7 +324,7 @@ const ofc_sema_type_t* ofc_sema_type_create_primitive(
 
 	return ofc_sema_type__create(
 		type, kind, 0,
-		NULL, NULL, NULL);
+		NULL, NULL);
 }
 
 const ofc_sema_type_t* ofc_sema_type_create_character(
@@ -351,7 +332,7 @@ const ofc_sema_type_t* ofc_sema_type_create_character(
 {
 	return ofc_sema_type__create(
 		OFC_SEMA_TYPE_CHARACTER, kind, len,
-		NULL, NULL, NULL);
+		NULL, NULL);
 }
 
 const ofc_sema_type_t* ofc_sema_type_create_structure(
@@ -359,7 +340,7 @@ const ofc_sema_type_t* ofc_sema_type_create_structure(
 {
 	return ofc_sema_type__create(
 		OFC_SEMA_TYPE_STRUCTURE, 0, 0,
-		NULL, NULL, structure);
+		NULL, structure);
 }
 
 const ofc_sema_type_t* ofc_sema_type_create_pointer(
@@ -367,19 +348,7 @@ const ofc_sema_type_t* ofc_sema_type_create_pointer(
 {
 	return ofc_sema_type__create(
 		OFC_SEMA_TYPE_POINTER, 0, 0,
-		NULL, target, NULL);
-}
-
-const ofc_sema_type_t* ofc_sema_type_create_array(
-	const ofc_sema_type_t* type,
-	const ofc_sema_array_t* array)
-{
-	if (ofc_sema_type_is_procedure(type))
-		return NULL;
-
-	return ofc_sema_type__create(
-		type->type, type->kind, type->len,
-		array, type->subtype, type->structure);
+		target, NULL);
 }
 
 const ofc_sema_type_t* ofc_sema_type_create_function(
@@ -393,7 +362,7 @@ const ofc_sema_type_t* ofc_sema_type_create_function(
 
 	return ofc_sema_type__create(
 		OFC_SEMA_TYPE_FUNCTION, 0, 0,
-		NULL, type, NULL);
+		type, NULL);
 }
 
 
@@ -412,7 +381,7 @@ const ofc_sema_type_t* ofc_sema_type_star_len(
 
 		return ofc_sema_type__create(
 			type->type, type->kind, star_len,
-			type->array, type->subtype, type->structure);
+			type->subtype, type->structure);
 	}
 
 	/* TODO - Warn if a kind isn't implicit. */
@@ -435,7 +404,7 @@ const ofc_sema_type_t* ofc_sema_type_star_len(
 		case OFC_SEMA_TYPE_COMPLEX:
 			return ofc_sema_type__create(
 				type->type, star_len, type->len,
-				type->array, type->subtype, type->structure);
+				type->subtype, type->structure);
 			break;
 		default:
 			break;
@@ -552,7 +521,7 @@ const ofc_sema_type_t* ofc_sema_type_subroutine(void)
 	{
 		subroutine = ofc_sema_type__create(
 			OFC_SEMA_TYPE_SUBROUTINE, 0, 0,
-			NULL, NULL,NULL);
+			NULL, NULL);
 	}
 
 	return subroutine;
@@ -595,12 +564,6 @@ const ofc_sema_type_t* ofc_sema_type_spec(
 			return NULL;
 	}
 
-	if (spec->array)
-	{
-		type = ofc_sema_type_create_array(
-			type, spec->array);
-	}
-
 	return type;
 }
 
@@ -617,11 +580,6 @@ static bool ofc_sema_type__compare(
 		return true;
 
 	if (a->type != b->type)
-		return false;
-
-	if ((a->array || b->array)
-		&& !ofc_sema_array_compare(
-			a->array, b->array))
 		return false;
 
 	switch (a->type)
@@ -750,15 +708,6 @@ bool ofc_sema_type_size(
 	if (type->len > 1)
 		s *= type->len;
 
-	if (type->array)
-	{
-		unsigned count;
-		if (!ofc_sema_array_total(
-			type->array, &count))
-			return false;
-		s *= count;
-	}
-
 	if (s == 0)
 		return false;
 
@@ -794,15 +743,6 @@ bool ofc_sema_type_elem_count(
 
 		default:
 			return false;
-	}
-
-	if (type->array)
-	{
-		unsigned e;
-		if (!ofc_sema_array_total(
-			type->array, &e))
-			return false;
-		c *= e;
 	}
 
 	if (count) *count = c;
@@ -872,11 +812,6 @@ bool ofc_sema_type_is_character(
 	return (type && (type->type == OFC_SEMA_TYPE_CHARACTER));
 }
 
-bool ofc_sema_type_is_array(const ofc_sema_type_t* type)
-{
-	return (type && type->array);
-}
-
 bool ofc_sema_type_is_structure(const ofc_sema_type_t* type)
 {
 	return (type && (type->type == OFC_SEMA_TYPE_STRUCTURE));
@@ -884,8 +819,7 @@ bool ofc_sema_type_is_structure(const ofc_sema_type_t* type)
 
 bool ofc_sema_type_is_composite(const ofc_sema_type_t* type)
 {
-	return (ofc_sema_type_is_array(type)
-		|| ofc_sema_type_is_structure(type));
+	return ofc_sema_type_is_structure(type);
 }
 
 
@@ -911,14 +845,6 @@ const ofc_sema_type_t* ofc_sema_type_base(
 {
 	if (!type)
 		return NULL;
-
-	if (type->array)
-	{
-		type = ofc_sema_type__create(
-			type->type, type->kind, type->len,
-			NULL, type->subtype, type->structure);
-		return type;
-	}
 
 	switch (type->type)
 	{
@@ -950,10 +876,6 @@ const ofc_sema_type_t* ofc_sema_type_promote(
 
 	if (ofc_sema_type_compare(a, b))
 		return a;
-
-	/* TODO - Support type promotion of arrays. */
-	if (a->array || b->array)
-		return NULL;
 
 	/* BYTE is always promoted. */
 	if (a->type == OFC_SEMA_TYPE_BYTE)
@@ -1006,7 +928,7 @@ const ofc_sema_type_t* ofc_sema_type_promote(
 			OFC_SEMA_TYPE_COMPLEX, kind);
 	}
 
-	/* We can't promote characters, arrays, structures or pointers. */
+	/* We can't promote characters, structures or pointers. */
 
 	return NULL;
 }
@@ -1040,7 +962,7 @@ bool ofc_sema_type_cast_valid(
 		|| (complex && (real || logical || integer)))
 		return true;
 
-	/* We can't cast characters, arrays, structures or pointers. */
+	/* We can't cast characters, structures or pointers. */
 
 	return false;
 }

@@ -474,7 +474,7 @@ ofc_sema_array_index_t* ofc_sema_array_index_from_offset(
 		return NULL;
 
 	ofc_sema_array_t* array
-		= decl->type->array;
+		= decl->array;
 	if (!array) return NULL;
 
 	unsigned i;
@@ -536,7 +536,7 @@ bool ofc_sema_array_index_offset(
 	}
 
 	const ofc_sema_array_t* array
-		= decl->type->array;
+		= decl->array;
 	if (!array) return false;
 
 	if (index->dimensions

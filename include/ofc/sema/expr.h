@@ -121,6 +121,12 @@ ofc_sema_expr_t* ofc_sema_expr_wrap_lhs(
 void ofc_sema_expr_delete(
 	ofc_sema_expr_t* expr);
 
+const ofc_sema_array_t* ofc_sema_expr_array(
+	const ofc_sema_expr_t* expr);
+bool ofc_sema_expr_elem_count(
+	const ofc_sema_expr_t* expr,
+	unsigned* count);
+
 bool ofc_sema_expr_compare(
 	const ofc_sema_expr_t* a,
 	const ofc_sema_expr_t* b);
