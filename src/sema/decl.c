@@ -1956,7 +1956,9 @@ bool ofc_sema_decl_print_data_init(ofc_colstr_t* cs,
 	else if (ofc_sema_type_is_character(decl->type))
 	{
 		unsigned csize = 0;
-		ofc_sema_type_size(decl->type, &csize);
+		if (!ofc_sema_type_base_size(
+			decl->type, &csize))
+			return false;
 		if (csize != 1)
 		{
 			/* TODO - Support strings with non-byte character size. */
