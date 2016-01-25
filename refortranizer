@@ -1,4 +1,5 @@
 #!/bin/bash
 
-./ofc $1 > a.f && gfortran a.f && ./a.out
-rm a.f a.out
+TPROG=$(tempfile)
+./ofc $1 | gfortran -x f77 - -o $TPROG && $TPROG
+rm $TPROG
