@@ -769,6 +769,27 @@ ofc_sema_typeval_t* ofc_sema_typeval_create_integer(
 	return typeval;
 }
 
+ofc_sema_typeval_t* ofc_sema_typeval_create_real(
+	long double value, ofc_sparse_ref_t ref)
+{
+	unsigned kind = 30;
+
+	const ofc_sema_type_t* type
+		= ofc_sema_type_create_primitive(
+			OFC_SEMA_TYPE_REAL, kind);
+	if (!type) return NULL;
+
+	ofc_sema_typeval_t* typeval
+		= (ofc_sema_typeval_t*)malloc(
+			sizeof(ofc_sema_typeval_t));
+	if (!typeval) return NULL;
+
+	typeval->type = type;
+	typeval->real = value;
+	typeval->src  = ref;
+	return typeval;
+}
+
 
 ofc_sema_typeval_t* ofc_sema_typeval_literal(
 	const ofc_parse_literal_t* literal,
@@ -859,6 +880,31 @@ bool ofc_sema_typeval_compare(
 				return (memcmp(a->character,
 					b->character, size) == 0);
 			}
+		default:
+			break;
+	}
+
+	return false;
+}
+
+
+
+bool ofc_sema_typeval_is_one(
+	const ofc_sema_typeval_t* typeval)
+{
+	if (!typeval)
+		return false;
+
+	switch (typeval->type->type)
+	{
+		case OFC_SEMA_TYPE_INTEGER:
+			return (typeval->integer == 1);
+		case OFC_SEMA_TYPE_BYTE:
+			return ((typeval->integer & 0xFF) == 1);
+		case OFC_SEMA_TYPE_REAL:
+			return (typeval->real == 1.0);
+		case OFC_SEMA_TYPE_COMPLEX:
+			return (typeval->complex.real == 1.0);
 		default:
 			break;
 	}
@@ -1240,12 +1286,32 @@ bool ofc_sema_typeval_get_real(
 	const ofc_sema_typeval_t* typeval,
 	long double* real)
 {
-	if (!typeval || !typeval->type
-		|| (typeval->type->type != OFC_SEMA_TYPE_REAL))
+	if (!typeval || !typeval->type)
 		return false;
 
-	if (real)
-		*real = typeval->real;
+	switch (typeval->type->type)
+	{
+		case OFC_SEMA_TYPE_LOGICAL:
+			if (real) *real = (typeval->logical ? 1.0 : 0.0);
+			break;
+
+		case OFC_SEMA_TYPE_INTEGER:
+		case OFC_SEMA_TYPE_BYTE:
+			if (real) *real = (long double)typeval->integer;
+			break;
+
+		case OFC_SEMA_TYPE_REAL:
+			if (real) *real = typeval->real;
+			break;
+
+		case OFC_SEMA_TYPE_COMPLEX:
+			if (real) *real = typeval->complex.real;
+			break;
+
+		default:
+			return false;
+	}
+
 	return true;
 }
 

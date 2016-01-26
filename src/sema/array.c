@@ -136,8 +136,10 @@ ofc_sema_array_t* ofc_sema_array(
 	return array;
 }
 
-ofc_sema_array_t* ofc_sema_array_copy(
-	const ofc_sema_array_t* array)
+ofc_sema_array_t* ofc_sema_array_copy_replace(
+	const ofc_sema_array_t* array,
+	const ofc_sema_decl_t*  replace,
+	const ofc_sema_expr_t*  with)
 {
 	if (!array)
 		return NULL;
@@ -154,11 +156,11 @@ ofc_sema_array_t* ofc_sema_array_copy(
 	for (i = 0; i < copy->dimensions; i++)
 	{
 		copy->segment[i].first
-			= ofc_sema_expr_copy(
-				array->segment[i].first);
+			= ofc_sema_expr_copy_replace(
+				array->segment[i].first, replace, with);
 		copy->segment[i].last
-			= ofc_sema_expr_copy(
-				array->segment[i].last);
+			= ofc_sema_expr_copy_replace(
+				array->segment[i].last, replace, with);
 
 		if (array->segment[i].first
 			&& !copy->segment[i].first)
@@ -175,6 +177,13 @@ ofc_sema_array_t* ofc_sema_array_copy(
 	}
 
 	return copy;
+}
+
+ofc_sema_array_t* ofc_sema_array_copy(
+	const ofc_sema_array_t* array)
+{
+	return ofc_sema_array_copy_replace(
+		array, NULL, NULL);
 }
 
 void ofc_sema_array_delete(
@@ -449,6 +458,48 @@ bool ofc_sema_array_index_print(
 	return ofc_colstr_atomic_writef(cs, ")");
 }
 
+ofc_sema_array_index_t* ofc_sema_array_index_copy_replace(
+	const ofc_sema_array_index_t* index,
+	const ofc_sema_decl_t*        replace,
+	const ofc_sema_expr_t*        with)
+{
+	if (!index)
+		return NULL;
+
+	ofc_sema_array_index_t* copy
+		= (ofc_sema_array_index_t*)malloc(
+			sizeof(ofc_sema_array_index_t)
+			+ (index->dimensions * sizeof(ofc_sema_expr_t*)));
+	if (!copy) return NULL;
+
+	copy->dimensions = index->dimensions;
+
+	bool success = true;
+	unsigned i;
+	for (i = 0; i < index->dimensions; i++)
+	{
+		copy->index[i] = ofc_sema_expr_copy_replace(
+			index->index[i], replace, with);
+		if (!copy->index[i])
+			success = false;
+	}
+
+	if (!success)
+	{
+		ofc_sema_array_index_delete(copy);
+		return NULL;
+	}
+
+	return copy;
+}
+
+ofc_sema_array_index_t* ofc_sema_array_index_copy(
+	const ofc_sema_array_index_t* index)
+{
+	return ofc_sema_array_index_copy_replace(
+		index, NULL, NULL);
+}
+
 void ofc_sema_array_index_delete(
 	ofc_sema_array_index_t* index)
 {
@@ -647,9 +698,79 @@ ofc_sema_array_slice_t* ofc_sema_array_slice(
 	if (!scope || !array || !index)
 		return NULL;
 
+	if (array->dimensions != index->count)
+		return NULL;
+
+
+
 	/* TODO - Implement. */
 
 	return NULL;
+}
+
+ofc_sema_array_slice_t* ofc_sema_array_slice_copy_replace(
+	const ofc_sema_array_slice_t* slice,
+	const ofc_sema_decl_t*        replace,
+	const ofc_sema_expr_t*        with)
+{
+	if (!slice)
+		return NULL;
+
+	ofc_sema_array_slice_t* copy
+		= (ofc_sema_array_slice_t*)malloc(
+			sizeof(ofc_sema_array_slice_t)
+			+ (slice->dimensions * sizeof(ofc_sema_array_segment_t)));
+	if (!copy) return NULL;
+
+	copy->dimensions = slice->dimensions;
+
+	bool success = true;
+	unsigned i;
+	for (i = 0; i < slice->dimensions; i++)
+	{
+		if (slice->segment[i].first)
+		{
+			copy->segment[i].first
+				= ofc_sema_expr_copy_replace(
+					slice->segment[i].first, replace, with);
+			if (!copy->segment[i].first)
+				success = false;
+		}
+
+		if (slice->segment[i].last)
+		{
+			copy->segment[i].last
+				= ofc_sema_expr_copy_replace(
+					slice->segment[i].last, replace, with);
+			if (!copy->segment[i].last)
+				success = false;
+		}
+
+		if (slice->segment[i].stride)
+		{
+			copy->segment[i].stride
+				= ofc_sema_expr_copy_replace(
+					slice->segment[i].stride, replace, with);
+			if (!copy->segment[i].stride)
+				success = false;
+		}
+
+	}
+
+	if (!success)
+	{
+		ofc_sema_array_slice_delete(copy);
+		return NULL;
+	}
+
+	return copy;
+}
+
+ofc_sema_array_slice_t* ofc_sema_array_slice_copy(
+	const ofc_sema_array_slice_t* slice)
+{
+	return ofc_sema_array_slice_copy_replace(
+		slice, NULL, NULL);
 }
 
 void ofc_sema_array_slice_delete(
@@ -662,7 +783,11 @@ void ofc_sema_array_slice_delete(
 	for (i = 0; i < slice->dimensions; i++)
 	{
 		ofc_sema_expr_delete(
-			slice->segment[i].index);
+			slice->segment[i].first);
+		ofc_sema_expr_delete(
+			slice->segment[i].last);
+		ofc_sema_expr_delete(
+			slice->segment[i].stride);
 	}
 
 	free(slice);
@@ -685,20 +810,21 @@ bool ofc_sema_array_slice_compare(
 	unsigned i;
 	for (i = 0; i < a->dimensions; i++)
 	{
-		if (a->segment[i].index)
-		{
-			if (!ofc_sema_expr_compare(
-				a->segment[i].index,
-				b->segment[i].index))
-				return false;
-		}
-		else
-		{
-			if ((a->segment[i].base != b->segment[i].base)
-				|| (a->segment[i].count != b->segment[i].count)
-				|| (a->segment[i].stride != b->segment[i].stride))
-				return false;
-		}
+		if (!ofc_sema_expr_compare(
+			a->segment[i].first,
+			b->segment[i].first))
+			return false;
+
+		if ((a->segment[i].last
+			|| b->segment[i].last)
+				&& !ofc_sema_expr_compare(
+					a->segment[i].last,
+					b->segment[i].last))
+			return false;
+
+		if (!ofc_sema_expr_compare_def_one(
+			a->segment[i].stride, b->segment[i].stride))
+			return false;
 	}
 
 	return true;
@@ -713,7 +839,7 @@ ofc_sema_array_t* ofc_sema_array_slice_dims(
 	unsigned i, d;
 	for (i = 0, d = 0; i < slice->dimensions; i++)
 	{
-		if (!slice->segment[i].index)
+		if (slice->segment[i].last)
 			d++;
 	}
 
@@ -731,22 +857,19 @@ ofc_sema_array_t* ofc_sema_array_slice_dims(
 	unsigned j;
 	for (i = 0, j = 0; i < slice->dimensions; i++)
 	{
-		if (slice->segment[i].index)
+		if (!slice->segment[i].last)
 			continue;
 
-		array->segment[j].first = NULL;
-		if (slice->segment[i].base != 1)
-		{
-			array->segment[j].first
-				= ofc_sema_expr_integer(
-					slice->segment[i].base);
-			if (!array->segment[j].first)
-				fail = true;
-		}
+		array->segment[j].first
+			= ofc_sema_expr_copy(
+				slice->segment[i].first);
+		if (slice->segment[i].first
+			&& !array->segment[j].first)
+			fail = true;
 
 		array->segment[j].last
-			= ofc_sema_expr_integer(
-				(slice->segment[i].base + slice->segment[i].count) - 1);
+			= ofc_sema_expr_copy(
+				slice->segment[i].last);
 		if (!array->segment[j].last)
 			fail = true;
 
@@ -775,25 +898,30 @@ bool ofc_sema_array_slice_print(
 	unsigned i;
 	for (i = 0; i < slice->dimensions; i++)
 	{
-		if ((i > 0) && !ofc_colstr_atomic_writef(cs, ", "))
-			return false;
+		if (i > 0)
+		{
+			if (!ofc_colstr_atomic_writef(cs, ",")
+				|| !ofc_colstr_atomic_writef(cs, " "))
+				return false;
+		}
 
 		ofc_sema_array_segment_t seg
 			= slice->segment[i];
-		if (seg.index)
-		{
-			if (!ofc_sema_expr_print(cs, seg.index))
-				return false;
-		}
-		else
-		{
-			if (!ofc_colstr_atomic_writef(cs, "%d:%u",
-				seg.base, ((seg.base + seg.count) - 1)))
-				return false;
+		if (seg.first && !ofc_sema_expr_print(cs, seg.first))
+			return false;
 
-			if ((seg.stride != 1) && !ofc_colstr_atomic_writef(
-				cs, ":%u", seg.stride))
-				return false;
+		if (seg.last)
+		{
+			if (!ofc_colstr_atomic_writef(cs, ":")
+				|| !ofc_sema_expr_print(cs, seg.last))
+				return NULL;
+
+			if (seg.stride)
+			{
+				if (!ofc_colstr_atomic_writef(cs, ":")
+					|| !ofc_sema_expr_print(cs, seg.stride))
+					return NULL;
+			}
 		}
 	}
 

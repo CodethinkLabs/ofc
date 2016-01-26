@@ -665,6 +665,116 @@ static ofc_sema_lhs_t* ofc_sema_lhs__offset_ref(
 	return ofc_sema_lhs__offset(lhs, offset);
 }
 
+
+
+ofc_sema_lhs_t* ofc_sema_lhs_copy_replace(
+	const ofc_sema_lhs_t*  lhs,
+	const ofc_sema_decl_t* replace,
+	const ofc_sema_expr_t* with)
+{
+	if (!lhs)
+		return NULL;
+
+	ofc_sema_lhs_t* copy
+		= (ofc_sema_lhs_t*)malloc(
+			sizeof(ofc_sema_lhs_t));
+	if (!copy) return NULL;
+
+	*copy = *lhs;
+
+	if (lhs->type == OFC_SEMA_LHS_DECL)
+	{
+		if (!ofc_sema_decl_reference(lhs->decl))
+		{
+			free(copy);
+			return NULL;
+		}
+	}
+	else
+	{
+		switch (lhs->type)
+		{
+			case OFC_SEMA_LHS_ARRAY_INDEX:
+				copy->index = ofc_sema_array_index_copy_replace(
+					lhs->index, replace, with);
+				if (!copy->index)
+				{
+					free(copy);
+					return NULL;
+				}
+				break;
+
+			case OFC_SEMA_LHS_ARRAY_SLICE:
+				copy->slice.slice
+					= ofc_sema_array_slice_copy_replace(
+						lhs->slice.slice, replace, with);
+				copy->slice.dims
+					= ofc_sema_array_slice_dims(lhs->slice.slice);
+				if (!copy->slice.slice
+					|| !copy->slice.dims)
+				{
+					ofc_sema_array_slice_delete(copy->slice.slice);
+					ofc_sema_array_delete(copy->slice.dims);
+					free(copy);
+					return NULL;
+				}
+				break;
+
+			case OFC_SEMA_LHS_SUBSTRING:
+				if (lhs->substring.first)
+				{
+					copy->substring.first
+						= ofc_sema_expr_copy_replace(
+							lhs->substring.first, replace, with);
+					if (!copy->substring.first)
+					{
+						free(copy);
+						return NULL;
+					}
+				}
+
+				if (lhs->substring.last)
+				{
+					copy->substring.last
+						= ofc_sema_expr_copy_replace(
+							lhs->substring.last, replace, with);
+					if (!copy->substring.last)
+					{
+						ofc_sema_expr_delete(
+							copy->substring.first);
+						free(copy);
+						return NULL;
+					}
+				}
+				break;
+
+			case OFC_SEMA_LHS_STRUCTURE_MEMBER:
+				break;
+
+			default:
+				free(copy);
+				return NULL;
+		}
+
+		copy->parent = ofc_sema_lhs_copy_replace(
+			lhs->parent, replace, with);
+		if (!copy->parent)
+		{
+			ofc_sema_lhs_delete(copy);
+			return NULL;
+		}
+	}
+
+	return copy;
+}
+
+ofc_sema_lhs_t* ofc_sema_lhs_copy(
+	const ofc_sema_lhs_t* lhs)
+{
+	return ofc_sema_lhs_copy_replace(
+		lhs, NULL, NULL);
+}
+
 bool ofc_sema_lhs_reference(
 	ofc_sema_lhs_t* lhs)
 {

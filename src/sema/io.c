@@ -135,60 +135,6 @@ bool ofc_sema_io_compare_types(
 	return true;
 }
 
-ofc_sema_expr_list_t* ofc_sema_output_list(
-	ofc_sema_scope_t* scope,
-	const ofc_parse_expr_list_t* parse_iolist)
-{
-	ofc_sema_expr_list_t* sema_iolist
-		= ofc_sema_expr_list_create();
-	if (!sema_iolist) return NULL;
-
-	unsigned i;
-	for (i = 0; i < parse_iolist->count; i++)
-	{
-		const ofc_parse_expr_t* parse_expr
-			= parse_iolist->expr[i];
-
-		if ((parse_expr->type == OFC_PARSE_EXPR_VARIABLE)
-			&& (parse_expr->variable->type == OFC_PARSE_LHS_IMPLICIT_DO))
-		{
-			ofc_sema_expr_list_t* implicit_do
-				= ofc_sema_expr_list_implicit_do(
-					scope, parse_expr->variable->implicit_do);
-
-			bool success = ofc_sema_expr_list_add_list(
-				sema_iolist, implicit_do);
-			ofc_sema_expr_list_delete(implicit_do);
-			if (!success)
-			{
-				ofc_sema_expr_list_delete(sema_iolist);
-				return NULL;
-			}
-		}
-		else
-		{
-			ofc_sema_expr_t* expr = ofc_sema_expr(
-				scope, parse_expr);
-			if (!expr)
-			{
-				ofc_sparse_ref_error(parse_expr->src,
-					"Bad expression in output list");
-				ofc_sema_expr_list_delete(sema_iolist);
-				return NULL;
-			}
-
-			if (!ofc_sema_expr_list_add(sema_iolist, expr))
-			{
-				ofc_sema_expr_delete(expr);
-				ofc_sema_expr_list_delete(sema_iolist);
-				return NULL;
-			}
-		}
-	}
-
-	return sema_iolist;
-}
-
 ofc_sema_lhs_list_t* ofc_sema_input_list(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_lhs_list_t* parse_iolist,

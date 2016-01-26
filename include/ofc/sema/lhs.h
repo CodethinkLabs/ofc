@@ -85,6 +85,13 @@ ofc_sema_lhs_t* ofc_sema_lhs_in_expr(
 ofc_sema_lhs_t* ofc_sema_lhs_local(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_lhs_t* lhs);
+
+ofc_sema_lhs_t* ofc_sema_lhs_copy_replace(
+	const ofc_sema_lhs_t*  lhs,
+	const ofc_sema_decl_t* replace,
+	const ofc_sema_expr_t* with);
+ofc_sema_lhs_t* ofc_sema_lhs_copy(
+	const ofc_sema_lhs_t* lhs);
 bool ofc_sema_lhs_reference(
 	ofc_sema_lhs_t* lhs);
 void ofc_sema_lhs_delete(

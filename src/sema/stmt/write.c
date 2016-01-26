@@ -437,7 +437,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 	if (stmt->io.iolist)
 	{
 		s.io_write.iolist
-			= ofc_sema_output_list(
+			= ofc_sema_expr_list_io(
 				scope, stmt->io.iolist);
 		if (!s.io_write.iolist)
 		{

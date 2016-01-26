@@ -24,6 +24,7 @@ typedef enum
 	OFC_SEMA_EXPR_INTRINSIC,
 	OFC_SEMA_EXPR_FUNCTION,
 	OFC_SEMA_EXPR_ALT_RETURN,
+	OFC_SEMA_EXPR_IMPLICIT_DO,
 
 	OFC_SEMA_EXPR_POWER,
 	OFC_SEMA_EXPR_MULTIPLY,
@@ -89,6 +90,18 @@ struct ofc_sema_expr_s
 		{
 			ofc_sema_expr_t* expr;
 		} alt_return;
+
+		struct
+		{
+			ofc_sema_expr_t* expr;
+			ofc_sema_decl_t* iter;
+			ofc_sema_expr_t* init;
+			ofc_sema_expr_t* last;
+			ofc_sema_expr_t* step;
+
+			bool     count_var;
+			unsigned count;
+		} implicit_do;
 	};
 };
 
@@ -101,6 +114,9 @@ struct ofc_sema_expr_list_s
 ofc_sema_expr_t* ofc_sema_expr(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_expr_t* expr);
+ofc_sema_expr_t* ofc_sema_expr_implicit_do(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_implicit_do_t* id);
 ofc_sema_expr_t* ofc_sema_expr_ds(
 	ofc_sema_scope_t* scope,
 	ofc_sema_scope_t* decl_scope,
@@ -108,6 +124,10 @@ ofc_sema_expr_t* ofc_sema_expr_ds(
 ofc_sema_expr_t* ofc_sema_expr_repeat(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_expr_t* expr);
+ofc_sema_expr_t* ofc_sema_expr_copy_replace(
+	const ofc_sema_expr_t* expr,
+	const ofc_sema_decl_t* replace,
+	const ofc_sema_expr_t* with);
 ofc_sema_expr_t* ofc_sema_expr_copy(
 	const ofc_sema_expr_t* expr);
 ofc_sema_expr_t* ofc_sema_expr_cast(
@@ -126,8 +146,13 @@ const ofc_sema_array_t* ofc_sema_expr_array(
 bool ofc_sema_expr_elem_count(
 	const ofc_sema_expr_t* expr,
 	unsigned* count);
+ofc_sema_expr_t* ofc_sema_expr_elem_get(
+	const ofc_sema_expr_t* expr, unsigned offset);
 
 bool ofc_sema_expr_compare(
+	const ofc_sema_expr_t* a,
+	const ofc_sema_expr_t* b);
+bool ofc_sema_expr_compare_def_one(
 	const ofc_sema_expr_t* a,
 	const ofc_sema_expr_t* b);
 
@@ -158,11 +183,18 @@ ofc_sema_expr_list_t* ofc_sema_expr_list(
 ofc_sema_expr_list_t* ofc_sema_expr_list_clist(
 	ofc_sema_scope_t*            scope,
 	const ofc_parse_expr_list_t* clist);
+ofc_sema_expr_list_t* ofc_sema_expr_list_io(
+	ofc_sema_scope_t*            scope,
+	const ofc_parse_expr_list_t* iolist);
 ofc_sema_expr_list_t* ofc_sema_expr_list_create(void);
 void ofc_sema_expr_list_delete(
 	ofc_sema_expr_list_t* list);
+ofc_sema_expr_list_t* ofc_sema_expr_list_copy_replace(
+	const ofc_sema_expr_list_t* list,
+	const ofc_sema_decl_t*      replace,
+	const ofc_sema_expr_t*      with);
 ofc_sema_expr_list_t* ofc_sema_expr_list_copy(
-	ofc_sema_expr_list_t* list);
+	const ofc_sema_expr_list_t* list);
 bool ofc_sema_expr_list_add(
 	ofc_sema_expr_list_t* list,
 	ofc_sema_expr_t* expr);
@@ -178,8 +210,6 @@ ofc_sema_expr_t* ofc_sema_expr_list_elem_get(
 bool ofc_sema_expr_list_compare(
 	const ofc_sema_expr_list_t* a,
 	const ofc_sema_expr_list_t* b);
-ofc_sema_expr_list_t* ofc_sema_expr_list_implicit_do(
-	ofc_sema_scope_t* scope, ofc_parse_implicit_do_t* id);
 
 bool ofc_sema_expr_print(
 	ofc_colstr_t* cs,
