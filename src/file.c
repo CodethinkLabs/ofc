@@ -25,17 +25,6 @@
 #include "ofc/file.h"
 
 
-struct ofc_file_s
-{
-	char*           path;
-	char*           include;
-	char*           strz;
-	ofc_lang_opts_t opts;
-	unsigned        size;
-	unsigned        ref;
-};
-
-
 static char* ofc_file__read(const char* path, unsigned* size)
 {
 	int fd = open(path, O_RDONLY);

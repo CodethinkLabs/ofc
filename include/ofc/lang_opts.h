@@ -61,4 +61,7 @@ static const ofc_lang_opts_t OFC_LANG_OPTS_F90 =
 	.case_sensitive = false,
 };
 
+#define OFC_LANG_OPTS_DEFAULT \
+		OFC_LANG_OPTS_F77
+
 #endif

@@ -19,7 +19,15 @@
 #include <stdbool.h>
 #include "lang_opts.h"
 
-typedef struct ofc_file_s ofc_file_t;
+typedef struct
+{
+	char*           path;
+	char*           include;
+	char*           strz;
+	ofc_lang_opts_t opts;
+	unsigned        size;
+	unsigned        ref;
+} ofc_file_t;
 
 /* Path must be valid for as long as the ofc_file_t* is */
 ofc_file_t* ofc_file_create(const char* path, ofc_lang_opts_t opts);
