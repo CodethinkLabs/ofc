@@ -26,7 +26,7 @@ static void ofc_sema_decl_init__delete(
 	}
 	else
 	{
-		ofc_sema_typeval_delete(init.tv);
+		ofc_sema_expr_delete(init.expr);
 	}
 }
 
@@ -59,7 +59,7 @@ ofc_sema_decl_t* ofc_sema_decl_create(
 	else
 	{
 		decl->init.is_substring = false;
-		decl->init.tv = NULL;
+		decl->init.expr = NULL;
 	}
 
 	decl->equiv = NULL;
@@ -656,9 +656,7 @@ bool ofc_sema_decl_init(
 		return false;
 	}
 
-	const ofc_sema_typeval_t* ctv
-		= ofc_sema_expr_constant(init);
-	if (!ctv)
+	if (!ofc_sema_expr_is_constant(init))
 	{
 		ofc_sparse_ref_error(init->src,
 			"Initializer element not constant");
@@ -684,30 +682,50 @@ bool ofc_sema_decl_init(
 		&& (type->type == OFC_SEMA_TYPE_CHARACTER)
 		&& (type->len == 0))
 	{
+		const ofc_sema_type_t* etype
+			= ofc_sema_expr_type(init);
+		unsigned len = 1;
+		if (etype && (etype->type
+			== OFC_SEMA_TYPE_CHARACTER))
+			len = etype->len;
+
 		const ofc_sema_type_t* ntype
 			= ofc_sema_type_create_character(
-				type->kind, ctv->type->len);
+				type->kind, len);
 		if (!ntype) return false;
 		type = ntype;
 	}
 
-	ofc_sema_typeval_t* tv
-		= ofc_sema_typeval_cast(
-			ctv, type);
-	if (!tv) return false;
+	ofc_sema_expr_t* expr
+		= ofc_sema_expr_copy(init);
+	if (!expr) return NULL;
+
+	if (!ofc_sema_type_compatible(
+		ofc_sema_expr_type(expr), type))
+	{
+		ofc_sema_expr_t* cast
+			= ofc_sema_expr_cast(
+				expr, type);
+		if (!cast)
+		{
+			ofc_sema_expr_delete(expr);
+			return NULL;
+		}
+		expr = cast;
+	}
 
 	if (decl->init.is_substring)
 	{
 		ofc_sparse_ref_error(init->src,
 			"Conflicting initializaters");
-		ofc_sema_typeval_delete(tv);
+		ofc_sema_expr_delete(expr);
 		return false;
 	}
-	else if (decl->init.tv)
+	else if (decl->init.expr)
 	{
-		bool redecl = ofc_sema_typeval_compare(
-			tv, decl->init.tv);
-		ofc_sema_typeval_delete(tv);
+		bool redecl = ofc_sema_expr_compare(
+			expr, decl->init.expr);
+		ofc_sema_expr_delete(expr);
 
 		if (redecl)
 		{
@@ -716,7 +734,6 @@ bool ofc_sema_decl_init(
 		}
 		else
 		{
-			/* TODO - Convert to assignment. */
 			ofc_sparse_ref_error(init->src,
 				"Conflicting initializaters");
 			return false;
@@ -725,7 +742,7 @@ bool ofc_sema_decl_init(
 	else
 	{
 		decl->type = type;
-		decl->init.tv = tv;
+		decl->init.expr = expr;
 	}
 
 	return true;
@@ -784,34 +801,47 @@ bool ofc_sema_decl_init_offset(
 		for (i = 0; i < elem_count; i++)
 		{
 			decl->init_array[i].is_substring = false;
-			decl->init_array[i].tv = NULL;
+			decl->init_array[i].expr = NULL;
 		}
 	}
 
-	const ofc_sema_typeval_t* ctv
-		= ofc_sema_expr_constant(init);
-	if (!ctv)
+	if (!ofc_sema_expr_is_constant(init))
 	{
 		ofc_sparse_ref_error(init->src,
 			"Array initializer element not constant.");
 		return false;
 	}
 
-	ofc_sema_typeval_t* tv = ofc_sema_typeval_cast(
-		ctv, decl->type);
-	if (!tv) return false;
+	ofc_sema_expr_t* expr
+		= ofc_sema_expr_copy(init);
+	if (!expr) return NULL;
+
+	if (!ofc_sema_type_compatible(
+		ofc_sema_expr_type(expr), decl->type))
+	{
+		ofc_sema_expr_t* cast
+			= ofc_sema_expr_cast(
+				expr, decl->type);
+		if (!cast)
+		{
+			ofc_sema_expr_delete(expr);
+			return NULL;
+		}
+		expr = cast;
+	}
 
 	if (decl->init_array[offset].is_substring)
 	{
 		ofc_sparse_ref_error(init->src,
 			"Conflicting initializer types for array element");
+		ofc_sema_expr_delete(expr);
 		return false;
 	}
-	else if (decl->init_array[offset].tv)
+	else if (decl->init_array[offset].expr)
 	{
-		bool equal = ofc_sema_typeval_compare(
-			decl->init_array[offset].tv, tv);
-		ofc_sema_typeval_delete(tv);
+		bool equal = ofc_sema_expr_compare(
+			decl->init_array[offset].expr, expr);
+		ofc_sema_expr_delete(expr);
 
 		if (!equal)
 		{
@@ -826,7 +856,7 @@ bool ofc_sema_decl_init_offset(
 	}
 	else
 	{
-		decl->init_array[offset].tv = tv;
+		decl->init_array[offset].expr = expr;
 	}
 
 	return true;
@@ -889,7 +919,7 @@ bool ofc_sema_decl_init_array(
 		for (i = 0; i < elem_count; i++)
 		{
 			decl->init_array[i].is_substring = false;
-			decl->init_array[i].tv = NULL;
+			decl->init_array[i].expr = NULL;
 		}
 	}
 
@@ -905,30 +935,43 @@ bool ofc_sema_decl_init_array(
 		unsigned i;
 		for (i = 0; i < count; i++)
 		{
-			const ofc_sema_typeval_t* ctv
-				= ofc_sema_expr_constant(init[i]);
-			if (!ctv)
+			if (!ofc_sema_expr_is_constant(init[i]))
 			{
 				ofc_sparse_ref_error(init[i]->src,
 					"Array initializer element not constant.");
 				return false;
 			}
 
-			ofc_sema_typeval_t* tv = ofc_sema_typeval_cast(
-				ctv, decl->type);
-			if (!tv) return false;
+			ofc_sema_expr_t* expr
+				= ofc_sema_expr_copy(init[i]);
+			if (!expr) return NULL;
+
+			if (!ofc_sema_type_compatible(
+				ofc_sema_expr_type(expr), decl->type))
+			{
+				ofc_sema_expr_t* cast
+					= ofc_sema_expr_cast(
+						expr, decl->type);
+				if (!cast)
+				{
+					ofc_sema_expr_delete(expr);
+					return NULL;
+				}
+				expr = cast;
+			}
 
 			if (decl->init_array[i].is_substring)
 			{
 				ofc_sparse_ref_error(init[i]->src,
 					"Conflicting initializer types for array element");
+				ofc_sema_expr_delete(expr);
 				return false;
 			}
-			if (decl->init_array[i].tv)
+			if (decl->init_array[i].expr)
 			{
-				bool equal = ofc_sema_typeval_compare(
-					decl->init_array[i].tv, tv);
-				ofc_sema_typeval_delete(tv);
+				bool equal = ofc_sema_expr_compare(
+					decl->init_array[i].expr, expr);
+				ofc_sema_expr_delete(expr);
 
 				if (!equal)
 				{
@@ -943,7 +986,7 @@ bool ofc_sema_decl_init_array(
 			}
 			else
 			{
-				decl->init_array[i].tv = tv;
+				decl->init_array[i].expr = expr;
 			}
 		}
 	}
@@ -991,7 +1034,7 @@ bool ofc_sema_decl_init_substring(
 	const ofc_sema_type_t* type
 		= ofc_sema_decl_type(decl);
 	if (!decl->init.is_substring
-		&& (decl->init.tv != NULL))
+		&& (decl->init.expr != NULL))
 	{
 		/* TODO - Check if substring initializer is the same as
 		          existing initializer contents and just warn. */
@@ -1300,7 +1343,7 @@ static bool ofc_sema_decl_init__used(
 		return true;
 	}
 
-	if (!init.tv)
+	if (!init.expr)
 		return false;
 
 	if (complete)
@@ -1715,8 +1758,8 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 					if (!ofc_colstr_writef(cs, "\""))
 						return false;
 				}
-				else if (!ofc_sema_typeval_print(
-					cs, decl->init_array[i].tv))
+				else if (!ofc_sema_expr_print(
+					cs, decl->init_array[i].expr))
 				{
 					return false;
 				}
@@ -1760,7 +1803,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 				if (!ofc_colstr_writef(cs, "\""))
 					return false;
 			}
-			else if (!ofc_sema_typeval_print(cs, decl->init.tv))
+			else if (!ofc_sema_expr_print(cs, decl->init.expr))
 				return false;
 		}
 	}
@@ -1867,7 +1910,7 @@ bool ofc_sema_decl_print_data_init(ofc_colstr_t* cs,
 		for (i = 0, first = true; i < count; i++)
 		{
 			if (!decl->init_array[i].is_substring
-				&& !decl->init_array[i].tv)
+				&& !decl->init_array[i].expr)
 				continue;
 
 			if (!first)
@@ -1896,7 +1939,7 @@ bool ofc_sema_decl_print_data_init(ofc_colstr_t* cs,
 		for (i = 0, first = true; i < count; i++)
 		{
 			if (!decl->init_array[i].is_substring
-				&& !decl->init_array[i].tv)
+				&& !decl->init_array[i].expr)
 				continue;
 
 			if (!first)
@@ -1936,8 +1979,8 @@ bool ofc_sema_decl_print_data_init(ofc_colstr_t* cs,
 			}
 			else
 			{
-				if (!ofc_sema_typeval_print(
-					cs, decl->init_array[i].tv))
+				if (!ofc_sema_expr_print(
+					cs, decl->init_array[i].expr))
 					return false;
 			}
 		}

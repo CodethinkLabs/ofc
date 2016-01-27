@@ -1327,7 +1327,9 @@ ofc_sema_typeval_t* ofc_sema_lhs_parameter(
 		return NULL;
 	}
 
-	return ofc_sema_typeval_copy(decl->init.tv);
+	return ofc_sema_typeval_copy(
+		ofc_sema_expr_constant(
+			decl->init.expr));
 }
 
 

@@ -25,7 +25,7 @@ typedef struct
 	union
 	__attribute__((__packed__))
 	{
-		ofc_sema_typeval_t* tv;
+		ofc_sema_expr_t* expr;
 
 		struct
 		{
