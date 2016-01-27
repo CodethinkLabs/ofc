@@ -58,11 +58,6 @@ bool ofc_sema_io_compare_types(
 	ofc_parse_format_desc_list_t* format_list,
 	unsigned* offset);
 
-ofc_sema_lhs_list_t* ofc_sema_input_list(
-	ofc_sema_scope_t* scope,
-	const ofc_parse_lhs_list_t* parse_iolist,
-	bool* is_dynamic);
-
 ofc_parse_format_desc_list_t* ofc_sema_io_data_format(
 	ofc_sema_format_t* format, unsigned iolist_len);
 unsigned ofc_sema_io_data_format_count(

@@ -20,8 +20,4 @@ bool ofc_sema_parameter(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
 
-ofc_sema_decl_t* ofc_sema_parameter_assign(
-	ofc_sema_scope_t* scope,
-	const ofc_parse_assign_t* assign);
-
 #endif

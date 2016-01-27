@@ -65,7 +65,6 @@ ofc_sema_decl_t* ofc_sema_decl_create(
 	decl->equiv = NULL;
 
 	decl->is_parameter = false;
-	decl->is_macro     = false;
 
 	decl->is_static    = false;
 	decl->is_volatile  = false;
@@ -1263,13 +1262,6 @@ bool ofc_sema_decl_is_parameter(
 {
 	if (!decl) return false;
 	return decl->is_parameter;
-}
-
-bool ofc_sema_decl_is_macro(
-	const ofc_sema_decl_t* decl)
-{
-	if (!decl) return false;
-	return decl->is_macro;
 }
 
 

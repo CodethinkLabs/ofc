@@ -21,12 +21,13 @@ static bool ofc_sema_stmt__data(
 	const ofc_parse_expr_list_t* clist)
 {
 	ofc_sema_lhs_list_t* lhs_list
-		= ofc_sema_input_list(scope, nlist, NULL);
+		= ofc_sema_lhs_list_id(scope, nlist);
 	ofc_sema_expr_list_t* expr_list
 		= ofc_sema_expr_list_clist(scope, clist);
 
 	unsigned lhs_count;
 	unsigned expr_count;
+
 	if (!ofc_sema_lhs_list_elem_count(lhs_list, &lhs_count)
 		|| !ofc_sema_expr_list_elem_count(expr_list, &expr_count))
 	{

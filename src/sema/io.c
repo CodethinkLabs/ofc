@@ -135,61 +135,6 @@ bool ofc_sema_io_compare_types(
 	return true;
 }
 
-ofc_sema_lhs_list_t* ofc_sema_input_list(
-	ofc_sema_scope_t* scope,
-	const ofc_parse_lhs_list_t* parse_iolist,
-	bool* is_dynamic)
-{
-	ofc_sema_lhs_list_t* sema_iolist
-		= ofc_sema_lhs_list_create();
-	if (!sema_iolist) return NULL;
-
-	unsigned i;
-	for (i = 0; i < parse_iolist->count; i++)
-	{
-		const ofc_parse_lhs_t* parse_lhs
-			= parse_iolist->lhs[i];
-
-		if (parse_lhs->type == OFC_PARSE_LHS_IMPLICIT_DO)
-		{
-			ofc_sema_lhs_list_t* implicit_do
-				= ofc_sema_lhs_list_implicit_do(
-					scope, parse_lhs->implicit_do, is_dynamic);
-			/* TODO - Create dynamic LHS list. */
-
-			bool success = ofc_sema_lhs_list_add_list(
-				sema_iolist, implicit_do);
-			ofc_sema_lhs_list_delete(implicit_do);
-			if (!success)
-			{
-				ofc_sema_lhs_list_delete(sema_iolist);
-				return NULL;
-			}
-		}
-		else
-		{
-			ofc_sema_lhs_t* lhs = ofc_sema_lhs(
-				scope, parse_lhs);
-			if (!lhs)
-			{
-				ofc_sparse_ref_error(parse_lhs->src,
-					"Bad variable in input list");
-				ofc_sema_lhs_list_delete(sema_iolist);
-				return NULL;
-			}
-
-			if (!ofc_sema_lhs_list_add(sema_iolist, lhs))
-			{
-				ofc_sema_lhs_delete(lhs);
-				ofc_sema_lhs_list_delete(sema_iolist);
-				return NULL;
-			}
-		}
-	}
-
-	return sema_iolist;
-}
-
 bool ofc_sema_io_list_has_complex(
 	ofc_sema_lhs_list_t* ilist,
 	ofc_sema_expr_list_t* olist,

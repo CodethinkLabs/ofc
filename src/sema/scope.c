@@ -103,21 +103,17 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 
 	bool is_root = ofc_sema_scope_is_root(scope);
 
-	/* Implicit Do is special, it's not root but it has decls. */
-	if (type == OFC_SEMA_SCOPE_IMPLICIT_DO)
-		is_root = true;
-
-	scope->common    = NULL;
-	scope->spec      = NULL;
-	scope->decl      = NULL;
-	scope->equiv     = NULL;
+	scope->common = NULL;
+	scope->spec   = NULL;
+	scope->decl   = NULL;
+	scope->equiv  = NULL;
 
 	bool alloc_fail = false;
 	if (is_root)
 	{
-		scope->spec      = ofc_sema_spec_map_create(opts.case_sensitive);
-		scope->decl      = ofc_sema_decl_list_create(opts.case_sensitive);
-		scope->equiv     = ofc_sema_equiv_list_create();
+		scope->spec  = ofc_sema_spec_map_create(opts.case_sensitive);
+		scope->decl  = ofc_sema_decl_list_create(opts.case_sensitive);
+		scope->equiv = ofc_sema_equiv_list_create();
 
 		alloc_fail = (!scope->spec
 			|| !scope->decl
@@ -740,20 +736,6 @@ ofc_sema_scope_t* ofc_sema_scope_do(
 	return do_scope;
 }
 
-ofc_sema_scope_t* ofc_sema_scope_implicit_do(
-	ofc_sema_scope_t* scope)
-{
-	if (!scope)
-		return NULL;
-
-	ofc_sema_scope_t* id_scope
-		= ofc_sema_scope__create(
-			scope, NULL, OFC_SEMA_SCOPE_IMPLICIT_DO);
-	if (!id_scope) return NULL;
-
-	return id_scope;
-}
-
 ofc_sema_scope_t* ofc_sema_scope_block_data(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt)
@@ -793,7 +775,6 @@ bool ofc_sema_scope_is_root(
 	{
 		case OFC_SEMA_SCOPE_STMT_FUNC:
 		case OFC_SEMA_SCOPE_IF:
-		case OFC_SEMA_SCOPE_IMPLICIT_DO:
 			return false;
 		default:
 			break;
@@ -1109,8 +1090,6 @@ bool ofc_sema_scope_print(
 			return ofc_sema_scope_body__print(cs, indent, scope);
 		case OFC_SEMA_SCOPE_STMT_FUNC:
 			return ofc_sema_expr_print(cs, scope->expr);
-		case OFC_SEMA_SCOPE_IMPLICIT_DO:
-			return false;
 
 		default:
 			return false;

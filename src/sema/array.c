@@ -192,6 +192,13 @@ void ofc_sema_array_delete(
 	if (!array)
 		return;
 
+	unsigned i;
+	for (i = 0; i < array->dimensions; i++)
+	{
+		ofc_sema_expr_delete(array->segment[i].first);
+		ofc_sema_expr_delete(array->segment[i].last);
+	}
+
 	free(array);
 }
 

@@ -50,7 +50,6 @@ struct ofc_sema_decl_s
 	};
 
 	bool is_parameter;
-	bool is_macro;
 
     bool is_static;
 	bool is_automatic;
@@ -162,8 +161,6 @@ bool ofc_sema_decl_is_procedure(
 	const ofc_sema_decl_t* decl);
 
 bool ofc_sema_decl_is_parameter(
-	const ofc_sema_decl_t* decl);
-bool ofc_sema_decl_is_macro(
 	const ofc_sema_decl_t* decl);
 
 bool ofc_sema_decl_has_initializer(

@@ -16,7 +16,7 @@
 #include "ofc/sema.h"
 
 
-ofc_sema_decl_t* ofc_sema_parameter_assign(
+static ofc_sema_decl_t* ofc_sema_parameter__assign(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_assign_t* assign)
 {
@@ -57,7 +57,7 @@ bool ofc_sema_parameter(
 	unsigned i;
 	for (i = 0; i < count; i++)
 	{
-		if (!ofc_sema_parameter_assign(
+		if (!ofc_sema_parameter__assign(
 			scope, stmt->parameter.list->assign[i]))
 			return false;
 	}

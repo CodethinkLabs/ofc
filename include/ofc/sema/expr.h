@@ -114,13 +114,6 @@ struct ofc_sema_expr_list_s
 ofc_sema_expr_t* ofc_sema_expr(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_expr_t* expr);
-ofc_sema_expr_t* ofc_sema_expr_implicit_do(
-	ofc_sema_scope_t* scope,
-	const ofc_parse_implicit_do_t* id);
-ofc_sema_expr_t* ofc_sema_expr_ds(
-	ofc_sema_scope_t* scope,
-	ofc_sema_scope_t* decl_scope,
-	const ofc_parse_expr_t* expr);
 ofc_sema_expr_t* ofc_sema_expr_repeat(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_expr_t* expr);
@@ -135,6 +128,8 @@ ofc_sema_expr_t* ofc_sema_expr_cast(
 	const ofc_sema_type_t* type);
 ofc_sema_expr_t* ofc_sema_expr_alt_return(
 	ofc_sema_expr_t* expr);
+ofc_sema_expr_t* ofc_sema_expr_typeval(
+	ofc_sema_typeval_t* typeval);
 ofc_sema_expr_t* ofc_sema_expr_integer(int value);
 ofc_sema_expr_t* ofc_sema_expr_wrap_lhs(
 	ofc_sema_lhs_t* lhs);

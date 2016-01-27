@@ -26,7 +26,6 @@ typedef enum
 	OFC_SEMA_SCOPE_BLOCK_DATA,
 	OFC_SEMA_SCOPE_IF,
 	OFC_SEMA_SCOPE_DO,
-	OFC_SEMA_SCOPE_IMPLICIT_DO,
 
 	OFC_SEMA_SCOPE_COUNT
 } ofc_sema_scope_e;
@@ -88,8 +87,6 @@ ofc_sema_scope_t* ofc_sema_scope_if(
 ofc_sema_scope_t* ofc_sema_scope_do(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_list_t* block);
-ofc_sema_scope_t* ofc_sema_scope_implicit_do(
-	ofc_sema_scope_t* scope);
 
 bool ofc_sema_scope_is_root(
 	const ofc_sema_scope_t* scope);
