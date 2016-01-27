@@ -2210,15 +2210,17 @@ bool ofc_sema_expr_print(
 			{
 				/* Print binary expression */
 				if (!ofc_sema_expr_print(cs, expr->a)
-					|| !ofc_colstr_atomic_writef(cs, " %s ",
-							ofc_sema_expr__operator[expr->type])
+					|| !ofc_colstr_atomic_writef(cs, " ")
+					|| !ofc_colstr_atomic_writef(cs, "%s",
+						ofc_sema_expr__operator[expr->type])
+					|| !ofc_colstr_atomic_writef(cs, " ")
 					|| !ofc_sema_expr_print(cs, expr->b))
 						return false;
 			}
 			else
 			{
 				/* Print unary expression */
-				if (!ofc_colstr_atomic_writef(cs, "%s ",
+				if (!ofc_colstr_atomic_writef(cs, "%s",
 						ofc_sema_expr__operator[expr->type])
 					|| !ofc_sema_expr_print(cs, expr->a))
 						return false;
