@@ -557,7 +557,8 @@ const ofc_sema_type_t* ofc_sema_type_spec(
 
 		case OFC_SEMA_TYPE_CHARACTER:
 			type = ofc_sema_type_create_character(
-				kind, (spec->len_var ? 0 : spec->len));
+				kind, (spec->len_var ? 0
+					: (spec->len == 0 ? 1 : spec->len)));
 			break;
 
 		default:

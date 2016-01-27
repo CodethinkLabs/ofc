@@ -128,11 +128,6 @@ ofc_sema_spec_t* ofc_sema_spec(
 			return NULL;
 		}
 	}
-	else if (!ptype->count_var
-		&& (s.type == OFC_SEMA_TYPE_CHARACTER))
-	{
-		s.len = 1;
-	}
 
 	switch (ptype->type)
 	{
