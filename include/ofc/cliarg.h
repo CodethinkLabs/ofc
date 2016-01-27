@@ -25,20 +25,31 @@ typedef enum
 	INVALID
 } ofc_cliarg_e;
 
+typedef enum
+{
+	GLOB_NONE = 0,
+	LANG_NONE,
+	LANG_INT
+
+} ofc_cliarg_param_e;
+
 typedef struct
 {
-	ofc_cliarg_e type;
-	const char*  name;
-	const char   flag;
-	const char*  desc;
-	unsigned     param_num;
-	bool         exclusive;
+	ofc_cliarg_e       type;
+	const char*        name;
+	const char         flag;
+	const char*        desc;
+	ofc_cliarg_param_e param_type;
+	unsigned           param_num;
+	bool               exclusive;
 } ofc_cliarg_body_t;
 
 typedef struct
 {
 	const ofc_cliarg_body_t* body;
 	int  value;
+	/* This will become a union when more argument
+	   value types are needed. */
 } ofc_cliarg_t;
 
 typedef struct

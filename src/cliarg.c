@@ -5,7 +5,8 @@ static bool set_global_opts__flag(
 	ofc_global_opts_t* global,
 	int arg_type)
 {
-	if (!global) return false;
+	if (!global)
+		return false;
 
 	switch (arg_type)
 	{
@@ -27,7 +28,8 @@ static bool set_lang_opts__flag(
 	ofc_lang_opts_t* lang_opts,
 	int arg_type)
 {
-	if (!lang_opts) return false;
+	if (!lang_opts)
+		return false;
 
 	switch (arg_type)
 	{
@@ -57,9 +59,10 @@ static bool set_lang_opts__flag(
 
 static bool set_lang_opts__num(
 	ofc_lang_opts_t* lang_opts,
-	unsigned value, int arg_type)
+	int arg_type, unsigned value)
 {
-	if (!lang_opts) return false;
+	if (!lang_opts)
+		return false;
 
 	switch (arg_type)
 	{
@@ -79,16 +82,16 @@ static bool set_lang_opts__num(
 
 static const ofc_cliarg_body_t cliargs[] =
 {
-	/*ENUM        NAME          FLAG  DESCRIPTION                 PARAMS EXCLUSIVE */
-	{ PARSE_TREE, "parse-tree", '\0', "Prints the parse tree",             0, true },
-	{ SEMA_TREE,  "sema-tree",  '\0', "Prints the semantic analysis tree", 0, true },
-	{ FIXED_FORM, "free-form",  '\0', "Sets free form type",               0, true },
-	{ FREE_FORM,  "fixed-form", '\0', "Sets fixed form type",              0, true },
-	{ TAB_FORM,   "tab-form",   '\0', "Sets tabbed form type",             0, true },
-	{ TAB_WIDTH,  "tab-width",  '\0', "Sets tab width",                    1, true },
-	{ DEBUG,      "debug",      '\0', "Sets debug mode",                   0, true },
-	{ COLUMNS,    "columns",    '\0', "sets number of columns to <n>",     1, true },
-	{ CASE_SEN,   "case-sen",   '\0', "Sets case sensitive mode",          0, true },
+	/*ENUM        NAME          FLAG  DESCRIPTION                 PARAM_TYPE PARAMS EXCLUSIVE */
+	{ PARSE_TREE, "parse-tree", '\0', "Prints the parse tree",             GLOB_NONE, 0, true },
+	{ SEMA_TREE,  "sema-tree",  '\0', "Prints the semantic analysis tree", GLOB_NONE, 0, true },
+	{ FIXED_FORM, "free-form",  '\0', "Sets free form type",               LANG_NONE, 0, true },
+	{ FREE_FORM,  "fixed-form", '\0', "Sets fixed form type",              LANG_NONE, 0, true },
+	{ TAB_FORM,   "tab-form",   '\0', "Sets tabbed form type",             LANG_NONE, 0, true },
+	{ TAB_WIDTH,  "tab-width",  '\0', "Sets tab width",                    LANG_INT,  1, true },
+	{ DEBUG,      "debug",      '\0', "Sets debug mode",                   LANG_NONE, 0, true },
+	{ COLUMNS,    "columns",    '\0', "sets number of columns to <n>",     LANG_INT,  1, true },
+	{ CASE_SEN,   "case-sen",   '\0', "Sets case sensitive mode",          LANG_NONE, 0, true },
 };
 
 static const char *get_file_ext(const char *path)
@@ -155,24 +158,21 @@ static bool resolve_param_pos_int(const char* arg_string, int* param_int)
 static bool ofc_cliarg__apply(
 	ofc_global_opts_t* global_opts,
 	ofc_lang_opts_t* lang_opts,
-	ofc_cliarg_e type,
-	const int value)
+	const ofc_cliarg_t* arg)
 {
-	switch (type)
+	ofc_cliarg_e       arg_type   = arg->body->type;
+	ofc_cliarg_param_e param_type = arg->body->param_type;
+
+	switch (param_type)
 	{
-		case PARSE_TREE:
-		case SEMA_TREE:
-			return set_global_opts__flag(global_opts, type);
+		case GLOB_NONE:
+			return set_global_opts__flag(global_opts, arg_type);
 
-		case DEBUG:
-		case CASE_SEN:
-		case FIXED_FORM:
-		case TAB_FORM:
-			return set_lang_opts__flag(lang_opts, type);
+		case LANG_NONE:
+			return set_lang_opts__flag(lang_opts, arg_type);
 
-		case COLUMNS:
-		case TAB_WIDTH:
-			return set_lang_opts__num(lang_opts, value, type);
+		case LANG_INT:
+			return set_lang_opts__num(lang_opts, arg_type, arg->value);
 
 		default:
 			break;;
@@ -189,8 +189,7 @@ static bool ofc_cliarg_list__apply(
 	unsigned i;
 	for (i = 0; i < list->count; i++)
 	{
-		if (!ofc_cliarg__apply(global_opts, lang_opts,
-			list->arg[i]->body->type, list->arg[i]->value))
+		if (!ofc_cliarg__apply(global_opts, lang_opts, list->arg[i]))
 			return false;
 	}
 
