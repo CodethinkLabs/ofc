@@ -1223,7 +1223,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 	if (lossy_cast)
 	{
 		ofc_sparse_ref_warning(typeval->src,
-			"Cast from %s to %s was lossy",
+			"Cast from %s to %s is lossy",
 			ofc_sema_type_str_rep(typeval->type),
 			ofc_sema_type_str_rep(type));
 	}
