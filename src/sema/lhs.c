@@ -569,7 +569,7 @@ static ofc_sema_lhs_t* ofc_sema_lhs__implicit_do(
 	ofc_sparse_ref_t src,
 	const ofc_parse_implicit_do_t* id)
 {
-	if (!id && id->init)
+	if (!id || !id->init)
 		return NULL;
 
 	ofc_sema_lhs_t* lhs
