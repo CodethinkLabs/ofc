@@ -319,8 +319,9 @@ bool ofc_sema_array_print(
 			&& !ofc_colstr_atomic_writef(cs, ":"))
 			return false;
 
-		if (dims.last && !ofc_sema_expr_print(
-			cs, dims.last))
+		if (dims.last
+			? !ofc_sema_expr_print(cs, dims.last)
+			: !ofc_colstr_atomic_writef(cs, "*"))
 			return false;
 	}
 
