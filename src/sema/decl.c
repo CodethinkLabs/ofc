@@ -1775,7 +1775,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 					|| !ofc_colstr_atomic_writef(cs, " ")
 					|| !ofc_colstr_atomic_writef(cs, "(/")
 					|| !ofc_colstr_atomic_writef(cs, " ")
-					|| !ofc_sema_array_print(cs, decl->array)
+					|| !ofc_sema_array_print_size(cs, decl->array)
 					|| !ofc_colstr_atomic_writef(cs, " ")
 					|| !ofc_colstr_atomic_writef(cs, "/)")
 					|| !ofc_colstr_atomic_writef(cs, ")"))

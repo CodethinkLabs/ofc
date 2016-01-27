@@ -53,6 +53,9 @@ bool ofc_sema_array_total(
 bool ofc_sema_array_print(
 	ofc_colstr_t* cs,
 	const ofc_sema_array_t* array);
+bool ofc_sema_array_print_size(
+	ofc_colstr_t* cs,
+	const ofc_sema_array_t* array);
 bool ofc_sema_array_print_brackets(
 	ofc_colstr_t* cs,
 	const ofc_sema_array_t* array);

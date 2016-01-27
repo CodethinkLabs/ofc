@@ -327,6 +327,40 @@ bool ofc_sema_array_print(
 	return true;
 }
 
+bool ofc_sema_array_print_size(
+	ofc_colstr_t* cs,
+	const ofc_sema_array_t* array)
+{
+		if (!cs || !array)
+		return false;
+
+	unsigned i;
+	for (i = 0; i < array->dimensions; i++)
+	{
+		if ((i > 0) && !ofc_colstr_atomic_writef(cs, ", "))
+			return false;
+
+		ofc_sema_array_dims_t dims
+			= array->segment[i];
+
+		int first = 1, last;
+		if (dims.first && !ofc_sema_expr_resolve_int(
+			dims.first, &first))
+			return false;
+		if (!ofc_sema_expr_resolve_int(
+			dims.last, &last))
+			return false;
+
+		unsigned count = 1 + (first <= last ?
+			(last - first) : (first - last));
+
+		if (!ofc_colstr_atomic_writef(cs, "%u", count))
+			return false;
+	}
+
+	return true;
+}
+
 bool ofc_sema_array_print_brackets(
 	ofc_colstr_t* cs,
 	const ofc_sema_array_t* array)
