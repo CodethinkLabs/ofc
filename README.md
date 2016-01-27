@@ -16,10 +16,8 @@ warnings.
 
 ### Features
 
-- Parses ALL NIST F77 tests.
-- Semantically analyses 190/192 NIST F77 tests.
-- Cleanly re-prints F77 parse trees in a form compatible with both fixed and free-form.
-- Cleanly translates some semantic analysis trees using F90 syntax.
+- Parse, semantically analyse and re-print ALL NIST F77 tests.
+- Safe translation from F77 to F90 syntax where possible.
 
 
 ## Usage
