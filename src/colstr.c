@@ -532,6 +532,6 @@ bool ofc_colstr_fdprint(ofc_colstr_t* cstr, int fd)
 	if (!cstr || !cstr->base)
 		return false;
 
-	return (dprintf(fd, "%.*s",
+	return (dprintf(fd, "%.*s\n",
 		cstr->size, cstr->base) > 0);
 }
