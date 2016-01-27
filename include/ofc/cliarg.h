@@ -12,7 +12,8 @@
 
 typedef enum
 {
-	PARSE_TREE = 0,
+	PARSE_ONLY = 0,
+	PARSE_TREE,
 	SEMA_TREE,
 	FIXED_FORM,
 	FREE_FORM,
@@ -60,6 +61,7 @@ typedef struct
 
 typedef struct
 {
+	bool parse_only;
 	bool parse_print;
 	bool sema_print;
 
@@ -68,6 +70,7 @@ typedef struct
 static const ofc_global_opts_t
 	OFC_GLOBAL_OPTS_DEFAULT =
 {
+	.parse_only  = false,
 	.parse_print = false,
 	.sema_print  = false,
 };

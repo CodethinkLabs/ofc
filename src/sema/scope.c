@@ -1068,6 +1068,9 @@ bool ofc_sema_scope_print(
 	ofc_colstr_t* cs, unsigned indent,
 	const ofc_sema_scope_t* scope)
 {
+	if (!scope)
+		return false;
+
 	const char* kwstr = NULL;
 	switch (scope->type)
 	{

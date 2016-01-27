@@ -69,14 +69,18 @@ int main(int argc, const char* argv[])
 		ofc_colstr_delete(cs);
 	}
 
-	ofc_sema_scope_t* sema = ofc_sema_scope_global(
-		&lang_opts, program);
-	if (!sema)
+	ofc_sema_scope_t* sema = NULL;
+	if (!global_opts.parse_only)
 	{
-		fprintf(stderr, "\nError: Program failed semantic analysis\n");
-		ofc_parse_stmt_list_delete(program);
-		ofc_sparse_delete(condense);
-		return EXIT_FAILURE;
+		sema = ofc_sema_scope_global(
+			&lang_opts, program);
+		if (!sema)
+		{
+			fprintf(stderr, "\nError: Program failed semantic analysis\n");
+			ofc_parse_stmt_list_delete(program);
+			ofc_sparse_delete(condense);
+			return EXIT_FAILURE;
+		}
 	}
 
 	if (global_opts.sema_print)
