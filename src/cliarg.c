@@ -261,7 +261,11 @@ bool ofc_cliarg_parse(
 				for (flag = 0; flag < strlen(arg_str); flag++)
 				{
 					const ofc_cliarg_body_t* arg_body = resolve_arg_flag(arg_str[flag]);
-					if (!arg_body) return false;
+					if (!arg_body)
+					{
+						fprintf(stderr, "Error: Cannot resolve flag: %s\n", argv[i]);
+						print_usage(program_name);
+					}
 					if (arg_body->param_num > 0)
 					{
 						fprintf(stderr, "Error: Cannot group flags that require a parameter: %s\n", argv[i]);
