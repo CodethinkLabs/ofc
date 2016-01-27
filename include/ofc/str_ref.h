@@ -55,19 +55,4 @@ static inline bool ofc_str_ref_ptr_equal(const ofc_str_ref_t* a, const ofc_str_r
 static inline bool ofc_str_ref_ptr_equal_ci(const ofc_str_ref_t* a, const ofc_str_ref_t* b)
 	{ if (!a || !b) return false; return ofc_str_ref_equal_ci(*a, *b); }
 
-
-typedef struct
-{
-	unsigned       count;
-	ofc_str_ref_t* ref;
-} ofc_str_ref_list_t;
-
-ofc_str_ref_list_t* ofc_str_ref_list_create(void);
-void ofc_str_ref_list_delete(ofc_str_ref_list_t* list);
-
-bool ofc_str_ref_list_add(
-	ofc_str_ref_list_t* list,
-	ofc_str_ref_t ref);
-
-
 #endif
