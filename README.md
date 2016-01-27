@@ -39,13 +39,7 @@ The compiler options will be automatically detected from the file name, but
 this can be overridden using commandline flags which are printed by invoking
 ofc with no source file.
 
-### Tree Printing
-Currently tree printing is excluded from the main binary, to enable it, do:
-
-    CFLAGS=-DOFC_PRINT_SEMA make -B
-    CFLAGS=-DOFC_PRINT_PARSE make -B
-
-You'll usually only want to select parse or semantic printing.
+To print the parse and semantic trees, use the --parse-tree and --sema-tree flags.
 
 
 ## Testing
