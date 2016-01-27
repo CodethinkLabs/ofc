@@ -1,5 +1,5 @@
 #!/bin/bash
 
 TPROG=$(tempfile)
-./ofc $1 | gfortran -x f77 - -o $TPROG && $TPROG
+./ofc --sema-tree $1 | gfortran -x f77 - -o $TPROG && $TPROG
 rm $TPROG
