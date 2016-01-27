@@ -293,7 +293,7 @@ bool ofc_cliarg_parse(
 	const char* source_file_ext = get_file_ext(path);
 
 	*file = ofc_file_create(path, *lang_opts);
-	if (!file)
+	if (!*file)
 	{
 		fprintf(stderr, "\nError: Failed read source file '%s'\n", path);
 		return false;
