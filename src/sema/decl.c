@@ -2116,6 +2116,28 @@ bool ofc_sema_decl_list_procedure_print(
 	return true;
 }
 
+bool ofc_sema_decl_list_procedure_spec_print(
+	ofc_colstr_t* cs, unsigned indent,
+	const ofc_sema_decl_list_t* decl_list)
+{
+	if (!cs || !decl_list)
+		return false;
+
+	unsigned i;
+	for (i = 0; i < decl_list->count; i++)
+	{
+		ofc_sema_decl_t* decl = decl_list->decl[i];
+		if (!ofc_sema_decl_is_procedure(decl)
+			|| ofc_sema_decl_is_subroutine(decl))
+			continue;
+
+		if (!ofc_sema_decl_print(
+			cs, indent, decl))
+			return false;
+	}
+
+	return true;
+}
 
 bool ofc_sema_decl_list_print(
 	ofc_colstr_t* cs, unsigned indent,
@@ -2127,9 +2149,8 @@ bool ofc_sema_decl_list_print(
 	unsigned i;
 	for (i = 0; i < decl_list->count; i++)
 	{
-		/* We have assumed we do not want a decl printed for a subroutine
-		   but this may change.  For now skip it in printing. */
-		if (ofc_sema_decl_is_subroutine(decl_list->decl[i])
+		/* Don't print specifiers for declared procedures. */
+		if (ofc_sema_decl_is_procedure(decl_list->decl[i])
 			|| decl_list->decl[i]->is_return)
 			continue;
 
@@ -2140,7 +2161,7 @@ bool ofc_sema_decl_list_print(
 
 	for (i = 0; i < decl_list->count; i++)
 	{
-		if (ofc_sema_decl_is_subroutine(decl_list->decl[i])
+		if (ofc_sema_decl_is_procedure(decl_list->decl[i])
 			|| decl_list->decl[i]->is_return)
 			continue;
 

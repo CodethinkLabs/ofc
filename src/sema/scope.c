@@ -1027,6 +1027,13 @@ static bool ofc_sema_scope_body__print(
 		return false;
 	}
 
+	if (scope->decl && (scope->type != OFC_SEMA_SCOPE_GLOBAL)
+		&& !ofc_sema_decl_list_procedure_spec_print(cs, indent, scope->decl))
+	{
+		fprintf(stderr, "\nError: Failed to print procedure specifier list");
+		return false;
+	}
+
 	if (scope->common
 		&& !ofc_sema_common_map_print(cs, indent, scope->common))
 	{
@@ -1135,8 +1142,8 @@ bool ofc_sema_scope_print(
 		}
 	}
 
-	if ((scope->type != OFC_SEMA_SCOPE_GLOBAL)
-		&& !ofc_sema_scope_body__print(cs, (indent + 1), scope))
+	if (!ofc_sema_scope_body__print(
+		cs, (indent + 1), scope))
 		return false;
 
 	if (kwstr)
