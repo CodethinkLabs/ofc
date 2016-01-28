@@ -382,7 +382,7 @@ bool ofc_sema_spec_print(
 	{
 		case OFC_SEMA_TYPE_CHARACTER:
 			type = ofc_sema_type_create_character(
-				kind, spec->len);
+				kind, spec->len, spec->len_var);
 			break;
 		default:
 			type = ofc_sema_type_create_primitive(

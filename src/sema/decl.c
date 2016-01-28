@@ -680,7 +680,7 @@ bool ofc_sema_decl_init(
 	const ofc_sema_type_t* type = decl->type;
 	if (decl->is_parameter
 		&& (type->type == OFC_SEMA_TYPE_CHARACTER)
-		&& (type->len == 0))
+		&& type->len_var)
 	{
 		const ofc_sema_type_t* etype
 			= ofc_sema_expr_type(init);
@@ -689,9 +689,17 @@ bool ofc_sema_decl_init(
 			== OFC_SEMA_TYPE_CHARACTER))
 			len = etype->len;
 
+		if (len == 0)
+		{
+			ofc_sparse_ref_error(init->src,
+				"Can't initialize variable length CHARACTER PARAMETER"
+				" with empty string");
+			return false;
+		}
+
 		const ofc_sema_type_t* ntype
 			= ofc_sema_type_create_character(
-				type->kind, len);
+				type->kind, len, false);
 		if (!ntype) return false;
 		type = ntype;
 	}

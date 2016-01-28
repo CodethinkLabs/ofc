@@ -207,14 +207,14 @@ static void ofc_sema_type__map_cleanup(void)
 
 static const ofc_sema_type_t* ofc_sema_type__create(
 	ofc_sema_type_e type,
-	unsigned kind, unsigned len,
+	unsigned kind, unsigned len, bool len_var,
 	const ofc_sema_type_t* subtype,
 	const ofc_sema_structure_t* structure)
 {
 	switch (type)
 	{
 		case OFC_SEMA_TYPE_BYTE:
-			if (len != 0)
+			if ((len != 0) || len_var)
 				return NULL;
 			if ((kind != 1)
 				&& (kind != 3))
@@ -231,7 +231,7 @@ static const ofc_sema_type_t* ofc_sema_type__create(
 		case OFC_SEMA_TYPE_REAL:
 		case OFC_SEMA_TYPE_COMPLEX:
 			if (!ofc_sema_type__kind_valid(kind)
-				|| (len != 0))
+				|| (len != 0) || len_var)
 				return NULL;
 			break;
 
@@ -269,6 +269,7 @@ static const ofc_sema_type_t* ofc_sema_type__create(
 		default:
 			stype.kind = kind;
 			stype.len = len;
+			stype.len_var = len_var;
 			break;
 	}
 
@@ -323,15 +324,15 @@ const ofc_sema_type_t* ofc_sema_type_create_primitive(
 	}
 
 	return ofc_sema_type__create(
-		type, kind, 0,
+		type, kind, 0, false,
 		NULL, NULL);
 }
 
 const ofc_sema_type_t* ofc_sema_type_create_character(
-	unsigned kind, unsigned len)
+	unsigned kind, unsigned len, bool len_var)
 {
 	return ofc_sema_type__create(
-		OFC_SEMA_TYPE_CHARACTER, kind, len,
+		OFC_SEMA_TYPE_CHARACTER, kind, len, len_var,
 		NULL, NULL);
 }
 
@@ -339,7 +340,7 @@ const ofc_sema_type_t* ofc_sema_type_create_structure(
 	const ofc_sema_structure_t* structure)
 {
 	return ofc_sema_type__create(
-		OFC_SEMA_TYPE_STRUCTURE, 0, 0,
+		OFC_SEMA_TYPE_STRUCTURE, 0, 0, false,
 		NULL, structure);
 }
 
@@ -347,7 +348,7 @@ const ofc_sema_type_t* ofc_sema_type_create_pointer(
 	ofc_sema_type_t* target)
 {
 	return ofc_sema_type__create(
-		OFC_SEMA_TYPE_POINTER, 0, 0,
+		OFC_SEMA_TYPE_POINTER, 0, 0, false,
 		target, NULL);
 }
 
@@ -361,56 +362,8 @@ const ofc_sema_type_t* ofc_sema_type_create_function(
 		return NULL;
 
 	return ofc_sema_type__create(
-		OFC_SEMA_TYPE_FUNCTION, 0, 0,
+		OFC_SEMA_TYPE_FUNCTION, 0, 0, false,
 		type, NULL);
-}
-
-
-const ofc_sema_type_t* ofc_sema_type_star_len(
-	const ofc_sema_type_t* type, unsigned star_len)
-{
-	if (!type || (star_len == 0))
-		return NULL;
-
-	if (type->type == OFC_SEMA_TYPE_CHARACTER)
-	{
-		if (type->len != 0)
-		{
-			/* TODO - Warn that length is being overridden. */
-		}
-
-		return ofc_sema_type__create(
-			type->type, type->kind, star_len,
-			type->subtype, type->structure);
-	}
-
-	/* TODO - Warn if a kind isn't implicit. */
-
-	if (type->type == OFC_SEMA_TYPE_FUNCTION)
-	{
-		const ofc_sema_type_t* subtype
-			= ofc_sema_type_star_len(
-				type->subtype, star_len);
-		if (!subtype) return NULL;
-
-		return ofc_sema_type_create_function(subtype);
-	}
-
-	switch (type->type)
-	{
-		case OFC_SEMA_TYPE_LOGICAL:
-		case OFC_SEMA_TYPE_INTEGER:
-		case OFC_SEMA_TYPE_REAL:
-		case OFC_SEMA_TYPE_COMPLEX:
-			return ofc_sema_type__create(
-				type->type, star_len, type->len,
-				type->subtype, type->structure);
-			break;
-		default:
-			break;
-	}
-
-	return NULL;
 }
 
 
@@ -520,7 +473,7 @@ const ofc_sema_type_t* ofc_sema_type_subroutine(void)
 	if (!subroutine)
 	{
 		subroutine = ofc_sema_type__create(
-			OFC_SEMA_TYPE_SUBROUTINE, 0, 0,
+			OFC_SEMA_TYPE_SUBROUTINE, 0, 0, false,
 			NULL, NULL);
 	}
 
@@ -557,8 +510,7 @@ const ofc_sema_type_t* ofc_sema_type_spec(
 
 		case OFC_SEMA_TYPE_CHARACTER:
 			type = ofc_sema_type_create_character(
-				kind, (spec->len_var ? 0
-					: (spec->len == 0 ? 1 : spec->len)));
+				kind, spec->len, spec->len_var);
 			break;
 
 		default:
@@ -702,15 +654,12 @@ bool ofc_sema_type_size(
 	if (!ofc_sema_type_base_size(type, &s))
 		return false;
 
-	if ((type->type == OFC_SEMA_TYPE_CHARACTER)
-		&& (type->len == 0))
-		return false;
-
-	if (type->len > 1)
+	if (type->type == OFC_SEMA_TYPE_CHARACTER)
+	{
+		if (type->len_var)
+			return false;
 		s *= type->len;
-
-	if (s == 0)
-		return false;
+	}
 
 	if (size) *size = s;
 	return true;
@@ -1143,7 +1092,7 @@ bool ofc_sema_type_print(
 					return false;
 			}
 
-			if (type->len == 0
+			if (type->len_var
 				? !ofc_colstr_atomic_writef(cs, "*")
 				: !ofc_colstr_atomic_writef(cs, "%u", type->len))
 				return false;

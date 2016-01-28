@@ -223,7 +223,7 @@ static ofc_sema_lhs_t* ofc_sema_lhs_substring(
 
 	const ofc_sema_type_t* type
 		= ofc_sema_type_create_character(
-			lhs->data_type->kind, len);
+			lhs->data_type->kind, len, false);
 	if (!type)
 	{
 		ofc_sema_lhs_delete(lhs);

@@ -44,6 +44,7 @@ struct ofc_sema_type_s
 		{
 			unsigned kind;
 			unsigned len;
+			bool     len_var;
 		};
 
 		const ofc_sema_structure_t* structure;
@@ -63,16 +64,13 @@ const char* ofc_sema_type_str_cast_rep(
 const ofc_sema_type_t* ofc_sema_type_create_primitive(
 	ofc_sema_type_e type, unsigned kind);
 const ofc_sema_type_t* ofc_sema_type_create_character(
-	unsigned kind, unsigned len);
+	unsigned kind, unsigned len, bool len_var);
 const ofc_sema_type_t* ofc_sema_type_create_structure(
 	const ofc_sema_structure_t* structure);
 const ofc_sema_type_t* ofc_sema_type_create_pointer(
 	ofc_sema_type_t* target);
 const ofc_sema_type_t* ofc_sema_type_create_function(
 	const ofc_sema_type_t* type);
-
-const ofc_sema_type_t* ofc_sema_type_star_len(
-	const ofc_sema_type_t* type, unsigned star_len);
 
 typedef const ofc_sema_type_t* (*ofc_sema_type_f)(void);
 

@@ -552,7 +552,8 @@ static ofc_sema_typeval_t* ofc_sema_typeval__character_literal(
 			return NULL;
 	}
 
-	if (!literal->string->base)
+	if ((literal->string->size > 0)
+		&& !literal->string->base)
 		return NULL;
 
 	unsigned size = literal->string->size;
@@ -582,7 +583,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__character_literal(
 
 	if (!typeval.type)
 	{
-		typeval.type = ofc_sema_type_create_character(1, size);
+		typeval.type = ofc_sema_type_create_character(1, size, false);
 		if (!typeval.type)
 		{
 			/* This should never happen. */
@@ -1507,7 +1508,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_concat(
 	if (!a || !a->type
 		|| !b || !b->type
 		|| (a->type->type != OFC_SEMA_TYPE_CHARACTER)
-		|| (b->type->type != OFC_SEMA_TYPE_CHARACTER))
+		|| (b->type->type != OFC_SEMA_TYPE_CHARACTER)
+		|| a->type->len_var
+		|| b->type->len_var)
 		return NULL;
 
 	unsigned asize, bsize;
@@ -1528,7 +1531,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_concat(
 
 	ofc_sema_typeval_t tv;
 	tv.type = ofc_sema_type_create_character(
-		a->type->kind, len);
+		a->type->kind, len, false);
 	if (!tv.type) return NULL;
 
 	if (!ofc_sparse_ref_bridge(
