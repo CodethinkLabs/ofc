@@ -80,7 +80,6 @@ ofc_sema_array_t* ofc_sema_array(
 				ofc_sema_expr_t* cast
 					= ofc_sema_expr_cast(seg->first,
 						ofc_sema_type_integer_default());
-				ofc_sema_expr_delete(seg->first);
 				if (!cast)
 				{
 					ofc_sema_array_delete(array);
