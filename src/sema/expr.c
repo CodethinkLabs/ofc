@@ -642,12 +642,9 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 	expr->a = as;
 	expr->b = bs;
 
-	if (!ofc_sparse_ref_bridge(
-		as->src, bs->src, &expr->src))
-	{
-		ofc_sema_expr_delete(expr);
-		return NULL;
-	}
+	expr->src = OFC_SPARSE_REF_EMPTY;
+	ofc_sparse_ref_bridge(
+		as->src, bs->src, &expr->src);
 
 	return expr;
 }
@@ -803,13 +800,10 @@ static ofc_sema_expr_t* ofc_sema_expr__intrinsic(
 	expr->intrinsic = intrinsic;
 	expr->args      = args;
 
-	if (!ofc_sparse_ref_bridge(
+	expr->src = OFC_SPARSE_REF_EMPTY;
+	ofc_sparse_ref_bridge(
 		name->parent->src, name->src,
-		&expr->src))
-	{
-		ofc_sema_expr_delete(expr);
-		return NULL;
-	}
+		&expr->src);
 
 	return expr;
 }
@@ -900,12 +894,9 @@ static ofc_sema_expr_t* ofc_sema_expr__function(
 	expr->function = decl;
 	expr->args     = args;
 
-	if (!ofc_sparse_ref_bridge(
-		name->parent->src, name->src, &expr->src))
-	{
-		ofc_sema_expr_delete(expr);
-		return NULL;
-	}
+	expr->src = OFC_SPARSE_REF_EMPTY;
+	ofc_sparse_ref_bridge(
+		name->parent->src, name->src, &expr->src);
 
 	return expr;
 }

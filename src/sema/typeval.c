@@ -1412,9 +1412,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_power(
 	ofc_sema_typeval_t tv;
 	tv.type = a->type;
 
-	if (!ofc_sparse_ref_bridge(
-		a->src, b->src, &tv.src))
-		return NULL;
+	tv.src = OFC_SPARSE_REF_EMPTY;
+	ofc_sparse_ref_bridge(
+		a->src, b->src, &tv.src);
 
 	switch (a->type->type)
 	{
@@ -1472,9 +1472,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_multiply(
 	ofc_sema_typeval_t tv;
 	tv.type = a->type;
 
-	if (!ofc_sparse_ref_bridge(
-		a->src, b->src, &tv.src))
-		return NULL;
+	tv.src = OFC_SPARSE_REF_EMPTY;
+	ofc_sparse_ref_bridge(
+		a->src, b->src, &tv.src);
 
 	switch (a->type->type)
 	{
@@ -1534,9 +1534,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_concat(
 		a->type->kind, len, false);
 	if (!tv.type) return NULL;
 
-	if (!ofc_sparse_ref_bridge(
-		a->src, b->src, &tv.src))
-		return NULL;
+	tv.src = OFC_SPARSE_REF_EMPTY;
+	ofc_sparse_ref_bridge(
+		a->src, b->src, &tv.src);
 
 	tv.character = (char*)malloc(sizeof(char) * len);
 	if (!tv.character) return NULL;
@@ -1563,9 +1563,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_divide(
 	ofc_sema_typeval_t tv;
 	tv.type = a->type;
 
-	if (!ofc_sparse_ref_bridge(
-		a->src, b->src, &tv.src))
-		return NULL;
+	tv.src = OFC_SPARSE_REF_EMPTY;
+	ofc_sparse_ref_bridge(
+		a->src, b->src, &tv.src);
 
 	switch (a->type->type)
 	{
@@ -1614,9 +1614,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_add(
 	ofc_sema_typeval_t tv;
 	tv.type = a->type;
 
-	if (!ofc_sparse_ref_bridge(
-		a->src, b->src, &tv.src))
-		return NULL;
+	tv.src = OFC_SPARSE_REF_EMPTY;
+	ofc_sparse_ref_bridge(
+		a->src, b->src, &tv.src);
 
 	switch (a->type->type)
 	{
@@ -1653,9 +1653,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_subtract(
 	ofc_sema_typeval_t tv;
 	tv.type = a->type;
 
-	if (!ofc_sparse_ref_bridge(
-		a->src, b->src, &tv.src))
-		return NULL;
+	tv.src = OFC_SPARSE_REF_EMPTY;
+	ofc_sparse_ref_bridge(
+		a->src, b->src, &tv.src);
 
 	switch (a->type->type)
 	{
@@ -1729,9 +1729,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_eq(
 	tv.type = ofc_sema_type_create_primitive(
 		OFC_SEMA_TYPE_LOGICAL, 1);
 
-	if (!ofc_sparse_ref_bridge(
-		a->src, b->src, &tv.src))
-		return NULL;
+	tv.src = OFC_SPARSE_REF_EMPTY;
+	ofc_sparse_ref_bridge(
+		a->src, b->src, &tv.src);
 
 	if (a->type->type == OFC_SEMA_TYPE_CHARACTER)
 	{
@@ -1788,9 +1788,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_ne(
 	tv.type = ofc_sema_type_create_primitive(
 		OFC_SEMA_TYPE_LOGICAL, 1);
 
-	if (!ofc_sparse_ref_bridge(
-		a->src, b->src, &tv.src))
-		return NULL;
+	tv.src = OFC_SPARSE_REF_EMPTY;
+	ofc_sparse_ref_bridge(
+		a->src, b->src, &tv.src);
 
 	if (a->type->type == OFC_SEMA_TYPE_CHARACTER)
 	{
@@ -1847,9 +1847,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_lt(
 	tv.type = ofc_sema_type_create_primitive(
 		OFC_SEMA_TYPE_LOGICAL, 1);
 
-	if (!ofc_sparse_ref_bridge(
-		a->src, b->src, &tv.src))
-		return NULL;
+	tv.src = OFC_SPARSE_REF_EMPTY;
+	ofc_sparse_ref_bridge(
+		a->src, b->src, &tv.src);
 
 	if (a->type->type == OFC_SEMA_TYPE_CHARACTER)
 	{
@@ -1918,9 +1918,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_le(
 	tv.type = ofc_sema_type_create_primitive(
 		OFC_SEMA_TYPE_LOGICAL, 1);
 
-	if (!ofc_sparse_ref_bridge(
-		a->src, b->src, &tv.src))
-		return NULL;
+	tv.src = OFC_SPARSE_REF_EMPTY;
+	ofc_sparse_ref_bridge(
+		a->src, b->src, &tv.src);
 
 	if (a->type->type == OFC_SEMA_TYPE_CHARACTER)
 	{
@@ -1989,9 +1989,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_gt(
 	tv.type = ofc_sema_type_create_primitive(
 		OFC_SEMA_TYPE_LOGICAL, 1);
 
-	if (!ofc_sparse_ref_bridge(
-		a->src, b->src, &tv.src))
-		return NULL;
+	tv.src = OFC_SPARSE_REF_EMPTY;
+	ofc_sparse_ref_bridge(
+		a->src, b->src, &tv.src);
 
 	if (a->type->type == OFC_SEMA_TYPE_CHARACTER)
 	{
@@ -2060,9 +2060,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_ge(
 	tv.type = ofc_sema_type_create_primitive(
 		OFC_SEMA_TYPE_LOGICAL, 1);
 
-	if (!ofc_sparse_ref_bridge(
-		a->src, b->src, &tv.src))
-		return NULL;
+	tv.src = OFC_SPARSE_REF_EMPTY;
+	ofc_sparse_ref_bridge(
+		a->src, b->src, &tv.src);
 
 	if (a->type->type == OFC_SEMA_TYPE_CHARACTER)
 	{
@@ -2155,9 +2155,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_and(
 	ofc_sema_typeval_t tv;
 	tv.type = a->type;
 
-	if (!ofc_sparse_ref_bridge(
-		a->src, b->src, &tv.src))
-		return NULL;
+	tv.src = OFC_SPARSE_REF_EMPTY;
+	ofc_sparse_ref_bridge(
+		a->src, b->src, &tv.src);
 
 	switch (a->type->type)
 	{
@@ -2188,9 +2188,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_or(
 	ofc_sema_typeval_t tv;
 	tv.type = a->type;
 
-	if (!ofc_sparse_ref_bridge(
-		a->src, b->src, &tv.src))
-		return NULL;
+	tv.src = OFC_SPARSE_REF_EMPTY;
+	ofc_sparse_ref_bridge(
+		a->src, b->src, &tv.src);
 
 	switch (a->type->type)
 	{
@@ -2222,9 +2222,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_eqv(
 	tv.type = ofc_sema_type_create_primitive(
 		OFC_SEMA_TYPE_LOGICAL, 1);
 
-	if (!ofc_sparse_ref_bridge(
-		a->src, b->src, &tv.src))
-		return NULL;
+	tv.src = OFC_SPARSE_REF_EMPTY;
+	ofc_sparse_ref_bridge(
+		a->src, b->src, &tv.src);
 
 	switch (a->type->type)
 	{
@@ -2255,9 +2255,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_neqv(
 	tv.type = ofc_sema_type_create_primitive(
 		OFC_SEMA_TYPE_LOGICAL, 1);
 
-	if (!ofc_sparse_ref_bridge(
-		a->src, b->src, &tv.src))
-		return NULL;
+	tv.src = OFC_SPARSE_REF_EMPTY;
+	ofc_sparse_ref_bridge(
+		a->src, b->src, &tv.src);
 
 	switch (a->type->type)
 	{
