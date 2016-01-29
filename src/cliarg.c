@@ -92,9 +92,9 @@ static const ofc_cliarg_body_t cliargs[] =
 	{ FIXED_FORM, "free-form",  '\0', "Sets free form type",               LANG_NONE, 0, true },
 	{ FREE_FORM,  "fixed-form", '\0', "Sets fixed form type",              LANG_NONE, 0, true },
 	{ TAB_FORM,   "tab-form",   '\0', "Sets tabbed form type",             LANG_NONE, 0, true },
-	{ TAB_WIDTH,  "tab-width",  '\0', "Sets tab width",                    LANG_INT,  1, true },
+	{ TAB_WIDTH,  "tab-width",  '\0', "Sets tab width <n>",                LANG_INT,  1, true },
 	{ DEBUG,      "debug",      '\0', "Sets debug mode",                   LANG_NONE, 0, true },
-	{ COLUMNS,    "columns",    '\0', "sets number of columns to <n>",     LANG_INT,  1, true },
+	{ COLUMNS,    "columns",    '\0', "Sets number of columns to <n>",     LANG_INT,  1, true },
 	{ CASE_SEN,   "case-sen",   '\0', "Sets case sensitive mode",          LANG_NONE, 0, true },
 };
 
@@ -311,18 +311,46 @@ bool ofc_cliarg_parse(
 	return true;
 }
 
+static unsigned ofc_cliarg_longest_name_len()
+{
+	unsigned longest_name_len = 0;
+
+	unsigned i;
+	for (i = 0; i < INVALID; i++)
+	{
+		if (strlen(cliargs[i].name) > longest_name_len)
+			longest_name_len = strlen(cliargs[i].name);
+	}
+
+	return longest_name_len;
+}
 
 void print_usage(const char* name)
 {
-		printf("%s [OPTIONS] FILE\n", name);
-		printf("Options:\n");
+	printf("%s [OPTIONS] FILE\n", name);
+	printf("Options:\n");
 
-		unsigned i;
-		for (i = 0; i < INVALID; i++)
-		{
-			printf("  --%s\t\t%s\n",
-				cliargs[i].name, cliargs[i].desc);
-		}
+	unsigned name_len = ofc_cliarg_longest_name_len() + 10;
+
+	unsigned i;
+	for (i = 0; i < INVALID; i++)
+	{
+		unsigned line_len = 0;
+
+		if (cliargs[i].param_type == LANG_INT)
+			line_len = printf("  --%s <n>", cliargs[i].name);
+		else
+			line_len = printf("  --%s", cliargs[i].name);
+
+		for (; line_len < name_len; line_len++) printf(" ");
+
+		if (cliargs[i].flag != '\0')
+			printf("-%c  ", cliargs[i].flag);
+		else
+			printf("    ");
+
+		printf("%s\n", cliargs[i].desc);
+	}
 }
 
 ofc_cliarg_t* ofc_cliarg_create(
