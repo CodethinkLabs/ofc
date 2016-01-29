@@ -15,7 +15,7 @@
 
 #include "ofc/sema.h"
 
-void ofc_sema_stmt_io_open__cleanup(
+static void ofc_sema_stmt_io_open__cleanup(
 	ofc_sema_stmt_t s)
 {
 	ofc_sema_expr_delete(s.io_open.unit);

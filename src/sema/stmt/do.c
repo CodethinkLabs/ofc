@@ -143,7 +143,7 @@ static bool ofc_sema_stmt__loop_control(
 	return true;
 }
 
-ofc_sema_stmt_t* ofc_sema_stmt_do__label(
+static ofc_sema_stmt_t* ofc_sema_stmt_do__label(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt)
 {
@@ -189,7 +189,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_do__label(
 	return as;
 }
 
-ofc_sema_stmt_t* ofc_sema_stmt_do__block(
+static ofc_sema_stmt_t* ofc_sema_stmt_do__block(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt)
 {
@@ -261,7 +261,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_do__block(
 	return as;
 }
 
-ofc_sema_stmt_t* ofc_sema_stmt_do_while__label(
+static ofc_sema_stmt_t* ofc_sema_stmt_do_while__label(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt)
 {
@@ -305,7 +305,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_do_while__label(
 	return as;
 }
 
-ofc_sema_stmt_t* ofc_sema_stmt_do_while__block(
+static ofc_sema_stmt_t* ofc_sema_stmt_do_while__block(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt)
 {
