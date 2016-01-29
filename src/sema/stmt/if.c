@@ -15,7 +15,7 @@
 
 #include "ofc/sema.h"
 
-ofc_sema_stmt_t* ofc_sema_stmt_if__computed(
+static ofc_sema_stmt_t* ofc_sema_stmt_if__computed(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt)
 {
@@ -103,7 +103,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_if__computed(
 	return as;
 }
 
-ofc_sema_stmt_t* ofc_sema_stmt_if__statement(
+static ofc_sema_stmt_t* ofc_sema_stmt_if__statement(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt)
 {
@@ -151,7 +151,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_if__statement(
 	return as;
 }
 
-ofc_sema_stmt_t* ofc_sema_stmt_if__then(
+static ofc_sema_stmt_t* ofc_sema_stmt_if__then(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt)
 {
