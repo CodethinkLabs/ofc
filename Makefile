@@ -16,13 +16,10 @@ OBJ_DEBUG = $(patsubst %.c, %.debug.o, $(SRC))
 DEB = $(patsubst %.c, %.d, $(SRC))
 DEB_DEBUG = $(patsubst %.c, %.debug.d, $(SRC))
 
+TEST_DIR = tests
+
 PREFIX = $(DESTDIR)/usr/local
 BINDIR = $(PREFIX)/bin
-
-TEST_DIR = tests
-TARGETS = $(sort $(wildcard $(TEST_DIR)/*.f $(TEST_DIR)/*.f77 $(TEST_DIR)/*.f90 $(TEST_DIR)/*.FOR))
-VG_TARGETS = $(addsuffix .vg, $(TARGETS))
-VGO_TARGETS = $(addsuffix .vgo, $(TARGETS))
 
 all : $(FRONTEND)
 
@@ -39,7 +36,7 @@ debug: $(FRONTEND_DEBUG)
 
 clean:
 	rm -f $(FRONTEND) $(FRONTEND_DEBUG) $(OBJ) $(OBJ_DEBUG) \
-	$(DEB) $(DEB_DEBUG) $(VG_TARGETS) $(VGO_TARGETS)
+	$(DEB) $(DEB_DEBUG)
 
 install: $(FRONTEND)
 	install $(FRONTEND) $(BINDIR)
@@ -63,24 +60,12 @@ scan-build:
 
 check: cppcheck scan scan-build
 
-tests: $(TARGETS)
-
-$(TARGETS): $(FRONTEND)
-	@$(realpath $(FRONTEND)) $@ > /dev/null
-
-$(VG_TARGETS) : %.vg : % $(FRONTEND_DEBUG)
-	valgrind -v --leak-check=full --errors-for-leak-kinds=all --track-origins=yes --error-exitcode=1 $(realpath $(FRONTEND_DEBUG)) $(patsubst %.vg, %, $@) > $@ 2>&1
-
-$(VGO_TARGETS) : %.vgo : % $(FRONTEND)
-	valgrind -v --leak-check=full --errors-for-leak-kinds=all --error-exitcode=1 $(realpath $(FRONTEND)) $(patsubst %.vgo, %, $@) > $@ 2>&1
-
-valgrind: $(VG_TARGETS)
-
-valgrind-optimized: $(VGO_TARGETS)
+test: $(FRONTEND) $(FRONTEND_DEBUG)
+	make FRONTEND=$(realpath $(FRONTEND)) $(realpath FRONTEND_DEBUG=$(FRONTEND_DEBUG)) -C $(TEST_DIR)
 
 loc:
 	@wc -l $(SRC)
 
 -include $(DEB) $(DEB_DEBUG)
 
-.PHONY : all clean install uninstall debug cppcheck scan scan-cc scan-build check tests $(TARGETS) loc valgrind
+.PHONY : all clean install uninstall debug cppcheck scan scan-cc scan-build check test loc
