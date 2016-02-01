@@ -6,19 +6,21 @@ git:
 
 # whitelist
 branches:
-  only:
-    - master
+    only:
+        - master
+
+addons:
+    apt:
+        sources:
+            - ubuntu-toolchain-r-test
+        packages:
+            - gcc-4.8
+            - valgrind
 
 before_install:
     # Replace the SSH URL with the public URL and initialize submodules
     - sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
     - git submodule update --init --recursive
-
-    - sudo apt-get update
-
-install:
-    - sudo apt-get install valgrind
-    - sudo apt-get install gcc
 
 script:
     - make
