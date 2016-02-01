@@ -17,6 +17,9 @@ addons:
             - gcc-4.8
             - valgrind
 
+compiler:
+    - gcc-4.8
+
 before_install:
     # Replace the SSH URL with the public URL and initialize submodules
     - sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
