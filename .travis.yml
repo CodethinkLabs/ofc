@@ -1,0 +1,20 @@
+language: c
+
+git:
+    depth: 3
+    submodules: false
+
+# whitelist
+branches:
+  only:
+    - master
+
+before_install:
+    # Replace the SSH URL with the public URL and initialize submodules
+    - sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
+    - git submodule update --init --recursive
+
+    - sudo apt-get update
+
+install:
+    - sudo apt-get install valgrind
