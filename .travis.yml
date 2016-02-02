@@ -1,5 +1,5 @@
-sudo: required
-dist: trusty
+# We run on the container-based infrastructure, sudo is not allowed.
+sudo: false
 language: c
 
 git:
@@ -16,7 +16,15 @@ branches:
 
 addons:
     apt:
-        - valgrind
+        sources:
+            - ubuntu-toolchain-r-test
+        packages:
+            - gcc-4.8
+            - valgrind
+
+# Travis CI C builder will export the CC env variable to point to gcc-4.8.
+compiler:
+    - gcc-4.8
 
 before_install:
     # Replace the SSH URL with the public URL and initialize submodules
