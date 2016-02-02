@@ -1,5 +1,4 @@
-# We run on the container-based infrastructure, sudo is not allowed.
-sudo: false
+sudo: required
 dist: trusty
 language: c
 
