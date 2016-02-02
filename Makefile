@@ -61,11 +61,17 @@ scan-build:
 check: cppcheck scan scan-build
 
 test: $(FRONTEND) $(FRONTEND_DEBUG)
-	make FRONTEND=$(realpath $(FRONTEND)) $(realpath FRONTEND_DEBUG=$(FRONTEND_DEBUG)) -C $(TEST_DIR)
+	make FRONTEND=$(realpath $(FRONTEND)) $(realpath FRONTEND_DEBUG=$(FRONTEND_DEBUG)) -C $(TEST_DIR) test
+
+test-report: $(FRONTEND) $(FRONTEND_DEBUG)
+	make FRONTEND=$(realpath $(FRONTEND)) $(realpath FRONTEND_DEBUG=$(FRONTEND_DEBUG)) -C $(TEST_DIR) test-report
+
+test-report-lite: $(FRONTEND) $(FRONTEND_DEBUG)
+	make FRONTEND=$(realpath $(FRONTEND)) $(realpath FRONTEND_DEBUG=$(FRONTEND_DEBUG)) -C $(TEST_DIR) test-report-lite
 
 loc:
 	@wc -l $(SRC)
 
 -include $(DEB) $(DEB_DEBUG)
 
-.PHONY : all clean install uninstall debug cppcheck scan scan-cc scan-build check test loc
+.PHONY : all clean install uninstall debug cppcheck scan scan-cc scan-build check test test-report test-report-lite loc
