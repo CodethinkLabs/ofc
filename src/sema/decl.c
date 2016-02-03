@@ -481,10 +481,19 @@ static bool ofc_sema_decl__decl(
 		}
 		else if (pdecl->init_clist)
 		{
-			ofc_sparse_ref_error(lhs->src,
-				"CList initializers not yet supported");
-			/* TODO - CList initializer resolution. */
-			return false;
+			ofc_sema_expr_list_t* init_clist
+				= ofc_sema_expr_list_clist(
+					scope, pdecl->init_clist);
+			if (!init_clist)
+				return false;
+
+			bool initialized = ofc_sema_decl_init_array(
+				decl, NULL, init_clist->count,
+				(const ofc_sema_expr_t**)init_clist->expr);
+			ofc_sema_expr_list_delete(init_clist);
+
+			if (!initialized)
+				return false;
 		}
 	}
 	else
