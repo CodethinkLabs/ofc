@@ -850,7 +850,20 @@ const ofc_sema_type_t* ofc_sema_type_promote(
 		return NULL;
 
 	if (a->type == b->type)
+	{
+		if (a->type == OFC_SEMA_TYPE_CHARACTER)
+		{
+			bool len_var = (a->len_var || b->len_var);
+			unsigned len = (len_var ? 0
+				: (a->len > b->len ? a->len : b->len));
+			unsigned kind = (asize > bsize ? a->kind : b->kind);
+
+			return ofc_sema_type_create_character(
+				kind, len, len_var);
+		}
+
 		return (asize > bsize ? a : b);
+	}
 
 	if (a->type == OFC_SEMA_TYPE_COMPLEX)
 		asize /= 2;
