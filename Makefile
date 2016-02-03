@@ -10,6 +10,9 @@ CFLAGS_COMMON = -Wall -Wextra -Werror -MD -MP -I include
 CFLAGS += -O3 $(CFLAGS_COMMON)
 CFLAGS_DEBUG += -O0 -g $(CFLAGS_COMMON)
 
+export OFC_GIT_COMMIT = $(shell git rev-parse HEAD)
+export OFC_GIT_BRANCH = $(shell git rev-parse --symbolic-full-name --abbrev-ref HEAD)
+
 SRC = $(foreach dir, $(SRC_DIR_BASE), $(wildcard $(dir)/*.c))
 OBJ = $(patsubst %.c, %.o, $(SRC))
 OBJ_DEBUG = $(patsubst %.c, %.debug.o, $(SRC))
