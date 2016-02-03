@@ -981,6 +981,17 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 	if ((type->type == OFC_SEMA_TYPE_CHARACTER)
 		&& (typeval->type->type == OFC_SEMA_TYPE_CHARACTER))
 	{
+		if (typeval->type->len_var)
+			return NULL;
+
+		if (type->len_var)
+		{
+			const ofc_sema_type_t* ntype
+				= ofc_sema_type_create_character(
+					type->kind, typeval->type->len, false);
+			return ofc_sema_typeval_cast(typeval, ntype);
+		}
+
 		unsigned len_tval = typeval->type->len;
 		unsigned len_type = type->len;
 
