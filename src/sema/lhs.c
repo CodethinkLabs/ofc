@@ -139,6 +139,7 @@ static ofc_sema_lhs_t* ofc_sema_lhs_substring(
 	}
 
 	unsigned len = 0;
+	bool len_var = true;
 	if ((!first || ofc_sema_expr_is_constant(first))
 		&& ofc_sema_expr_is_constant(last))
 	{
@@ -219,11 +220,12 @@ static ofc_sema_lhs_t* ofc_sema_lhs_substring(
 			ofc_sema_expr_delete(first);
 			return NULL;
 		}
+		len_var = false;
 	}
 
 	const ofc_sema_type_t* type
 		= ofc_sema_type_create_character(
-			lhs->data_type->kind, len, false);
+			lhs->data_type->kind, len, len_var);
 	if (!type)
 	{
 		ofc_sema_lhs_delete(lhs);
