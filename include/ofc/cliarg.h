@@ -8,11 +8,13 @@
 #include <ctype.h>
 
 #include "ofc/lang_opts.h"
+#include "ofc/global_opts.h"
 #include "ofc/file.h"
 
 typedef enum
 {
-	PARSE_ONLY = 0,
+	NO_WARN = 0,
+	PARSE_ONLY,
 	PARSE_TREE,
 	SEMA_TREE,
 	FIXED_FORM,
@@ -58,22 +60,6 @@ typedef struct
 	unsigned       count;
 	ofc_cliarg_t** arg;
 } ofc_cliarg_list_t;
-
-typedef struct
-{
-	bool parse_only;
-	bool parse_print;
-	bool sema_print;
-
-} ofc_global_opts_t;
-
-static const ofc_global_opts_t
-	OFC_GLOBAL_OPTS_DEFAULT =
-{
-	.parse_only  = false,
-	.parse_print = false,
-	.sema_print  = false,
-};
 
 bool ofc_cliarg_parse(
 	int argc,

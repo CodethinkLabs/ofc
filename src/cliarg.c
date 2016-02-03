@@ -10,6 +10,9 @@ static bool set_global_opts__flag(
 
 	switch (arg_type)
 	{
+		case NO_WARN:
+			global->no_warn = true;
+			break;
 		case PARSE_ONLY:
 			global->parse_only = true;
 			break;
@@ -86,6 +89,7 @@ static bool set_lang_opts__num(
 static const ofc_cliarg_body_t cliargs[] =
 {
 	/*ENUM        NAME          FLAG  DESCRIPTION                 PARAM_TYPE PARAMS EXCLUSIVE */
+	{ NO_WARN,    "no-warn",    '\0', "Suppress OFC warnings",             GLOB_NONE, 0, true },
 	{ PARSE_ONLY, "parse-only", '\0', "Runs the parser only",              GLOB_NONE, 0, true },
 	{ PARSE_TREE, "parse-tree", '\0', "Prints the parse tree",             GLOB_NONE, 0, true },
 	{ SEMA_TREE,  "sema-tree",  '\0', "Prints the semantic analysis tree", GLOB_NONE, 0, true },
