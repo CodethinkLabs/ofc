@@ -2097,6 +2097,27 @@ static const char* ofc_sema_expr__operator[] =
 	".NEQV.",
 };
 
+static bool ofc_sema_expr__root_is_constant(
+	const ofc_sema_expr_t* expr)
+{
+	if (!expr) return false;
+
+	switch (expr->type)
+	{
+		case OFC_SEMA_EXPR_CONSTANT:
+			return true;
+
+		case OFC_SEMA_EXPR_CAST:
+			return ofc_sema_expr__root_is_constant(
+				expr->cast.expr);
+
+		default:
+			break;
+	}
+
+	return false;
+}
+
 bool ofc_sema_expr_print(
 	ofc_colstr_t* cs,
 	const ofc_sema_expr_t* expr)
@@ -2122,6 +2143,9 @@ bool ofc_sema_expr_print(
 			break;
 
 		case OFC_SEMA_EXPR_CAST:
+			if (!expr->constant
+				|| !ofc_sema_expr__root_is_constant(expr->cast.expr)
+				|| !ofc_sema_typeval_print(cs, expr->constant))
 			{
 				#ifdef OFC_PRINT_SEMA_IMPLICIT_CAST
 				const char* cast
