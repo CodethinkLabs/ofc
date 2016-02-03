@@ -1068,6 +1068,13 @@ bool ofc_sema_decl_init_substring(
 		return false;
 	}
 
+	if (type->len_var)
+	{
+		ofc_sparse_ref_error(init->src,
+			"Substring of variable length CHARACTER type isn't supported");
+		return false;
+	}
+
 	if (ofc_sema_decl_is_array(decl))
 	{
 		/* TODO - Support substrings of arrays. */
