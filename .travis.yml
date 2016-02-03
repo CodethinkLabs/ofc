@@ -34,4 +34,4 @@ before_install:
     - git submodule update --init --recursive
 
 script:
-    - make test
+    - make -j 2 test
