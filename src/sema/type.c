@@ -1064,11 +1064,8 @@ bool ofc_sema_type_print(
 	}
 
 	bool print_len = ((type->type == OFC_SEMA_TYPE_CHARACTER)
-		&& ((type->len > 1) || type->len_var));
-
-	bool print_kind = ((type->kind != 1)
-		&& !kind_abs
-		&& !print_double);
+		&& (type->len != 1));
+	bool print_kind = ((type->kind != 1) && !kind_abs && !print_double);
 
 	if (print_len || print_kind)
 	{
@@ -1081,6 +1078,7 @@ bool ofc_sema_type_print(
 				|| !ofc_colstr_atomic_writef(cs, "=")
 				|| !ofc_colstr_atomic_writef(cs, "%u", type->kind))
 				return false;
+
 		}
 
 		if (print_len)
