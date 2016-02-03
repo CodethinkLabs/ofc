@@ -19,9 +19,6 @@
 
 #include "ofc/fctype.h"
 #include "ofc/sparse.h"
-#include "ofc/global_opts.h"
-
-extern ofc_global_opts_t global_opts;
 
 
 typedef struct
@@ -450,14 +447,11 @@ void ofc_sparse_warning_va(
 	const ofc_sparse_t* sparse, ofc_str_ref_t ref,
 	const char* format, va_list args)
 {
-	if (!global_opts.no_warn)
-	{
-		const ofc_file_t* file = ofc_sparse__file(sparse);
-		const char*       fsol = NULL;
-		const char*       fptr = ofc_sparse__file_pointer(sparse, ref.base, &fsol);
+	const ofc_file_t* file = ofc_sparse__file(sparse);
+	const char*       fsol = NULL;
+	const char*       fptr = ofc_sparse__file_pointer(sparse, ref.base, &fsol);
 
-		ofc_file_warning_va(file, fsol, fptr, format, args);
-	}
+	ofc_file_warning_va(file, fsol, fptr, format, args);
 }
 
 void ofc_sparse_error(

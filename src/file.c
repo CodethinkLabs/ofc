@@ -23,6 +23,9 @@
 
 #include "ofc/fctype.h"
 #include "ofc/file.h"
+#include "ofc/global_opts.h"
+
+extern ofc_global_opts_t global_opts;
 
 
 static char* ofc_file__read(const char* path, unsigned* size)
@@ -322,8 +325,11 @@ void ofc_file_warning_va(
 	const char* sol, const char* ptr,
 	const char* format, va_list args)
 {
-	ofc_file__debug_va(
-		file, sol, ptr, "Warning", format, args);
+	if (!global_opts.no_warn)
+	{
+		ofc_file__debug_va(
+			file, sol, ptr, "Warning", format, args);
+	}
 }
 
 
