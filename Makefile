@@ -61,13 +61,13 @@ scan-build:
 check: cppcheck scan scan-build
 
 test: $(FRONTEND) $(FRONTEND_DEBUG)
-	make FRONTEND=$(realpath $(FRONTEND)) $(realpath FRONTEND_DEBUG=$(FRONTEND_DEBUG)) -C $(TEST_DIR) test
+	$(MAKE) FRONTEND=$(realpath $(FRONTEND)) $(realpath FRONTEND_DEBUG=$(FRONTEND_DEBUG)) -C $(TEST_DIR) test
 
 test-report: $(FRONTEND) $(FRONTEND_DEBUG)
-	make FRONTEND=$(realpath $(FRONTEND)) $(realpath FRONTEND_DEBUG=$(FRONTEND_DEBUG)) -C $(TEST_DIR) test-report
+	$(MAKE) FRONTEND=$(realpath $(FRONTEND)) $(realpath FRONTEND_DEBUG=$(FRONTEND_DEBUG)) -C $(TEST_DIR) test-report
 
 test-report-lite: $(FRONTEND) $(FRONTEND_DEBUG)
-	make FRONTEND=$(realpath $(FRONTEND)) $(realpath FRONTEND_DEBUG=$(FRONTEND_DEBUG)) -C $(TEST_DIR) test-report-lite
+	$(MAKE) FRONTEND=$(realpath $(FRONTEND)) $(realpath FRONTEND_DEBUG=$(FRONTEND_DEBUG)) -C $(TEST_DIR) test-report-lite
 
 loc:
 	@wc -l $(SRC)
