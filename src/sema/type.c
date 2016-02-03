@@ -552,7 +552,13 @@ static bool ofc_sema_type__compare(
 				compat, a->subtype, b->subtype);
 
 		case OFC_SEMA_TYPE_CHARACTER:
-			if (a->len != b->len)
+			if (compat)
+			{
+				if (!a->len_var && !b->len_var
+					&& (a->len != b->len))
+					return false;
+			}
+			else if (a->len != b->len)
 				return false;
 			break;
 
