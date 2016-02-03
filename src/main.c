@@ -30,7 +30,7 @@ int main(int argc, const char* argv[])
 {
 	global_opts = OFC_GLOBAL_OPTS_DEFAULT;
 
-	ofc_lang_opts_t   lang_opts   = OFC_LANG_OPTS_DEFAULT;
+	ofc_lang_opts_t lang_opts = OFC_LANG_OPTS_DEFAULT;
 
 	ofc_file_t* file = NULL;
 
