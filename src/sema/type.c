@@ -493,6 +493,8 @@ const ofc_sema_type_t* ofc_sema_type_spec(
 	unsigned kind = spec->kind;
 	if (kind == 0) kind = 1;
 
+	unsigned len = spec->len;
+
 	const ofc_sema_type_t* type;
 	switch (spec->type)
 	{
@@ -509,8 +511,11 @@ const ofc_sema_type_t* ofc_sema_type_spec(
 			break;
 
 		case OFC_SEMA_TYPE_CHARACTER:
+			if (!spec->len_var
+				&& (spec->len == 0))
+				len = 1;
 			type = ofc_sema_type_create_character(
-				kind, spec->len, spec->len_var);
+				kind, len, spec->len_var);
 			break;
 
 		default:
