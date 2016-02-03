@@ -577,7 +577,62 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 		return NULL;
 	}
 
-	if (!ofc_sema_type_compatible(at, bt))
+	if ((at->type == OFC_SEMA_TYPE_CHARACTER)
+		&& (bt->type == OFC_SEMA_TYPE_CHARACTER))
+	{
+		unsigned asize, bsize;
+		if (!ofc_sema_type_base_size(at, &asize)
+			|| !ofc_sema_type_base_size(bt, &bsize))
+		{
+			ofc_sema_expr_delete(bs);
+			ofc_sema_expr_delete(as);
+			return NULL;
+		}
+
+		if (asize < bsize)
+		{
+			at = ofc_sema_type_create_character(
+				bt->kind, at->len, at->len_var);
+			if (!at)
+			{
+				ofc_sema_expr_delete(bs);
+				ofc_sema_expr_delete(as);
+				return NULL;
+			}
+
+			ofc_sema_expr_t* cast
+				= ofc_sema_expr_cast(as, at);
+			if (!cast)
+			{
+				ofc_sema_expr_delete(bs);
+				ofc_sema_expr_delete(as);
+				return NULL;
+			}
+			as = cast;
+		}
+		else
+		{
+			bt = ofc_sema_type_create_character(
+				at->kind, bt->len, bt->len_var);
+			if (!bt)
+			{
+				ofc_sema_expr_delete(bs);
+				ofc_sema_expr_delete(as);
+				return NULL;
+			}
+
+			ofc_sema_expr_t* cast
+				= ofc_sema_expr_cast(bs, bt);
+			if (!cast)
+			{
+				ofc_sema_expr_delete(bs);
+				ofc_sema_expr_delete(as);
+				return NULL;
+			}
+			bs = cast;
+		}
+	}
+	else if (!ofc_sema_type_compatible(at, bt))
 	{
 		const ofc_sema_type_t* ptype
 			= ofc_sema_type_promote(at, bt);
