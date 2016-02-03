@@ -22,7 +22,7 @@ addons:
             - gcc-4.8
             - valgrind
             - gfortran
-            - coreutils
+            - realpath
 
 # Travis CI C builder will export the CC env variable to point to gcc-4.8.
 compiler:
