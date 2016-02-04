@@ -775,6 +775,7 @@ bool ofc_sema_scope_is_root(
 	{
 		case OFC_SEMA_SCOPE_STMT_FUNC:
 		case OFC_SEMA_SCOPE_IF:
+		case OFC_SEMA_SCOPE_DO:
 			return false;
 		default:
 			break;
