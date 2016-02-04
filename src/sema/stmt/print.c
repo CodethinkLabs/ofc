@@ -224,11 +224,6 @@ bool ofc_sema_stmt_print_print(
 		if (!ofc_colstr_atomic_writef(cs, "*"))
 			return false;
 	}
-	else if (stmt->io_print.format)
-	{
-        if (!ofc_sema_format_print(cs, stmt->io_print.format))
-			return false;
-	}
 	else if (stmt->io_print.format_expr)
 	{
 		if (!ofc_sema_expr_print(cs, stmt->io_print.format_expr))
