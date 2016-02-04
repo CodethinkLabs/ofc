@@ -210,8 +210,7 @@ ofc_parse_type_t* ofc_parse_type(
 			return 0;
 		}
 	}
-	else if (((type.type == OFC_PARSE_TYPE_CHARACTER)
-			|| (type.type == OFC_PARSE_TYPE_BYTE))
+	else if ((type.type == OFC_PARSE_TYPE_CHARACTER)
 		&& (ptr[i] == '*'))
 	{
 		unsigned l = ofc_parse_star_len(

@@ -268,16 +268,6 @@ ofc_sema_spec_t* ofc_sema_spec(
 		}
 	}
 
-	if ((s.len != 0) || s.len_var)
-	{
-		if (s.type != OFC_SEMA_TYPE_CHARACTER)
-		{
-			ofc_sparse_ref_error(ptype->src,
-					"LEN parameter only supported for CHARACTER type");
-			return NULL;
-		}
-	}
-
 	if (s.type == OFC_SEMA_TYPE_BYTE)
 	{
 		if ((s.kind != 1)
