@@ -101,6 +101,178 @@ bool ofc_sema_compare_desc_expr_type(
 	return ofc_sema__type_rule[type_desc][type_expr];
 }
 
+bool ofc_sema_format_desc(
+	const ofc_parse_format_desc_t* desc)
+{
+	if (!desc)
+		return false;
+
+	switch (desc->type)
+	{
+		case OFC_PARSE_FORMAT_DESC_E:
+		case OFC_PARSE_FORMAT_DESC_G:
+			if (desc->e_set && (desc->e == 0))
+			{
+				ofc_sparse_ref_error(desc->src,
+					"Format descriptor requires non-zero exponent width");
+				return false;
+			}
+			break;
+
+		default:
+			break;
+	}
+
+	switch (desc->type)
+	{
+		case OFC_PARSE_FORMAT_DESC_E:
+		case OFC_PARSE_FORMAT_DESC_G:
+		case OFC_PARSE_FORMAT_DESC_REAL:
+		case OFC_PARSE_FORMAT_DESC_D:
+			if (!desc->d_set)
+			{
+				ofc_sparse_ref_error(desc->src,
+					"Format descriptor requires decimal width");
+				return false;
+			}
+			break;
+
+		default:
+			break;
+	}
+
+	switch (desc->type)
+	{
+		case OFC_PARSE_FORMAT_DESC_E:
+		case OFC_PARSE_FORMAT_DESC_G:
+		case OFC_PARSE_FORMAT_DESC_REAL:
+		case OFC_PARSE_FORMAT_DESC_D:
+		case OFC_PARSE_FORMAT_DESC_INTEGER:
+		case OFC_PARSE_FORMAT_DESC_BINARY:
+		case OFC_PARSE_FORMAT_DESC_OCTAL:
+		case OFC_PARSE_FORMAT_DESC_HEX:
+			if (!desc->w_set)
+			{
+				ofc_sparse_ref_error(desc->src,
+					"Format descriptor requires field width");
+			}
+			break;
+
+		default:
+			break;
+	}
+
+	switch (desc->type)
+	{
+		case OFC_PARSE_FORMAT_DESC_E:
+		case OFC_PARSE_FORMAT_DESC_G:
+		case OFC_PARSE_FORMAT_DESC_REAL:
+		case OFC_PARSE_FORMAT_DESC_D:
+		case OFC_PARSE_FORMAT_DESC_INTEGER:
+		case OFC_PARSE_FORMAT_DESC_BINARY:
+		case OFC_PARSE_FORMAT_DESC_OCTAL:
+		case OFC_PARSE_FORMAT_DESC_HEX:
+		/* Should w be mandatory for LOGICAL? */
+		case OFC_PARSE_FORMAT_DESC_LOGICAL:
+		case OFC_PARSE_FORMAT_DESC_CHARACTER:
+			if (desc->w_set && (desc->w == 0))
+			{
+				ofc_sparse_ref_error(desc->src,
+					"Format descriptor requires non-zero field width");
+				return false;
+			}
+			break;
+
+		case OFC_PARSE_FORMAT_DESC_REAL_SCALE:
+			if (!desc->n_set)
+			{
+				ofc_sparse_ref_error(desc->src,
+					"Format descriptor requires scale factor");
+				return false;
+			}
+			break;
+
+		case OFC_PARSE_FORMAT_DESC_X:
+			/* Only a warning, n is defaulted to 1 (gfortran allows it) */
+			if (!desc->n_set)
+				ofc_sparse_ref_warning(desc->src,
+					"Format descriptor should have count");
+			else if (desc->n == 0)
+			{
+				ofc_sparse_ref_error(desc->src,
+					"Format descriptor requires non-zero count");
+				return false;
+			}
+			break;
+
+		case OFC_PARSE_FORMAT_DESC_T:
+		case OFC_PARSE_FORMAT_DESC_TL:
+		case OFC_PARSE_FORMAT_DESC_TR:
+			if (!desc->w_set)
+			{
+				ofc_sparse_ref_error(desc->src,
+					"Format descriptor requires count");
+				return false;
+			}
+			else if (desc->w == 0)
+			{
+				ofc_sparse_ref_error(desc->src,
+					"Format descriptor requires non-zero count");
+				return false;
+			}
+			break;
+
+		case OFC_PARSE_FORMAT_DESC_REPEAT:
+		{
+			unsigned i;
+			for (i = 0; i < desc->repeat->count; i++)
+			{
+				if (!ofc_sema_format_desc(desc->repeat->desc[i]))
+					return false;
+			}
+			return true;
+		}
+
+		default:
+			return true;
+	}
+
+	if ((desc->w_set && !ofc_parse_format_desc_has_w(desc))
+		|| (desc->d_set && !ofc_parse_format_desc_has_d(desc))
+		|| (desc->e_set && !ofc_parse_format_desc_has_e(desc)))
+	{
+		ofc_sparse_ref_warning(desc->src,
+			"Unexpected element in format descriptor");
+		return false;
+	}
+
+	/* The values of m, d, and e must not exceed
+	   the value of w, the field width */
+	if (desc->w_set)
+	{
+		unsigned i = 0;
+
+		if (desc->d_set)
+		{
+			/* Decimal point */
+			i += 1;
+			i += desc->d;
+		}
+
+		if (desc->e_set)
+		{
+			/* E+ */
+			i += 2;
+			i += desc->e;
+		}
+
+		if (i > desc->w)
+			ofc_sparse_ref_warning(desc->src,
+				"Field width too small");
+	}
+	return true;
+}
+
 static ofc_sema_format_t* ofc_sema_format__create(
 	const ofc_parse_format_desc_list_t* src)
 {
@@ -133,6 +305,19 @@ bool ofc_sema_format(
 	ofc_sema_format_t* format
 		= ofc_sema_format__create(stmt->format);
 	if (!format) return false;
+
+	if (format->src)
+	{
+		unsigned i;
+		for (i = 0; i < format->src->count; i++)
+		{
+			if (!ofc_sema_format_desc(format->src->desc[i]))
+			{
+				ofc_sema_format_delete(format);
+				return false;
+			}
+		}
+	}
 
 	if (!ofc_sema_label_map_add_format(
 		stmt, scope->label,

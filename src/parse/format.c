@@ -63,6 +63,41 @@ static const ofc_parse_format_desc__map_t ofc_parse_format_desc__map[] =
 	{ NULL, 0, 0, 0, 0 }
 };
 
+bool ofc_parse_format_desc_has_w(
+	const ofc_parse_format_desc_t* desc)
+{
+	unsigned i;
+	for (i = 0; ofc_parse_format_desc__map[i].name; i++)
+	{
+		if (ofc_parse_format_desc__map[i].type == desc->type)
+			return ofc_parse_format_desc__map[i].w;
+	}
+	return false;
+}
+
+bool ofc_parse_format_desc_has_d(
+	const ofc_parse_format_desc_t* desc)
+{
+	unsigned i;
+	for (i = 0; ofc_parse_format_desc__map[i].name; i++)
+	{
+		if (ofc_parse_format_desc__map[i].type == desc->type)
+			return ofc_parse_format_desc__map[i].d;
+	}
+	return false;
+}
+
+bool ofc_parse_format_desc_has_e(
+	const ofc_parse_format_desc_t* desc)
+{
+	unsigned i;
+	for (i = 0; ofc_parse_format_desc__map[i].name; i++)
+	{
+		if (ofc_parse_format_desc__map[i].type == desc->type)
+			return ofc_parse_format_desc__map[i].e;
+	}
+	return false;
+}
 
 ofc_parse_format_desc_t* ofc_parse_format_desc(
 	const ofc_sparse_t* src, const char* ptr,
@@ -76,12 +111,16 @@ ofc_parse_format_desc_t* ofc_parse_format_desc(
 
 	unsigned dpos = ofc_parse_debug_position(debug);
 
+	desc->n_set = false;
+
 	unsigned i = 0;
 	desc->string = ofc_parse_hollerith(
 		src, ptr, debug, &i);
 
 	if (i > 0)
 	{
+		desc->src = ofc_sparse_ref(
+			src, ptr, i);
 		desc->neg  = false;
 		desc->n    = 1;
 		desc->type = OFC_PARSE_FORMAT_DESC_HOLLERITH;
@@ -98,11 +137,14 @@ ofc_parse_format_desc_t* ofc_parse_format_desc(
 	l = ofc_parse_unsigned(
 		src, &ptr[i], debug, &n);
 	i = (l > 0 ? i + l : 0);
+	desc->n_set = (l > 0);
 
 	desc->string = ofc_parse_character(
 		src, &ptr[i], debug, &l);
 	if (desc->string)
 	{
+		desc->src = ofc_sparse_ref(
+			src, ptr, i);
 		desc->neg  = negative;
 		desc->n    = n;
 		desc->type = OFC_PARSE_FORMAT_DESC_STRING;
@@ -114,6 +156,9 @@ ofc_parse_format_desc_t* ofc_parse_format_desc(
 	if (ptr[i] == '(')
 	{
 		i += 1;
+
+		desc->src = ofc_sparse_ref(
+			src, ptr, i);
 
 		unsigned k;
 		desc->repeat = ofc_parse_format_desc_list(
@@ -155,38 +200,51 @@ ofc_parse_format_desc_t* ofc_parse_format_desc(
 	}
 	i += l;
 
-	unsigned w = 0;
+	unsigned k;
+	desc->w_set = false;
+	desc->d_set = false;
+	desc->e_set = false;
+
+	unsigned w = 1;
 	if (map.w)
 	{
-		i += ofc_parse_unsigned(
+		k = ofc_parse_unsigned(
 			src, &ptr[i], debug, &w);
+		desc->w_set = (k > 0);
+
+		i += k;
 	}
 
-	bool d_set = false;
 	unsigned d = 0;
 	if (map.d && (ptr[i] == '.'))
 	{
 		i += 1;
-		i += ofc_parse_unsigned(
+		k = ofc_parse_unsigned(
 			src, &ptr[i], debug, &d);
-		d_set = true;
+		desc->d_set = (k > 0);
+
+		i += k;
 	}
 
 	unsigned e = 0;
 	if (map.e && (toupper(ptr[i]) == 'E'))
 	{
 		i += 1;
-		i += ofc_parse_unsigned(
+		k = ofc_parse_unsigned(
 			src, &ptr[i], debug, &e);
+		desc->e_set = (k > 0);
+
+		i += k;
 	}
 
+	desc->src = ofc_sparse_ref(
+		src, ptr, i);
 	desc->type = map.type;
-	desc->neg = negative;
+	desc->neg  = negative;
 	desc->n = n;
 	desc->w = w;
 	desc->d = d;
 	desc->e = e;
-	desc->d_set = d_set;
 
 	if (len) *len = i;
 	return desc;
@@ -246,51 +304,6 @@ const char* ofc_parse_format_desc__name[] =
 };
 
 
-static bool ofc_parse_format_desc_print__w(
-	ofc_parse_format_desc_e type, unsigned w)
-{
-	switch (type)
-	{
-		case OFC_PARSE_FORMAT_DESC_CHARACTER:
-			return (w > 0);
-		case OFC_PARSE_FORMAT_DESC_INTEGER:
-		case OFC_PARSE_FORMAT_DESC_REAL:
-		case OFC_PARSE_FORMAT_DESC_D:
-		case OFC_PARSE_FORMAT_DESC_E:
-		case OFC_PARSE_FORMAT_DESC_G:
-		case OFC_PARSE_FORMAT_DESC_LOGICAL:
-		case OFC_PARSE_FORMAT_DESC_REAL_SCALE:
-		case OFC_PARSE_FORMAT_DESC_T:
-		case OFC_PARSE_FORMAT_DESC_TL:
-		case OFC_PARSE_FORMAT_DESC_TR:
-		case OFC_PARSE_FORMAT_DESC_BINARY:
-		case OFC_PARSE_FORMAT_DESC_OCTAL:
-		case OFC_PARSE_FORMAT_DESC_HEX:
-			return true;
-		default:
-			break;
-	}
-
-	return false;
-}
-
-static bool ofc_parse_format_desc_print__d(
-	ofc_parse_format_desc_e type)
-{
-	switch (type)
-	{
-		case OFC_PARSE_FORMAT_DESC_REAL:
-		case OFC_PARSE_FORMAT_DESC_D:
-		case OFC_PARSE_FORMAT_DESC_E:
-		case OFC_PARSE_FORMAT_DESC_G:
-			return true;
-		default:
-			break;
-	}
-
-	return false;
-}
-
 bool ofc_parse_format_desc_print(
 	ofc_colstr_t* cs, const ofc_parse_format_desc_t* desc)
 {
@@ -344,13 +357,13 @@ bool ofc_parse_format_desc_print(
 			if (!ofc_colstr_atomic_writef(cs, "%s",
 				ofc_parse_format_desc__name[desc->type]))
 				return false;
-			if (ofc_parse_format_desc_print__w(desc->type, desc->w)
+			if ((desc->w_set || desc->type == OFC_PARSE_FORMAT_DESC_LOGICAL)
 				&& !ofc_colstr_atomic_writef(cs, "%u", desc->w))
 				return false;
-			if ((desc->d_set || ofc_parse_format_desc_print__d(desc->type))
+			if (desc->d_set
 				&& !ofc_colstr_atomic_writef(cs, ".%u", desc->d))
 				return false;
-			if ((desc->e > 0)
+			if (desc->e_set
 				&& !ofc_colstr_atomic_writef(cs, "E%u", desc->e))
 				return false;
 			break;

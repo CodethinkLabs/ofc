@@ -57,13 +57,16 @@ struct ofc_parse_format_desc_s
 {
 	ofc_parse_format_desc_e type;
 
+	ofc_sparse_ref_t src;
+
 	bool neg;
+	bool n_set;
 	unsigned n;
 	union
 	{
 		struct
 		{
-			bool d_set;
+			bool w_set, d_set, e_set;
 			unsigned w, d, e;
 		};
 
@@ -79,6 +82,12 @@ struct ofc_parse_format_desc_list_s
 	ofc_parse_format_desc_t** desc;
 };
 
+bool ofc_parse_format_desc_has_w(
+	const ofc_parse_format_desc_t* desc);
+bool ofc_parse_format_desc_has_d(
+	const ofc_parse_format_desc_t* desc);
+bool ofc_parse_format_desc_has_e(
+	const ofc_parse_format_desc_t* desc);
 
 ofc_parse_format_desc_t* ofc_parse_format_desc(
 	const ofc_sparse_t* src, const char* ptr,
