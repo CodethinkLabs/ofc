@@ -15,15 +15,102 @@
 
 #include "ofc/sema.h"
 
+static const char* ofc_sema_intrinsics__reserved_list[]=
+{
+	"AdjustL",
+	"AdjustR",
+	"All",
+	"Allocated",
+	"Any",
+	"Associated",
+	"Ceiling",
+	"Count",
+	"CShift",
+	"Digits",
+	"Dot_Product",
+	"EOShift",
+	"Epsilon",
+	"Exponent",
+	"Floor",
+	"Fraction",
+	"Huge",
+	"Kind",
+	"LBound",
+	"Logical",
+	"MatMul",
+	"MaxExponent",
+	"MaxLoc",
+	"MaxVal",
+	"Merge",
+	"MinExponent",
+	"MinLoc",
+	"MinVal",
+	"Modulo",
+	"Nearest",
+	"Pack",
+	"Precision",
+	"Present",
+	"Product",
+	"Radix",
+	"Random_Number",
+	"Random_Seed",
+	"Range",
+	"Repeat",
+	"Reshape",
+	"RRSpacing",
+	"Scale",
+	"Scan",
+	"Selected_Int_Kind",
+	"Selected_Real_Kind",
+	"Set_Exponent",
+	"Shape",
+	"Spacing",
+	"Spread",
+	"Sum",
+	"Tiny",
+	"Transfer",
+	"Transpose",
+	"Trim",
+	"UBound",
+	"Unpack",
+	"Verify",
+
+	NULL
+};
+
+bool ofc_sema_intrinsic_name_reserved(char* name)
+{
+    unsigned i = 0;
+
+	/* TODO - Use a hash map to speed this up. */
+	while (ofc_sema_intrinsics__reserved_list[i])
+	{
+		if (strcasecmp(ofc_sema_intrinsics__reserved_list[i], name) == 0)
+			return true;
+	}
+
+	return false;
+}
+
 typedef enum
 {
-	IT_ANY = 0, /* Any type */
+	OFC_SEMA_INTRINSIC_OP,
+	OFC_SEMA_INTRINSIC_FUNC,
+	OFC_SEMA_INTRINSIC_SUBR,
+
+	OFC_SEMA_INTRINSIC_INVALID
+} ofc_sema_intrinsic_e;
+
+typedef enum
+{
+	IT_ANY,     /* Any type */
 	IT_SAME,    /* Same as argument */
 	IT_SCALAR,  /* Any scalar type */
 	IT_LOGICAL,
 	IT_INTEGER,
 	IT_REAL,
 	IT_COMPLEX,
+	IT_CHARACTER,
 
 	IT_DEF_LOGICAL,
 	IT_DEF_INTEGER,
@@ -34,6 +121,9 @@ typedef enum
 	IT_DEF_DOUBLE_COMPLEX,
 
 	IT_DEF_HALF_INTEGER,
+
+	IT_REAL_1,
+	IT_REAL_2,
 
 	IT_INTEGER_1,
 	IT_INTEGER_2,
@@ -189,16 +279,135 @@ static const ofc_sema_intrinsic_op_t ofc_sema_intrinsic__op_list[] =
 	{ NULL, 0, 0, 0, 0 }
 };
 
+typedef enum
+{
+	IN = 0,
+	OUT,
+
+	NS
+} ofc_sema_intrinsic_arg_intent_e;
+
+typedef struct
+{
+	ofc_sema_intrinsic_type_e       type;
+	int                             length;
+	ofc_sema_intrinsic_arg_intent_e intent;
+} ofc_sema_intrinsic_arg_t;
+
+
+typedef struct
+{
+	const char*               name;
+	unsigned                  arg_min, arg_max;
+	ofc_sema_intrinsic_type_e return_type;
+	ofc_sema_intrinsic_arg_t  arg_type[3];
+} ofc_sema_intrinsic_func_t;
+
+static const ofc_sema_intrinsic_func_t ofc_sema_intrinsic__func_list[] =
+{
+	{ "MClock",  0, 0, IT_INTEGER_1, {{ 0 }} },
+	{ "MClock8", 0, 0, IT_INTEGER_2, {{ 0 }} },
+	{ "FDate",   0, 0, IT_CHARACTER, {{ 0 }} },
+	{ "Second",  0, 0, IT_REAL_1,    {{ 0 }} },
+
+	{ "Loc",      1, 1, IT_INTEGER,     {{ IT_ANY,       1, IN  }} },
+	{ "IRand",    0, 1, IT_INTEGER,     {{ IT_INTEGER,   1, IN  }} },
+	{ "LnBlnk",   1, 1, IT_INTEGER,     {{ IT_CHARACTER, 1, IN  }} },
+	{ "IsaTty",   1, 1, IT_LOGICAL,     {{ IT_INTEGER,   1, IN  }} },
+	{ "Len",      1, 1, IT_INTEGER,     {{ IT_CHARACTER, 1, IN  }} },
+	{ "AImag",    1, 1, IT_REAL,        {{ IT_COMPLEX,   1, IN  }} },
+	{ "Len_Trim", 1, 1, IT_INTEGER,     {{ IT_CHARACTER, 1, IN  }} },
+	{ "AChar",    1, 1, IT_CHARACTER,   {{ IT_INTEGER,   1, IN  }} },
+	{ "IChar",    1, 1, IT_INTEGER,     {{ IT_CHARACTER, 1, IN  }} },
+	{ "BesJ0",    1, 1, IT_REAL,        {{ IT_REAL,      1, IN  }} },
+	{ "BesJ1",    1, 1, IT_REAL,        {{ IT_REAL,      1, IN  }} },
+	{ "BesJN",    1, 1, IT_DEF_INTEGER, {{ IT_REAL,      1, IN  }} },
+	{ "BesY0",    1, 1, IT_REAL,        {{ IT_REAL,      1, IN  }} },
+	{ "BesY1",    1, 1, IT_REAL,        {{ IT_REAL,      1, IN  }} },
+	{ "CTime",    1, 1, IT_CHARACTER,   {{ IT_INTEGER,   1, IN  }} },
+	{ "DErF",     1, 1, IT_REAL_2,      {{ IT_REAL_2,    1, IN  }} },
+	{ "DErFC",    1, 1, IT_REAL_2,      {{ IT_REAL_2,    1, IN  }} },
+	{ "ErF",      1, 1, IT_REAL,        {{ IT_REAL,      1, IN  }} },
+	{ "ErFC",     1, 1, IT_REAL,        {{ IT_REAL,      1, IN  }} },
+	{ "ETime",    1, 1, IT_REAL_1,      {{ IT_REAL_1,    2, IN  }} },
+	{ "FTell",    1, 1, IT_INTEGER,     {{ IT_INTEGER,   1, IN  }} },
+	{ "GetCWD",   1, 1, IT_INTEGER,     {{ IT_CHARACTER, 1, OUT }} },
+	{ "HostNm",   1, 1, IT_INTEGER,     {{ IT_CHARACTER, 1, OUT }} },
+	{ "TtyNam",   1, 1, IT_CHARACTER,   {{ IT_INTEGER,   1, IN  }} },
+
+
+	{ "Stat",   2, 2, IT_INTEGER, {{ IT_CHARACTER, 1, IN }, { IT_INTEGER,   13, OUT }} },
+	{ "LStat",  2, 2, IT_INTEGER, {{ IT_CHARACTER, 1, IN }, { IT_INTEGER,   13, OUT }} },
+	{ "FStat",  2, 2, IT_INTEGER, {{ IT_INTEGER,   1, IN }, { IT_INTEGER,   13, OUT }} },
+	{ "Access", 2, 2, IT_INTEGER, {{ IT_CHARACTER, 1, IN }, { IT_CHARACTER, 1,  IN  }} },
+	{ "LGe",    2, 2, IT_LOGICAL, {{ IT_CHARACTER, 1, IN }, { IT_CHARACTER, 1,  IN  }} },
+	{ "LGt",    2, 2, IT_LOGICAL, {{ IT_CHARACTER, 1, IN }, { IT_CHARACTER, 1,  IN  }} },
+	{ "LLe",    2, 2, IT_LOGICAL, {{ IT_CHARACTER, 1, IN }, { IT_CHARACTER, 1,  IN  }} },
+	{ "LLt",    2, 2, IT_LOGICAL, {{ IT_CHARACTER, 1, IN }, { IT_CHARACTER, 1,  IN  }} },
+	{ "LShift", 2, 2, IT_INTEGER, {{ IT_INTEGER,   1, IN }, { IT_INTEGER,   1,  IN  }} },
+	{ "BesYN",  2, 2, IT_REAL,    {{ IT_INTEGER,   1, IN }, { IT_REAL,      1,  IN  }} },
+
+	{ "IShftC", 3, 3, IT_INTEGER, {{ IT_INTEGER, 1, IN }, { IT_INTEGER, 1, IN }, { IT_INTEGER, 1, IN }} },
+
+	{ NULL, 0, 0, 0, {{0}} }
+};
+
+
+typedef struct
+{
+	const char*               name;
+	unsigned                  arg_min, arg_max;
+	ofc_sema_intrinsic_arg_t  arg_type[3];
+} ofc_sema_intrinsic_subr_t;
+
+static const ofc_sema_intrinsic_subr_t ofc_sema_intrinsic__subr_list[] =
+{
+	{ "ITime",  1, 1, {{ IT_INTEGER,   3, OUT }} },
+	{ "FDate",  1, 1, {{ IT_CHARACTER, 1, OUT }} },
+	{ "Second", 1, 1, {{ IT_REAL,      1, OUT }} },
+
+	{ "ChDir",  1, 2, {{ IT_CHARACTER, 1, IN  }, { IT_INTEGER,   1, OUT }} },
+	{ "LTime",  2, 2, {{ IT_INTEGER,   1, IN  }, { IT_CHARACTER, 1, OUT }} },
+	{ "CTime",  2, 2, {{ IT_INTEGER,   1, IN  }, { IT_CHARACTER, 1, OUT }} },
+	{ "DTime",  2, 2, {{ IT_REAL,      2, OUT }, { IT_REAL,      1, OUT }} },
+	{ "ETime",  2, 2, {{ IT_REAL,      2, OUT }, { IT_REAL,      1, OUT }} },
+	{ "FGet",   1, 2, {{ IT_CHARACTER, 1, OUT }, { IT_INTEGER,   1, OUT }} },
+	{ "FPut",   1, 2, {{ IT_CHARACTER, 1, IN  }, { IT_INTEGER,   1, OUT }} },
+	{ "FTell",  2, 2, {{ IT_INTEGER,   1, IN  }, { IT_INTEGER,   1, OUT }} },
+	{ "GetCWD", 1, 2, {{ IT_CHARACTER, 1, OUT }, { IT_INTEGER,   1, OUT }} },
+	{ "HostNm", 1, 2, {{ IT_CHARACTER, 1, OUT }, { IT_INTEGER,   1, OUT }} },
+	{ "System", 1, 2, {{ IT_CHARACTER, 1, IN  }, { IT_INTEGER,   1, OUT }} },
+	{ "TtyNam", 2, 2, {{ IT_INTEGER,   1, IN  }, { IT_CHARACTER, 1, OUT }} },
+	{ "UMask",  1, 2, {{ IT_INTEGER,   1, IN  }, { IT_INTEGER,   1, OUT }} },
+	{ "Unlink", 1, 2, {{ IT_CHARACTER, 1, IN  }, { IT_INTEGER,   1, OUT }} },
+
+	{ "ChMod",  2, 3, {{ IT_CHARACTER, 1, IN }, { IT_CHARACTER, 1,  IN  }, { IT_INTEGER, 1, OUT }} },
+	{ "SymLnk", 2, 3, {{ IT_CHARACTER, 1, IN }, { IT_CHARACTER, 1,  IN  }, { IT_INTEGER, 1, OUT }} },
+	{ "Kill",   2, 3, {{ IT_INTEGER,   1, IN }, { IT_INTEGER,   1,  IN  }, { IT_INTEGER, 1, OUT }} },
+	{ "Stat",   2, 3, {{ IT_CHARACTER, 1, IN }, { IT_INTEGER,   13, OUT }, { IT_INTEGER, 1, OUT }} },
+	{ "FStat",  2, 3, {{ IT_INTEGER,   1, IN }, { IT_INTEGER,   13, OUT }, { IT_INTEGER, 1, OUT }} },
+	{ "LStat",  2, 3, {{ IT_CHARACTER, 1, IN }, { IT_INTEGER,   13, OUT }, { IT_INTEGER, 1, OUT }} },
+	{ "Alarm",  2, 3, {{ IT_INTEGER,   1, IN }, { IT_INTEGER,   13, IN  }, { IT_INTEGER, 1, OUT }} },
+	{ "FGetC",  2, 3, {{ IT_INTEGER,   1, IN }, { IT_CHARACTER, 1,  OUT }, { IT_INTEGER, 1, OUT }} },
+	{ "FPutC",  2, 3, {{ IT_INTEGER,   1, IN }, { IT_CHARACTER, 1,  IN  }, { IT_INTEGER, 1, OUT }} },
+	{ "Link",   2, 3, {{ IT_CHARACTER, 1, IN }, { IT_CHARACTER, 1,  IN  }, { IT_INTEGER, 1, OUT }} },
+	{ "Rename", 2, 3, {{ IT_CHARACTER, 1, IN }, { IT_CHARACTER, 1,  IN  }, { IT_INTEGER, 1, OUT }} },
+
+	{ NULL, 0, 0, {{0}} }
+};
+
 
 struct ofc_sema_intrinsic_s
 {
-	ofc_str_ref_t name;
+	ofc_sema_intrinsic_e type;
 
-	bool is_op;
+	ofc_str_ref_t name;
 
 	union
 	{
-		const ofc_sema_intrinsic_op_t* op;
+		const ofc_sema_intrinsic_op_t*   op;
+		const ofc_sema_intrinsic_func_t* func;
+		const ofc_sema_intrinsic_subr_t* subr;
 	};
 };
 
@@ -214,7 +423,7 @@ static ofc_sema_intrinsic_t* ofc_sema_intrinsic__create_op(
 	if (!intrinsic) return NULL;
 
 	intrinsic->name = ofc_str_ref_from_strz(op->name);
-	intrinsic->is_op = true;
+	intrinsic->type = OFC_SEMA_INTRINSIC_OP;
 	intrinsic->op = op;
 
 	return intrinsic;
@@ -314,7 +523,7 @@ ofc_sema_expr_list_t* ofc_sema_intrinsic_cast(
 		return NULL;
 	}
 
-	if (!intrinsic->is_op
+	if ((intrinsic->type != OFC_SEMA_INTRINSIC_OP)
 		|| !intrinsic->op)
 		return NULL;
 
@@ -485,7 +694,7 @@ const ofc_sema_type_t* ofc_sema_intrinsic_type(
 	if (!intrinsic)
 		return NULL;
 
-	if (!intrinsic->is_op
+	if ((intrinsic->type != OFC_SEMA_INTRINSIC_OP)
 		|| !intrinsic->op)
 		return NULL;
 
