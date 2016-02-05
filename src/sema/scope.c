@@ -37,6 +37,9 @@ void ofc_sema_scope_delete(
 	ofc_sema_equiv_list_delete(scope->equiv);
 	ofc_sema_label_map_delete(scope->label);
 
+	ofc_sema_structure_list_delete(scope->structure);
+	ofc_sema_structure_list_delete(scope->derived_type);
+
 	switch (scope->type)
 	{
 		case OFC_SEMA_SCOPE_STMT_FUNC:
@@ -108,6 +111,9 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 	scope->decl   = NULL;
 	scope->equiv  = NULL;
 
+	scope->structure    = NULL;
+	scope->derived_type = NULL;
+
 	bool alloc_fail = false;
 	if (is_root)
 	{
@@ -115,9 +121,16 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 		scope->decl  = ofc_sema_decl_list_create(opts.case_sensitive);
 		scope->equiv = ofc_sema_equiv_list_create();
 
+		scope->structure
+			= ofc_sema_structure_list_create(opts.case_sensitive);
+		scope->derived_type
+			= ofc_sema_structure_list_create(opts.case_sensitive);
+
 		alloc_fail = (!scope->spec
 			|| !scope->decl
-			|| !scope->equiv);
+			|| !scope->equiv
+			|| !scope->structure
+			|| !scope->derived_type);
 	}
 
 	scope->label = ofc_sema_label_map_create();
@@ -461,13 +474,16 @@ static bool ofc_sema_scope__body(
 					return false;
 				break;
 
-			case OFC_PARSE_STMT_NAMELIST:
-			case OFC_PARSE_STMT_POINTER:
 			case OFC_PARSE_STMT_TYPE:
 			case OFC_PARSE_STMT_STRUCTURE:
 			case OFC_PARSE_STMT_UNION:
 			case OFC_PARSE_STMT_MAP:
-			case OFC_PARSE_STMT_RECORD:
+				if (!ofc_sema_structure(scope, stmt))
+					return false;
+				break;
+
+			case OFC_PARSE_STMT_NAMELIST:
+			case OFC_PARSE_STMT_POINTER:
 				ofc_sparse_ref_error(stmt->src,
 					"Unsupported statement");
 				/* TODO - Support these statements. */
@@ -947,6 +963,68 @@ ofc_sema_decl_t* ofc_sema_scope_decl_find_modify(
 		scope->parent, name, false);
 }
 
+
+bool ofc_sema_scope_derived_type_add(
+	ofc_sema_scope_t* scope,
+	ofc_sema_structure_t* structure)
+{
+	if (!scope)
+		return NULL;
+
+	if (!scope->derived_type)
+		return ofc_sema_scope_derived_type_add(
+			scope->parent, structure);
+
+	return ofc_sema_structure_list_add(
+		scope->derived_type, structure);
+}
+
+ofc_sema_structure_t* ofc_sema_scope_derived_type_find(
+	ofc_sema_scope_t* scope, ofc_str_ref_t name)
+{
+	if (!scope)
+		return NULL;
+
+	ofc_sema_structure_t* structure
+		= ofc_sema_structure_list_find_modify(
+			scope->derived_type, name);
+	if (structure) return structure;
+
+	return ofc_sema_scope_derived_type_find(
+		scope->parent, name);
+}
+
+bool ofc_sema_scope_structure_add(
+	ofc_sema_scope_t* scope,
+	ofc_sema_structure_t* structure)
+{
+	if (!scope)
+		return NULL;
+
+	if (!scope->structure)
+		return ofc_sema_scope_structure_add(
+			scope->parent, structure);
+
+	return ofc_sema_structure_list_add(
+		scope->structure, structure);
+}
+
+ofc_sema_structure_t* ofc_sema_scope_structure_find(
+	ofc_sema_scope_t* scope, ofc_str_ref_t name)
+{
+	if (!scope)
+		return NULL;
+
+	ofc_sema_structure_t* structure
+		= ofc_sema_structure_list_find_modify(
+			scope->structure, name);
+	if (structure) return structure;
+
+	return ofc_sema_scope_derived_type_find(
+		scope->parent, name);
+}
+
+
 ofc_sema_common_t* ofc_sema_scope_common_find_create(
 	ofc_sema_scope_t* scope, ofc_str_ref_t name)
 {
@@ -1014,6 +1092,19 @@ static bool ofc_sema_scope_body__print(
 		return false;
 
 	/* TODO - Use scope error printing preferably with source location. */
+
+	if (scope->structure && !ofc_sema_structure_list_print(
+		cs, indent, scope->structure))
+	{
+		fprintf(stderr, "\nError: Failed to print structure list");
+		return false;
+	}
+	if (scope->derived_type && !ofc_sema_structure_list_print(
+		cs, indent, scope->derived_type))
+	{
+		fprintf(stderr, "\nError: Failed to print derived type list");
+		return false;
+	}
 
 	if (scope->spec
 		&& !ofc_sema_spec_list_print(cs, indent, scope, scope->spec->list))

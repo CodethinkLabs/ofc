@@ -39,8 +39,10 @@ struct ofc_sema_decl_s
 {
 	const ofc_sema_type_t* type;
 	ofc_str_ref_t          name;
-	ofc_sema_scope_t*      func;
-	ofc_sema_array_t*      array;
+
+	ofc_sema_scope_t*     func;
+	ofc_sema_array_t*     array;
+	ofc_sema_structure_t* structure;
 
 	union
 	__attribute__((__packed__))
@@ -116,6 +118,10 @@ ofc_sema_decl_t* ofc_sema_decl_subroutine(
 bool ofc_sema_decl(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
+bool ofc_sema_decl_member(
+	ofc_sema_scope_t* scope,
+	ofc_sema_structure_t* structure,
+	const ofc_parse_stmt_t* stmt);
 void ofc_sema_decl_delete(
 	ofc_sema_decl_t* decl);
 
@@ -149,6 +155,8 @@ bool ofc_sema_decl_elem_count(
 	unsigned* count);
 
 bool ofc_sema_decl_is_array(
+	const ofc_sema_decl_t* decl);
+bool ofc_sema_decl_is_structure(
 	const ofc_sema_decl_t* decl);
 bool ofc_sema_decl_is_composite(
 	const ofc_sema_decl_t* decl);

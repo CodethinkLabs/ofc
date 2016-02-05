@@ -138,6 +138,8 @@ void ofc_sema_expr_delete(
 
 const ofc_sema_array_t* ofc_sema_expr_array(
 	const ofc_sema_expr_t* expr);
+ofc_sema_structure_t* ofc_sema_expr_structure(
+	const ofc_sema_expr_t* expr);
 bool ofc_sema_expr_elem_count(
 	const ofc_sema_expr_t* expr,
 	unsigned* count);

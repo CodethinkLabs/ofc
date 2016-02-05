@@ -25,6 +25,7 @@ bool ofc_sema_io_compare_types(
 	ofc_sema_expr_t** expr,
 	const ofc_sema_type_t* type,
 	const ofc_sema_array_t* array,
+	ofc_sema_structure_t* structure,
 	ofc_parse_format_desc_list_t* format_list,
 	unsigned* offset)
 {
@@ -45,18 +46,30 @@ bool ofc_sema_io_compare_types(
 		for (j = 0; j < array_count; j++)
 		{
 			if (!ofc_sema_io_compare_types(
-				scope, stmt, lhs, expr, type, NULL, format_list, offset))
+				scope, stmt, lhs, expr, type, NULL, structure, format_list, offset))
 				return false;
 		}
 	}
 	/* Compare each member of the structure to the format list */
-	else if (ofc_sema_type_is_structure(type))
+	else if (structure)
 	{
+		unsigned member_count;
+		if (!ofc_sema_structure_member_count(
+			structure, &member_count))
+			return false;
+
 		unsigned j;
-		for (j = 0; j < type->structure->member.count; j++)
+		for (j = 0; j < member_count; j++)
 		{
+			const ofc_sema_decl_t* member
+				= ofc_sema_structure_member_get_decl_offset(structure, j);
+			if (!member) return false;
+
+			/* TODO - STRUCTURE - Handle nested structures. */
+
 			if (!ofc_sema_io_compare_types(
-				scope, stmt, lhs, expr, type->structure->member.type[j], NULL,
+				scope, stmt, lhs, expr,
+				member->type, member->array, member->structure,
 				format_list, offset))
 				return false;
 		}
@@ -387,9 +400,11 @@ bool ofc_sema_io_format_iolist_compare(
 			= ofc_sema_expr_type(*expr);
 		const ofc_sema_array_t* array
 			= ofc_sema_expr_array(*expr);
+		ofc_sema_structure_t* structure
+			= ofc_sema_expr_structure(*expr);
 
 		if (!ofc_sema_io_compare_types(
-			scope, stmt, NULL, expr, type, array, format_list, &offset))
+			scope, stmt, NULL, expr, type, array, structure, format_list, &offset))
 			return false;
 	}
 
@@ -411,10 +426,12 @@ bool ofc_sema_io_format_input_list_compare(
 			= ofc_sema_lhs_type(iolist->lhs[i]);
 		const ofc_sema_array_t* array
 			= ofc_sema_lhs_array(iolist->lhs[i]);
+		ofc_sema_structure_t* structure
+			= ofc_sema_lhs_structure(iolist->lhs[i]);
 
 		if (!ofc_sema_io_compare_types(
 			scope, stmt, iolist->lhs[i], NULL,
-			type, array, format_list, &offset))
+			type, array, structure, format_list, &offset))
 			return false;
 	}
 

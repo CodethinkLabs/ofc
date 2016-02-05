@@ -60,6 +60,9 @@ struct ofc_sema_scope_s
 	ofc_sema_label_map_t*  label;
 	/* namelist_list_map */
 
+	ofc_sema_structure_list_t* structure;
+	ofc_sema_structure_list_t* derived_type;
+
 	union
 	{
 		ofc_sema_stmt_list_t* stmt;
@@ -115,6 +118,18 @@ const ofc_sema_decl_t* ofc_sema_scope_decl_find(
 	const ofc_sema_scope_t* scope, ofc_str_ref_t name, bool local);
 ofc_sema_decl_t* ofc_sema_scope_decl_find_modify(
 	ofc_sema_scope_t* scope, ofc_str_ref_t name, bool local);
+
+bool ofc_sema_scope_derived_type_add(
+	ofc_sema_scope_t* scope,
+	ofc_sema_structure_t* structure);
+ofc_sema_structure_t* ofc_sema_scope_derived_type_find(
+	ofc_sema_scope_t* scope, ofc_str_ref_t name);
+
+bool ofc_sema_scope_structure_add(
+	ofc_sema_scope_t* scope,
+	ofc_sema_structure_t* structure);
+ofc_sema_structure_t* ofc_sema_scope_structure_find(
+	ofc_sema_scope_t* scope, ofc_str_ref_t name);
 
 const ofc_sema_scope_t* ofc_sema_scope_child_find(
 	const ofc_sema_scope_t* scope, ofc_str_ref_t name);

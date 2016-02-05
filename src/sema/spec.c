@@ -25,6 +25,7 @@ const ofc_sema_spec_t OFC_SEMA_SPEC_DEFAULT =
 	.len           = 0,
 	.len_var       = false,
 	.array         = NULL,
+	.structure     = NULL,
 	.is_static     = false,
 	.is_automatic  = false,
 	.is_volatile   = false,
@@ -92,8 +93,31 @@ ofc_sema_spec_t* ofc_sema_spec(
 			s.type = OFC_SEMA_TYPE_BYTE;
 			break;
 
+		case OFC_PARSE_TYPE_TYPE:
+			s.type = OFC_SEMA_TYPE_TYPE;
+			s.structure = ofc_sema_scope_derived_type_find(
+				scope, ptype->type_name.string);
+			if (!s.structure)
+			{
+				s.structure = ofc_sema_scope_structure_find(
+					scope, ptype->type_name.string);
+				if (!s.structure)
+				{
+					ofc_sparse_ref_error(ptype->type_name,
+						"Referencing undefined TYPE name");
+					return NULL;
+				}
+				ofc_sparse_ref_warning(ptype->type_name,
+					"Referencing STRUCTURE in TYPE declaration");
+			}
+			break;
+
+		case OFC_PARSE_TYPE_RECORD:
+			s.type = OFC_SEMA_TYPE_RECORD;
+			s.structure = NULL;
+			break;
+
 		default:
-			/* TODO - Handle derived types? */
 			return NULL;
 	}
 
@@ -289,6 +313,14 @@ ofc_sema_spec_t* ofc_sema_spec(
 	if (!spec) return NULL;
 
 	*spec = s;
+
+	if (spec->structure
+		&& !ofc_sema_structure_reference(spec->structure))
+	{
+		free(spec);
+		return NULL;
+	}
+
 	return spec;
 }
 
@@ -304,14 +336,28 @@ ofc_sema_spec_t* ofc_sema_spec_copy(
 
 	*copy = *spec;
 
+	copy->array = NULL;
+	copy->structure = NULL;
+
 	if (spec->array)
 	{
 		copy->array = ofc_sema_array_copy(spec->array);
 		if (!copy->array)
 		{
-			free(copy);
+			ofc_sema_spec_delete(copy);
 			return NULL;
 		}
+	}
+
+	if (spec->structure)
+	{
+		if (!ofc_sema_structure_reference(
+			spec->structure))
+		{
+			ofc_sema_spec_delete(copy);
+			return NULL;
+		}
+		copy->structure = spec->structure;
 	}
 
 	return copy;
@@ -374,15 +420,42 @@ bool ofc_sema_spec_print(
 			type = ofc_sema_type_create_character(
 				kind, spec->len, spec->len_var);
 			break;
+		case OFC_SEMA_TYPE_TYPE:
+		case OFC_SEMA_TYPE_RECORD:
+			type = NULL;
+			break;
 		default:
 			type = ofc_sema_type_create_primitive(
 				spec->type, kind);
 			break;
 	}
 
-	if (!ofc_colstr_newline(cs, indent, NULL)
-		|| !ofc_sema_type_print(cs, type))
+	if (!ofc_colstr_newline(cs, indent, NULL))
 		return false;
+
+	if (spec->type == OFC_SEMA_TYPE_RECORD)
+	{
+		return (ofc_colstr_atomic_writef(cs, "RECORD")
+			&& ofc_colstr_atomic_writef(cs, " ")
+			&& ofc_colstr_atomic_writef(cs, "/")
+			&& ofc_sema_structure_print_name(cs, spec->structure)
+			&& ofc_colstr_atomic_writef(cs, "/")
+			&& ofc_colstr_atomic_writef(cs, " ")
+			&& ofc_sparse_ref_print(cs, spec->name));
+	}
+	else if (spec->type == OFC_SEMA_TYPE_TYPE)
+	{
+		if (!ofc_colstr_atomic_writef(cs, "TYPE")
+			|| !ofc_colstr_atomic_writef(cs, "(")
+			|| !ofc_sema_structure_print_name(cs, spec->structure)
+			|| !ofc_colstr_atomic_writef(cs, ")"))
+			return false;
+	}
+	else
+	{
+		if (!ofc_sema_type_print(cs, type))
+			return false;
+	}
 
 	if (spec->is_external)
 	{
@@ -446,6 +519,7 @@ void ofc_sema_spec_delete(
 		return;
 
 	ofc_sema_array_delete(spec->array);
+	ofc_sema_structure_delete(spec->structure);
 	free(spec);
 }
 

@@ -16,36 +16,69 @@
 #ifndef __ofc_sema_structure_h__
 #define __ofc_sema_structure_h__
 
+typedef enum
+{
+	OFC_SEMA_STRUCTURE_VAX_STRUCTURE,
+	OFC_SEMA_STRUCTURE_VAX_UNION,
+	OFC_SEMA_STRUCTURE_F90_TYPE,
+} ofc_sema_structure_e;
+
+typedef struct ofc_sema_structure_s ofc_sema_structure_t;
+
 typedef struct
 {
-	bool is_vax;
-	bool is_union;
+	bool is_structure;
 
-	struct
+	union
 	{
-		unsigned                count;
-		const ofc_sema_type_t** type;
-		ofc_str_ref_t*          name;
-	} member;
+		ofc_sema_structure_t* structure;
+		ofc_sema_decl_t*      decl;
+	};
+} ofc_sema_structure_member_t;
 
-	bool locked;
-} ofc_sema_structure_t;
+struct ofc_sema_structure_s
+{
+	ofc_sparse_ref_t      name;
+	ofc_sema_structure_e  type;
 
-ofc_sema_structure_t* ofc_sema_structure_create(bool is_vax);
-ofc_sema_structure_t* ofc_sema_structure_create_union(void);
+	unsigned count;
+	ofc_sema_structure_member_t** member;
 
-bool ofc_sema_structure_append(
-	ofc_sema_structure_t*  structure,
-	const ofc_sema_type_t* type, ofc_str_ref_t name);
+	ofc_hashmap_t* map;
 
-void ofc_sema_structure_delete(ofc_sema_structure_t* structure);
+	unsigned refcnt;
+};
 
-uint8_t ofc_sema_structure_hash(
+ofc_sema_structure_t* ofc_sema_structure(
+	ofc_sema_scope_t* scope,
+	ofc_parse_stmt_t* stmt);
+
+bool ofc_sema_structure_reference(
+	ofc_sema_structure_t* structure);
+void ofc_sema_structure_delete(
+	ofc_sema_structure_t* structure);
+
+bool ofc_sema_structure_member_add_decl(
+	ofc_sema_structure_t* structure,
+	ofc_sema_decl_t*      member);
+bool ofc_sema_structure_member_add_structure(
+	ofc_sema_structure_t* structure,
+	ofc_sema_structure_t* member);
+
+bool ofc_sema_structure_is_union(
+	const ofc_sema_structure_t* structure);
+bool ofc_sema_structure_is_nested(
 	const ofc_sema_structure_t* structure);
 
-bool ofc_sema_structure_compare(
-	const ofc_sema_structure_t* a,
-	const ofc_sema_structure_t* b);
+bool ofc_sema_structure_member_count(
+	const ofc_sema_structure_t* structure,
+	unsigned* count);
+ofc_sema_decl_t* ofc_sema_structure_member_get_decl_offset(
+	ofc_sema_structure_t* structure,
+	unsigned offset);
+ofc_sema_decl_t* ofc_sema_structure_member_get_decl_name(
+	ofc_sema_structure_t* structure,
+	ofc_str_ref_t name);
 
 bool ofc_sema_structure_size(
 	const ofc_sema_structure_t* structure,
@@ -53,5 +86,39 @@ bool ofc_sema_structure_size(
 bool ofc_sema_structure_elem_count(
 	const ofc_sema_structure_t* structure,
 	unsigned* count);
+
+bool ofc_sema_structure_print_name(
+	ofc_colstr_t* cs,
+	const ofc_sema_structure_t* structure);
+
+bool ofc_sema_structure_print(
+	ofc_colstr_t* cs, unsigned indent,
+	const ofc_sema_structure_t* structure);
+
+
+typedef struct
+{
+	unsigned count;
+	ofc_sema_structure_t** structure;
+	ofc_hashmap_t* map;
+} ofc_sema_structure_list_t;
+
+ofc_sema_structure_list_t* ofc_sema_structure_list_create(
+	bool case_sensitive);
+void ofc_sema_structure_list_delete(
+	ofc_sema_structure_list_t* list);
+
+bool ofc_sema_structure_list_add(
+	ofc_sema_structure_list_t* list,
+	ofc_sema_structure_t* structure);
+
+const ofc_sema_structure_t* ofc_sema_structure_list_find(
+	const ofc_sema_structure_list_t* list, ofc_str_ref_t name);
+ofc_sema_structure_t* ofc_sema_structure_list_find_modify(
+	ofc_sema_structure_list_t* list, ofc_str_ref_t name);
+
+bool ofc_sema_structure_list_print(
+	ofc_colstr_t* cs, unsigned indent,
+	const ofc_sema_structure_list_t* list);
 
 #endif

@@ -261,21 +261,34 @@ static ofc_sema_lhs_t* ofc_sema_lhs_substring(
 
 static ofc_sema_lhs_t* ofc_sema_lhs_member(
 	ofc_sema_lhs_t* lhs,
-	ofc_sparse_ref_t member)
+	ofc_sema_decl_t* member)
 {
 	if (!ofc_sema_lhs_reference(lhs))
 		return NULL;
 
-	if (ofc_sparse_ref_empty(member))
+	if (!ofc_sema_decl_reference(member))
 	{
 		ofc_sema_lhs_delete(lhs);
 		return NULL;
 	}
 
-	/* TODO - Implement. */
+	ofc_sema_lhs_t* alhs
+		= (ofc_sema_lhs_t*)malloc(
+			sizeof(ofc_sema_lhs_t));
+	if (!alhs)
+	{
+		ofc_sema_decl_delete(member);
+		ofc_sema_lhs_delete(lhs);
+		return NULL;
+	}
 
-	ofc_sema_lhs_delete(lhs);
-	return NULL;
+	alhs->type      = OFC_SEMA_LHS_STRUCTURE_MEMBER;
+	alhs->src       = lhs->src;
+	alhs->parent    = lhs;
+	alhs->data_type = ofc_sema_decl_type(member);
+	alhs->refcnt    = 0;
+	alhs->member    = member;
+	return alhs;
 }
 
 
@@ -308,11 +321,11 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 					scope, lhs->parent, is_expr, force_local);
 				if (!parent) return NULL;
 
-				/* TODO - Check dereference type against structure type. */
+				/* TODO - STRUCTURE - Check dereference type against structure type. */
 
-				if (!parent->data_type
-					|| (parent->data_type->type
-						!= OFC_SEMA_TYPE_STRUCTURE))
+				ofc_sema_structure_t* structure
+					= ofc_sema_lhs_structure(parent);
+				if (!structure)
 				{
 					ofc_sparse_ref_error(lhs->src,
 						"Attempting to dereference member of a variable"
@@ -321,15 +334,21 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 					return NULL;
 				}
 
-				ofc_sema_lhs_t* slhs
-					= ofc_sema_lhs_member(
-						parent, lhs->member.name);
-				if (!slhs)
+				ofc_sema_decl_t* member
+					= ofc_sema_structure_member_get_decl_name(
+						structure, lhs->member.name.string);
+				if (!member)
 				{
+					ofc_sparse_ref_error(lhs->src,
+						"Dereferencing undefined structure member");
 					ofc_sema_lhs_delete(parent);
 					return NULL;
 				}
 
+				ofc_sema_lhs_t* slhs
+					= ofc_sema_lhs_member(
+						parent, member);
+				ofc_sema_lhs_delete(parent);
 				return slhs;
 			}
 
@@ -821,16 +840,21 @@ ofc_sema_lhs_t* ofc_sema_lhs_elem_get(
 
 			if (ofc_sema_lhs_is_array(lhs))
 			{
-				const ofc_sema_type_t* base_type
-					= lhs->data_type;
+				unsigned base_count = 1;
+				if (ofc_sema_lhs_is_structure(lhs))
+				{
+					const ofc_sema_structure_t* structure
+						= ofc_sema_lhs_structure(lhs);
 
-				unsigned base_count;
-				if (!ofc_sema_type_elem_count(
-					base_type, &base_count))
-					return NULL;
+					unsigned scount;
+					if (!ofc_sema_structure_elem_count(
+						structure, &scount))
+						return NULL;
 
-				if (base_count == 0)
-					return NULL;
+					base_count *= scount;
+					if (base_count == 0)
+						return NULL;
+				}
 
 				unsigned base_offset = (offset % base_count);
 
@@ -852,8 +876,11 @@ ofc_sema_lhs_t* ofc_sema_lhs_elem_get(
 				ofc_sema_lhs_delete(nlhs);
 				return rlhs;
 			}
-
-			if (!ofc_sema_type_is_composite(lhs->data_type))
+			else if (ofc_sema_lhs_is_structure(lhs))
+			{
+				/* TODO - STRUCTURE - Implement. */
+			}
+			else
 			{
 				if (offset != 0)
 					return NULL;
@@ -861,8 +888,6 @@ ofc_sema_lhs_t* ofc_sema_lhs_elem_get(
 					return NULL;
 				return lhs;
 			}
-
-			/* TODO - Handle structures. */
 			break;
 
 		case OFC_SEMA_LHS_ARRAY_SLICE:
@@ -1145,6 +1170,10 @@ void ofc_sema_lhs_delete(
 			ofc_sema_expr_delete(lhs->substring.first);
 			break;
 
+		case OFC_SEMA_LHS_STRUCTURE_MEMBER:
+			ofc_sema_decl_delete(lhs->member);
+			break;
+
 		case OFC_SEMA_LHS_IMPLICIT_DO:
 			ofc_sema_lhs_delete(lhs->implicit_do.lhs);
 			ofc_sema_decl_delete(lhs->implicit_do.iter);
@@ -1248,6 +1277,36 @@ bool ofc_sema_lhs_is_array(
 			return false;
 
 		case OFC_SEMA_LHS_STRUCTURE_MEMBER:
+			/* TODO - Implement. */
+			return false;
+
+		default:
+			break;
+	}
+
+	return false;
+}
+
+bool ofc_sema_lhs_is_structure(
+	const ofc_sema_lhs_t* lhs)
+{
+	if (!lhs)
+		return false;
+
+	switch (lhs->type)
+	{
+		case OFC_SEMA_LHS_DECL:
+			return ofc_sema_decl_is_structure(lhs->decl);
+
+		case OFC_SEMA_LHS_ARRAY_SLICE:
+		case OFC_SEMA_LHS_ARRAY_INDEX:
+		case OFC_SEMA_LHS_SUBSTRING:
+			return ofc_sema_lhs_is_structure(lhs->parent);
+
+		case OFC_SEMA_LHS_STRUCTURE_MEMBER:
+			/* TODO - STRUCTURE - Implement. */
+			return false;
+
 		default:
 			break;
 	}
@@ -1290,6 +1349,27 @@ const ofc_sema_array_t* ofc_sema_lhs_array(
 
 		case OFC_SEMA_LHS_ARRAY_SLICE:
 			return lhs->slice.dims;
+
+		default:
+			break;
+	}
+
+	return NULL;
+}
+
+ofc_sema_structure_t* ofc_sema_lhs_structure(
+	const ofc_sema_lhs_t* lhs)
+{
+	if (!lhs)
+		return NULL;
+
+	switch (lhs->type)
+	{
+		case OFC_SEMA_LHS_DECL:
+			if (!lhs->decl) return NULL;
+			return lhs->decl->structure;
+
+		/* TODO - STRUCTURE - Handle other cases. */
 
 		default:
 			break;
@@ -1432,11 +1512,7 @@ bool ofc_sema_lhs_elem_count(
 {
 	if (!lhs) return false;
 
-	unsigned ecount;
-	if (!ofc_sema_type_elem_count(
-		lhs->data_type, &ecount))
-		return false;
-
+	unsigned ecount = 1;
 	if (lhs->type == OFC_SEMA_LHS_IMPLICIT_DO)
 	{
 		if (lhs->implicit_do.count_var)
@@ -1465,6 +1541,17 @@ bool ofc_sema_lhs_elem_count(
 			array, &acount))
 			return false;
 		ecount *= acount;
+	}
+
+	const ofc_sema_structure_t* structure
+		= ofc_sema_lhs_structure(lhs);
+	if (structure)
+	{
+		unsigned scount;
+		if (!ofc_sema_structure_elem_count(
+			structure, &scount))
+			return false;
+		ecount *= scount;
 	}
 
 	if (count) *count = ecount;
@@ -1529,8 +1616,8 @@ bool ofc_sema_lhs_print(
 			break;
 
 		case OFC_SEMA_LHS_STRUCTURE_MEMBER:
-			if (!ofc_colstr_atomic_writef(cs, ".%.*s",
-				lhs->member.size, lhs->member.base))
+			if (!ofc_colstr_atomic_writef(cs, ".")
+				|| !ofc_sema_decl_print_name(cs, lhs->member))
 					return false;
 			break;
 

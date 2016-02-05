@@ -30,6 +30,7 @@ static const char* ofc_parse_type__name[] =
 	"DOUBLE COMPLEX",
 	"BYTE",
 	"TYPE",
+	"RECORD",
 };
 
 const char* ofc_parse_type_str_rep(
@@ -148,6 +149,7 @@ static const ofc_parse_type__keyword_t ofc_parse_type__keyword_map[] =
 	{ OFC_PARSE_TYPE_DOUBLE_PRECISION, OFC_PARSE_KEYWORD_DOUBLE_PRECISION },
 	{ OFC_PARSE_TYPE_DOUBLE_COMPLEX  , OFC_PARSE_KEYWORD_DOUBLE_COMPLEX   },
 	{ OFC_PARSE_TYPE_TYPE            , OFC_PARSE_KEYWORD_TYPE             },
+	{ OFC_PARSE_TYPE_RECORD          , OFC_PARSE_KEYWORD_RECORD           },
 	{ OFC_PARSE_TYPE_NONE            , 0 },
 };
 
@@ -185,6 +187,7 @@ ofc_parse_type_t* ofc_parse_type(
 	type.count_expr = NULL;
 	type.count_var  = false;
 	type.size       = 0;
+	type.params     = NULL;
 
 	if (type.type == OFC_PARSE_TYPE_TYPE)
 	{
@@ -210,56 +213,58 @@ ofc_parse_type_t* ofc_parse_type(
 			return 0;
 		}
 	}
-	else if ((type.type == OFC_PARSE_TYPE_CHARACTER)
-		&& (ptr[i] == '*'))
+	else if (type.type != OFC_PARSE_TYPE_RECORD)
 	{
-		unsigned l = ofc_parse_star_len(
-			src, &ptr[i], debug,
-			&type.count_expr,
-			&type.count_var);
-		if (l == 0)
+		if ((type.type == OFC_PARSE_TYPE_CHARACTER)
+			&& (ptr[i] == '*'))
 		{
-			ofc_sparse_error_ptr(src, &ptr[i],
-				"Expected count expression or value for character");
-			return NULL;
+			unsigned l = ofc_parse_star_len(
+				src, &ptr[i], debug,
+				&type.count_expr,
+				&type.count_var);
+			if (l == 0)
+			{
+				ofc_sparse_error_ptr(src, &ptr[i],
+					"Expected count expression or value for character");
+				return NULL;
+			}
+			i += l;
 		}
-		i += l;
-	}
-	else if (ptr[i] == '*')
-	{
-		i += 1;
-		unsigned l = ofc_parse_unsigned(
-			src, &ptr[i], debug, &type.size);
-		if (l == 0)
+		else if (ptr[i] == '*')
 		{
-			ofc_sparse_error_ptr(src, &ptr[i],
-				"Expected size after asterisk in type specifier");
-			return NULL;
+			i += 1;
+			unsigned l = ofc_parse_unsigned(
+				src, &ptr[i], debug, &type.size);
+			if (l == 0)
+			{
+				ofc_sparse_error_ptr(src, &ptr[i],
+					"Expected size after asterisk in type specifier");
+				return NULL;
+			}
+
+			if (type.size == 0)
+			{
+				ofc_parse_debug_warning(debug,
+					ofc_sparse_ref(src, &ptr[i], l),
+					"Size must be non-zero, using default");
+			}
+			i += l;
 		}
 
-		if (type.size == 0)
+		if (ptr[i] == '(')
 		{
-			ofc_parse_debug_warning(debug,
-				ofc_sparse_ref(src, &ptr[i], l),
-				"Size must be non-zero, using default");
-		}
-		i += l;
-	}
-
-	type.params = NULL;
-	if (ptr[i] == '(')
-	{
-		unsigned l;
-		type.params = ofc_parse_call_arg_list_force_named(
-			src, &ptr[i + 1], debug, &l);
-		if (type.params && (ptr[i + 1 + l] == ')'))
-		{
-			i += (l + 2);
-		}
-		else
-		{
-			ofc_parse_call_arg_list_delete(
-				type.params);
+			unsigned l;
+			type.params = ofc_parse_call_arg_list_force_named(
+				src, &ptr[i + 1], debug, &l);
+			if (type.params && (ptr[i + 1 + l] == ')'))
+			{
+				i += (l + 2);
+			}
+			else
+			{
+				ofc_parse_call_arg_list_delete(
+					type.params);
+			}
 		}
 	}
 
@@ -294,8 +299,11 @@ bool ofc_parse_type_print(
 {
 	if (ofc_parse_type_print_f77(cs, type))
 		return true;
+	/* TODO - Fix bug with partial F77 type print,
+	          which could result in mangled type. */
 
-	if (type->type >= OFC_PARSE_TYPE_COUNT)
+	if ((type->type >= OFC_PARSE_TYPE_COUNT)
+		|| (type->type == OFC_PARSE_TYPE_RECORD))
 		return false;
 
 	if (!ofc_colstr_atomic_writef(cs, "%s",

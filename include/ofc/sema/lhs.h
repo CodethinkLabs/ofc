@@ -68,7 +68,7 @@ struct ofc_sema_lhs_s
 					ofc_sema_expr_t* last;
 				} substring;
 
-				ofc_str_ref_t member;
+				ofc_sema_decl_t* member;
 			};
 		};
 	};
@@ -120,10 +120,14 @@ bool ofc_sema_lhs_init_array(
 
 bool ofc_sema_lhs_is_array(
 	const ofc_sema_lhs_t* lhs);
+bool ofc_sema_lhs_is_structure(
+	const ofc_sema_lhs_t* lhs);
 bool ofc_sema_lhs_is_parameter(
 	const ofc_sema_lhs_t* lhs);
 
 const ofc_sema_array_t* ofc_sema_lhs_array(
+	const ofc_sema_lhs_t* lhs);
+ofc_sema_structure_t* ofc_sema_lhs_structure(
 	const ofc_sema_lhs_t* lhs);
 ofc_sema_typeval_t* ofc_sema_lhs_parameter(
 	const ofc_sema_lhs_t* lhs);

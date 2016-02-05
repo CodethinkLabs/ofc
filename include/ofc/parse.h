@@ -48,7 +48,6 @@ typedef struct ofc_parse_implicit_do_s ofc_parse_implicit_do_t;
 #include <ofc/parse/save.h>
 #include <ofc/parse/implicit.h>
 #include <ofc/parse/format.h>
-#include <ofc/parse/record.h>
 #include <ofc/parse/pointer.h>
 #include <ofc/parse/stmt.h>
 #include <ofc/parse/file.h>

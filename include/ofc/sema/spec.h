@@ -30,6 +30,8 @@ struct ofc_sema_spec_s
 
 	ofc_sema_array_t* array;
 
+	ofc_sema_structure_t* structure;
+
 	bool is_static;
 	bool is_automatic;
 	bool is_volatile;

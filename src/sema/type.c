@@ -95,10 +95,14 @@ static const char* ofc_sema_type__name[] =
 	"COMPLEX",
 	"BYTE",
 	"CHARACTER",
-	"STRUCTURE",
+
 	"POINTER",
+
 	"FUNCTION",
 	"SUBROUTINE",
+
+	"TYPE",
+	"RECORD",
 
 	NULL
 };
@@ -111,8 +115,12 @@ static const char* ofc_sema_type__cast[] =
 	"CMPLX",
 	NULL,
 	NULL,
+
+	NULL,
+
 	NULL,
 	NULL,
+
 	NULL,
 	NULL,
 
@@ -167,11 +175,6 @@ uint8_t ofc_sema_type_hash(
 
 	switch (type->type)
 	{
-		case OFC_SEMA_TYPE_STRUCTURE:
-			hash += ofc_sema_structure_hash(
-				type->structure);
-			break;
-
 		case OFC_SEMA_TYPE_POINTER:
 			hash += ofc_sema_type_hash(
 				type->subtype);
@@ -208,8 +211,7 @@ static void ofc_sema_type__map_cleanup(void)
 static const ofc_sema_type_t* ofc_sema_type__create(
 	ofc_sema_type_e type,
 	unsigned kind, unsigned len, bool len_var,
-	const ofc_sema_type_t* subtype,
-	const ofc_sema_structure_t* structure)
+	const ofc_sema_type_t* subtype)
 {
 	switch (type)
 	{
@@ -262,9 +264,6 @@ static const ofc_sema_type_t* ofc_sema_type__create(
 		case OFC_SEMA_TYPE_POINTER:
 		case OFC_SEMA_TYPE_FUNCTION:
 			stype.subtype = subtype;
-			break;
-		case OFC_SEMA_TYPE_STRUCTURE:
-			stype.structure = structure;
 			break;
 		default:
 			stype.kind = kind;
@@ -324,32 +323,21 @@ const ofc_sema_type_t* ofc_sema_type_create_primitive(
 	}
 
 	return ofc_sema_type__create(
-		type, kind, 0, false,
-		NULL, NULL);
+		type, kind, 0, false, NULL);
 }
 
 const ofc_sema_type_t* ofc_sema_type_create_character(
 	unsigned kind, unsigned len, bool len_var)
 {
 	return ofc_sema_type__create(
-		OFC_SEMA_TYPE_CHARACTER, kind, len, len_var,
-		NULL, NULL);
-}
-
-const ofc_sema_type_t* ofc_sema_type_create_structure(
-	const ofc_sema_structure_t* structure)
-{
-	return ofc_sema_type__create(
-		OFC_SEMA_TYPE_STRUCTURE, 0, 0, false,
-		NULL, structure);
+		OFC_SEMA_TYPE_CHARACTER, kind, len, len_var, NULL);
 }
 
 const ofc_sema_type_t* ofc_sema_type_create_pointer(
 	ofc_sema_type_t* target)
 {
 	return ofc_sema_type__create(
-		OFC_SEMA_TYPE_POINTER, 0, 0, false,
-		target, NULL);
+		OFC_SEMA_TYPE_POINTER, 0, 0, false, target);
 }
 
 const ofc_sema_type_t* ofc_sema_type_create_function(
@@ -362,8 +350,7 @@ const ofc_sema_type_t* ofc_sema_type_create_function(
 		return NULL;
 
 	return ofc_sema_type__create(
-		OFC_SEMA_TYPE_FUNCTION, 0, 0, false,
-		type, NULL);
+		OFC_SEMA_TYPE_FUNCTION, 0, 0, false, type);
 }
 
 
@@ -473,11 +460,36 @@ const ofc_sema_type_t* ofc_sema_type_subroutine(void)
 	if (!subroutine)
 	{
 		subroutine = ofc_sema_type__create(
-			OFC_SEMA_TYPE_SUBROUTINE, 0, 0, false,
-			NULL, NULL);
+			OFC_SEMA_TYPE_SUBROUTINE, 0, 0, false, NULL);
 	}
 
 	return subroutine;
+}
+
+const ofc_sema_type_t* ofc_sema_type_type(void)
+{
+	static const ofc_sema_type_t* type = NULL;
+
+	if (!type)
+	{
+		type = ofc_sema_type__create(
+			OFC_SEMA_TYPE_TYPE, 0, 0, false, NULL);
+	}
+
+	return type;
+}
+
+const ofc_sema_type_t* ofc_sema_type_record(void)
+{
+	static const ofc_sema_type_t* record = NULL;
+
+	if (!record)
+	{
+		record = ofc_sema_type__create(
+			OFC_SEMA_TYPE_RECORD, 0, 0, false, NULL);
+	}
+
+	return record;
 }
 
 
@@ -518,6 +530,22 @@ const ofc_sema_type_t* ofc_sema_type_spec(
 				kind, len, spec->len_var);
 			break;
 
+		case OFC_SEMA_TYPE_TYPE:
+			if ((spec->len != 0)
+				|| spec->len_var
+				|| (kind != 1))
+				return false;
+			type = ofc_sema_type_type();
+			break;
+
+		case OFC_SEMA_TYPE_RECORD:
+			if ((spec->len != 0)
+				|| spec->len_var
+				|| (kind != 1))
+				return false;
+			type = ofc_sema_type_record();
+			break;
+
 		default:
 			return NULL;
 	}
@@ -542,10 +570,6 @@ static bool ofc_sema_type__compare(
 
 	switch (a->type)
 	{
-		case OFC_SEMA_TYPE_STRUCTURE:
-			return ofc_sema_structure_compare(
-				a->structure, b->structure);
-
 		case OFC_SEMA_TYPE_POINTER:
 		case OFC_SEMA_TYPE_FUNCTION:
 			return ofc_sema_type__compare(
@@ -564,6 +588,10 @@ static bool ofc_sema_type__compare(
 
 		case OFC_SEMA_TYPE_SUBROUTINE:
 			return true;
+
+		case OFC_SEMA_TYPE_TYPE:
+		case OFC_SEMA_TYPE_RECORD:
+			return false;
 
 		default:
 			break;
@@ -626,12 +654,6 @@ bool ofc_sema_type_base_size(
 			def = 1;
 			break;
 
-		case OFC_SEMA_TYPE_STRUCTURE:
-			if (!ofc_sema_structure_size(
-				type->structure, &s))
-				return false;
-			break;
-
 		case OFC_SEMA_TYPE_POINTER:
 			s = ofc_target_pointer_size_get();
 			break;
@@ -676,39 +698,6 @@ bool ofc_sema_type_size(
 	return true;
 }
 
-bool ofc_sema_type_elem_count(
-	const ofc_sema_type_t* type,
-	unsigned* count)
-{
-	if (!type)
-		return false;
-
-	unsigned c;
-	switch (type->type)
-	{
-		case OFC_SEMA_TYPE_LOGICAL:
-		case OFC_SEMA_TYPE_INTEGER:
-		case OFC_SEMA_TYPE_REAL:
-		case OFC_SEMA_TYPE_COMPLEX:
-		case OFC_SEMA_TYPE_BYTE:
-		case OFC_SEMA_TYPE_CHARACTER:
-		case OFC_SEMA_TYPE_POINTER:
-			c = 1;
-			break;
-
-		case OFC_SEMA_TYPE_STRUCTURE:
-			if (!ofc_sema_structure_elem_count(
-				type->structure, &c))
-				return false;
-			break;
-
-		default:
-			return false;
-	}
-
-	if (count) *count = c;
-	return true;
-}
 
 bool ofc_sema_type_is_integer(const ofc_sema_type_t* type)
 {
@@ -773,14 +762,15 @@ bool ofc_sema_type_is_character(
 	return (type && (type->type == OFC_SEMA_TYPE_CHARACTER));
 }
 
-bool ofc_sema_type_is_structure(const ofc_sema_type_t* type)
+
+bool ofc_sema_type_is_type(const ofc_sema_type_t* type)
 {
-	return (type && (type->type == OFC_SEMA_TYPE_STRUCTURE));
+	return (type && (type->type == OFC_SEMA_TYPE_TYPE));
 }
 
-bool ofc_sema_type_is_composite(const ofc_sema_type_t* type)
+bool ofc_sema_type_is_record(const ofc_sema_type_t* type)
 {
-	return ofc_sema_type_is_structure(type);
+	return (type && (type->type == OFC_SEMA_TYPE_RECORD));
 }
 
 
@@ -814,6 +804,8 @@ const ofc_sema_type_t* ofc_sema_type_base(
 			return type->subtype;
 
 		case OFC_SEMA_TYPE_SUBROUTINE:
+		case OFC_SEMA_TYPE_TYPE:
+		case OFC_SEMA_TYPE_RECORD:
 			return NULL;
 
 		default:
@@ -902,7 +894,7 @@ const ofc_sema_type_t* ofc_sema_type_promote(
 			OFC_SEMA_TYPE_COMPLEX, kind);
 	}
 
-	/* We can't promote characters, structures or pointers. */
+	/* We can't promote characters or pointers. */
 
 	return NULL;
 }
@@ -936,7 +928,7 @@ bool ofc_sema_type_cast_valid(
 		|| (complex && (real || logical || integer)))
 		return true;
 
-	/* We can't cast characters, structures or pointers. */
+	/* We can't cast characters or pointers. */
 
 	return false;
 }

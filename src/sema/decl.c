@@ -47,10 +47,12 @@ ofc_sema_decl_t* ofc_sema_decl_create(
 			sizeof(ofc_sema_decl_t));
 	if (!decl) return NULL;
 
-	decl->type  = type;
-	decl->name  = name.string;
-	decl->func  = NULL;
-	decl->array = NULL;
+	decl->type = type;
+	decl->name = name.string;
+
+	decl->func      = NULL;
+	decl->array     = NULL;
+	decl->structure = NULL;
 
 	if (ofc_sema_decl_is_composite(decl))
 	{
@@ -81,6 +83,7 @@ ofc_sema_decl_t* ofc_sema_decl_create(
 
 static ofc_sema_decl_t* ofc_sema_decl__spec(
 	ofc_sema_scope_t*       scope,
+	ofc_sema_structure_t*   member_of,
 	ofc_sparse_ref_t        name,
 	ofc_sema_spec_t*        spec,
 	const ofc_sema_array_t* array,
@@ -89,6 +92,12 @@ static ofc_sema_decl_t* ofc_sema_decl__spec(
 {
 	if (!spec)
 		return NULL;
+
+	if (spec->common && member_of)
+	{
+		/* This should never happen. */
+		return NULL;
+	}
 
 	if (spec->common && (spec->is_static
 		|| spec->is_automatic || spec->is_volatile
@@ -100,7 +109,51 @@ static ofc_sema_decl_t* ofc_sema_decl__spec(
 		return NULL;
 	}
 
-	if (is_procedure)
+	if (member_of)
+	{
+		if (is_procedure)
+		{
+			ofc_sparse_ref_error(name,
+				"Structure members cannot be a procedure");
+			return NULL;
+		}
+
+		if (spec->is_static)
+		{
+			ofc_sparse_ref_error(name,
+				"Structure members cannot be STATIC");
+			return NULL;
+		}
+
+		if (spec->is_automatic)
+		{
+			ofc_sparse_ref_error(name,
+				"Structure members cannot be AUTOMATIC");
+			return NULL;
+		}
+
+		if (spec->is_volatile)
+		{
+			ofc_sparse_ref_error(name,
+				"Structure members cannot be VOLATILE");
+			return NULL;
+		}
+
+		if (spec->is_intrinsic)
+		{
+			ofc_sparse_ref_error(name,
+				"Structure members cannot be INTRINSIC");
+			return NULL;
+		}
+
+		if (spec->is_external)
+		{
+			ofc_sparse_ref_error(name,
+				"Structure members cannot be EXTERNAL");
+			return NULL;
+		}
+	}
+	else if (is_procedure)
 	{
 		if (spec->is_static)
 		{
@@ -188,6 +241,15 @@ static ofc_sema_decl_t* ofc_sema_decl__spec(
 		array = spec->array;
 	}
 
+	ofc_sema_structure_t* structure = NULL;
+	if ((spec->type == OFC_SEMA_TYPE_TYPE)
+		|| (spec->type == OFC_SEMA_TYPE_RECORD))
+	{
+		if (!spec->structure)
+			return NULL;
+		structure = spec->structure;
+	}
+
 	const ofc_sema_type_t* type
 		= ofc_sema_type_spec(spec);
 	if (!type) return NULL;
@@ -216,6 +278,18 @@ static ofc_sema_decl_t* ofc_sema_decl__spec(
 		decl->init_array = NULL;
 	}
 
+	if (structure)
+	{
+		if (!ofc_sema_structure_reference(structure))
+		{
+			ofc_sema_decl_delete(decl);
+			return NULL;
+		}
+
+		decl->structure = structure;
+		decl->init_array = NULL;
+	}
+
 	decl->is_static    = spec->is_static;
 	decl->is_automatic = spec->is_automatic;
 	decl->is_volatile  = spec->is_volatile;
@@ -224,11 +298,23 @@ static ofc_sema_decl_t* ofc_sema_decl__spec(
 
 	decl->has_spec = spec->used;
 
-	if (!ofc_sema_scope_decl_add(
-		scope, decl))
+	if (member_of)
 	{
-		ofc_sema_decl_delete(decl);
-		return NULL;
+		if (!ofc_sema_structure_member_add_decl(
+				member_of, decl))
+		{
+			ofc_sema_decl_delete(decl);
+			return NULL;
+		}
+	}
+	else
+	{
+		if (!ofc_sema_scope_decl_add(
+			scope, decl))
+		{
+			ofc_sema_decl_delete(decl);
+			return NULL;
+		}
 	}
 
 	if (spec->common)
@@ -251,7 +337,7 @@ ofc_sema_decl_t* ofc_sema_decl_spec(
 	const ofc_sema_array_t* array)
 {
 	return ofc_sema_decl__spec(
-		scope, name, spec, array, false, false);
+		scope, NULL, name, spec, array, false, false);
 }
 
 ofc_sema_decl_t* ofc_sema_decl_implicit(
@@ -328,7 +414,7 @@ ofc_sema_decl_t* ofc_sema_decl_function(
 	ofc_sema_spec_t*   spec)
 {
 	return ofc_sema_decl__spec(
-		scope, name, spec, NULL, true, true);
+		scope, NULL, name, spec, NULL, true, true);
 }
 
 ofc_sema_decl_t* ofc_sema_decl_subroutine(
@@ -339,7 +425,7 @@ ofc_sema_decl_t* ofc_sema_decl_subroutine(
 		= ofc_sema_scope_spec_find_final(
 			scope, name);
 	ofc_sema_decl_t* decl = ofc_sema_decl__spec(
-		scope, name, spec, NULL, true, false);
+		scope, NULL, name, spec, NULL, true, false);
 	ofc_sema_spec_delete(spec);
 	return decl;
 }
@@ -348,12 +434,34 @@ ofc_sema_decl_t* ofc_sema_decl_subroutine(
 static bool ofc_sema_decl__decl(
 	ofc_sema_scope_t*       scope,
 	ofc_sema_spec_t         spec,
+	ofc_sema_structure_t*   structure,
 	const ofc_parse_decl_t* pdecl)
 {
 	if (!pdecl || !pdecl->lhs)
 		return false;
 
-	bool is_decl = (pdecl->init_clist || pdecl->init_expr);
+	if (!ofc_sparse_ref_empty(pdecl->record))
+	{
+		/* We intentionally override the existing structure. */
+		spec.structure = ofc_sema_scope_structure_find(
+			scope, pdecl->record.string);
+		if (!spec.structure)
+		{
+			spec.structure = ofc_sema_scope_derived_type_find(
+				scope, pdecl->record.string);
+			if (!spec.structure)
+			{
+				ofc_sparse_ref_error(pdecl->record,
+					"Referencing undefined STRUCTURE in RECORD statement");
+				return false;
+			}
+			ofc_sparse_ref_warning(pdecl->record,
+				"Referencing Fortran 90 TYPE in VAX RECORD statement");
+		}
+	}
+
+	bool is_decl = ((structure != NULL)
+		|| pdecl->init_clist || pdecl->init_expr);
 
 	const ofc_parse_lhs_t* lhs = pdecl->lhs;
 	if (lhs->type == OFC_PARSE_LHS_STAR_LEN)
@@ -442,14 +550,96 @@ static bool ofc_sema_decl__decl(
 		return false;
 	}
 
-	ofc_sema_decl_t* decl
-		= ofc_sema_scope_decl_find_modify(
+	ofc_sema_decl_t* decl = NULL;
+	if (!structure)
+	{
+		decl = ofc_sema_scope_decl_find_modify(
 			scope, spec.name.string, true);
-	bool exist = (decl != NULL);
+	}
+
+	ofc_sema_spec_t* nspec = &spec;
+	if (!structure)
+	{
+		if (decl != NULL)
+		{
+			/* TODO - Handle specifications which are compatible. */
+
+			ofc_sparse_ref_error(lhs->src,
+				"Specification of declared variable");
+			ofc_sema_array_delete(spec.array);
+			return false;
+		}
+
+		nspec = ofc_sema_scope_spec_modify(
+			scope, spec.name);
+		if (!nspec)
+		{
+			ofc_sema_array_delete(spec.array);
+			return false;
+		}
+
+		/* Overlay the spec on the existing one. */
+		if (!spec.type_implicit)
+		{
+			if (!nspec->type_implicit
+				&& ((nspec->type != spec.type)
+					|| (nspec->structure != spec.structure)))
+			{
+				ofc_sema_array_delete(spec.array);
+				return false;
+			}
+
+			nspec->type_implicit = spec.type_implicit;
+			nspec->type          = spec.type;
+
+			if (spec.kind != 0)
+				nspec->kind = spec.kind;
+
+			if (spec.structure)
+			{
+				if (nspec->structure
+					? (nspec->structure != spec.structure)
+					: !ofc_sema_structure_reference(spec.structure))
+				{
+					ofc_sema_array_delete(spec.array);
+					return false;
+				}
+				nspec->structure = spec.structure;
+			}
+		}
+
+		if (spec.array)
+		{
+			if (nspec->array)
+			{
+				bool conflict = !ofc_sema_array_compare(
+					nspec->array, spec.array);
+				ofc_sema_array_delete(spec.array);
+				if (conflict) return false;
+			}
+			else
+			{
+				nspec->array = spec.array;
+			}
+		}
+
+		if ((spec.len != 0)
+			|| spec.len_var)
+		{
+			nspec->len     = spec.len;
+			nspec->len_var = spec.len_var;
+		}
+
+		nspec->is_static    |= spec.is_static;
+		nspec->is_automatic |= spec.is_automatic;
+		nspec->is_volatile  |= spec.is_volatile;
+		nspec->is_intrinsic |= spec.is_intrinsic;
+		nspec->is_external  |= spec.is_external;
+	}
 
 	if (is_decl)
 	{
-		if (exist)
+		if (decl != NULL)
 		{
 			/* TODO - Handle redeclarations which match original. */
 
@@ -460,9 +650,9 @@ static bool ofc_sema_decl__decl(
 		}
 
 		decl = ofc_sema_decl__spec(
-			scope, spec.name, &spec,
+			scope, structure,
+			spec.name, nspec,
 			NULL, false, false);
-		ofc_sema_array_delete(spec.array);
 		if (!decl) return false;
 
 		if (pdecl->init_expr)
@@ -496,72 +686,6 @@ static bool ofc_sema_decl__decl(
 				return false;
 		}
 	}
-	else
-	{
-		if (exist)
-		{
-			/* TODO - Handle specifications which are compatible. */
-
-			ofc_sparse_ref_error(lhs->src,
-				"Specification of declared variable");
-			ofc_sema_array_delete(spec.array);
-			return false;
-		}
-
-		ofc_sema_spec_t* nspec
-			= ofc_sema_scope_spec_modify(
-				scope, spec.name);
-		if (!nspec)
-		{
-			ofc_sema_array_delete(spec.array);
-			return false;
-		}
-
-		/* Overlay the spec on the existing one. */
-		if (!spec.type_implicit)
-		{
-			if (!nspec->type_implicit
-				&& (nspec->type != spec.type))
-			{
-				ofc_sema_array_delete(spec.array);
-				return false;
-			}
-
-			nspec->type_implicit = spec.type_implicit;
-			nspec->type          = spec.type;
-
-			if (spec.kind != 0)
-				nspec->kind = spec.kind;
-		}
-
-		if (spec.array)
-		{
-			if (nspec->array)
-			{
-				bool conflict = !ofc_sema_array_compare(
-					nspec->array, spec.array);
-				ofc_sema_array_delete(spec.array);
-				if (conflict) return false;
-			}
-			else
-			{
-				nspec->array = spec.array;
-			}
-		}
-
-		if ((spec.len != 0)
-			|| spec.len_var)
-		{
-			nspec->len     = spec.len;
-			nspec->len_var = spec.len_var;
-		}
-
-		nspec->is_static    |= spec.is_static;
-		nspec->is_automatic |= spec.is_automatic;
-		nspec->is_volatile  |= spec.is_volatile;
-		nspec->is_intrinsic |= spec.is_intrinsic;
-		nspec->is_external  |= spec.is_external;
-	}
 
 	return true;
 }
@@ -586,10 +710,43 @@ bool ofc_sema_decl(
 	for (i = 0; i < count; i++)
 	{
 		if (!ofc_sema_decl__decl(
-			scope, *spec, stmt->decl.decl->decl[i]))
+			scope, *spec, NULL, stmt->decl.decl->decl[i]))
 		{
 			ofc_sema_spec_delete(spec);
 			return false;
+		}
+	}
+
+	ofc_sema_spec_delete(spec);
+	return true;
+}
+
+bool ofc_sema_decl_member(
+	ofc_sema_scope_t* scope,
+	ofc_sema_structure_t* structure,
+	const ofc_parse_stmt_t* stmt)
+{
+	if (!stmt || !scope
+		|| !stmt->decl.type || !stmt->decl.decl
+		|| (stmt->type != OFC_PARSE_STMT_DECL))
+		return NULL;
+
+	ofc_sema_spec_t* spec = ofc_sema_spec(
+		scope, stmt->decl.type);
+	if (!spec) return NULL;
+
+	unsigned count = stmt->decl.decl->count;
+	if (count == 0) return NULL;
+
+	unsigned i;
+	for (i = 0; i < count; i++)
+	{
+		if (!ofc_sema_decl__decl(
+			scope, *spec, structure,
+			stmt->decl.decl->decl[i]))
+		{
+			ofc_sema_spec_delete(spec);
+			return NULL;
 		}
 	}
 
@@ -644,6 +801,7 @@ void ofc_sema_decl_delete(
 	}
 
 	ofc_sema_array_delete(decl->array);
+	ofc_sema_structure_delete(decl->structure);
 	ofc_sema_scope_delete(decl->func);
 	ofc_sema_equiv_delete(decl->equiv);
 	free(decl);
@@ -1279,12 +1437,12 @@ bool ofc_sema_decl_elem_count(
 		decl->array, &acount))
 		return false;
 
-	unsigned ecount;
-	if (!ofc_sema_type_elem_count(
-		decl->type, &ecount))
+	unsigned scount = 1;
+	if (decl->structure && !ofc_sema_structure_elem_count(
+		decl->structure, &scount))
 		return false;
 
-	if (count) *count = (acount * ecount);
+	if (count) *count = (acount * scount);
 	return true;
 }
 
@@ -1294,13 +1452,19 @@ bool ofc_sema_decl_is_array(
 	return (decl && decl->array);
 }
 
+bool ofc_sema_decl_is_structure(
+	const ofc_sema_decl_t* decl)
+{
+	return (decl && decl->structure);
+}
+
 bool ofc_sema_decl_is_composite(
 	const ofc_sema_decl_t* decl)
 {
 	if (!decl)
 		return false;
 	return (ofc_sema_decl_is_array(decl)
-		|| ofc_sema_type_is_composite(decl->type));
+		|| ofc_sema_decl_is_structure(decl));
 }
 
 
@@ -1611,7 +1775,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 	unsigned indent,
 	const ofc_sema_decl_t* decl)
 {
-	if (!decl)
+	if (!decl || !decl->type)
 		return false;
 
 	/* If there's a used specifier we print that instead and handle
@@ -1619,27 +1783,48 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 	if (decl->has_spec)
 		return true;
 
-	const ofc_sema_type_t* type = decl->type;
-	bool is_pointer = (type->type == OFC_SEMA_TYPE_POINTER);
-	if (is_pointer || ofc_sema_decl_is_function(decl))
-		type = type->subtype;
-
-	if (!type)
+	if (!ofc_colstr_newline(cs, indent, NULL))
 		return false;
 
-	/* We can't support nested pointer types. */
-	if (type->type == OFC_SEMA_TYPE_POINTER)
-		return false;
-
-	if (type->type == OFC_SEMA_TYPE_STRUCTURE)
+	const ofc_sema_type_t* type = NULL;
+	bool is_pointer = false;
+	if (decl->type->type == OFC_SEMA_TYPE_RECORD)
 	{
-		/* TODO - Handle STRUCTURE declarations. */
-		return false;
+		return (ofc_colstr_atomic_writef(cs, "RECORD")
+			&& ofc_colstr_atomic_writef(cs, " ")
+			&& ofc_colstr_atomic_writef(cs, "/")
+			&& ofc_sema_structure_print_name(cs, decl->structure)
+			&& ofc_colstr_atomic_writef(cs, "/")
+			&& ofc_colstr_atomic_writef(cs, " ")
+			&& ofc_sema_decl_print_name(cs, decl));
 	}
+	else if (decl->type->type == OFC_SEMA_TYPE_TYPE)
+	{
+		if (!ofc_colstr_atomic_writef(cs, "TYPE")
+			|| !ofc_colstr_atomic_writef(cs, "(")
+			|| !ofc_sema_structure_print_name(cs, decl->structure)
+			|| !ofc_colstr_atomic_writef(cs, ")"))
+			return false;
+	}
+	else
+	{
+		type = decl->type;
+		if (!type) return false;
 
-	if (!ofc_colstr_newline(cs, indent, NULL)
-		|| !ofc_sema_type_print(cs, type))
-		return false;
+		is_pointer = (type->type == OFC_SEMA_TYPE_POINTER);
+		if (is_pointer || ofc_sema_decl_is_function(decl))
+		{
+			type = type->subtype;
+			if (!type) return false;
+		}
+
+		/* We can't support nested pointer types. */
+		if (type->type == OFC_SEMA_TYPE_POINTER)
+			return false;
+
+		if (!ofc_sema_type_print(cs, type))
+			return false;
+	}
 
 	if (decl->is_external)
 	{
@@ -1714,7 +1899,9 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 			return false;
 	}
 
-	if (!ofc_colstr_atomic_writef(cs, " :: "))
+	if (!ofc_colstr_atomic_writef(cs, " ")
+		|| !ofc_colstr_atomic_writef(cs, "::")
+		|| !ofc_colstr_atomic_writef(cs, " "))
 		return false;
 
 	if (!ofc_sema_decl_print_name(cs, decl))
@@ -1912,17 +2099,13 @@ bool ofc_sema_decl_print_data_init(ofc_colstr_t* cs,
 	}
 	else if (ofc_sema_decl_is_array(decl))
 	{
-		unsigned count;
-		if (!ofc_sema_type_elem_count(
-			decl->type, &count))
-			return false;
-
-		if (count != 1)
+		if (decl->structure)
 		{
-			/* TODO - Support more exotic arrays. */
+			/* TODO - Support structure arrays. */
 			return false;
 		}
 
+		unsigned count;
 		if (!ofc_sema_decl_elem_count(
 			decl, &count))
 			return false;

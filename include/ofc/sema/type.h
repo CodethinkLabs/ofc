@@ -24,10 +24,14 @@ typedef enum
 	OFC_SEMA_TYPE_COMPLEX,
 	OFC_SEMA_TYPE_BYTE,
 	OFC_SEMA_TYPE_CHARACTER,
-	OFC_SEMA_TYPE_STRUCTURE,
+
 	OFC_SEMA_TYPE_POINTER,
+
 	OFC_SEMA_TYPE_FUNCTION,
 	OFC_SEMA_TYPE_SUBROUTINE,
+
+	OFC_SEMA_TYPE_TYPE,
+	OFC_SEMA_TYPE_RECORD,
 
 	OFC_SEMA_TYPE_COUNT
 } ofc_sema_type_e;
@@ -46,8 +50,6 @@ struct ofc_sema_type_s
 			unsigned len;
 			bool     len_var;
 		};
-
-		const ofc_sema_structure_t* structure;
 	};
 };
 
@@ -65,8 +67,6 @@ const ofc_sema_type_t* ofc_sema_type_create_primitive(
 	ofc_sema_type_e type, unsigned kind);
 const ofc_sema_type_t* ofc_sema_type_create_character(
 	unsigned kind, unsigned len, bool len_var);
-const ofc_sema_type_t* ofc_sema_type_create_structure(
-	const ofc_sema_structure_t* structure);
 const ofc_sema_type_t* ofc_sema_type_create_pointer(
 	ofc_sema_type_t* target);
 const ofc_sema_type_t* ofc_sema_type_create_function(
@@ -82,6 +82,8 @@ const ofc_sema_type_t* ofc_sema_type_complex_default(void);
 const ofc_sema_type_t* ofc_sema_type_double_complex_default(void);
 const ofc_sema_type_t* ofc_sema_type_byte_default(void);
 const ofc_sema_type_t* ofc_sema_type_subroutine(void);
+const ofc_sema_type_t* ofc_sema_type_type(void);
+const ofc_sema_type_t* ofc_sema_type_record(void);
 
 uint8_t ofc_sema_type_hash(
 	const ofc_sema_type_t* type);
@@ -100,9 +102,6 @@ bool ofc_sema_type_base_size(
 bool ofc_sema_type_size(
 	const ofc_sema_type_t* type,
 	unsigned* size);
-bool ofc_sema_type_elem_count(
-	const ofc_sema_type_t* type,
-	unsigned* count);
 
 bool ofc_sema_type_is_integer(const ofc_sema_type_t* type);
 bool ofc_sema_type_is_scalar(const ofc_sema_type_t* type);
@@ -111,7 +110,6 @@ bool ofc_sema_type_is_logical(const ofc_sema_type_t* type);
 bool ofc_sema_type_is_character(const ofc_sema_type_t* type);
 
 bool ofc_sema_type_is_structure(const ofc_sema_type_t* type);
-bool ofc_sema_type_is_composite(const ofc_sema_type_t* type);
 
 bool ofc_sema_type_is_subroutine(const ofc_sema_type_t* type);
 bool ofc_sema_type_is_function(const ofc_sema_type_t* type);

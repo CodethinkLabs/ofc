@@ -13,174 +13,420 @@
  * limitations under the License.
  */
 
-#include "ofc/hashmap.h"
 #include "ofc/sema.h"
 
 
-static void ofc_sema_structure__delete_locked(ofc_sema_structure_t* structure)
+static const ofc_str_ref_t* ofc_structure__member_name(
+	const ofc_sema_structure_member_t* member)
 {
-	if (!structure)
-		return;
-
-	free(structure->member.type);
-	free(structure->member.name);
-	free(structure);
-}
-
-void ofc_sema_structure_delete(
-	ofc_sema_structure_t* structure)
-{
-	if (structure && structure->locked)
-		ofc_sema_structure__delete_locked(structure);
+	if (!member)
+		return NULL;
+	return (member->is_structure
+		? &member->structure->name.string
+		: &member->decl->name);
 }
 
 
-ofc_sema_structure_t* ofc_sema_structure_create(bool is_vax)
+static ofc_sema_structure_t* ofc_sema__structure(
+	ofc_sema_scope_t* scope,
+	ofc_parse_stmt_t* stmt)
 {
+	if (!stmt)
+		return NULL;
+
+	ofc_sema_structure_e type;
+	switch (stmt->type)
+	{
+		case OFC_PARSE_STMT_STRUCTURE:
+			type = OFC_SEMA_STRUCTURE_VAX_STRUCTURE;
+			break;
+
+		case OFC_PARSE_STMT_UNION:
+			type = OFC_SEMA_STRUCTURE_VAX_UNION;
+			break;
+
+		case OFC_PARSE_STMT_TYPE:
+			type = OFC_SEMA_STRUCTURE_F90_TYPE;
+			break;
+
+		default:
+			return NULL;
+	}
+
 	ofc_sema_structure_t* structure
 		= (ofc_sema_structure_t*)malloc(
 			sizeof(ofc_sema_structure_t));
 	if (!structure) return NULL;
 
-	structure->is_vax   = is_vax;
-	structure->is_union = false;
+	ofc_lang_opts_t opts
+		= ofc_sparse_lang_opts(stmt->src.sparse);
+	structure->map = ofc_hashmap_create(
+		(void*)(opts.case_sensitive
+			? ofc_str_ref_ptr_hash
+			: ofc_str_ref_ptr_hash_ci),
+		(void*)(opts.case_sensitive
+			? ofc_str_ref_ptr_equal
+			: ofc_str_ref_ptr_equal_ci),
+		(void*)ofc_structure__member_name,
+		NULL);
+	if (!structure->map)
+	{
+		free(structure);
+		return NULL;
+	}
 
-	structure->member.count = 0;
-	structure->member.type  = NULL;
-	structure->member.name  = NULL;
+	structure->name = stmt->structure.name;
+	structure->type = type;
 
-	structure->locked = false;
+	structure->count  = 0;
+	structure->member = NULL;
+
+	structure->refcnt = 0;
+
+	if (stmt->structure.block)
+	{
+		unsigned i;
+		for (i = 0; i < stmt->structure.block->count; i++)
+		{
+			/* TODO - Validate sub-structures. */
+
+			ofc_sema_structure_t* smember
+				= ofc_sema__structure(scope,
+					stmt->structure.block->stmt[i]);
+			if (smember)
+			{
+				if (!ofc_sema_structure_member_add_structure(
+					structure, smember))
+				{
+					ofc_sema_structure_delete(structure);
+					return NULL;
+				}
+			}
+			else if (!ofc_sema_decl_member(scope, structure,
+				stmt->structure.block->stmt[i]))
+			{
+				ofc_sema_structure_delete(structure);
+				return NULL;
+			}
+		}
+	}
 
 	return structure;
 }
 
-ofc_sema_structure_t* ofc_sema_structure_create_union(void)
+ofc_sema_structure_t* ofc_sema_structure(
+	ofc_sema_scope_t* scope,
+	ofc_parse_stmt_t* stmt)
 {
+	if (!stmt)
+		return NULL;
+
 	ofc_sema_structure_t* structure
-		= ofc_sema_structure_create(true);
+		= ofc_sema__structure(scope, stmt);
 	if (!structure) return NULL;
 
-	structure->is_union = true;
+	bool added = false;
+	switch (stmt->type)
+	{
+		case OFC_PARSE_STMT_STRUCTURE:
+			added = ofc_sema_scope_structure_add(scope, structure);
+			break;
+		case OFC_PARSE_STMT_TYPE:
+			added = ofc_sema_scope_derived_type_add(scope, structure);
+			break;
+		default:
+			break;
+	}
+	if (!added)
+	{
+		ofc_sema_structure_delete(structure);
+		return NULL;
+	}
+
 	return structure;
 }
 
-
-bool ofc_sema_structure_append(
-	ofc_sema_structure_t* structure,
-	const ofc_sema_type_t* type, ofc_str_ref_t name)
-{
-	if (!structure || !type
-		|| structure->locked
-		|| ofc_str_ref_empty(name))
-		return false;
-
-	const ofc_sema_type_t** ntype
-		= (const ofc_sema_type_t**)realloc(structure->member.type,
-			(sizeof(const ofc_sema_type_t*) * (structure->member.count + 1)));
-	if (!ntype) return false;
-	structure->member.type = ntype;
-
-	ofc_str_ref_t* nname
-		= (ofc_str_ref_t*)realloc(structure->member.name,
-			(sizeof(ofc_str_ref_t) * (structure->member.count + 1)));
-	if (!nname) return false;
-	structure->member.name = nname;
-
-	structure->member.type[structure->member.count] = type;
-	structure->member.name[structure->member.count] = name;
-	structure->member.count++;
-	return true;
-}
-
-
-const ofc_sema_structure_t* ofc_sema_structure__key(
-	const ofc_sema_structure_t* structure)
-{
-	return structure;
-}
-
-ofc_hashmap_t* ofc_sema_structure__map = NULL;
-
-bool ofc_sema_structure_complete(
+bool ofc_sema_structure_reference(
 	ofc_sema_structure_t* structure)
 {
 	if (!structure)
 		return false;
 
-	if (structure->locked)
-		return true;
-
-	if (!ofc_sema_structure__map)
-	{
-		ofc_sema_structure__map = ofc_hashmap_create(
-			(void*)ofc_sema_structure_hash,
-			(void*)ofc_sema_structure_compare,
-			(void*)ofc_sema_structure__key,
-			(void*)ofc_sema_structure__delete_locked);
-		if (!ofc_sema_structure__map)
-			return false;
-	}
-
-	if (!ofc_hashmap_add(
-		ofc_sema_structure__map,
-		structure))
+	if ((structure->refcnt + 1) == 0)
 		return false;
 
-	structure->locked = true;
+	structure->refcnt++;
+	return true;
+}
+
+static void ofc_sema_structure__member_delete(
+	ofc_sema_structure_member_t* member)
+{
+	if (!member)
+		return;
+
+	if (member->is_structure)
+		ofc_sema_structure_delete(
+			member->structure);
+	else
+		ofc_sema_decl_delete(member->decl);
+
+	free(member);
+}
+
+void ofc_sema_structure_delete(
+	ofc_sema_structure_t* structure)
+{
+	if (!structure)
+		return;
+
+	if (structure->refcnt > 0)
+	{
+		structure->refcnt--;
+		return;
+	}
+
+	ofc_hashmap_delete(structure->map);
+
+	unsigned i;
+	for (i = 0; i < structure->count; i++)
+	{
+		ofc_sema_structure__member_delete(
+			structure->member[i]);
+	}
+	free(structure->member);
+
+	free(structure);
+}
+
+
+static bool ofc_sema_structure__member_anon(
+	ofc_sema_structure_member_t* member)
+{
+	if (!member || !member->is_structure)
+		return false;
+	return ofc_sparse_ref_empty(
+		member->structure->name);
+}
+
+static bool ofc_sema_structure__member_add(
+	ofc_sema_structure_t*        structure,
+	ofc_sema_structure_member_t* member)
+{
+	if (!structure || !member)
+		return false;
+
+	bool anon = ofc_sema_structure__member_anon(member);
+	if (!anon)
+	{
+		const ofc_sema_structure_member_t* emember
+			= ofc_hashmap_find(structure->map,
+				ofc_structure__member_name(member));
+		if (emember)
+		{
+			/* TODO - STRUCTURE - Error about duplicate structure member. */
+			return false;
+		}
+	}
+
+	ofc_sema_structure_member_t** nmember
+		= (ofc_sema_structure_member_t**)realloc(structure->member,
+			(sizeof(ofc_sema_structure_member_t*) * (structure->count + 1)));
+	if (!nmember) return false;
+	structure->member = nmember;
+
+	if (!anon && !ofc_hashmap_add(
+		structure->map, member))
+		return false;
+
+	structure->member[structure->count++] = member;
+	return true;
+}
+
+bool ofc_sema_structure_member_add_decl(
+	ofc_sema_structure_t* structure,
+	ofc_sema_decl_t*      member)
+{
+	if (!member)
+		return false;
+
+	ofc_sema_structure_member_t* m
+		= (ofc_sema_structure_member_t*)malloc(
+			sizeof(ofc_sema_structure_member_t));
+	if (!m) return false;
+
+	m->is_structure = false;
+	m->decl = member;
+
+	if (!ofc_sema_structure__member_add(
+		structure, m))
+	{
+		free(m);
+		return false;
+	}
+
+	return true;
+}
+
+bool ofc_sema_structure_member_add_structure(
+	ofc_sema_structure_t* structure,
+	ofc_sema_structure_t* member)
+{
+	if (!member)
+		return false;
+
+	ofc_sema_structure_member_t* m
+		= (ofc_sema_structure_member_t*)malloc(
+			sizeof(ofc_sema_structure_member_t));
+	if (!m) return false;
+
+	m->is_structure = true;
+	m->structure = member;
+
+	if (!ofc_sema_structure__member_add(
+		structure, m))
+	{
+		free(m);
+		return false;
+	}
+
 	return true;
 }
 
 
-uint8_t ofc_sema_structure_hash(
+bool ofc_sema_structure_member_count(
+	const ofc_sema_structure_t* structure,
+	unsigned* count)
+{
+	if (!structure)
+		return false;
+
+	unsigned i, c;
+	for (i = 0, c = 0; i < structure->count; i++)
+	{
+		unsigned rc = 1;
+		if (ofc_sema_structure__member_anon(
+			structure->member[i]))
+		{
+			if (!ofc_sema_structure_member_count(
+				structure->member[i]->structure, &rc))
+				return false;
+		}
+		c += rc;
+	}
+
+	if (count) *count = c;
+	return true;
+}
+
+ofc_sema_decl_t* ofc_sema_structure_member_get_decl_offset(
+	ofc_sema_structure_t* structure,
+	unsigned offset)
+{
+	if (!structure
+		|| !structure->member)
+		return NULL;
+
+	unsigned i, o;
+	for (i = 0, o = offset; i < structure->count; i++)
+	{
+		if (ofc_sema_structure__member_anon(
+			structure->member[i]))
+		{
+			unsigned count;
+			if (!ofc_sema_structure_member_count(
+				structure->member[i]->structure, &count))
+				return NULL;
+
+			if (o < count)
+				return ofc_sema_structure_member_get_decl_offset(
+					structure, o);
+			o -= count;
+		}
+		else
+		{
+			if (o == 0)
+			{
+				if (structure->member[i]->is_structure)
+					return NULL;
+				return structure->member[i]->decl;
+			}
+			o -= 1;
+		}
+	}
+
+	return NULL;
+}
+
+ofc_sema_decl_t* ofc_sema_structure_member_get_decl_name(
+	ofc_sema_structure_t* structure,
+	ofc_str_ref_t name)
+{
+	if (!structure)
+		return NULL;
+
+	ofc_sema_structure_member_t* member
+		= ofc_hashmap_find_modify(
+			structure->map, &name);
+	if (member)
+	{
+		if (member->is_structure)
+			return NULL;
+		return member->decl;
+	}
+
+	if (!member)
+	{
+		unsigned i;
+		for (i = 0; i < structure->count; i++)
+		{
+			if (!ofc_sema_structure__member_anon(
+				structure->member[i]))
+				continue;
+
+			ofc_sema_decl_t* decl
+				= ofc_sema_structure_member_get_decl_name(
+					member->structure, name);
+			if (decl) return decl;
+		}
+	}
+
+	return NULL;
+}
+
+
+bool ofc_sema_structure_is_union(
 	const ofc_sema_structure_t* structure)
 {
 	if (!structure)
-		return 0;
+		return false;
 
-	uint8_t hash = (structure->is_vax
-		+ structure->is_union);
-
-	unsigned i;
-	for (i = 0; i < structure->member.count; i++)
+	switch (structure->type)
 	{
-		hash += ofc_str_ref_hash(structure->member.name[i]);
-		hash += ofc_sema_type_hash(structure->member.type[i]);
+		case OFC_SEMA_STRUCTURE_VAX_UNION:
+			return true;
+
+		default:
+			break;
 	}
 
-	return hash;
+	return false;
 }
 
-bool ofc_sema_structure_compare(
-	const ofc_sema_structure_t* a,
-	const ofc_sema_structure_t* b)
+bool ofc_sema_structure_is_nested(
+	const ofc_sema_structure_t* structure)
 {
-	if (!a || !b)
-		return false;
-
-	if (a == b)
-		return true;
-
-	if ((a->is_vax != b->is_vax)
-		|| (a->is_union != b->is_union)
-		|| (a->member.count != b->member.count))
+	if (!structure)
 		return false;
 
 	unsigned i;
-	for (i = 0; i < a->member.count; i++)
+	for (i = 0; i < structure->count; i++)
 	{
-		/* TODO - Compare case insensitively dependent on lang_opts */
-		if (!ofc_str_ref_equal(
-			a->member.name[i],
-			b->member.name[i]))
-			return false;
-
-		if (!ofc_sema_type_compare(
-			a->member.type[i],
-			b->member.type[i]))
-			return false;
+		if (structure->member[i]->is_structure)
+			return true;
 	}
 
-	return true;
+	return false;
 }
 
 
@@ -191,22 +437,38 @@ bool ofc_sema_structure_size(
 	if (!structure)
 		return false;
 
-	unsigned total = 0, max = 0;
+	unsigned usize = 0;
+	unsigned ssize = 0;
 	unsigned i;
-	for (i = 0; i < structure->member.count; i++)
+	for (i = 0; i < structure->count; i++)
 	{
 		unsigned msize;
-		if (!ofc_sema_type_size(
-			structure->member.type[i], &msize))
-			return false;
-		total += msize;
+		if (structure->member[i]->is_structure)
+		{
+			if (!ofc_sema_structure_size(
+				structure->member[i]->structure, &msize))
+				return false;
+		}
+		else
+		{
+			if (!ofc_sema_decl_size(
+				structure->member[i]->decl, &msize))
+				return false;
+		}
 
-		if (msize > max)
-			max = msize;
+		if (msize > usize)
+			usize = msize;
+		ssize += msize;
 	}
 
 	if (size)
-		*size = (structure->is_union ? max : total);
+	{
+		if (ofc_sema_structure_is_union(structure))
+			*size = usize;
+		else
+			*size = ssize;
+	}
+
 	return true;
 }
 
@@ -214,25 +476,243 @@ bool ofc_sema_structure_elem_count(
 	const ofc_sema_structure_t* structure,
 	unsigned* count)
 {
-	if (!structure
-		|| (structure->member.count == 0))
+	if (!structure)
 		return false;
 
-	unsigned total = 0, max = 0;
+	unsigned ucount = 0;
+	unsigned scount = 0;
 	unsigned i;
-	for (i = 0; i < structure->member.count; i++)
+	for (i = 0; i < structure->count; i++)
 	{
-		unsigned melem;
-		if (!ofc_sema_type_elem_count(
-			structure->member.type[i], &melem))
-			return false;
-		total += melem;
+		unsigned mcount;
+		if (structure->member[i]->is_structure)
+		{
+			if (!ofc_sema_structure_elem_count(
+				structure->member[i]->structure, &mcount))
+				return false;
+		}
+		else
+		{
+			if (!ofc_sema_decl_elem_count(
+				structure->member[i]->decl, &mcount))
+				return false;
+		}
 
-		if (melem > max)
-			max = melem;
+		if (mcount > ucount)
+			ucount = mcount;
+		scount += mcount;
 	}
 
 	if (count)
-		*count = (structure->is_union ? max : total);
+	{
+		if (ofc_sema_structure_is_union(structure))
+			*count = ucount;
+		else
+			*count = scount;
+	}
+
+	return true;
+}
+
+
+bool ofc_sema_structure_print_name(
+	ofc_colstr_t* cs,
+	const ofc_sema_structure_t* structure)
+{
+	if (!structure)
+		return false;
+	return ofc_sparse_ref_print(
+		cs, structure->name);
+}
+
+bool ofc_sema_structure_print(
+	ofc_colstr_t* cs, unsigned indent,
+	const ofc_sema_structure_t* structure)
+{
+	if (!structure)
+		return false;
+
+	if (!ofc_colstr_newline(
+		cs, indent, NULL))
+		return false;
+
+	const char* kwstr;
+	switch (structure->type)
+	{
+		case OFC_SEMA_STRUCTURE_F90_TYPE:
+			kwstr = "TYPE";
+			break;
+
+		case OFC_SEMA_STRUCTURE_VAX_STRUCTURE:
+			kwstr = "STRUCTURE";
+			break;
+
+		case OFC_SEMA_STRUCTURE_VAX_UNION:
+			kwstr = "UNION";
+			break;
+
+		default:
+			return false;
+	}
+
+	if (!ofc_colstr_atomic_writef(cs, "%s", kwstr))
+		return false;
+
+	bool has_name = !ofc_sparse_ref_empty(structure->name);
+	if (has_name)
+	{
+		if (!ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_sparse_ref_print(cs, structure->name))
+			return false;
+	}
+
+	unsigned i;
+	for (i = 0; i < structure->count; i++)
+	{
+		if (structure->member[i]->is_structure)
+		{
+			if (!ofc_sema_structure_print(cs, (indent + 1),
+				structure->member[i]->structure))
+				return false;
+		}
+		else
+		{
+			if (!ofc_sema_decl_print(cs, (indent + 1),
+				structure->member[i]->decl))
+				return false;
+		}
+	}
+
+	if (!ofc_colstr_newline(cs, indent, NULL)
+		|| !ofc_colstr_atomic_writef(cs, "END")
+		|| !ofc_colstr_atomic_writef(cs, " ")
+		|| !ofc_colstr_atomic_writef(cs, "%s", kwstr))
+		return false;
+
+	if (has_name)
+	{
+		if (!ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_sparse_ref_print(cs, structure->name))
+			return false;
+	}
+
+	return true;
+}
+
+
+
+static const ofc_str_ref_t* ofc_structure__name(
+	const ofc_sema_structure_t* structure)
+{
+	if (!structure)
+		return NULL;
+	return &structure->name.string;
+}
+
+ofc_sema_structure_list_t* ofc_sema_structure_list_create(
+	bool case_sensitive)
+{
+	ofc_sema_structure_list_t* list
+		= (ofc_sema_structure_list_t*)malloc(
+			sizeof(ofc_sema_structure_list_t));
+	if (!list) return NULL;
+
+	list->map = ofc_hashmap_create(
+		(void*)(case_sensitive
+			? ofc_str_ref_ptr_hash
+			: ofc_str_ref_ptr_hash_ci),
+		(void*)(case_sensitive
+			? ofc_str_ref_ptr_equal
+			: ofc_str_ref_ptr_equal_ci),
+		(void*)ofc_structure__name,
+		NULL);
+	if (!list->map)
+	{
+		free(list);
+		return NULL;
+	}
+
+	list->count = 0;
+	list->structure = NULL;
+
+	return list;
+}
+
+void ofc_sema_structure_list_delete(
+	ofc_sema_structure_list_t* list)
+{
+	if (!list)
+		return;
+
+	ofc_hashmap_delete(list->map);
+
+	unsigned i;
+	for (i = 0; i < list->count; i++)
+	{
+		ofc_sema_structure_delete(
+			list->structure[i]);
+	}
+	free(list->structure);
+
+	free(list);
+}
+
+
+bool ofc_sema_structure_list_add(
+	ofc_sema_structure_list_t* list,
+	ofc_sema_structure_t* structure)
+{
+	if (!list || !structure)
+		return false;
+
+	if (ofc_sema_structure_list_find(
+		list, structure->name.string))
+		return false;
+
+	ofc_sema_structure_t** nstructure
+		= (ofc_sema_structure_t**)malloc(
+			sizeof(ofc_sema_structure_t*) * (list->count + 1));
+	if (!nstructure) return false;
+	list->structure = nstructure;
+
+	if (!ofc_hashmap_add(
+		list->map, structure))
+		return false;
+
+	list->structure[list->count++] = structure;
+	return true;
+}
+
+
+const ofc_sema_structure_t* ofc_sema_structure_list_find(
+	const ofc_sema_structure_list_t* list, ofc_str_ref_t name)
+{
+	if (!list) return NULL;
+	return ofc_hashmap_find(list->map, &name);
+}
+
+ofc_sema_structure_t* ofc_sema_structure_list_find_modify(
+	ofc_sema_structure_list_t* list, ofc_str_ref_t name)
+{
+	if (!list) return false;
+	return ofc_hashmap_find_modify(list->map, &name);
+}
+
+
+bool ofc_sema_structure_list_print(
+	ofc_colstr_t* cs, unsigned indent,
+	const ofc_sema_structure_list_t* list)
+{
+	if (!list)
+		return false;
+
+	unsigned i;
+	for (i = 0; i < list->count; i++)
+	{
+		if (!ofc_sema_structure_print(
+			cs, indent, list->structure[i]))
+			return false;
+	}
+
 	return true;
 }

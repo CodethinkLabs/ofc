@@ -203,33 +203,6 @@ unsigned ofc_parse_stmt_map(
 	return i;
 }
 
-unsigned ofc_parse_stmt_record(
-	const ofc_sparse_t* src, const char* ptr,
-	ofc_parse_debug_t* debug,
-	ofc_parse_stmt_t* stmt)
-{
-	unsigned dpos = ofc_parse_debug_position(debug);
-
-	unsigned i = ofc_parse_keyword(
-		src, ptr, debug, OFC_PARSE_KEYWORD_RECORD);
-	if (i == 0) return 0;
-
-	unsigned l;
-	stmt->record = ofc_parse_record_list(
-		src, &ptr[i], debug, &l);
-	if (l == 0)
-	{
-		ofc_parse_debug_rewind(debug, dpos);
-		return 0;
-	}
-	i += l;
-
-	stmt->type = OFC_PARSE_STMT_RECORD;
-	return i;
-}
-
-
-
 
 bool ofc_parse_stmt_structure_print(
 	ofc_colstr_t* cs, unsigned indent,
@@ -278,22 +251,5 @@ bool ofc_parse_stmt_structure_print(
 	if (!ofc_colstr_newline(cs, indent, NULL))
 		return false;
 
-	unsigned j;
-	for (j = 0; j < indent; j++)
-	{
-		if (!ofc_colstr_atomic_writef(cs, "  "))
-			return false;
-	}
-
 	return ofc_colstr_atomic_writef(cs, "END %s", kwstr);
-}
-
-bool ofc_parse_stmt_record_print(
-	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt)
-{
-	if (!stmt)
-		return false;
-
-	return (ofc_colstr_atomic_writef(cs, "RECORD ")
-		&& ofc_parse_record_list_print(cs, stmt->record));
 }

@@ -1492,6 +1492,16 @@ const ofc_sema_array_t* ofc_sema_expr_array(
 	return NULL;
 }
 
+ofc_sema_structure_t* ofc_sema_expr_structure(
+	const ofc_sema_expr_t* expr)
+{
+	if (!expr) return NULL;
+
+	/* TODO - STRUCTURE - Implement. */
+
+	return NULL;
+}
+
 bool ofc_sema_expr_elem_count(
 	const ofc_sema_expr_t* expr,
 	unsigned* count)
@@ -1499,11 +1509,7 @@ bool ofc_sema_expr_elem_count(
 	if (!expr)
 		return false;
 
-	unsigned ecount;
-	if (!ofc_sema_type_elem_count(
-		ofc_sema_expr_type(expr), &ecount))
-		return false;
-
+	unsigned ecount = 1;
 	if (expr->type == OFC_SEMA_EXPR_IMPLICIT_DO)
 	{
 		if (expr->implicit_do.count_var)
@@ -1532,6 +1538,17 @@ bool ofc_sema_expr_elem_count(
 			array, &acount))
 			return false;
 		ecount *= acount;
+	}
+
+	const ofc_sema_structure_t* structure
+		= ofc_sema_expr_structure(expr);
+	if (structure)
+	{
+		unsigned scount;
+		if (!ofc_sema_structure_elem_count(
+			structure, &scount))
+			return false;
+		ecount *= scount;
 	}
 
 	if (count) *count = ecount;

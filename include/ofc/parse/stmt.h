@@ -68,7 +68,6 @@ typedef enum
 	OFC_PARSE_STMT_STRUCTURE,
 	OFC_PARSE_STMT_UNION,
 	OFC_PARSE_STMT_MAP,
-	OFC_PARSE_STMT_RECORD,
 	OFC_PARSE_STMT_IO_OPEN,
 	OFC_PARSE_STMT_IO_INQUIRE,
 	OFC_PARSE_STMT_IO_REWIND,
@@ -119,8 +118,6 @@ struct ofc_parse_stmt_s
 			ofc_parse_type_t*      type;
 			ofc_parse_decl_list_t* decl;
 		} decl;
-
-		ofc_parse_record_list_t* record;
 
 		ofc_parse_common_group_list_t* common_namelist;
 

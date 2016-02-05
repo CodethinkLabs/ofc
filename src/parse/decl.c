@@ -27,6 +27,8 @@ static ofc_parse_decl_t* ofc_parse__decl(
 			sizeof(ofc_parse_decl_t));
 	if (!decl) return NULL;
 
+	decl->record = OFC_SPARSE_REF_EMPTY;
+
 	unsigned i;
 	decl->lhs = ofc_parse_lhs_star_len(
 		src, ptr, debug, &i);
@@ -76,6 +78,51 @@ ofc_parse_decl_t* ofc_parse_decl_f90(
 		src, ptr, true, debug, len);
 }
 
+ofc_parse_decl_t* ofc_parse_decl_record(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	unsigned* len)
+{
+	ofc_parse_decl_t* decl
+		= (ofc_parse_decl_t*)malloc(
+			sizeof(ofc_parse_decl_t));
+	if (!decl) return NULL;
+
+	decl->record = OFC_SPARSE_REF_EMPTY;
+
+	unsigned i = 0, l;
+	if (ptr[i] == '/')
+	{
+		i++;
+
+		l = ofc_parse_ident(src, &ptr[i],
+			debug, &decl->record);
+		i += l;
+		if ((l == 0)
+			|| (ptr[i++] != '/'))
+		{
+			free(decl);
+			return NULL;
+		}
+	}
+
+	decl->lhs = ofc_parse_lhs(
+		src, &ptr[i], debug, &l);
+	if (!decl->lhs)
+	{
+		free(decl);
+		return NULL;
+	}
+	i += l;
+
+	decl->init_expr  = NULL;
+	decl->init_clist = NULL;
+
+	if (len) *len = i;
+	return decl;
+}
+
+
 void ofc_parse_decl_delete(
 	ofc_parse_decl_t* decl)
 {
@@ -93,6 +140,15 @@ bool ofc_parse_decl_print(
 	ofc_colstr_t* cs, const ofc_parse_decl_t* decl)
 {
 	if (!decl) return false;
+
+	if (!ofc_sparse_ref_empty(decl->record))
+	{
+		if (!ofc_colstr_atomic_writef(cs, "/")
+			|| !ofc_sparse_ref_print(cs, decl->record)
+			|| !ofc_colstr_atomic_writef(cs, "/")
+			|| !ofc_colstr_atomic_writef(cs, " "))
+			return false;
+	}
 
 	if (!ofc_parse_lhs_print(
 		cs, decl->lhs, true))
@@ -139,6 +195,41 @@ ofc_parse_decl_list_t* ofc_parse_decl_list(
 	if (i == 0)
 	{
 		free(list);
+		return NULL;
+	}
+
+	if (len) *len = i;
+	return list;
+}
+
+ofc_parse_decl_list_t* ofc_parse_decl_list_record(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	unsigned* len)
+{
+	ofc_parse_decl_list_t* list
+		= (ofc_parse_decl_list_t*)malloc(
+			sizeof(ofc_parse_decl_list_t));
+	if (!list) return NULL;
+
+	list->count = 0;
+	list->decl = NULL;
+
+	unsigned i = ofc_parse_list(
+		src, ptr, debug, ',',
+		&list->count, (void***)&list->decl,
+		(void*)ofc_parse_decl_record,
+		(void*)ofc_parse_decl_delete);
+	if (i == 0)
+	{
+		free(list);
+		return NULL;
+	}
+
+	if (ofc_sparse_ref_empty(
+		list->decl[0]->record))
+	{
+		ofc_parse_decl_list_delete(list);
 		return NULL;
 	}
 
