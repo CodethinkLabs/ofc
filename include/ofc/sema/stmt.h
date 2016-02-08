@@ -184,7 +184,6 @@ struct ofc_sema_stmt_s
 			ofc_sema_call_arg_e position_type;
 
 			ofc_sema_expr_t*    status;
-			ofc_sema_call_arg_e file_type;
 		} io_open;
 
 		struct

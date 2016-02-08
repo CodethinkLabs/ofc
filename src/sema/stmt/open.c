@@ -66,7 +66,6 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 	s.io_open.format_type   = OFC_SEMA_CALL_ARG_FORMATTED;
 	s.io_open.padding       = OFC_SEMA_CALL_ARG_PAD_YES;
 	s.io_open.position_type = OFC_SEMA_CALL_ARG_ASIS;
-	s.io_open.file_type     = OFC_SEMA_CALL_ARG_UNKNOWN;
 	/* Default is processor dependant */
 	s.io_open.action_type   = OFC_SEMA_CALL_ARG_COUNT;
 
@@ -582,6 +581,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 		}
 	}
 
+	bool is_scratch = false;
 	if (ca_status)
 	{
 		s.io_open.status = ofc_sema_expr(
@@ -611,38 +611,23 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 		{
 			const ofc_sema_typeval_t* constant
 				= ofc_sema_expr_constant(s.io_open.status);
-
-			if (ofc_typeval_character_equal_strz_ci(constant, "SCRATCH"))
-			{
-				s.io_open.file_type = OFC_SEMA_CALL_ARG_SCRATCH;
-			}
-			else if (ofc_typeval_character_equal_strz_ci(constant, "UNKNOWN"))
-			{
-				s.io_open.file_type = OFC_SEMA_CALL_ARG_UNKNOWN;
-			}
-			else if (ofc_typeval_character_equal_strz_ci(constant, "REPLACE"))
-			{
-				s.io_open.file_type = OFC_SEMA_CALL_ARG_REPLACE;
-			}
-			else if (ofc_typeval_character_equal_strz_ci(constant, "OLD"))
-			{
-				s.io_open.file_type = OFC_SEMA_CALL_ARG_OLD;
-			}
-			else if (ofc_typeval_character_equal_strz_ci(constant, "NEW"))
-			{
-				s.io_open.file_type = OFC_SEMA_CALL_ARG_NEW;
-			}
-			else
+			is_scratch = (constant &&
+				ofc_typeval_character_equal_strz_ci(constant, "SCRATCH"));
+			if (constant && !is_scratch
+				&& !ofc_typeval_character_equal_strz_ci(constant, "UNKNOWN")
+				&& !ofc_typeval_character_equal_strz_ci(constant, "REPLACE")
+				&& !ofc_typeval_character_equal_strz_ci(constant, "OLD")
+				&& !ofc_typeval_character_equal_strz_ci(constant, "NEW"))
 			{
 				ofc_sparse_ref_error(stmt->src,
-					"STATUS must be 'UNKNOWN', 'REPLACE', 'OLD', 'NEW' or 'SCRATCH' in OPEN");
+					"STATUS must be UNKNOWN/REPLACE/OLD/NEW/SCRATCH in OPEN");
 				ofc_sema_stmt_io_open__cleanup(s);
 				return NULL;
 			}
 		}
 	}
 
-	if (ca_file && (s.io_open.file_type == OFC_SEMA_CALL_ARG_SCRATCH))
+	if (ca_file && is_scratch)
 	{
 		ofc_sparse_ref_error(stmt->src,
 			"FILE can only be specified for non scratch files in OPEN");
