@@ -1497,7 +1497,19 @@ ofc_sema_structure_t* ofc_sema_expr_structure(
 {
 	if (!expr) return NULL;
 
-	/* TODO - STRUCTURE - Implement. */
+	/* TODO - Support for all expressions. */
+
+	switch (expr->type)
+	{
+		case OFC_SEMA_EXPR_LHS:
+			return ofc_sema_lhs_structure(expr->lhs);
+
+		case OFC_SEMA_EXPR_CAST:
+			return ofc_sema_expr_structure(expr->cast.expr);
+
+		default:
+			break;
+	}
 
 	return NULL;
 }

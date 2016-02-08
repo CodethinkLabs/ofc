@@ -263,6 +263,13 @@ static ofc_sema_lhs_t* ofc_sema_lhs_member(
 	ofc_sema_lhs_t* lhs,
 	ofc_sema_decl_t* member)
 {
+	if (ofc_sema_lhs_is_array(lhs)
+		&& ofc_sema_decl_is_array(member))
+	{
+		/* FORTRAN can't handle nested arrays. */
+		return NULL;
+	}
+
 	if (!ofc_sema_lhs_reference(lhs))
 		return NULL;
 
@@ -321,8 +328,6 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 					scope, lhs->parent, is_expr, force_local);
 				if (!parent) return NULL;
 
-				/* TODO - STRUCTURE - Check dereference type against structure type. */
-
 				ofc_sema_structure_t* structure
 					= ofc_sema_lhs_structure(parent);
 				if (!structure)
@@ -332,6 +337,19 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 						" that's not a structure.");
 					ofc_sema_lhs_delete(parent);
 					return NULL;
+				}
+
+				if ((lhs->type == OFC_PARSE_LHS_MEMBER_TYPE)
+					&& (structure->type != OFC_SEMA_STRUCTURE_F90_TYPE))
+				{
+					ofc_sparse_ref_warning(lhs->src,
+						"Dereferencing member of a VAX struct using F90 syntax");
+				}
+				else if ((lhs->type == OFC_PARSE_LHS_MEMBER_STRUCTURE)
+					&& (structure->type == OFC_SEMA_STRUCTURE_F90_TYPE))
+				{
+					ofc_sparse_ref_warning(lhs->src,
+						"Dereferencing member of an F90 TYPE using VAX syntax");
 				}
 
 				ofc_sema_decl_t* member
@@ -838,14 +856,14 @@ ofc_sema_lhs_t* ofc_sema_lhs_elem_get(
 			if (ofc_sema_type_is_procedure(lhs->data_type))
 				return NULL;
 
+			ofc_sema_structure_t* structure
+				= ofc_sema_lhs_structure(lhs);
+
 			if (ofc_sema_lhs_is_array(lhs))
 			{
 				unsigned base_count = 1;
-				if (ofc_sema_lhs_is_structure(lhs))
+				if (structure)
 				{
-					const ofc_sema_structure_t* structure
-						= ofc_sema_lhs_structure(lhs);
-
 					unsigned scount;
 					if (!ofc_sema_structure_elem_count(
 						structure, &scount))
@@ -863,7 +881,8 @@ ofc_sema_lhs_t* ofc_sema_lhs_elem_get(
 						lhs->decl, (offset / base_count));
 				if (!index) return NULL;
 
-				ofc_sema_lhs_t* nlhs = ofc_sema_lhs_index(lhs, index);
+				ofc_sema_lhs_t* nlhs
+					= ofc_sema_lhs_index(lhs, index);
 				if (!nlhs)
 				{
 					ofc_sema_array_index_delete(index);
@@ -876,9 +895,25 @@ ofc_sema_lhs_t* ofc_sema_lhs_elem_get(
 				ofc_sema_lhs_delete(nlhs);
 				return rlhs;
 			}
-			else if (ofc_sema_lhs_is_structure(lhs))
+			else if (structure)
 			{
-				/* TODO - STRUCTURE - Implement. */
+				ofc_sema_decl_t* member
+					= ofc_sema_structure_member_get_decl_offset(
+						structure, offset);
+
+				ofc_sema_lhs_t* nlhs
+					= ofc_sema_lhs_member(lhs, member);
+				if (!nlhs)
+				{
+					ofc_sema_decl_delete(member);
+					return NULL;
+				}
+
+				ofc_sema_lhs_t* rlhs
+					= ofc_sema_lhs_elem_get(
+						nlhs, offset);
+				ofc_sema_lhs_delete(nlhs);
+				return rlhs;
 			}
 			else
 			{
@@ -891,7 +926,7 @@ ofc_sema_lhs_t* ofc_sema_lhs_elem_get(
 			break;
 
 		case OFC_SEMA_LHS_ARRAY_SLICE:
-			/* TODO - Convert offset to index and treat as index. */
+			/* TODO - SLICE - Convert offset to index and treat as index. */
 			break;
 
 		case OFC_SEMA_LHS_SUBSTRING:
@@ -1217,6 +1252,21 @@ bool ofc_sema_lhs_init(
 				decl, offset, init);
 		}
 
+		case OFC_SEMA_LHS_STRUCTURE_MEMBER:
+		{
+			ofc_sema_structure_t* structure
+				= ofc_sema_lhs_structure(lhs->parent);
+			if (!structure) return false;
+
+			unsigned offset;
+			if (!ofc_sema_structure_member_offset(
+				structure, lhs->member, &offset))
+				return false;
+
+			return ofc_sema_decl_init_offset(
+				decl, offset, init);
+		}
+
 		case OFC_SEMA_LHS_SUBSTRING:
 			/* TODO - Handle nested substrings. */
 			return ofc_sema_decl_init_substring(
@@ -1277,8 +1327,8 @@ bool ofc_sema_lhs_is_array(
 			return false;
 
 		case OFC_SEMA_LHS_STRUCTURE_MEMBER:
-			/* TODO - Implement. */
-			return false;
+			return (ofc_sema_decl_is_array(lhs->member)
+				|| ofc_sema_lhs_is_array(lhs->parent));
 
 		default:
 			break;
@@ -1304,8 +1354,7 @@ bool ofc_sema_lhs_is_structure(
 			return ofc_sema_lhs_is_structure(lhs->parent);
 
 		case OFC_SEMA_LHS_STRUCTURE_MEMBER:
-			/* TODO - STRUCTURE - Implement. */
-			return false;
+			return ofc_sema_decl_is_structure(lhs->member);
 
 		default:
 			break;
@@ -1347,6 +1396,11 @@ const ofc_sema_array_t* ofc_sema_lhs_array(
 			if (!lhs->decl) return NULL;
 			return lhs->decl->array;
 
+		case OFC_SEMA_LHS_STRUCTURE_MEMBER:
+			if (lhs->member && lhs->member->array)
+				return lhs->member->array;
+			return ofc_sema_lhs_array(lhs->parent);
+
 		case OFC_SEMA_LHS_ARRAY_SLICE:
 			return lhs->slice.dims;
 
@@ -1369,7 +1423,14 @@ ofc_sema_structure_t* ofc_sema_lhs_structure(
 			if (!lhs->decl) return NULL;
 			return lhs->decl->structure;
 
-		/* TODO - STRUCTURE - Handle other cases. */
+		case OFC_SEMA_LHS_ARRAY_SLICE:
+		case OFC_SEMA_LHS_ARRAY_INDEX:
+		case OFC_SEMA_LHS_SUBSTRING:
+			return ofc_sema_lhs_structure(lhs->parent);
+
+		case OFC_SEMA_LHS_STRUCTURE_MEMBER:
+			if (!lhs->member) return NULL;
+			return lhs->member->structure;
 
 		default:
 			break;
@@ -1616,9 +1677,18 @@ bool ofc_sema_lhs_print(
 			break;
 
 		case OFC_SEMA_LHS_STRUCTURE_MEMBER:
-			if (!ofc_colstr_atomic_writef(cs, ".")
-				|| !ofc_sema_decl_print_name(cs, lhs->member))
-					return false;
+			{
+				char member = '%';
+				ofc_sema_structure_t* structure
+					= ofc_sema_lhs_structure(lhs->parent);
+				if (structure && (structure->type
+					!= OFC_SEMA_STRUCTURE_F90_TYPE))
+					member = '.';
+
+				if (!ofc_colstr_atomic_writef(cs, "%c", member)
+					|| !ofc_sema_decl_print_name(cs, lhs->member))
+						return false;
+			}
 			break;
 
 		case OFC_SEMA_LHS_IMPLICIT_DO:

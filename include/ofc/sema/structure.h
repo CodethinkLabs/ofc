@@ -79,13 +79,25 @@ ofc_sema_decl_t* ofc_sema_structure_member_get_decl_offset(
 ofc_sema_decl_t* ofc_sema_structure_member_get_decl_name(
 	ofc_sema_structure_t* structure,
 	ofc_str_ref_t name);
+bool ofc_sema_structure_member_offset(
+	const ofc_sema_structure_t* structure,
+	const ofc_sema_decl_t*      member,
+	unsigned*                   offset);
 
 bool ofc_sema_structure_size(
 	const ofc_sema_structure_t* structure,
 	unsigned* size);
+
 bool ofc_sema_structure_elem_count(
 	const ofc_sema_structure_t* structure,
 	unsigned* count);
+ofc_sema_decl_t* ofc_sema_structure_elem_get(
+	ofc_sema_structure_t* structure,
+	unsigned offset);
+bool ofc_sema_structure_elem_print(
+	ofc_colstr_t* cs,
+	const ofc_sema_structure_t* structure,
+	unsigned offset);
 
 bool ofc_sema_structure_print_name(
 	ofc_colstr_t* cs,

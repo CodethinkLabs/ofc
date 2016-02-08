@@ -394,6 +394,52 @@ ofc_sema_decl_t* ofc_sema_structure_member_get_decl_name(
 	return NULL;
 }
 
+bool ofc_sema_structure_member_offset(
+	const ofc_sema_structure_t* structure,
+	const ofc_sema_decl_t* member,
+	unsigned* offset)
+{
+	if (!structure || !member)
+		return false;
+
+	unsigned i, o;
+	for (i = 0, o = 0; i < structure->count; i++)
+	{
+		if (!structure->member[i]->is_structure)
+		{
+            if (structure->member[i]->decl == member)
+			{
+				if (offset) *offset = o;
+				return true;
+			}
+			o++;
+		}
+		else if (ofc_sema_structure__member_anon(
+			structure->member[i]))
+		{
+			unsigned ao;
+			if (ofc_sema_structure_member_offset(
+				structure->member[i]->structure, member, &ao))
+			{
+				if (offset) *offset = (o + ao);
+				return true;
+			}
+
+			unsigned ac;
+			if (!ofc_sema_structure_member_count(
+				structure->member[i]->structure, &ac))
+				return false;
+			o += ac;
+		}
+		else
+		{
+			o++;
+		}
+	}
+
+	return false;
+}
+
 
 bool ofc_sema_structure_is_union(
 	const ofc_sema_structure_t* structure)
@@ -512,6 +558,89 @@ bool ofc_sema_structure_elem_count(
 	}
 
 	return true;
+}
+
+ofc_sema_decl_t* ofc_sema_structure_elem_get(
+	ofc_sema_structure_t* structure,
+	unsigned offset)
+{
+	if (!structure)
+		return NULL;
+
+	unsigned i, o;
+	for (i = 0, o = 0; i < structure->count; i++)
+	{
+		if (structure->member[i]->is_structure)
+		{
+			unsigned sc;
+			if (!ofc_sema_structure_elem_count(
+				structure->member[i]->structure, &sc))
+				return NULL;
+
+			if ((offset - o) < sc)
+				return ofc_sema_structure_elem_get(
+					structure->member[i]->structure, (offset - o));
+
+			o += sc;
+		}
+		else
+		{
+			if (o == offset)
+				return structure->member[i]->decl;
+			o++;
+		}
+	}
+
+	return NULL;
+}
+
+bool ofc_sema_structure_elem_print(
+	ofc_colstr_t* cs,
+	const ofc_sema_structure_t* structure,
+	unsigned offset)
+{
+	if (!structure)
+		return false;
+
+	char msym = '%';
+	if (structure->type
+		!= OFC_SEMA_STRUCTURE_F90_TYPE)
+		msym = '.';
+
+	if (!ofc_colstr_atomic_writef(cs, "%c", msym))
+		return false;
+
+	unsigned i, o;
+	for (i = 0, o = 0; i < structure->count; i++)
+	{
+		if (structure->member[i]->is_structure)
+		{
+			unsigned sc;
+			if (!ofc_sema_structure_elem_count(
+				structure->member[i]->structure, &sc))
+				return NULL;
+
+			if ((offset - o) < sc)
+			{
+				if (!ofc_sema_structure_print_name(
+					cs, structure->member[i]->structure))
+					return false;
+				return ofc_sema_structure_elem_print(
+					cs, structure->member[i]->structure, (offset - o));
+			}
+
+			o += sc;
+		}
+		else
+		{
+			if (o == offset)
+				return ofc_sema_decl_print_name(
+					cs, structure->member[i]->decl);
+			o++;
+		}
+	}
+
+	return false;
 }
 
 

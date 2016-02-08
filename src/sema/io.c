@@ -53,19 +53,17 @@ bool ofc_sema_io_compare_types(
 	/* Compare each member of the structure to the format list */
 	else if (structure)
 	{
-		unsigned member_count;
-		if (!ofc_sema_structure_member_count(
-			structure, &member_count))
+		unsigned elem_count;
+		if (!ofc_sema_structure_elem_count(
+			structure, &elem_count))
 			return false;
 
 		unsigned j;
-		for (j = 0; j < member_count; j++)
+		for (j = 0; j < elem_count; j++)
 		{
 			const ofc_sema_decl_t* member
-				= ofc_sema_structure_member_get_decl_offset(structure, j);
+				= ofc_sema_structure_elem_get(structure, j);
 			if (!member) return false;
-
-			/* TODO - STRUCTURE - Handle nested structures. */
 
 			if (!ofc_sema_io_compare_types(
 				scope, stmt, lhs, expr,

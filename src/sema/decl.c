@@ -942,7 +942,7 @@ bool ofc_sema_decl_init_offset(
 	if (!decl->type)
 		return NULL;
 
-	if (!ofc_sema_decl_is_array(decl))
+	if (!ofc_sema_decl_is_composite(decl))
 	{
 		if (offset == 0)
 			return ofc_sema_decl_init(
@@ -991,12 +991,33 @@ bool ofc_sema_decl_init_offset(
 		= ofc_sema_expr_copy(init);
 	if (!expr) return NULL;
 
+	const ofc_sema_type_t* dtype = decl->type;
+	if (decl->structure)
+	{
+		unsigned moffset = offset;
+		if (decl->array)
+		{
+			unsigned mcount;
+			if (!ofc_sema_structure_elem_count(
+				decl->structure, &mcount)
+				|| (mcount == 0))
+				return NULL;
+			moffset %= mcount;
+		}
+
+		ofc_sema_decl_t* mdecl
+			= ofc_sema_structure_elem_get(
+				decl->structure, moffset);
+		if (!mdecl) return NULL;
+		dtype = mdecl->type;
+	}
+
 	if (!ofc_sema_type_compatible(
-		ofc_sema_expr_type(expr), decl->type))
+		ofc_sema_expr_type(expr), dtype))
 	{
 		ofc_sema_expr_t* cast
 			= ofc_sema_expr_cast(
-				expr, decl->type);
+				expr, dtype);
 		if (!cast)
 		{
 			ofc_sema_expr_delete(expr);
@@ -2168,6 +2189,95 @@ bool ofc_sema_decl_print_data_init(ofc_colstr_t* cs,
 						if (u)
 						{
 							/* TODO - Support arrays of substrings. */
+							return false;
+						}
+						l++;
+					}
+					else
+					{
+						u = true;
+					}
+				}
+
+				if (!ofc_colstr_writef(cs, "\"")
+					|| !ofc_colstr_write_escaped(cs,
+						decl->init_array[i].substring.string, l)
+					|| !ofc_colstr_writef(cs, "\""))
+					return false;
+			}
+			else
+			{
+				if (!ofc_sema_expr_print(
+					cs, decl->init_array[i].expr))
+					return false;
+			}
+		}
+
+		if (!ofc_colstr_atomic_writef(cs, "/"))
+			return false;
+	}
+	else if (ofc_sema_decl_is_structure(decl))
+	{
+		unsigned count;
+		if (!ofc_sema_decl_elem_count(
+			decl, &count))
+			return false;
+
+		bool first;
+		unsigned i;
+		for (i = 0, first = true; i < count; i++)
+		{
+			if (!decl->init_array[i].is_substring
+				&& !decl->init_array[i].expr)
+				continue;
+
+			if (!first)
+			{
+				if (!ofc_colstr_atomic_writef(cs, ",")
+					|| !ofc_colstr_atomic_writef(cs, " "))
+					return false;
+			}
+			first = false;
+
+			ofc_sema_decl_t* member
+				= ofc_sema_structure_elem_get(
+					decl->structure, i);
+			if (!member) return false;
+
+			if (!ofc_sema_decl_print_name(cs, decl)
+				|| !ofc_sema_structure_elem_print(
+					cs, decl->structure, i))
+				return false;
+		}
+
+		if (!ofc_colstr_atomic_writef(cs, "/"))
+			return false;
+
+		for (i = 0, first = true; i < count; i++)
+		{
+			if (!decl->init_array[i].is_substring
+				&& !decl->init_array[i].expr)
+				continue;
+
+			if (!first)
+			{
+				if (!ofc_colstr_atomic_writef(cs, ",")
+					|| !ofc_colstr_atomic_writef(cs, " "))
+					return false;
+			}
+			first = false;
+
+			if (decl->init_array[i].is_substring)
+			{
+				bool u = false;
+				unsigned j, l;
+				for (j = 0, l = 0; j < decl->type->len; j++)
+				{
+					if (decl->init_array[i].substring.mask[j])
+					{
+						if (u)
+						{
+							/* TODO - Support structures containing substrings. */
 							return false;
 						}
 						l++;
