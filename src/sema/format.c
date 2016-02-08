@@ -131,9 +131,8 @@ bool ofc_sema_format_desc(
 		case OFC_PARSE_FORMAT_DESC_D:
 			if (!desc->d_set)
 			{
-				ofc_sparse_ref_error(desc->src,
-					"Format descriptor requires decimal width");
-				return false;
+				ofc_sparse_ref_warning(desc->src,
+					"Format descriptor should have decimal width");
 			}
 			break;
 
@@ -153,8 +152,8 @@ bool ofc_sema_format_desc(
 		case OFC_PARSE_FORMAT_DESC_HEX:
 			if (!desc->w_set)
 			{
-				ofc_sparse_ref_error(desc->src,
-					"Format descriptor requires field width");
+				ofc_sparse_ref_warning(desc->src,
+					"Format descriptor should have field width");
 			}
 			break;
 
@@ -166,13 +165,7 @@ bool ofc_sema_format_desc(
 	{
 		case OFC_PARSE_FORMAT_DESC_E:
 		case OFC_PARSE_FORMAT_DESC_G:
-		case OFC_PARSE_FORMAT_DESC_REAL:
 		case OFC_PARSE_FORMAT_DESC_D:
-		case OFC_PARSE_FORMAT_DESC_INTEGER:
-		case OFC_PARSE_FORMAT_DESC_BINARY:
-		case OFC_PARSE_FORMAT_DESC_OCTAL:
-		case OFC_PARSE_FORMAT_DESC_HEX:
-		/* Should w be mandatory for LOGICAL? */
 		case OFC_PARSE_FORMAT_DESC_LOGICAL:
 		case OFC_PARSE_FORMAT_DESC_CHARACTER:
 			if (desc->w_set && (desc->w == 0))
@@ -186,14 +179,12 @@ bool ofc_sema_format_desc(
 		case OFC_PARSE_FORMAT_DESC_REAL_SCALE:
 			if (!desc->n_set)
 			{
-				ofc_sparse_ref_error(desc->src,
-					"Format descriptor requires scale factor");
-				return false;
+				ofc_sparse_ref_warning(desc->src,
+					"Format descriptor should have scale factor");
 			}
 			break;
 
 		case OFC_PARSE_FORMAT_DESC_X:
-			/* Only a warning, n is defaulted to 1 (gfortran allows it) */
 			if (!desc->n_set)
 				ofc_sparse_ref_warning(desc->src,
 					"Format descriptor should have count");
@@ -205,7 +196,6 @@ bool ofc_sema_format_desc(
 			}
 			break;
 
-		case OFC_PARSE_FORMAT_DESC_T:
 		case OFC_PARSE_FORMAT_DESC_TL:
 		case OFC_PARSE_FORMAT_DESC_TR:
 			if (!desc->w_set)

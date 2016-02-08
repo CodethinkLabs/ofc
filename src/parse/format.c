@@ -342,12 +342,20 @@ bool ofc_parse_format_desc_print(
 				return false;
 			break;
 		case OFC_PARSE_FORMAT_DESC_REAL_SCALE:
-			if (!ofc_colstr_atomic_writef(cs, "%s%uP",
-				(desc->neg ? "-" : ""), desc->n))
+			if (desc->neg
+				&& !ofc_colstr_atomic_writef(cs, "-"))
+				return false;
+			if (desc->n_set
+				&& !ofc_colstr_atomic_writef(cs, "%u", desc->n))
+				return false;
+			if (!ofc_colstr_atomic_writef(cs, "P"))
 				return false;
 			break;
 		case OFC_PARSE_FORMAT_DESC_X:
-			if (!ofc_colstr_atomic_writef(cs, "%uX", desc->n))
+			if (desc->n_set
+				&& !ofc_colstr_atomic_writef(cs, "%u", desc->n))
+				return false;
+			if (!ofc_colstr_atomic_writef(cs, "X"))
 				return false;
 			break;
 		default:
@@ -357,7 +365,7 @@ bool ofc_parse_format_desc_print(
 			if (!ofc_colstr_atomic_writef(cs, "%s",
 				ofc_parse_format_desc__name[desc->type]))
 				return false;
-			if ((desc->w_set || desc->type == OFC_PARSE_FORMAT_DESC_LOGICAL)
+			if (desc->w_set
 				&& !ofc_colstr_atomic_writef(cs, "%u", desc->w))
 				return false;
 			if (desc->d_set
