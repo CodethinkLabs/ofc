@@ -72,19 +72,19 @@ static ofc_sema_expr__rule_t ofc_sema_expr__rule[] =
 	{ NULL, 0, 1, 1, 1, 0 }, /* SUBTRACT */
 	{ NULL, 0, 1, 1, 1, 0 }, /* NEGATE */
 
-	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 0, 1, 1, 1, 1 }, /* EQ */
-	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 0, 1, 1, 1, 1 }, /* NE */
+	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 1, 1, 1, 1, 1 }, /* EQ */
+	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 1, 1, 1, 1, 1 }, /* NE */
 	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 0, 1, 1, 0, 1 }, /* LT */
 	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 0, 1, 1, 0, 1 }, /* LE */
 	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 0, 1, 1, 0, 1 }, /* GT */
 	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 0, 1, 1, 0, 1 }, /* GE */
 
-	{ NULL, 1, 1, 0, 0, 0 }, /* NOT */
-	{ NULL, 1, 1, 0, 0, 0 }, /* AND */
-	{ NULL, 1, 1, 0, 0, 0 }, /* OR */
+	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 1, 1, 0, 0, 0 }, /* NOT */
+	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 1, 1, 0, 0, 0 }, /* AND */
+	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 1, 1, 0, 0, 0 }, /* OR */
 
-	{ NULL, 1, 0, 0, 0, 0 }, /* EQV */
-	{ NULL, 1, 0, 0, 0, 0 }, /* NEQV */
+	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 1, 0, 0, 0, 0 }, /* EQV */
+	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 1, 0, 0, 0, 0 }, /* NEQV */
 };
 
 static bool ofc_sema_expr_type_allowed(
