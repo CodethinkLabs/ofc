@@ -471,12 +471,12 @@ bool ofc_sema_io_check_label(
 				if (((int64_t)ulabel) != fl64)
 					return false;
 
-				label_ret = ofc_sema_label_map_find(
-					scope->label, ulabel);
+				label_ret = ofc_sema_scope_label_find(
+					scope, ulabel);
 				if (!label_ret)
 				{
-					ofc_sparse_ref_error(stmt->src,
-						"Label %d expression not defined", ulabel);
+					ofc_sparse_ref_error(expr->src,
+						"Label %u not defined", ulabel);
 					return false;
 				}
 			}

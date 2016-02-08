@@ -858,6 +858,25 @@ ofc_lang_opts_t ofc_sema_scope_get_lang_opts(
 
 
 
+const ofc_sema_label_t* ofc_sema_scope_label_find(
+	const ofc_sema_scope_t* scope, unsigned label)
+{
+	if (!scope)
+		return NULL;
+
+	const ofc_sema_label_t* l
+		=ofc_sema_label_map_find(
+			scope->label, label);
+	if (l) return l;
+
+	if (!ofc_sema_scope_is_root(scope))
+		return ofc_sema_scope_label_find(
+			scope->parent, label);
+
+	return NULL;
+}
+
+
 static ofc_sema_spec_t* ofc_sema_scope_spec__find(
 	const ofc_sema_scope_t* scope, ofc_str_ref_t name)
 {
