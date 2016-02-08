@@ -429,6 +429,42 @@ static ofc_sema_intrinsic_t* ofc_sema_intrinsic__create_op(
 	return intrinsic;
 }
 
+static ofc_sema_intrinsic_t* ofc_sema_intrinsic__create_func(
+	const ofc_sema_intrinsic_func_t* func)
+{
+	if (!func)
+		return NULL;
+
+	ofc_sema_intrinsic_t* intrinsic
+		= (ofc_sema_intrinsic_t*)malloc(
+			sizeof(ofc_sema_intrinsic_t));
+	if (!intrinsic) return NULL;
+
+	intrinsic->name = ofc_str_ref_from_strz(func->name);
+	intrinsic->type = OFC_SEMA_INTRINSIC_FUNC;
+	intrinsic->func = func;
+
+	return intrinsic;
+}
+
+static ofc_sema_intrinsic_t* ofc_sema_intrinsic__create_subr(
+	const ofc_sema_intrinsic_subr_t* subr)
+{
+	if (!subr)
+		return NULL;
+
+	ofc_sema_intrinsic_t* intrinsic
+		= (ofc_sema_intrinsic_t*)malloc(
+			sizeof(ofc_sema_intrinsic_t));
+	if (!intrinsic) return NULL;
+
+	intrinsic->name = ofc_str_ref_from_strz(subr->name);
+	intrinsic->type = OFC_SEMA_INTRINSIC_SUBR;
+	intrinsic->subr = subr;
+
+	return intrinsic;
+}
+
 static void ofc_sema_intrinsic__delete(
 	ofc_sema_intrinsic_t* intrinsic)
 {
@@ -446,25 +482,25 @@ static const ofc_str_ref_t* ofc_sema_intrinsic__key(
 	return &intrinsic->name;
 }
 
-static ofc_hashmap_t* ofc_sema_intrinsic__map = NULL;
+static ofc_hashmap_t* ofc_sema_intrinsic__op_map   = NULL;
+static ofc_hashmap_t* ofc_sema_intrinsic__func_map = NULL;
+static ofc_hashmap_t* ofc_sema_intrinsic__subr_map = NULL;
 
 static void ofc_sema_intrinsic__term(void)
 {
-	ofc_hashmap_delete(ofc_sema_intrinsic__map);
+	ofc_hashmap_delete(ofc_sema_intrinsic__op_map);
+	ofc_hashmap_delete(ofc_sema_intrinsic__func_map);
+	ofc_hashmap_delete(ofc_sema_intrinsic__subr_map);
 }
 
-static bool ofc_sema_intrinsic__init(void)
+static bool ofc_sema_intrinisc__op_map_init(void)
 {
-	if (ofc_sema_intrinsic__map)
-		return true;
-
-	/* TODO - Set case sensitivity based on lang_opts? */
-	ofc_sema_intrinsic__map = ofc_hashmap_create(
+	ofc_sema_intrinsic__op_map = ofc_hashmap_create(
 		(void*)ofc_str_ref_ptr_hash_ci,
 		(void*)ofc_str_ref_ptr_equal_ci,
 		(void*)ofc_sema_intrinsic__key,
 		(void*)ofc_sema_intrinsic__delete);
-	if (!ofc_sema_intrinsic__map)
+	if (!ofc_sema_intrinsic__op_map)
 		return false;
 
 	unsigned i;
@@ -476,22 +512,116 @@ static bool ofc_sema_intrinsic__init(void)
 		if (!intrinsic)
 		{
 			ofc_hashmap_delete(
-				ofc_sema_intrinsic__map);
-			ofc_sema_intrinsic__map = NULL;
+				ofc_sema_intrinsic__op_map);
+			ofc_sema_intrinsic__op_map = NULL;
 			return false;
 		}
 
 		if (!ofc_hashmap_add(
-			ofc_sema_intrinsic__map,
+			ofc_sema_intrinsic__op_map,
 			intrinsic))
 		{
 			ofc_sema_intrinsic__delete(intrinsic);
 			ofc_hashmap_delete(
-				ofc_sema_intrinsic__map);
-			ofc_sema_intrinsic__map = NULL;
+				ofc_sema_intrinsic__op_map);
+			ofc_sema_intrinsic__op_map = NULL;
 			return false;
 		}
 	}
+
+	return true;
+}
+
+static bool ofc_sema_intrinsic__func_map_init(void)
+{
+	ofc_sema_intrinsic__func_map = ofc_hashmap_create(
+		(void*)ofc_str_ref_ptr_hash_ci,
+		(void*)ofc_str_ref_ptr_equal_ci,
+		(void*)ofc_sema_intrinsic__key,
+		(void*)ofc_sema_intrinsic__delete);
+	if (!ofc_sema_intrinsic__func_map)
+		return false;
+
+	unsigned i;
+	for (i = 0; ofc_sema_intrinsic__func_list[i].name; i++)
+	{
+		ofc_sema_intrinsic_t* intrinsic
+			= ofc_sema_intrinsic__create_func(
+				&ofc_sema_intrinsic__func_list[i]);
+		if (!intrinsic)
+		{
+			ofc_hashmap_delete(
+				ofc_sema_intrinsic__func_map);
+			ofc_sema_intrinsic__func_map = NULL;
+			return false;
+		}
+
+		if (!ofc_hashmap_add(
+			ofc_sema_intrinsic__func_map,
+			intrinsic))
+		{
+			ofc_sema_intrinsic__delete(intrinsic);
+			ofc_hashmap_delete(
+				ofc_sema_intrinsic__func_map);
+			ofc_sema_intrinsic__func_map = NULL;
+			return false;
+		}
+	}
+
+	return true;
+}
+
+static bool ofc_sema_intrinsic__subr_map_init(void)
+{
+	ofc_sema_intrinsic__subr_map = ofc_hashmap_create(
+		(void*)ofc_str_ref_ptr_hash_ci,
+		(void*)ofc_str_ref_ptr_equal_ci,
+		(void*)ofc_sema_intrinsic__key,
+		(void*)ofc_sema_intrinsic__delete);
+	if (!ofc_sema_intrinsic__subr_map)
+		return false;
+
+	unsigned i;
+	for (i = 0; ofc_sema_intrinsic__subr_list[i].name; i++)
+	{
+		ofc_sema_intrinsic_t* intrinsic
+			= ofc_sema_intrinsic__create_subr(
+				&ofc_sema_intrinsic__subr_list[i]);
+		if (!intrinsic)
+		{
+			ofc_hashmap_delete(
+				ofc_sema_intrinsic__subr_map);
+			ofc_sema_intrinsic__subr_map = NULL;
+			return false;
+		}
+
+		if (!ofc_hashmap_add(
+			ofc_sema_intrinsic__subr_map,
+			intrinsic))
+		{
+			ofc_sema_intrinsic__delete(intrinsic);
+			ofc_hashmap_delete(
+				ofc_sema_intrinsic__subr_map);
+			ofc_sema_intrinsic__subr_map = NULL;
+			return false;
+		}
+	}
+
+	return true;
+}
+
+static bool ofc_sema_intrinsic__init(void)
+{
+	if (ofc_sema_intrinsic__op_map
+		&& ofc_sema_intrinsic__func_map
+		&& ofc_sema_intrinsic__subr_map)
+		return true;
+
+	/* TODO - Set case sensitivity based on lang_opts? */
+	if (!ofc_sema_intrinisc__op_map_init()
+		|| !ofc_sema_intrinsic__func_map_init()
+		|| !ofc_sema_intrinsic__subr_map_init())
+		return false;
 
 	atexit(ofc_sema_intrinsic__term);
 	return true;
@@ -508,7 +638,7 @@ const ofc_sema_intrinsic_t* ofc_sema_intrinsic(
 	(void)scope;
 
 	return ofc_hashmap_find(
-		ofc_sema_intrinsic__map, &name);
+		ofc_sema_intrinsic__op_map, &name);
 }
 
 ofc_sema_expr_list_t* ofc_sema_intrinsic_cast(
