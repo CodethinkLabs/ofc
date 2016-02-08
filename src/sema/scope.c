@@ -258,64 +258,6 @@ static bool ofc_sema_scope__function(
 	if (ofc_sparse_ref_empty(name))
 		return false;
 
-	ofc_sema_spec_t* spec;
-	const ofc_sema_type_t* rtype;
-	if (stmt->program.type)
-	{
-		spec = ofc_sema_spec(scope,
-			stmt->program.type);
-	}
-	else
-	{
-		spec = ofc_sema_scope_spec_find_final(
-			scope, stmt->program.name);
-		if (!spec)
-		{
-			ofc_sparse_ref_error(stmt->src,
-				"No IMPLICIT type matches FUNCTION name");
-			return false;
-		}
-	}
-	rtype = ofc_sema_type_spec(spec);
-	ofc_sema_spec_delete(spec);
-	if (!rtype) return false;
-
-	const ofc_sema_type_t* ftype
-		= ofc_sema_type_create_function(rtype);
-	if (!ftype) return false;
-
-	ofc_sema_decl_t* decl
-		= ofc_sema_scope_decl_find_modify(
-			scope, name.string, true);
-	if (decl)
-	{
-		if (!ofc_sema_decl_is_function(decl))
-		{
-			ofc_sparse_ref_error(stmt->src,
-				"Can't redeclare used variable as FUNCTION");
-			return false;
-		}
-		else if (!ofc_sema_type_compare(rtype,
-			ofc_sema_decl_base_type(decl)))
-		{
-			ofc_sparse_ref_error(stmt->src,
-				"Conflicting definitions of FUNCTION return type");
-			return false;
-		}
-	}
-	else
-	{
-		decl = ofc_sema_decl_create(ftype, name);
-		if (!decl) return false;
-
-		if (!ofc_sema_scope_decl_add(
-			scope, decl))
-		{
-			ofc_sema_decl_delete(decl);
-			return false;
-		}
-	}
-
 	ofc_sema_scope_t* func_scope
 		= ofc_sema_scope__create(scope, NULL,
 			OFC_SEMA_SCOPE_FUNCTION);
@@ -333,11 +275,99 @@ static bool ofc_sema_scope__function(
 		}
 	}
 
+
+	if (stmt->program.type)
+	{
+		ofc_sema_spec_t* spec
+			= ofc_sema_spec(func_scope,
+				stmt->program.type);
+		if (!spec)
+		{
+			ofc_sema_scope_delete(func_scope);
+			return false;
+		}
+		spec->name = stmt->program.name;
+
+		if (!ofc_sema_spec_map_add(
+			func_scope->spec, spec))
+		{
+			ofc_sema_spec_delete(spec);
+			ofc_sema_scope_delete(func_scope);
+			return false;
+		}
+	}
+
 	if (!ofc_sema_scope__body(
 		func_scope, stmt->program.body))
 	{
 		ofc_sema_scope_delete(func_scope);
 		return false;
+	}
+
+	ofc_sema_spec_t* spec
+		= ofc_sema_scope_spec_find_final(
+			func_scope, stmt->program.name);
+	if (!spec)
+	{
+		ofc_sparse_ref_error(stmt->src,
+			"No IMPLICIT type matches FUNCTION name");
+		ofc_sema_scope_delete(func_scope);
+		return false;
+	}
+	const ofc_sema_type_t* rtype
+		= ofc_sema_type_spec(spec);
+	ofc_sema_spec_delete(spec);
+	if (!rtype)
+	{
+		ofc_sema_scope_delete(func_scope);
+		return false;
+	}
+
+	const ofc_sema_type_t* ftype
+		= ofc_sema_type_create_function(rtype);
+	if (!ftype)
+	{
+		ofc_sema_scope_delete(func_scope);
+		return false;
+	}
+
+	ofc_sema_decl_t* decl
+		= ofc_sema_scope_decl_find_modify(
+			scope, name.string, true);
+	if (decl)
+	{
+		if (!ofc_sema_decl_is_function(decl))
+		{
+			ofc_sparse_ref_error(stmt->src,
+				"Can't redeclare used variable as FUNCTION");
+			ofc_sema_scope_delete(func_scope);
+			return false;
+		}
+		else if (!ofc_sema_type_compare(rtype,
+			ofc_sema_decl_base_type(decl)))
+		{
+			ofc_sparse_ref_error(stmt->src,
+				"Conflicting definitions of FUNCTION return type");
+			ofc_sema_scope_delete(func_scope);
+			return false;
+		}
+	}
+	else
+	{
+		decl = ofc_sema_decl_create(ftype, name);
+		if (!decl)
+		{
+			ofc_sema_scope_delete(func_scope);
+			return false;
+		}
+
+		if (!ofc_sema_scope_decl_add(
+			scope, decl))
+		{
+			ofc_sema_decl_delete(decl);
+			ofc_sema_scope_delete(func_scope);
+			return false;
+		}
 	}
 
 	if (!ofc_sema_decl_init_func(
