@@ -112,6 +112,8 @@ typedef enum
 	IT_COMPLEX,
 	IT_CHARACTER,
 
+	IT_CHARACTER_1,
+
 	IT_DEF_LOGICAL,
 	IT_DEF_INTEGER,
 	IT_DEF_REAL,
@@ -318,7 +320,7 @@ static const ofc_sema_intrinsic_func_t ofc_sema_intrinsic__func_list[] =
 	{ "AImag",    1, 1, IT_REAL,        {{ IT_COMPLEX,   1, IN  }} },
 	{ "Len_Trim", 1, 1, IT_INTEGER,     {{ IT_CHARACTER, 1, IN  }} },
 	{ "AChar",    1, 1, IT_CHARACTER,   {{ IT_INTEGER,   1, IN  }} },
-	{ "IChar",    1, 1, IT_INTEGER,     {{ IT_CHARACTER, 1, IN  }} },
+	{ "IChar",    1, 1, IT_DEF_INTEGER, {{ IT_CHARACTER_1, 1, IN  }} },
 	{ "BesJ0",    1, 1, IT_REAL,        {{ IT_REAL,      1, IN  }} },
 	{ "BesJ1",    1, 1, IT_REAL,        {{ IT_REAL,      1, IN  }} },
 	{ "BesJN",    1, 1, IT_DEF_INTEGER, {{ IT_REAL,      1, IN  }} },
@@ -637,11 +639,20 @@ const ofc_sema_intrinsic_t* ofc_sema_intrinsic(
 
 	(void)scope;
 
-	return ofc_hashmap_find(
+	const ofc_sema_intrinsic_t* op = ofc_hashmap_find(
 		ofc_sema_intrinsic__op_map, &name);
+	if (op)
+		return op;
+
+	const ofc_sema_intrinsic_t* func = ofc_hashmap_find(
+		ofc_sema_intrinsic__func_map, &name);
+	if (func)
+		return func;
+
+	return NULL;
 }
 
-ofc_sema_expr_list_t* ofc_sema_intrinsic_cast(
+static ofc_sema_expr_list_t* ofc_sema_intrinsic_cast__op(
 	ofc_sparse_ref_t src,
 	const ofc_sema_intrinsic_t* intrinsic,
 	ofc_sema_expr_list_t* args)
@@ -817,7 +828,213 @@ ofc_sema_expr_list_t* ofc_sema_intrinsic_cast(
 	return args;
 }
 
-const ofc_sema_type_t* ofc_sema_intrinsic_type(
+static ofc_sema_expr_list_t* ofc_sema_intrinsic_cast__func(
+	ofc_sparse_ref_t src,
+	const ofc_sema_intrinsic_t* intrinsic,
+	ofc_sema_expr_list_t* args)
+{
+	if (!intrinsic || !args
+		|| (args->count == 0))
+	{
+		ofc_sema_expr_list_delete(args);
+		return NULL;
+	}
+
+	if ((intrinsic->type != OFC_SEMA_INTRINSIC_FUNC)
+		|| !intrinsic->func)
+		return NULL;
+
+	if (args->count < intrinsic->func->arg_min)
+	{
+		ofc_sparse_ref_error(src,
+			"Not enough arguments for intrinsic function.");
+		ofc_sema_expr_list_delete(args);
+		return NULL;
+	}
+	if ((intrinsic->func->arg_max != 0)
+		&& (args->count > intrinsic->func->arg_max))
+	{
+		ofc_sparse_ref_error(src,
+			"Too many arguments for intrinsic function.");
+		ofc_sema_expr_list_delete(args);
+		return NULL;
+	}
+
+
+	const ofc_sema_type_t* at[args->count];
+
+	unsigned i;
+	for (i = 0; i < args->count; i++)
+	{
+		const ofc_sema_type_t* stype = NULL;
+		switch (intrinsic->func->arg_type[i].type)
+		{
+			case IT_DEF_LOGICAL:
+				stype = ofc_sema_type_logical_default();
+				break;
+
+			case IT_DEF_INTEGER:
+				stype = ofc_sema_type_integer_default();
+				break;
+
+			case IT_DEF_REAL:
+				stype = ofc_sema_type_real_default();
+				break;
+
+			case IT_DEF_COMPLEX:
+				stype = ofc_sema_type_complex_default();
+				break;
+
+			case IT_DEF_DOUBLE:
+				stype = ofc_sema_type_double_default();
+				break;
+
+			case IT_DEF_DOUBLE_COMPLEX:
+				stype = ofc_sema_type_double_complex_default();
+				break;
+
+			case IT_DEF_HALF_INTEGER:
+				stype = ofc_sema_type_create_primitive(
+					OFC_SEMA_TYPE_INTEGER, 5);
+				break;
+
+			case IT_INTEGER_1:
+				stype = ofc_sema_type_create_primitive(
+					OFC_SEMA_TYPE_INTEGER, 3);
+				break;
+
+			case IT_INTEGER_2:
+				stype = ofc_sema_type_create_primitive(
+					OFC_SEMA_TYPE_INTEGER, 6);
+				break;
+
+			case IT_INTEGER_4:
+				stype = ofc_sema_type_create_primitive(
+					OFC_SEMA_TYPE_INTEGER, 12);
+				break;
+
+			case IT_CHARACTER_1:
+				stype = ofc_sema_type_create_character(
+					1, 1, false);
+				break;
+
+			default:
+				break;
+		}
+
+		at[i] = ofc_sema_expr_type(args->expr[i]);
+
+		const ofc_sema_type_t* atype = at[i];
+		if (!atype)
+		{
+			ofc_sema_expr_list_delete(args);
+			return NULL;
+		}
+
+		bool valid = false;
+		switch (intrinsic->func->arg_type[i].type)
+		{
+			case IT_ANY:
+				valid = true;
+				break;
+
+			case IT_SCALAR:
+				valid = ofc_sema_type_is_scalar(atype);
+				break;
+
+			case IT_LOGICAL:
+				valid = ofc_sema_type_is_logical(atype);
+				break;
+
+			case IT_INTEGER:
+				valid = ofc_sema_type_is_integer(atype);
+				break;
+
+			case IT_REAL:
+				valid = (atype->type == OFC_SEMA_TYPE_REAL);
+				break;
+
+			case IT_COMPLEX:
+				valid = (atype->type == OFC_SEMA_TYPE_COMPLEX);
+				break;
+
+			case IT_CHARACTER:
+				valid = (atype->type == OFC_SEMA_TYPE_CHARACTER);
+				break;
+
+			case IT_CHARACTER_1:
+			case IT_DEF_LOGICAL:
+			case IT_DEF_INTEGER:
+			case IT_DEF_REAL:
+			case IT_DEF_COMPLEX:
+			case IT_DEF_DOUBLE:
+			case IT_DEF_DOUBLE_COMPLEX:
+			case IT_DEF_HALF_INTEGER:
+			case IT_INTEGER_1:
+			case IT_INTEGER_2:
+			case IT_INTEGER_4:
+				valid = ofc_sema_type_compatible(atype, stype);
+				break;
+
+			default:
+				break;
+		}
+
+		if (!ofc_sema_type_compatible(atype, stype))
+		{
+			ofc_sema_expr_t* cast
+				= ofc_sema_expr_cast(
+					args->expr[i], stype);
+			if (!cast)
+			{
+				ofc_sparse_ref_error(args->expr[i]->src,
+					"Incompatible argument type for intrinsic.");
+				ofc_sema_expr_list_delete(args);
+				return NULL;
+			}
+			else
+			{
+				valid = true;
+			}
+
+			args->expr[i] = cast;
+		}
+
+		if (!valid)
+		{
+			ofc_sparse_ref_warning(args->expr[i]->src,
+				"Incorrect argument type for intrinsic.");
+		}
+	}
+
+	return args;
+}
+
+ofc_sema_expr_list_t* ofc_sema_intrinsic_cast(
+	ofc_sparse_ref_t src,
+	const ofc_sema_intrinsic_t* intrinsic,
+	ofc_sema_expr_list_t* args)
+{
+	switch (intrinsic->type)
+	{
+		case OFC_SEMA_INTRINSIC_OP:
+			return ofc_sema_intrinsic_cast__op(src, intrinsic, args);
+
+		case OFC_SEMA_INTRINSIC_FUNC:
+			return ofc_sema_intrinsic_cast__func(src, intrinsic, args);
+
+		case OFC_SEMA_INTRINSIC_SUBR:
+			break;
+
+		default:
+			break;
+	}
+
+	return NULL;
+}
+
+
+static const ofc_sema_type_t* ofc_sema_intrinsic__op_type(
 	const ofc_sema_intrinsic_t* intrinsic,
 	ofc_sema_expr_list_t* args)
 {
@@ -938,6 +1155,155 @@ const ofc_sema_type_t* ofc_sema_intrinsic_type(
 			default:
 				break;
 		}
+	}
+
+	return NULL;
+}
+
+
+static const ofc_sema_type_t* ofc_sema_intrinsic__func_type(
+	const ofc_sema_intrinsic_t* intrinsic,
+	ofc_sema_expr_list_t* args)
+{
+	if (!intrinsic)
+		return NULL;
+
+	if ((intrinsic->type != OFC_SEMA_INTRINSIC_FUNC)
+		|| !intrinsic->op)
+		return NULL;
+
+	switch (intrinsic->func->return_type)
+	{
+		case IT_ANY:
+			return NULL;
+
+		case IT_DEF_LOGICAL:
+			return ofc_sema_type_logical_default();
+
+		case IT_DEF_INTEGER:
+			return ofc_sema_type_integer_default();
+
+		case IT_DEF_REAL:
+			return ofc_sema_type_real_default();
+
+		case IT_DEF_COMPLEX:
+			return ofc_sema_type_complex_default();
+
+		case IT_DEF_DOUBLE:
+			return ofc_sema_type_double_default();
+
+		case IT_DEF_DOUBLE_COMPLEX:
+			return ofc_sema_type_double_complex_default();
+
+		case IT_DEF_HALF_INTEGER:
+			return ofc_sema_type_create_primitive(
+				OFC_SEMA_TYPE_INTEGER, 5);
+
+		case IT_INTEGER_1:
+			return ofc_sema_type_create_primitive(
+				OFC_SEMA_TYPE_INTEGER, 3);
+
+		case IT_INTEGER_2:
+			return ofc_sema_type_create_primitive(
+				OFC_SEMA_TYPE_INTEGER, 6);
+
+		case IT_INTEGER_4:
+			return ofc_sema_type_create_primitive(
+				OFC_SEMA_TYPE_INTEGER, 12);
+
+		default:
+			break;
+	}
+
+	if (!args || (args->count < 1))
+		return NULL;
+
+	const ofc_sema_type_t* atype
+		= ofc_sema_expr_type(args->expr[0]);
+	if (!atype) return NULL;
+
+	if (intrinsic->func->return_type == IT_SAME)
+		return atype;
+
+	if (atype->type == OFC_SEMA_TYPE_COMPLEX)
+	{
+		switch (intrinsic->func->return_type)
+		{
+			case IT_COMPLEX:
+				return atype;
+
+			case IT_SCALAR:
+			case IT_REAL:
+				return ofc_sema_type_create_primitive(
+					OFC_SEMA_TYPE_REAL, atype->kind);
+
+			default:
+				break;
+		}
+	}
+	else
+	{
+		/* TODO - Handle other conversions if used. */
+		switch (intrinsic->func->return_type)
+		{
+			case IT_COMPLEX:
+				if (atype->type == OFC_SEMA_TYPE_REAL)
+				{
+					return ofc_sema_type_create_primitive(
+						OFC_SEMA_TYPE_COMPLEX, atype->kind);
+				}
+				else if (ofc_sema_type_is_scalar(atype))
+				{
+					const ofc_sema_type_t* ptype
+						= ofc_sema_type_promote(atype,
+							ofc_sema_type_real_default());
+					return ofc_sema_type_create_primitive(
+						OFC_SEMA_TYPE_COMPLEX, ptype->kind);
+				}
+				break;
+
+			case IT_SCALAR:
+				if (!ofc_sema_type_is_scalar(atype))
+					return NULL;
+				return atype;
+
+			case IT_REAL:
+				if (atype->type == OFC_SEMA_TYPE_REAL)
+				{
+					return atype;
+				}
+				else if (ofc_sema_type_is_scalar(atype))
+				{
+					return ofc_sema_type_promote(atype,
+							ofc_sema_type_real_default());
+				}
+				break;
+
+			default:
+				break;
+		}
+	}
+
+	return NULL;
+}
+
+const ofc_sema_type_t* ofc_sema_intrinsic_type(
+	const ofc_sema_intrinsic_t* intrinsic,
+	ofc_sema_expr_list_t* args)
+{
+	switch (intrinsic->type)
+	{
+		case OFC_SEMA_INTRINSIC_OP:
+			return ofc_sema_intrinsic__op_type(intrinsic, args);
+
+		case OFC_SEMA_INTRINSIC_FUNC:
+			return ofc_sema_intrinsic__func_type(intrinsic, args);
+
+		case OFC_SEMA_INTRINSIC_SUBR:
+			break;
+
+		default:
+			break;
 	}
 
 	return NULL;
