@@ -69,6 +69,41 @@ static bool ofc_sema_typeval__in_range(
 		&& (typeval->integer >= imin));
 }
 
+static bool ofc_sema_typeval__clamp_range(
+	ofc_sema_typeval_t* typeval)
+{
+	if (!typeval)
+		return false;
+
+	if (!typeval->type)
+		return true;
+
+	/* We only range check integers. */
+	if (typeval->type->type
+		!= OFC_SEMA_TYPE_INTEGER)
+		return true;
+
+	unsigned size;
+	if (!ofc_sema_type_size(
+		typeval->type, &size))
+		return false;
+
+	if (size >= sizeof(typeval->integer))
+		return true;
+
+	int64_t imax = 1LL << (size * 8);
+	int64_t imin = -(imax >> 1);
+
+	if ((typeval->integer >= imax)
+		|| (typeval->integer < imin))
+		return false;
+
+	if (typeval->integer > (imax >> 1))
+		typeval->integer |= (0xFFFFFFFFFFFFFFFFULL << (64 - (size * 8)));
+
+	return true;
+}
+
 static bool is_base_digit(
 	char c, unsigned base, unsigned* value)
 {
@@ -110,20 +145,23 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 		}
 	}
 
+	bool mask_valid = false;
 	unsigned base = 10;
 	switch (literal->type)
 	{
 		case OFC_PARSE_LITERAL_NUMBER:
-			base = 10;
 			break;
 		case OFC_PARSE_LITERAL_BINARY:
 			base = 2;
+			mask_valid = true;
 			break;
 		case OFC_PARSE_LITERAL_OCTAL:
 			base = 8;
+			mask_valid = true;
 			break;
 		case OFC_PARSE_LITERAL_HEX:
 			base = 16;
+			mask_valid = true;
 			break;
 		default:
 			return NULL;
@@ -247,9 +285,20 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 
 	if (!ofc_sema_typeval__in_range(&typeval))
 	{
-		ofc_sparse_ref_error(literal->src,
-			"Out of range for type");
-		return NULL;
+		if (mask_valid
+			&& ofc_sema_typeval__clamp_range(&typeval))
+		{
+			ofc_sparse_ref_warning(literal->src,
+				"Out of range for signed type"
+				", treating as unsigned");
+
+		}
+		else
+		{
+			ofc_sparse_ref_error(literal->src,
+				"Out of range for type");
+			return NULL;
+		}
 	}
 
 	typeval.src = literal->src;
