@@ -1067,7 +1067,12 @@ static ofc_sema_expr_t* ofc_sema_expr__variable(
 				= ofc_sema_decl_function(
 					scope, base_name, fspec);
 			ofc_sema_spec_delete(fspec);
-			if (!fdecl) return NULL;
+			if (!fdecl)
+			{
+				ofc_sparse_ref_error(name->parent->src,
+					"No complete IMPLICIT rule or specifier for function");
+				return NULL;
+			}
 
 			expr = ofc_sema_expr__function(
 				scope, name, fdecl);
@@ -1075,6 +1080,11 @@ static ofc_sema_expr_t* ofc_sema_expr__variable(
 			{
 				ofc_sparse_ref_error(name->src,
 					"Invalid invocation of function");
+			}
+			else
+			{
+				ofc_sparse_ref_warning(name->src,
+					"Implicit function declaration");
 			}
 		}
 		else
