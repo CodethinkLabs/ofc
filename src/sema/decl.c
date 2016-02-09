@@ -638,11 +638,10 @@ static bool ofc_sema_decl__decl(
 	}
 
 	if (ofc_sema_spec_is_dynamic_array(nspec)
-		&& !ofc_sema_spec_is_argument(nspec, scope))
+		&& !ofc_sema_scope_is_procedure(scope))
 	{
 		ofc_sparse_ref_error(lhs->src,
-			"Only a dummy argument may be declared"
-			" as a dynamically sized array");
+			"Dynamically sized arrays are only valid in procedures");
 		return false;
 	}
 

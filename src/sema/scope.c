@@ -848,6 +848,25 @@ ofc_sema_scope_t* ofc_sema_scope_root(
 }
 
 
+bool ofc_sema_scope_is_procedure(
+	const ofc_sema_scope_t* scope)
+{
+	if (!scope)
+		return false;
+
+	switch (scope->type)
+	{
+		case OFC_SEMA_SCOPE_STMT_FUNC:
+		case OFC_SEMA_SCOPE_SUBROUTINE:
+		case OFC_SEMA_SCOPE_FUNCTION:
+			return true;
+		default:
+			break;
+	}
+	return false;
+}
+
+
 const ofc_str_ref_t* ofc_sema_scope_get_name(
 	const ofc_sema_scope_t* scope)
 {

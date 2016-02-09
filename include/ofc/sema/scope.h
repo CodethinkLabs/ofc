@@ -96,6 +96,9 @@ bool ofc_sema_scope_is_root(
 ofc_sema_scope_t* ofc_sema_scope_root(
 	ofc_sema_scope_t* scope);
 
+bool ofc_sema_scope_is_procedure(
+	const ofc_sema_scope_t* scope);
+
 void ofc_sema_scope_delete(
 	ofc_sema_scope_t* scope);
 
