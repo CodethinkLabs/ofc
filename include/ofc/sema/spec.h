@@ -60,6 +60,12 @@ typedef struct
 
 const ofc_sema_spec_t OFC_SEMA_SPEC_DEFAULT;
 
+bool ofc_sema_spec_is_dynamic_array(
+	const ofc_sema_spec_t* spec);
+bool ofc_sema_spec_is_argument(
+	const ofc_sema_spec_t*  spec,
+	ofc_sema_scope_t* scope);
+
 ofc_sema_spec_t* ofc_sema_spec_create(ofc_sparse_ref_t name);
 ofc_sema_spec_t* ofc_sema_spec(
 	ofc_sema_scope_t*       scope,

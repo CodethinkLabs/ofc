@@ -637,6 +637,15 @@ static bool ofc_sema_decl__decl(
 		nspec->is_external  |= spec.is_external;
 	}
 
+	if (ofc_sema_spec_is_dynamic_array(nspec)
+		&& !ofc_sema_spec_is_argument(nspec, scope))
+	{
+		ofc_sparse_ref_error(lhs->src,
+			"Only a dummy argument may be declared"
+			" as a dynamically sized array");
+		return false;
+	}
+
 	if (is_decl)
 	{
 		if (decl != NULL)
@@ -645,7 +654,6 @@ static bool ofc_sema_decl__decl(
 
 			ofc_sparse_ref_error(lhs->src,
 				"Redeclaration of declared variable");
-			ofc_sema_array_delete(spec.array);
 			return false;
 		}
 
@@ -734,6 +742,14 @@ bool ofc_sema_decl_member(
 	ofc_sema_spec_t* spec = ofc_sema_spec(
 		scope, stmt->decl.type);
 	if (!spec) return NULL;
+
+	if (ofc_sema_spec_is_dynamic_array(spec))
+	{
+		ofc_sparse_ref_error(stmt->src,
+			"Structure members cannot be dynamically sized arrays");
+		ofc_sema_spec_delete(spec);
+		return NULL;
+	}
 
 	unsigned count = stmt->decl.decl->count;
 	if (count == 0) return NULL;

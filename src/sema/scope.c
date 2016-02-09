@@ -286,6 +286,16 @@ static bool ofc_sema_scope__function(
 			ofc_sema_scope_delete(func_scope);
 			return false;
 		}
+
+		if (ofc_sema_spec_is_dynamic_array(spec))
+		{
+			ofc_sparse_ref_error(stmt->src,
+				"FUNCTION return type cannot be a dynamically sized array");
+			ofc_sema_spec_delete(spec);
+			ofc_sema_scope_delete(func_scope);
+			return NULL;
+		}
+
 		spec->name = stmt->program.name;
 
 		if (!ofc_sema_spec_map_add(

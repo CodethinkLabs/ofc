@@ -30,6 +30,11 @@ ofc_sema_array_t* ofc_sema_array(
 		if (!index->range[i])
 			return NULL;
 
+		/* For assumed size/shape arrays. */
+		if (!index->range[i]->first
+			&& !index->range[i]->last)
+			continue;
+
 		if (!index->range[i]->first
 			|| index->range[i]->stride)
 			return NULL;
@@ -309,19 +314,31 @@ bool ofc_sema_array_print(
 		ofc_sema_array_dims_t dims
 			= array->segment[i];
 
-		if (dims.first
-			&& !ofc_sema_expr_print(
-				cs, dims.first))
-			return false;
+		if (dims.first)
+		{
+			if (!ofc_sema_expr_print(cs, dims.first)
+				|| !ofc_colstr_atomic_writef(cs, ":"))
+				return false;
+		}
 
-		if ((dims.first || !dims.last)
-			&& !ofc_colstr_atomic_writef(cs, ":"))
-			return false;
-
-		if (dims.last
-			? !ofc_sema_expr_print(cs, dims.last)
-			: !ofc_colstr_atomic_writef(cs, "*"))
-			return false;
+		/* TODO - Properly differentiate between assumed size and shape. */
+		bool is_last = ((i + 1) == array->dimensions);
+		if (dims.last)
+		{
+			if (!ofc_sema_expr_print(cs, dims.last))
+				return false;
+		}
+		else if (!is_last)
+		{
+			if (!dims.first
+				&& !ofc_colstr_atomic_writef(cs, ":"))
+				return false;
+		}
+		else
+		{
+			if (!ofc_colstr_atomic_writef(cs, "*"))
+				return false;
+		}
 	}
 
 	return true;
@@ -331,7 +348,7 @@ bool ofc_sema_array_print_size(
 	ofc_colstr_t* cs,
 	const ofc_sema_array_t* array)
 {
-		if (!cs || !array)
+	if (!cs || !array)
 		return false;
 
 	unsigned i;
