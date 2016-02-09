@@ -466,8 +466,22 @@ static bool ofc_sema_decl__decl(
 	const ofc_parse_lhs_t* lhs = pdecl->lhs;
 	if (lhs->type == OFC_PARSE_LHS_STAR_LEN)
 	{
+		if (spec.type_implicit)
+		{
+			ofc_sparse_ref_error(lhs->src,
+				"Can't specify a star LEN/KIND for an implied type");
+			return false;
+		}
+
 		if (lhs->star_len.var)
 		{
+			if (spec.type != OFC_SEMA_TYPE_CHARACTER)
+			{
+				ofc_sparse_ref_error(lhs->src,
+					"Only CHARACTER types may have an assumed length");
+				return false;
+			}
+
 			if (spec.len > 0)
 			{
 				ofc_sparse_ref_warning(lhs->src,
@@ -495,16 +509,38 @@ static bool ofc_sema_decl__decl(
 				return false;
 			}
 
-			if (spec.len_var
-				|| ((spec.len > 0) && (spec.len != star_len)))
+			if (spec.type == OFC_SEMA_TYPE_CHARACTER)
 			{
-				ofc_sparse_ref_warning(lhs->src,
-					"Overriding specified star length in %s list",
-					(is_decl ? "decl" : "specifier"));
-			}
+				if (spec.len_var
+					|| ((spec.len > 0) && (spec.len != star_len)))
+				{
+					ofc_sparse_ref_warning(lhs->src,
+						"Overriding specified LEN in %s list",
+						(is_decl ? "decl" : "specifier"));
+				}
 
-			spec.len     = star_len;
-			spec.len_var = false;
+				spec.len     = star_len;
+				spec.len_var = false;
+			}
+			else
+			{
+				if (star_len == 0)
+				{
+					ofc_sparse_ref_error(lhs->src,
+						"Star size must be non-zero");
+					return false;
+				}
+
+				if ((spec.kind != 0)
+					&& ((star_len * 3) != spec.kind))
+				{
+					ofc_sparse_ref_warning(lhs->src,
+						"Overriding specified KIND in %s list",
+						(is_decl ? "decl" : "specifier"));
+				}
+
+				spec.kind = (star_len * 3);
+			}
 		}
 
 		lhs = lhs->parent;
