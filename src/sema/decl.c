@@ -1232,7 +1232,7 @@ bool ofc_sema_decl_init_array(
 
 			ofc_sema_expr_t* expr
 				= ofc_sema_expr_copy(init[i]);
-			if (!expr) return NULL;
+			if (!expr) return false;
 
 			if (!ofc_sema_type_compatible(
 				ofc_sema_expr_type(expr), decl->type))
@@ -1242,8 +1242,10 @@ bool ofc_sema_decl_init_array(
 						expr, decl->type);
 				if (!cast)
 				{
+					ofc_sparse_ref_error(init[i]->src,
+						"Incompatible types in initializer");
 					ofc_sema_expr_delete(expr);
-					return NULL;
+					return false;
 				}
 				expr = cast;
 			}
