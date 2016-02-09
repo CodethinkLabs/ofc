@@ -40,7 +40,12 @@ bool ofc_sema_stmt_equivalence(
 
 		ofc_sema_lhs_t* base
 			= ofc_sema_lhs(scope, list->lhs[0]);
-		if (!base) return false;
+		if (!base)
+		{
+			ofc_sparse_ref_error(list->lhs[0]->src,
+				"Invalid EQUIVALENCE element");
+			return false;
+		}
 
 		if (list->count < 2)
 		{
@@ -72,6 +77,8 @@ bool ofc_sema_stmt_equivalence(
 				= ofc_sema_lhs(scope, list->lhs[i]);
 			if (!elhs)
 			{
+				ofc_sparse_ref_error(list->lhs[i]->src,
+					"Invalid EQUIVALENCE element");
 				ofc_sema_equiv_delete(equiv);
 				return false;
 			}
