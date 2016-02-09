@@ -312,42 +312,42 @@ static const ofc_sema_intrinsic_func_t ofc_sema_intrinsic__func_list[] =
 	{ "FDate",   0, 0, IT_CHARACTER, {{ 0 }} },
 	{ "Second",  0, 0, IT_REAL_1,    {{ 0 }} },
 
-	{ "Loc",      1, 1, IT_INTEGER,     {{ IT_ANY,       1, IN  }} },
-	{ "IRand",    0, 1, IT_INTEGER,     {{ IT_INTEGER,   1, IN  }} },
-	{ "LnBlnk",   1, 1, IT_INTEGER,     {{ IT_CHARACTER, 1, IN  }} },
-	{ "IsaTty",   1, 1, IT_LOGICAL,     {{ IT_INTEGER,   1, IN  }} },
-	{ "Len",      1, 1, IT_INTEGER,     {{ IT_CHARACTER, 1, IN  }} },
-	{ "AImag",    1, 1, IT_REAL,        {{ IT_COMPLEX,   1, IN  }} },
-	{ "Len_Trim", 1, 1, IT_INTEGER,     {{ IT_CHARACTER, 1, IN  }} },
-	{ "AChar",    1, 1, IT_CHARACTER,   {{ IT_INTEGER,   1, IN  }} },
+	{ "Loc",      1, 1, IT_DEF_INTEGER, {{ IT_ANY,         1, IN  }} },
+	{ "IRand",    0, 1, IT_DEF_INTEGER, {{ IT_INTEGER,     1, IN  }} },
+	{ "LnBlnk",   1, 1, IT_DEF_INTEGER, {{ IT_CHARACTER,   1, IN  }} },
+	{ "IsaTty",   1, 1, IT_LOGICAL,     {{ IT_INTEGER,     1, IN  }} },
+	{ "Len",      1, 1, IT_INTEGER_1,   {{ IT_CHARACTER,   1, IN  }} },
+	{ "AImag",    1, 1, IT_REAL,        {{ IT_DEF_COMPLEX, 1, IN  }} },
+	{ "Len_Trim", 1, 1, IT_DEF_INTEGER, {{ IT_CHARACTER,   1, IN  }} },
+	{ "AChar",    1, 1, IT_CHARACTER,   {{ IT_INTEGER,     1, IN  }} },
 	{ "IChar",    1, 1, IT_DEF_INTEGER, {{ IT_CHARACTER_1, 1, IN  }} },
-	{ "BesJ0",    1, 1, IT_REAL,        {{ IT_REAL,      1, IN  }} },
-	{ "BesJ1",    1, 1, IT_REAL,        {{ IT_REAL,      1, IN  }} },
-	{ "BesJN",    1, 1, IT_DEF_INTEGER, {{ IT_REAL,      1, IN  }} },
-	{ "BesY0",    1, 1, IT_REAL,        {{ IT_REAL,      1, IN  }} },
-	{ "BesY1",    1, 1, IT_REAL,        {{ IT_REAL,      1, IN  }} },
-	{ "CTime",    1, 1, IT_CHARACTER,   {{ IT_INTEGER,   1, IN  }} },
-	{ "DErF",     1, 1, IT_REAL_2,      {{ IT_REAL_2,    1, IN  }} },
-	{ "DErFC",    1, 1, IT_REAL_2,      {{ IT_REAL_2,    1, IN  }} },
-	{ "ErF",      1, 1, IT_REAL,        {{ IT_REAL,      1, IN  }} },
-	{ "ErFC",     1, 1, IT_REAL,        {{ IT_REAL,      1, IN  }} },
-	{ "ETime",    1, 1, IT_REAL_1,      {{ IT_REAL_1,    2, IN  }} },
-	{ "FTell",    1, 1, IT_INTEGER,     {{ IT_INTEGER,   1, IN  }} },
-	{ "GetCWD",   1, 1, IT_INTEGER,     {{ IT_CHARACTER, 1, OUT }} },
-	{ "HostNm",   1, 1, IT_INTEGER,     {{ IT_CHARACTER, 1, OUT }} },
-	{ "TtyNam",   1, 1, IT_CHARACTER,   {{ IT_INTEGER,   1, IN  }} },
+	{ "BesJ0",    1, 1, IT_REAL,        {{ IT_REAL,        1, IN  }} },
+	{ "BesJ1",    1, 1, IT_REAL,        {{ IT_REAL,        1, IN  }} },
+	{ "BesJN",    1, 1, IT_DEF_INTEGER, {{ IT_REAL,        1, IN  }} },
+	{ "BesY0",    1, 1, IT_REAL,        {{ IT_REAL,        1, IN  }} },
+	{ "BesY1",    1, 1, IT_REAL,        {{ IT_REAL,        1, IN  }} },
+	{ "CTime",    1, 1, IT_CHARACTER,   {{ IT_INTEGER,     1, IN  }} },
+	{ "DErF",     1, 1, IT_REAL_2,      {{ IT_REAL_2,      1, IN  }} },
+	{ "DErFC",    1, 1, IT_REAL_2,      {{ IT_REAL_2,      1, IN  }} },
+	{ "ErF",      1, 1, IT_REAL,        {{ IT_REAL,        1, IN  }} },
+	{ "ErFC",     1, 1, IT_REAL,        {{ IT_REAL,        1, IN  }} },
+	{ "ETime",    1, 1, IT_REAL_1,      {{ IT_REAL_1,      2, IN  }} },
+	{ "FTell",    1, 1, IT_DEF_INTEGER, {{ IT_INTEGER,     1, IN  }} },
+	{ "GetCWD",   1, 1, IT_DEF_INTEGER, {{ IT_CHARACTER,   1, OUT }} },
+	{ "HostNm",   1, 1, IT_DEF_INTEGER, {{ IT_CHARACTER,   1, OUT }} },
+	{ "TtyNam",   1, 1, IT_CHARACTER,   {{ IT_INTEGER,     1, IN  }} },
 
 
-	{ "Stat",   2, 2, IT_INTEGER, {{ IT_CHARACTER, 1, IN }, { IT_INTEGER,   13, OUT }} },
-	{ "LStat",  2, 2, IT_INTEGER, {{ IT_CHARACTER, 1, IN }, { IT_INTEGER,   13, OUT }} },
-	{ "FStat",  2, 2, IT_INTEGER, {{ IT_INTEGER,   1, IN }, { IT_INTEGER,   13, OUT }} },
-	{ "Access", 2, 2, IT_INTEGER, {{ IT_CHARACTER, 1, IN }, { IT_CHARACTER, 1,  IN  }} },
-	{ "LGe",    2, 2, IT_LOGICAL, {{ IT_CHARACTER, 1, IN }, { IT_CHARACTER, 1,  IN  }} },
-	{ "LGt",    2, 2, IT_LOGICAL, {{ IT_CHARACTER, 1, IN }, { IT_CHARACTER, 1,  IN  }} },
-	{ "LLe",    2, 2, IT_LOGICAL, {{ IT_CHARACTER, 1, IN }, { IT_CHARACTER, 1,  IN  }} },
-	{ "LLt",    2, 2, IT_LOGICAL, {{ IT_CHARACTER, 1, IN }, { IT_CHARACTER, 1,  IN  }} },
-	{ "LShift", 2, 2, IT_INTEGER, {{ IT_INTEGER,   1, IN }, { IT_INTEGER,   1,  IN  }} },
-	{ "BesYN",  2, 2, IT_REAL,    {{ IT_INTEGER,   1, IN }, { IT_REAL,      1,  IN  }} },
+	{ "Stat",   2, 2, IT_DEF_INTEGER, {{ IT_CHARACTER, 1, IN }, { IT_INTEGER,   13, OUT }} },
+	{ "LStat",  2, 2, IT_DEF_INTEGER, {{ IT_CHARACTER, 1, IN }, { IT_INTEGER,   13, OUT }} },
+	{ "FStat",  2, 2, IT_DEF_INTEGER, {{ IT_INTEGER,   1, IN }, { IT_INTEGER,   13, OUT }} },
+	{ "Access", 2, 2, IT_DEF_INTEGER, {{ IT_CHARACTER, 1, IN }, { IT_CHARACTER, 1,  IN  }} },
+	{ "LGe",    2, 2, IT_LOGICAL,     {{ IT_CHARACTER, 1, IN }, { IT_CHARACTER, 1,  IN  }} },
+	{ "LGt",    2, 2, IT_LOGICAL,     {{ IT_CHARACTER, 1, IN }, { IT_CHARACTER, 1,  IN  }} },
+	{ "LLe",    2, 2, IT_LOGICAL,     {{ IT_CHARACTER, 1, IN }, { IT_CHARACTER, 1,  IN  }} },
+	{ "LLt",    2, 2, IT_LOGICAL,     {{ IT_CHARACTER, 1, IN }, { IT_CHARACTER, 1,  IN  }} },
+	{ "LShift", 2, 2, IT_DEF_INTEGER, {{ IT_INTEGER,   1, IN }, { IT_INTEGER,   1,  IN  }} },
+	{ "BesYN",  2, 2, IT_REAL,        {{ IT_INTEGER,   1, IN }, { IT_REAL,      1,  IN  }} },
 
 	{ "IShftC", 3, 3, IT_INTEGER, {{ IT_INTEGER, 1, IN }, { IT_INTEGER, 1, IN }, { IT_INTEGER, 1, IN }} },
 
@@ -893,6 +893,11 @@ static ofc_sema_expr_list_t* ofc_sema_intrinsic_cast__func(
 				stype = ofc_sema_type_double_complex_default();
 				break;
 
+			case IT_CHARACTER:
+				stype = ofc_sema_type_create_character(
+					1, 1, true);
+				break;
+
 			case IT_DEF_HALF_INTEGER:
 				stype = ofc_sema_type_create_primitive(
 					OFC_SEMA_TYPE_INTEGER, 5);
@@ -980,7 +985,8 @@ static ofc_sema_expr_list_t* ofc_sema_intrinsic_cast__func(
 				break;
 		}
 
-		if (!ofc_sema_type_compatible(atype, stype))
+		if (intrinsic->func->arg_type[i].type != IT_ANY
+			&& !ofc_sema_type_compatible(atype, stype))
 		{
 			ofc_sema_expr_t* cast
 				= ofc_sema_expr_cast(
