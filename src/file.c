@@ -313,6 +313,13 @@ static void ofc_file__debug_va(
 	}
 }
 
+static bool ofc_file__error_count = 0;
+
+bool ofc_file_no_errors(void)
+{
+	return (ofc_file__error_count == 0);
+}
+
 void ofc_file_error_va(
 	const ofc_file_t* file,
 	const char* sol, const char* ptr,
@@ -320,6 +327,7 @@ void ofc_file_error_va(
 {
 	ofc_file__debug_va(
 		file, sol, ptr, "Error", format, args);
+	ofc_file__error_count++;
 }
 
 void ofc_file_warning_va(

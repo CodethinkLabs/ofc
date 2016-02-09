@@ -50,6 +50,8 @@ bool ofc_file_get_position(
 
 #include <stdarg.h>
 
+bool ofc_file_no_errors(void);
+
 void ofc_file_error(
 	const ofc_file_t* file, const char* ptr,
 	const char* format, ...)

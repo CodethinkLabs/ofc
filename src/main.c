@@ -41,17 +41,18 @@ int main(int argc, const char* argv[])
 	ofc_sparse_t* condense = ofc_prep(file);
 	if (!condense)
 	{
-		ofc_file_error(file, NULL, "Failed preprocess source file");
+		if (ofc_file_no_errors())
+			ofc_file_error(file, NULL, "Failed to preprocess source file");
 		return EXIT_FAILURE;
 	}
 	ofc_file_delete(file);
 
 	ofc_parse_stmt_list_t* program
 		= ofc_parse_file(condense);
-
 	if (!program)
 	{
-		ofc_file_error(file, NULL, "Failed preprocess program");
+		if (ofc_file_no_errors())
+			ofc_file_error(file, NULL, "Failed to parse program");
 		ofc_sparse_delete(condense);
 		return EXIT_FAILURE;
 	}
@@ -77,7 +78,8 @@ int main(int argc, const char* argv[])
 			&lang_opts, program);
 		if (!sema)
 		{
-			ofc_file_error(file, NULL, "Program failed semantic analysis");
+			if (ofc_file_no_errors())
+				ofc_file_error(file, NULL, "Program failed semantic analysis");
 			ofc_parse_stmt_list_delete(program);
 			ofc_sparse_delete(condense);
 			return EXIT_FAILURE;
