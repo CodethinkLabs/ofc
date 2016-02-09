@@ -464,12 +464,29 @@ static bool ofc_sema_decl__decl(
 		|| pdecl->init_clist || pdecl->init_expr);
 
 	const ofc_parse_lhs_t* lhs = pdecl->lhs;
+
+	ofc_sema_array_t* array = NULL;
+	if (lhs->type == OFC_PARSE_LHS_ARRAY)
+	{
+		array = ofc_sema_array(
+			scope, lhs->array.index);
+		if (!array) return false;
+
+		lhs = lhs->parent;
+		if (!lhs)
+		{
+			ofc_sema_array_delete(array);
+			return false;
+		}
+	}
+
 	if (lhs->type == OFC_PARSE_LHS_STAR_LEN)
 	{
 		if (spec.type_implicit)
 		{
 			ofc_sparse_ref_error(lhs->src,
 				"Can't specify a star LEN/KIND for an implied type");
+			ofc_sema_array_delete(array);
 			return false;
 		}
 
@@ -479,6 +496,7 @@ static bool ofc_sema_decl__decl(
 			{
 				ofc_sparse_ref_error(lhs->src,
 					"Only CHARACTER types may have an assumed length");
+				ofc_sema_array_delete(array);
 				return false;
 			}
 
@@ -496,7 +514,11 @@ static bool ofc_sema_decl__decl(
 		{
 			ofc_sema_expr_t* expr
 				= ofc_sema_expr(scope, lhs->star_len.len);
-			if (!expr) return false;
+			if (!expr)
+			{
+				ofc_sema_array_delete(array);
+				return false;
+			}
 
 			unsigned star_len;
 			bool resolved = ofc_sema_expr_resolve_uint(expr, &star_len);
@@ -506,6 +528,7 @@ static bool ofc_sema_decl__decl(
 			{
 				ofc_sparse_ref_error(lhs->src,
 					"Star length must be a positive whole integer");
+				ofc_sema_array_delete(array);
 				return false;
 			}
 
@@ -528,6 +551,7 @@ static bool ofc_sema_decl__decl(
 				{
 					ofc_sparse_ref_error(lhs->src,
 						"Star size must be non-zero");
+					ofc_sema_array_delete(array);
 					return false;
 				}
 
@@ -544,32 +568,49 @@ static bool ofc_sema_decl__decl(
 		}
 
 		lhs = lhs->parent;
-		if (!lhs) return false;
+		if (!lhs)
+		{
+			ofc_sema_array_delete(array);
+			return false;
+		}
 	}
 
 	if (lhs->type == OFC_PARSE_LHS_ARRAY)
+	{
+		if (array)
+		{
+			ofc_sparse_ref_error(lhs->src,
+				"Multiple definition of array dimensions");
+			ofc_sema_array_delete(array);
+			return false;
+		}
+
+		array = ofc_sema_array(
+			scope, lhs->array.index);
+		if (!array) return false;
+
+		lhs = lhs->parent;
+		if (!lhs)
+		{
+			ofc_sema_array_delete(array);
+			return false;
+		}
+	}
+
+	if (array)
 	{
 		if (spec.array)
 		{
 			/* This shouldn't ever happen since arrays
 			   can't be specified on the LHS of a declaration. */
+			ofc_sema_array_delete(array);
 			return false;
 		}
-
-		spec.array = ofc_sema_array(
-			scope, lhs->array.index);
-		if (!spec.array) return false;
-
-		lhs = lhs->parent;
-		if (!lhs)
-		{
-			ofc_sema_array_delete(spec.array);
-			return false;
-		}
+		spec.array = array;
 	}
 	else if (spec.array)
 	{
-		spec.array = ofc_sema_array_copy(spec.array);
+		spec.array = ofc_sema_array_copy(array);
 		if (!spec.array) return false;
 	}
 
