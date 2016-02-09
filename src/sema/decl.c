@@ -965,7 +965,7 @@ bool ofc_sema_decl_init(
 
 	ofc_sema_expr_t* expr
 		= ofc_sema_expr_copy(init);
-	if (!expr) return NULL;
+	if (!expr) return false;
 
 	if (!ofc_sema_type_compatible(
 		ofc_sema_expr_type(expr), type))
@@ -975,8 +975,10 @@ bool ofc_sema_decl_init(
 				expr, type);
 		if (!cast)
 		{
+			ofc_sparse_ref_error(init->src,
+				"Incompatible types in initializer");
 			ofc_sema_expr_delete(expr);
-			return NULL;
+			return false;
 		}
 		expr = cast;
 	}
@@ -1032,7 +1034,7 @@ bool ofc_sema_decl_init_offset(
 	}
 
 	if (!decl->type)
-		return NULL;
+		return false;
 
 	if (!ofc_sema_decl_is_composite(decl))
 	{
@@ -1081,7 +1083,7 @@ bool ofc_sema_decl_init_offset(
 
 	ofc_sema_expr_t* expr
 		= ofc_sema_expr_copy(init);
-	if (!expr) return NULL;
+	if (!expr) return false;
 
 	const ofc_sema_type_t* dtype = decl->type;
 	if (decl->structure)
@@ -1093,14 +1095,14 @@ bool ofc_sema_decl_init_offset(
 			if (!ofc_sema_structure_elem_count(
 				decl->structure, &mcount)
 				|| (mcount == 0))
-				return NULL;
+				return false;
 			moffset %= mcount;
 		}
 
 		ofc_sema_decl_t* mdecl
 			= ofc_sema_structure_elem_get(
 				decl->structure, moffset);
-		if (!mdecl) return NULL;
+		if (!mdecl) return false;
 		dtype = mdecl->type;
 	}
 
@@ -1112,8 +1114,10 @@ bool ofc_sema_decl_init_offset(
 				expr, dtype);
 		if (!cast)
 		{
+			ofc_sparse_ref_error(init->src,
+				"Incompatible types in initializer");
 			ofc_sema_expr_delete(expr);
-			return NULL;
+			return false;
 		}
 		expr = cast;
 	}
