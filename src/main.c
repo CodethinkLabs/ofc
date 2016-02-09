@@ -41,8 +41,7 @@ int main(int argc, const char* argv[])
 	ofc_sparse_t* condense = ofc_prep(file);
 	if (!condense)
 	{
-		fprintf(stderr, "\nError: Failed preprocess source file '%s'\n",
-			ofc_file_get_path(file));
+		ofc_file_error(file, NULL, "Failed preprocess source file");
 		return EXIT_FAILURE;
 	}
 	ofc_file_delete(file);
@@ -52,7 +51,7 @@ int main(int argc, const char* argv[])
 
 	if (!program)
 	{
-		fprintf(stderr, "\nError: Failed to parse program\n");
+		ofc_file_error(file, NULL, "Failed preprocess program");
 		ofc_sparse_delete(condense);
 		return EXIT_FAILURE;
 	}
@@ -62,7 +61,7 @@ int main(int argc, const char* argv[])
 		ofc_colstr_t* cs = ofc_colstr_create(72, 0);
 		if (!ofc_parse_stmt_list_print(cs, 0, program))
 		{
-			fprintf(stderr, "\nError: Failed to print parse tree\n");
+			ofc_file_error(file, NULL, "Failed to print parse tree");
 			ofc_parse_stmt_list_delete(program);
 			ofc_sparse_delete(condense);
 			return EXIT_FAILURE;
@@ -78,7 +77,7 @@ int main(int argc, const char* argv[])
 			&lang_opts, program);
 		if (!sema)
 		{
-			fprintf(stderr, "\nError: Program failed semantic analysis\n");
+			ofc_file_error(file, NULL, "Program failed semantic analysis");
 			ofc_parse_stmt_list_delete(program);
 			ofc_sparse_delete(condense);
 			return EXIT_FAILURE;
@@ -90,7 +89,7 @@ int main(int argc, const char* argv[])
 		ofc_colstr_t* cs = ofc_colstr_create(72, 0);
 		if (!ofc_sema_scope_print(cs, 0, sema))
 		{
-			fprintf(stderr, "\nError: Failed to print semantic tree\n");
+			ofc_file_error(file, NULL, "Failed to print semantic tree");
 			ofc_colstr_delete(cs);
 			ofc_sema_scope_delete(sema);
 			ofc_parse_stmt_list_delete(program);

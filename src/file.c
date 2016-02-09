@@ -264,9 +264,11 @@ static void ofc_file__debug_va(
 
 	fprintf(stderr, "%s:", type);
 
+	if (file->path)
+		fprintf(stderr, "%s:", file->path);
+
 	if (positional)
-		fprintf(stderr, "%s:%u,%u:",
-			file->path, (row + 1), col);
+		fprintf(stderr, "%u,%u:", (row + 1), col);
 
 	fprintf(stderr, " ");
 	vfprintf(stderr, format, args);
