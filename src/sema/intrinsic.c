@@ -124,6 +124,10 @@ typedef enum
 
 	IT_DEF_HALF_INTEGER,
 
+	IT_INTEGER_KIND,
+	/* Represents an INTEGER initialization expression
+	   indicating the kind parameter of the result.*/
+
 	IT_INTEGER_1,
 	IT_INTEGER_2,
 	IT_INTEGER_4,
@@ -334,17 +338,19 @@ static const ofc_sema_intrinsic_func_t ofc_sema_intrinsic__func_list[] =
 	{ "HostNm",   1, 1, IT_DEF_INTEGER, {{ IT_CHARACTER,   0, OUT }} },
 	{ "TtyNam",   1, 1, IT_CHARACTER,   {{ IT_INTEGER,     0, IN  }} },
 
-	{ "Stat",   2, 2, IT_DEF_INTEGER, {{ IT_CHARACTER, 0, IN }, { IT_INTEGER,   13, OUT }} },
-	{ "LStat",  2, 2, IT_DEF_INTEGER, {{ IT_CHARACTER, 0, IN }, { IT_INTEGER,   13, OUT }} },
-	{ "FStat",  2, 2, IT_DEF_INTEGER, {{ IT_INTEGER,   0, IN }, { IT_INTEGER,   13, OUT }} },
-	{ "Access", 2, 2, IT_DEF_INTEGER, {{ IT_CHARACTER, 0, IN }, { IT_CHARACTER, 0,  IN  }} },
-	{ "LGe",    2, 2, IT_LOGICAL,     {{ IT_CHARACTER, 0, IN }, { IT_CHARACTER, 0,  IN  }} },
-	{ "LGt",    2, 2, IT_LOGICAL,     {{ IT_CHARACTER, 0, IN }, { IT_CHARACTER, 0,  IN  }} },
-	{ "LLe",    2, 2, IT_LOGICAL,     {{ IT_CHARACTER, 0, IN }, { IT_CHARACTER, 0,  IN  }} },
-	{ "LLt",    2, 2, IT_LOGICAL,     {{ IT_CHARACTER, 0, IN }, { IT_CHARACTER, 0,  IN  }} },
-	{ "LShift", 2, 2, IT_DEF_INTEGER, {{ IT_INTEGER,   0, IN }, { IT_INTEGER,   0,  IN  }} },
-	{ "IShft",  2, 2, IT_DEF_INTEGER, {{ IT_INTEGER,   0, IN }, { IT_INTEGER,   0,  IN  }} },
-	{ "BesYN",  2, 2, IT_REAL,        {{ IT_INTEGER,   0, IN }, { IT_REAL,      0,  IN  }} },
+	{ "Stat",   2, 2, IT_DEF_INTEGER, {{ IT_CHARACTER, 0, IN }, { IT_INTEGER,      13, OUT }} },
+	{ "LStat",  2, 2, IT_DEF_INTEGER, {{ IT_CHARACTER, 0, IN }, { IT_INTEGER,      13, OUT }} },
+	{ "FStat",  2, 2, IT_DEF_INTEGER, {{ IT_INTEGER,   0, IN }, { IT_INTEGER,      13, OUT }} },
+	{ "Access", 2, 2, IT_DEF_INTEGER, {{ IT_CHARACTER, 0, IN }, { IT_CHARACTER,    0,  IN  }} },
+	{ "LGe",    2, 2, IT_LOGICAL,     {{ IT_CHARACTER, 0, IN }, { IT_CHARACTER,    0,  IN  }} },
+	{ "LGt",    2, 2, IT_LOGICAL,     {{ IT_CHARACTER, 0, IN }, { IT_CHARACTER,    0,  IN  }} },
+	{ "LLe",    2, 2, IT_LOGICAL,     {{ IT_CHARACTER, 0, IN }, { IT_CHARACTER,    0,  IN  }} },
+	{ "LLt",    2, 2, IT_LOGICAL,     {{ IT_CHARACTER, 0, IN }, { IT_CHARACTER,    0,  IN  }} },
+	{ "LShift", 2, 2, IT_DEF_INTEGER, {{ IT_INTEGER,   0, IN }, { IT_INTEGER,      0,  IN  }} },
+	{ "IShft",  2, 2, IT_DEF_INTEGER, {{ IT_INTEGER,   0, IN }, { IT_INTEGER,      0,  IN  }} },
+	{ "BesYN",  2, 2, IT_REAL,        {{ IT_INTEGER,   0, IN }, { IT_REAL,         0,  IN  }} },
+	{ "Char",   1, 2, IT_CHARACTER,   {{ IT_INTEGER,   0, IN }, { IT_INTEGER_KIND, 0,  IN  }} },
+	/* TODO - Return char must have the same kind as optional integer argument */
 
 	{ "IShftC", 3, 3, IT_INTEGER, {{ IT_INTEGER, 0, IN }, { IT_INTEGER, 0, IN }, { IT_INTEGER, 0, IN }} },
 
@@ -1215,6 +1221,10 @@ static const ofc_sema_type_t* ofc_sema_intrinsic__func_type(
 		case IT_INTEGER_4:
 			return ofc_sema_type_create_primitive(
 				OFC_SEMA_TYPE_INTEGER, 12);
+
+		case IT_CHARACTER:
+			return ofc_sema_type_create_character(
+				1, 1, true);
 
 		default:
 			break;
