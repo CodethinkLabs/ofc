@@ -1027,6 +1027,46 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 		|| !ofc_sema_type_base_size(type, &csize))
 		return NULL;
 
+	if ((type->type == OFC_SEMA_TYPE_INTEGER)
+		&& (typeval->type->type == OFC_SEMA_TYPE_CHARACTER))
+	{
+		unsigned char_size;
+		if (!ofc_sema_type_size(
+			typeval->type, &char_size))
+			return NULL;
+
+		if (char_size < csize)
+		{
+			unsigned ksize;
+			if (!ofc_sema_type_kind_size(
+				1, typeval->type->kind, &ksize))
+				return NULL;
+
+			unsigned nlen = (csize + (ksize - 1)) / ksize;
+			const ofc_sema_type_t* ntype
+				= ofc_sema_type_create_character(
+					typeval->type->kind, nlen, false);
+			if (!ntype) return NULL;
+
+			ofc_sema_typeval_t* ntv
+				= ofc_sema_typeval_cast(
+					typeval, ntype);
+			if (!ntv) return NULL;
+
+			ofc_sema_typeval_t* ctv
+				= ofc_sema_typeval_cast(ntv, type);
+			ofc_sema_typeval_delete(ntv);
+			return ctv;
+		}
+
+		ofc_sparse_ref_warning(typeval->src,
+			"Casting CHARACTER to INTEGER");
+
+		tv.integer = 0;
+		memcpy(&tv.integer, typeval->character, csize);
+		return ofc_sema_typeval__alloc(tv);
+	}
+
 	if ((type->type == OFC_SEMA_TYPE_CHARACTER)
 		&& (typeval->type->type == OFC_SEMA_TYPE_CHARACTER))
 	{

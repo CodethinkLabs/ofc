@@ -900,37 +900,64 @@ const ofc_sema_type_t* ofc_sema_type_promote(
 }
 
 bool ofc_sema_type_cast_valid(
-	const ofc_sema_type_t* a,
-	const ofc_sema_type_t* b)
+	const ofc_sema_type_t* from,
+	const ofc_sema_type_t* to)
 {
-	if (!a) return false;
-	if (!b) return false;
+	if (!from) return false;
+	if (!to  ) return false;
 
-	if (a->type == b->type)
+	if (from->type == to->type)
 		return true;
+
+	/* CHARACTERs can be cast to INTEGERs. */
+	if ((from->type == OFC_SEMA_TYPE_CHARACTER)
+		&& (to->type == OFC_SEMA_TYPE_INTEGER))
+		return true;
+
+	switch (from->type)
+	{
+		case OFC_SEMA_TYPE_BYTE:
+		case OFC_SEMA_TYPE_LOGICAL:
+		case OFC_SEMA_TYPE_INTEGER:
+		case OFC_SEMA_TYPE_REAL:
+		case OFC_SEMA_TYPE_COMPLEX:
+			break;
+		default:
+			/* We can't cast from anyting else. */
+			return false;
+	}
+
+	switch (to->type)
+	{
+		case OFC_SEMA_TYPE_BYTE:
+		case OFC_SEMA_TYPE_LOGICAL:
+		case OFC_SEMA_TYPE_INTEGER:
+		case OFC_SEMA_TYPE_REAL:
+		case OFC_SEMA_TYPE_COMPLEX:
+			break;
+		default:
+			/* We can't cast to anyting else. */
+			return false;
+	}
 
 	/* BYTE can always be cast. */
-	if ((a->type == OFC_SEMA_TYPE_BYTE)
-		|| (b->type == OFC_SEMA_TYPE_BYTE))
+	if ((from->type == OFC_SEMA_TYPE_BYTE)
+		|| (to->type == OFC_SEMA_TYPE_BYTE))
 		return true;
 
-	bool logical = ((a->type == OFC_SEMA_TYPE_LOGICAL)
-		|| (b->type == OFC_SEMA_TYPE_LOGICAL));
-	bool integer = ((a->type == OFC_SEMA_TYPE_INTEGER)
-		|| (b->type == OFC_SEMA_TYPE_INTEGER));
-	bool real = ((a->type == OFC_SEMA_TYPE_REAL)
-		|| (b->type == OFC_SEMA_TYPE_REAL));
-	bool complex = ((a->type == OFC_SEMA_TYPE_COMPLEX)
-		|| (b->type == OFC_SEMA_TYPE_COMPLEX));
+	bool logical = ((from->type == OFC_SEMA_TYPE_LOGICAL)
+		|| (to->type == OFC_SEMA_TYPE_LOGICAL));
+	bool integer = ((from->type == OFC_SEMA_TYPE_INTEGER)
+		|| (to->type == OFC_SEMA_TYPE_INTEGER));
+	bool real = ((from->type == OFC_SEMA_TYPE_REAL)
+		|| (to->type == OFC_SEMA_TYPE_REAL));
+	bool complex = ((from->type == OFC_SEMA_TYPE_COMPLEX)
+		|| (to->type == OFC_SEMA_TYPE_COMPLEX));
 
-	if ((logical && integer)
+	return ((logical && integer)
 		|| (real && (logical || integer))
-		|| (complex && (real || logical || integer)))
+		|| (complex && (real || logical || integer)));
 		return true;
-
-	/* We can't cast characters or pointers. */
-
-	return false;
 }
 
 bool ofc_sema_type_cast_is_lossless(
