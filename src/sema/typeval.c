@@ -296,7 +296,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 		else
 		{
 			ofc_sparse_ref_error(literal->src,
-				"Out of range for type");
+				"Out of range for KIND (%u)", kind);
 			return NULL;
 		}
 	}
