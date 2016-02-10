@@ -1040,8 +1040,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 		|| !ofc_sema_type_base_size(type, &csize))
 		return NULL;
 
-	if ((type->type == OFC_SEMA_TYPE_INTEGER)
-		&& (typeval->type->type == OFC_SEMA_TYPE_CHARACTER))
+	if ((typeval->type->type == OFC_SEMA_TYPE_CHARACTER)
+		&& ((type->type == OFC_SEMA_TYPE_INTEGER)
+			|| (type->type == OFC_SEMA_TYPE_BYTE)))
 	{
 		unsigned char_size;
 		if (!ofc_sema_type_size(

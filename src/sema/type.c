@@ -830,16 +830,32 @@ const ofc_sema_type_t* ofc_sema_type_promote(
 	if (ofc_sema_type_compare(a, b))
 		return a;
 
+	unsigned asize, bsize;
+	if (!ofc_sema_type_base_size(a, &asize)
+		|| !ofc_sema_type_base_size(b, &bsize))
+		return NULL;
+
+	if ((a->type == OFC_SEMA_TYPE_CHARACTER)
+		&& ((b->type == OFC_SEMA_TYPE_INTEGER)
+			|| (b->type == OFC_SEMA_TYPE_BYTE)))
+	{
+		if (bsize >= asize)
+			return b;
+		return ofc_sema_type_create_primitive(
+			b->type, (asize * 3));
+	}
+	else if ((b->type == OFC_SEMA_TYPE_CHARACTER)
+		&& ((a->type == OFC_SEMA_TYPE_INTEGER)
+			|| (a->type == OFC_SEMA_TYPE_BYTE)))
+	{
+		return ofc_sema_type_promote(b, a);
+	}
+
 	/* BYTE is always promoted. */
 	if (a->type == OFC_SEMA_TYPE_BYTE)
 		return b;
 	if (b->type == OFC_SEMA_TYPE_BYTE)
 		return a;
-
-	unsigned asize, bsize;
-	if (!ofc_sema_type_base_size(a, &asize)
-		|| !ofc_sema_type_base_size(b, &bsize))
-		return NULL;
 
 	if (a->type == b->type)
 	{
@@ -911,7 +927,8 @@ bool ofc_sema_type_cast_valid(
 
 	/* CHARACTERs can be cast to INTEGERs. */
 	if ((from->type == OFC_SEMA_TYPE_CHARACTER)
-		&& (to->type == OFC_SEMA_TYPE_INTEGER))
+		&& ((to->type == OFC_SEMA_TYPE_INTEGER)
+			|| (to->type == OFC_SEMA_TYPE_BYTE)))
 		return true;
 
 	switch (from->type)
