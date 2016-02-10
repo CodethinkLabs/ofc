@@ -337,7 +337,6 @@ static const ofc_sema_intrinsic_func_t ofc_sema_intrinsic__func_list[] =
 	{ "HostNm",   1, 1, IT_DEF_INTEGER, {{ IT_CHARACTER,   1, OUT }} },
 	{ "TtyNam",   1, 1, IT_CHARACTER,   {{ IT_INTEGER,     1, IN  }} },
 
-
 	{ "Stat",   2, 2, IT_DEF_INTEGER, {{ IT_CHARACTER, 1, IN }, { IT_INTEGER,   13, OUT }} },
 	{ "LStat",  2, 2, IT_DEF_INTEGER, {{ IT_CHARACTER, 1, IN }, { IT_INTEGER,   13, OUT }} },
 	{ "FStat",  2, 2, IT_DEF_INTEGER, {{ IT_INTEGER,   1, IN }, { IT_INTEGER,   13, OUT }} },
@@ -347,6 +346,7 @@ static const ofc_sema_intrinsic_func_t ofc_sema_intrinsic__func_list[] =
 	{ "LLe",    2, 2, IT_LOGICAL,     {{ IT_CHARACTER, 1, IN }, { IT_CHARACTER, 1,  IN  }} },
 	{ "LLt",    2, 2, IT_LOGICAL,     {{ IT_CHARACTER, 1, IN }, { IT_CHARACTER, 1,  IN  }} },
 	{ "LShift", 2, 2, IT_DEF_INTEGER, {{ IT_INTEGER,   1, IN }, { IT_INTEGER,   1,  IN  }} },
+	{ "IShft",  2, 2, IT_DEF_INTEGER, {{ IT_INTEGER,   1, IN }, { IT_INTEGER,   1,  IN  }} },
 	{ "BesYN",  2, 2, IT_REAL,        {{ IT_INTEGER,   1, IN }, { IT_REAL,      1,  IN  }} },
 
 	{ "IShftC", 3, 3, IT_INTEGER, {{ IT_INTEGER, 1, IN }, { IT_INTEGER, 1, IN }, { IT_INTEGER, 1, IN }} },
@@ -873,6 +873,7 @@ static ofc_sema_expr_list_t* ofc_sema_intrinsic_cast__func(
 				stype = ofc_sema_type_logical_default();
 				break;
 
+			case IT_INTEGER:
 			case IT_DEF_INTEGER:
 				stype = ofc_sema_type_integer_default();
 				break;
