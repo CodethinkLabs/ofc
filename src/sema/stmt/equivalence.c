@@ -14,6 +14,9 @@
  */
 
 #include "ofc/sema.h"
+#include "ofc/global_opts.h"
+
+extern ofc_global_opts_t global_opts;
 
 
 bool ofc_sema_stmt_equivalence(
@@ -87,8 +90,11 @@ bool ofc_sema_stmt_equivalence(
 				ofc_sema_lhs_type(base),
 				ofc_sema_lhs_type(elhs)))
 			{
-				ofc_sparse_ref_warning(elhs->src,
-					"EQUIVALENCE types don't match.");
+				if (!global_opts.no_warn_equiv_type)
+				{
+					ofc_sparse_ref_warning(elhs->src,
+						"EQUIVALENCE types don't match.");
+				}
 			}
 
 			if (!ofc_sema_equiv_add(equiv, elhs))

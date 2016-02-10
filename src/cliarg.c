@@ -28,6 +28,9 @@ static bool set_global_opts__flag(
 		case NO_WARN:
 			global->no_warn = true;
 			break;
+		case NO_WARN_EQUIV_TYPE:
+			global->no_warn_equiv_type = true;
+			break;
 		case PARSE_ONLY:
 			global->parse_only = true;
 			break;
@@ -103,18 +106,19 @@ static bool set_lang_opts__num(
 
 static const ofc_cliarg_body_t cliargs[] =
 {
-	/*ENUM        NAME          FLAG  DESCRIPTION                 PARAM_TYPE PARAMS EXCLUSIVE */
-	{ NO_WARN,    "no-warn",    '\0', "Suppress OFC warnings",             GLOB_NONE, 0, true },
-	{ PARSE_ONLY, "parse-only", '\0', "Runs the parser only",              GLOB_NONE, 0, true },
-	{ PARSE_TREE, "parse-tree", '\0', "Prints the parse tree",             GLOB_NONE, 0, true },
-	{ SEMA_TREE,  "sema-tree",  '\0', "Prints the semantic analysis tree", GLOB_NONE, 0, true },
-	{ FIXED_FORM, "free-form",  '\0', "Sets free form type",               LANG_NONE, 0, true },
-	{ FREE_FORM,  "fixed-form", '\0', "Sets fixed form type",              LANG_NONE, 0, true },
-	{ TAB_FORM,   "tab-form",   '\0', "Sets tabbed form type",             LANG_NONE, 0, true },
-	{ TAB_WIDTH,  "tab-width",  '\0', "Sets tab width <n>",                LANG_INT,  1, true },
-	{ DEBUG,      "debug",      '\0', "Sets debug mode",                   LANG_NONE, 0, true },
-	{ COLUMNS,    "columns",    '\0', "Sets number of columns to <n>",     LANG_INT,  1, true },
-	{ CASE_SEN,   "case-sen",   '\0', "Sets case sensitive mode",          LANG_NONE, 0, true },
+	/*ENUM                NAME                  FLAG  DESCRIPTION                           PARAM_TYPE PARAMS EXCLUSIVE */
+	{ NO_WARN,            "no-warn",            '\0', "Suppress OFC warnings",                       GLOB_NONE, 0, true },
+	{ NO_WARN_EQUIV_TYPE, "no-warn-equiv-type", '\0', "Suppress EQUIVALENCE type mismatch warnings", GLOB_NONE, 0, true },
+	{ PARSE_ONLY,         "parse-only",         '\0', "Runs the parser only",                        GLOB_NONE, 0, true },
+	{ PARSE_TREE,         "parse-tree",         '\0', "Prints the parse tree",                       GLOB_NONE, 0, true },
+	{ SEMA_TREE,          "sema-tree",          '\0', "Prints the semantic analysis tree",           GLOB_NONE, 0, true },
+	{ FIXED_FORM,         "free-form",          '\0', "Sets free form type",                         LANG_NONE, 0, true },
+	{ FREE_FORM,          "fixed-form",         '\0', "Sets fixed form type",                        LANG_NONE, 0, true },
+	{ TAB_FORM,           "tab-form",           '\0', "Sets tabbed form type",                       LANG_NONE, 0, true },
+	{ TAB_WIDTH,          "tab-width",          '\0', "Sets tab width <n>",                          LANG_INT,  1, true },
+	{ DEBUG,              "debug",              '\0', "Sets debug mode",                             LANG_NONE, 0, true },
+	{ COLUMNS,            "columns",            '\0', "Sets number of columns to <n>",               LANG_INT,  1, true },
+	{ CASE_SEN,           "case-sen",           '\0', "Sets case sensitive mode",                    LANG_NONE, 0, true },
 };
 
 static const char *get_file_ext(const char *path)
@@ -349,7 +353,7 @@ void print_usage(const char* name)
 	printf("%s [OPTIONS] FILE\n", name);
 	printf("Options:\n");
 
-	unsigned name_len = ofc_cliarg_longest_name_len() + 10;
+	unsigned name_len = ofc_cliarg_longest_name_len() + 5;
 
 	unsigned i;
 	for (i = 0; i < INVALID; i++)

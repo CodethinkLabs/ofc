@@ -29,6 +29,7 @@
 typedef enum
 {
 	NO_WARN = 0,
+	NO_WARN_EQUIV_TYPE,
 	PARSE_ONLY,
 	PARSE_TREE,
 	SEMA_TREE,
