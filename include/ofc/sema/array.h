@@ -99,6 +99,7 @@ bool ofc_sema_array_index_compare(
 
 typedef struct
 {
+	bool is_index;
 	ofc_sema_expr_t* first;
 	ofc_sema_expr_t* last;
 	ofc_sema_expr_t* stride;
@@ -128,7 +129,8 @@ bool ofc_sema_array_slice_compare(
 	const ofc_sema_array_slice_t* b);
 
 ofc_sema_array_t* ofc_sema_array_slice_dims(
-	const ofc_sema_array_slice_t* slice);
+	const ofc_sema_array_slice_t* slice,
+	const ofc_sema_array_t* array);
 
 bool ofc_sema_array_slice_print(
 	ofc_colstr_t* cs,

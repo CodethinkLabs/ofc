@@ -53,11 +53,15 @@ static ofc_sema_lhs_t* ofc_sema_lhs_slice(
 	if (!slice)
 		return NULL;
 
+	const ofc_sema_array_t* parray
+		= ofc_sema_lhs_array(lhs);
+	if (!parray) return NULL;
+
 	if (!ofc_sema_lhs_reference(lhs))
 		return NULL;
 
 	ofc_sema_array_t* array
-		= ofc_sema_array_slice_dims(slice);
+		= ofc_sema_array_slice_dims(slice, parray);
 	if (!array)
 	{
 		ofc_sema_lhs_delete(lhs);
@@ -69,6 +73,7 @@ static ofc_sema_lhs_t* ofc_sema_lhs_slice(
 			sizeof(ofc_sema_lhs_t));
 	if (!alhs)
 	{
+		ofc_sema_array_delete(array);
 		ofc_sema_lhs_delete(lhs);
 		return NULL;
 	}
@@ -80,12 +85,7 @@ static ofc_sema_lhs_t* ofc_sema_lhs_slice(
 	alhs->refcnt      = 0;
 
 	alhs->slice.slice = slice;
-	alhs->slice.dims  = ofc_sema_array_slice_dims(slice);
-	if (!alhs->slice.dims)
-	{
-		ofc_sema_lhs_delete(alhs);
-		return NULL;
-	}
+	alhs->slice.dims  = array;
 
 	return alhs;
 }
@@ -1060,8 +1060,10 @@ ofc_sema_lhs_t* ofc_sema_lhs_copy_replace(
 				copy->slice.slice
 					= ofc_sema_array_slice_copy_replace(
 						lhs->slice.slice, replace, with);
+				/* TODO - SLICE - Recalculate dimensions. */
 				copy->slice.dims
-					= ofc_sema_array_slice_dims(lhs->slice.slice);
+					= ofc_sema_array_copy_replace(
+						lhs->slice.dims, replace, with);
 				if (!copy->slice.slice
 					|| !copy->slice.dims)
 				{

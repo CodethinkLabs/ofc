@@ -28,6 +28,8 @@ typedef struct
 
 typedef struct
 {
+	ofc_sparse_ref_t src;
+
 	unsigned                  count;
 	ofc_parse_array_range_t** range;
 } ofc_parse_array_index_t;

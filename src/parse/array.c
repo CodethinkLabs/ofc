@@ -224,6 +224,7 @@ ofc_parse_array_index_t* ofc_parse_array_index(
 		return NULL;
 	}
 
+	index->src = ofc_sparse_ref(src, ptr, i);
 	if (len) *len = i;
 	return index;
 }
@@ -252,6 +253,7 @@ ofc_parse_array_index_t* ofc_parse_array_index_copy(
 		return NULL;
 	}
 
+	copy->src = index->src;
 	return copy;
 }
 

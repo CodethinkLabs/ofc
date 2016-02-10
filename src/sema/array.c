@@ -756,14 +756,139 @@ ofc_sema_array_slice_t* ofc_sema_array_slice(
 	if (!scope || !array || !index)
 		return NULL;
 
-	if (array->dimensions != index->count)
+	if (array->dimensions < index->count)
+	{
+		ofc_sparse_ref_warning(index->src,
+			"Too many dimensions in array slice");
 		return NULL;
+	}
+	else if (array->dimensions != index->count)
+	{
+		ofc_sparse_ref_warning(index->src,
+			"Non-standard array slice syntax");
+	}
 
+	ofc_sema_array_slice_t* slice
+		= (ofc_sema_array_slice_t*)malloc(sizeof(ofc_sema_array_slice_t)
+			+ (array->dimensions * sizeof(ofc_sema_array_segment_t)));
+	if (!slice) return NULL;
 
+	slice->dimensions = array->dimensions;
 
-	/* TODO - Implement. */
+	unsigned i;
+	for (i = 0; i < array->dimensions; i++)
+	{
+		slice->segment[i].first  = NULL;
+		slice->segment[i].last   = NULL;
+		slice->segment[i].stride = NULL;
+		slice->segment[i].is_index = false;
+	}
 
-	return NULL;
+	for (i = 0; i < index->count; i++)
+	{
+		const ofc_parse_array_range_t* range
+			= index->range[i];
+		if (!range)
+		{
+			ofc_sema_array_slice_delete(slice);
+			return NULL;
+		}
+
+		if (range->first)
+		{
+			slice->segment[i].first
+				= ofc_sema_expr(scope, range->first);
+			if (!slice->segment[i].first)
+			{
+				ofc_sema_array_slice_delete(slice);
+				return NULL;
+			}
+
+			int sfirst;
+			if (ofc_sema_expr_resolve_int(
+					slice->segment[i].first, &sfirst))
+			{
+				int afirst;
+				if (ofc_sema_expr_resolve_int(
+					array->segment[i].first, &afirst)
+					&& (sfirst < afirst))
+				{
+					ofc_sparse_ref_error(range->first->src,
+						"Array slice lower bound underflow");
+					ofc_sema_array_slice_delete(slice);
+					return NULL;
+				}
+
+				int alast;
+				if (ofc_sema_expr_resolve_int(
+					array->segment[i].last, &alast)
+					&& (sfirst >= alast))
+				{
+					ofc_sparse_ref_error(range->first->src,
+						"Array slice lower bound overflow");
+					ofc_sema_array_slice_delete(slice);
+					return NULL;
+				}
+			}
+		}
+
+		if (range->last)
+		{
+			slice->segment[i].last
+				= ofc_sema_expr(scope, range->last);
+			if (!slice->segment[i].last)
+			{
+				ofc_sema_array_slice_delete(slice);
+				return NULL;
+			}
+
+			/* TODO - SLICE - Ensure last isn't lower than first. */
+
+			int slast;
+			if (ofc_sema_expr_resolve_int(
+					slice->segment[i].last, &slast))
+			{
+				int afirst;
+				if (ofc_sema_expr_resolve_int(
+					array->segment[i].first, &afirst)
+					&& (slast < afirst))
+				{
+					ofc_sparse_ref_error(range->first->src,
+						"Array slice upper bound underflow");
+					ofc_sema_array_slice_delete(slice);
+					return NULL;
+				}
+
+				int alast;
+				if (ofc_sema_expr_resolve_int(
+					array->segment[i].last, &alast)
+					&& (slast >= alast))
+				{
+					ofc_sparse_ref_error(range->first->src,
+						"Array slice upper bound overflow");
+					ofc_sema_array_slice_delete(slice);
+					return NULL;
+				}
+			}
+		}
+
+		if (range->stride)
+		{
+			slice->segment[i].stride
+				= ofc_sema_expr(scope, range->stride);
+			if (!slice->segment[i].stride)
+			{
+				ofc_sema_array_slice_delete(slice);
+				return NULL;
+			}
+		}
+
+		slice->segment[i].is_index = (slice->segment[i].first
+			&& !slice->segment[i].last && !slice->segment[i].stride
+			&& !range->is_slice);
+	}
+
+	return slice;
 }
 
 ofc_sema_array_slice_t* ofc_sema_array_slice_copy_replace(
@@ -786,6 +911,7 @@ ofc_sema_array_slice_t* ofc_sema_array_slice_copy_replace(
 	unsigned i;
 	for (i = 0; i < slice->dimensions; i++)
 	{
+		copy->segment[i].first = NULL;
 		if (slice->segment[i].first)
 		{
 			copy->segment[i].first
@@ -795,6 +921,7 @@ ofc_sema_array_slice_t* ofc_sema_array_slice_copy_replace(
 				success = false;
 		}
 
+		copy->segment[i].last = NULL;
 		if (slice->segment[i].last)
 		{
 			copy->segment[i].last
@@ -804,6 +931,7 @@ ofc_sema_array_slice_t* ofc_sema_array_slice_copy_replace(
 				success = false;
 		}
 
+		copy->segment[i].stride = NULL;
 		if (slice->segment[i].stride)
 		{
 			copy->segment[i].stride
@@ -813,6 +941,8 @@ ofc_sema_array_slice_t* ofc_sema_array_slice_copy_replace(
 				success = false;
 		}
 
+		copy->segment[i].is_index
+			= slice->segment[i].is_index;
 	}
 
 	if (!success)
@@ -889,58 +1019,103 @@ bool ofc_sema_array_slice_compare(
 }
 
 ofc_sema_array_t* ofc_sema_array_slice_dims(
-	const ofc_sema_array_slice_t* slice)
+	const ofc_sema_array_slice_t* slice,
+	const ofc_sema_array_t* array)
 {
-	if (!slice)
+	if (!slice || !array)
 		return NULL;
 
-	unsigned i, d;
-	for (i = 0, d = 0; i < slice->dimensions; i++)
+	unsigned i, d = array->dimensions;
+	for (i = 0; i < slice->dimensions; i++)
 	{
-		if (slice->segment[i].last)
-			d++;
+		if (slice->segment[i].is_index)
+			d--;
 	}
 
 	if (d == 0)
 		return NULL;
 
-	ofc_sema_array_t* array
+	ofc_sema_array_t* dims
 		= (ofc_sema_array_t*)malloc(sizeof(ofc_sema_array_t)
 			+ (d * sizeof(ofc_sema_array_dims_t)));
-	if (!array) return NULL;
+	if (!dims) return NULL;
 
-	array->dimensions = d;
+	dims->dimensions = d;
 
 	bool fail = false;
 	unsigned j;
 	for (i = 0, j = 0; i < slice->dimensions; i++)
 	{
-		if (!slice->segment[i].last)
+		if (slice->segment[i].is_index)
 			continue;
 
-		array->segment[j].first
-			= ofc_sema_expr_copy(
-				slice->segment[i].first);
-		if (slice->segment[i].first
-			&& !array->segment[j].first)
+		if (slice->segment[i].stride)
+		{
+			/* TODO - SLICE - Support stride in dimensions. */
 			fail = true;
+		}
 
-		array->segment[j].last
-			= ofc_sema_expr_copy(
-				slice->segment[i].last);
-		if (!array->segment[j].last)
-			fail = true;
+		dims->segment[j].first = NULL;
+		if (slice->segment[i].first)
+		{
+			dims->segment[j].first
+				= ofc_sema_expr_copy(
+					slice->segment[i].first);
+			if (!dims->segment[j].first)
+				fail = true;
+		}
+		else if (array->segment[i].first)
+		{
+			dims->segment[j].first
+				= ofc_sema_expr_copy(
+					array->segment[i].first);
+			if (!dims->segment[j].first)
+				fail = true;
+		}
+
+		dims->segment[j].last = NULL;
+		if (slice->segment[i].last)
+		{
+			dims->segment[j].last
+				= ofc_sema_expr_copy(
+					slice->segment[i].last);
+			if (!dims->segment[j].last)
+				fail = true;
+		}
+		else if (array->segment[i].last)
+		{
+			dims->segment[j].last
+				= ofc_sema_expr_copy(
+					array->segment[i].last);
+			if (!dims->segment[j].last)
+				fail = true;
+		}
 
 		j++;
 	}
 
+	for (; i < array->dimensions; i++, j++)
+	{
+		dims->segment[j].first = ofc_sema_expr_copy(
+			array->segment[i].first);
+		if (array->segment[i].first
+			&& !dims->segment[j].first)
+			fail = true;
+
+		dims->segment[j].last = ofc_sema_expr_copy(
+			array->segment[i].last);
+		if (array->segment[i].last
+			&& !dims->segment[j].last)
+			fail = true;
+	}
+
 	if (fail)
 	{
-		ofc_sema_array_delete(array);
+		ofc_sema_array_delete(dims);
 		return NULL;
 	}
 
-	return array;
+	return dims;
 }
 
 bool ofc_sema_array_slice_print(
@@ -968,10 +1143,11 @@ bool ofc_sema_array_slice_print(
 		if (seg.first && !ofc_sema_expr_print(cs, seg.first))
 			return false;
 
-		if (seg.last)
+		if (seg.last || !seg.is_index)
 		{
-			if (!ofc_colstr_atomic_writef(cs, ":")
-				|| !ofc_sema_expr_print(cs, seg.last))
+			if (!ofc_colstr_atomic_writef(cs, ":"))
+				return NULL;
+			if (seg.last && !ofc_sema_expr_print(cs, seg.last))
 				return NULL;
 
 			if (seg.stride)
