@@ -125,7 +125,8 @@ static bool is_base_digit(
 
 static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 	const ofc_parse_literal_t* literal,
-	const ofc_sema_type_t* type)
+	const ofc_sema_type_t* type,
+	bool* fail)
 {
 	if (!literal)
 		return NULL;
@@ -214,6 +215,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 	{
 		ofc_sparse_ref_error(literal->src,
 			"Out of range for compiler");
+		if (fail) *fail = true;
 		return NULL;
 	}
 
@@ -234,6 +236,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 			{
 				ofc_sparse_ref_error(literal->src,
 					"Kind out of range");
+				if (fail) *fail = true;
 				return NULL;
 			}
 
@@ -244,6 +247,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 		{
 			ofc_sparse_ref_error(literal->src,
 				"Literal kind must be non-zero");
+			if (fail) *fail = true;
 			return NULL;
 		}
 
@@ -251,6 +255,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 		{
 			ofc_sparse_ref_error(literal->src,
 				"Expected kind doesn't match literal kind");
+			if (fail) *fail = true;
 			return NULL;
 		}
 	}
@@ -268,6 +273,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 	{
 		ofc_sparse_ref_error(literal->src,
 			"Byte can never have a KIND larger than 1 byte");
+		if (fail) *fail = true;
 		return NULL;
 	}
 
@@ -297,6 +303,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 		{
 			ofc_sparse_ref_error(literal->src,
 				"Out of range for KIND (%u)", kind);
+			if (fail) *fail = true;
 			return NULL;
 		}
 	}
@@ -760,7 +767,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__byte_literal(
 		case OFC_PARSE_LITERAL_OCTAL:
 		case OFC_PARSE_LITERAL_HEX:
 			return ofc_sema_typeval__integer_literal(
-				literal, type);
+				literal, type, NULL);
 		case OFC_PARSE_LITERAL_LOGICAL:
 			return ofc_sema_typeval__logical_literal(
 				literal, type);
@@ -849,13 +856,19 @@ ofc_sema_typeval_t* ofc_sema_typeval_literal(
 
 	if (!type)
 	{
+		bool fail = false;
 		ofc_sema_typeval_t* typeval = NULL;
-		if (!typeval) typeval = ofc_sema_typeval__integer_literal(literal, type);
-		if (!typeval) typeval = ofc_sema_typeval__real_literal(literal, type);
-		if (!typeval) typeval = ofc_sema_typeval__logical_literal(literal, type);
-		if (!typeval) typeval = ofc_sema_typeval__complex_literal(literal, type);
+		if (!typeval && !fail)
+			typeval = ofc_sema_typeval__integer_literal(literal, type, &fail);
+		if (!typeval && !fail)
+			typeval = ofc_sema_typeval__real_literal(literal, type);
+		if (!typeval && !fail)
+			typeval = ofc_sema_typeval__logical_literal(literal, type);
+		if (!typeval && !fail)
+			typeval = ofc_sema_typeval__complex_literal(literal, type);
 		/* Byte can never be auto-detected. */
-		if (!typeval) typeval = ofc_sema_typeval__character_literal(literal, type);
+		if (!typeval && !fail)
+			typeval = ofc_sema_typeval__character_literal(literal, type);
 
 		return typeval;
 	}
@@ -865,7 +878,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_literal(
 		case OFC_SEMA_TYPE_LOGICAL:
 			return ofc_sema_typeval__logical_literal(literal, type);
 		case OFC_SEMA_TYPE_INTEGER:
-			return ofc_sema_typeval__integer_literal(literal, type);
+			return ofc_sema_typeval__integer_literal(literal, type, NULL);
 		case OFC_SEMA_TYPE_REAL:
 			return ofc_sema_typeval__real_literal(literal, type);
 		case OFC_SEMA_TYPE_COMPLEX:
