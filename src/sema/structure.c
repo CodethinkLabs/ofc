@@ -29,7 +29,7 @@ static const ofc_str_ref_t* ofc_structure__member_name(
 
 static ofc_sema_structure_t* ofc_sema__structure(
 	ofc_sema_scope_t* scope,
-	ofc_parse_stmt_t* stmt)
+	const ofc_parse_stmt_t* stmt)
 {
 	if (!stmt)
 		return NULL;
@@ -116,7 +116,7 @@ static ofc_sema_structure_t* ofc_sema__structure(
 
 ofc_sema_structure_t* ofc_sema_structure(
 	ofc_sema_scope_t* scope,
-	ofc_parse_stmt_t* stmt)
+	const ofc_parse_stmt_t* stmt)
 {
 	if (!stmt)
 		return NULL;

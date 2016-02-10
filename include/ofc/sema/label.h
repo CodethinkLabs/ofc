@@ -20,6 +20,7 @@ typedef enum
 {
 	OFC_SEMA_LABEL_STMT = 0,
 	OFC_SEMA_LABEL_FORMAT,
+	OFC_SEMA_LABEL_END_BLOCK,
 
 	OFC_SEMA_LABEL_COUNT
 } ofc_sema_label_e;
@@ -31,8 +32,8 @@ typedef struct
 
 	union
 	{
-		unsigned offset;
-		ofc_sema_format_t* format;
+		const ofc_sema_stmt_t* stmt;
+		ofc_sema_format_t*     format;
 	};
 } ofc_sema_label_t;
 
@@ -48,7 +49,10 @@ typedef struct
 	ofc_hashmap_t*                label;
 
 	/* This owns the statement labels. */
-	ofc_hashmap_t*                offset;
+	ofc_hashmap_t*                stmt;
+
+	/* This owns the end block labels. */
+	ofc_hashmap_t*                end_block;
 
 	/* This owns the format labels. */
 	ofc_sema_format_label_list_t* format;
@@ -59,8 +63,24 @@ void ofc_sema_label_map_delete(
 	ofc_sema_label_map_t* label_map);
 
 bool ofc_sema_label_map_add_stmt(
+	ofc_sema_label_map_t* map, unsigned label,
+	const ofc_sema_stmt_t* stmt);
+bool ofc_sema_label_map_add_end_block(
+	ofc_sema_label_map_t* map, unsigned label,
+	const ofc_sema_stmt_t* end_block);
+bool ofc_sema_label_map_add_format(
 	const ofc_parse_stmt_t* stmt,
-	ofc_sema_label_map_t* map, unsigned label, unsigned offset);
+	ofc_sema_label_map_t* map, unsigned label,
+	ofc_sema_format_t* format);
+
+const ofc_sema_label_t* ofc_sema_label_map_find(
+	const ofc_sema_label_map_t* map, unsigned label);
+const ofc_sema_label_t* ofc_sema_label_map_find_stmt(
+	const ofc_sema_label_map_t* map,
+	const ofc_sema_stmt_t*      stmt);
+const ofc_sema_label_t* ofc_sema_label_map_find_end_block(
+	const ofc_sema_label_map_t* map,
+	const ofc_sema_stmt_t*      stmt);
 
 ofc_sema_format_label_list_t* ofc_sema_format_label_list_create(void);
 void ofc_sema_format_label_list_delete(
@@ -74,13 +94,5 @@ bool ofc_sema_format_label_list_print(
 	ofc_sema_format_label_list_t* list);
 bool ofc_sema_format_label_print(ofc_colstr_t* cs,
 	ofc_sema_label_t* label);
-bool ofc_sema_label_map_add_format(
-	const ofc_parse_stmt_t* stmt,
-	ofc_sema_label_map_t* map, unsigned label,
-	ofc_sema_format_t* format);
-const ofc_sema_label_t* ofc_sema_label_map_find(
-	const ofc_sema_label_map_t* map, unsigned label);
-const ofc_sema_label_t* ofc_sema_label_map_find_offset(
-	const ofc_sema_label_map_t* map, unsigned label);
 
 #endif

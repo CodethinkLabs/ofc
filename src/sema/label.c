@@ -28,7 +28,7 @@ static void ofc_sema_label__delete(
 }
 
 static ofc_sema_label_t* ofc_sema_label__stmt(
-	unsigned number, unsigned offset)
+	unsigned number, const ofc_sema_stmt_t* stmt)
 {
 	ofc_sema_label_t* label
 		= (ofc_sema_label_t*)malloc(
@@ -37,7 +37,7 @@ static ofc_sema_label_t* ofc_sema_label__stmt(
 
 	label->type   = OFC_SEMA_LABEL_STMT;
 	label->number = number;
-	label->offset = offset;
+	label->stmt   = stmt;
 
 	return label;
 }
@@ -66,10 +66,10 @@ static const unsigned* ofc_sema_label__number(
 	return (label ? &label->number : NULL);
 }
 
-static const unsigned* ofc_sema_label__offset(
+static const ofc_sema_stmt_t* ofc_sema_label__stmt_key(
 	const ofc_sema_label_t* label)
 {
-	return (label ? &label->offset : NULL);
+	return (label ? label->stmt : NULL);
 }
 
 static bool ofc_sema_label__compare(
@@ -78,6 +78,15 @@ static bool ofc_sema_label__compare(
 	if (!a || !b)
 		return false;
 	return (*a == *b);
+}
+
+static bool ofc_sema_label__stmt_ptr_compare(
+	const ofc_sema_stmt_t* a,
+	const ofc_sema_stmt_t* b)
+{
+	if (!a || !b)
+		return false;
+	return (a == b);
 }
 
 static uint8_t ofc_sema_label__hash(const unsigned* label)
@@ -92,12 +101,16 @@ static uint8_t ofc_sema_label__hash(const unsigned* label)
 	return (h & 0xFF);
 }
 
-static uint8_t ofc_sema_label_offset__hash(const unsigned* offset)
+static uint8_t ofc_sema_label__stmt_hash(
+	const ofc_sema_stmt_t* stmt)
 {
-	if (!offset)
-		return 0;
+	uintptr_t p = (uintptr_t)stmt;
+	uint8_t h = 0;
 
-	return (*offset & 0xFF);
+	unsigned i;
+	for (i = 0; i < sizeof(p); i++)
+		h += ((p >> (i * 8)) & 0xFF);
+	return h;
 }
 
 ofc_sema_label_map_t* ofc_sema_label_map_create(void)
@@ -113,16 +126,23 @@ ofc_sema_label_map_t* ofc_sema_label_map_create(void)
 		(void*)ofc_sema_label__number,
 		NULL);
 
-	map->offset = ofc_hashmap_create(
-		(void*)ofc_sema_label_offset__hash,
-		(void*)ofc_sema_label__compare,
-		(void*)ofc_sema_label__offset,
+	map->stmt = ofc_hashmap_create(
+		(void*)ofc_sema_label__stmt_hash,
+		(void*)ofc_sema_label__stmt_ptr_compare,
+		(void*)ofc_sema_label__stmt_key,
+		(void*)ofc_sema_label__delete);
+
+	map->end_block = ofc_hashmap_create(
+		(void*)ofc_sema_label__stmt_hash,
+		(void*)ofc_sema_label__stmt_ptr_compare,
+		(void*)ofc_sema_label__stmt_key,
 		(void*)ofc_sema_label__delete);
 
 	map->format = ofc_sema_format_label_list_create();
 
 	if (!map->label
-		|| !map->offset
+		|| !map->stmt
+		|| !map->end_block
 		|| !map->format)
 	{
 		ofc_sema_label_map_delete(map);
@@ -138,17 +158,18 @@ void ofc_sema_label_map_delete(
 	if (!map) return;
 
 	ofc_sema_format_label_list_delete(map->format);
-	ofc_hashmap_delete(map->offset);
+	ofc_hashmap_delete(map->end_block);
+	ofc_hashmap_delete(map->stmt);
 	ofc_hashmap_delete(map->label);
 
 	free(map);
 }
 
 bool ofc_sema_label_map_add_stmt(
-	const ofc_parse_stmt_t* stmt,
-	ofc_sema_label_map_t* map, unsigned label, unsigned offset)
+	ofc_sema_label_map_t* map, unsigned label,
+	const ofc_sema_stmt_t* stmt)
 {
-	if (!map || !map->label || !map->offset)
+	if (!map || !map->label || !map->stmt)
 		return false;
 
 	const ofc_sema_label_t* duplicate
@@ -167,11 +188,54 @@ bool ofc_sema_label_map_add_stmt(
 	}
 
 	ofc_sema_label_t* l
-		= ofc_sema_label__stmt(label, offset);
+		= ofc_sema_label__stmt(label, stmt);
 	if (!l) return false;
 
 	if (!ofc_hashmap_add(
-		map->offset, l))
+		map->stmt, l))
+	{
+		ofc_sema_label__delete(l);
+		return false;
+	}
+
+	if (!ofc_hashmap_add(
+		map->label, l))
+	{
+		/* This should never happen. */
+		abort();
+	}
+
+	return true;
+}
+
+bool ofc_sema_label_map_add_end_block(
+	ofc_sema_label_map_t* map, unsigned label,
+	const ofc_sema_stmt_t* stmt)
+{
+	if (!map || !map->label || !map->stmt)
+		return false;
+
+	const ofc_sema_label_t* duplicate
+		= ofc_hashmap_find(map->label, &label);
+	if (duplicate)
+	{
+		ofc_sparse_ref_error(stmt->src,
+			"Re-definition of label %d", label);
+		return false;
+	}
+
+	if (label == 0)
+	{
+		ofc_sparse_ref_warning(stmt->src,
+			"Label zero isn't supported in standard Fortran");
+	}
+
+	ofc_sema_label_t* l
+		= ofc_sema_label__stmt(label, stmt);
+	if (!l) return false;
+
+	if (!ofc_hashmap_add(
+		map->end_block, l))
 	{
 		ofc_sema_label__delete(l);
 		return false;
@@ -242,13 +306,24 @@ const ofc_sema_label_t* ofc_sema_label_map_find(
 		map->label, &label);
 }
 
-const ofc_sema_label_t* ofc_sema_label_map_find_offset(
-	const ofc_sema_label_map_t* map, unsigned label)
+const ofc_sema_label_t* ofc_sema_label_map_find_stmt(
+	const ofc_sema_label_map_t* map,
+	const ofc_sema_stmt_t*      stmt)
 {
 	if (!map)
 		return NULL;
 	return ofc_hashmap_find(
-		map->offset, &label);
+		map->stmt, stmt);
+}
+
+const ofc_sema_label_t* ofc_sema_label_map_find_end_block(
+	const ofc_sema_label_map_t* map,
+	const ofc_sema_stmt_t*      stmt)
+{
+	if (!map)
+		return NULL;
+	return ofc_hashmap_find(
+		map->end_block, stmt);
 }
 
 ofc_sema_format_label_list_t*

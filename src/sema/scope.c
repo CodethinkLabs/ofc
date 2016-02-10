@@ -145,12 +145,7 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 			break;
 
 		default:
-			scope->stmt = ofc_sema_stmt_list_create();
-			if (!scope->stmt)
-			{
-				ofc_sema_scope_delete(scope);
-				return NULL;
-			}
+			scope->stmt = NULL;
 			break;
 	}
 
@@ -166,11 +161,93 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 }
 
 
+
+static bool ofc_sema_scope__body_scan_format(
+	const ofc_parse_stmt_t* stmt,
+	ofc_sema_scope_t* scope)
+{
+	if (!stmt) return false;
+	return ((stmt->type != OFC_PARSE_STMT_FORMAT)
+		|| ofc_sema_format(scope, stmt));
+}
+
+static bool ofc_sema_scope__body_scan_equivalence(
+	const ofc_parse_stmt_t* stmt,
+	ofc_sema_scope_t* scope)
+{
+	if (!stmt) return false;
+	return ((stmt->type != OFC_PARSE_STMT_EQUIVALENCE)
+		|| ofc_sema_stmt_equivalence(scope, stmt));
+}
+
 static bool ofc_sema_scope__body(
 	ofc_sema_scope_t* scope,
-	const ofc_parse_stmt_list_t* body);
+	const ofc_parse_stmt_list_t* body)
+{
+	if (scope->type == OFC_SEMA_SCOPE_STMT_FUNC)
+		return false;
 
-static bool ofc_sema_scope__subroutine(
+	if (!body)
+		return true;
+
+	/* Initial scan for FORMAT statements */
+	if (!ofc_parse_stmt_list_foreach(body, scope,
+		(void*)ofc_sema_scope__body_scan_format))
+		return false;
+
+	if (scope->stmt)
+		return false;
+
+	scope->stmt = ofc_sema_stmt_list(scope, body);
+	if (!scope->stmt) return false;
+
+	/* Declare unused specifiers which exist in COMMON blocks. */
+	if (scope->common)
+	{
+		unsigned i;
+		for (i = 0; i < scope->common->count; i++)
+		{
+			ofc_sema_common_t* common
+				= scope->common->common[i];
+			if (!common) continue;
+
+			unsigned j;
+			for (j = 0; j < common->count; j++)
+			{
+				if (common->decl[j])
+					continue;
+
+				ofc_sema_spec_t* spec
+					= common->spec[j];
+				if (!spec) return false;
+
+				ofc_sema_spec_t* fspec
+					= ofc_sema_scope_spec_find_final(
+						scope, spec->name);
+				if (fspec) spec = fspec;
+
+				ofc_sema_decl_t* decl = ofc_sema_decl_spec(
+					scope, spec->name, spec, NULL);
+				ofc_sema_spec_delete(fspec);
+				if (!decl) return false;
+			}
+		}
+	}
+
+	/* Handle EQUIVALENCE statements */
+	if (!ofc_parse_stmt_list_foreach(body, scope,
+		(void*)ofc_sema_scope__body_scan_equivalence))
+		return false;
+
+	/* TODO - Check for unused specifiers. */
+
+	/* TODO - Check declarations exist and are used for FUNCTION arguments. */
+
+	return true;
+}
+
+
+bool ofc_sema_scope_subroutine(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt)
 {
@@ -246,7 +323,7 @@ static bool ofc_sema_scope__subroutine(
 	return true;
 }
 
-static bool ofc_sema_scope__function(
+bool ofc_sema_scope_function(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt)
 {
@@ -386,220 +463,6 @@ static bool ofc_sema_scope__function(
 		ofc_sema_scope_delete(func_scope);
 		return false;
 	}
-
-	return true;
-}
-
-
-static bool ofc_sema_scope__body(
-	ofc_sema_scope_t* scope,
-	const ofc_parse_stmt_list_t* body)
-{
-	if (scope->type == OFC_SEMA_SCOPE_STMT_FUNC)
-		return false;
-
-	if (!body)
-		return true;
-
-	/* Initial scan for FORMAT statements */
-	unsigned i;
-	for (i = 0; i < body->count; i++)
-	{
-		ofc_parse_stmt_t* stmt = body->stmt[i];
-		if (!stmt) continue;
-
-		switch (stmt->type)
-		{
-			case OFC_PARSE_STMT_FORMAT:
-				if (!ofc_sema_format(scope, stmt))
-					return false;
-				break;
-
-			default:
-				break;
-		}
-	}
-
-	for (i = 0; i < body->count; i++)
-	{
-		ofc_parse_stmt_t* stmt = body->stmt[i];
-		if (!stmt) continue;
-
-		if (stmt->type == OFC_PARSE_STMT_EMPTY)
-			continue;
-
-		if (ofc_sema_stmt_is_stmt_func(scope, stmt))
-		{
-			if (!ofc_sema_scope_stmt_func(scope, stmt))
-				return false;
-			continue;
-		}
-
-		switch (stmt->type)
-		{
-			case OFC_PARSE_STMT_INCLUDE:
-				/* Has no semantic effect. */
-				break;
-
-			case OFC_PARSE_STMT_FORMAT:
-				/* These are already handled. */
-				break;
-
-			case OFC_PARSE_STMT_SUBROUTINE:
-				if (!ofc_sema_scope__subroutine(scope, stmt))
-					return false;
-				break;
-
-			case OFC_PARSE_STMT_FUNCTION:
-				if (!ofc_sema_scope__function(scope, stmt))
-					return false;
-				break;
-
-			case OFC_PARSE_STMT_PROGRAM:
-				if (!ofc_sema_scope_program(scope, stmt))
-					return false;
-				break;
-
-			case OFC_PARSE_STMT_BLOCK_DATA:
-				if (!ofc_sema_scope_block_data(scope, stmt))
-					return false;
-				break;
-
-			case OFC_PARSE_STMT_PARAMETER:
-				if (!ofc_sema_parameter(scope, stmt))
-					return false;
-				break;
-
-			case OFC_PARSE_STMT_IMPLICIT_NONE:
-			case OFC_PARSE_STMT_IMPLICIT:
-				if (!ofc_sema_implicit(scope, stmt))
-					return false;
-				break;
-
-			case OFC_PARSE_STMT_DECL:
-				if (!ofc_sema_decl(scope, stmt))
-					return false;
-				break;
-
-			case OFC_PARSE_STMT_DATA:
-				if (!ofc_sema_stmt_data(scope, stmt))
-					return false;
-				break;
-
-			case OFC_PARSE_STMT_DIMENSION:
-				if (!ofc_sema_stmt_dimension(scope, stmt))
-					return false;
-				break;
-
-			case OFC_PARSE_STMT_EQUIVALENCE:
-				/* We handle this next pass. */
-				break;
-
-			case OFC_PARSE_STMT_COMMON:
-				if (!ofc_sema_stmt_common(scope, stmt))
-					return false;
-				break;
-
-			case OFC_PARSE_STMT_DECL_ATTR_AUTOMATIC:
-			case OFC_PARSE_STMT_DECL_ATTR_STATIC:
-			case OFC_PARSE_STMT_DECL_ATTR_VOLATILE:
-			case OFC_PARSE_STMT_DECL_ATTR_EXTERNAL:
-			case OFC_PARSE_STMT_DECL_ATTR_INTRINSIC:
-				if (!ofc_sema_stmt_decl_attr(scope, stmt))
-					return false;
-				break;
-
-			case OFC_PARSE_STMT_SAVE:
-				if (!ofc_sema_stmt_save(scope, stmt))
-					return false;
-				break;
-
-			case OFC_PARSE_STMT_TYPE:
-			case OFC_PARSE_STMT_STRUCTURE:
-			case OFC_PARSE_STMT_UNION:
-			case OFC_PARSE_STMT_MAP:
-				if (!ofc_sema_structure(scope, stmt))
-					return false;
-				break;
-
-			case OFC_PARSE_STMT_NAMELIST:
-			case OFC_PARSE_STMT_POINTER:
-				ofc_sparse_ref_error(stmt->src,
-					"Unsupported statement");
-				/* TODO - Support these statements. */
-				return false;
-
-			default:
-				switch (scope->type)
-				{
-					case OFC_SEMA_SCOPE_GLOBAL:
-					case OFC_SEMA_SCOPE_BLOCK_DATA:
-						ofc_sparse_ref_error(stmt->src,
-							"Unexpected executable statement in scope.");
-						return false;
-					default:
-						break;
-				}
-
-				if (!ofc_sema_stmt_scoped(scope, stmt))
-					return false;
-				break;
-		}
-	}
-
-	/* Declare unused specifiers which exist in COMMON blocks. */
-	if (scope->common)
-	{
-		for (i = 0; i < scope->common->count; i++)
-		{
-			ofc_sema_common_t* common
-				= scope->common->common[i];
-			if (!common) continue;
-
-			unsigned j;
-			for (j = 0; j < common->count; j++)
-			{
-				if (common->decl[j])
-					continue;
-
-				ofc_sema_spec_t* spec
-					= common->spec[j];
-				if (!spec) return false;
-
-				ofc_sema_spec_t* fspec
-					= ofc_sema_scope_spec_find_final(
-						scope, spec->name);
-				if (fspec) spec = fspec;
-
-				ofc_sema_decl_t* decl = ofc_sema_decl_spec(
-					scope, spec->name, spec, NULL);
-				ofc_sema_spec_delete(fspec);
-				if (!decl) return false;
-			}
-		}
-	}
-
-	/* Handle EQUIVALENCE statements */
-	for (i = 0; i < body->count; i++)
-	{
-		ofc_parse_stmt_t* stmt = body->stmt[i];
-		if (!stmt) continue;
-
-		switch (stmt->type)
-		{
-			case OFC_PARSE_STMT_EQUIVALENCE:
-				if (!ofc_sema_stmt_equivalence(scope, stmt))
-					return false;
-				break;
-
-			default:
-				break;
-		}
-	}
-
-	/* TODO - Check for unused specifiers. */
-
-	/* TODO - Check declarations exist and are used for FUNCTION arguments. */
 
 	return true;
 }
@@ -748,50 +611,6 @@ ofc_sema_scope_t* ofc_sema_scope_stmt_func(
 	return func;
 }
 
-ofc_sema_scope_t* ofc_sema_scope_if(
-	ofc_sema_scope_t* scope,
-	const ofc_parse_stmt_list_t* block)
-{
-	if (!scope || !block)
-		return NULL;
-
-	ofc_sema_scope_t* if_scope
-		= ofc_sema_scope__create(
-			scope, NULL, OFC_SEMA_SCOPE_IF);
-	if (!if_scope)
-		return NULL;
-
-	if (!ofc_sema_scope__body(if_scope, block))
-	{
-		ofc_sema_scope_delete(if_scope);
-		return NULL;
-	}
-
-	return if_scope;
-}
-
-ofc_sema_scope_t* ofc_sema_scope_do(
-	ofc_sema_scope_t* scope,
-	const ofc_parse_stmt_list_t* block)
-{
-	if (!scope || !block)
-		return NULL;
-
-	ofc_sema_scope_t* do_scope
-		= ofc_sema_scope__create(
-			scope, NULL, OFC_SEMA_SCOPE_DO);
-	if(!do_scope)
-		return NULL;
-
-	if (!ofc_sema_scope__body(do_scope, block))
-	{
-		ofc_sema_scope_delete(do_scope);
-		return NULL;
-	}
-
-	return do_scope;
-}
-
 ofc_sema_scope_t* ofc_sema_scope_block_data(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt)
@@ -830,9 +649,8 @@ bool ofc_sema_scope_is_root(
 	switch (scope->type)
 	{
 		case OFC_SEMA_SCOPE_STMT_FUNC:
-		case OFC_SEMA_SCOPE_IF:
-		case OFC_SEMA_SCOPE_DO:
 			return false;
+
 		default:
 			break;
 	}
@@ -1265,9 +1083,6 @@ bool ofc_sema_scope_print(
 		case OFC_SEMA_SCOPE_BLOCK_DATA:
 			kwstr = "BLOCK DATA";
 			break;
-		case OFC_SEMA_SCOPE_IF:
-		case OFC_SEMA_SCOPE_DO:
-			return ofc_sema_scope_body__print(cs, indent, scope);
 		case OFC_SEMA_SCOPE_STMT_FUNC:
 			return ofc_sema_expr_print(cs, scope->expr);
 

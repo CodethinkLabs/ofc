@@ -179,12 +179,12 @@ static ofc_sema_stmt_t* ofc_sema_stmt_if__then(
 		return NULL;
 	}
 
-	s.if_then.scope_then = NULL;
+	s.if_then.block_then = NULL;
 	if (stmt->if_then.block_then)
 	{
-		s.if_then.scope_then = ofc_sema_scope_if(
+		s.if_then.block_then = ofc_sema_stmt_list(
 			scope, stmt->if_then.block_then);
-		if (!s.if_then.scope_then)
+		if (!s.if_then.block_then)
 		{
 			ofc_sema_expr_delete(s.if_then.cond);
 			return NULL;
@@ -196,33 +196,15 @@ static ofc_sema_stmt_t* ofc_sema_stmt_if__then(
 			"Empty IF THEN block");
 	}
 
-	s.if_then.scope_else = NULL;
+	s.if_then.block_else = NULL;
 	if (stmt->if_then.block_else)
 	{
-		s.if_then.scope_else = ofc_sema_scope_if(
+		s.if_then.block_else = ofc_sema_stmt_list(
 			scope, stmt->if_then.block_else);
-		if (!s.if_then.scope_else)
+		if (!s.if_then.block_else)
 		{
 			ofc_sema_expr_delete(s.if_then.cond);
-			ofc_sema_scope_delete(s.if_then.scope_then);
-			return NULL;
-		}
-	}
-
-	if (stmt->if_then.end_if_has_label)
-	{
-		ofc_sema_scope_t* ls
-			= s.if_then.scope_else;
-		if (!ls) ls = s.if_then.scope_then;
-
-		if (!ofc_sema_label_map_add_stmt(
-			stmt, ls->label,
-			stmt->if_then.end_if_label,
-			ofc_sema_stmt_list_count(ls->stmt)))
-		{
-			ofc_sema_expr_delete(s.if_then.cond);
-			ofc_sema_scope_delete(s.if_then.scope_then);
-			ofc_sema_scope_delete(s.if_then.scope_else);
+			ofc_sema_stmt_list_delete(s.if_then.block_else);
 			return NULL;
 		}
 	}
@@ -231,8 +213,16 @@ static ofc_sema_stmt_t* ofc_sema_stmt_if__then(
 	if (!as)
 	{
 		ofc_sema_expr_delete(s.if_then.cond);
-		ofc_sema_scope_delete(s.if_then.scope_then);
-		ofc_sema_scope_delete(s.if_then.scope_else);
+		ofc_sema_stmt_list_delete(s.if_then.block_then);
+		ofc_sema_stmt_list_delete(s.if_then.block_else);
+		return NULL;
+	}
+
+	if (stmt->if_then.end_if_has_label
+		&& !ofc_sema_label_map_add_end_block(
+			scope->label, stmt->if_then.end_if_label, as))
+	{
+		ofc_sema_stmt_delete(as);
 		return NULL;
 	}
 
@@ -273,7 +263,7 @@ bool ofc_sema_stmt_if_print(
 		|| !ofc_sema_expr_print(cs, stmt->if_stmt.cond)
 		|| !ofc_colstr_atomic_writef(cs, ")")
 		|| !ofc_colstr_atomic_writef(cs, " ")
-		|| !ofc_sema_stmt_print(cs, indent,
+		|| !ofc_sema_stmt_print(cs, indent, NULL,
 			stmt->if_stmt.stmt))
 		return false;
 
@@ -299,6 +289,7 @@ bool ofc_sema_stmt_if_comp_print(ofc_colstr_t* cs,
 
 bool ofc_sema_stmt_if_then_print(
 	ofc_colstr_t* cs, unsigned indent,
+	ofc_sema_label_map_t* label_map,
 	const ofc_sema_stmt_t* stmt)
 {
 	if (!cs || !stmt) return false;
@@ -312,30 +303,27 @@ bool ofc_sema_stmt_if_then_print(
 		|| !ofc_colstr_atomic_writef(cs, "THEN"))
 		return false;
 
-	if (stmt->if_then.scope_then)
+	if (stmt->if_then.block_then)
 	{
-		if (!ofc_sema_scope_print(cs, (indent + 1),
-			stmt->if_then.scope_then))
+		if (!ofc_sema_stmt_list_print(cs, (indent + 1),
+			label_map, stmt->if_then.block_then))
 				return false;
 	}
 
-	if (stmt->if_then.scope_else)
+	if (stmt->if_then.block_else)
 	{
 		/* TODO - ELSE IF could print on the same line for neatness
 			but this works for now. */
 		if (!ofc_colstr_newline(cs, indent, NULL)
 			|| !ofc_colstr_atomic_writef(cs, "ELSE")
-			|| !ofc_sema_scope_print(cs, (indent + 1),
-				stmt->if_then.scope_else))
+			|| !ofc_sema_stmt_list_print(cs, (indent + 1),
+				label_map, stmt->if_then.block_else))
 					return false;
 	}
 
-	const ofc_sema_scope_t* ls
-		= stmt->if_then.scope_else;
-	if (!ls) ls = stmt->if_then.scope_then;
 	const ofc_sema_label_t* label
-		= ofc_sema_label_map_find_offset(
-			ls->label, ofc_sema_stmt_list_count(ls->stmt));
+		= ofc_sema_label_map_find_end_block(
+			label_map, stmt);
 	const unsigned* ulabel = NULL;
 	if (label) ulabel = &label->number;
 

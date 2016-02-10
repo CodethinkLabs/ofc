@@ -910,6 +910,63 @@ void ofc_parse_stmt_list_delete(
 	free(list);
 }
 
+bool ofc_parse_stmt_list_foreach(
+	const ofc_parse_stmt_list_t* list, void* context,
+	bool (*callback)(const ofc_parse_stmt_t* stmt, void* context))
+{
+	if (!list || !callback)
+		return false;
+
+	unsigned i;
+	for (i = 0; i < list->count; i++)
+	{
+		const ofc_parse_stmt_t* stmt = list->stmt[i];
+
+		if (!callback(stmt, context))
+			return false;
+
+		if (!stmt)
+			continue;
+
+		switch (stmt->type)
+		{
+			case OFC_PARSE_STMT_IF_THEN:
+				if (stmt->if_then.block_then
+					&& !ofc_parse_stmt_list_foreach(
+						stmt->if_then.block_then,
+						context, callback))
+					return false;
+				if (stmt->if_then.block_else
+					&& !ofc_parse_stmt_list_foreach(
+						stmt->if_then.block_else,
+						context, callback))
+					return false;
+				break;
+
+			case OFC_PARSE_STMT_DO_BLOCK:
+				if (stmt->do_block.block
+					&& !ofc_parse_stmt_list_foreach(
+						stmt->do_block.block,
+						context, callback))
+					return false;
+				break;
+
+			case OFC_PARSE_STMT_DO_WHILE_BLOCK:
+				if (stmt->do_while_block.block
+					&& !ofc_parse_stmt_list_foreach(
+						stmt->do_while_block.block,
+						context, callback))
+					return false;
+				break;
+
+			default:
+				break;
+		}
+	}
+
+	return true;
+}
+
 
 
 bool ofc_parse_stmt_list_print(

@@ -51,7 +51,7 @@ struct ofc_sema_structure_s
 
 ofc_sema_structure_t* ofc_sema_structure(
 	ofc_sema_scope_t* scope,
-	ofc_parse_stmt_t* stmt);
+	const ofc_parse_stmt_t* stmt);
 
 bool ofc_sema_structure_reference(
 	ofc_sema_structure_t* structure);

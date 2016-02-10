@@ -28,16 +28,19 @@ bool ofc_sema_stmt_if_print(
 	const ofc_sema_stmt_t* stmt);
 bool ofc_sema_stmt_if_then_print(
 	ofc_colstr_t* cs, unsigned indent,
+	ofc_sema_label_map_t* label_map,
 	const ofc_sema_stmt_t* stmt);
 bool ofc_sema_stmt_do_label_print(ofc_colstr_t* cs,
 	const ofc_sema_stmt_t* stmt);
 bool ofc_sema_stmt_do_block_print(
 	ofc_colstr_t* cs, unsigned indent,
+	ofc_sema_label_map_t* label_map,
 	const ofc_sema_stmt_t* stmt);
 bool ofc_sema_stmt_do_while_print(ofc_colstr_t* cs,
 	const ofc_sema_stmt_t* stmt);
 bool ofc_sema_stmt_do_while_block_print(
 	ofc_colstr_t* cs, unsigned indent,
+	ofc_sema_label_map_t* label_map,
 	const ofc_sema_stmt_t* stmt);
 bool ofc_sema_go_to_print(ofc_colstr_t* cs,
 	const ofc_sema_stmt_t* stmt);
@@ -189,64 +192,6 @@ ofc_sema_stmt_t* ofc_sema_stmt(
 
 	if (s) s->src = stmt->src;
 	return s;
-}
-
-bool ofc_sema_stmt_scoped(
-	ofc_sema_scope_t* scope,
-	const ofc_parse_stmt_t* stmt)
-{
-	if (!scope || !stmt)
-		return false;
-
-	if (stmt->label != 0)
-	{
-		if (ofc_sema_label_map_find(
-			scope->label, stmt->label))
-		{
-			ofc_sparse_ref_error(stmt->src,
-				"Duplicate label definition");
-			return false;
-		}
-	}
-
-	ofc_sema_stmt_t* s
-		= ofc_sema_stmt(scope, stmt);
-
-	/* Statement analysis failed,
-	   should already have printed an error. */
-	if (!s) return false;
-
-	if ((s->type == OFC_SEMA_STMT_CONTINUE)
-		&& (stmt->label == 0))
-	{
-		ofc_sparse_ref_warning(stmt->src,
-			"Unlabelled CONTINUE statement has no effect");
-		ofc_sema_stmt_delete(s);
-		return true;
-	}
-
-	unsigned offset
-		= ofc_sema_stmt_list_count(
-			scope->stmt);
-
-	if (!ofc_sema_stmt_list_add(
-		scope->stmt, s))
-	{
-		ofc_sema_stmt_delete(s);
-		return false;
-	}
-
-	if (stmt->label != 0)
-	{
-		if (!ofc_sema_label_map_add_stmt(stmt,
-			scope->label, stmt->label, offset))
-		{
-			/* This should never happen. */
-			abort();
-		}
-	}
-
-	return true;
 }
 
 void ofc_sema_stmt_delete(
@@ -422,10 +367,10 @@ void ofc_sema_stmt_delete(
 		case OFC_SEMA_STMT_IF_THEN:
 			ofc_sema_expr_delete(
 				stmt->if_then.cond);
-			ofc_sema_scope_delete(
-				stmt->if_then.scope_then);
-			ofc_sema_scope_delete(
-				stmt->if_then.scope_else);
+			ofc_sema_stmt_list_delete(
+				stmt->if_then.block_then);
+			ofc_sema_stmt_list_delete(
+				stmt->if_then.block_else);
 			break;
 		case OFC_SEMA_STMT_STOP:
 		case OFC_SEMA_STMT_PAUSE:
@@ -465,8 +410,8 @@ void ofc_sema_stmt_delete(
 				stmt->do_block.last);
 			ofc_sema_expr_delete(
 				stmt->do_block.step);
-			ofc_sema_scope_delete(
-				stmt->do_block.scope);
+			ofc_sema_stmt_list_delete(
+				stmt->do_block.block);
 			break;
 		case OFC_SEMA_STMT_DO_WHILE:
 			ofc_sema_expr_delete(
@@ -477,8 +422,8 @@ void ofc_sema_stmt_delete(
 		case OFC_SEMA_STMT_DO_WHILE_BLOCK:
 			ofc_sema_expr_delete(
 				stmt->do_while_block.cond);
-			ofc_sema_scope_delete(
-				stmt->do_while_block.scope);
+			ofc_sema_stmt_list_delete(
+				stmt->do_while_block.block);
 			break;
 		case OFC_SEMA_STMT_CALL:
 			ofc_sema_expr_list_delete(
@@ -510,6 +455,176 @@ ofc_sema_stmt_list_t* ofc_sema_stmt_list_create(void)
 
 	list->count = 0;
 	list->stmt  = NULL;
+	return list;
+}
+
+
+static bool ofc_sema_stmt_list__entry(
+	ofc_sema_scope_t* scope,
+	ofc_sema_stmt_list_t* list,
+	const ofc_parse_stmt_t* stmt)
+{
+	if (!stmt)
+		return false;
+
+	if (stmt->type == OFC_PARSE_STMT_EMPTY)
+		return true;
+
+	if (ofc_sema_stmt_is_stmt_func(scope, stmt))
+		return ofc_sema_scope_stmt_func(scope, stmt);
+
+	switch (stmt->type)
+	{
+		case OFC_PARSE_STMT_INCLUDE:
+			/* Has no semantic effect. */
+			return true;
+
+		case OFC_PARSE_STMT_FORMAT:
+			/* These are already handled. */
+			return true;
+
+		case OFC_PARSE_STMT_SUBROUTINE:
+			return ofc_sema_scope_subroutine(scope, stmt);
+
+		case OFC_PARSE_STMT_FUNCTION:
+			return ofc_sema_scope_function(scope, stmt);
+
+		case OFC_PARSE_STMT_PROGRAM:
+			return ofc_sema_scope_program(scope, stmt);
+
+		case OFC_PARSE_STMT_BLOCK_DATA:
+			return ofc_sema_scope_block_data(scope, stmt);
+
+		case OFC_PARSE_STMT_PARAMETER:
+			return ofc_sema_parameter(scope, stmt);
+
+		case OFC_PARSE_STMT_IMPLICIT_NONE:
+		case OFC_PARSE_STMT_IMPLICIT:
+			return ofc_sema_implicit(scope, stmt);
+
+		case OFC_PARSE_STMT_DECL:
+			return ofc_sema_decl(scope, stmt);
+
+		case OFC_PARSE_STMT_DATA:
+			return ofc_sema_stmt_data(scope, stmt);
+
+		case OFC_PARSE_STMT_DIMENSION:
+			return ofc_sema_stmt_dimension(scope, stmt);
+
+		case OFC_PARSE_STMT_EQUIVALENCE:
+			/* We handle this next pass. */
+			return true;
+
+		case OFC_PARSE_STMT_COMMON:
+			return ofc_sema_stmt_common(scope, stmt);
+
+		case OFC_PARSE_STMT_DECL_ATTR_AUTOMATIC:
+		case OFC_PARSE_STMT_DECL_ATTR_STATIC:
+		case OFC_PARSE_STMT_DECL_ATTR_VOLATILE:
+		case OFC_PARSE_STMT_DECL_ATTR_EXTERNAL:
+		case OFC_PARSE_STMT_DECL_ATTR_INTRINSIC:
+			return ofc_sema_stmt_decl_attr(scope, stmt);
+
+		case OFC_PARSE_STMT_SAVE:
+			return ofc_sema_stmt_save(scope, stmt);
+
+		case OFC_PARSE_STMT_TYPE:
+		case OFC_PARSE_STMT_STRUCTURE:
+		case OFC_PARSE_STMT_UNION:
+		case OFC_PARSE_STMT_MAP:
+			return ofc_sema_structure(scope, stmt);
+
+		case OFC_PARSE_STMT_NAMELIST:
+		case OFC_PARSE_STMT_POINTER:
+			ofc_sparse_ref_error(stmt->src,
+				"Unsupported statement");
+			/* TODO - Support these statements. */
+			return false;
+
+		default:
+			break;
+	}
+
+	if (!scope)
+		return false;
+
+	switch (scope->type)
+	{
+		case OFC_SEMA_SCOPE_GLOBAL:
+		case OFC_SEMA_SCOPE_BLOCK_DATA:
+			ofc_sparse_ref_error(stmt->src,
+				"Unexpected executable statement in scope.");
+			return false;
+		default:
+			break;
+	}
+
+	if (stmt->label != 0)
+	{
+		if (ofc_sema_label_map_find(
+			scope->label, stmt->label))
+		{
+			ofc_sparse_ref_error(stmt->src,
+				"Duplicate label definition");
+			return false;
+		}
+	}
+
+	ofc_sema_stmt_t* s
+		= ofc_sema_stmt(scope, stmt);
+
+	/* Statement analysis failed,
+	   should already have printed an error. */
+	if (!s) return false;
+
+	if ((s->type == OFC_SEMA_STMT_CONTINUE)
+		&& (stmt->label == 0))
+	{
+		ofc_sparse_ref_warning(stmt->src,
+			"Unlabelled CONTINUE statement has no effect");
+		ofc_sema_stmt_delete(s);
+		return true;
+	}
+
+	if (!ofc_sema_stmt_list_add(list, s))
+	{
+		ofc_sema_stmt_delete(s);
+		return false;
+	}
+
+	if ((stmt->label != 0)
+		&& !ofc_sema_label_map_add_stmt(
+			scope->label, stmt->label, s))
+	{
+		/* This should never happen. */
+		abort();
+	}
+
+	return true;
+}
+
+ofc_sema_stmt_list_t* ofc_sema_stmt_list(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_list_t* body)
+{
+	if (!body)
+		return NULL;
+
+	ofc_sema_stmt_list_t* list
+		= ofc_sema_stmt_list_create();;
+	if (!list) return NULL;
+
+	unsigned i;
+	for (i = 0; i < body->count; i++)
+	{
+		if (!ofc_sema_stmt_list__entry(
+			scope, list, body->stmt[i]))
+		{
+			ofc_sema_stmt_list_delete(list);
+			return NULL;
+		}
+	}
+
 	return list;
 }
 
@@ -564,6 +679,7 @@ unsigned ofc_sema_stmt_list_count(
 
 bool ofc_sema_stmt_print(
 	ofc_colstr_t* cs, unsigned indent,
+	ofc_sema_label_map_t* label_map,
 	const ofc_sema_stmt_t* stmt)
 {
 	switch (stmt->type)
@@ -607,7 +723,8 @@ bool ofc_sema_stmt_print(
 			return ofc_sema_stmt_if_print(cs, indent, stmt);
 
 		case OFC_SEMA_STMT_IF_THEN:
-			return ofc_sema_stmt_if_then_print(cs, indent, stmt);
+			return ofc_sema_stmt_if_then_print(
+				cs, indent, label_map, stmt);
 
 		case OFC_SEMA_STMT_STOP:
 		case OFC_SEMA_STMT_PAUSE:
@@ -623,13 +740,15 @@ bool ofc_sema_stmt_print(
 			return ofc_sema_stmt_do_label_print(cs, stmt);
 
 		case OFC_SEMA_STMT_DO_BLOCK:
-			return ofc_sema_stmt_do_block_print(cs, indent, stmt);
+			return ofc_sema_stmt_do_block_print(
+				cs, indent, label_map, stmt);
 
 		case OFC_SEMA_STMT_DO_WHILE:
 			return ofc_sema_stmt_do_while_print(cs, stmt);
 
 		case OFC_SEMA_STMT_DO_WHILE_BLOCK:
-			return ofc_sema_stmt_do_while_block_print(cs, indent, stmt);
+			return ofc_sema_stmt_do_while_block_print(
+				cs, indent, label_map, stmt);
 
 		case OFC_SEMA_STMT_CALL:
 			return ofc_sema_stmt_call_print(cs, stmt);
@@ -700,7 +819,8 @@ bool ofc_sema_stmt_list_print(
 	for (i = 0; i < stmt_list->count; i++)
 	{
 		const ofc_sema_label_t* label
-			= ofc_sema_label_map_find_offset(label_map, i);
+			= ofc_sema_label_map_find_stmt(
+				label_map, stmt_list->stmt[i]);
 		if (label)
 		{
 			unsigned label_num = label->number;
@@ -713,7 +833,8 @@ bool ofc_sema_stmt_list_print(
 				return false;
 		}
 
-		if (!ofc_sema_stmt_print(cs, indent,
+		if (!ofc_sema_stmt_print(
+			cs, indent, label_map,
 			stmt_list->stmt[i]))
 		{
 			fprintf(stderr, "\nError: Failed to print statement: %s",

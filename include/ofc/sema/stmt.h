@@ -87,9 +87,9 @@ struct ofc_sema_stmt_s
 
 		struct
 		{
-			ofc_sema_expr_t*  cond;
-			ofc_sema_scope_t* scope_then;
-			ofc_sema_scope_t* scope_else;
+			ofc_sema_expr_t*      cond;
+			ofc_sema_stmt_list_t* block_then;
+			ofc_sema_stmt_list_t* block_else;
 		} if_then;
 
 		struct
@@ -253,11 +253,11 @@ struct ofc_sema_stmt_s
 
 		struct
 		{
-			ofc_sema_lhs_t*   iter;
-			ofc_sema_expr_t*  init;
-			ofc_sema_expr_t*  last;
-			ofc_sema_expr_t*  step;
-			ofc_sema_scope_t* scope;
+			ofc_sema_lhs_t*       iter;
+			ofc_sema_expr_t*      init;
+			ofc_sema_expr_t*      last;
+			ofc_sema_expr_t*      step;
+			ofc_sema_stmt_list_t* block;
 		} do_block;
 
 		struct
@@ -268,8 +268,8 @@ struct ofc_sema_stmt_s
 
 		struct
 		{
-			ofc_sema_expr_t*  cond;
-			ofc_sema_scope_t* scope;
+			ofc_sema_expr_t*      cond;
+			ofc_sema_stmt_list_t* block;
 		} do_while_block;
 
 		struct
@@ -288,9 +288,6 @@ struct ofc_sema_stmt_s
 
 
 ofc_sema_stmt_t* ofc_sema_stmt(
-	ofc_sema_scope_t* scope,
-	const ofc_parse_stmt_t* stmt);
-bool ofc_sema_stmt_scoped(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
 
@@ -381,6 +378,9 @@ struct ofc_sema_stmt_list_s
 
 
 ofc_sema_stmt_list_t* ofc_sema_stmt_list_create(void);
+ofc_sema_stmt_list_t* ofc_sema_stmt_list(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_list_t* body);
 
 void ofc_sema_stmt_list_delete(
 	ofc_sema_stmt_list_t* list);
@@ -394,6 +394,7 @@ unsigned ofc_sema_stmt_list_count(
 
 bool ofc_sema_stmt_print(
 	ofc_colstr_t* cs, unsigned indent,
+	ofc_sema_label_map_t* label_map,
 	const ofc_sema_stmt_t* stmt);
 
 bool ofc_sema_stmt_list_print(
