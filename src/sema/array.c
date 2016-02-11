@@ -758,7 +758,7 @@ ofc_sema_array_slice_t* ofc_sema_array_slice(
 
 	if (array->dimensions < index->count)
 	{
-		ofc_sparse_ref_warning(index->src,
+		ofc_sparse_ref_error(index->src,
 			"Too many dimensions in array slice");
 		return NULL;
 	}
