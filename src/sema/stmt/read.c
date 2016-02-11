@@ -53,7 +53,6 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 	s.io_read.err          = NULL;
 	s.io_read.iolist       = NULL;
 	s.io_read.advance      = NULL;
-	s.io_read.is_advancing = true;
 	s.io_read.end          = NULL;
 	s.io_read.eor          = NULL;
 	s.io_read.size         = NULL;
@@ -320,6 +319,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 		return NULL;
 	}
 
+	bool is_nonadvance = false;
 	if (ca_advance && s.io_read.stdin)
 	{
 		ofc_sparse_ref_error(stmt->src,
@@ -364,21 +364,13 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 			const ofc_sema_typeval_t* constant
 				= ofc_sema_expr_constant(s.io_read.advance);
 
-			const char* advance_str;
-			if (!ofc_sema_typeval_get_character(constant, &advance_str))
-			{
-				ofc_sema_stmt_io_read__cleanup(s);
-				return NULL;
-			}
-
-			if (strcasecmp(advance_str, "NO") == 0)
-			{
-				s.io_read.is_advancing = false;
-			}
-			else if (strcasecmp(advance_str, "YES") != 0)
+			is_nonadvance = (constant
+				&& ofc_typeval_character_equal_strz_ci(constant, "NO"));
+			if (constant && !is_nonadvance
+				&& !ofc_typeval_character_equal_strz_ci(constant, "YES"))
 			{
 				ofc_sparse_ref_error(stmt->src,
-					"ADVANCE must be 'YES' or 'NO' in READ");
+					"ADVANCE must be YES/NO in WRITE");
 				ofc_sema_stmt_io_read__cleanup(s);
 				return NULL;
 			}
@@ -512,7 +504,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 		}
 	}
 
-	if (ca_size && s.io_read.is_advancing)
+	if (ca_size && !is_nonadvance)
 	{
 		ofc_sparse_ref_error(stmt->src,
 			"SIZE not compatible with advancing formatted "

@@ -248,18 +248,12 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_close(
 			const ofc_sema_typeval_t* constant
 				= ofc_sema_expr_constant(s.io_close.status);
 
-			if (ofc_typeval_character_equal_strz_ci(constant, "DELETE"))
-			{
-				s.io_close.status_type = OFC_SEMA_CALL_ARG_DELETE;
-			}
-			else if (ofc_typeval_character_equal_strz_ci(constant, "KEEP"))
-			{
-				s.io_close.status_type = OFC_SEMA_CALL_ARG_KEEP;
-			}
-			else
+			if (constant
+				&& !ofc_typeval_character_equal_strz_ci(constant, "DELETE")
+				&& !ofc_typeval_character_equal_strz_ci(constant, "KEEP"))
 			{
 				ofc_sparse_ref_error(stmt->src,
-					"STATUS must be 'DELETE' or 'KEEP' in CLOSE");
+					"STATUS must be DELETE/KEEP in CLOSE");
 				ofc_sema_stmt_io_close__cleanup(s);
 				return NULL;
 			}

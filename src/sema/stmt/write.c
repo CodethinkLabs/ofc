@@ -47,7 +47,6 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 	s.io_write.format_ldio  = false;
 	s.io_write.formatted    = false;
 	s.io_write.advance      = NULL;
-	s.io_write.is_advancing = true;
 	s.io_write.err          = NULL;
 	s.io_write.iostat       = NULL;
 	s.io_write.rec          = NULL;
@@ -323,21 +322,12 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 			const ofc_sema_typeval_t* constant
 				= ofc_sema_expr_constant(s.io_write.advance);
 
-			const char* advance_str;
-			if (!ofc_sema_typeval_get_character(constant, &advance_str))
-			{
-				ofc_sema_stmt_io_write__cleanup(s);
-				return NULL;
-			}
-
-			if (strcasecmp(advance_str, "NO") == 0)
-			{
-				s.io_write.is_advancing = false;
-			}
-			else if (strcasecmp(advance_str, "YES") != 0)
+			if (constant
+				&& !ofc_typeval_character_equal_strz_ci(constant, "NO")
+				&& !ofc_typeval_character_equal_strz_ci(constant, "YES"))
 			{
 				ofc_sparse_ref_error(stmt->src,
-					"ADVANCE must be 'YES' or 'NO' in WRITE");
+					"ADVANCE must be YES/NO in WRITE");
 				ofc_sema_stmt_io_write__cleanup(s);
 				return NULL;
 			}
