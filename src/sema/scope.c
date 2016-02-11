@@ -992,67 +992,77 @@ static bool ofc_sema_scope_body__print(
 	if (scope->structure && !ofc_sema_structure_list_print(
 		cs, indent, scope->structure))
 	{
-		fprintf(stderr, "\nError: Failed to print structure list");
+		ofc_file_error(NULL, NULL,
+			"Failed to print structure list");
 		return false;
 	}
 	if (scope->derived_type && !ofc_sema_structure_list_print(
 		cs, indent, scope->derived_type))
 	{
-		fprintf(stderr, "\nError: Failed to print derived type list");
+		ofc_file_error(NULL, NULL,
+			"Failed to print derived type list");
 		return false;
 	}
 
 	if (scope->spec
 		&& !ofc_sema_spec_list_print(cs, indent, scope, scope->spec->list))
 	{
-		fprintf(stderr, "\nError: Failed to print spec list");
+		ofc_file_error(NULL, NULL,
+			"Failed to print spec list");
 		return false;
 	}
 	if (scope->decl
 		&& !ofc_sema_decl_list_print(cs, indent, scope->decl))
 	{
-		fprintf(stderr, "\nError: Failed to print decl list");
+		ofc_file_error(NULL, NULL,
+			"Failed to print decl list");
 		return false;
 	}
 
 	if (scope->decl && (scope->type != OFC_SEMA_SCOPE_GLOBAL)
 		&& !ofc_sema_decl_list_procedure_spec_print(cs, indent, scope->decl))
 	{
-		fprintf(stderr, "\nError: Failed to print procedure specifier list");
+		ofc_file_error(NULL, NULL,
+			"Failed to print procedure specifier list");
 		return false;
 	}
 
 	if (scope->common
 		&& !ofc_sema_common_map_print(cs, indent, scope->common))
 	{
-		fprintf(stderr, "\nError: Failed to print common map");
+		ofc_file_error(NULL, NULL,
+			"Failed to print common map");
 		return false;
 	}
 
 	if (scope->equiv
 		&& !ofc_sema_equiv_list_print(cs, indent, scope->equiv))
 	{
-		fprintf(stderr, "\nError: Failed to print equiv list");
+		ofc_file_error(NULL, NULL,
+			"Failed to print equiv list");
 		return false;
 	}
 
 	if (scope->decl
 		&& !ofc_sema_decl_list_stmt_func_print(cs, indent, scope->decl))
 	{
-		fprintf(stderr, "\nError: Failed to print stmt func list");
+		ofc_file_error(NULL, NULL,
+			"Failed to print stmt func list");
 		return false;
 	}
 
 	if (scope->stmt
 		&& !ofc_sema_stmt_list_print(cs, indent, scope->label, scope->stmt))
 	{
-		fprintf(stderr, "\nError: Failed to print stmt list");
+		ofc_file_error(NULL, NULL,
+			"Failed to print stmt list");
 		return false;
 	}
 	if (scope->label
 		&& !ofc_sema_format_label_list_print(cs, indent, scope->label->format))
 	{
-		fprintf(stderr, "\nError: Failed to print format label list");
+		ofc_file_error(NULL, NULL,
+			"Failed to print format label list");
 		return false;
 	}
 
@@ -1151,7 +1161,8 @@ bool ofc_sema_scope_print(
 
 	if (!ofc_sema_decl_list_procedure_print(cs, indent, scope->decl))
 	{
-		fprintf(stderr, "\nError: Failed to print procedure list");
+		ofc_file_error(NULL, NULL,
+			"Failed to print procedure list");
 		return false;
 	}
 

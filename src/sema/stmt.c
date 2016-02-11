@@ -837,7 +837,7 @@ bool ofc_sema_stmt_list_print(
 			cs, indent, label_map,
 			stmt_list->stmt[i]))
 		{
-			fprintf(stderr, "\nError: Failed to print statement: %s",
+			ofc_file_error(NULL, NULL, "Failed to print statement: %s",
 				ofc_sema_stmt__str_rep(stmt_list->stmt[i]));
 			return false;
 		}

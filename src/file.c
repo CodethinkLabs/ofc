@@ -264,7 +264,7 @@ static void ofc_file__debug_va(
 
 	fprintf(stderr, "%s:", type);
 
-	if (file->path)
+	if (file && file->path)
 		fprintf(stderr, "%s:", file->path);
 
 	if (positional)
