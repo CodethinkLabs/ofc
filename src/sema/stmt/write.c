@@ -450,13 +450,10 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 	{
 		/* Count elements in iolist */
 		unsigned iolist_len = 0;
-		if (s.io_write.iolist
-			&& !ofc_sema_expr_list_elem_count(
-				s.io_write.iolist, &iolist_len))
-		{
-			ofc_sema_stmt_io_write__cleanup(s);
-			return NULL;
-		}
+		bool iolist_len_var
+			= (s.io_write.iolist
+				&& !ofc_sema_expr_list_elem_count(
+					s.io_write.iolist, &iolist_len));
 
 		if (iolist_len > 0)
 		{
@@ -512,12 +509,12 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 			ofc_sparse_ref_warning(stmt->src,
 				"No data edit descriptors in FORMAT list");
 		}
-		else if (data_desc_count > 0)
+		else if ((data_desc_count > 0)
+			&& !iolist_len_var)
 		{
 			ofc_sparse_ref_warning(stmt->src,
 				"No IO list in WRITE statement");
 		}
-
 	}
 
 	ofc_sema_stmt_t* as

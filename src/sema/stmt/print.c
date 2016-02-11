@@ -122,14 +122,10 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_print(
 
 	/* Count elements in iolist */
 	unsigned iolist_len = 0;
-	if (s.io_print.iolist
-		&& !ofc_sema_expr_list_elem_count(
-			s.io_print.iolist, &iolist_len))
-	{
-		ofc_sema_expr_delete(s.io_print.format_expr);
-		ofc_sema_expr_list_delete(s.io_print.iolist);
-		return NULL;
-	}
+	bool iolist_len_var
+		= (s.io_print.iolist
+			&& !ofc_sema_expr_list_elem_count(
+				s.io_print.iolist, &iolist_len));
 
 	if (iolist_len > 0)
 	{
@@ -190,7 +186,8 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_print(
 			ofc_sparse_ref_warning(stmt->io_print.format->src,
 				"No data edit descriptors in FORMAT list");
 		}
-		else if (data_desc_count > 0)
+		else if ((data_desc_count > 0)
+			&& (!iolist_len_var))
 		{
 			ofc_sparse_ref_warning(stmt->io_print.format->src,
 				"No IO list in PRINT statement");
