@@ -302,7 +302,8 @@ static ofc_sema_lhs_t* ofc_sema_lhs_member(
 static ofc_sema_lhs_t* ofc_sema__lhs(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_lhs_t* lhs,
-	bool is_expr, bool force_local)
+	bool is_expr, bool force_local,
+	bool is_dummy_arg)
 {
 	if (!scope || !lhs)
 		return NULL;
@@ -325,7 +326,7 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 		case OFC_PARSE_LHS_MEMBER_STRUCTURE:
 			{
 				ofc_sema_lhs_t* parent = ofc_sema__lhs(
-					scope, lhs->parent, is_expr, force_local);
+					scope, lhs->parent, is_expr, force_local, is_dummy_arg);
 				if (!parent) return NULL;
 
 				ofc_sema_structure_t* structure
@@ -373,7 +374,7 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 		case OFC_PARSE_LHS_ARRAY:
 			{
 				ofc_sema_lhs_t* parent = ofc_sema__lhs(
-					scope, lhs->parent, is_expr, force_local);
+					scope, lhs->parent, is_expr, force_local, is_dummy_arg);
 				if (!parent) return NULL;
 
 				if (!ofc_sema_lhs_is_array(parent))
@@ -500,7 +501,7 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 			}
 		}
 
-		if (is_expr
+		if (is_expr && !is_dummy_arg
 			&& !ofc_sema_decl_is_procedure(decl)
 			&& !is_argument)
 		{
@@ -513,7 +514,8 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 	if (is_return)
 		decl->is_return = true;
 
-	if (!is_expr && ofc_sema_decl_is_parameter(decl))
+	if (!is_expr && !is_dummy_arg
+		&& ofc_sema_decl_is_parameter(decl))
 	{
 		/* TODO - Throw this error for PARAMETER arrays, etc. too. */
 		ofc_sparse_ref_error(lhs->src,
@@ -548,7 +550,7 @@ ofc_sema_lhs_t* ofc_sema_lhs(
 	const ofc_parse_lhs_t* lhs)
 {
 	return ofc_sema__lhs(
-		scope, lhs, false, false);
+		scope, lhs, false, false, false);
 }
 
 ofc_sema_lhs_t* ofc_sema_lhs_from_expr(
@@ -572,7 +574,15 @@ ofc_sema_lhs_t* ofc_sema_lhs_in_expr(
 	const ofc_parse_lhs_t* lhs)
 {
 	return ofc_sema__lhs(
-		scope, lhs, true, false);
+		scope, lhs, true, false, false);
+}
+
+ofc_sema_lhs_t* ofc_sema_lhs_in_dummy_arg(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_lhs_t* lhs)
+{
+	return ofc_sema__lhs(
+		scope, lhs, false, false, true);
 }
 
 ofc_sema_lhs_t* ofc_sema_lhs_local(
@@ -580,7 +590,7 @@ ofc_sema_lhs_t* ofc_sema_lhs_local(
 	const ofc_parse_lhs_t* lhs)
 {
 	return ofc_sema__lhs(
-		scope, lhs, false, true);
+		scope, lhs, false, true, false);
 }
 
 

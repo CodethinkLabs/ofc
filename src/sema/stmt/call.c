@@ -93,7 +93,8 @@ ofc_sema_stmt_t* ofc_sema_stmt_call(
 			}
 
 			ofc_sema_expr_t* expr
-				= ofc_sema_expr(scope, arg->expr);
+				= ofc_sema_expr_dummy_arg(
+					scope, arg->expr);
 			if (!expr)
 			{
 				ofc_sema_expr_list_delete(s.call.args);

@@ -919,7 +919,8 @@ static ofc_sema_expr_t* ofc_sema_expr__function(
 			}
 
 			ofc_sema_expr_t* expr
-				= ofc_sema_expr(scope, range->first);
+				= ofc_sema_expr_dummy_arg(
+					scope, range->first);
 			if (!expr)
 			{
 				ofc_sema_expr_list_delete(args);
@@ -958,13 +959,15 @@ static ofc_sema_expr_t* ofc_sema_expr__function(
 
 static ofc_sema_expr_t* ofc_sema_expr__lhs(
 	ofc_sema_scope_t* scope,
-	const ofc_parse_lhs_t* name)
+	const ofc_parse_lhs_t* name,
+	bool is_dummy_arg)
 {
 	if (!name)
 		return NULL;
 
-	ofc_sema_lhs_t* lhs = ofc_sema_lhs_in_expr(
-		scope, name);
+	ofc_sema_lhs_t* lhs = (is_dummy_arg
+		? ofc_sema_lhs_in_dummy_arg(scope, name)
+		: ofc_sema_lhs_in_expr(scope, name));
 	if (!lhs) return NULL;
 
 	ofc_sema_expr_t* expr
@@ -995,7 +998,8 @@ static ofc_sema_expr_t* ofc_sema_expr__lhs(
 
 static ofc_sema_expr_t* ofc_sema_expr__variable(
 	ofc_sema_scope_t* scope,
-	const ofc_parse_lhs_t* name)
+	const ofc_parse_lhs_t* name,
+	bool is_dummy_arg)
 {
 	ofc_sparse_ref_t base_name;
 	if (!ofc_parse_lhs_base_name(
@@ -1024,7 +1028,7 @@ static ofc_sema_expr_t* ofc_sema_expr__variable(
 		{
 			/* FUNCTION types are only valid as arguments. */
 			expr = ofc_sema_expr__lhs(
-				scope, name);
+				scope, name, is_dummy_arg);
 		}
 	}
 	else
@@ -1090,7 +1094,7 @@ static ofc_sema_expr_t* ofc_sema_expr__variable(
 		else
 		{
 			expr = ofc_sema_expr__lhs(
-				scope, name);
+				scope, name, is_dummy_arg);
 		}
 	}
 
@@ -1129,7 +1133,7 @@ ofc_sema_expr_t* ofc_sema_expr(
 				&expr->literal);
 		case OFC_PARSE_EXPR_VARIABLE:
 			return ofc_sema_expr__variable(
-				scope, expr->variable);
+				scope, expr->variable, false);
 		case OFC_PARSE_EXPR_BRACKETS:
 			return ofc_sema_expr__brackets(
 				scope, expr->brackets.expr);
@@ -1180,6 +1184,23 @@ ofc_sema_expr_t* ofc_sema_expr_repeat(
 		= ofc_sema_expr__repeat(scope, expr);
 	if (!e) e = ofc_sema_expr(scope, expr);
 	return e;
+}
+
+ofc_sema_expr_t* ofc_sema_expr_dummy_arg(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_expr_t* expr)
+{
+	if (!expr) return NULL;
+
+	if (expr->type == OFC_PARSE_EXPR_VARIABLE)
+	{
+		ofc_sema_expr_t* e
+			= ofc_sema_expr__variable(
+				scope, expr->variable, true);
+		if (e) return e;
+	}
+
+	return ofc_sema_expr(scope, expr);
 }
 
 static ofc_sema_expr_t* ofc_sema_expr__implicit_do(
@@ -1906,9 +1927,14 @@ static ofc_sema_expr_list_t* ofc_sema_expr__list(
 	ofc_sema_scope_t*            scope,
 	const ofc_parse_expr_list_t* list,
 	bool allow_repeat,
-	bool allow_implicit_do)
+	bool allow_implicit_do,
+	bool dummy_args)
 {
 	if (!list)
+		return NULL;
+
+	/* Dummy argument lists can never have repeats. */
+	if (allow_repeat && dummy_args)
 		return NULL;
 
 	ofc_sema_expr_list_t* slist
@@ -1934,9 +1960,13 @@ static ofc_sema_expr_list_t* ofc_sema_expr__list(
 		}
 		else
 		{
-			expr = (allow_repeat
-				? ofc_sema_expr_repeat(scope, list->expr[i])
-				: ofc_sema_expr(scope, list->expr[i]));
+			if (dummy_args)
+				expr = ofc_sema_expr_dummy_arg(scope, list->expr[i]);
+			else if (allow_repeat)
+				expr = ofc_sema_expr_repeat(scope, list->expr[i]);
+			else
+				expr = ofc_sema_expr(scope, list->expr[i]);
+
 			if (!expr)
 			{
 				ofc_sema_expr_list_delete(slist);
@@ -1960,7 +1990,7 @@ ofc_sema_expr_list_t* ofc_sema_expr_list(
 	const ofc_parse_expr_list_t* list)
 {
 	return ofc_sema_expr__list(
-		scope, list, false, false);
+		scope, list, false, false, false);
 }
 
 ofc_sema_expr_list_t* ofc_sema_expr_list_clist(
@@ -1968,7 +1998,7 @@ ofc_sema_expr_list_t* ofc_sema_expr_list_clist(
 	const ofc_parse_expr_list_t* clist)
 {
 	return ofc_sema_expr__list(
-		scope, clist, true, false);
+		scope, clist, true, false, false);
 }
 
 ofc_sema_expr_list_t* ofc_sema_expr_list_io(
@@ -1976,7 +2006,15 @@ ofc_sema_expr_list_t* ofc_sema_expr_list_io(
 	const ofc_parse_expr_list_t* iolist)
 {
 	return ofc_sema_expr__list(
-		scope, iolist, false, true);
+		scope, iolist, false, true, false);
+}
+
+ofc_sema_expr_list_t* ofc_sema_expr_list_dummy_arg(
+	ofc_sema_scope_t*            scope,
+	const ofc_parse_expr_list_t* iolist)
+{
+	return ofc_sema_expr__list(
+		scope, iolist, false, false, true);
 }
 
 ofc_sema_expr_list_t* ofc_sema_expr_list_create(void)

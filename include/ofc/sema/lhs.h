@@ -94,6 +94,9 @@ ofc_sema_lhs_t* ofc_sema_lhs_from_expr(
 ofc_sema_lhs_t* ofc_sema_lhs_in_expr(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_lhs_t* lhs);
+ofc_sema_lhs_t* ofc_sema_lhs_in_dummy_arg(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_lhs_t* lhs);
 ofc_sema_lhs_t* ofc_sema_lhs_local(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_lhs_t* lhs);

@@ -117,6 +117,9 @@ ofc_sema_expr_t* ofc_sema_expr(
 ofc_sema_expr_t* ofc_sema_expr_repeat(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_expr_t* expr);
+ofc_sema_expr_t* ofc_sema_expr_dummy_arg(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_expr_t* expr);
 ofc_sema_expr_t* ofc_sema_expr_copy_replace(
 	const ofc_sema_expr_t* expr,
 	const ofc_sema_decl_t* replace,
