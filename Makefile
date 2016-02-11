@@ -42,6 +42,7 @@ clean:
 	$(DEB) $(DEB_DEBUG)
 
 install: $(FRONTEND)
+	install -d $(BINDIR)
 	install $(FRONTEND) $(BINDIR)
 
 uninstall:
