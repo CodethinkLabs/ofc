@@ -22,6 +22,7 @@ typedef struct
 {
 	bool no_warn;
 	bool no_warn_equiv_type;
+	bool no_warn_name_keyword;
 	bool parse_only;
 	bool parse_print;
 	bool sema_print;
@@ -31,11 +32,12 @@ typedef struct
 static const ofc_global_opts_t
 	OFC_GLOBAL_OPTS_DEFAULT =
 {
-	.no_warn            = false,
-	.no_warn_equiv_type = false,
-	.parse_only         = false,
-	.parse_print        = false,
-	.sema_print         = false,
+	.no_warn              = false,
+	.no_warn_equiv_type   = false,
+	.no_warn_name_keyword = false,
+	.parse_only           = false,
+	.parse_print          = false,
+	.sema_print           = false,
 };
 
 #endif

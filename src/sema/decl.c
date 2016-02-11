@@ -14,7 +14,9 @@
  */
 
 #include "ofc/sema.h"
+#include "ofc/global_opts.h"
 
+extern ofc_global_opts_t global_opts;
 
 static void ofc_sema_decl_init__delete(
 	ofc_sema_decl_init_t init)
@@ -36,7 +38,8 @@ ofc_sema_decl_t* ofc_sema_decl_create(
 	const ofc_sema_type_t* type,
 	ofc_sparse_ref_t name)
 {
-	if (ofc_str_ref_begins_with_keyword(name.string))
+	if ((!global_opts.no_warn_name_keyword)
+		&& ofc_str_ref_begins_with_keyword(name.string))
 	{
 		ofc_sparse_ref_warning(name,
 			"Symbol name begins with langauge keyword");
