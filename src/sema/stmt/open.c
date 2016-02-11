@@ -58,17 +58,6 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 	s.io_open.recl          = NULL;
 	s.io_open.status        = NULL;
 
-	/* Default status */
-	s.io_open.access_type   = OFC_SEMA_CALL_ARG_SEQUENTIAL;
-	s.io_open.action_type   = OFC_SEMA_CALL_ARG_COUNT;
-	s.io_open.blank_type    = OFC_SEMA_CALL_ARG_BLANK_NULL;
-	s.io_open.delim_type    = OFC_SEMA_CALL_ARG_DELIM_NONE;
-	s.io_open.format_type   = OFC_SEMA_CALL_ARG_FORMATTED;
-	s.io_open.padding       = OFC_SEMA_CALL_ARG_PAD_YES;
-	s.io_open.position_type = OFC_SEMA_CALL_ARG_ASIS;
-	/* Default is processor dependant */
-	s.io_open.action_type   = OFC_SEMA_CALL_ARG_COUNT;
-
 	ofc_parse_call_arg_t* ca_unit     = NULL;
 	ofc_parse_call_arg_t* ca_access   = NULL;
 	ofc_parse_call_arg_t* ca_action   = NULL;
@@ -300,6 +289,8 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 		return NULL;
 	}
 
+	bool access_type_direct = false;
+	bool format_type_unformatted  = false;
 	if (ca_access)
 	{
 		s.io_open.access = ofc_sema_expr(
@@ -330,11 +321,20 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 			const ofc_sema_typeval_t* constant
 				= ofc_sema_expr_constant(s.io_open.access);
 
-			if (ofc_typeval_character_equal_strz_ci(constant, "DIRECT"))
+			access_type_direct = (constant
+				&& ofc_typeval_character_equal_strz_ci(constant, "DIRECT"));
+			if (constant && !access_type_direct
+				&& !ofc_typeval_character_equal_strz_ci(constant, "SEQUENTIAL"))
 			{
-				s.io_open.access_type = OFC_SEMA_CALL_ARG_DIRECT;
+				ofc_sparse_ref_error(stmt->src,
+					"ACCESS must be SEQUENTIAL/DIRECT in OPEN");
+				ofc_sema_stmt_io_open__cleanup(s);
+				return NULL;
+			}
+			else if (access_type_direct)
+			{
 				/* Change default format */
-				s.io_open.format_type = OFC_SEMA_CALL_ARG_UNFORMATTED;
+				format_type_unformatted = true;
 
 				if (!ca_recl)
 				{
@@ -343,13 +343,6 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 					ofc_sema_stmt_io_open__cleanup(s);
 					return NULL;
 				}
-			}
-			else if (!ofc_typeval_character_equal_strz_ci(constant, "SEQUENTIAL"))
-			{
-				ofc_sparse_ref_error(stmt->src,
-					"ACCESS must be 'SEQUENTIAL' or 'DIRECT' in OPEN");
-				ofc_sema_stmt_io_open__cleanup(s);
-				return NULL;
 			}
 		}
 	}
@@ -384,19 +377,10 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 			const ofc_sema_typeval_t* constant
 				= ofc_sema_expr_constant(s.io_open.action);
 
-			if (ofc_typeval_character_equal_strz_ci(constant, "READWRITE"))
-			{
-				s.io_open.action_type = OFC_SEMA_CALL_ARG_READWRITE;
-			}
-			else if (ofc_typeval_character_equal_strz_ci(constant, "WRITE"))
-			{
-				s.io_open.action_type = OFC_SEMA_CALL_ARG_WRITE;
-			}
-			else if (ofc_typeval_character_equal_strz_ci(constant, "READ"))
-			{
-				s.io_open.action_type = OFC_SEMA_CALL_ARG_READ;
-			}
-			else
+			if (constant
+				&& !ofc_typeval_character_equal_strz_ci(constant, "READWRITE")
+				&& !ofc_typeval_character_equal_strz_ci(constant, "WRITE")
+				&& !ofc_typeval_character_equal_strz_ci(constant, "READ"))
 			{
 				ofc_sparse_ref_error(stmt->src,
 					"ACTION must be 'READ', 'WRITE' or 'READWRITE' in OPEN");
@@ -436,26 +420,20 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 			const ofc_sema_typeval_t* constant
 				= ofc_sema_expr_constant(s.io_open.form);
 
-			if (ofc_typeval_character_equal_strz_ci(constant, "FORMATTED"))
-			{
-				s.io_open.format_type = OFC_SEMA_CALL_ARG_FORMATTED;
-			}
-			else if (ofc_typeval_character_equal_strz_ci(constant, "UNFORMATTED"))
-			{
-				s.io_open.format_type = OFC_SEMA_CALL_ARG_UNFORMATTED;
-			}
-			else
+			format_type_unformatted = (constant
+				&& ofc_typeval_character_equal_strz_ci(constant, "UNFORMATTED"));
+			if (constant && !format_type_unformatted
+				&& !ofc_typeval_character_equal_strz_ci(constant, "FORMATTED"))
 			{
 				ofc_sparse_ref_error(stmt->src,
-					"FORM must be 'FORMATTED' or 'UNFORMATTED' in OPEN");
+					"FORM must be FORMATTED/UNFORMATTED in OPEN");
 				ofc_sema_stmt_io_open__cleanup(s);
 				return NULL;
 			}
 		}
 	}
 
-	if (ca_blank
-		&& (s.io_open.format_type != OFC_SEMA_CALL_ARG_FORMATTED))
+	if (ca_blank && format_type_unformatted)
 	{
 		ofc_sparse_ref_error(stmt->src,
 			"BLANK can only be specified for formatted I/O in OPEN");
@@ -492,22 +470,19 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 			const ofc_sema_typeval_t* constant
 				= ofc_sema_expr_constant(s.io_open.blank);
 
-			if (ofc_typeval_character_equal_strz_ci(constant, "ZERO"))
-			{
-				s.io_open.blank_type = OFC_SEMA_CALL_ARG_BLANK_ZERO;
-			}
-			else if (!ofc_typeval_character_equal_strz_ci(constant, "NULL"))
+			if (constant
+				&& !ofc_typeval_character_equal_strz_ci(constant, "ZERO")
+				&& !ofc_typeval_character_equal_strz_ci(constant, "NULL"))
 			{
 				ofc_sparse_ref_error(stmt->src,
-					"BLANK must be 'NULL' or 'ZERO' in OPEN");
+					"BLANK must be NULL/ZERO in OPEN");
 				ofc_sema_stmt_io_open__cleanup(s);
 				return NULL;
 			}
 		}
 	}
 
-	if (ca_delim
-		&& (s.io_open.format_type != OFC_SEMA_CALL_ARG_FORMATTED))
+	if (ca_delim && format_type_unformatted)
 	{
 		ofc_sparse_ref_error(stmt->src,
 			"DELIM can only be specified for formatted I/O in OPEN");
@@ -544,18 +519,13 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 			const ofc_sema_typeval_t* constant
 				= ofc_sema_expr_constant(s.io_open.delim);
 
-			if (ofc_typeval_character_equal_strz_ci(constant, "APOSTROPHE"))
-			{
-				s.io_open.delim_type = OFC_SEMA_CALL_ARG_DELIM_APOSTROPHE;
-			}
-			else if (ofc_typeval_character_equal_strz_ci(constant, "QUOTE"))
-			{
-				s.io_open.delim_type = OFC_SEMA_CALL_ARG_DELIM_QUOTE;
-			}
-			else if (!ofc_typeval_character_equal_strz_ci(constant, "NONE"))
+			if (constant
+				&& !ofc_typeval_character_equal_strz_ci(constant, "APOSTROPHE")
+				&& !ofc_typeval_character_equal_strz_ci(constant, "QUOTE")
+				&& !ofc_typeval_character_equal_strz_ci(constant, "NONE"))
 			{
 				ofc_sparse_ref_error(stmt->src,
-					"DELIM must be 'NULL' or 'ZERO' in OPEN");
+					"DELIM must be APOSTROPHE/QUOTE/NONE in OPEN");
 				ofc_sema_stmt_io_open__cleanup(s);
 				return NULL;
 			}
@@ -696,7 +666,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 		}
 	}
 
-	if (ca_pad && (s.io_open.format_type != OFC_SEMA_CALL_ARG_FORMATTED))
+	if (ca_pad && format_type_unformatted)
 	{
 		ofc_sparse_ref_error(stmt->src,
 			"PAD can only be specified for formatted I/O in OPEN");
@@ -733,21 +703,19 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 			const ofc_sema_typeval_t* constant
 				= ofc_sema_expr_constant(s.io_open.pad);
 
-			if (ofc_typeval_character_equal_strz_ci(constant, "NO"))
-			{
-				s.io_open.padding = OFC_SEMA_CALL_ARG_PAD_NO;
-			}
-			else if (!ofc_typeval_character_equal_strz_ci(constant, "YES"))
+			if (constant
+				&& !ofc_typeval_character_equal_strz_ci(constant, "NO")
+				&& !ofc_typeval_character_equal_strz_ci(constant, "YES"))
 			{
 				ofc_sparse_ref_error(stmt->src,
-					"PAD must be 'YES' or 'NO' in OPEN");
+					"PAD must be YES/NO in OPEN");
 				ofc_sema_stmt_io_open__cleanup(s);
 				return NULL;
 			}
 		}
 	}
 
-	if (ca_position && (s.io_open.access_type != OFC_SEMA_CALL_ARG_SEQUENTIAL))
+	if (ca_position && access_type_direct)
 	{
 		ofc_sparse_ref_error(stmt->src,
 			"POSITION can only be specified for files with sequential access in OPEN");
@@ -784,18 +752,13 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 			const ofc_sema_typeval_t* constant
 				= ofc_sema_expr_constant(s.io_open.position);
 
-			if (ofc_typeval_character_equal_strz_ci(constant, "REWIND"))
-			{
-				s.io_open.position_type = OFC_SEMA_CALL_ARG_REWIND;
-			}
-			else if (ofc_typeval_character_equal_strz_ci(constant, "APPEND"))
-			{
-				s.io_open.position_type = OFC_SEMA_CALL_ARG_APPEND;
-			}
-			else if (!ofc_typeval_character_equal_strz_ci(constant, "ASIS"))
+			if (constant
+				&& !ofc_typeval_character_equal_strz_ci(constant, "REWIND")
+				&& !ofc_typeval_character_equal_strz_ci(constant, "APPEND")
+				&& !ofc_typeval_character_equal_strz_ci(constant, "ASIS"))
 			{
 				ofc_sparse_ref_error(stmt->src,
-					"POSITION must be 'REWIND', 'APPEND' or 'ASIS' in OPEN");
+					"POSITION must be REWIND/APPEND/ASIS in OPEN");
 				ofc_sema_stmt_io_open__cleanup(s);
 				return NULL;
 			}
