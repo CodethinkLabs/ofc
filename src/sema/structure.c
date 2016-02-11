@@ -799,8 +799,8 @@ bool ofc_sema_structure_list_add(
 		return false;
 
 	ofc_sema_structure_t** nstructure
-		= (ofc_sema_structure_t**)malloc(
-			sizeof(ofc_sema_structure_t*) * (list->count + 1));
+		= (ofc_sema_structure_t**)realloc(list->structure,
+			(sizeof(ofc_sema_structure_t*) * (list->count + 1)));
 	if (!nstructure) return false;
 	list->structure = nstructure;
 
