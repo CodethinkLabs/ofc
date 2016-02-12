@@ -917,9 +917,47 @@ ofc_sema_lhs_t* ofc_sema_lhs_elem_get(
 			break;
 
 		case OFC_SEMA_LHS_ARRAY_SLICE:
-			/* TODO - SLICE - Convert offset to index and treat as index. */
-			break;
+		{
+			if (ofc_sema_type_is_procedure(lhs->data_type))
+				return NULL;
 
+			ofc_sema_structure_t* structure
+				= ofc_sema_lhs_structure(lhs);
+
+			unsigned base_count = 1;
+			if (structure)
+			{
+				unsigned scount;
+				if (!ofc_sema_structure_elem_count(
+					structure, &scount))
+					return NULL;
+
+				base_count *= scount;
+				if (base_count == 0)
+					return NULL;
+			}
+
+			unsigned base_offset = (offset % base_count);
+
+			ofc_sema_array_index_t* index
+				= ofc_sema_array_slice_index_from_offset(
+					lhs->slice.slice, (offset / base_count));
+			if (!index) return NULL;
+
+			ofc_sema_lhs_t* nlhs
+				= ofc_sema_lhs_index(lhs->parent, index);
+			if (!nlhs)
+			{
+				ofc_sema_array_index_delete(index);
+				return NULL;
+			}
+
+			ofc_sema_lhs_t* rlhs
+				= ofc_sema_lhs_elem_get(
+					nlhs, base_offset);
+			ofc_sema_lhs_delete(nlhs);
+			return rlhs;
+		}
 		case OFC_SEMA_LHS_SUBSTRING:
 			if (offset != 0)
 				return NULL;

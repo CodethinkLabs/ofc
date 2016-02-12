@@ -132,6 +132,9 @@ ofc_sema_array_t* ofc_sema_array_slice_dims(
 	const ofc_sema_array_slice_t* slice,
 	const ofc_sema_array_t* array);
 
+ofc_sema_array_index_t* ofc_sema_array_slice_index_from_offset(
+	const ofc_sema_array_slice_t* slice, unsigned offset);
+
 bool ofc_sema_array_slice_print(
 	ofc_colstr_t* cs,
 	const ofc_sema_array_slice_t* slice);

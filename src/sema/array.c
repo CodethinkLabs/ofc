@@ -636,6 +636,77 @@ ofc_sema_array_index_t* ofc_sema_array_index_from_offset(
 	return index;
 }
 
+ofc_sema_array_index_t* ofc_sema_array_slice_index_from_offset(
+	const ofc_sema_array_slice_t* slice, unsigned offset)
+{
+	if (!slice) return NULL;
+
+	int      first[slice->dimensions];
+	unsigned count[slice->dimensions];
+
+	unsigned i;
+	for (i = 0; i < slice->dimensions; i++)
+	{
+		first[i] = 1;
+		if (slice->segment[i].first
+			&& !ofc_sema_expr_resolve_int(
+				slice->segment[i].first, &first[i]))
+			return NULL;
+
+		if(slice->segment[i].is_index)
+		{
+			count[i] = 0;
+			continue;
+		}
+
+		int last;
+		if (!ofc_sema_expr_resolve_int(
+			slice->segment[i].last, &last))
+			return NULL;
+
+		if (last < first[i])
+			return NULL;
+
+		count[i] = ((last + 1) - first[i]);
+	}
+
+	int idx[slice->dimensions];
+	for (i = 0; i < slice->dimensions; i++)
+	{
+		if (count[i] == 0)
+		{
+			idx[i] = first[i];
+			continue;
+		}
+
+		idx[i] = first[i] + (offset % count[i]);
+		offset /= count[i];
+
+	}
+
+	ofc_sema_array_index_t* index
+		= (ofc_sema_array_index_t*)malloc(sizeof(ofc_sema_array_index_t)
+				+ (slice->dimensions * sizeof(ofc_sema_expr_t*)));
+	if (!index) return NULL;
+
+	bool success = true;
+	index->dimensions = slice->dimensions;
+	for (i = 0; i < slice->dimensions; i++)
+	{
+		index->index[i] = ofc_sema_expr_integer(idx[i]);
+		if (!index->index[i])
+			success = false;
+	}
+
+	if (!success)
+	{
+		ofc_sema_array_index_delete(index);
+		return NULL;
+	}
+
+	return index;
+}
+
 bool ofc_sema_array_index_offset(
 	const ofc_sema_decl_t*        decl,
 	const ofc_sema_array_index_t* index,
@@ -822,7 +893,7 @@ ofc_sema_array_slice_t* ofc_sema_array_slice(
 				int alast;
 				if (ofc_sema_expr_resolve_int(
 					array->segment[i].last, &alast)
-					&& (sfirst >= alast))
+					&& (sfirst > alast))
 				{
 					ofc_sparse_ref_error(range->first->src,
 						"Array slice lower bound overflow");
@@ -862,7 +933,7 @@ ofc_sema_array_slice_t* ofc_sema_array_slice(
 				int alast;
 				if (ofc_sema_expr_resolve_int(
 					array->segment[i].last, &alast)
-					&& (slast >= alast))
+					&& (slast > alast))
 				{
 					ofc_sparse_ref_error(range->first->src,
 						"Array slice upper bound overflow");
