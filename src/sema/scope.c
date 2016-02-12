@@ -987,6 +987,20 @@ static bool ofc_sema_scope_body__print(
 	if (!cs || !scope)
 		return false;
 
+	switch (scope->type)
+	{
+		case OFC_SEMA_SCOPE_GLOBAL:
+		case OFC_SEMA_SCOPE_STMT_FUNC:
+			break;
+		default:
+			if (!ofc_colstr_newline(cs, indent, NULL)
+				|| !ofc_colstr_atomic_writef(cs, "IMPLICIT")
+				|| !ofc_colstr_atomic_writef(cs, " ")
+				|| !ofc_colstr_atomic_writef(cs, "NONE"))
+				return false;
+			break;
+	}
+
 	/* TODO - Use scope error printing preferably with source location. */
 
 	if (scope->structure && !ofc_sema_structure_list_print(
