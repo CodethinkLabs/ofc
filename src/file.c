@@ -234,6 +234,50 @@ bool ofc_file_get_position(
 }
 
 
+ofc_file_include_list_t* ofc_file_include_list_create(void)
+{
+	ofc_file_include_list_t* list
+		= (ofc_file_include_list_t*)malloc(
+			sizeof(ofc_file_include_list_t));
+	if (!list) return NULL;
+
+	list->count = 0;
+	list->include_path = NULL;
+	return list;
+}
+
+bool ofc_file_include_list_add(
+	ofc_file_include_list_t* list,
+	char* path)
+{
+	if (!list || !path)
+		return false;
+
+	char** nlist
+		= (char**)realloc(list->include_path,
+			(sizeof(char*) * (list->count + 1)));
+	if (!nlist) return NULL;
+
+	list->include_path = nlist;
+	list->include_path[list->count++] = strdup(path);
+
+	return true;
+}
+
+void ofc_file_include_list_delete(
+	ofc_file_include_list_t* list)
+{
+	if (!list)
+		return;
+
+	unsigned i;
+	for (i = 0; i < list->count; i++)
+		free(list->include_path[i]);
+
+	free(list->include_path);
+	free(list);
+}
+
 
 static bool line_empty(const char* ptr, unsigned len)
 {

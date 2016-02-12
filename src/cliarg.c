@@ -35,7 +35,7 @@ static bool set_global_opts__flag(
 			global->no_warn_name_keyword = true;
 			break;
 		case NO_WARN_PEDANTIC:
-			global->no_warn_equiv_type = true;
+			global->no_warn_equiv_type   = true;
 			global->no_warn_name_keyword = true;
 			break;
 		case PARSE_ONLY:
@@ -111,23 +111,45 @@ static bool set_lang_opts__num(
 	return true;
 }
 
+static bool set_lang_opts__str(
+	ofc_lang_opts_t* lang_opts,
+	int arg_type, char* str)
+{
+	if (!lang_opts)
+		return false;
+
+	switch (arg_type)
+	{
+		case INCLUDE:
+			printf("%s", str);
+			break;
+
+		default:
+			return false;
+	}
+
+	return true;
+}
+
+
 static const ofc_cliarg_body_t cliargs[] =
 {
-	/*ENUM                  NAME                    FLAG  DESCRIPTION                          PARAM_TYPE PARAMS EXCLUSIVE */
-	{ NO_WARN,              "no-warn",              '\0', "Suppress OFC warnings",                      GLOB_NONE, 0, true },
-	{ NO_WARN_EQUIV_TYPE,   "no-warn-equiv-type",   '\0', "Suppress EQUIVALENCE type mismatch warning", GLOB_NONE, 0, true },
-	{ NO_WARN_NAME_KEYWORD, "no-warn-name-keyword", '\0', "Suppress language keyword in name warning",  GLOB_NONE, 0, true },
-	{ NO_WARN_PEDANTIC,     "no-warn-pedantic",     '\0', "Suppress all pedantic warnings",             GLOB_NONE, 0, true },
-	{ PARSE_ONLY,           "parse-only",           '\0', "Runs the parser only",                       GLOB_NONE, 0, true },
-	{ PARSE_TREE,           "parse-tree",           '\0', "Prints the parse tree",                      GLOB_NONE, 0, true },
-	{ SEMA_TREE,            "sema-tree",            '\0', "Prints the semantic analysis tree",          GLOB_NONE, 0, true },
-	{ FIXED_FORM,           "free-form",            '\0', "Sets free form type",                        LANG_NONE, 0, true },
-	{ FREE_FORM,            "fixed-form",           '\0', "Sets fixed form type",                       LANG_NONE, 0, true },
-	{ TAB_FORM,             "tab-form",             '\0', "Sets tabbed form type",                      LANG_NONE, 0, true },
-	{ TAB_WIDTH,            "tab-width",            '\0', "Sets tab width <n>",                         LANG_INT,  1, true },
-	{ DEBUG,                "debug",                '\0', "Sets debug mode",                            LANG_NONE, 0, true },
-	{ COLUMNS,              "columns",              '\0', "Sets number of columns to <n>",              LANG_INT,  1, true },
-	{ CASE_SEN,             "case-sen",             '\0', "Sets case sensitive mode",                   LANG_NONE, 0, true },
+	/*ENUM                  NAME                    FLAG  DESCRIPTION                            PARAM_TYPE PARAMS EXCLUSIVE */
+	{ NO_WARN,              "no-warn",              '\0', "Suppress OFC warnings",                      GLOB_NONE, 0, true  },
+	{ NO_WARN_EQUIV_TYPE,   "no-warn-equiv-type",   '\0', "Suppress EQUIVALENCE type mismatch warning", GLOB_NONE, 0, true  },
+	{ NO_WARN_NAME_KEYWORD, "no-warn-name-keyword", '\0', "Suppress language keyword in name warning",  GLOB_NONE, 0, true  },
+	{ NO_WARN_PEDANTIC,     "no-warn-pedantic",     '\0', "Suppress all pedantic warnings",             GLOB_NONE, 0, true  },
+	{ PARSE_ONLY,           "parse-only",           '\0', "Runs the parser only",                       GLOB_NONE, 0, true  },
+	{ PARSE_TREE,           "parse-tree",           '\0', "Prints the parse tree",                      GLOB_NONE, 0, true  },
+	{ SEMA_TREE,            "sema-tree",            '\0', "Prints the semantic analysis tree",          GLOB_NONE, 0, true  },
+	{ FIXED_FORM,           "free-form",            '\0', "Sets free form type",                        LANG_NONE, 0, true  },
+	{ FREE_FORM,            "fixed-form",           '\0', "Sets fixed form type",                       LANG_NONE, 0, true  },
+	{ TAB_FORM,             "tab-form",             '\0', "Sets tabbed form type",                      LANG_NONE, 0, true  },
+	{ TAB_WIDTH,            "tab-width",            '\0', "Sets tab width <n>",                         LANG_INT,  1, true  },
+	{ DEBUG,                "debug",                '\0', "Sets debug mode",                            LANG_NONE, 0, true  },
+	{ COLUMNS,              "columns",              '\0', "Sets number of columns to <n>",              LANG_INT,  1, true  },
+	{ CASE_SEN,             "case-sen",             '\0', "Sets case sensitive mode",                   LANG_NONE, 0, true  },
+	{ INCLUDE,              "include",              '\0', "Set include paths <s>",                      LANG_STR,  1, false },
 };
 
 static const char *get_file_ext(const char *path)
@@ -191,6 +213,14 @@ static bool resolve_param_pos_int(const char* arg_string, int* param_int)
 	return false;
 }
 
+static bool resolve_param_str(const char* arg_string)
+{
+	if (!arg_string || (arg_string[0] == '-'))
+		return false;
+
+	return true;
+}
+
 static bool ofc_cliarg__apply(
 	ofc_global_opts_t* global_opts,
 	ofc_lang_opts_t* lang_opts,
@@ -209,6 +239,9 @@ static bool ofc_cliarg__apply(
 
 		case LANG_INT:
 			return set_lang_opts__num(lang_opts, arg_type, arg->value);
+
+		case LANG_STR:
+			return set_lang_opts__str(lang_opts, arg_type, arg->str);
 
 		default:
 			break;;
@@ -268,23 +301,45 @@ bool ofc_cliarg_parse(
 				}
 				i++;
 
-				if (arg_body->param_num > 1)
+				switch (arg_body->param_type)
 				{
-					/* TODO: Handle this if we have args with multiple values */
-					return false;
-				}
+					case GLOB_NONE:
+					case LANG_NONE:
+						resolved_arg = ofc_cliarg_create(arg_body, NULL);
+						break;
 
-				int param = -1;
-				if (arg_body->param_num > 0)
-				{
-					if (!resolve_param_pos_int(argv[i++], &param))
+					case LANG_INT:
 					{
-						fprintf(stderr, "Error: Expected parameter for argument: %s\n", argv[i]);
-						print_usage(program_name);
-						return false;
+						int param = -1;
+						if (!resolve_param_pos_int(argv[i++], &param))
+						{
+							fprintf(stderr, "Error: Expected parameter for argument: %s\n", argv[i]);
+							print_usage(program_name);
+							return false;
+						}
+						resolved_arg = ofc_cliarg_create(arg_body, &param);
+						break;
 					}
+
+					case LANG_STR:
+					{
+						if (resolve_param_str(argv[i]))
+						{
+							resolved_arg = ofc_cliarg_create(arg_body, argv[i]);
+							i++;
+						}
+						else
+						{
+							fprintf(stderr, "Error: Expected parameter for argument: %s\n", argv[i]);
+							print_usage(program_name);
+							return false;
+						}
+						break;
+					}
+
+					default:
+						break;
 				}
-				resolved_arg = ofc_cliarg_create(arg_body, param);
 
 				if (!resolved_arg
 					|| !ofc_cliarg_list_add(args_list, resolved_arg))
@@ -369,10 +424,20 @@ void print_usage(const char* name)
 	{
 		unsigned line_len = 0;
 
-		if (cliargs[i].param_type == LANG_INT)
-			line_len = printf("  --%s <n>", cliargs[i].name);
-		else
-			line_len = printf("  --%s", cliargs[i].name);
+		switch (cliargs[i].param_type)
+		{
+			case LANG_INT:
+				line_len = printf("  --%s <n>", cliargs[i].name);
+				break;
+
+			case LANG_STR:
+				line_len = printf("  --%s <s>", cliargs[i].name);
+				break;
+
+			default:
+				line_len = printf("  --%s", cliargs[i].name);
+				break;
+		}
 
 		for (; line_len < name_len; line_len++) printf(" ");
 
@@ -385,16 +450,33 @@ void print_usage(const char* name)
 	}
 }
 
+
 ofc_cliarg_t* ofc_cliarg_create(
 	const ofc_cliarg_body_t* arg_body,
-	int value)
+	const void* param)
 {
 	ofc_cliarg_t* arg = (ofc_cliarg_t*)malloc(sizeof(ofc_cliarg_t));
 	if (!arg)
 		return NULL;
 
 	arg->body = arg_body;
-	arg->value = value;
+
+	if (param)
+	{
+		switch (arg_body->param_type)
+		{
+			case LANG_INT:
+				arg->value = *((int*)param);
+				break;
+
+			case LANG_STR:
+				arg->str = strdup((char*)param);
+				break;
+
+			default:
+				return NULL;
+		}
+	}
 
 	return arg;
 }

@@ -42,6 +42,7 @@ typedef enum
 	DEBUG,
 	COLUMNS,
 	CASE_SEN,
+	INCLUDE,
 
 	INVALID
 } ofc_cliarg_e;
@@ -50,7 +51,8 @@ typedef enum
 {
 	GLOB_NONE = 0,
 	LANG_NONE,
-	LANG_INT
+	LANG_INT,
+	LANG_STR,
 
 } ofc_cliarg_param_e;
 
@@ -68,9 +70,12 @@ typedef struct
 typedef struct
 {
 	const ofc_cliarg_body_t* body;
-	int  value;
-	/* This will become a union when more argument
-	   value types are needed. */
+
+	union
+	{
+		int value;
+		char* str;
+	};
 } ofc_cliarg_t;
 
 typedef struct
@@ -90,7 +95,7 @@ void print_usage(const char* name);
 
 ofc_cliarg_t* ofc_cliarg_create(
 	const ofc_cliarg_body_t* arg_prop,
-	int value);
+	const void* param);
 void ofc_cliarg_delete(ofc_cliarg_t* arg);
 
 ofc_cliarg_list_t* ofc_cliarg_list_create(void);

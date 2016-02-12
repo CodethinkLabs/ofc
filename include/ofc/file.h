@@ -21,6 +21,12 @@
 
 typedef struct
 {
+	char**   include_path;
+	unsigned count;
+} ofc_file_include_list_t;
+
+typedef struct
+{
 	char*           path;
 	char*           include;
 	char*           strz;
@@ -47,6 +53,11 @@ bool ofc_file_get_position(
 	const ofc_file_t* file, const char* ptr,
 	unsigned* row, unsigned* col);
 
+ofc_file_include_list_t* ofc_file_include_list_create(void);
+bool ofc_file_include_list_add(
+	ofc_file_include_list_t* list, char* path);
+void ofc_file_include_list_delete(
+	ofc_file_include_list_t* list);
 
 #include <stdarg.h>
 
