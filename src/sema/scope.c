@@ -201,6 +201,32 @@ static bool ofc_sema_scope__body(
 	scope->stmt = ofc_sema_stmt_list(scope, body);
 	if (!scope->stmt) return false;
 
+	/* Declare arguments */
+	if (scope->args)
+	{
+		unsigned i;
+		for (i = 0; i < scope->args->count; i++)
+		{
+			if (scope->args->arg[i].alt_return)
+				continue;
+
+			ofc_sparse_ref_t name
+				= scope->args->arg[i].name;
+			const ofc_sema_decl_t* exist
+				= ofc_sema_scope_decl_find(
+					scope, name.string, true);
+			if (exist) continue;
+
+			ofc_sema_spec_t* spec
+				= ofc_sema_scope_spec_find_final(
+					scope, name);
+			ofc_sema_decl_t* decl = ofc_sema_decl_spec(
+				scope, name, spec, NULL);
+			ofc_sema_spec_delete(spec);
+			if (!decl) return false;
+		}
+	}
+
 	/* Declare unused specifiers which exist in COMMON blocks. */
 	if (scope->common)
 	{
