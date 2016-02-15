@@ -49,6 +49,11 @@ bool ofc_sema_stmt_equivalence(
 				"Invalid EQUIVALENCE element");
 			return false;
 		}
+		if (!ofc_sema_lhs_mark_used(base))
+		{
+			ofc_sema_lhs_delete(base);
+			return false;
+		}
 
 		if (list->count < 2)
 		{
@@ -82,6 +87,12 @@ bool ofc_sema_stmt_equivalence(
 			{
 				ofc_sparse_ref_error(list->lhs[i]->src,
 					"Invalid EQUIVALENCE element");
+				ofc_sema_equiv_delete(equiv);
+				return false;
+			}
+			if (!ofc_sema_lhs_mark_used(elhs))
+			{
+				ofc_sema_lhs_delete(elhs);
 				ofc_sema_equiv_delete(equiv);
 				return false;
 			}
