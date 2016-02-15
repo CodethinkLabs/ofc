@@ -233,7 +233,6 @@ bool ofc_sema_format_desc(
 	{
 		ofc_sparse_ref_warning(desc->src,
 			"Unexpected element in format descriptor");
-		return false;
 	}
 
 	/* The values of m, d, and e must not exceed

@@ -31,9 +31,9 @@ typedef struct
 static const ofc_parse_format_desc__map_t ofc_parse_format_desc__map[] =
 {
 	{ "I" , OFC_PARSE_FORMAT_DESC_INTEGER   , 1, 1, 0 },
-	{ "F" , OFC_PARSE_FORMAT_DESC_REAL      , 1, 1, 1 },
+	{ "F" , OFC_PARSE_FORMAT_DESC_REAL      , 1, 1, 0 },
 	{ "E" , OFC_PARSE_FORMAT_DESC_E         , 1, 1, 1 },
-	{ "D" , OFC_PARSE_FORMAT_DESC_D         , 1, 1, 1 },
+	{ "D" , OFC_PARSE_FORMAT_DESC_D         , 1, 1, 0 },
 	{ "G" , OFC_PARSE_FORMAT_DESC_G         , 1, 1, 1 },
 	{ "A" , OFC_PARSE_FORMAT_DESC_CHARACTER , 1, 0, 0 },
 	{ "L" , OFC_PARSE_FORMAT_DESC_LOGICAL   , 1, 0, 0 },
