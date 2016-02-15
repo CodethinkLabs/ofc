@@ -111,11 +111,11 @@ static bool set_lang_opts__num(
 	return true;
 }
 
-static bool set_lang_opts__str(
-	ofc_lang_opts_t* lang_opts,
+static bool set_file__str(
+	ofc_file_t* file,
 	int arg_type, char* str)
 {
-	if (!lang_opts)
+	if (!file)
 		return false;
 
 	switch (arg_type)
@@ -149,7 +149,7 @@ static const ofc_cliarg_body_t cliargs[] =
 	{ DEBUG,                "debug",                '\0', "Sets debug mode",                            LANG_NONE, 0, true  },
 	{ COLUMNS,              "columns",              '\0', "Sets number of columns to <n>",              LANG_INT,  1, true  },
 	{ CASE_SEN,             "case-sen",             '\0', "Sets case sensitive mode",                   LANG_NONE, 0, true  },
-	{ INCLUDE,              "include",              '\0', "Set include paths <s>",                      LANG_STR,  1, false },
+	{ INCLUDE,              "include",              '\0', "Set include paths <s>",                      FILE_STR,  1, false },
 };
 
 static const char *get_file_ext(const char *path)
@@ -224,6 +224,7 @@ static bool resolve_param_str(const char* arg_string)
 static bool ofc_cliarg__apply(
 	ofc_global_opts_t* global_opts,
 	ofc_lang_opts_t* lang_opts,
+	ofc_file_t* file,
 	const ofc_cliarg_t* arg)
 {
 	ofc_cliarg_e       arg_type   = arg->body->type;
@@ -240,8 +241,8 @@ static bool ofc_cliarg__apply(
 		case LANG_INT:
 			return set_lang_opts__num(lang_opts, arg_type, arg->value);
 
-		case LANG_STR:
-			return set_lang_opts__str(lang_opts, arg_type, arg->str);
+		case FILE_STR:
+			return set_file__str(file, arg_type, arg->str);
 
 		default:
 			break;;
@@ -253,12 +254,13 @@ static bool ofc_cliarg__apply(
 static bool ofc_cliarg_list__apply(
 	ofc_global_opts_t* global_opts,
 	ofc_lang_opts_t* lang_opts,
+	ofc_file_t* file,
 	ofc_cliarg_list_t* list)
 {
 	unsigned i;
 	for (i = 0; i < list->count; i++)
 	{
-		if (!ofc_cliarg__apply(global_opts, lang_opts, list->arg[i]))
+		if (!ofc_cliarg__apply(global_opts, lang_opts, file, list->arg[i]))
 			return false;
 	}
 
@@ -321,7 +323,7 @@ bool ofc_cliarg_parse(
 						break;
 					}
 
-					case LANG_STR:
+					case FILE_STR:
 					{
 						if (resolve_param_str(argv[i]))
 						{
@@ -390,7 +392,7 @@ bool ofc_cliarg_parse(
 		&& (strcasecmp(source_file_ext, "F90") == 0))
 		*lang_opts = OFC_LANG_OPTS_F90;
 
-	if (!ofc_cliarg_list__apply(global_opts, lang_opts, args_list))
+	if (!ofc_cliarg_list__apply(global_opts, lang_opts, *file, args_list))
 		return false;
 
 	ofc_cliarg_list_delete(args_list);
@@ -430,7 +432,7 @@ void print_usage(const char* name)
 				line_len = printf("  --%s <n>", cliargs[i].name);
 				break;
 
-			case LANG_STR:
+			case FILE_STR:
 				line_len = printf("  --%s <s>", cliargs[i].name);
 				break;
 
@@ -469,7 +471,7 @@ ofc_cliarg_t* ofc_cliarg_create(
 				arg->value = *((int*)param);
 				break;
 
-			case LANG_STR:
+			case FILE_STR:
 				arg->str = strdup((char*)param);
 				break;
 
@@ -486,7 +488,7 @@ void ofc_cliarg_delete(ofc_cliarg_t* arg)
 	if (!arg)
 		return;
 
-	if (arg->body->param_type == LANG_STR)
+	if (arg->body->param_type == FILE_STR)
 		free (arg->str);
 
 	free(arg);

@@ -52,7 +52,7 @@ typedef enum
 	GLOB_NONE = 0,
 	LANG_NONE,
 	LANG_INT,
-	LANG_STR,
+	FILE_STR,
 
 } ofc_cliarg_param_e;
 
