@@ -394,6 +394,21 @@ bool ofc_sema_scope_subroutine(
 			ofc_sema_scope_delete(sub_scope);
 			return false;
 		}
+
+		unsigned i;
+		for (i = 0; i < sub_scope->args->count; i++)
+		{
+			if (sub_scope->args->arg[i].alt_return
+				|| ofc_sparse_ref_empty(sub_scope->args->arg[i].name))
+				continue;
+
+			if (!ofc_sema_scope_spec_modify(
+				sub_scope, sub_scope->args->arg[i].name))
+			{
+				ofc_sema_scope_delete(sub_scope);
+				return false;
+			}
+		}
 	}
 
 	if (!ofc_sema_scope__body(
@@ -439,6 +454,21 @@ bool ofc_sema_scope_function(
 		{
 			ofc_sema_scope_delete(func_scope);
 			return false;
+		}
+
+		unsigned i;
+		for (i = 0; i < func_scope->args->count; i++)
+		{
+			if (func_scope->args->arg[i].alt_return
+				|| ofc_sparse_ref_empty(func_scope->args->arg[i].name))
+				continue;
+
+			if (!ofc_sema_scope_spec_modify(
+				func_scope, func_scope->args->arg[i].name))
+			{
+				ofc_sema_scope_delete(func_scope);
+				return false;
+			}
 		}
 	}
 

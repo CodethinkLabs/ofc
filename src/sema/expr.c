@@ -1006,14 +1006,21 @@ static ofc_sema_expr_t* ofc_sema_expr__variable(
 		*name, &base_name))
 		return NULL;
 
-	const ofc_sema_intrinsic_t* intrinsic
-		= ofc_sema_intrinsic(scope, base_name.string);
+	const ofc_sema_spec_t* spec
+		= ofc_sema_scope_spec_find(scope, base_name);
 	const ofc_sema_decl_t* decl
 		= ofc_sema_scope_decl_find(
 			scope, base_name.string, false);
 
+	const ofc_sema_intrinsic_t* intrinsic = NULL;
+	if (!spec && !decl)
+	{
+		intrinsic = ofc_sema_intrinsic(
+			scope, base_name.string);
+	}
+
 	ofc_sema_expr_t* expr;
-	if (intrinsic && !decl
+	if (intrinsic
 		&& (name->type == OFC_PARSE_LHS_ARRAY))
 	{
 		expr = ofc_sema_expr__intrinsic(
@@ -1040,16 +1047,10 @@ static ofc_sema_expr_t* ofc_sema_expr__variable(
 			is_array = ofc_sema_decl_is_array(decl);
 			is_function = ofc_sema_decl_is_function(decl);
 		}
-		else
+		else if (spec)
 		{
-			const ofc_sema_spec_t* spec
-				= ofc_sema_scope_spec_modify(
-					scope, base_name);
-			if (spec)
-			{
-				is_array    = (spec->array != NULL);
-				is_function = (spec->is_intrinsic || spec->is_external);
-			}
+			is_array    = (spec->array != NULL);
+			is_function = (spec->is_intrinsic || spec->is_external);
 		}
 
 		if ((is_function || !is_array)
@@ -1063,10 +1064,6 @@ static ofc_sema_expr_t* ofc_sema_expr__variable(
 						  returning arrays or structures. */
 				return NULL;
 			}
-
-			const ofc_sema_spec_t* espec
-				= ofc_sema_scope_spec_find(
-					scope, base_name);
 
 			ofc_sema_spec_t* fspec
 				= ofc_sema_scope_spec_find_final(
@@ -1089,7 +1086,7 @@ static ofc_sema_expr_t* ofc_sema_expr__variable(
 				ofc_sparse_ref_error(name->src,
 					"Invalid invocation of function");
 			}
-			else if (!espec)
+			else if (!spec)
 			{
 				ofc_sparse_ref_warning(name->src,
 					"Implicit function declaration");
