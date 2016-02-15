@@ -185,6 +185,9 @@ bool ofc_sema_lhs_list_init(
 	ofc_sema_lhs_list_t* lhs,
 	const ofc_sema_expr_list_t* init);
 
+bool ofc_sema_lhs_list_mark_used(
+	ofc_sema_lhs_list_t* lhs);
+
 bool ofc_sema_lhs_list_print(
 	ofc_colstr_t* cs,
 	const ofc_sema_lhs_list_t* lhs_list);

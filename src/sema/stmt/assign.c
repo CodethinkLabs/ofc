@@ -26,9 +26,10 @@ ofc_sema_stmt_t* ofc_sema_stmt_assign(
 		return false;
 
 	ofc_sema_stmt_t s;
-	s.assign.dest = ofc_sema_scope_decl_find(
-		scope, stmt->assign.variable.string, false);
-	if (!s.assign.dest)
+	ofc_sema_decl_t* dest
+		= ofc_sema_scope_decl_find_modify(
+			scope, stmt->assign.variable.string, false);
+	if (!dest)
 	{
 		ofc_sema_spec_t* spec = ofc_sema_scope_spec_modify(
 			scope, stmt->assign.variable);
@@ -46,12 +47,11 @@ ofc_sema_stmt_t* ofc_sema_stmt_assign(
 			spec->type = OFC_SEMA_TYPE_INTEGER;
 		}
 
-		ofc_sema_decl_t* idecl = ofc_sema_decl_spec(
+		dest = ofc_sema_decl_spec(
 			scope, stmt->assign.variable, spec, NULL);
-		if (!idecl) return false;
-
-		s.assign.dest = idecl;
+		if (!dest) return false;
 	}
+	s.assign.dest = dest;
 
 	s.assign.label = stmt->assign.label;
 
@@ -70,6 +70,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_assign(
 		= ofc_sema_stmt_alloc(s);
 	if (!as) return NULL;
 
+	dest->used = true;
 	return as;
 }
 

@@ -1224,6 +1224,12 @@ static ofc_sema_expr_t* ofc_sema_expr__implicit_do(
 		ofc_sema_expr_delete(expr);
 		return NULL;
 	}
+	if (!ofc_sema_lhs_mark_used(iter_lhs))
+	{
+		ofc_sema_lhs_delete(iter_lhs);
+		ofc_sema_expr_delete(expr);
+		return NULL;
+	}
 
 	if (iter_lhs->type != OFC_SEMA_LHS_DECL)
 	{

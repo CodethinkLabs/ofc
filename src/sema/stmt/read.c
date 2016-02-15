@@ -549,7 +549,9 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 		s.io_read.iolist
 			= ofc_sema_lhs_list_id(
 				scope, stmt->io_read.iolist);
-		if (!s.io_read.iolist)
+		if (!s.io_read.iolist
+			|| !ofc_sema_lhs_list_mark_used(
+				s.io_read.iolist))
 		{
 			ofc_sema_stmt_io_read__cleanup(s);
 			return NULL;

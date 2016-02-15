@@ -51,7 +51,7 @@ ofc_sema_decl_t* ofc_sema_decl_create(
 	if (!decl) return NULL;
 
 	decl->type = type;
-	decl->name = name.string;
+	decl->name = name;
 
 	decl->func      = NULL;
 	decl->array     = NULL;
@@ -75,6 +75,7 @@ ofc_sema_decl_t* ofc_sema_decl_create(
 	decl->is_volatile  = false;
 	decl->is_automatic = false;
 	decl->is_target    = false;
+	decl->is_argument  = false;
 	decl->is_return    = false;
 	decl->has_spec     = false;
 
@@ -1722,7 +1723,7 @@ const ofc_sema_type_t* ofc_sema_decl_base_type(
 static const ofc_str_ref_t* ofc_sema_decl__key(
 	const ofc_sema_decl_t* decl)
 {
-	return (decl ? &decl->name : NULL);
+	return (decl ? &decl->name.string : NULL);
 }
 
 bool ofc_sema_decl_list__remap(
@@ -1812,7 +1813,7 @@ bool ofc_sema_decl_list_add(
 
 	/* Check for duplicate definitions. */
 	if (ofc_sema_decl_list_find(
-		list, decl->name))
+		list, decl->name.string))
 		return false;
 
 	ofc_sema_decl_t** ndecl
@@ -1840,7 +1841,7 @@ bool ofc_sema_decl_list_add_ref(
 
 	/* Check for duplicate definitions. */
 	if (ofc_sema_decl_list_find(
-		list, decl->name))
+		list, decl->name.string))
 		return false;
 
 	const ofc_sema_decl_t** ndecl
@@ -1886,11 +1887,8 @@ const ofc_hashmap_t* ofc_sema_decl_list_map(
 bool ofc_sema_decl_print_name(ofc_colstr_t* cs,
 	const ofc_sema_decl_t* decl)
 {
-	if (!decl)
-		return false;
-
-	return ofc_colstr_atomic_writef(cs, "%.*s",
-		decl->name.size, decl->name.base);
+	if (!decl) return false;
+	return ofc_sparse_ref_print(cs, decl->name);
 }
 
 bool ofc_sema_decl_print(ofc_colstr_t* cs,
@@ -2162,7 +2160,7 @@ static bool ofc_sema_decl_print_data_init__ssn(
 
 	*first = false;
 
-	return (ofc_str_ref_print(cs, decl->name)
+	return (ofc_sparse_ref_print(cs, decl->name)
 		&& ofc_colstr_atomic_writef(cs, "(")
 		&& ofc_colstr_atomic_writef(cs, "%u", (base + 1))
 		&& ofc_colstr_atomic_writef(cs, ":")
@@ -2486,12 +2484,14 @@ bool ofc_sema_decl_list_stmt_func_print(
 			&& (decl->func->type == OFC_SEMA_SCOPE_STMT_FUNC))
 		{
 			if (!ofc_colstr_newline(cs, indent, NULL)
-				|| !ofc_colstr_atomic_writef(cs, "%.*s(",
-					decl->name.size, decl->name.base)
+				|| !ofc_sema_decl_print_name(cs, decl)
+				|| !ofc_colstr_atomic_writef(cs, "(")
 				|| (decl->func->args && !ofc_sema_arg_list_print(cs,
 					decl->func->args))
 				|| !ofc_colstr_atomic_writef(cs, ")")
-				|| !ofc_colstr_atomic_writef(cs, " = ")
+				|| !ofc_colstr_atomic_writef(cs, " ")
+				|| !ofc_colstr_atomic_writef(cs, "=")
+				|| !ofc_colstr_atomic_writef(cs, " ")
 				|| !ofc_sema_scope_print(cs, indent, decl->func))
 				return false;
 		}

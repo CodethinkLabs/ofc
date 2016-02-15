@@ -500,6 +500,8 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 					: ofc_str_ref_equal_ci(arg.name.string, lhs->variable.string));
 			}
 		}
+		if (is_argument)
+			decl->is_argument = true;
 
 		if (is_expr && !is_dummy_arg
 			&& !ofc_sema_decl_is_procedure(decl)
@@ -540,7 +542,7 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 	slhs->data_type = decl->type;
 	slhs->refcnt    = 0;
 
-	if (is_expr)
+	if (is_expr || is_dummy_arg)
 		decl->used = true;
 	return slhs;
 }
@@ -626,6 +628,12 @@ static ofc_sema_lhs_t* ofc_sema_lhs__implicit_do(
 		scope, id->init->name);
 	if (!iter_lhs)
 	{
+		ofc_sema_lhs_delete(lhs);
+		return NULL;
+	}
+	if (!ofc_sema_lhs_mark_used(iter_lhs))
+	{
+		ofc_sema_lhs_delete(iter_lhs);
 		ofc_sema_lhs_delete(lhs);
 		return NULL;
 	}
@@ -1513,12 +1521,20 @@ bool ofc_sema_lhs_mark_used(
 	if (!lhs)
 		return false;
 
-	if (lhs->type == OFC_SEMA_LHS_DECL)
+	switch (lhs->type)
 	{
-		if (!lhs->decl)
-			return false;
-		lhs->decl->used = true;
-		return true;
+		case OFC_SEMA_LHS_DECL:
+			if (!lhs->decl)
+				return false;
+			lhs->decl->used = true;
+			return true;
+
+		case OFC_SEMA_LHS_IMPLICIT_DO:
+			return ofc_sema_lhs_mark_used(
+				lhs->implicit_do.lhs);
+
+		default:
+			break;
 	}
 
 	return ofc_sema_lhs_mark_used(
@@ -1959,6 +1975,24 @@ bool ofc_sema_lhs_list_init(
 	}
 
 	return true;
+}
+
+
+bool ofc_sema_lhs_list_mark_used(
+	ofc_sema_lhs_list_t* lhs)
+{
+	if (!lhs)
+		return false;
+
+	bool success = true;
+	unsigned i;
+	for (i = 0; i < lhs->count; i++)
+	{
+		if (!ofc_sema_lhs_mark_used(lhs->lhs[i]))
+			success = false;
+	}
+
+	return success;
 }
 
 

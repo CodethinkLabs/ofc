@@ -30,6 +30,12 @@ static bool ofc_sema_stmt__loop_control(
 		scope, parse_init->name);
 	if (!*sema_iter) return false;
 
+	if (!ofc_sema_lhs_mark_used(*sema_iter))
+	{
+		ofc_sema_lhs_delete(*sema_iter);
+		return false;
+	}
+
 	const ofc_sema_type_t* dtype
 		= ofc_sema_lhs_type(*sema_iter);
 	if (!ofc_sema_type_is_scalar(dtype))

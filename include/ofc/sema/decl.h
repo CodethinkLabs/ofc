@@ -38,7 +38,7 @@ typedef struct
 struct ofc_sema_decl_s
 {
 	const ofc_sema_type_t* type;
-	ofc_str_ref_t          name;
+	ofc_sparse_ref_t       name;
 
 	ofc_sema_scope_t*     func;
 	ofc_sema_array_t*     array;
@@ -61,6 +61,7 @@ struct ofc_sema_decl_s
 
 	bool is_target;
 
+	bool is_argument;
 	bool is_return;
 	bool has_spec;
 

@@ -212,18 +212,20 @@ static bool ofc_sema_scope__body(
 
 			ofc_sparse_ref_t name
 				= scope->args->arg[i].name;
-			const ofc_sema_decl_t* exist
-				= ofc_sema_scope_decl_find(
+			ofc_sema_decl_t* decl
+				= ofc_sema_scope_decl_find_modify(
 					scope, name.string, true);
-			if (exist) continue;
-
-			ofc_sema_spec_t* spec
-				= ofc_sema_scope_spec_find_final(
-					scope, name);
-			ofc_sema_decl_t* decl = ofc_sema_decl_spec(
-				scope, name, spec, NULL);
-			ofc_sema_spec_delete(spec);
-			if (!decl) return false;
+			if (!decl)
+			{
+				ofc_sema_spec_t* spec
+					= ofc_sema_scope_spec_find_final(
+						scope, name);
+				decl = ofc_sema_decl_spec(
+					scope, name, spec, NULL);
+				ofc_sema_spec_delete(spec);
+				if (!decl) return false;
+			}
+			decl->is_argument = true;
 		}
 	}
 
@@ -265,9 +267,71 @@ static bool ofc_sema_scope__body(
 		(void*)ofc_sema_scope__body_scan_equivalence))
 		return false;
 
-	/* TODO - Check for unused specifiers. */
+	/* Warn about unused specifiers. */
+	if (scope->spec && scope->spec->list)
+	{
+		unsigned i;
+		for (i = 0; i < scope->spec->list->count; i++)
+		{
+			const ofc_sema_spec_t* spec
+				= scope->spec->list->spec[i];
+			if (!spec) continue;
 
-	/* TODO - Check declarations exist and are used for FUNCTION arguments. */
+			if (ofc_sparse_ref_empty(spec->name))
+				continue;
+
+			const ofc_sema_decl_t* decl
+				= ofc_sema_scope_decl_find(
+					scope, spec->name.string, true);
+			if (!decl)
+			{
+				ofc_sparse_ref_warning(spec->name,
+					"Variable '%.*s' specified but not used",
+					spec->name.string.size,
+					spec->name.string.base);
+			}
+		}
+	}
+
+	/* Warn about unused declarations. */
+	if (scope->decl)
+	{
+		unsigned i;
+		for (i = 0; i < scope->decl->count; i++)
+		{
+			const ofc_sema_decl_t* decl
+				= scope->decl->decl_ref[i];
+			if (!decl || decl->used
+				|| ofc_sparse_ref_empty(decl->name))
+				continue;
+
+			/* TODO - Warn properly about unreferenced procedures. */
+			if(ofc_sema_decl_is_procedure(decl))
+				continue;
+
+			if (decl->is_argument)
+			{
+				ofc_sparse_ref_warning(decl->name,
+					"Unused argument '%.*s'",
+					decl->name.string.size,
+					decl->name.string.base);
+			}
+			else if (decl->is_return)
+			{
+				ofc_sparse_ref_warning(decl->name,
+					"FUNCTION '%.*s' provides return value",
+					decl->name.string.size,
+					decl->name.string.base);
+			}
+			else
+			{
+				ofc_sparse_ref_warning(decl->name,
+					"Variable '%.*s' declared but not used",
+					decl->name.string.size,
+					decl->name.string.base);
+			}
+		}
+	}
 
 	return true;
 }
@@ -378,7 +442,6 @@ bool ofc_sema_scope_function(
 		}
 	}
 
-
 	if (stmt->program.type)
 	{
 		ofc_sema_spec_t* spec
@@ -482,6 +545,7 @@ bool ofc_sema_scope_function(
 			return false;
 		}
 	}
+	decl->is_return = true;
 
 	if (!ofc_sema_decl_init_func(
 		decl, func_scope))
@@ -1026,8 +1090,6 @@ static bool ofc_sema_scope_body__print(
 				return false;
 			break;
 	}
-
-	/* TODO - Use scope error printing preferably with source location. */
 
 	if (scope->structure && !ofc_sema_structure_list_print(
 		cs, indent, scope->structure))

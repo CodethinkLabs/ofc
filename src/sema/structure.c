@@ -23,7 +23,7 @@ static const ofc_str_ref_t* ofc_structure__member_name(
 		return NULL;
 	return (member->is_structure
 		? &member->structure->name.string
-		: &member->decl->name);
+		: &member->decl->name.string);
 }
 
 
