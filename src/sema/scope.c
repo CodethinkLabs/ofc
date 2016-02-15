@@ -302,6 +302,7 @@ static bool ofc_sema_scope__body(
 			const ofc_sema_decl_t* decl
 				= scope->decl->decl_ref[i];
 			if (!decl || decl->used
+				|| decl->is_common
 				|| ofc_sparse_ref_empty(decl->name))
 				continue;
 

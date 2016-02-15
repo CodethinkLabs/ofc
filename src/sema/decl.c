@@ -73,6 +73,7 @@ ofc_sema_decl_t* ofc_sema_decl_create(
 	decl->is_volatile  = false;
 	decl->is_automatic = false;
 	decl->is_target    = false;
+	decl->is_common    = false;
 	decl->is_argument  = false;
 	decl->is_return    = false;
 	decl->has_spec     = false;
@@ -327,6 +328,8 @@ static ofc_sema_decl_t* ofc_sema_decl__spec(
 			/* This should never happen. */
 			abort();
 		}
+
+		decl->is_common = true;
 	}
 
 	return decl;
