@@ -363,7 +363,7 @@ bool ofc_cliarg_parse(
 						print_usage(program_name);
 						return false;
 					}
-					// TODO - Add support for single character flags.
+					/* TODO - Add support for single character flags. */
 				}
 				i++;
 			}
@@ -485,6 +485,9 @@ void ofc_cliarg_delete(ofc_cliarg_t* arg)
 {
 	if (!arg)
 		return;
+
+	if (arg->body->param_type == LANG_STR)
+		free (arg->str);
 
 	free(arg);
 }
