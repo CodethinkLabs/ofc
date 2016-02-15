@@ -224,7 +224,11 @@ static bool ofc_sema_structure__member_add(
 				ofc_structure__member_name(member));
 		if (emember)
 		{
-			/* TODO - STRUCTURE - Error about duplicate structure member. */
+			ofc_sparse_ref_t ref = (member->is_structure
+				? member->structure->name
+				: member->decl->name);
+			ofc_sparse_ref_error(ref,
+				"Duplicate structure member declaration");
 			return false;
 		}
 	}
