@@ -67,8 +67,6 @@ ofc_sema_decl_t* ofc_sema_decl_create(
 		decl->init.expr = NULL;
 	}
 
-	decl->equiv = NULL;
-
 	decl->is_parameter = false;
 
 	decl->is_static    = false;
@@ -899,7 +897,6 @@ void ofc_sema_decl_delete(
 	ofc_sema_array_delete(decl->array);
 	ofc_sema_structure_delete(decl->structure);
 	ofc_sema_scope_delete(decl->func);
-	ofc_sema_equiv_delete(decl->equiv);
 	free(decl);
 }
 

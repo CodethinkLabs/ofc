@@ -45,8 +45,8 @@ void ofc_sema_common_delete(
 }
 
 bool ofc_sema_common_add(
-	ofc_sema_common_t*     common,
-	ofc_sema_spec_t* spec)
+	ofc_sema_common_t* common,
+	ofc_sema_spec_t*   spec)
 {
 	if (!common || !spec)
 		return false;

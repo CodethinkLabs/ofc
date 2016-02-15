@@ -65,8 +65,6 @@ struct ofc_sema_decl_s
 	bool is_return;
 	bool has_spec;
 
-	ofc_sema_equiv_t* equiv;
-
 	bool used;
 
 	unsigned refcnt;
