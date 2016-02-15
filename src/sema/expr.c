@@ -1064,6 +1064,10 @@ static ofc_sema_expr_t* ofc_sema_expr__variable(
 				return NULL;
 			}
 
+			const ofc_sema_spec_t* espec
+				= ofc_sema_scope_spec_find(
+					scope, base_name);
+
 			ofc_sema_spec_t* fspec
 				= ofc_sema_scope_spec_find_final(
 					scope, base_name);
@@ -1085,7 +1089,7 @@ static ofc_sema_expr_t* ofc_sema_expr__variable(
 				ofc_sparse_ref_error(name->src,
 					"Invalid invocation of function");
 			}
-			else
+			else if (!espec)
 			{
 				ofc_sparse_ref_warning(name->src,
 					"Implicit function declaration");

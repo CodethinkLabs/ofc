@@ -832,6 +832,20 @@ static ofc_sema_spec_t* ofc_sema_scope_spec__find(
 	return n;
 }
 
+const ofc_sema_spec_t* ofc_sema_scope_spec_find(
+	const ofc_sema_scope_t* scope, ofc_sparse_ref_t name)
+{
+	if (!scope || ofc_sparse_ref_empty(name))
+		return NULL;
+
+	if (!scope->spec)
+		return ofc_sema_scope_spec_find(
+			scope->parent, name);
+
+	return ofc_hashmap_find(
+		scope->spec->map, &name.string);
+}
+
 ofc_sema_spec_t* ofc_sema_scope_spec_modify(
 	ofc_sema_scope_t* scope, ofc_sparse_ref_t name)
 {
