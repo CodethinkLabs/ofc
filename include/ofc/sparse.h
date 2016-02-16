@@ -50,6 +50,8 @@ const char* ofc_sparse_parent_pointer(
 
 ofc_lang_opts_t ofc_sparse_lang_opts(const ofc_sparse_t* sparse);
 
+const ofc_file_t* ofc_sparse_file(const ofc_sparse_t* sparse);
+
 const char* ofc_sparse_get_include(
 	const ofc_sparse_t* sparse);
 char* ofc_sparse_include_path(

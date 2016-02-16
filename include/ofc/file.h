@@ -21,23 +21,27 @@
 
 typedef struct
 {
-	char**   include_path;
+	char**   path;
 	unsigned count;
 } ofc_file_include_list_t;
 
-typedef struct
+typedef struct ofc_file_s ofc_file_t;
+
+struct ofc_file_s
 {
-	char*           path;
-	char*           include;
-	char*           strz;
-	ofc_lang_opts_t opts;
-	unsigned        size;
-	unsigned        ref;
-} ofc_file_t;
+	const ofc_file_t*        parent;
+
+	char*                    path;
+	ofc_file_include_list_t* include;
+	char*                    strz;
+	ofc_lang_opts_t          opts;
+	unsigned                 size;
+	unsigned                 ref;
+};
 
 /* Path must be valid for as long as the ofc_file_t* is */
 ofc_file_t* ofc_file_create(const char* path, ofc_lang_opts_t opts);
-ofc_file_t* ofc_file_create_include(const char* path, ofc_lang_opts_t opts, const char* include);
+ofc_file_t* ofc_file_create_include(const char* path, ofc_lang_opts_t opts, const ofc_file_t* parent_file);
 bool        ofc_file_reference(ofc_file_t* file);
 void        ofc_file_delete(ofc_file_t* file);
 
@@ -56,6 +60,8 @@ bool ofc_file_get_position(
 ofc_file_include_list_t* ofc_file_include_list_create(void);
 bool ofc_file_include_list_add(
 	ofc_file_include_list_t* list, char* path);
+ofc_file_include_list_t* ofc_file_include_list_dup(
+	const ofc_file_include_list_t* source);
 void ofc_file_include_list_delete(
 	ofc_file_include_list_t* list);
 

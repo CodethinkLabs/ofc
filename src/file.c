@@ -71,6 +71,7 @@ ofc_file_t* ofc_file_create(const char* path, ofc_lang_opts_t opts)
 	file->strz = ofc_file__read(path, &file->size);
 	file->opts = opts;
 
+	file->parent = NULL;
 	file->include = NULL;
 
 	file->ref = 0;
@@ -83,77 +84,6 @@ ofc_file_t* ofc_file_create(const char* path, ofc_lang_opts_t opts)
 
 	return file;
 }
-
-ofc_file_t* ofc_file_create_include(
-	const char* path, ofc_lang_opts_t opts, const char* include)
-{
-	ofc_file_t* file = ofc_file_create(path, opts);
-	if (!include) return file;
-	if (!file) return NULL;
-
-	file->include = strdup(include);
-	if (!file->include)
-	{
-		ofc_file_delete(file);
-		return NULL;
-	}
-
-	return file;
-}
-
-bool ofc_file_reference(ofc_file_t* file)
-{
-	if (!file)
-		return false;
-
-	unsigned nref = file->ref + 1;
-	if (nref == 0) return false;
-
-	file->ref += 1;
-	return true;
-}
-
-void ofc_file_delete(ofc_file_t* file)
-{
-	if (!file)
-		return;
-
-	if (file->ref > 0)
-	{
-		file->ref -= 1;
-		return;
-	}
-
-	free(file->strz);
-	free(file->path);
-	free(file->include);
-	free(file);
-}
-
-
-
-const char* ofc_file_get_path(const ofc_file_t* file)
-{
-	return (file ? file->path : NULL);
-}
-
-const char* ofc_file_get_include(const ofc_file_t* file)
-{
-	if (!file)
-		return NULL;
-	return (file->include ? file->include : file->path);
-}
-
-const char* ofc_file_get_strz(const ofc_file_t* file)
-{
-	return (file ? file->strz : NULL);
-}
-
-ofc_lang_opts_t ofc_file_get_lang_opts(const ofc_file_t* file)
-{
-	return (file ? file->opts : OFC_LANG_OPTS_F77);
-}
-
 
 static char* ofc_file__include_path(
 	const char* file, const char* path)
@@ -184,20 +114,103 @@ static char* ofc_file__include_path(
 	return rpath;
 }
 
-char* ofc_file_include_path(
-	const ofc_file_t* file, const char* path)
+static char* ofc_file__base_parent_path(
+	const ofc_file_t* file)
 {
-	if (!file)
-		return strdup(path);
+    if (file->parent)
+		return ofc_file__base_parent_path(file->parent);
 
-	if (file->include)
-		return ofc_file__include_path(
-			file->include, path);
-
-	return ofc_file__include_path(
-		file->path, path);
+	return file->path;
 }
 
+ofc_file_t* ofc_file_create_include(
+	const char* path, ofc_lang_opts_t opts, const ofc_file_t* parent_file)
+{
+	ofc_file_t* file = NULL;
+
+	if (parent_file && parent_file->include)
+	{
+		ofc_file_include_list_t* include = parent_file->include;
+		unsigned i;
+		for (i = 0; i < include->count; i++)
+		{
+			char* rpath = ofc_file__include_path(include->path[i], path);
+			file = ofc_file_create(rpath, opts);
+
+			if (file)
+			{
+				file->parent = parent_file;
+				file->include = parent_file->include;
+
+				free(rpath);
+				return file;
+			}
+			free(rpath);
+		}
+	}
+
+	char* bpath = ofc_file__base_parent_path(parent_file);
+	char* rpath = ofc_file__include_path(bpath, path);
+	file = ofc_file_create(rpath, opts);
+	if (!parent_file) return file;
+	if (!file) return NULL;
+
+	file->parent = parent_file;
+	file->include = parent_file->include;
+
+	free(rpath);
+	return file;
+}
+
+bool ofc_file_reference(ofc_file_t* file)
+{
+	if (!file)
+		return false;
+
+	unsigned nref = file->ref + 1;
+	if (nref == 0) return false;
+
+	file->ref += 1;
+	return true;
+}
+
+void ofc_file_delete(ofc_file_t* file)
+{
+	if (!file)
+		return;
+
+	if (file->ref > 0)
+	{
+		file->ref -= 1;
+		return;
+	}
+
+	free(file->strz);
+	free(file->path);
+
+	/* The root file is responsible for cleaning up */
+	if (!file->parent)
+		ofc_file_include_list_delete(file->include);
+
+	free(file);
+}
+
+
+
+const char* ofc_file_get_path(const ofc_file_t* file)
+{
+	return (file ? file->path : NULL);
+}
+
+const char* ofc_file_get_strz(const ofc_file_t* file)
+{
+	return (file ? file->strz : NULL);
+}
+
+ofc_lang_opts_t ofc_file_get_lang_opts(const ofc_file_t* file)
+{
+	return (file ? file->opts : OFC_LANG_OPTS_F77);
+}
 
 
 bool ofc_file_get_position(
@@ -242,7 +255,7 @@ ofc_file_include_list_t* ofc_file_include_list_create(void)
 	if (!list) return NULL;
 
 	list->count = 0;
-	list->include_path = NULL;
+	list->path = NULL;
 	return list;
 }
 
@@ -254,12 +267,12 @@ bool ofc_file_include_list_add(
 		return false;
 
 	char** nlist
-		= (char**)realloc(list->include_path,
+		= (char**)realloc(list->path,
 			(sizeof(char*) * (list->count + 1)));
 	if (!nlist) return NULL;
 
-	list->include_path = nlist;
-	list->include_path[list->count++] = strdup(path);
+	list->path = nlist;
+	list->path[list->count++] = strdup(path);
 
 	return true;
 }
@@ -272,9 +285,9 @@ void ofc_file_include_list_delete(
 
 	unsigned i;
 	for (i = 0; i < list->count; i++)
-		free(list->include_path[i]);
+		free(list->path[i]);
 
-	free(list->include_path);
+	free(list->path);
 	free(list);
 }
 

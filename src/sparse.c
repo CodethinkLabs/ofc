@@ -348,24 +348,13 @@ ofc_lang_opts_t ofc_sparse_lang_opts(const ofc_sparse_t* sparse)
 	return ofc_sparse_lang_opts(sparse->parent);
 }
 
-
-const char* ofc_sparse_get_include(
-	const ofc_sparse_t* sparse)
-{
-	return ofc_file_get_include(
-		ofc_sparse__file(sparse));
-}
-
-char* ofc_sparse_include_path(
-	const ofc_sparse_t* sparse, const char* path)
+const ofc_file_t* ofc_sparse_file(const ofc_sparse_t* sparse)
 {
 	if (!sparse)
-		return strdup(path);
+		return NULL;
 
-	return ofc_file_include_path(
-		ofc_sparse__file(sparse), path);
+	return ofc_sparse__file(sparse);
 }
-
 
 
 bool ofc_sparse_ref_bridge(

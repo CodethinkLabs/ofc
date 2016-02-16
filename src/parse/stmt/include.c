@@ -56,19 +56,17 @@ unsigned ofc_parse_stmt_include(
 	memcpy(path, spath->base, spath->size);
 	path[spath->size] = '\0';
 
-	const char* include_path = ofc_sparse_get_include(src);
-	char* rpath = ofc_sparse_include_path(src, path);
+	ofc_string_delete(spath);
+
 	stmt->include.file = ofc_file_create_include(
-		rpath, ofc_sparse_lang_opts(src), include_path);
+		path, ofc_sparse_lang_opts(src), ofc_sparse_file(src));
 
 	if (!stmt->include.file)
 	{
 		ofc_sparse_error(src, ofc_str_ref(ptr, i),
-			"Can't open include file '%s'", rpath);
-		free(rpath);
+			"Can't open include file '%s'", path);
 		return 0;
 	}
-	free(rpath);
 
 	stmt->include.src = ofc_prep(stmt->include.file);
 
