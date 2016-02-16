@@ -38,6 +38,8 @@ struct ofc_sema_spec_s
 	bool is_intrinsic;
 	bool is_external;
 
+	bool is_equiv;
+
 	bool used;
 
 	ofc_sema_common_t* common;

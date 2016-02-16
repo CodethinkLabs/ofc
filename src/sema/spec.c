@@ -31,6 +31,8 @@ const ofc_sema_spec_t OFC_SEMA_SPEC_DEFAULT =
 	.is_volatile   = false,
 	.is_intrinsic  = false,
 	.is_external   = false,
+	.is_equiv      = false,
+	.used          = false,
 	.common        = NULL,
 	.common_offset = 0,
 };

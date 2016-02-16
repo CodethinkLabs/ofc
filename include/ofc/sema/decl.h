@@ -61,6 +61,7 @@ struct ofc_sema_decl_s
 
 	bool is_target;
 
+	bool is_equiv;
 	bool is_common;
 	bool is_argument;
 	bool is_return;

@@ -19,6 +19,43 @@
 extern ofc_global_opts_t global_opts;
 
 
+bool ofc_sema_stmt_equivalence_spec(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt)
+{
+	if (!scope || !stmt
+		|| (stmt->type != OFC_PARSE_STMT_EQUIVALENCE))
+		return false;
+
+	unsigned g;
+	for (g = 0; g < stmt->equivalence.count; g++)
+	{
+		const ofc_parse_lhs_list_t* list
+			= stmt->equivalence.group[g];
+		if (!list || (list->count == 0))
+			continue;
+
+		unsigned i;
+		for (i = 0; i < list->count; i++)
+		{
+			if (!list->lhs[i])
+				continue;
+
+			ofc_sparse_ref_t name;
+			if (!ofc_parse_lhs_base_name(
+				*(list->lhs[i]), &name))
+				return false;
+
+			ofc_sema_spec_t* spec
+				= ofc_sema_scope_spec_modify(scope, name);
+			if (!spec) return false;
+			spec->is_equiv = true;
+		}
+	}
+
+	return true;
+}
+
 bool ofc_sema_stmt_equivalence(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt)

@@ -72,7 +72,10 @@ ofc_sema_decl_t* ofc_sema_decl_create(
 	decl->is_static    = false;
 	decl->is_volatile  = false;
 	decl->is_automatic = false;
+
 	decl->is_target    = false;
+
+	decl->is_equiv     = false;
 	decl->is_common    = false;
 	decl->is_argument  = false;
 	decl->is_return    = false;
@@ -298,6 +301,8 @@ static ofc_sema_decl_t* ofc_sema_decl__spec(
 	decl->is_volatile  = spec->is_volatile;
 	decl->is_intrinsic = spec->is_intrinsic;
 	decl->is_external  = spec->is_external;
+
+	decl->is_equiv = spec->is_equiv;
 
 	decl->has_spec = spec->used;
 

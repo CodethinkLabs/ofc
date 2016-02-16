@@ -505,7 +505,7 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 
 		if (is_expr && !is_dummy_arg && !is_argument
 			&& !ofc_sema_decl_is_procedure(decl)
-			&& !decl->is_common)
+			&& !decl->is_common && !decl->is_equiv)
 		{
 			ofc_sparse_ref_warning(lhs->src,
 				"Referencing uninitialized variable '%.*s' in expression.",

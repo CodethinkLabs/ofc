@@ -177,6 +177,15 @@ static bool ofc_sema_scope__body_scan_equivalence(
 {
 	if (!stmt) return false;
 	return ((stmt->type != OFC_PARSE_STMT_EQUIVALENCE)
+		|| ofc_sema_stmt_equivalence_spec(scope, stmt));
+}
+
+static bool ofc_sema_scope__body_sema_equivalence(
+	const ofc_parse_stmt_t* stmt,
+	ofc_sema_scope_t* scope)
+{
+	if (!stmt) return false;
+	return ((stmt->type != OFC_PARSE_STMT_EQUIVALENCE)
 		|| ofc_sema_stmt_equivalence(scope, stmt));
 }
 
@@ -193,6 +202,11 @@ static bool ofc_sema_scope__body(
 	/* Initial scan for FORMAT statements */
 	if (!ofc_parse_stmt_list_foreach(body, scope,
 		(void*)ofc_sema_scope__body_scan_format))
+		return false;
+
+	/* Generate specifiers for EQUIVALENCE statements */
+	if (!ofc_parse_stmt_list_foreach(body, scope,
+		(void*)ofc_sema_scope__body_scan_equivalence))
 		return false;
 
 	if (scope->stmt)
@@ -264,7 +278,7 @@ static bool ofc_sema_scope__body(
 
 	/* Handle EQUIVALENCE statements */
 	if (!ofc_parse_stmt_list_foreach(body, scope,
-		(void*)ofc_sema_scope__body_scan_equivalence))
+		(void*)ofc_sema_scope__body_sema_equivalence))
 		return false;
 
 	/* Warn about unused specifiers. */
