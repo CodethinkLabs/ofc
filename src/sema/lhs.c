@@ -455,15 +455,6 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 				lhs->variable.string.size, lhs->variable.string.base);
 			return NULL;
 		}
-
-		if (is_expr && !is_dummy_arg && !decl->is_argument
-			&& !ofc_sema_decl_is_procedure(decl)
-			&& !decl->is_common && !decl->is_equiv)
-		{
-			ofc_sparse_ref_warning(lhs->src,
-				"Referencing uninitialized variable '%.*s' in expression.",
-				lhs->variable.string.size, lhs->variable.string.base);
-		}
 	}
 
 	if (!is_expr && !is_dummy_arg
