@@ -397,7 +397,9 @@ bool ofc_parse_stmt__do_while_block_print(
 		cs, (indent + 1), stmt->do_while_block.block))
 		return false;
 
-	if (!ofc_colstr_newline(cs, indent, NULL))
+	const unsigned* ulabel = (stmt->do_while_block.end_do_has_label
+		? &stmt->do_while_block.end_do_label : NULL);
+	if (!ofc_colstr_newline(cs, indent, ulabel))
 		return false;
 
 	return ofc_colstr_atomic_writef(cs, "END DO");
@@ -456,7 +458,9 @@ bool ofc_parse_stmt__do_block_print(
 			cs, (indent + 1), stmt->do_block.block))
 		return false;
 
-	if (!ofc_colstr_newline(cs, indent, NULL))
+	const unsigned* ulabel = (stmt->do_block.end_do_has_label
+		? &stmt->do_block.end_do_label : NULL);
+	if (!ofc_colstr_newline(cs, indent, ulabel))
 		return false;
 
 	return ofc_colstr_atomic_writef(cs, "END DO");

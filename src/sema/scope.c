@@ -86,6 +86,8 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 			sizeof(ofc_sema_scope_t));
 	if (!scope) return NULL;
 
+	scope->src = OFC_SPARSE_REF_EMPTY;
+
 	scope->parent = parent;
 	scope->child  = NULL;
 
@@ -395,6 +397,7 @@ bool ofc_sema_scope_subroutine(
 		= ofc_sema_scope__create(scope, NULL,
 			OFC_SEMA_SCOPE_SUBROUTINE);
 	if (!sub_scope) return false;
+	sub_scope->src  = stmt->src;
 	sub_scope->name = name.string;
 
 	if (stmt->program.args)
@@ -432,6 +435,14 @@ bool ofc_sema_scope_subroutine(
 		return false;
 	}
 
+	if (stmt->program.end_has_label
+		&& !ofc_sema_label_map_add_end_scope(
+			sub_scope->label, stmt->program.end_label, sub_scope))
+	{
+		ofc_sema_scope_delete(sub_scope);
+		return false;
+	}
+
 	if (!ofc_sema_decl_init_func(
 		decl, sub_scope))
 	{
@@ -458,6 +469,7 @@ bool ofc_sema_scope_function(
 		= ofc_sema_scope__create(scope, NULL,
 			OFC_SEMA_SCOPE_FUNCTION);
 	if (!func_scope) return false;
+	func_scope->src  = stmt->src;
 	func_scope->name = name.string;
 
 	{
@@ -607,6 +619,14 @@ bool ofc_sema_scope_function(
 	}
 	decl->is_return = true;
 
+	if (stmt->program.end_has_label
+		&& !ofc_sema_label_map_add_end_scope(
+			func_scope->label, stmt->program.end_label, func_scope))
+	{
+		ofc_sema_scope_delete(func_scope);
+		return false;
+	}
+
 	if (!ofc_sema_decl_init_func(
 		decl, func_scope))
 	{
@@ -637,6 +657,22 @@ ofc_sema_scope_t* ofc_sema_scope_global(
 		return NULL;
 	}
 
+	if (list && (list->count > 0)
+		&& list->stmt[0])
+	{
+		if (list->count == 1)
+		{
+			scope->src = list->stmt[0]->src;
+		}
+		else if (list->stmt[list->count - 1])
+		{
+			ofc_sparse_ref_bridge(
+				list->stmt[0]->src,
+				list->stmt[list->count - 1]->src,
+				&scope->src);
+		}
+	}
+
 	return scope;
 }
 
@@ -653,6 +689,7 @@ ofc_sema_scope_t* ofc_sema_scope_program(
 			scope, NULL, OFC_SEMA_SCOPE_PROGRAM);
 	if (!program) return NULL;
 
+	program->src  = stmt->src;
 	program->name = stmt->program.name.string;
 
 	if (!ofc_sema_scope__body(
@@ -660,6 +697,14 @@ ofc_sema_scope_t* ofc_sema_scope_program(
 	{
 		ofc_sema_scope_delete(program);
 		return NULL;
+	}
+
+	if (stmt->program.end_has_label
+		&& !ofc_sema_label_map_add_end_scope(
+			program->label, stmt->program.end_label, program))
+	{
+		ofc_sema_scope_delete(program);
+		return false;
 	}
 
 	if (!ofc_sema_scope__add_child(scope, program))
@@ -726,6 +771,7 @@ ofc_sema_scope_t* ofc_sema_scope_stmt_func(
 		ofc_sema_spec_delete(spec);
 		return NULL;
 	}
+	func->src = stmt->src;
 
 	ofc_sema_spec_t* rspec = ofc_sema_spec_copy(spec);
 	ofc_sema_spec_delete(spec);
@@ -799,11 +845,19 @@ ofc_sema_scope_t* ofc_sema_scope_block_data(
 		|| (stmt->type != OFC_PARSE_STMT_BLOCK_DATA))
 		return NULL;
 
+	if (stmt->program.end_has_label)
+	{
+		ofc_sparse_ref_error(stmt->src,
+			"END BLOCK DATA can't have label");
+		return NULL;
+	}
+
 	ofc_sema_scope_t* block_data
 		= ofc_sema_scope__create(
 			scope, NULL, OFC_SEMA_SCOPE_BLOCK_DATA);
 	if (!block_data) return NULL;
 
+	block_data->src  = stmt->src;
 	block_data->name = stmt->program.name.string;
 
 	if (!ofc_sema_scope__body(
@@ -1341,7 +1395,12 @@ bool ofc_sema_scope_print(
 
 	if (kwstr)
 	{
-		if (!ofc_colstr_newline(cs, indent, NULL)
+		const ofc_sema_label_t* label
+			= ofc_sema_label_map_find_end_scope(
+				scope->label, scope);
+		const unsigned* ulabel = (label ? &label->number : NULL);
+
+		if (!ofc_colstr_newline(cs, indent, ulabel)
 			|| !ofc_colstr_atomic_writef(cs, "END %s ", kwstr))
 			return false;
 

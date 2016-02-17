@@ -44,6 +44,11 @@ unsigned ofc_parse_stmt_program__body(
 			"Empty %s body", ofc_parse_keyword_name(keyword));
 	}
 
+	stmt->program.end_label = 0;
+	stmt->program.end_has_label
+		= ofc_sparse_label_find(src, &ptr[i],
+			&stmt->program.end_label);
+
 	unsigned len = ofc_parse_keyword_end_named(
 		src, &ptr[i], debug,
 		keyword, false,
@@ -406,7 +411,9 @@ bool ofc_parse_stmt_program_print(
 			cs, (indent + 1), stmt->program.body))
 		return false;
 
-	if (!ofc_colstr_newline(cs, indent, NULL))
+	const unsigned* ulabel = (stmt->program.end_has_label
+		? &stmt->program.end_label : NULL);
+	if (!ofc_colstr_newline(cs, indent, ulabel))
 		return false;
 
 	unsigned i;

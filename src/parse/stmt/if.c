@@ -320,7 +320,9 @@ bool ofc_parse_stmt_if_print(
 				return false;
 		}
 
-		if (!ofc_colstr_newline(cs, indent, NULL))
+		const unsigned* ulabel = (stmt->if_then.end_if_has_label
+			? &stmt->if_then.end_if_label : NULL);
+		if (!ofc_colstr_newline(cs, indent, ulabel))
 				return false;
 
 		if (!ofc_colstr_atomic_writef(cs, "END IF"))

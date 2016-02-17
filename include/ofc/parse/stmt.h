@@ -271,6 +271,9 @@ struct ofc_parse_stmt_s
 			/* args is only set for functions and subroutines. */
 			ofc_parse_call_arg_list_t* args;
 			ofc_parse_stmt_list_t*     body;
+
+			bool     end_has_label;
+			unsigned end_label;
 		} program;
 	};
 };

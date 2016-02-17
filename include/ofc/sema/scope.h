@@ -37,8 +37,10 @@ typedef struct
 
 struct ofc_sema_scope_s
 {
-	ofc_sema_scope_t* parent;
-	ofc_sema_scope_list_t*    child;
+	ofc_sparse_ref_t src;
+
+	ofc_sema_scope_t*      parent;
+	ofc_sema_scope_list_t* child;
 
 	const ofc_lang_opts_t* lang_opts;
 

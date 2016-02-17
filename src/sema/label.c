@@ -28,16 +28,32 @@ static void ofc_sema_label__delete(
 }
 
 static ofc_sema_label_t* ofc_sema_label__stmt(
-	unsigned number, const ofc_sema_stmt_t* stmt)
+	unsigned number, const ofc_sema_stmt_t* stmt,
+	ofc_sema_label_e type)
 {
 	ofc_sema_label_t* label
 		= (ofc_sema_label_t*)malloc(
 			sizeof(ofc_sema_label_t));
 	if (!label) return NULL;
 
-	label->type   = OFC_SEMA_LABEL_STMT;
+	label->type   = type;
 	label->number = number;
 	label->stmt   = stmt;
+
+	return label;
+}
+
+static ofc_sema_label_t* ofc_sema_label__scope(
+	unsigned number, const ofc_sema_scope_t* scope)
+{
+	ofc_sema_label_t* label
+		= (ofc_sema_label_t*)malloc(
+			sizeof(ofc_sema_label_t));
+	if (!label) return NULL;
+
+	label->type   = OFC_SEMA_LABEL_END_SCOPE;
+	label->number = number;
+	label->scope  = scope;
 
 	return label;
 }
@@ -72,6 +88,12 @@ static const ofc_sema_stmt_t* ofc_sema_label__stmt_key(
 	return (label ? label->stmt : NULL);
 }
 
+static const ofc_sema_scope_t* ofc_sema_label__scope_key(
+	const ofc_sema_label_t* label)
+{
+	return (label ? label->scope : NULL);
+}
+
 static bool ofc_sema_label__compare(
 	const unsigned* a, const unsigned* b)
 {
@@ -83,6 +105,15 @@ static bool ofc_sema_label__compare(
 static bool ofc_sema_label__stmt_ptr_compare(
 	const ofc_sema_stmt_t* a,
 	const ofc_sema_stmt_t* b)
+{
+	if (!a || !b)
+		return false;
+	return (a == b);
+}
+
+static bool ofc_sema_label__scope_ptr_compare(
+	const ofc_sema_scope_t* a,
+	const ofc_sema_scope_t* b)
 {
 	if (!a || !b)
 		return false;
@@ -101,10 +132,10 @@ static uint8_t ofc_sema_label__hash(const unsigned* label)
 	return (h & 0xFF);
 }
 
-static uint8_t ofc_sema_label__stmt_hash(
-	const ofc_sema_stmt_t* stmt)
+static uint8_t ofc_sema_label__ptr_hash(
+	const void* ptr)
 {
-	uintptr_t p = (uintptr_t)stmt;
+	uintptr_t p = (uintptr_t)ptr;
 	uint8_t h = 0;
 
 	unsigned i;
@@ -127,15 +158,21 @@ ofc_sema_label_map_t* ofc_sema_label_map_create(void)
 		NULL);
 
 	map->stmt = ofc_hashmap_create(
-		(void*)ofc_sema_label__stmt_hash,
+		(void*)ofc_sema_label__ptr_hash,
 		(void*)ofc_sema_label__stmt_ptr_compare,
 		(void*)ofc_sema_label__stmt_key,
 		(void*)ofc_sema_label__delete);
 
 	map->end_block = ofc_hashmap_create(
-		(void*)ofc_sema_label__stmt_hash,
+		(void*)ofc_sema_label__ptr_hash,
 		(void*)ofc_sema_label__stmt_ptr_compare,
 		(void*)ofc_sema_label__stmt_key,
+		(void*)ofc_sema_label__delete);
+
+	map->end_scope = ofc_hashmap_create(
+		(void*)ofc_sema_label__ptr_hash,
+		(void*)ofc_sema_label__scope_ptr_compare,
+		(void*)ofc_sema_label__scope_key,
 		(void*)ofc_sema_label__delete);
 
 	map->format = ofc_sema_format_label_list_create();
@@ -143,6 +180,7 @@ ofc_sema_label_map_t* ofc_sema_label_map_create(void)
 	if (!map->label
 		|| !map->stmt
 		|| !map->end_block
+		|| !map->end_scope
 		|| !map->format)
 	{
 		ofc_sema_label_map_delete(map);
@@ -159,6 +197,7 @@ void ofc_sema_label_map_delete(
 
 	ofc_sema_format_label_list_delete(map->format);
 	ofc_hashmap_delete(map->end_block);
+	ofc_hashmap_delete(map->end_scope);
 	ofc_hashmap_delete(map->stmt);
 	ofc_hashmap_delete(map->label);
 
@@ -188,7 +227,8 @@ bool ofc_sema_label_map_add_stmt(
 	}
 
 	ofc_sema_label_t* l
-		= ofc_sema_label__stmt(label, stmt);
+		= ofc_sema_label__stmt(label, stmt,
+			OFC_SEMA_LABEL_STMT);
 	if (!l) return false;
 
 	if (!ofc_hashmap_add(
@@ -212,7 +252,7 @@ bool ofc_sema_label_map_add_end_block(
 	ofc_sema_label_map_t* map, unsigned label,
 	const ofc_sema_stmt_t* stmt)
 {
-	if (!map || !map->label || !map->stmt)
+	if (!map || !map->label || !map->end_block)
 		return false;
 
 	const ofc_sema_label_t* duplicate
@@ -231,11 +271,55 @@ bool ofc_sema_label_map_add_end_block(
 	}
 
 	ofc_sema_label_t* l
-		= ofc_sema_label__stmt(label, stmt);
+		= ofc_sema_label__stmt(label, stmt,
+			OFC_SEMA_LABEL_END_BLOCK);
 	if (!l) return false;
 
 	if (!ofc_hashmap_add(
 		map->end_block, l))
+	{
+		ofc_sema_label__delete(l);
+		return false;
+	}
+
+	if (!ofc_hashmap_add(
+		map->label, l))
+	{
+		/* This should never happen. */
+		abort();
+	}
+
+	return true;
+}
+
+bool ofc_sema_label_map_add_end_scope(
+	ofc_sema_label_map_t* map, unsigned label,
+	const ofc_sema_scope_t* scope)
+{
+	if (!map || !map->label || !map->end_scope)
+		return false;
+
+	const ofc_sema_label_t* duplicate
+		= ofc_hashmap_find(map->label, &label);
+	if (duplicate)
+	{
+		ofc_sparse_ref_error(scope->src,
+			"Re-definition of label %d", label);
+		return false;
+	}
+
+	if (label == 0)
+	{
+		ofc_sparse_ref_warning(scope->src,
+			"Label zero isn't supported in standard Fortran");
+	}
+
+	ofc_sema_label_t* l
+		= ofc_sema_label__scope(label, scope);
+	if (!l) return false;
+
+	if (!ofc_hashmap_add(
+		map->end_scope, l))
 	{
 		ofc_sema_label__delete(l);
 		return false;
@@ -324,6 +408,16 @@ const ofc_sema_label_t* ofc_sema_label_map_find_end_block(
 		return NULL;
 	return ofc_hashmap_find(
 		map->end_block, stmt);
+}
+
+const ofc_sema_label_t* ofc_sema_label_map_find_end_scope(
+	const ofc_sema_label_map_t* map,
+	const ofc_sema_scope_t*     scope)
+{
+	if (!map)
+		return NULL;
+	return ofc_hashmap_find(
+		map->end_scope, scope);
 }
 
 ofc_sema_format_label_list_t*

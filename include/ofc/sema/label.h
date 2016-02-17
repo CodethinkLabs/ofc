@@ -21,6 +21,7 @@ typedef enum
 	OFC_SEMA_LABEL_STMT = 0,
 	OFC_SEMA_LABEL_FORMAT,
 	OFC_SEMA_LABEL_END_BLOCK,
+	OFC_SEMA_LABEL_END_SCOPE,
 
 	OFC_SEMA_LABEL_COUNT
 } ofc_sema_label_e;
@@ -32,8 +33,9 @@ typedef struct
 
 	union
 	{
-		const ofc_sema_stmt_t* stmt;
-		ofc_sema_format_t*     format;
+		const ofc_sema_scope_t* scope;
+		const ofc_sema_stmt_t*  stmt;
+		ofc_sema_format_t*      format;
 	};
 } ofc_sema_label_t;
 
@@ -51,8 +53,9 @@ typedef struct
 	/* This owns the statement labels. */
 	ofc_hashmap_t*                stmt;
 
-	/* This owns the end block labels. */
-	ofc_hashmap_t*                end_block;
+	/* These own the end block/scope labels. */
+	ofc_hashmap_t* end_block;
+	ofc_hashmap_t* end_scope;
 
 	/* This owns the format labels. */
 	ofc_sema_format_label_list_t* format;
@@ -68,6 +71,9 @@ bool ofc_sema_label_map_add_stmt(
 bool ofc_sema_label_map_add_end_block(
 	ofc_sema_label_map_t* map, unsigned label,
 	const ofc_sema_stmt_t* end_block);
+bool ofc_sema_label_map_add_end_scope(
+	ofc_sema_label_map_t* map, unsigned label,
+	const ofc_sema_scope_t* end_scope);
 bool ofc_sema_label_map_add_format(
 	const ofc_parse_stmt_t* stmt,
 	ofc_sema_label_map_t* map, unsigned label,
@@ -81,6 +87,9 @@ const ofc_sema_label_t* ofc_sema_label_map_find_stmt(
 const ofc_sema_label_t* ofc_sema_label_map_find_end_block(
 	const ofc_sema_label_map_t* map,
 	const ofc_sema_stmt_t*      stmt);
+const ofc_sema_label_t* ofc_sema_label_map_find_end_scope(
+	const ofc_sema_label_map_t* map,
+	const ofc_sema_scope_t*     scope);
 
 ofc_sema_format_label_list_t* ofc_sema_format_label_list_create(void);
 void ofc_sema_format_label_list_delete(
