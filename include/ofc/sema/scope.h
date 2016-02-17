@@ -90,11 +90,6 @@ bool ofc_sema_scope_function(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
 
-bool ofc_sema_scope_is_root(
-	const ofc_sema_scope_t* scope);
-ofc_sema_scope_t* ofc_sema_scope_root(
-	ofc_sema_scope_t* scope);
-
 bool ofc_sema_scope_is_procedure(
 	const ofc_sema_scope_t* scope);
 

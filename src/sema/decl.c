@@ -302,7 +302,9 @@ static ofc_sema_decl_t* ofc_sema_decl__spec(
 	decl->is_intrinsic = spec->is_intrinsic;
 	decl->is_external  = spec->is_external;
 
-	decl->is_equiv = spec->is_equiv;
+	decl->is_equiv    = spec->is_equiv;
+	decl->is_argument = spec->is_argument;
+	decl->is_return   = spec->is_return;
 
 	decl->has_spec = spec->used;
 

@@ -442,33 +442,9 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 			return NULL;
 	}
 
-	ofc_sema_scope_t* root
-		= ofc_sema_scope_root(scope);
-
-	bool is_return = ((root->type == OFC_SEMA_SCOPE_FUNCTION)
-		&& (ofc_sema_scope_get_lang_opts(root).case_sensitive
-			? ofc_str_ref_equal(lhs->variable.string, root->name)
-			: ofc_str_ref_equal_ci(lhs->variable.string, root->name)));
-
-	ofc_sema_decl_t* decl;
-	if (is_return)
-	{
-		/* Special case for FUNCTION return value. */
-
-		decl = ofc_sema_scope_decl_find_modify(
-			scope, lhs->variable.string, true);
-		if (!decl)
-		{
-			decl = ofc_sema_scope_decl_find_modify(
-				root, lhs->variable.string, true);
-		}
-	}
-	else
-	{
-		decl = ofc_sema_scope_decl_find_modify(
+	ofc_sema_decl_t* decl
+		= ofc_sema_scope_decl_find_modify(
 			scope, lhs->variable.string, force_local);
-	}
-
 	if (!decl)
 	{
 		decl = ofc_sema_decl_implicit_lhs(scope, lhs);
@@ -480,30 +456,7 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 			return NULL;
 		}
 
-		bool is_argument = false;
-		if (scope->args != NULL)
-		{
-			/* TODO - Store args in hashmap. */
-			unsigned i;
-			for (i = 0; !is_argument && (i < scope->args->count); i++)
-			{
-				ofc_sema_arg_t arg = scope->args->arg[i];
-
-				if (arg.alt_return)
-					continue;
-
-				ofc_lang_opts_t opts
-					= ofc_sema_scope_get_lang_opts(scope);
-
-				is_argument = (opts.case_sensitive
-					? ofc_str_ref_equal(arg.name.string, lhs->variable.string)
-					: ofc_str_ref_equal_ci(arg.name.string, lhs->variable.string));
-			}
-		}
-		if (is_argument)
-			decl->is_argument = true;
-
-		if (is_expr && !is_dummy_arg && !is_argument
+		if (is_expr && !is_dummy_arg && !decl->is_argument
 			&& !ofc_sema_decl_is_procedure(decl)
 			&& !decl->is_common && !decl->is_equiv)
 		{
@@ -512,9 +465,6 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 				lhs->variable.string.size, lhs->variable.string.base);
 		}
 	}
-
-	if (is_return)
-		decl->is_return = true;
 
 	if (!is_expr && !is_dummy_arg
 		&& ofc_sema_decl_is_parameter(decl))

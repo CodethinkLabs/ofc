@@ -31,6 +31,8 @@ const ofc_sema_spec_t OFC_SEMA_SPEC_DEFAULT =
 	.is_volatile   = false,
 	.is_intrinsic  = false,
 	.is_external   = false,
+	.is_argument   = false,
+	.is_return     = false,
 	.is_equiv      = false,
 	.used          = false,
 	.common        = NULL,
@@ -44,38 +46,6 @@ bool ofc_sema_spec_is_dynamic_array(
 {
 	return (spec && spec->array
 		&& !ofc_sema_array_total(spec->array, NULL));
-}
-
-bool ofc_sema_spec_is_argument(
-	const ofc_sema_spec_t*  spec,
-	ofc_sema_scope_t* scope)
-{
-	if (!spec) return false;
-
-	ofc_sema_scope_t* root
-		= ofc_sema_scope_root(scope);
-	if (!root || !root->args)
-		return false;
-
-	ofc_lang_opts_t opts
-		= ofc_sema_scope_get_lang_opts(root);
-
-	unsigned i;
-	for (i = 0; i < root->args->count; i++)
-	{
-        if (root->args->arg[i].alt_return)
-			continue;
-
-		ofc_str_ref_t arg_name
-			= root->args->arg[i].name.string;
-
-		if (opts.case_sensitive
-			? ofc_str_ref_equal(arg_name, spec->name.string)
-			: ofc_str_ref_equal_ci(arg_name, spec->name.string))
-			return true;
-	}
-
-	return false;
 }
 
 

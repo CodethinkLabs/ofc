@@ -38,6 +38,8 @@ struct ofc_sema_spec_s
 	bool is_intrinsic;
 	bool is_external;
 
+	bool is_return;
+	bool is_argument;
 	bool is_equiv;
 
 	bool used;

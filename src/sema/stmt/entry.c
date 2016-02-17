@@ -34,6 +34,35 @@ ofc_sema_stmt_t* ofc_sema_stmt_entry(
 		s.entry.args = ofc_sema_arg_list(
 			stmt->call_entry.args);
 		if (!s.entry.args) return NULL;
+
+		unsigned i;
+		for (i = 0; i < s.entry.args->count; i++)
+		{
+			const ofc_sema_arg_t arg
+				= s.entry.args->arg[i];
+			if (arg.alt_return)
+				continue;
+
+			ofc_sema_decl_t* decl
+				= ofc_sema_scope_decl_find_modify(
+					scope, arg.name.string, true);
+			if (decl)
+			{
+				decl->is_argument = true;
+			}
+			else
+			{
+				ofc_sema_spec_t* spec
+					= ofc_sema_scope_spec_modify(
+						scope, arg.name);
+				if (!spec)
+				{
+					ofc_sema_arg_list_delete(s.entry.args);
+					return NULL;
+				}
+				spec->is_argument = true;
+			}
+		}
 	}
 
 	ofc_sema_stmt_t* as
