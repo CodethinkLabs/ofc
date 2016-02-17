@@ -67,8 +67,6 @@ unsigned ofc_parse_stmt_program__body(
 	return i;
 }
 
-/* This is hacky, but it means we can suppress redeclarations of the same program. */
-static ofc_str_ref_t ofc_parse_stmt_program__current = OFC_STR_REF_EMPTY;
 
 unsigned ofc_parse_stmt_program(
 	const ofc_sparse_t* src, const char* ptr,
@@ -84,24 +82,6 @@ unsigned ofc_parse_stmt_program(
 		&stmt->program.name);
 	if (i == 0) return 0;
 
-	if (!ofc_sparse_ref_empty(stmt->program.name))
-	{
-		ofc_lang_opts_t opts = ofc_sparse_lang_opts(src);
-		if (opts.case_sensitive
-			? ofc_str_ref_equal(stmt->program.name.string,
-				ofc_parse_stmt_program__current)
-			: ofc_str_ref_equal_ci(stmt->program.name.string,
-				ofc_parse_stmt_program__current))
-		{
-			ofc_parse_debug_warning(
-				debug, ofc_sparse_ref(src, ptr, 0),
-				"Re-definition of PROGRAM");
-
-			stmt->type = OFC_PARSE_STMT_EMPTY;
-			return i;
-		}
-	}
-
 	unsigned len;
 	if (!ofc_is_end_statement(&ptr[i], &len))
 	{
@@ -109,9 +89,6 @@ unsigned ofc_parse_stmt_program(
 		return 0;
 	}
 	i += len;
-
-	ofc_str_ref_t prev_program_name = ofc_parse_stmt_program__current;
-	ofc_parse_stmt_program__current = stmt->program.name.string;
 
 	len = ofc_parse_stmt_program__body(
 		src, &ptr[i], debug,
@@ -122,8 +99,6 @@ unsigned ofc_parse_stmt_program(
 		return 0;
 	}
 	i += len;
-
-	ofc_parse_stmt_program__current = prev_program_name;
 
 	stmt->program.type = NULL;
 	stmt->program.args = NULL;
@@ -269,9 +244,6 @@ unsigned ofc_parse_stmt_function(
 }
 
 
-/* This is hacky, but it means we can suppress redeclarations of the same block_data. */
-static ofc_str_ref_t ofc_parse_stmt_block_data__current = OFC_STR_REF_EMPTY;
-
 unsigned ofc_parse_stmt_block_data(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
@@ -286,24 +258,6 @@ unsigned ofc_parse_stmt_block_data(
 		&stmt->program.name);
 	if (i == 0) return 0;
 
-	if (!ofc_sparse_ref_empty(stmt->program.name))
-	{
-		ofc_lang_opts_t opts = ofc_sparse_lang_opts(src);
-		if (opts.case_sensitive
-			? ofc_str_ref_equal(stmt->program.name.string,
-				ofc_parse_stmt_block_data__current)
-			: ofc_str_ref_equal_ci(stmt->program.name.string,
-				ofc_parse_stmt_block_data__current))
-		{
-			ofc_parse_debug_warning(
-				debug, ofc_sparse_ref(src, ptr, 0),
-				"Re-definition of BLOCK DATA");
-
-			stmt->type = OFC_PARSE_STMT_EMPTY;
-			return i;
-		}
-	}
-
 	unsigned len;
 	if (!ofc_is_end_statement(&ptr[i], &len))
 	{
@@ -311,9 +265,6 @@ unsigned ofc_parse_stmt_block_data(
 		return 0;
 	}
 	i += len;
-
-	ofc_str_ref_t prev_block_data_name = ofc_parse_stmt_block_data__current;
-	ofc_parse_stmt_block_data__current = stmt->program.name.string;
 
 	len = ofc_parse_stmt_program__body(
 		src, &ptr[i], debug,
@@ -324,8 +275,6 @@ unsigned ofc_parse_stmt_block_data(
 		return 0;
 	}
 	i += len;
-
-	ofc_parse_stmt_block_data__current = prev_block_data_name;
 
 	stmt->program.type = NULL;
 	stmt->program.args = NULL;
