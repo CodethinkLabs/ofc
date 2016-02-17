@@ -658,46 +658,81 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 	}
 	else if (!ofc_sema_type_compatible(at, bt))
 	{
-		const ofc_sema_type_t* ptype
-			= ofc_sema_type_promote(at, bt);
-		if (!ptype)
+		if (type == OFC_SEMA_EXPR_AND
+			|| type == OFC_SEMA_EXPR_OR
+			|| type == OFC_SEMA_EXPR_EQV
+			|| type == OFC_SEMA_EXPR_NEQV)
 		{
-			ofc_sparse_ref_error(a->src,
-				"Incompatible types (%s, %s) in operator %s",
-				ofc_sema_type_str_rep(at),
-				ofc_sema_type_str_rep(bt),
-				ofc_parse_operator_str_rep(op));
-			ofc_sema_expr_delete(bs);
-			ofc_sema_expr_delete(as);
-			return NULL;
-		}
+			const ofc_sema_type_t* logtype
+				= ofc_sema_type_logical_default();
 
-		/* TODO - Warn about implicit cast? */
-
-		if (!ofc_sema_type_compatible(at, ptype))
-		{
-			ofc_sema_expr_t* cast
-				= ofc_sema_expr_cast(as, ptype);
-			if (!cast)
+			if (!ofc_sema_type_compatible(at, logtype))
 			{
+				ofc_sema_expr_t* cast
+					= ofc_sema_expr_cast(as, logtype);
+				if (!cast)
+				{
+					ofc_sema_expr_delete(bs);
+					ofc_sema_expr_delete(as);
+					return NULL;
+				}
+				as = cast;
+			}
+
+			if (!ofc_sema_type_compatible(bt, logtype))
+			{
+				ofc_sema_expr_t* cast
+					= ofc_sema_expr_cast(bs, logtype);
+				if (!cast)
+				{
+					ofc_sema_expr_delete(bs);
+					ofc_sema_expr_delete(as);
+					return NULL;
+				}
+				bs = cast;
+			}
+		}
+		else
+		{
+			const ofc_sema_type_t* ptype
+				= ofc_sema_type_promote(at, bt);
+			if (!ptype)
+			{
+				ofc_sparse_ref_error(a->src,
+					"Incompatible types (%s, %s) in operator %s",
+					ofc_sema_type_str_rep(at),
+					ofc_sema_type_str_rep(bt),
+					ofc_parse_operator_str_rep(op));
 				ofc_sema_expr_delete(bs);
 				ofc_sema_expr_delete(as);
 				return NULL;
 			}
-			as = cast;
-		}
 
-		if (!ofc_sema_type_compatible(bt, ptype))
-		{
-			ofc_sema_expr_t* cast
-				= ofc_sema_expr_cast(bs, ptype);
-			if (!cast)
+			if (!ofc_sema_type_compatible(at, ptype))
 			{
-				ofc_sema_expr_delete(bs);
-				ofc_sema_expr_delete(as);
-				return NULL;
+				ofc_sema_expr_t* cast
+					= ofc_sema_expr_cast(as, ptype);
+				if (!cast)
+				{
+					ofc_sema_expr_delete(bs);
+					ofc_sema_expr_delete(as);
+					return NULL;
+				}
+				as = cast;
 			}
-			bs = cast;
+
+			if (!ofc_sema_type_compatible(bt, ptype))
+			{
+				ofc_sema_expr_t* cast
+					= ofc_sema_expr_cast(bs, ptype);
+				if (!cast)
+				{
+					ofc_sema_expr_delete(bs);
+					ofc_sema_expr_delete(as);
+					return NULL;
+				}
+				bs = cast;
+			}
 		}
 	}
 
@@ -733,6 +768,7 @@ static ofc_sema_expr_t* ofc_sema_expr__unary(
 	ofc_parse_operator_e op,
 	const ofc_parse_expr_t* a)
 {
+	bool needs_bool = false;
 	ofc_sema_expr_e type;
 	switch (op)
 	{
@@ -743,6 +779,7 @@ static ofc_sema_expr_t* ofc_sema_expr__unary(
 			break;
 		case OFC_PARSE_OPERATOR_NOT:
 			type = OFC_SEMA_EXPR_NOT;
+			needs_bool = true;
 			break;
 		default:
 			return NULL;
@@ -771,6 +808,21 @@ static ofc_sema_expr_t* ofc_sema_expr__unary(
 			"Using type %s in operator '%s'",
 			ofc_sema_type_str_rep(at),
 			ofc_parse_operator_str_rep(op));
+	}
+
+	if (needs_bool && !ofc_sema_type_is_logical(at))
+	{
+		const ofc_sema_type_t* logtype
+			= ofc_sema_type_logical_default();
+
+		ofc_sema_expr_t* cast
+			= ofc_sema_expr_cast(as, logtype);
+		if (!cast)
+		{
+			ofc_sema_expr_delete(as);
+			return NULL;
+		}
+		as = cast;
 	}
 
 	ofc_sema_expr_t* expr
