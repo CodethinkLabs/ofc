@@ -616,24 +616,24 @@ static bool ofc_sema_decl__decl(
 			ofc_sema_array_delete(array);
 			return false;
 		}
-		spec.array = array;
 	}
 	else if (spec.array)
 	{
-		spec.array = ofc_sema_array_copy(array);
-		if (!spec.array) return false;
+		array = ofc_sema_array_copy(spec.array);
+		if (!array) return false;
 	}
+	spec.array = array;
 
 	if (lhs->type != OFC_PARSE_LHS_VARIABLE)
 	{
-		ofc_sema_array_delete(spec.array);
+		ofc_sema_array_delete(array);
 		return false;
 	}
 
 	if (!ofc_parse_lhs_base_name(
 		*lhs, &spec.name))
 	{
-		ofc_sema_array_delete(spec.array);
+		ofc_sema_array_delete(array);
 		return false;
 	}
 
@@ -653,7 +653,7 @@ static bool ofc_sema_decl__decl(
 
 			ofc_sparse_ref_error(lhs->src,
 				"Specification of declared variable");
-			ofc_sema_array_delete(spec.array);
+			ofc_sema_array_delete(array);
 			return false;
 		}
 
@@ -661,7 +661,7 @@ static bool ofc_sema_decl__decl(
 			scope, spec.name);
 		if (!nspec)
 		{
-			ofc_sema_array_delete(spec.array);
+			ofc_sema_array_delete(array);
 			return false;
 		}
 
@@ -672,7 +672,7 @@ static bool ofc_sema_decl__decl(
 				&& ((nspec->type != spec.type)
 					|| (nspec->structure != spec.structure)))
 			{
-				ofc_sema_array_delete(spec.array);
+				ofc_sema_array_delete(array);
 				return false;
 			}
 
@@ -688,7 +688,7 @@ static bool ofc_sema_decl__decl(
 					? (nspec->structure != spec.structure)
 					: !ofc_sema_structure_reference(spec.structure))
 				{
-					ofc_sema_array_delete(spec.array);
+					ofc_sema_array_delete(array);
 					return false;
 				}
 				nspec->structure = spec.structure;
@@ -701,7 +701,7 @@ static bool ofc_sema_decl__decl(
 			{
 				bool conflict = !ofc_sema_array_compare(
 					nspec->array, spec.array);
-				ofc_sema_array_delete(spec.array);
+				ofc_sema_array_delete(array);
 				if (conflict) return false;
 			}
 			else
@@ -709,6 +709,7 @@ static bool ofc_sema_decl__decl(
 				nspec->array = spec.array;
 			}
 		}
+		array = NULL;
 
 		if ((spec.len != 0)
 			|| spec.len_var)
@@ -729,6 +730,7 @@ static bool ofc_sema_decl__decl(
 	{
 		ofc_sparse_ref_error(lhs->src,
 			"Dynamically sized arrays are only valid in procedures");
+		ofc_sema_array_delete(array);
 		return false;
 	}
 
@@ -740,6 +742,7 @@ static bool ofc_sema_decl__decl(
 
 			ofc_sparse_ref_error(lhs->src,
 				"Redeclaration of declared variable");
+			ofc_sema_array_delete(array);
 			return false;
 		}
 
@@ -747,6 +750,7 @@ static bool ofc_sema_decl__decl(
 			scope, structure,
 			spec.name, nspec,
 			NULL, false, false);
+		ofc_sema_array_delete(array);
 		if (!decl) return false;
 
 		if (pdecl->init_expr)
