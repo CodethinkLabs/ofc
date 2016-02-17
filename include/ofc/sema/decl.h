@@ -171,6 +171,8 @@ bool ofc_sema_decl_is_procedure(
 
 bool ofc_sema_decl_is_parameter(
 	const ofc_sema_decl_t* decl);
+bool ofc_sema_decl_is_common(
+	const ofc_sema_decl_t* decl);
 
 bool ofc_sema_decl_has_initializer(
 	const ofc_sema_decl_t* decl,

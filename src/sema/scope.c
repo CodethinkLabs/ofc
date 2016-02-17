@@ -337,7 +337,8 @@ static bool ofc_sema_scope__body(
 					decl->name.string.size,
 					decl->name.string.base);
 			}
-			else if (!ofc_sema_decl_is_parameter(decl))
+			else if (!ofc_sema_decl_is_parameter(decl)
+				&& !ofc_sema_decl_is_common(decl))
 			{
 				ofc_sparse_ref_warning(decl->name,
 					"Variable '%.*s' declared but not used",

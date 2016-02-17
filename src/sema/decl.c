@@ -1629,6 +1629,13 @@ bool ofc_sema_decl_is_parameter(
 	return decl->is_parameter;
 }
 
+bool ofc_sema_decl_is_common(
+	const ofc_sema_decl_t* decl)
+{
+	if (!decl) return false;
+	return decl->is_common;
+}
+
 
 static bool ofc_sema_decl_init__used(
 	ofc_sema_decl_init_t init,
