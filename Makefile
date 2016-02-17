@@ -70,7 +70,7 @@ test: $(FRONTEND) $(FRONTEND_DEBUG)
 test-report: $(FRONTEND) $(FRONTEND_DEBUG)
 	$(MAKE) FRONTEND=$(realpath $(FRONTEND)) $(realpath FRONTEND_DEBUG=$(FRONTEND_DEBUG)) -C $(TEST_DIR) test-report
 
-test-report-lite: $(FRONTEND) $(FRONTEND_DEBUG)
+test-report-lite: $(FRONTEND)
 	$(MAKE) FRONTEND=$(realpath $(FRONTEND)) $(realpath FRONTEND_DEBUG=$(FRONTEND_DEBUG)) -C $(TEST_DIR) test-report-lite
 
 loc:
