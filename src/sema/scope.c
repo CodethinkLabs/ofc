@@ -99,21 +99,17 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 	scope->name = OFC_STR_REF_EMPTY;
 	scope->args = NULL;
 
-	scope->implicit = (parent
-		? ofc_sema_implicit_copy(parent->implicit) : NULL);
-	if (!scope->implicit)
-		scope->implicit = ofc_sema_implicit_create();
-
 	scope->spec  = ofc_sema_spec_map_create(opts.case_sensitive);
 	scope->decl  = ofc_sema_decl_list_create(opts.case_sensitive);
 
 	scope->external = false;
 	scope->intrinsic = false;
 
-	bool alloc_fail = (!scope->implicit
-		|| !scope->spec || !scope->decl);
+	bool alloc_fail = (!scope->spec || !scope->decl);
 	if (scope->type == OFC_SEMA_SCOPE_STMT_FUNC)
 	{
+		scope->implicit = NULL;
+
 		scope->common = NULL;
 		scope->equiv  = NULL;
 
@@ -126,6 +122,11 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 	}
 	else
 	{
+		scope->implicit = (parent
+			? ofc_sema_implicit_copy(parent->implicit) : NULL);
+		if (!scope->implicit)
+			scope->implicit = ofc_sema_implicit_create();
+
 		scope->common = ofc_sema_common_map_create(opts.case_sensitive);
 		scope->equiv  = ofc_sema_equiv_list_create();
 
@@ -138,7 +139,8 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 
 		scope->stmt = NULL;
 
-		if (!scope->common
+		if (!scope->implicit
+			|| !scope->common
 			|| !scope->equiv
 			|| !scope->structure
 			|| !scope->derived_type
@@ -861,6 +863,30 @@ ofc_lang_opts_t ofc_sema_scope_get_lang_opts(
 
 
 
+const ofc_sema_implicit_t* ofc_sema_scope_implicit(
+	const ofc_sema_scope_t* scope)
+{
+	if (!scope)
+		return NULL;
+	if (scope->implicit)
+		return scope->implicit;
+	return ofc_sema_scope_implicit(
+		scope->parent);
+}
+
+ofc_sema_implicit_t* ofc_sema_scope_implicit_modify(
+	ofc_sema_scope_t* scope)
+{
+	if (!scope)
+		return NULL;
+	if (scope->implicit)
+		return scope->implicit;
+	return ofc_sema_scope_implicit_modify(
+		scope->parent);
+}
+
+
+
 const ofc_sema_label_t* ofc_sema_scope_label_find(
 	const ofc_sema_scope_t* scope, unsigned label)
 {
@@ -957,8 +983,11 @@ ofc_sema_spec_t* ofc_sema_scope_spec_find_final(
 		= ofc_sema_scope_spec__find(
 			scope, name.string);
 
+	const ofc_sema_implicit_t* implicit
+		= ofc_sema_scope_implicit(scope);
+
 	return ofc_sema_implicit_apply(
-		scope->implicit, name, spec);
+		implicit, name, spec);
 }
 
 

@@ -101,6 +101,11 @@ const ofc_str_ref_t* ofc_sema_scope_get_name(
 ofc_lang_opts_t ofc_sema_scope_get_lang_opts(
 	const ofc_sema_scope_t* scope);
 
+const ofc_sema_implicit_t* ofc_sema_scope_implicit(
+	const ofc_sema_scope_t* scope);
+ofc_sema_implicit_t* ofc_sema_scope_implicit_modify(
+	ofc_sema_scope_t* scope);
+
 const ofc_sema_label_t* ofc_sema_scope_label_find(
 	const ofc_sema_scope_t* scope, unsigned label);
 

@@ -158,10 +158,9 @@ bool ofc_sema_implicit(
 		return false;
 
 	ofc_sema_implicit_t* implicit
-		= scope->implicit;
+		= ofc_sema_scope_implicit_modify(scope);
 
-	if (stmt->type
-		== OFC_PARSE_STMT_IMPLICIT_NONE)
+	if (stmt->type == OFC_PARSE_STMT_IMPLICIT_NONE)
 		return ofc_sema_implicit_none(implicit);
 
 	if ((stmt->type
