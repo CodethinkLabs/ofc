@@ -39,6 +39,13 @@ static const ofc_sema_type_t* OFC_SEMA_EXPR__LOGICAL_RETURN(
 	return ofc_sema_type_logical_default();
 }
 
+typedef enum
+{
+	OFC_SEMA_EXPR__OP_TYPE_INVALID = 0,
+	OFC_SEMA_EXPR__OP_TYPE_ALLOW   = 1,
+	OFC_SEMA_EXPR__OP_TYPE_WARN    = 2,
+} ofc_sema_expr__op_type_e;
+
 typedef struct
 {
 	/* We need to use a function pointer since we can't
@@ -47,11 +54,11 @@ typedef struct
 		const ofc_sema_type_t*,
 		const ofc_sema_type_t*);
 
-	bool allow_logical;
-	bool allow_integer;
-	bool allow_real;
-	bool allow_complex;
-	bool allow_character;
+	ofc_sema_expr__op_type_e allow_logical;
+	ofc_sema_expr__op_type_e allow_integer;
+	ofc_sema_expr__op_type_e allow_real;
+	ofc_sema_expr__op_type_e allow_complex;
+	ofc_sema_expr__op_type_e allow_character;
 } ofc_sema_expr__rule_t;
 
 static ofc_sema_expr__rule_t ofc_sema_expr__rule[] =
@@ -72,12 +79,12 @@ static ofc_sema_expr__rule_t ofc_sema_expr__rule[] =
 	{ NULL, 0, 1, 1, 1, 0 }, /* SUBTRACT */
 	{ NULL, 0, 1, 1, 1, 0 }, /* NEGATE */
 
-	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 1, 1, 1, 1, 1 }, /* EQ */
-	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 1, 1, 1, 1, 1 }, /* NE */
-	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 0, 1, 1, 0, 1 }, /* LT */
-	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 0, 1, 1, 0, 1 }, /* LE */
-	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 0, 1, 1, 0, 1 }, /* GT */
-	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 0, 1, 1, 0, 1 }, /* GE */
+	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 2, 1, 1, 1, 1 }, /* EQ */
+	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 2, 1, 1, 1, 1 }, /* NE */
+	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 2, 1, 1, 0, 2 }, /* LT */
+	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 2, 1, 1, 0, 2 }, /* LE */
+	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 2, 1, 1, 0, 2 }, /* GT */
+	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 2, 1, 1, 0, 2 }, /* GE */
 
 	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 1, 1, 0, 0, 0 }, /* NOT */
 	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 1, 1, 0, 0, 0 }, /* AND */
@@ -87,40 +94,40 @@ static ofc_sema_expr__rule_t ofc_sema_expr__rule[] =
 	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 1, 0, 0, 0, 0 }, /* NEQV */
 };
 
-static bool ofc_sema_expr_type_allowed(
+static ofc_sema_expr__op_type_e ofc_sema_expr_type_allowed(
 	ofc_sema_expr_e etype,
 	const ofc_sema_type_t* type)
 {
 	if (!type)
-		return false;
+		return OFC_SEMA_EXPR__OP_TYPE_INVALID;
 
 	if (etype >= OFC_SEMA_EXPR_COUNT)
-		return false;
+		return OFC_SEMA_EXPR__OP_TYPE_INVALID;
 
 	ofc_sema_expr__rule_t rule
 		= ofc_sema_expr__rule[etype];
 
 	if (rule.allow_logical
 		&& ofc_sema_type_is_logical(type))
-		return true;
+		return rule.allow_logical;
 
 	if (rule.allow_integer
 		&& ofc_sema_type_is_integer(type))
-		return true;
+		return rule.allow_integer;
 
 	if (rule.allow_real
 		&& (type->type == OFC_SEMA_TYPE_REAL))
-		return true;
+		return rule.allow_real;
 
 	if (rule.allow_complex
 		&& (type->type == OFC_SEMA_TYPE_COMPLEX))
-		return true;
+		return rule.allow_complex;
 
 	if (rule.allow_character
 		&& (type->type == OFC_SEMA_TYPE_CHARACTER))
-		return true;
+		return rule.allow_character;
 
-	return false;
+	return OFC_SEMA_EXPR__OP_TYPE_INVALID;
 }
 
 
@@ -539,7 +546,9 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 		return NULL;
 	}
 
-	if (!ofc_sema_expr_type_allowed(type, at))
+	ofc_sema_expr__op_type_e err
+		= ofc_sema_expr_type_allowed(type, at);
+	if (err == OFC_SEMA_EXPR__OP_TYPE_INVALID)
 	{
 		ofc_sparse_ref_error(a->src,
 			"Can't use type %s in operator '%s'",
@@ -547,6 +556,13 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 			ofc_parse_operator_str_rep(op));
 		ofc_sema_expr_delete(as);
 		return NULL;
+	}
+	else if (err == OFC_SEMA_EXPR__OP_TYPE_WARN)
+	{
+		ofc_sparse_ref_warning(a->src,
+			"Using type %s in operator '%s'",
+			ofc_sema_type_str_rep(at),
+			ofc_parse_operator_str_rep(op));
 	}
 
 	ofc_sema_expr_t* bs = ofc_sema_expr(
@@ -566,7 +582,8 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 		return NULL;
 	}
 
-	if (!ofc_sema_expr_type_allowed(type, bt))
+	err = ofc_sema_expr_type_allowed(type, bt);
+	if (err == OFC_SEMA_EXPR__OP_TYPE_INVALID)
 	{
 		ofc_sparse_ref_error(a->src,
 			"Can't use type %s in operator '%s'",
@@ -575,6 +592,13 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 		ofc_sema_expr_delete(bs);
 		ofc_sema_expr_delete(as);
 		return NULL;
+	}
+	else if (err == OFC_SEMA_EXPR__OP_TYPE_WARN)
+	{
+		ofc_sparse_ref_warning(a->src,
+			"Using type %s in operator '%s'",
+			ofc_sema_type_str_rep(bt),
+			ofc_parse_operator_str_rep(op));
 	}
 
 	if ((at->type == OFC_SEMA_TYPE_CHARACTER)
@@ -729,14 +753,24 @@ static ofc_sema_expr_t* ofc_sema_expr__unary(
 
 	const ofc_sema_type_t* at
 		= ofc_sema_expr_type(as);
-	if (!ofc_sema_expr_type_allowed(type, at))
+
+	ofc_sema_expr__op_type_e err
+		= ofc_sema_expr_type_allowed(type, at);
+	if (err == OFC_SEMA_EXPR__OP_TYPE_INVALID)
 	{
 		ofc_sparse_ref_error(a->src,
-			"Can't use type %s in operator %s",
+			"Can't use type %s in operator '%s'",
 			ofc_sema_type_str_rep(at),
 			ofc_parse_operator_str_rep(op));
 		ofc_sema_expr_delete(as);
 		return NULL;
+	}
+	else if (err == OFC_SEMA_EXPR__OP_TYPE_WARN)
+	{
+		ofc_sparse_ref_warning(a->src,
+			"Using type %s in operator '%s'",
+			ofc_sema_type_str_rep(at),
+			ofc_parse_operator_str_rep(op));
 	}
 
 	ofc_sema_expr_t* expr
