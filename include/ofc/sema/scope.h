@@ -16,6 +16,8 @@
 #ifndef __ofc_sema_scope_h__
 #define __ofc_sema_scope_h__
 
+#include <ofc/sema/intrinsic.h>
+
 typedef enum
 {
 	OFC_SEMA_SCOPE_GLOBAL = 0,
@@ -71,6 +73,9 @@ struct ofc_sema_scope_s
 };
 
 
+bool ofc_sema_scope__check_namespace_collision(
+	ofc_sema_scope_t* scope, ofc_sparse_ref_t ref);
+
 ofc_sema_scope_t* ofc_sema_scope_global(
 	const ofc_lang_opts_t* lang_opts,
 	const ofc_parse_stmt_list_t* list);
@@ -81,6 +86,10 @@ ofc_sema_scope_t* ofc_sema_scope_program(
 ofc_sema_scope_t* ofc_sema_scope_stmt_func(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
+
+bool ofc_sema_scope_block_data_name_exists(
+	ofc_sema_scope_t* scope,
+	ofc_str_ref_t name);
 ofc_sema_scope_t* ofc_sema_scope_block_data(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
@@ -123,6 +132,8 @@ ofc_sema_spec_t* ofc_sema_scope_spec_find_final(
 bool ofc_sema_scope_equiv_add(
 	ofc_sema_scope_t* scope, ofc_sema_equiv_t* equiv);
 
+bool ofc_sema_scope_decl_name_exists(
+	ofc_sema_scope_t* scope, ofc_str_ref_t name);
 bool ofc_sema_scope_decl_add(
 	ofc_sema_scope_t* scope, ofc_sema_decl_t* decl);
 const ofc_sema_decl_t* ofc_sema_scope_decl_find(
@@ -136,6 +147,8 @@ bool ofc_sema_scope_derived_type_add(
 ofc_sema_structure_t* ofc_sema_scope_derived_type_find(
 	ofc_sema_scope_t* scope, ofc_str_ref_t name);
 
+bool ofc_sema_scope_structure_name_exists(
+	ofc_sema_scope_t* scope, ofc_str_ref_t name);
 bool ofc_sema_scope_structure_add(
 	ofc_sema_scope_t* scope,
 	ofc_sema_structure_t* structure);
@@ -147,6 +160,8 @@ const ofc_sema_scope_t* ofc_sema_scope_child_find(
 ofc_sema_scope_t* ofc_sema_scope_child_find_modify(
 	ofc_sema_scope_t* scope, ofc_str_ref_t name);
 
+bool ofc_sema_scope_common_name_exists(
+	ofc_sema_scope_t* scope, ofc_str_ref_t name);
 ofc_sema_common_t* ofc_sema_scope_common_find_create(
 	ofc_sema_scope_t* scope, ofc_str_ref_t name);
 
@@ -156,6 +171,9 @@ bool ofc_sema_scope_print(
 
 ofc_sema_scope_list_t* ofc_sema_scope_list_create(void);
 
+ofc_sema_scope_t* ofc_sema_scope_list_find_name(
+	ofc_sema_scope_list_t* list,
+	ofc_str_ref_t name);
 bool ofc_sema_scope_list_add(
 	ofc_sema_scope_list_t* list,
 	ofc_sema_scope_t* scope);

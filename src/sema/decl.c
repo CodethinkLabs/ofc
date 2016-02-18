@@ -319,6 +319,9 @@ static ofc_sema_decl_t* ofc_sema_decl__spec(
 	}
 	else
 	{
+		ofc_sema_scope__check_namespace_collision(
+			scope, name);
+
 		if (!ofc_sema_scope_decl_add(
 			scope, decl))
 		{

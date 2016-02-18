@@ -76,6 +76,7 @@ static bool ofc_sema_scope__add_child(
 		scope->child, child);
 }
 
+
 static ofc_sema_scope_t* ofc_sema_scope__create(
 	ofc_sema_scope_t*      parent,
 	const ofc_lang_opts_t* lang_opts,
@@ -393,6 +394,64 @@ static bool ofc_sema_scope__body(
 	return true;
 }
 
+bool ofc_sema_scope__check_namespace_collision(
+	ofc_sema_scope_t* scope, ofc_sparse_ref_t ref)
+{
+	if (!scope)
+		return false;
+
+	bool collision = false;
+
+	if (ofc_sema_scope_common_name_exists(scope, ref.string))
+	{
+		ofc_sparse_ref_warning(ref,
+			"The name'%.*s' conflicts with a common block",
+			ref.string.size, ref.string.base);
+
+		collision = true;
+	}
+
+	if (ofc_sema_scope_block_data_name_exists(scope, ref.string))
+	{
+		ofc_sparse_ref_warning(ref,
+			"The name '%.*s' Tconflicts with a block data",
+			ref.string.size, ref.string.base);
+
+		collision = true;
+	}
+
+	if (ofc_sema_scope_structure_name_exists(scope, ref.string))
+	{
+		ofc_sparse_ref_warning(ref,
+			"The name '%.*s' conflicts with a structure",
+			ref.string.size, ref.string.base);
+
+		collision = true;
+	}
+
+	if (ofc_sema_scope_decl_name_exists(scope, ref.string))
+	{
+		ofc_sparse_ref_warning(ref,
+			"Name name '%.*s' conflicts with a declaration",
+			ref.string.size, ref.string.base);
+
+		collision = true;
+	}
+
+	char* name_str = strndup(ref.string.base, ref.string.size);
+
+	if (ofc_sema_intrinsic_name_reserved(name_str))
+	{
+		ofc_sparse_ref_warning(ref,
+			"The name '%.*s' conflicts with a reserved intrinsic keyword",
+			ref.string.size, ref.string.base);
+
+		collision = true;
+	}
+
+	free (name_str);
+	return collision;
+}
 
 bool ofc_sema_scope_subroutine(
 	ofc_sema_scope_t* scope,
@@ -426,6 +485,9 @@ bool ofc_sema_scope_subroutine(
 
 		decl = ofc_sema_decl_create(stype, name);
 		if (!decl) return false;
+
+		ofc_sema_scope__check_namespace_collision(
+			scope, stmt->src);
 
 		if (!ofc_sema_scope_decl_add(
 			scope, decl))
@@ -667,6 +729,9 @@ bool ofc_sema_scope_function(
 			ofc_sema_scope_delete(func_scope);
 			return false;
 		}
+
+		ofc_sema_scope__check_namespace_collision(
+			scope, stmt->src);
 	}
 	decl->is_return = true;
 
@@ -880,6 +945,20 @@ ofc_sema_scope_t* ofc_sema_scope_stmt_func(
 	return func;
 }
 
+bool ofc_sema_scope_block_data_name_exists(
+	ofc_sema_scope_t* scope,
+	ofc_str_ref_t name)
+{
+	if (!scope || !scope->child)
+		return false;
+
+	ofc_sema_scope_t* block_data
+		= ofc_sema_scope_list_find_name(
+			scope->child, name);
+
+	return block_data ? true : false;
+}
+
 ofc_sema_scope_t* ofc_sema_scope_block_data(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt)
@@ -909,6 +988,9 @@ ofc_sema_scope_t* ofc_sema_scope_block_data(
 		ofc_sema_scope_delete(block_data);
 		return NULL;
 	}
+
+	ofc_sema_scope__check_namespace_collision(
+		scope, stmt->src);
 
 	if (!ofc_sema_scope__add_child(scope, block_data))
 	{
@@ -1122,6 +1204,18 @@ bool ofc_sema_scope_equiv_add(
 		scope->equiv, equiv);
 }
 
+bool ofc_sema_scope_decl_name_exists(
+	ofc_sema_scope_t* scope, ofc_str_ref_t name)
+{
+	if (!scope)
+		return false;
+
+	const ofc_sema_decl_t* decl
+		= ofc_sema_decl_list_find(
+			scope->decl, name);
+
+	return decl ? true : false;
+}
 
 
 bool ofc_sema_scope_decl_add(
@@ -1220,6 +1314,19 @@ bool ofc_sema_scope_structure_add(
 		scope->structure, structure);
 }
 
+bool ofc_sema_scope_structure_name_exists(
+	ofc_sema_scope_t* scope, ofc_str_ref_t name)
+{
+	if (!scope)
+		return NULL;
+
+	ofc_sema_structure_t* structure =
+		ofc_sema_scope_structure_find(
+			scope, name);
+
+	return structure ? true : false;
+}
+
 ofc_sema_structure_t* ofc_sema_scope_structure_find(
 	ofc_sema_scope_t* scope, ofc_str_ref_t name)
 {
@@ -1235,6 +1342,18 @@ ofc_sema_structure_t* ofc_sema_scope_structure_find(
 		scope->parent, name);
 }
 
+bool ofc_sema_scope_common_name_exists(
+	ofc_sema_scope_t* scope, ofc_str_ref_t name)
+{
+    if (!scope || !scope->common)
+		return false;
+
+	const ofc_sema_common_t* common
+		= ofc_sema_common_map_find(
+			scope->common, name);
+
+	return common ? true : false;
+}
 
 ofc_sema_common_t* ofc_sema_scope_common_find_create(
 	ofc_sema_scope_t* scope, ofc_str_ref_t name)
@@ -1486,6 +1605,26 @@ bool ofc_sema_scope_print(
 	}
 
 	return true;
+}
+
+ofc_sema_scope_t* ofc_sema_scope_list_find_name(
+	ofc_sema_scope_list_t* list,
+	ofc_str_ref_t name)
+{
+    if (!list)
+		return NULL;
+
+	unsigned i;
+	for (i = 0; i < list->count; i++)
+	{
+		/* TODO - Handle case sensitivity flag */
+
+        if (ofc_str_ref_equal_ci(
+			list->scope[i]->name, name))
+				return list->scope[i];
+	}
+
+	return NULL;
 }
 
 ofc_sema_scope_list_t* ofc_sema_scope_list_create(void)

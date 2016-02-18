@@ -18,6 +18,8 @@
 
 typedef struct ofc_sema_intrinsic_s ofc_sema_intrinsic_t;
 
+bool ofc_sema_intrinsic_name_reserved(const char* name);
+
 const ofc_sema_intrinsic_t* ofc_sema_intrinsic(
 	const ofc_sema_scope_t* scope,
 	ofc_str_ref_t name);

@@ -33,6 +33,9 @@ bool ofc_sema_stmt_common(
 		if (!group || !group->names)
 			continue;
 
+		ofc_sema_scope__check_namespace_collision(
+			scope, stmt->src);
+
 		ofc_sema_common_t* common
 			= ofc_sema_scope_common_find_create(
 				scope, group->group.string);

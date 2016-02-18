@@ -78,15 +78,15 @@ static const char* ofc_sema_intrinsics__reserved_list[]=
 	NULL
 };
 
-bool ofc_sema_intrinsic_name_reserved(char* name)
+bool ofc_sema_intrinsic_name_reserved(const char* name)
 {
     unsigned i = 0;
 
-	/* TODO - Use a hash map to speed this up. */
 	while (ofc_sema_intrinsics__reserved_list[i])
 	{
 		if (strcasecmp(ofc_sema_intrinsics__reserved_list[i], name) == 0)
 			return true;
+		i++;
 	}
 
 	return false;
