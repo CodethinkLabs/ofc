@@ -110,6 +110,10 @@ unsigned ofc_parse_stmt_do(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
 	ofc_parse_stmt_t* stmt);
+unsigned ofc_parse_stmt_while_do_block(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_stmt_t* stmt);
 unsigned ofc_parse_stmt_format(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
@@ -530,6 +534,7 @@ ofc_parse_stmt_t* ofc_parse_stmt(
 
 		case 'W':
 			if (i == 0) i = ofc_parse_stmt_io_write(src, ptr, debug, &stmt);
+			if (i == 0) i = ofc_parse_stmt_while_do_block(src, ptr, debug, &stmt);
 			break;
 
 		default:
@@ -871,6 +876,7 @@ ofc_parse_stmt_list_t* ofc_parse_stmt_list(
 	ofc_parse_stmt_list_t* list
 		= ofc_parse_stmt_list_create();
 	if (!list) return NULL;
+
 
 	if (!ofc_parse_stmt_sublist(
 		list, src, ptr, debug, len))

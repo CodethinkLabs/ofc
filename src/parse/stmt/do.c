@@ -15,7 +15,105 @@
 
 #include "ofc/parse.h"
 
-unsigned ofc_parse_stmt__do_while_block(
+/* DO (cond) WHILE...END DO
+   http://www.tat.physik.uni-tuebingen.de/~kley/lehre/ftn77/tutorial/loops.html */
+unsigned ofc_parse_stmt_while_do_block(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_stmt_t* stmt)
+{
+	unsigned dpos = ofc_parse_debug_position(debug);
+
+	unsigned i = ofc_parse_keyword(
+		src, ptr, debug,
+		OFC_PARSE_KEYWORD_WHILE);
+	if (i == 0) return 0;
+
+	if (ptr[i++] != '(')
+	{
+		ofc_parse_debug_rewind(debug, dpos);
+		return 0;
+	}
+
+	unsigned len;
+	stmt->do_while_block.cond = ofc_parse_expr(
+		src, &ptr[i], debug, &len);
+	if (!stmt->do_while_block.cond)
+	{
+		ofc_parse_debug_rewind(debug, dpos);
+		return 0;
+	}
+	i += len;
+
+	if (ptr[i++] != ')')
+	{
+		ofc_parse_expr_delete(stmt->do_while_block.cond);
+		ofc_parse_debug_rewind(debug, dpos);
+		return 0;
+	}
+
+	len = ofc_parse_keyword(
+		src, &ptr[i], debug,
+		OFC_PARSE_KEYWORD_DO);
+	if (len == 0)
+	{
+		ofc_parse_expr_delete(stmt->do_while_block.cond);
+		ofc_parse_debug_rewind(debug, dpos);
+		return 0;
+	}
+	i += len;
+
+	/* TODO - Make optional? */
+	if (!ofc_is_end_statement(&ptr[i], &len))
+	{
+		ofc_parse_expr_delete(stmt->do_while_block.cond);
+		ofc_parse_debug_rewind(debug, dpos);
+		return 0;
+	}
+	i += len;
+
+	stmt->do_while_block.block
+		= ofc_parse_stmt_list(src, &ptr[i], debug, &len);
+	if (stmt->do_while_block.block)
+	{
+		if (ofc_parse_stmt_list_contains_error(
+			stmt->do_while_block.block))
+		{
+			/* Don't rewind cause we want to report the error. */
+			ofc_parse_stmt_list_delete(
+				stmt->do_while_block.block);
+			ofc_parse_expr_delete(stmt->do_while_block.cond);
+			return 0;
+		}
+
+		i += len;
+	}
+
+	stmt->do_while_block.end_do_has_label = ofc_sparse_label_find(
+		src, &ptr[i], &stmt->do_while_block.end_do_label);
+
+	len = ofc_parse_keyword_end(
+		src, &ptr[i], debug,
+		OFC_PARSE_KEYWORD_DO, false);
+	if (len == 0)
+	{
+		ofc_sparse_error_ptr(src, &ptr[i],
+			"Invalid statement in DO WHILE body");
+
+		ofc_parse_stmt_list_delete(
+			stmt->do_while_block.block);
+		ofc_parse_expr_delete(stmt->do_while_block.cond);
+
+		stmt->type = OFC_PARSE_STMT_ERROR;
+		return i;
+	}
+	i += len;
+
+	stmt->type = OFC_PARSE_STMT_DO_WHILE_BLOCK;
+	return i;
+}
+
+static unsigned ofc_parse_stmt__do_while_block(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
 	ofc_parse_stmt_t* stmt)
@@ -100,7 +198,7 @@ unsigned ofc_parse_stmt__do_while_block(
 	return i;
 }
 
-unsigned ofc_parse_stmt__do_while(
+static unsigned ofc_parse_stmt__do_while(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
 	ofc_parse_stmt_t* stmt)
@@ -157,7 +255,7 @@ unsigned ofc_parse_stmt__do_while(
 	return i;
 }
 
-unsigned ofc_parse_stmt__do_label(
+static unsigned ofc_parse_stmt__do_label(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
 	ofc_parse_stmt_t* stmt)
@@ -243,7 +341,7 @@ unsigned ofc_parse_stmt__do_label(
 	return i;
 }
 
-unsigned ofc_parse_stmt__do_block(
+static unsigned ofc_parse_stmt__do_block(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
 	ofc_parse_stmt_t* stmt)
@@ -384,11 +482,12 @@ unsigned ofc_parse_stmt_do(
 
 
 
-bool ofc_parse_stmt__do_while_block_print(
+static bool ofc_parse_stmt__do_while_block_print(
 	ofc_colstr_t* cs, unsigned indent,
 	const ofc_parse_stmt_t* stmt)
 {
-	if (!ofc_colstr_atomic_writef(cs, "DO WHILE(")
+	if (!ofc_colstr_atomic_writef(cs, "DO WHILE")
+		|| !ofc_colstr_atomic_writef(cs, "(")
 		|| !ofc_parse_expr_print(cs, stmt->do_while_block.cond)
 		|| !ofc_colstr_atomic_writef(cs, ")"))
 		return false;
@@ -405,24 +504,31 @@ bool ofc_parse_stmt__do_while_block_print(
 	return ofc_colstr_atomic_writef(cs, "END DO");
 }
 
-bool ofc_parse_stmt__do_while_print(
+static bool ofc_parse_stmt__do_while_print(
 	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt)
 {
-	return (ofc_colstr_atomic_writef(cs, "DO ")
+	return (ofc_colstr_atomic_writef(cs, "DO")
+		&& ofc_colstr_atomic_writef(cs, " ")
 		&& ofc_parse_expr_print(cs, stmt->do_while.end_label)
-		&& ofc_colstr_atomic_writef(cs, ", WHILE(")
+		&& ofc_colstr_atomic_writef(cs, ",")
+		&& ofc_colstr_atomic_writef(cs, " ")
+		&& ofc_colstr_atomic_writef(cs, "WHILE")
+		&& ofc_colstr_atomic_writef(cs, "(")
 		&& ofc_parse_expr_print(cs, stmt->do_while.cond)
 		&& ofc_colstr_atomic_writef(cs, ")"));
 }
 
-bool ofc_parse_stmt__do_label_print(
+static bool ofc_parse_stmt__do_label_print(
 	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt)
 {
-	if (!ofc_colstr_atomic_writef(cs, "DO ")
+	if (!ofc_colstr_atomic_writef(cs, "DO")
+		|| !ofc_colstr_atomic_writef(cs, " ")
 		|| !ofc_parse_expr_print(cs, stmt->do_label.end_label)
-		|| !ofc_colstr_atomic_writef(cs, ", ")
+		|| !ofc_colstr_atomic_writef(cs, ",")
+		|| !ofc_colstr_atomic_writef(cs, " ")
 		|| !ofc_parse_assign_print(cs, stmt->do_label.init)
-		|| !ofc_colstr_atomic_writef(cs, ", ")
+		|| !ofc_colstr_atomic_writef(cs, ",")
+		|| !ofc_colstr_atomic_writef(cs, " ")
 		|| !ofc_parse_expr_print(cs, stmt->do_label.last))
 		return false;
 
@@ -437,18 +543,21 @@ bool ofc_parse_stmt__do_label_print(
 	return true;
 }
 
-bool ofc_parse_stmt__do_block_print(
+static bool ofc_parse_stmt__do_block_print(
 	ofc_colstr_t* cs, unsigned indent, const ofc_parse_stmt_t* stmt)
 {
-	if (!ofc_colstr_atomic_writef(cs, "DO ")
+	if (!ofc_colstr_atomic_writef(cs, "DO")
+		|| !ofc_colstr_atomic_writef(cs, " ")
 		|| !ofc_parse_assign_print(cs, stmt->do_block.init)
-		|| !ofc_colstr_atomic_writef(cs, ", ")
+		|| !ofc_colstr_atomic_writef(cs, ",")
+		|| !ofc_colstr_atomic_writef(cs, " ")
 		|| !ofc_parse_expr_print(cs, stmt->do_block.last))
 		return false;
 
 	if (stmt->do_block.step)
 	{
-		if (!ofc_colstr_atomic_writef(cs, ", ")
+		if (!ofc_colstr_atomic_writef(cs, ",")
+			|| !ofc_colstr_atomic_writef(cs, " ")
 			|| !ofc_parse_expr_print(
 				cs, stmt->do_block.step))
 			return false;
