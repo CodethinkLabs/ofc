@@ -23,7 +23,6 @@ typedef enum
 	OFC_SEMA_EXPR_CAST,
 	OFC_SEMA_EXPR_INTRINSIC,
 	OFC_SEMA_EXPR_FUNCTION,
-	OFC_SEMA_EXPR_ALT_RETURN,
 	OFC_SEMA_EXPR_IMPLICIT_DO,
 
 	OFC_SEMA_EXPR_POWER,
@@ -55,10 +54,14 @@ struct ofc_sema_expr_s
 	ofc_sparse_ref_t src;
 
 	ofc_sema_typeval_t* constant;
+	ofc_sema_label_t*   label;
 
 	bool brackets;
 
 	unsigned repeat;
+
+	bool is_alt_return;
+	bool is_label;
 
 	union
 	{
@@ -89,11 +92,6 @@ struct ofc_sema_expr_s
 		struct
 		{
 			ofc_sema_expr_t* expr;
-		} alt_return;
-
-		struct
-		{
-			ofc_sema_expr_t* expr;
 			ofc_sema_decl_t* iter;
 			ofc_sema_expr_t* init;
 			ofc_sema_expr_t* last;
@@ -120,6 +118,12 @@ ofc_sema_expr_t* ofc_sema_expr_repeat(
 ofc_sema_expr_t* ofc_sema_expr_dummy_arg(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_expr_t* expr);
+ofc_sema_expr_t* ofc_sema_expr_label(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_expr_t* expr);
+ofc_sema_expr_t* ofc_sema_expr_alt_return(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_expr_t* expr);
 ofc_sema_expr_t* ofc_sema_expr_copy_replace(
 	const ofc_sema_expr_t* expr,
 	const ofc_sema_decl_t* replace,
@@ -129,8 +133,6 @@ ofc_sema_expr_t* ofc_sema_expr_copy(
 ofc_sema_expr_t* ofc_sema_expr_cast(
 	ofc_sema_expr_t* expr,
 	const ofc_sema_type_t* type);
-ofc_sema_expr_t* ofc_sema_expr_alt_return(
-	ofc_sema_expr_t* expr);
 ofc_sema_expr_t* ofc_sema_expr_typeval(
 	ofc_sema_typeval_t* typeval);
 ofc_sema_expr_t* ofc_sema_expr_integer(int value);
@@ -178,6 +180,9 @@ bool ofc_sema_expr_resolve_int(
 	int* value);
 
 ofc_sema_expr_list_t* ofc_sema_expr_list(
+	ofc_sema_scope_t*            scope,
+	const ofc_parse_expr_list_t* list);
+ofc_sema_expr_list_t* ofc_sema_expr_list_label(
 	ofc_sema_scope_t*            scope,
 	const ofc_parse_expr_list_t* list);
 ofc_sema_expr_list_t* ofc_sema_expr_list_clist(

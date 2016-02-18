@@ -259,8 +259,8 @@ struct ofc_parse_stmt_s
 
 		struct
 		{
-			unsigned         label;
-			ofc_sparse_ref_t variable;
+			ofc_parse_expr_t* label;
+			ofc_sparse_ref_t  variable;
 		} assign;
 
 		struct

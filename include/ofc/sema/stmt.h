@@ -70,7 +70,7 @@ struct ofc_sema_stmt_s
 		struct
 		{
 			const ofc_sema_decl_t* dest;
-			unsigned               label;
+			ofc_sema_expr_t*       label;
 		} assign;
 
 		struct

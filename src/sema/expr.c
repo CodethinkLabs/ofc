@@ -68,7 +68,6 @@ static ofc_sema_expr__rule_t ofc_sema_expr__rule[] =
 	{ NULL, 0, 0, 0, 0, 0 }, /* CAST */
 	{ NULL, 0, 0, 0, 0, 0 }, /* INTRINSIC */
 	{ NULL, 0, 0, 0, 0, 0 }, /* FUNCTION */
-	{ NULL, 0, 0, 0, 0, 0 }, /* ALT_RETURN */
 	{ NULL, 0, 0, 0, 0, 0 }, /* IMPLICIT_DO */
 
 	{ NULL, 0, 1, 1, 1, 0 }, /* POWER */
@@ -156,7 +155,6 @@ static ofc_sema_typeval_t* (*ofc_sema_expr__resolve[])(
 	NULL, /* CAST */
 	NULL, /* INTRINSIC */
 	NULL, /* FUNCTION */
-	NULL, /* ALT_RETURN */
 	NULL, /* IMPLICIT_DO */
 
 	ofc_sema_typeval_power,
@@ -199,10 +197,14 @@ static ofc_sema_expr_t* ofc_sema_expr__create(
 	expr->src = OFC_SPARSE_REF_EMPTY;
 
 	expr->constant = NULL;
+	expr->label    = NULL;
 
 	expr->brackets = false;
 
 	expr->repeat = 1;
+
+	expr->is_alt_return = false;
+	expr->is_label      = false;
 
 	switch (type)
 	{
@@ -222,9 +224,6 @@ static ofc_sema_expr_t* ofc_sema_expr__create(
 		case OFC_SEMA_EXPR_FUNCTION:
 			expr->function = NULL;
 			expr->args     = NULL;
-			break;
-		case OFC_SEMA_EXPR_ALT_RETURN:
-			expr->alt_return.expr = NULL;
 			break;
 		case OFC_SEMA_EXPR_IMPLICIT_DO:
 			expr->implicit_do.expr = NULL;
@@ -323,12 +322,6 @@ ofc_sema_expr_t* ofc_sema_expr_copy_replace(
 			copy->args     = ofc_sema_expr_list_copy_replace(
 				expr->args, replace, with);
 			success = (copy->args != NULL);
-			break;
-
-		case OFC_SEMA_EXPR_ALT_RETURN:
-			copy->alt_return.expr = ofc_sema_expr_copy_replace(
-				expr->alt_return.expr, replace, with);
-			success = (copy->alt_return.expr != NULL);
 			break;
 
 		case OFC_SEMA_EXPR_IMPLICIT_DO:
@@ -461,33 +454,6 @@ ofc_sema_expr_t* ofc_sema_expr_cast(
 	cast->cast.type = type;
 	cast->cast.expr = expr;
 	return cast;
-}
-
-ofc_sema_expr_t* ofc_sema_expr_alt_return(
-	ofc_sema_expr_t* expr)
-{
-	if (!expr)
-		return NULL;
-
-	ofc_sema_expr_t* alt_return
-		= ofc_sema_expr__create(
-			OFC_SEMA_EXPR_ALT_RETURN);
-	if (!alt_return) return NULL;
-
-	if (ofc_sema_expr_is_constant(expr))
-	{
-		alt_return->constant
-			= ofc_sema_typeval_copy(expr->constant);
-		if (!alt_return->constant)
-		{
-			ofc_sema_expr_delete(alt_return);
-			return NULL;
-		}
-	}
-
-	alt_return->src = expr->src;
-	alt_return->alt_return.expr = expr;
-	return alt_return;
 }
 
 ofc_sema_expr_t* ofc_sema_expr_typeval(
@@ -1290,6 +1256,54 @@ ofc_sema_expr_t* ofc_sema_expr_dummy_arg(
 	return ofc_sema_expr(scope, expr);
 }
 
+ofc_sema_expr_t* ofc_sema_expr_label(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_expr_t* expr)
+{
+	ofc_sema_expr_t* label
+		= ofc_sema_expr(scope, expr);
+	if (!label) return NULL;
+
+	const ofc_sema_type_t* type
+		= ofc_sema_expr_type(label);
+	if (!ofc_sema_type_is_integer(type))
+	{
+		ofc_sparse_ref_warning(label->src,
+			"Label must be an INTEGER expression");
+		ofc_sema_expr_delete(label);
+		return NULL;
+	}
+
+	const ofc_sema_typeval_t* tv
+		= ofc_sema_expr_constant(label);
+	if (tv)
+	{
+		int64_t v;
+		bool has_val = ofc_sema_typeval_get_integer(tv, &v);
+		if (has_val && (v <= 0))
+		{
+			ofc_sparse_ref_warning(label->src,
+				"Label expression must be greater than zero");
+			ofc_sema_expr_delete(label);
+			return NULL;
+		}
+	}
+
+	label->is_label = true;
+	return label;
+}
+
+ofc_sema_expr_t* ofc_sema_expr_alt_return(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_expr_t* expr)
+{
+	ofc_sema_expr_t* alt_return
+		= ofc_sema_expr_label(scope, expr);
+	if (!alt_return) return NULL;
+	alt_return->is_alt_return = true;
+	return alt_return;
+}
+
 static ofc_sema_expr_t* ofc_sema_expr__implicit_do(
 	ofc_sema_scope_t* scope,
 	ofc_sparse_ref_t src,
@@ -1573,9 +1587,6 @@ void ofc_sema_expr_delete(
 		case OFC_SEMA_EXPR_FUNCTION:
 			ofc_sema_expr_list_delete(expr->args);
 			break;
-		case OFC_SEMA_EXPR_ALT_RETURN:
-			ofc_sema_expr_delete(expr->alt_return.expr);
-			break;
 		case OFC_SEMA_EXPR_IMPLICIT_DO:
 			ofc_sema_expr_delete(expr->implicit_do.expr);
 			ofc_sema_decl_delete(expr->implicit_do.iter);
@@ -1824,7 +1835,9 @@ bool ofc_sema_expr_compare(
 	if (a == b)
 		return true;
 
-	if (a->type != b->type)
+	if ((a->type != b->type)
+		|| (a->is_label != b->is_label)
+		|| (a->is_alt_return != b->is_alt_return))
 		return false;
 
 	if (ofc_sema_expr_is_constant(a)
@@ -1855,10 +1868,6 @@ bool ofc_sema_expr_compare(
 		case OFC_SEMA_EXPR_FUNCTION:
 			return ((a->function == b->function)
 				&& ofc_sema_expr_list_compare(a->args, b->args));
-
-		case OFC_SEMA_EXPR_ALT_RETURN:
-			return ofc_sema_expr_compare(
-				a->alt_return.expr, b->alt_return.expr);
 
 		case OFC_SEMA_EXPR_IMPLICIT_DO:
 			return (ofc_sema_expr_compare(
@@ -1924,9 +1933,6 @@ const ofc_sema_type_t* ofc_sema_expr_type(
 		case OFC_SEMA_EXPR_FUNCTION:
 			return ofc_sema_decl_base_type(
 				expr->function);
-		case OFC_SEMA_EXPR_ALT_RETURN:
-			return ofc_sema_expr_type(
-				expr->alt_return.expr);
 		case OFC_SEMA_EXPR_IMPLICIT_DO:
 			return ofc_sema_expr_type(
 				expr->implicit_do.expr);
@@ -2021,13 +2027,13 @@ static ofc_sema_expr_list_t* ofc_sema_expr__list(
 	const ofc_parse_expr_list_t* list,
 	bool allow_repeat,
 	bool allow_implicit_do,
-	bool dummy_args)
+	bool is_label)
 {
 	if (!list)
 		return NULL;
 
-	/* Dummy argument lists can never have repeats. */
-	if (allow_repeat && dummy_args)
+	/* Label lists can never have repeats. */
+	if (allow_repeat && is_label)
 		return NULL;
 
 	ofc_sema_expr_list_t* slist
@@ -2053,8 +2059,8 @@ static ofc_sema_expr_list_t* ofc_sema_expr__list(
 		}
 		else
 		{
-			if (dummy_args)
-				expr = ofc_sema_expr_dummy_arg(scope, list->expr[i]);
+			if (is_label)
+				expr = ofc_sema_expr_label(scope, list->expr[i]);
 			else if (allow_repeat)
 				expr = ofc_sema_expr_repeat(scope, list->expr[i]);
 			else
@@ -2086,6 +2092,14 @@ ofc_sema_expr_list_t* ofc_sema_expr_list(
 		scope, list, false, false, false);
 }
 
+ofc_sema_expr_list_t* ofc_sema_expr_list_label(
+	ofc_sema_scope_t*            scope,
+	const ofc_parse_expr_list_t* list)
+{
+	return ofc_sema_expr__list(
+		scope, list, false, false, true);
+}
+
 ofc_sema_expr_list_t* ofc_sema_expr_list_clist(
 	ofc_sema_scope_t*            scope,
 	const ofc_parse_expr_list_t* clist)
@@ -2100,14 +2114,6 @@ ofc_sema_expr_list_t* ofc_sema_expr_list_io(
 {
 	return ofc_sema_expr__list(
 		scope, iolist, false, true, false);
-}
-
-ofc_sema_expr_list_t* ofc_sema_expr_list_dummy_arg(
-	ofc_sema_scope_t*            scope,
-	const ofc_parse_expr_list_t* iolist)
-{
-	return ofc_sema_expr__list(
-		scope, iolist, false, false, true);
 }
 
 ofc_sema_expr_list_t* ofc_sema_expr_list_create(void)
@@ -2299,7 +2305,6 @@ static const char* ofc_sema_expr__operator[] =
 	NULL, /* CAST */
 	NULL, /* INTRINSIC */
 	NULL, /* FUNCTION */
-	NULL, /* ALT_RETURN */
 	NULL, /* IMPLICIT_DO */
 
 	"**",
@@ -2349,11 +2354,13 @@ bool ofc_sema_expr_print(
 {
 	if (!cs || !expr) return false;
 
-	if (expr->brackets)
-	{
-		if (!ofc_colstr_atomic_writef(cs, "("))
-			return false;
-	}
+	if (expr->is_alt_return
+		&& !ofc_colstr_atomic_writef(cs, "*"))
+		return false;
+
+	if (expr->brackets
+		&& !ofc_colstr_atomic_writef(cs, "("))
+		return false;
 
 	switch (expr->type)
 	{
@@ -2406,12 +2413,6 @@ bool ofc_sema_expr_print(
 				|| !ofc_colstr_atomic_writef(cs, "(")
 				|| (expr->args && !ofc_sema_expr_list_print(cs, expr->args))
 				|| !ofc_colstr_atomic_writef(cs, ")"))
-				return false;
-			break;
-
-		case OFC_SEMA_EXPR_ALT_RETURN:
-			if (!ofc_colstr_atomic_writef(cs, "*")
-				|| !ofc_sema_expr_print(cs, expr->alt_return.expr))
 				return false;
 			break;
 
@@ -2468,11 +2469,9 @@ bool ofc_sema_expr_print(
 			break;
 	}
 
-	if (expr->brackets)
-	{
-		if (!ofc_colstr_atomic_writef(cs, ")"))
-			return false;
-	}
+	if (expr->brackets
+		&& !ofc_colstr_atomic_writef(cs, ")"))
+		return false;
 
 	return true;
 }

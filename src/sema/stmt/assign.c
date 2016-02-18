@@ -53,7 +53,9 @@ ofc_sema_stmt_t* ofc_sema_stmt_assign(
 	}
 	s.assign.dest = dest;
 
-	s.assign.label = stmt->assign.label;
+	s.assign.label = ofc_sema_expr_label(
+		scope, stmt->assign.label);
+	if (!s.assign.label) return false;
 
 	const ofc_sema_type_t* dtype
 		= ofc_sema_decl_type(s.assign.dest);
@@ -61,6 +63,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_assign(
 	{
 		ofc_sparse_ref_error(stmt->src,
 			"ASSIGN destination must be of type INTEGER.");
+		ofc_sema_expr_delete(s.assign.label);
 		return NULL;
 	}
 	s.type = OFC_SEMA_STMT_ASSIGN;
@@ -68,7 +71,11 @@ ofc_sema_stmt_t* ofc_sema_stmt_assign(
 
 	ofc_sema_stmt_t* as
 		= ofc_sema_stmt_alloc(s);
-	if (!as) return NULL;
+	if (!as)
+	{
+		ofc_sema_expr_delete(s.assign.label);
+		return NULL;
+	}
 
 	dest->used = true;
 	return as;
@@ -78,17 +85,12 @@ bool ofc_sema_stmt_assign_print(
 	ofc_colstr_t* cs,
 	const ofc_sema_stmt_t* stmt)
 {
-	if (!cs || !stmt)
-		return false;
-
-	if (!ofc_colstr_atomic_writef(cs, "ASSIGN")
-		|| !ofc_colstr_atomic_writef(cs, " ")
-		|| !ofc_colstr_atomic_writef(cs, "%d", stmt->assign.label)
-		|| !ofc_colstr_atomic_writef(cs, " ")
-		|| !ofc_colstr_atomic_writef(cs, "TO")
-		|| !ofc_colstr_atomic_writef(cs, " ")
-		|| !ofc_sema_decl_print_name(cs, stmt->assign.dest))
-		return false;
-
-	return true;
+	return (cs && stmt
+		&& ofc_colstr_atomic_writef(cs, "ASSIGN")
+		&& ofc_colstr_atomic_writef(cs, " ")
+		&& ofc_sema_expr_print(cs, stmt->assign.label)
+		&& ofc_colstr_atomic_writef(cs, " ")
+		&& ofc_colstr_atomic_writef(cs, "TO")
+		&& ofc_colstr_atomic_writef(cs, " ")
+		&& ofc_sema_decl_print_name(cs, stmt->assign.dest));
 }

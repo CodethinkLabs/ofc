@@ -167,10 +167,9 @@ static ofc_sema_stmt_t* ofc_sema_stmt_do__label(
 	s.do_label.last = NULL;
 	s.do_label.step = NULL;
 
-	s.do_label.end_label = ofc_sema_expr(
+	s.do_label.end_label = ofc_sema_expr_label(
 		scope, stmt->do_label.end_label);
-	if (!s.do_label.end_label)
-		return NULL;
+	if (!s.do_label.end_label) return NULL;
 
 	if (!ofc_sema_stmt__loop_control(
 		scope, stmt->do_label.init,
@@ -269,10 +268,9 @@ static ofc_sema_stmt_t* ofc_sema_stmt_do_while__label(
 	ofc_sema_stmt_t s;
 	s.type = OFC_SEMA_STMT_DO_WHILE;
 
-	s.do_while.end_label = ofc_sema_expr(
-	scope, stmt->do_while.end_label);
-	if (!s.do_while.end_label)
-		return NULL;
+	s.do_while.end_label = ofc_sema_expr_label(
+		scope, stmt->do_while.end_label);
+	if (!s.do_while.end_label) return NULL;
 
 	s.do_while.cond = ofc_sema_expr(
 		scope, stmt->do_while.cond);

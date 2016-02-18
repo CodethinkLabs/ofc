@@ -208,6 +208,10 @@ void ofc_sema_stmt_delete(
 			ofc_sema_lhs_delete(
 				stmt->assignment.dest);
 			break;
+		case OFC_SEMA_STMT_ASSIGN:
+			ofc_sema_expr_delete(
+				stmt->assign.label);
+			break;
 		case OFC_SEMA_STMT_IO_WRITE:
 			ofc_sema_expr_delete(
 				stmt->io_write.unit);

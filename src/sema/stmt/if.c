@@ -68,19 +68,8 @@ static ofc_sema_stmt_t* ofc_sema_stmt_if__computed(
 	unsigned i;
 	for (i = 0; i < stmt->if_comp.label->count; i++)
 	{
-		ofc_sema_expr_t* label = ofc_sema_expr(
+		ofc_sema_expr_t* label = ofc_sema_expr_label(
 			scope, stmt->if_comp.label->expr[i]);
-
-		if (!ofc_sema_expr_validate_uint(label))
-		{
-			ofc_sparse_ref_error(label->src,
-				"Target label must be a positive INTEGER.");
-
-			ofc_sema_expr_delete(label);
-			ofc_sema_expr_list_delete(s.if_comp.label);
-			ofc_sema_expr_delete(s.if_comp.cond);
-			return NULL;
-		}
 
 		if (!ofc_sema_expr_list_add(
 			s.if_comp.label, label))

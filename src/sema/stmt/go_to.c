@@ -22,19 +22,11 @@ static ofc_sema_stmt_t* ofc_sema_stmt_go_to__assigned(
 {
 	ofc_sema_stmt_t s;
 	s.type = OFC_SEMA_STMT_GO_TO;
-	s.go_to.label = ofc_sema_expr(
+	s.go_to.label = ofc_sema_expr_label(
 		scope, stmt->go_to_list.cond);
 	if (!s.go_to.label) return NULL;
 
-	if (!ofc_sema_expr_validate_uint(s.go_to.label))
-	{
-		ofc_sparse_ref_error(s.go_to.label->src,
-			"GO TO target must be a positive integer.");
-		ofc_sema_expr_delete(s.go_to.label);
-		return NULL;
-	}
-
-	s.go_to.allow = ofc_sema_expr_list(
+	s.go_to.allow = ofc_sema_expr_list_label(
 		scope, stmt->go_to_list.label);
 	if (!s.go_to.allow)
 	{
@@ -51,16 +43,7 @@ static ofc_sema_stmt_t* ofc_sema_stmt_go_to__assigned(
 		if (!ofc_sema_expr_is_constant(expr))
 		{
 			ofc_sparse_ref_error(expr->src,
-				"Assigned GO TO allow list entry must be constant.");
-			ofc_sema_expr_list_delete(s.go_to.allow);
-			ofc_sema_expr_delete(s.go_to.label);
-			return NULL;
-		}
-
-		if (!ofc_sema_expr_validate_uint(expr))
-		{
-			ofc_sparse_ref_error(expr->src,
-				"Assigned GO TO allow list entry must be a positive INTEGER.");
+				"Assigned GO TO allow list entries must be constant");
 			ofc_sema_expr_list_delete(s.go_to.allow);
 			ofc_sema_expr_delete(s.go_to.label);
 			return NULL;
@@ -91,14 +74,14 @@ static ofc_sema_stmt_t* ofc_sema_stmt_go_to__assigned(
 		if (!match)
 		{
 			ofc_sparse_ref_error(s.go_to.label->src,
-				"Assigned GO TO target not in allow list.");
+				"Assigned GO TO target not in allow list");
 			ofc_sema_expr_list_delete(s.go_to.allow);
 			ofc_sema_expr_delete(s.go_to.label);
 			return NULL;
 		}
 
 		ofc_sparse_ref_warning(s.go_to.label->src,
-			"Using assigned GO TO for a constant label makes little sense.");
+			"Using assigned GO TO for a constant label makes little sense");
 	}
 
 	ofc_sema_stmt_t* as
@@ -128,7 +111,7 @@ static ofc_sema_stmt_t* ofc_sema_stmt_go_to__computed(
 	if (!ofc_sema_type_is_scalar(type))
 	{
 		ofc_sparse_ref_error(s.go_to_comp.cond->src,
-			"Computed GO TO value must be scalar.");
+			"Computed GO TO value must be scalar");
 		ofc_sema_expr_delete(s.go_to_comp.cond);
 		return NULL;
 	}
@@ -146,7 +129,7 @@ static ofc_sema_stmt_t* ofc_sema_stmt_go_to__computed(
 		s.go_to_comp.cond = cast;
 	}
 
-	s.go_to_comp.label = ofc_sema_expr_list(
+	s.go_to_comp.label = ofc_sema_expr_list_label(
 		scope, stmt->go_to_list.label);
 	if (!s.go_to_comp.label)
 	{
@@ -163,23 +146,14 @@ static ofc_sema_stmt_t* ofc_sema_stmt_go_to__computed(
 		if (!ofc_sema_expr_is_constant(expr))
 		{
 			ofc_sparse_ref_warning(expr->src,
-				"Computed GO TO label list entry should be constant.");
-		}
-
-		if (!ofc_sema_expr_validate_uint(expr))
-		{
-			ofc_sparse_ref_error(expr->src,
-				"Computed GO TO label list entry must be a positive INTEGER.");
-			ofc_sema_expr_list_delete(s.go_to_comp.label);
-			ofc_sema_expr_delete(s.go_to_comp.cond);
-			return NULL;
+				"Computed GO TO label list entry should be constant");
 		}
 	}
 
 	if (ofc_sema_expr_is_constant(s.go_to_comp.cond))
 	{
 		ofc_sparse_ref_warning(s.go_to_comp.cond->src,
-			"Using computed GO TO for a constant value makes little sense.");
+			"Using computed GO TO for a constant value makes little sense");
 	}
 
 	ofc_sema_stmt_t* as
@@ -216,17 +190,9 @@ ofc_sema_stmt_t* ofc_sema_stmt_go_to(
 
 	ofc_sema_stmt_t s;
 	s.type = OFC_SEMA_STMT_GO_TO;
-	s.go_to.label = ofc_sema_expr(
+	s.go_to.label = ofc_sema_expr_label(
 		scope, stmt->go_to.label);
 	if (!s.go_to.label) return NULL;
-
-	if (!ofc_sema_expr_validate_uint(s.go_to.label))
-	{
-		ofc_sparse_ref_error(s.go_to.label->src,
-			"GO TO target must be a positive integer");
-		ofc_sema_expr_delete(s.go_to.label);
-		return NULL;
-	}
 
 	if (!ofc_sema_expr_is_constant(s.go_to.label))
 	{
@@ -254,7 +220,8 @@ bool ofc_sema_go_to_print(
 	if (!cs || (stmt->type != OFC_SEMA_STMT_GO_TO))
 		return false;
 
-	if (!ofc_colstr_atomic_writef(cs, "GO TO ")
+	if (!ofc_colstr_atomic_writef(cs, "GO TO")
+		|| !ofc_colstr_atomic_writef(cs, " ")
 		|| !ofc_sema_expr_print(cs, stmt->go_to.label))
 		return false;
 
@@ -277,11 +244,13 @@ bool ofc_sema_go_to_computed_print(
 	if (!cs || (stmt->type != OFC_SEMA_STMT_GO_TO_COMPUTED))
 		return false;
 
-	if (!ofc_colstr_atomic_writef(cs, "GO TO ")
+	if (!ofc_colstr_atomic_writef(cs, "GO TO")
+		|| !ofc_colstr_atomic_writef(cs, " ")
 		|| !ofc_colstr_atomic_writef(cs, "(")
 		|| !ofc_sema_expr_list_print(cs, stmt->go_to_comp.label)
 		|| !ofc_colstr_atomic_writef(cs, ")")
-		|| !ofc_colstr_atomic_writef(cs, ", ")
+		|| !ofc_colstr_atomic_writef(cs, ",")
+		|| !ofc_colstr_atomic_writef(cs, " ")
 		|| !ofc_sema_expr_print(cs, stmt->go_to_comp.cond))
 		return false;
 

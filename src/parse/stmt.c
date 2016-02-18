@@ -379,6 +379,9 @@ static void ofc_parse_stmt__cleanup(
 		case OFC_PARSE_STMT_PARAMETER:
 			ofc_parse_assign_list_delete(stmt.parameter.list);
 			break;
+		case OFC_PARSE_STMT_ASSIGN:
+			ofc_parse_expr_delete(stmt.assign.label);
+			break;
 		default:
 			break;
 	}

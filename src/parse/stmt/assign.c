@@ -27,9 +27,10 @@ unsigned ofc_parse_stmt_assign(
 		src, ptr, debug, OFC_PARSE_KEYWORD_ASSIGN);
 	if (i == 0) return 0;
 
-	unsigned len = ofc_parse_unsigned(
-		src, &ptr[i], debug, &stmt->assign.label);
-	if (len == 0)
+	unsigned len;
+	stmt->assign.label = ofc_parse_expr_integer(
+		src, &ptr[i], debug, &len);
+	if (!stmt->assign.label)
 	{
 		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
@@ -41,6 +42,7 @@ unsigned ofc_parse_stmt_assign(
 	if (len == 0)
 	{
 		ofc_parse_debug_rewind(debug, dpos);
+		ofc_parse_expr_delete(stmt->assign.label);
 		return 0;
 	}
 	i += 2;
@@ -51,6 +53,7 @@ unsigned ofc_parse_stmt_assign(
 	if (len == 0)
 	{
 		ofc_parse_debug_rewind(debug, dpos);
+		ofc_parse_expr_delete(stmt->assign.label);
 		return 0;
 	}
 	i += len;
@@ -65,6 +68,11 @@ bool ofc_parse_stmt_assign_print(
 	if (!stmt)
 		return false;
 
-	return (ofc_colstr_atomic_writef(cs, "ASSIGN %u TO ", stmt->assign.label)
+	return (ofc_colstr_atomic_writef(cs, "ASSIGN")
+		&& ofc_colstr_atomic_writef(cs, " ")
+		&& ofc_parse_expr_print(cs, stmt->assign.label)
+		&& ofc_colstr_atomic_writef(cs, " ")
+		&& ofc_colstr_atomic_writef(cs, "TO")
+		&& ofc_colstr_atomic_writef(cs, " ")
 		&& ofc_sparse_ref_print(cs, stmt->assign.variable));
 }

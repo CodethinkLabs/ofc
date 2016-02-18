@@ -93,26 +93,21 @@ ofc_sema_stmt_t* ofc_sema_stmt_call(
 					return NULL;
 			}
 
-			ofc_sema_expr_t* expr
-				= ofc_sema_expr_dummy_arg(
+			ofc_sema_expr_t* expr;
+			if (arg->type == OFC_PARSE_CALL_ARG_RETURN)
+			{
+				expr = ofc_sema_expr_alt_return(
 					scope, arg->expr);
+			}
+			else
+			{
+				expr = ofc_sema_expr_dummy_arg(
+					scope, arg->expr);
+			}
 			if (!expr)
 			{
 				ofc_sema_expr_list_delete(s.call.args);
 				return NULL;
-			}
-
-			if (arg->type == OFC_PARSE_CALL_ARG_RETURN)
-			{
-				ofc_sema_expr_t* alt_return
-					= ofc_sema_expr_alt_return(expr);
-				if (!alt_return)
-				{
-					ofc_sema_expr_delete(expr);
-					ofc_sema_expr_list_delete(s.call.args);
-					return NULL;
-				}
-				expr = alt_return;
 			}
 
 			if (!ofc_sema_expr_list_add(
