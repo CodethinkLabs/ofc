@@ -75,8 +75,8 @@ struct ofc_sema_stmt_s
 
 		struct
 		{
-			ofc_sema_expr_t*       cond;
-			ofc_sema_expr_list_t*  label;
+			ofc_sema_expr_t*      cond;
+			ofc_sema_expr_list_t* label;
 		} if_comp;
 
 		struct
@@ -157,15 +157,15 @@ struct ofc_sema_stmt_s
 			ofc_sema_expr_t* err;
 			ofc_sema_expr_t* recl;
 
-			ofc_sema_expr_t*    access;
-			ofc_sema_expr_t*    action;
-			ofc_sema_expr_t*    blank;
-			ofc_sema_expr_t*    delim;
-			ofc_sema_expr_t*    file;
-			ofc_sema_expr_t*    form;
-			ofc_sema_expr_t*    pad;
-			ofc_sema_expr_t*    position;
-			ofc_sema_expr_t*    status;
+			ofc_sema_expr_t* access;
+			ofc_sema_expr_t* action;
+			ofc_sema_expr_t* blank;
+			ofc_sema_expr_t* delim;
+			ofc_sema_expr_t* file;
+			ofc_sema_expr_t* form;
+			ofc_sema_expr_t* pad;
+			ofc_sema_expr_t* position;
+			ofc_sema_expr_t* status;
 		} io_open;
 
 		struct
@@ -376,6 +376,17 @@ bool ofc_sema_stmt_list_add(
 
 unsigned ofc_sema_stmt_list_count(
 	const ofc_sema_stmt_list_t* list);
+
+bool ofc_sema_stmt_list_foreach(
+	ofc_sema_stmt_list_t* list, void* param,
+	bool (*func)(ofc_sema_stmt_t* stmt, void* param));
+
+bool ofc_sema_stmt_foreach_expr(
+	ofc_sema_stmt_t* stmt, void* param,
+	bool (*func)(ofc_sema_expr_t* expr, void* param));
+bool ofc_sema_stmt_list_foreach_expr(
+	ofc_sema_stmt_list_t* list, void* param,
+	bool (*func)(ofc_sema_expr_t* expr, void* param));
 
 bool ofc_sema_stmt_print(
 	ofc_colstr_t* cs, unsigned indent,

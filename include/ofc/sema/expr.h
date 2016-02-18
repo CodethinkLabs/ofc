@@ -86,7 +86,7 @@ struct ofc_sema_expr_s
 				const ofc_sema_intrinsic_t* intrinsic;
 				const ofc_sema_decl_t*      function;
 			};
-			ofc_sema_expr_list_t*       args;
+			ofc_sema_expr_list_t* args;
 		};
 
 		struct
@@ -215,6 +215,13 @@ ofc_sema_expr_t* ofc_sema_expr_list_elem_get(
 bool ofc_sema_expr_list_compare(
 	const ofc_sema_expr_list_t* a,
 	const ofc_sema_expr_list_t* b);
+
+bool ofc_sema_expr_foreach(
+	ofc_sema_expr_t* expr, void* param,
+	bool (*func)(ofc_sema_expr_t* expr, void* param));
+bool ofc_sema_expr_list_foreach(
+	ofc_sema_expr_list_t* list, void* param,
+	bool (*func)(ofc_sema_expr_t* expr, void* param));
 
 bool ofc_sema_expr_print(
 	ofc_colstr_t* cs,

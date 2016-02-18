@@ -681,6 +681,370 @@ unsigned ofc_sema_stmt_list_count(
 	return (list ? list->count : 0);
 }
 
+bool ofc_sema_stmt_list_foreach(
+	ofc_sema_stmt_list_t* list, void* param,
+	bool (*func)(ofc_sema_stmt_t* stmt, void* param))
+{
+	if (!list || !func)
+		return false;
+
+	unsigned i;
+	for (i = 0; i < list->count; i++)
+	{
+		ofc_sema_stmt_t* stmt = list->stmt[i];
+
+		if (!func(stmt, param))
+			return false;
+
+		if (!stmt) continue;
+
+		switch (stmt->type)
+		{
+			case OFC_SEMA_STMT_IF_THEN:
+				if (stmt->if_then.block_then
+					&& !ofc_sema_stmt_list_foreach(
+						stmt->if_then.block_then, param, func))
+					return false;
+				if (stmt->if_then.block_else
+					&& !ofc_sema_stmt_list_foreach(
+						stmt->if_then.block_else, param, func))
+					return false;
+				break;
+
+			case OFC_SEMA_STMT_DO_BLOCK:
+				if (stmt->do_block.block
+					&& !ofc_sema_stmt_list_foreach(
+						stmt->do_block.block, param, func))
+					return false;
+				break;
+
+			case OFC_SEMA_STMT_DO_WHILE_BLOCK:
+				if (stmt->do_while_block.block
+					&& !ofc_sema_stmt_list_foreach(
+						stmt->do_while_block.block, param, func))
+					return false;
+				break;
+
+			default:
+				break;
+		}
+	}
+
+	return true;
+}
+
+
+bool ofc_sema_stmt_foreach_expr(
+	ofc_sema_stmt_t* stmt, void* param,
+	bool (*func)(ofc_sema_expr_t* expr, void* param))
+{
+	if (!stmt || !func)
+		return false;
+
+	switch (stmt->type)
+	{
+		case OFC_SEMA_STMT_ASSIGNMENT:
+			if (!ofc_sema_expr_foreach(
+				stmt->assignment.expr, param, func))
+				return false;
+			break;
+
+		case OFC_SEMA_STMT_ASSIGN:
+			if (!ofc_sema_expr_foreach(
+				stmt->assign.label, param, func))
+				return false;
+			break;
+
+		case OFC_SEMA_STMT_IO_WRITE:
+			if (stmt->io_write.unit && !ofc_sema_expr_foreach(
+				stmt->io_write.unit, param, func))
+				return false;
+			if (stmt->io_write.format_expr && !ofc_sema_expr_foreach(
+				stmt->io_write.format_expr, param, func))
+				return false;
+			if (stmt->io_write.iostat && !ofc_sema_expr_foreach(
+				stmt->io_write.iostat, param, func))
+				return false;
+			if (stmt->io_write.rec && !ofc_sema_expr_foreach(
+				stmt->io_write.rec, param, func))
+				return false;
+			if (stmt->io_write.err && !ofc_sema_expr_foreach(
+				stmt->io_write.err, param, func))
+				return false;
+			if (stmt->io_write.advance && !ofc_sema_expr_foreach(
+				stmt->io_write.advance, param, func))
+				return false;
+			if (stmt->io_write.iolist && !ofc_sema_expr_list_foreach(
+				stmt->io_write.iolist, param, func))
+				return false;
+			break;
+
+		case OFC_SEMA_STMT_IO_READ:
+			if (stmt->io_read.unit && !ofc_sema_expr_foreach(
+				stmt->io_read.unit, param, func))
+				return false;
+			if (stmt->io_read.format_expr && !ofc_sema_expr_foreach(
+				stmt->io_read.format_expr, param, func))
+				return false;
+			if (stmt->io_read.iostat && !ofc_sema_expr_foreach(
+				stmt->io_read.iostat, param, func))
+				return false;
+			if (stmt->io_read.rec && !ofc_sema_expr_foreach(
+				stmt->io_read.rec, param, func))
+				return false;
+			if (stmt->io_read.err && !ofc_sema_expr_foreach(
+				stmt->io_read.err, param, func))
+				return false;
+			if (stmt->io_read.advance && !ofc_sema_expr_foreach(
+				stmt->io_read.advance, param, func))
+				return false;
+			if (stmt->io_read.end && !ofc_sema_expr_foreach(
+				stmt->io_read.end, param, func))
+				return false;
+			if (stmt->io_read.eor && !ofc_sema_expr_foreach(
+				stmt->io_read.eor, param, func))
+				return false;
+			if (stmt->io_read.size && !ofc_sema_expr_foreach(
+				stmt->io_read.size, param, func))
+				return false;
+			break;
+
+		case OFC_SEMA_STMT_IO_PRINT:
+			if (stmt->io_print.format_expr && !ofc_sema_expr_foreach(
+				stmt->io_print.format_expr, param, func))
+				return false;
+			if (stmt->io_print.iolist
+				&& !ofc_sema_expr_list_foreach(
+					stmt->io_print.iolist, param, func))
+				return false;
+			break;
+
+		case OFC_SEMA_STMT_IO_REWIND:
+		case OFC_SEMA_STMT_IO_END_FILE:
+		case OFC_SEMA_STMT_IO_BACKSPACE:
+			if (stmt->io_position.unit && !ofc_sema_expr_foreach(
+				stmt->io_position.unit, param, func))
+				return false;
+			if (stmt->io_position.iostat && !ofc_sema_expr_foreach(
+				stmt->io_position.iostat, param, func))
+				return false;
+			if (stmt->io_position.err && !ofc_sema_expr_foreach(
+				stmt->io_position.err, param, func))
+				return false;
+			break;
+
+		case OFC_SEMA_STMT_IO_OPEN:
+			if (stmt->io_open.unit && !ofc_sema_expr_foreach(
+				stmt->io_open.unit, param, func))
+				return false;
+			if (stmt->io_open.iostat && !ofc_sema_expr_foreach(
+				stmt->io_open.iostat, param, func))
+				return false;
+			if (stmt->io_open.err && !ofc_sema_expr_foreach(
+				stmt->io_open.err, param, func))
+				return false;
+			if (stmt->io_open.recl && !ofc_sema_expr_foreach(
+				stmt->io_open.recl, param, func))
+				return false;
+			if (stmt->io_open.access && !ofc_sema_expr_foreach(
+				stmt->io_open.access, param, func))
+				return false;
+			if (stmt->io_open.action && !ofc_sema_expr_foreach(
+				stmt->io_open.action, param, func))
+				return false;
+			if (stmt->io_open.blank && !ofc_sema_expr_foreach(
+				stmt->io_open.blank, param, func))
+				return false;
+			if (stmt->io_open.delim && !ofc_sema_expr_foreach(
+				stmt->io_open.delim, param, func))
+				return false;
+			if (stmt->io_open.file && !ofc_sema_expr_foreach(
+				stmt->io_open.file, param, func))
+				return false;
+			if (stmt->io_open.form && !ofc_sema_expr_foreach(
+				stmt->io_open.form, param, func))
+				return false;
+			if (stmt->io_open.pad && !ofc_sema_expr_foreach(
+				stmt->io_open.pad, param, func))
+				return false;
+			if (stmt->io_open.position && !ofc_sema_expr_foreach(
+				stmt->io_open.position, param, func))
+				return false;
+			if (stmt->io_open.status && !ofc_sema_expr_foreach(
+				stmt->io_open.status, param, func))
+				return false;
+			break;
+
+		case OFC_SEMA_STMT_IO_CLOSE:
+			if (stmt->io_close.unit && !ofc_sema_expr_foreach(
+				stmt->io_close.unit, param, func))
+				return false;
+			if (stmt->io_close.iostat && !ofc_sema_expr_foreach(
+				stmt->io_close.iostat, param, func))
+				return false;
+			if (stmt->io_close.err && !ofc_sema_expr_foreach(
+				stmt->io_close.err, param, func))
+				return false;
+			if (stmt->io_close.status && !ofc_sema_expr_foreach(
+				stmt->io_close.status, param, func))
+				return false;
+			break;
+
+		case OFC_SEMA_STMT_IO_INQUIRE:
+			if (stmt->io_inquire.unit && !ofc_sema_expr_foreach(
+				stmt->io_inquire.unit, param, func))
+				return false;
+			if (stmt->io_inquire.file && !ofc_sema_expr_foreach(
+				stmt->io_inquire.file, param, func))
+				return false;
+			if (stmt->io_inquire.err && !ofc_sema_expr_foreach(
+				stmt->io_inquire.err, param, func))
+				return false;
+			break;
+
+		case OFC_SEMA_STMT_CONTINUE:
+			break;
+
+		case OFC_SEMA_STMT_IF_COMPUTED:
+			if (stmt->if_comp.cond && !ofc_sema_expr_foreach(
+				stmt->if_comp.cond, param, func))
+				return false;
+			if (stmt->if_comp.label && !ofc_sema_expr_list_foreach(
+				stmt->if_comp.label, param, func))
+				return false;
+			break;
+
+		case OFC_SEMA_STMT_IF_STATEMENT:
+			if (stmt->if_stmt.cond && !ofc_sema_expr_foreach(
+				stmt->if_stmt.cond, param, func))
+				return false;
+			if (stmt->if_stmt.stmt && !ofc_sema_stmt_foreach_expr(
+				stmt->if_stmt.stmt, param, func))
+				return false;
+			break;
+
+		case OFC_SEMA_STMT_IF_THEN:
+			if (stmt->if_then.cond && !ofc_sema_expr_foreach(
+				stmt->if_then.cond, param, func))
+				return false;
+			if (stmt->if_then.block_then && !ofc_sema_stmt_list_foreach_expr(
+				stmt->if_then.block_then, param, func))
+				return false;
+			if (stmt->if_then.block_else && !ofc_sema_stmt_list_foreach_expr(
+				stmt->if_then.block_else, param, func))
+				return false;
+			break;
+
+		case OFC_SEMA_STMT_STOP:
+		case OFC_SEMA_STMT_PAUSE:
+			if (stmt->stop_pause.str && !ofc_sema_expr_foreach(
+				stmt->stop_pause.str, param, func))
+				return false;
+			break;
+
+		case OFC_SEMA_STMT_GO_TO:
+			if (stmt->go_to.label && !ofc_sema_expr_foreach(
+				stmt->go_to.label, param, func))
+				return false;
+			if (stmt->go_to.allow && !ofc_sema_expr_list_foreach(
+				stmt->go_to.allow, param, func))
+				return false;
+			break;
+
+		case OFC_SEMA_STMT_GO_TO_COMPUTED:
+			if (stmt->go_to_comp.cond && !ofc_sema_expr_foreach(
+				stmt->go_to_comp.cond, param, func))
+				return false;
+			if (stmt->go_to_comp.label && !ofc_sema_expr_list_foreach(
+				stmt->go_to_comp.label, param, func))
+				return false;
+			break;
+
+		case OFC_SEMA_STMT_DO_LABEL:
+			if (stmt->do_label.end_label && !ofc_sema_expr_foreach(
+				stmt->do_label.end_label, param, func))
+				return false;
+			if (stmt->do_label.init && !ofc_sema_expr_foreach(
+				stmt->do_label.init, param, func))
+				return false;
+			if (stmt->do_label.last && !ofc_sema_expr_foreach(
+				stmt->do_label.last, param, func))
+				return false;
+			if (stmt->do_label.step && !ofc_sema_expr_foreach(
+				stmt->do_label.step, param, func))
+				return false;
+			break;
+
+		case OFC_SEMA_STMT_DO_BLOCK:
+			if (stmt->do_block.init && !ofc_sema_expr_foreach(
+				stmt->do_block.init, param, func))
+				return false;
+			if (stmt->do_block.last && !ofc_sema_expr_foreach(
+				stmt->do_block.last, param, func))
+				return false;
+			if (stmt->do_block.step && !ofc_sema_expr_foreach(
+				stmt->do_block.step, param, func))
+				return false;
+			if (stmt->do_block.block && !ofc_sema_stmt_list_foreach_expr(
+				stmt->do_block.block, param, func))
+				return false;
+			break;
+
+		case OFC_SEMA_STMT_DO_WHILE:
+			if (stmt->do_while.end_label && !ofc_sema_expr_foreach(
+				stmt->do_while.end_label, param, func))
+				return false;
+			if (stmt->do_while.cond && !ofc_sema_expr_foreach(
+				stmt->do_while.cond, param, func))
+				return false;
+			break;
+
+		case OFC_SEMA_STMT_DO_WHILE_BLOCK:
+			if (stmt->do_while_block.cond && !ofc_sema_expr_foreach(
+				stmt->do_while_block.cond, param, func))
+				return false;
+			if (stmt->do_while_block.block && !ofc_sema_stmt_list_foreach_expr(
+				stmt->do_while_block.block, param, func))
+				return false;
+			break;
+
+		case OFC_SEMA_STMT_CALL:
+			if (stmt->call.args && !ofc_sema_expr_list_foreach(
+				stmt->call.args, param, func))
+			return false;
+
+		case OFC_SEMA_STMT_RETURN:
+			if (stmt->alt_return && !ofc_sema_expr_foreach(
+				stmt->alt_return, param, func))
+				return false;
+			break;
+
+		case OFC_SEMA_STMT_ENTRY:
+			break;
+
+		default:
+			return false;
+	}
+
+	return true;
+}
+
+bool ofc_sema_stmt_list_foreach_expr(
+	ofc_sema_stmt_list_t* list, void* param,
+	bool (*func)(ofc_sema_expr_t* expr, void* param))
+{
+	unsigned i;
+	for (i = 0; i < list->count; i++)
+	{
+		if (!ofc_sema_stmt_foreach_expr(
+			list->stmt[i], param, func))
+			return false;
+	}
+
+	return true;
+}
+
+
 bool ofc_sema_stmt_print(
 	ofc_colstr_t* cs, unsigned indent,
 	ofc_sema_label_map_t* label_map,

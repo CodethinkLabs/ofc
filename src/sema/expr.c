@@ -2298,6 +2298,77 @@ bool ofc_sema_expr_list_compare(
 	return true;
 }
 
+
+
+bool ofc_sema_expr_foreach(
+	ofc_sema_expr_t* expr, void* param,
+	bool (*func)(ofc_sema_expr_t* expr, void* param))
+{
+	if (!expr || !func)
+		return false;
+
+	switch (expr->type)
+	{
+		case OFC_SEMA_EXPR_CONSTANT:
+		case OFC_SEMA_EXPR_LHS:
+			break;
+
+		case OFC_SEMA_EXPR_CAST:
+			if (!func(expr->cast.expr, param))
+				return false;
+			break;
+
+		case OFC_SEMA_EXPR_INTRINSIC:
+		case OFC_SEMA_EXPR_FUNCTION:
+			if (!ofc_sema_expr_list_foreach(
+				expr->args, param, func))
+				return false;
+
+		case OFC_SEMA_EXPR_IMPLICIT_DO:
+			if (expr->implicit_do.expr
+				&& !func(expr->implicit_do.expr, param))
+				return false;
+			if (expr->implicit_do.init
+				&& !func(expr->implicit_do.init, param))
+				return false;
+			if (expr->implicit_do.last
+				&& !func(expr->implicit_do.last, param))
+				return false;
+			if (expr->implicit_do.step
+				&& !func(expr->implicit_do.step, param))
+				return false;
+			break;
+
+		default:
+			if ((expr->a && !func(expr->a, param))
+				|| (expr->b && !func(expr->b, param)))
+				return false;
+			break;
+	}
+
+	return func(expr, param);
+}
+
+bool ofc_sema_expr_list_foreach(
+	ofc_sema_expr_list_t* list, void* param,
+	bool (*func)(ofc_sema_expr_t* expr, void* param))
+{
+	if (!list || !func)
+		return false;
+
+	unsigned i;
+	for (i = 0; i < list->count; i++)
+	{
+		if (!ofc_sema_expr_foreach(
+			list->expr[i], param, func))
+			return false;
+	}
+
+	return true;
+}
+
+
+
 static const char* ofc_sema_expr__operator[] =
 {
 	NULL, /* CONSTANT */
