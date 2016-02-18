@@ -14,7 +14,9 @@
  */
 
 #include "ofc/sema.h"
+#include "ofc/global_opts.h"
 
+extern ofc_global_opts_t global_opts;
 
 void ofc_sema_scope_delete(
 	ofc_sema_scope_t* scope)
@@ -404,36 +406,48 @@ bool ofc_sema_scope__check_namespace_collision(
 
 	if (ofc_sema_scope_common_name_exists(scope, ref.string))
 	{
-		ofc_sparse_ref_warning(ref,
-			"The name'%.*s' conflicts with a common block",
-			ref.string.size, ref.string.base);
+		if (!global_opts.no_warn_namespace_col)
+		{
+			ofc_sparse_ref_warning(ref,
+				"The name'%.*s' conflicts with a common block",
+				ref.string.size, ref.string.base);
+		}
 
 		collision = true;
 	}
 
 	if (ofc_sema_scope_block_data_name_exists(scope, ref.string))
 	{
-		ofc_sparse_ref_warning(ref,
-			"The name '%.*s' Tconflicts with a block data",
-			ref.string.size, ref.string.base);
+		if (!global_opts.no_warn_namespace_col)
+		{
+			ofc_sparse_ref_warning(ref,
+				"The name '%.*s' Tconflicts with a block data",
+				ref.string.size, ref.string.base);
+		}
 
 		collision = true;
 	}
 
 	if (ofc_sema_scope_structure_name_exists(scope, ref.string))
 	{
-		ofc_sparse_ref_warning(ref,
-			"The name '%.*s' conflicts with a structure",
-			ref.string.size, ref.string.base);
+		if (!global_opts.no_warn_namespace_col)
+		{
+			ofc_sparse_ref_warning(ref,
+				"The name '%.*s' conflicts with a structure",
+				ref.string.size, ref.string.base);
+		}
 
 		collision = true;
 	}
 
 	if (ofc_sema_scope_decl_name_exists(scope, ref.string))
 	{
-		ofc_sparse_ref_warning(ref,
-			"Name name '%.*s' conflicts with a declaration",
-			ref.string.size, ref.string.base);
+		if (!global_opts.no_warn_namespace_col)
+		{
+			ofc_sparse_ref_warning(ref,
+				"Name name '%.*s' conflicts with a declaration",
+				ref.string.size, ref.string.base);
+		}
 
 		collision = true;
 	}
@@ -442,9 +456,12 @@ bool ofc_sema_scope__check_namespace_collision(
 
 	if (ofc_sema_intrinsic_name_reserved(name_str))
 	{
-		ofc_sparse_ref_warning(ref,
-			"The name '%.*s' conflicts with a reserved intrinsic keyword",
-			ref.string.size, ref.string.base);
+		if (!global_opts.no_warn_namespace_col)
+		{
+			ofc_sparse_ref_warning(ref,
+				"The name '%.*s' conflicts with a reserved intrinsic keyword",
+				ref.string.size, ref.string.base);
+		}
 
 		collision = true;
 	}
