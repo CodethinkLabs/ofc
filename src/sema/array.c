@@ -865,6 +865,8 @@ ofc_sema_array_slice_t* ofc_sema_array_slice(
 			return NULL;
 		}
 
+		int sfirst;
+		bool resolved_first = false;
 		if (range->first)
 		{
 			slice->segment[i].first
@@ -875,10 +877,11 @@ ofc_sema_array_slice_t* ofc_sema_array_slice(
 				return NULL;
 			}
 
-			int sfirst;
 			if (ofc_sema_expr_resolve_int(
 					slice->segment[i].first, &sfirst))
 			{
+				resolved_first = true;
+
 				int afirst;
 				if (ofc_sema_expr_resolve_int(
 					array->segment[i].first, &afirst)
@@ -913,18 +916,24 @@ ofc_sema_array_slice_t* ofc_sema_array_slice(
 				return NULL;
 			}
 
-			/* TODO - SLICE - Ensure last isn't lower than first. */
-
 			int slast;
 			if (ofc_sema_expr_resolve_int(
 					slice->segment[i].last, &slast))
 			{
+				if (resolved_first && (sfirst > slast))
+				{
+					ofc_sparse_ref_error(range->last->src,
+						"Array slice upper bound smaller than lower bound");
+					ofc_sema_array_slice_delete(slice);
+					return NULL;
+				}
+
 				int afirst;
 				if (ofc_sema_expr_resolve_int(
 					array->segment[i].first, &afirst)
 					&& (slast < afirst))
 				{
-					ofc_sparse_ref_error(range->first->src,
+					ofc_sparse_ref_error(range->last->src,
 						"Array slice upper bound underflow");
 					ofc_sema_array_slice_delete(slice);
 					return NULL;
@@ -935,7 +944,7 @@ ofc_sema_array_slice_t* ofc_sema_array_slice(
 					array->segment[i].last, &alast)
 					&& (slast > alast))
 				{
-					ofc_sparse_ref_error(range->first->src,
+					ofc_sparse_ref_error(range->last->src,
 						"Array slice upper bound overflow");
 					ofc_sema_array_slice_delete(slice);
 					return NULL;
