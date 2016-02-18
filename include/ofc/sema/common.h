@@ -63,6 +63,8 @@ ofc_sema_common_map_t* ofc_sema_common_map_create(
 void ofc_sema_common_map_delete(
 	ofc_sema_common_map_t* map);
 
+const ofc_sema_common_t* ofc_sema_common_map_find(
+	ofc_sema_common_map_t* map, ofc_str_ref_t name);
 ofc_sema_common_t* ofc_sema_common_map_find_modify(
 	ofc_sema_common_map_t* map, ofc_str_ref_t name);
 

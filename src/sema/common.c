@@ -196,6 +196,15 @@ void ofc_sema_common_map_delete(
 	free(map);
 }
 
+const ofc_sema_common_t* ofc_sema_common_map_find(
+	ofc_sema_common_map_t* map, ofc_str_ref_t name)
+{
+	if (!map)
+		return NULL;
+	return ofc_hashmap_find(
+		map->map, &name);
+}
+
 ofc_sema_common_t* ofc_sema_common_map_find_modify(
 	ofc_sema_common_map_t* map, ofc_str_ref_t name)
 {
