@@ -159,6 +159,16 @@ bool ofc_sema_expr_compare_def_one(
 	const ofc_sema_expr_t* a,
 	const ofc_sema_expr_t* b);
 
+ofc_sema_expr_t* ofc_sema_expr_add(
+	const ofc_sema_expr_t* a,
+	const ofc_sema_expr_t* b);
+ofc_sema_expr_t* ofc_sema_expr_sub(
+	const ofc_sema_expr_t* a,
+	const ofc_sema_expr_t* b);
+ofc_sema_expr_t* ofc_sema_expr_div(
+	const ofc_sema_expr_t* a,
+	const ofc_sema_expr_t* b);
+
 uint8_t ofc_sema_expr_hash(
 	const ofc_sema_expr_t* expr);
 

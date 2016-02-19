@@ -961,6 +961,17 @@ ofc_sema_array_slice_t* ofc_sema_array_slice(
 				ofc_sema_array_slice_delete(slice);
 				return NULL;
 			}
+
+			int stride;
+			if (ofc_sema_expr_resolve_int(
+				slice->segment[i].stride, &stride)
+				&& (stride == 0))
+			{
+				ofc_sparse_ref_error(range->stride->src,
+					"Stride can't be zero");
+				ofc_sema_array_slice_delete(slice);
+				return NULL;
+			}
 		}
 
 		slice->segment[i].is_index = (slice->segment[i].first
@@ -1129,47 +1140,81 @@ ofc_sema_array_t* ofc_sema_array_slice_dims(
 		if (slice->segment[i].is_index)
 			continue;
 
+		ofc_sema_expr_t* first;
+		if (slice->segment[i].first)
+			first = ofc_sema_expr_copy(
+				slice->segment[i].first);
+		else if (array->segment[i].first)
+			first = ofc_sema_expr_copy(
+				array->segment[i].first);
+		else
+			first = ofc_sema_expr_integer(1);
+
+		ofc_sema_expr_t* last;
+		if (slice->segment[i].last)
+			last = slice->segment[i].last;
+		else if (array->segment[i].last)
+			last = array->segment[i].last;
+		else
+		{
+			ofc_sema_expr_delete(first);
+			ofc_sema_array_delete(dims);
+			return NULL;
+		}
+
+		ofc_sema_expr_t* expr_sub
+			= ofc_sema_expr_sub(last, first);
+		ofc_sema_expr_delete(first);
+
+		ofc_sema_expr_t* unity
+			= ofc_sema_expr_integer(1);
+
+		/* last - first + 1 */
+		ofc_sema_expr_t* expr
+			= ofc_sema_expr_add(
+				expr_sub, unity);
+		ofc_sema_expr_delete(expr_sub);
+		if (!expr)
+		{
+			ofc_sema_expr_delete(unity);
+			ofc_sema_array_delete(dims);
+			return NULL;
+		}
+
+		dims->segment[j].last = expr;
+
+		/* ((last - first + 1) / stride) round up
+		   ceiling(a/b) = ((a + b - 1) / b) */
 		if (slice->segment[i].stride)
 		{
-			/* TODO - SLICE - Support stride in dimensions. */
-			fail = true;
+			ofc_sema_expr_t* expr_stride_sub
+				= ofc_sema_expr_sub(
+					slice->segment[i].stride, unity);
+			ofc_sema_expr_t* expr_stride_add
+				= ofc_sema_expr_add(expr, expr_stride_sub);
+
+			ofc_sema_expr_t* expr_stride
+				= ofc_sema_expr_div(expr_stride_add,
+					slice->segment[i].stride);
+
+			ofc_sema_expr_delete(expr);
+			ofc_sema_expr_delete(expr_stride_sub);
+			ofc_sema_expr_delete(expr_stride_add);
+
+			if (!expr_stride)
+			{
+				ofc_sema_expr_delete(unity);
+				ofc_sema_array_delete(dims);
+				return NULL;
+			}
+
+			dims->segment[j].last = expr_stride;
 		}
 
-		dims->segment[j].first = NULL;
-		if (slice->segment[i].first)
-		{
-			dims->segment[j].first
-				= ofc_sema_expr_copy(
-					slice->segment[i].first);
-			if (!dims->segment[j].first)
-				fail = true;
-		}
-		else if (array->segment[i].first)
-		{
-			dims->segment[j].first
-				= ofc_sema_expr_copy(
-					array->segment[i].first);
-			if (!dims->segment[j].first)
-				fail = true;
-		}
+		ofc_sema_expr_delete(unity);
 
-		dims->segment[j].last = NULL;
-		if (slice->segment[i].last)
-		{
-			dims->segment[j].last
-				= ofc_sema_expr_copy(
-					slice->segment[i].last);
-			if (!dims->segment[j].last)
-				fail = true;
-		}
-		else if (array->segment[i].last)
-		{
-			dims->segment[j].last
-				= ofc_sema_expr_copy(
-					array->segment[i].last);
-			if (!dims->segment[j].last)
-				fail = true;
-		}
+		dims->segment[j].first
+			= ofc_sema_expr_integer(1);
 
 		j++;
 	}

@@ -1912,6 +1912,53 @@ bool ofc_sema_expr_compare_def_one(
 	return ofc_sema_typeval_is_one(ctv);
 }
 
+ofc_sema_expr_t* ofc_sema_expr_add(
+	const ofc_sema_expr_t* a,
+	const ofc_sema_expr_t* b)
+{
+	if (!a || !b) return NULL;
+
+	ofc_sema_expr_t* expr
+		= ofc_sema_expr__create(OFC_SEMA_EXPR_ADD);
+	if (!expr) return NULL;
+
+	expr->a = ofc_sema_expr_copy(a);
+	expr->b = ofc_sema_expr_copy(b);
+
+	return expr;
+}
+
+ofc_sema_expr_t* ofc_sema_expr_sub(
+	const ofc_sema_expr_t* a,
+	const ofc_sema_expr_t* b)
+{
+	if (!a || !b) return NULL;
+
+	ofc_sema_expr_t* expr
+		= ofc_sema_expr__create(OFC_SEMA_EXPR_SUBTRACT);
+	if (!expr) return NULL;
+
+	expr->a = ofc_sema_expr_copy(a);
+	expr->b = ofc_sema_expr_copy(b);
+
+	return expr;
+}
+
+ofc_sema_expr_t* ofc_sema_expr_div(
+	const ofc_sema_expr_t* a,
+	const ofc_sema_expr_t* b)
+{
+	if (!a || !b) return NULL;
+
+	ofc_sema_expr_t* expr
+		= ofc_sema_expr__create(OFC_SEMA_EXPR_DIVIDE);
+	if (!expr) return NULL;
+
+	expr->a = ofc_sema_expr_copy(a);
+	expr->b = ofc_sema_expr_copy(b);
+
+	return expr;
+}
 
 const ofc_sema_type_t* ofc_sema_expr_type(
 	const ofc_sema_expr_t* expr)
