@@ -2314,15 +2314,17 @@ bool ofc_sema_expr_foreach(
 			break;
 
 		case OFC_SEMA_EXPR_CAST:
-			if (!func(expr->cast.expr, param))
+			if (expr->cast.expr
+				&& !func(expr->cast.expr, param))
 				return false;
 			break;
 
 		case OFC_SEMA_EXPR_INTRINSIC:
 		case OFC_SEMA_EXPR_FUNCTION:
-			if (!ofc_sema_expr_list_foreach(
+			if (expr->args && !ofc_sema_expr_list_foreach(
 				expr->args, param, func))
 				return false;
+			break;
 
 		case OFC_SEMA_EXPR_IMPLICIT_DO:
 			if (expr->implicit_do.expr

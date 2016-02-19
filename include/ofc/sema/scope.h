@@ -110,6 +110,8 @@ ofc_sema_implicit_t* ofc_sema_scope_implicit_modify(
 
 const ofc_sema_label_t* ofc_sema_scope_label_find(
 	const ofc_sema_scope_t* scope, unsigned label);
+ofc_sema_label_t* ofc_sema_scope_label_modify(
+	ofc_sema_scope_t* scope, unsigned label);
 
 const ofc_sema_spec_t* ofc_sema_scope_spec_find(
 	const ofc_sema_scope_t* scope, ofc_sparse_ref_t name);

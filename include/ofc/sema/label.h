@@ -37,6 +37,8 @@ typedef struct
 		const ofc_sema_stmt_t*  stmt;
 		ofc_sema_format_t*      format;
 	};
+
+	bool used;
 } ofc_sema_label_t;
 
 struct ofc_sema_format_label_list_s
@@ -81,6 +83,9 @@ bool ofc_sema_label_map_add_format(
 
 const ofc_sema_label_t* ofc_sema_label_map_find(
 	const ofc_sema_label_map_t* map, unsigned label);
+ofc_sema_label_t* ofc_sema_label_map_find_modify(
+	ofc_sema_label_map_t* map, unsigned label);
+
 const ofc_sema_label_t* ofc_sema_label_map_find_stmt(
 	const ofc_sema_label_map_t* map,
 	const ofc_sema_stmt_t*      stmt);

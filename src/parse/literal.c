@@ -564,8 +564,9 @@ unsigned ofc_parse_literal_number(
 			"Kind is ambiguous, ignoring exponent kind");
 	}
 
-	literal->type = OFC_PARSE_LITERAL_NUMBER;
-	literal->kind = k;
+	literal->type   = OFC_PARSE_LITERAL_NUMBER;
+	literal->kind   = k;
+	literal->src    = ofc_sparse_ref(src, ptr, i);
 	literal->number = ofc_str_ref(ptr, i);
 	return i;
 }
@@ -586,6 +587,7 @@ unsigned ofc_parse_literal_integer(
 
 	literal->type = OFC_PARSE_LITERAL_NUMBER;
 	literal->kind = 1;
+	literal->src    = ofc_sparse_ref(src, ptr, i);
 	literal->number = ofc_str_ref(ptr, i);
 	return i;
 }

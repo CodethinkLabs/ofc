@@ -188,6 +188,43 @@ static bool ofc_sema_scope__body_sema_equivalence(
 		|| ofc_sema_stmt_equivalence(scope, stmt));
 }
 
+static bool ofc_sema_scope__body_label_resolve(
+	ofc_sema_expr_t* expr,
+	ofc_sema_scope_t* scope)
+{
+	if (!expr) return false;
+
+	if (!expr->is_label || expr->label)
+		return true;
+
+	if (ofc_sema_expr_is_constant(expr))
+	{
+		unsigned ulabel;
+		if (!ofc_sema_expr_resolve_uint(
+			expr, &ulabel))
+		{
+			ofc_sparse_ref_error(expr->src,
+				"Invalid label constant");
+			return false;
+		}
+
+		ofc_sema_label_t* label
+			= ofc_sema_scope_label_modify(
+				scope, ulabel);
+		if (!label)
+		{
+			ofc_sparse_ref_error(expr->src,
+				"Label does not exist in current scope");
+			return false;
+		}
+
+		expr->label = label;
+		label->used = true;
+	}
+
+	return true;
+}
+
 static bool ofc_sema_scope__body(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_list_t* body)
@@ -213,6 +250,11 @@ static bool ofc_sema_scope__body(
 
 	scope->stmt = ofc_sema_stmt_list(scope, body);
 	if (!scope->stmt) return false;
+
+	/* Resolve labels */
+	if (!ofc_sema_stmt_list_foreach_expr(scope->stmt, scope,
+		(void*)ofc_sema_scope__body_label_resolve))
+		return false;
 
 	/* Declare arguments */
 	if (scope->args)
@@ -429,16 +471,16 @@ bool ofc_sema_scope_subroutine(
 		}
 	}
 
-	if (!ofc_sema_scope__body(
-		sub_scope, stmt->program.body))
+	if (stmt->program.end_has_label
+		&& !ofc_sema_label_map_add_end_scope(
+			sub_scope->label, stmt->program.end_label, sub_scope))
 	{
 		ofc_sema_scope_delete(sub_scope);
 		return false;
 	}
 
-	if (stmt->program.end_has_label
-		&& !ofc_sema_label_map_add_end_scope(
-			sub_scope->label, stmt->program.end_label, sub_scope))
+	if (!ofc_sema_scope__body(
+		sub_scope, stmt->program.body))
 	{
 		ofc_sema_scope_delete(sub_scope);
 		return false;
@@ -546,6 +588,14 @@ bool ofc_sema_scope_function(
 		}
 	}
 
+	if (stmt->program.end_has_label
+		&& !ofc_sema_label_map_add_end_scope(
+			func_scope->label, stmt->program.end_label, func_scope))
+	{
+		ofc_sema_scope_delete(func_scope);
+		return false;
+	}
+
 	if (!ofc_sema_scope__body(
 		func_scope, stmt->program.body))
 	{
@@ -620,14 +670,6 @@ bool ofc_sema_scope_function(
 	}
 	decl->is_return = true;
 
-	if (stmt->program.end_has_label
-		&& !ofc_sema_label_map_add_end_scope(
-			func_scope->label, stmt->program.end_label, func_scope))
-	{
-		ofc_sema_scope_delete(func_scope);
-		return false;
-	}
-
 	if (!ofc_sema_decl_init_func(
 		decl, func_scope))
 	{
@@ -693,19 +735,19 @@ ofc_sema_scope_t* ofc_sema_scope_program(
 	program->src  = stmt->src;
 	program->name = stmt->program.name.string;
 
-	if (!ofc_sema_scope__body(
-		program, stmt->program.body))
-	{
-		ofc_sema_scope_delete(program);
-		return NULL;
-	}
-
 	if (stmt->program.end_has_label
 		&& !ofc_sema_label_map_add_end_scope(
 			program->label, stmt->program.end_label, program))
 	{
 		ofc_sema_scope_delete(program);
 		return false;
+	}
+
+	if (!ofc_sema_scope__body(
+		program, stmt->program.body))
+	{
+		ofc_sema_scope_delete(program);
+		return NULL;
 	}
 
 	if (!ofc_sema_scope__add_child(scope, program))
@@ -959,6 +1001,25 @@ const ofc_sema_label_t* ofc_sema_scope_label_find(
 
 	return NULL;
 }
+
+ofc_sema_label_t* ofc_sema_scope_label_modify(
+	ofc_sema_scope_t* scope, unsigned label)
+{
+	if (!scope)
+		return NULL;
+
+	ofc_sema_label_t* l
+		= ofc_sema_label_map_find_modify(
+			scope->label, label);
+	if (l) return l;
+
+	if (!scope->label)
+		return ofc_sema_scope_label_modify(
+			scope->parent, label);
+
+	return NULL;
+}
+
 
 
 static ofc_sema_spec_t* ofc_sema_scope_spec__find(

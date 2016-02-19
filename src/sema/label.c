@@ -39,6 +39,7 @@ static ofc_sema_label_t* ofc_sema_label__stmt(
 	label->type   = type;
 	label->number = number;
 	label->stmt   = stmt;
+	label->used   = false;
 
 	return label;
 }
@@ -54,6 +55,7 @@ static ofc_sema_label_t* ofc_sema_label__scope(
 	label->type   = OFC_SEMA_LABEL_END_SCOPE;
 	label->number = number;
 	label->scope  = scope;
+	label->used   = false;
 
 	return label;
 }
@@ -72,6 +74,7 @@ static ofc_sema_label_t* ofc_sema_label__format(
 	label->type   = OFC_SEMA_LABEL_FORMAT;
 	label->number = number;
 	label->format = format;
+	label->used   = false;
 
 	return label;
 }
@@ -387,6 +390,14 @@ const ofc_sema_label_t* ofc_sema_label_map_find(
 	if (!map)
 		return NULL;
 	return ofc_hashmap_find(
+		map->label, &label);
+}
+
+ofc_sema_label_t* ofc_sema_label_map_find_modify(
+	ofc_sema_label_map_t* map, unsigned label)
+{
+	if (!map) return NULL;
+	return ofc_hashmap_find_modify(
 		map->label, &label);
 }
 

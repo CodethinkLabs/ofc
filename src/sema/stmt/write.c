@@ -237,7 +237,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 
 		if (ofc_sema_type_is_integer(etype))
 		{
-			const ofc_sema_label_t* label;
+			ofc_sema_label_t* label;
 			if (!ofc_sema_io_check_label(
 				scope, stmt, true,
 				s.io_write.format_expr, &label))
@@ -246,15 +246,19 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 				return NULL;
 			}
 
-			if (label && label->type != OFC_SEMA_LABEL_FORMAT)
-			{
-				ofc_sparse_ref_error(stmt->src,
-					"Label expression must be a FORMAT statement in WRITE");
-				ofc_sema_stmt_io_write__cleanup(s);
-				return NULL;
-			}
 			if (label)
+			{
+				if (label->type != OFC_SEMA_LABEL_FORMAT)
+				{
+					ofc_sparse_ref_error(stmt->src,
+						"Label expression must be a FORMAT statement in WRITE");
+					ofc_sema_stmt_io_write__cleanup(s);
+					return NULL;
+				}
+
 				s.io_write.format = label->format;
+				label->used = true;
+			}
 		}
 		else if (etype->type == OFC_SEMA_TYPE_CHARACTER)
 		{

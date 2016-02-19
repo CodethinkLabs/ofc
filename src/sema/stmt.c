@@ -744,13 +744,13 @@ bool ofc_sema_stmt_foreach_expr(
 	switch (stmt->type)
 	{
 		case OFC_SEMA_STMT_ASSIGNMENT:
-			if (!ofc_sema_expr_foreach(
+			if (stmt->assignment.expr && !ofc_sema_expr_foreach(
 				stmt->assignment.expr, param, func))
 				return false;
 			break;
 
 		case OFC_SEMA_STMT_ASSIGN:
-			if (!ofc_sema_expr_foreach(
+			if (stmt->assign.label && !ofc_sema_expr_foreach(
 				stmt->assign.label, param, func))
 				return false;
 			break;
@@ -1011,7 +1011,8 @@ bool ofc_sema_stmt_foreach_expr(
 		case OFC_SEMA_STMT_CALL:
 			if (stmt->call.args && !ofc_sema_expr_list_foreach(
 				stmt->call.args, param, func))
-			return false;
+				return false;
+			break;
 
 		case OFC_SEMA_STMT_RETURN:
 			if (stmt->alt_return && !ofc_sema_expr_foreach(

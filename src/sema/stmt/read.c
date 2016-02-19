@@ -278,7 +278,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 
 		if (ofc_sema_type_is_integer(etype))
 		{
-			const ofc_sema_label_t* label;
+			ofc_sema_label_t* label;
 			if (!ofc_sema_io_check_label(
 				scope, stmt, true,
 				s.io_read.format_expr, &label))
@@ -287,15 +287,19 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 				return NULL;
 			}
 
-			if (label && label->type != OFC_SEMA_LABEL_FORMAT)
+			if (label)
 			{
-				ofc_sparse_ref_error(stmt->src,
-					"Label expression must be a FORMAT statement in READ");
-				ofc_sema_stmt_io_read__cleanup(s);
-				return NULL;
-			}
-			if(label)
+				if (label->type != OFC_SEMA_LABEL_FORMAT)
+				{
+					ofc_sparse_ref_error(stmt->src,
+						"Label expression must be a FORMAT statement in READ");
+					ofc_sema_stmt_io_read__cleanup(s);
+					return NULL;
+				}
+
 				s.io_read.format = label->format;
+				label->used = true;
+			}
 		}
 		else if (etype->type == OFC_SEMA_TYPE_CHARACTER)
 		{

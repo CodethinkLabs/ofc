@@ -169,34 +169,7 @@ static ofc_sema_stmt_t* ofc_sema_stmt_if__then(
 	}
 
 	s.if_then.block_then = NULL;
-	if (stmt->if_then.block_then)
-	{
-		s.if_then.block_then = ofc_sema_stmt_list(
-			scope, stmt->if_then.block_then);
-		if (!s.if_then.block_then)
-		{
-			ofc_sema_expr_delete(s.if_then.cond);
-			return NULL;
-		}
-	}
-	else
-	{
-		ofc_sparse_ref_warning(stmt->src,
-			"Empty IF THEN block");
-	}
-
 	s.if_then.block_else = NULL;
-	if (stmt->if_then.block_else)
-	{
-		s.if_then.block_else = ofc_sema_stmt_list(
-			scope, stmt->if_then.block_else);
-		if (!s.if_then.block_else)
-		{
-			ofc_sema_expr_delete(s.if_then.cond);
-			ofc_sema_stmt_list_delete(s.if_then.block_else);
-			return NULL;
-		}
-	}
 
 	ofc_sema_stmt_t* as = ofc_sema_stmt_alloc(s);
 	if (!as)
@@ -213,6 +186,33 @@ static ofc_sema_stmt_t* ofc_sema_stmt_if__then(
 	{
 		ofc_sema_stmt_delete(as);
 		return NULL;
+	}
+
+	if (stmt->if_then.block_then)
+	{
+		as->if_then.block_then = ofc_sema_stmt_list(
+			scope, stmt->if_then.block_then);
+		if (!as->if_then.block_then)
+		{
+			ofc_sema_stmt_delete(as);
+			return NULL;
+		}
+	}
+	else
+	{
+		ofc_sparse_ref_warning(stmt->src,
+			"Empty IF THEN block");
+	}
+
+	if (stmt->if_then.block_else)
+	{
+		as->if_then.block_else = ofc_sema_stmt_list(
+			scope, stmt->if_then.block_else);
+		if (!as->if_then.block_else)
+		{
+			ofc_sema_stmt_delete(as);
+			return NULL;
+		}
 	}
 
 	return as;

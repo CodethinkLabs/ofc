@@ -206,10 +206,11 @@ static ofc_sema_stmt_t* ofc_sema_stmt_do__block(
 
 	ofc_sema_stmt_t s;
 	s.type = OFC_SEMA_STMT_DO_BLOCK;
-	s.do_block.iter = NULL;
-	s.do_block.init = NULL;
-	s.do_block.last = NULL;
-	s.do_block.step = NULL;
+	s.do_block.iter  = NULL;
+	s.do_block.init  = NULL;
+	s.do_block.last  = NULL;
+	s.do_block.step  = NULL;
+	s.do_block.block = NULL;
 
 	if (!ofc_sema_stmt__loop_control(
 		scope, stmt->do_block.init,
@@ -217,22 +218,6 @@ static ofc_sema_stmt_t* ofc_sema_stmt_do__block(
 		&s.do_block.iter, &s.do_block.init,
 		&s.do_block.last, &s.do_block.step))
 		return NULL;
-
-
-	s.do_block.block = NULL;
-	if (stmt->do_block.block)
-	{
-		s.do_block.block
-			= ofc_sema_stmt_list(
-				scope, stmt->do_block.block);
-		if (!s.do_block.block)
-		{
-			ofc_sema_expr_delete(s.do_block.init);
-			ofc_sema_expr_delete(s.do_block.last);
-			ofc_sema_expr_delete(s.do_block.step);
-			return NULL;
-		}
-	}
 
 	ofc_sema_stmt_t* as = ofc_sema_stmt_alloc(s);
 	if (!as)
@@ -250,6 +235,18 @@ static ofc_sema_stmt_t* ofc_sema_stmt_do__block(
 	{
 		ofc_sema_stmt_delete(as);
 		return NULL;
+	}
+
+	if (stmt->do_block.block)
+	{
+		as->do_block.block
+			= ofc_sema_stmt_list(
+				scope, stmt->do_block.block);
+		if (!as->do_block.block)
+		{
+			ofc_sema_stmt_delete(as);
+			return NULL;
+		}
 	}
 
 	return as;
@@ -328,18 +325,6 @@ static ofc_sema_stmt_t* ofc_sema_stmt_do_while__block(
 	}
 
 	s.do_while_block.block = NULL;
-	if (stmt->do_while_block.block)
-	{
-		s.do_while_block.block
-			= ofc_sema_stmt_list(
-				scope, stmt->do_while_block.block);
-
-		if (!s.do_while_block.block)
-		{
-			ofc_sema_expr_delete(s.do_while_block.cond);
-			return NULL;
-		}
-	}
 
 	ofc_sema_stmt_t* as = ofc_sema_stmt_alloc(s);
 	if (!as)
@@ -355,6 +340,19 @@ static ofc_sema_stmt_t* ofc_sema_stmt_do_while__block(
 	{
 		ofc_sema_stmt_delete(as);
 		return NULL;
+	}
+
+	if (stmt->do_while_block.block)
+	{
+		as->do_while_block.block
+			= ofc_sema_stmt_list(
+				scope, stmt->do_while_block.block);
+
+		if (!as->do_while_block.block)
+		{
+			ofc_sema_stmt_delete(as);
+			return NULL;
+		}
 	}
 
 	return as;

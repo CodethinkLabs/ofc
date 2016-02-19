@@ -440,7 +440,7 @@ bool ofc_sema_io_check_label(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt,
 	bool is_format, ofc_sema_expr_t* expr,
-	const ofc_sema_label_t** label_dst)
+	ofc_sema_label_t** label_dst)
 {
 	if (!expr) return false;
 
@@ -448,7 +448,7 @@ bool ofc_sema_io_check_label(
 		= ofc_sema_expr_type(expr);
 	if (!etype) return false;
 
-	const ofc_sema_label_t* label_ret = NULL;
+	ofc_sema_label_t* label_ret = NULL;
 	if (ofc_sema_type_is_integer(etype))
 	{
 		const ofc_sema_typeval_t* label
@@ -471,7 +471,7 @@ bool ofc_sema_io_check_label(
 				if (((int64_t)ulabel) != fl64)
 					return false;
 
-				label_ret = ofc_sema_scope_label_find(
+				label_ret = ofc_sema_scope_label_modify(
 					scope, ulabel);
 				if (!label_ret)
 				{

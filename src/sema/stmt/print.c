@@ -71,9 +71,8 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_print(
 					return NULL;
 				}
 
-				const ofc_sema_label_t* label
-					= ofc_sema_label_map_find(
-						scope->label, ulabel);
+				ofc_sema_label_t* label
+					= ofc_sema_scope_label_modify(scope, ulabel);
 				if (!label)
 				{
 					ofc_sparse_ref_error(stmt->io_print.format->src,
@@ -89,7 +88,9 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_print(
 					ofc_sema_expr_delete(s.io_print.format_expr);
 					return NULL;
 				}
+
 				s.io_print.format = label->format;
+				label->used = true;
 			}
 		}
 		else if (etype->type == OFC_SEMA_TYPE_CHARACTER)
