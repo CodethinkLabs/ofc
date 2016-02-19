@@ -29,7 +29,8 @@ typedef struct ofc_file_s ofc_file_t;
 
 struct ofc_file_s
 {
-	const ofc_file_t*        parent;
+	const ofc_file_t* parent;
+	const char*       include_ptr;
 
 	char*                    path;
 	ofc_file_include_list_t* include;
@@ -41,13 +42,13 @@ struct ofc_file_s
 
 /* Path must be valid for as long as the ofc_file_t* is */
 ofc_file_t* ofc_file_create(const char* path, ofc_lang_opts_t opts);
-ofc_file_t* ofc_file_create_include(const char* path, ofc_lang_opts_t opts, const ofc_file_t* parent_file);
-bool        ofc_file_reference(ofc_file_t* file);
-void        ofc_file_delete(ofc_file_t* file);
-
-const char*     ofc_file_get_path(const ofc_file_t* file);
-const char*     ofc_file_get_include(const ofc_file_t* file);
-const char*     ofc_file_get_strz(const ofc_file_t* file);
+ofc_file_t* ofc_file_create_include(const char* path, ofc_lang_opts_t opts,
+	const ofc_file_t* parent_file, const char* include_ptr);
+bool ofc_file_reference(ofc_file_t* file);
+void ofc_file_delete(ofc_file_t* file);
+const char* ofc_file_get_path(const ofc_file_t* file);
+const char* ofc_file_get_include(const ofc_file_t* file);
+const char* ofc_file_get_strz(const ofc_file_t* file);
 ofc_lang_opts_t ofc_file_get_lang_opts(const ofc_file_t* file);
 
 char* ofc_file_include_path(

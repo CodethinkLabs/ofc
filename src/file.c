@@ -124,7 +124,8 @@ static char* ofc_file__base_parent_path(
 }
 
 ofc_file_t* ofc_file_create_include(
-	const char* path, ofc_lang_opts_t opts, const ofc_file_t* parent_file)
+	const char* path, ofc_lang_opts_t opts,
+	const ofc_file_t* parent_file, const char* include_ptr)
 {
 	ofc_file_t* file = NULL;
 
@@ -321,13 +322,26 @@ static void ofc_file__debug_va(
 
 	fprintf(stderr, "%s:", type);
 
-	if (file && file->path)
-		fprintf(stderr, "%s:", file->path);
+	if (file)
+	{
+		if (file->path)
+			fprintf(stderr, "%s:", file->path);
+		if (positional)
+			fprintf(stderr, "%u,%u:", (row + 1), col);
 
-	if (positional)
-		fprintf(stderr, "%u,%u:", (row + 1), col);
+		if (file->parent)
+			fprintf(stderr, "\n  ");
+		const ofc_file_t* include_file = file->parent;
+		while (include_file)
+		{
+			fprintf(stderr, "Include:%s\n  ",
+				include_file->path);
+			include_file = include_file->parent;
+		}
+	}
 
-	fprintf(stderr, " ");
+	if (!file->parent)
+		fprintf(stderr, " ");
 	vfprintf(stderr, format, args);
 	fprintf(stderr, "\n");
 
