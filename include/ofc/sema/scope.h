@@ -164,7 +164,7 @@ ofc_sema_scope_t* ofc_sema_scope_child_find_modify(
 bool ofc_sema_scope_common_name_exists(
 	ofc_sema_scope_t* scope, ofc_str_ref_t name);
 ofc_sema_common_t* ofc_sema_scope_common_find_create(
-	ofc_sema_scope_t* scope, ofc_str_ref_t name);
+	ofc_sema_scope_t* scope, ofc_sparse_ref_t name);
 
 bool ofc_sema_scope_print(
 	ofc_colstr_t* cs, unsigned indent,

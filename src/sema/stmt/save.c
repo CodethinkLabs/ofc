@@ -41,7 +41,7 @@ bool ofc_sema_stmt_save(
 		{
 			ofc_sema_common_t* common
 				= ofc_sema_scope_common_find_create(
-					scope, save->common.string);
+					scope, save->common);
 			/* TODO - Warn when new COMMON block is created in SAVE */
 			if (!common) return NULL;
 

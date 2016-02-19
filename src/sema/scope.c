@@ -512,7 +512,7 @@ bool ofc_sema_scope_subroutine(
 		if (!decl) return false;
 
 		ofc_sema_scope__check_namespace_collision(
-			scope, "Subroutine", stmt->src);
+			scope, "Subroutine", name);
 
 		if (!ofc_sema_scope_decl_add(
 			scope, decl))
@@ -747,6 +747,9 @@ bool ofc_sema_scope_function(
 			return false;
 		}
 
+		ofc_sema_scope__check_namespace_collision(
+			scope, "Function", name);
+
 		if (!ofc_sema_scope_decl_add(
 			scope, decl))
 		{
@@ -754,9 +757,6 @@ bool ofc_sema_scope_function(
 			ofc_sema_scope_delete(func_scope);
 			return false;
 		}
-
-		ofc_sema_scope__check_namespace_collision(
-			scope, "Function", stmt->src);
 	}
 	decl->is_return = true;
 
@@ -1253,6 +1253,9 @@ bool ofc_sema_scope_decl_add(
 		return ofc_sema_scope_decl_add(
 			scope->parent, decl);
 
+	ofc_sema_scope__check_namespace_collision(
+		scope, "Declaration", decl->name);
+
 	return ofc_sema_decl_list_add(
 		scope->decl, decl);
 }
@@ -1381,7 +1384,7 @@ bool ofc_sema_scope_common_name_exists(
 }
 
 ofc_sema_common_t* ofc_sema_scope_common_find_create(
-	ofc_sema_scope_t* scope, ofc_str_ref_t name)
+	ofc_sema_scope_t* scope, ofc_sparse_ref_t name)
 {
 	if (!scope)
 		return NULL;
@@ -1392,11 +1395,14 @@ ofc_sema_common_t* ofc_sema_scope_common_find_create(
 
 	ofc_sema_common_t* common
 		= ofc_sema_common_map_find_modify(
-			scope->common, name);
+			scope->common, name.string);
 	if (!common)
 	{
-		common = ofc_sema_common_create(name);
+		common = ofc_sema_common_create(name.string);
 		if (!common) return NULL;
+
+		ofc_sema_scope__check_namespace_collision(
+			scope, "Common Block", name);
 
 		if (!ofc_sema_common_map_add(
 			scope->common, common))
