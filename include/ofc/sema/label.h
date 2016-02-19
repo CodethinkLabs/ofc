@@ -39,10 +39,17 @@ typedef struct
 	bool used;
 } ofc_sema_label_t;
 
+ofc_sparse_ref_t ofc_sema_label_src(
+	const ofc_sema_label_t* label);
+
+
 typedef struct
 {
-	/* This references all labels. */
-	ofc_hashmap_t* label;
+	unsigned           count;
+	ofc_sema_label_t** label;
+
+	/* These references all labels. */
+	ofc_hashmap_t* map;
 
 	/* This owns the statement labels. */
 	ofc_hashmap_t* stmt;

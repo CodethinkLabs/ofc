@@ -266,6 +266,25 @@ static bool ofc_sema_scope__body(
 		(void*)ofc_sema_scope__body_label_resolve))
 		return false;
 
+	/* Warn about unused labels. */
+	if (scope->label)
+	{
+		unsigned i;
+		for (i = 0; i < scope->label->count; i++)
+		{
+			ofc_sema_label_t* label
+				= scope->label->label[i];
+			if (!label) continue;
+
+			if (!label->used)
+			{
+				/* TODO - Get position of actual label. */
+				ofc_sparse_ref_warning(ofc_sema_label_src(label),
+					"Label %u is defined but not used", label->number);
+			}
+		}
+	}
+
 	/* Validate FORMAT descriptors. */
 	if (!ofc_sema_stmt_list_foreach(scope->stmt, scope,
 		(void*)ofc_sema_scope__body_format_validate))
