@@ -299,26 +299,48 @@ bool ofc_sema_stmt_if_then_print(
 				return false;
 	}
 
-	if (stmt->if_then.block_else)
-	{
-		/* TODO - ELSE IF could print on the same line for neatness
-			but this works for now. */
-		if (!ofc_colstr_newline(cs, indent, NULL)
-			|| !ofc_colstr_atomic_writef(cs, "ELSE")
-			|| !ofc_sema_stmt_list_print(cs, (indent + 1),
-				label_map, stmt->if_then.block_else))
-					return false;
-	}
-
 	const ofc_sema_label_t* label
 		= ofc_sema_label_map_find_end_block(
 			label_map, stmt);
 	const unsigned* ulabel = NULL;
 	if (label) ulabel = &label->number;
 
-	if (!ofc_colstr_newline(cs, indent, ulabel)
-		|| !ofc_colstr_atomic_writef(cs, "END IF"))
-		return false;
+	bool hide_end = false;
+	if (stmt->if_then.block_else)
+	{
+		if (!ofc_colstr_newline(cs, indent, NULL)
+			|| !ofc_colstr_atomic_writef(cs, "ELSE"))
+			return false;
+
+		if ((stmt->if_then.block_else->count == 1)
+			&& stmt->if_then.block_else->stmt[0]
+			&& (stmt->if_then.block_else->stmt[0]->type
+				== OFC_SEMA_STMT_IF_THEN)
+			&& !ulabel)
+		{
+			if (!ofc_colstr_atomic_writef(cs, " "))
+				return false;
+
+			if (!ofc_sema_stmt_if_then_print(
+				cs, indent, label_map,
+				stmt->if_then.block_else->stmt[0]))
+				return false;
+			hide_end = true;
+		}
+		else
+		{
+			if (!ofc_sema_stmt_list_print(cs, (indent + 1),
+				label_map, stmt->if_then.block_else))
+				return false;
+		}
+	}
+
+	if (!hide_end)
+	{
+		if (!ofc_colstr_newline(cs, indent, ulabel)
+			|| !ofc_colstr_atomic_writef(cs, "END IF"))
+			return false;
+	}
 
 	return true;
 }
