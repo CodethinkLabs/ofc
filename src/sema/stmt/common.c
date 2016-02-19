@@ -34,7 +34,7 @@ bool ofc_sema_stmt_common(
 			continue;
 
 		ofc_sema_scope__check_namespace_collision(
-			scope, stmt->src);
+			scope, "Common Block", stmt->src);
 
 		ofc_sema_common_t* common
 			= ofc_sema_scope_common_find_create(

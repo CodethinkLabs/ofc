@@ -397,7 +397,8 @@ static bool ofc_sema_scope__body(
 }
 
 bool ofc_sema_scope__check_namespace_collision(
-	ofc_sema_scope_t* scope, ofc_sparse_ref_t ref)
+	ofc_sema_scope_t* scope,
+	char* namespace, ofc_sparse_ref_t ref)
 {
 	if (!scope)
 		return false;
@@ -409,8 +410,8 @@ bool ofc_sema_scope__check_namespace_collision(
 		if (!global_opts.no_warn_namespace_col)
 		{
 			ofc_sparse_ref_warning(ref,
-				"The name'%.*s' conflicts with a common block",
-				ref.string.size, ref.string.base);
+				"%s name '%.*s' conflicts with a common block",
+				namespace, ref.string.size, ref.string.base);
 		}
 
 		collision = true;
@@ -421,8 +422,8 @@ bool ofc_sema_scope__check_namespace_collision(
 		if (!global_opts.no_warn_namespace_col)
 		{
 			ofc_sparse_ref_warning(ref,
-				"The name '%.*s' Tconflicts with a block data",
-				ref.string.size, ref.string.base);
+				"T%s name '%.*s' Tconflicts with a block data",
+				namespace, ref.string.size, ref.string.base);
 		}
 
 		collision = true;
@@ -433,8 +434,8 @@ bool ofc_sema_scope__check_namespace_collision(
 		if (!global_opts.no_warn_namespace_col)
 		{
 			ofc_sparse_ref_warning(ref,
-				"The name '%.*s' conflicts with a structure",
-				ref.string.size, ref.string.base);
+				"%s name '%.*s' conflicts with a structure",
+				namespace, ref.string.size, ref.string.base);
 		}
 
 		collision = true;
@@ -445,8 +446,8 @@ bool ofc_sema_scope__check_namespace_collision(
 		if (!global_opts.no_warn_namespace_col)
 		{
 			ofc_sparse_ref_warning(ref,
-				"Name name '%.*s' conflicts with a declaration",
-				ref.string.size, ref.string.base);
+				"%s name '%.*s' conflicts with a declaration",
+				namespace, ref.string.size, ref.string.base);
 		}
 
 		collision = true;
@@ -459,8 +460,8 @@ bool ofc_sema_scope__check_namespace_collision(
 		if (!global_opts.no_warn_namespace_col)
 		{
 			ofc_sparse_ref_warning(ref,
-				"The name '%.*s' conflicts with a reserved intrinsic keyword",
-				ref.string.size, ref.string.base);
+				"%s name '%.*s' conflicts with a reserved intrinsic keyword",
+				namespace, ref.string.size, ref.string.base);
 		}
 
 		collision = true;
@@ -504,7 +505,7 @@ bool ofc_sema_scope_subroutine(
 		if (!decl) return false;
 
 		ofc_sema_scope__check_namespace_collision(
-			scope, stmt->src);
+			scope, "Subroutine", stmt->src);
 
 		if (!ofc_sema_scope_decl_add(
 			scope, decl))
@@ -748,7 +749,7 @@ bool ofc_sema_scope_function(
 		}
 
 		ofc_sema_scope__check_namespace_collision(
-			scope, stmt->src);
+			scope, "Function", stmt->src);
 	}
 	decl->is_return = true;
 
@@ -1007,7 +1008,7 @@ ofc_sema_scope_t* ofc_sema_scope_block_data(
 	}
 
 	ofc_sema_scope__check_namespace_collision(
-		scope, stmt->src);
+		scope, "BLock Data", stmt->src);
 
 	if (!ofc_sema_scope__add_child(scope, block_data))
 	{

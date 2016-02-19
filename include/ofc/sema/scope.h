@@ -74,7 +74,8 @@ struct ofc_sema_scope_s
 
 
 bool ofc_sema_scope__check_namespace_collision(
-	ofc_sema_scope_t* scope, ofc_sparse_ref_t ref);
+	ofc_sema_scope_t* scope,
+	char* namespace, ofc_sparse_ref_t ref);
 
 ofc_sema_scope_t* ofc_sema_scope_global(
 	const ofc_lang_opts_t* lang_opts,

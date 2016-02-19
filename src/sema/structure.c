@@ -126,7 +126,7 @@ ofc_sema_structure_t* ofc_sema_structure(
 	if (!structure) return NULL;
 
 	ofc_sema_scope__check_namespace_collision(
-		scope, stmt->src);
+		scope, "Structure", stmt->src);
 
 	bool added = false;
 	switch (stmt->type)
