@@ -17,10 +17,6 @@
 
 bool ofc_sema_stmt_assignment_print(ofc_colstr_t* cs,
 	const ofc_sema_stmt_t* stmt);
-bool ofc_sema_stmt_read_print(ofc_colstr_t* cs,
-	const ofc_sema_stmt_t* stmt);
-bool ofc_sema_stmt_write_print(ofc_colstr_t* cs,
-	const ofc_sema_stmt_t* stmt);
 bool ofc_sema_stmt_if_comp_print(ofc_colstr_t* cs,
 	const ofc_sema_stmt_t* stmt);
 bool ofc_sema_stmt_if_print(
@@ -51,6 +47,12 @@ bool ofc_sema_stmt_stop_pause_print(ofc_colstr_t* cs,
 bool ofc_sema_stmt_assign_print(ofc_colstr_t* cs,
 	const ofc_sema_stmt_t* stmt);
 bool ofc_sema_stmt_call_print(ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt);
+bool ofc_sema_stmt_io_format_print(ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt);
+bool ofc_sema_stmt_write_print(ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt);
+bool ofc_sema_stmt_read_print(ofc_colstr_t* cs,
 	const ofc_sema_stmt_t* stmt);
 bool ofc_sema_stmt_io_position_print(ofc_colstr_t* cs,
 	const ofc_sema_stmt_t* stmt);
@@ -112,6 +114,11 @@ ofc_sema_stmt_t* ofc_sema_stmt(
 
 		case OFC_PARSE_STMT_CONTINUE:
 			s = ofc_sema_stmt_simple(stmt->type);
+			break;
+
+		case OFC_PARSE_STMT_FORMAT:
+			s = ofc_sema_stmt_io_format(
+				scope, stmt);
 			break;
 
 		case OFC_PARSE_STMT_IO_WRITE:
@@ -212,11 +219,15 @@ void ofc_sema_stmt_delete(
 			ofc_sema_expr_delete(
 				stmt->assign.label);
 			break;
+		case OFC_SEMA_STMT_IO_FORMAT:
+			ofc_parse_format_desc_list_delete(
+				stmt->io_format.format);
+			break;
 		case OFC_SEMA_STMT_IO_WRITE:
 			ofc_sema_expr_delete(
 				stmt->io_write.unit);
 			ofc_sema_expr_delete(
-				stmt->io_write.format_expr);
+				stmt->io_write.format);
 			ofc_sema_expr_delete(
 				stmt->io_write.iostat);
 			ofc_sema_expr_delete(
@@ -232,7 +243,7 @@ void ofc_sema_stmt_delete(
 			ofc_sema_expr_delete(
 				stmt->io_read.unit);
 			ofc_sema_expr_delete(
-				stmt->io_read.format_expr);
+				stmt->io_read.format);
 			ofc_sema_expr_delete(
 				stmt->io_read.iostat);
 			ofc_sema_expr_delete(
@@ -252,7 +263,7 @@ void ofc_sema_stmt_delete(
 			break;
 		case OFC_SEMA_STMT_IO_PRINT:
 			ofc_sema_expr_delete(
-				stmt->io_print.format_expr);
+				stmt->io_print.format);
 			ofc_sema_expr_list_delete(
 				stmt->io_print.iolist);
 			break;
@@ -463,6 +474,49 @@ ofc_sema_stmt_list_t* ofc_sema_stmt_list_create(void)
 }
 
 
+static bool ofc_parse_stmt_is_exec(
+	const ofc_parse_stmt_t* stmt)
+{
+	if (!stmt)
+		return false;
+
+	switch (stmt->type)
+	{
+		case OFC_PARSE_STMT_EMPTY:
+		case OFC_PARSE_STMT_INCLUDE:
+		case OFC_PARSE_STMT_SUBROUTINE:
+		case OFC_PARSE_STMT_FUNCTION:
+		case OFC_PARSE_STMT_PROGRAM:
+		case OFC_PARSE_STMT_BLOCK_DATA:
+		case OFC_PARSE_STMT_PARAMETER:
+		case OFC_PARSE_STMT_IMPLICIT_NONE:
+		case OFC_PARSE_STMT_IMPLICIT:
+		case OFC_PARSE_STMT_DECL:
+		case OFC_PARSE_STMT_DATA:
+		case OFC_PARSE_STMT_DIMENSION:
+		case OFC_PARSE_STMT_EQUIVALENCE:
+		case OFC_PARSE_STMT_COMMON:
+		case OFC_PARSE_STMT_DECL_ATTR_AUTOMATIC:
+		case OFC_PARSE_STMT_DECL_ATTR_STATIC:
+		case OFC_PARSE_STMT_DECL_ATTR_VOLATILE:
+		case OFC_PARSE_STMT_DECL_ATTR_EXTERNAL:
+		case OFC_PARSE_STMT_DECL_ATTR_INTRINSIC:
+		case OFC_PARSE_STMT_SAVE:
+		case OFC_PARSE_STMT_TYPE:
+		case OFC_PARSE_STMT_STRUCTURE:
+		case OFC_PARSE_STMT_UNION:
+		case OFC_PARSE_STMT_MAP:
+		case OFC_PARSE_STMT_NAMELIST:
+		case OFC_PARSE_STMT_POINTER:
+			return false;
+
+		default:
+			break;
+	}
+
+	return true;
+}
+
 static bool ofc_sema_stmt_list__entry(
 	ofc_sema_scope_t* scope,
 	ofc_sema_stmt_list_t* list,
@@ -481,10 +535,6 @@ static bool ofc_sema_stmt_list__entry(
 	{
 		case OFC_PARSE_STMT_INCLUDE:
 			/* Has no semantic effect. */
-			return true;
-
-		case OFC_PARSE_STMT_FORMAT:
-			/* These are already handled. */
 			return true;
 
 		case OFC_PARSE_STMT_SUBROUTINE:
@@ -609,6 +659,7 @@ static bool ofc_sema_stmt_list__entry(
 
 ofc_sema_stmt_list_t* ofc_sema_stmt_list(
 	ofc_sema_scope_t* scope,
+	ofc_sema_stmt_t*  block,
 	const ofc_parse_stmt_list_t* body)
 {
 	if (!body)
@@ -627,6 +678,51 @@ ofc_sema_stmt_list_t* ofc_sema_stmt_list(
 			ofc_sema_stmt_list_delete(list);
 			return NULL;
 		}
+	}
+
+	/* Add labels from non-executable statements. */
+	unsigned j;
+	for (i = 0, j = 0; i < body->count; i++)
+	{
+		const ofc_parse_stmt_t* stmt
+			= body->stmt[i];
+		if (!stmt) continue;
+
+		if (ofc_parse_stmt_is_exec(stmt))
+		{
+			j += 1;
+			continue;
+		}
+
+		if (stmt->label == 0)
+			continue;
+
+		bool success;
+		if (j < list->count)
+		{
+			success = ofc_sema_label_map_add_stmt(
+				scope->label, stmt->label, list->stmt[j]);
+
+		}
+		else if (block)
+		{
+			success = ofc_sema_label_map_add_end_block(
+				scope->label, stmt->label, block);
+		}
+		else
+		{
+			success = ofc_sema_label_map_add_end_scope(
+					scope->label, stmt->label, scope);
+		}
+
+		if (!success)
+		{
+			ofc_sema_stmt_list_delete(list);
+			return NULL;
+		}
+
+		ofc_sparse_ref_warning(stmt->src,
+			"Label %u points to non-executable statement", stmt->label);
 	}
 
 	return list;
@@ -755,12 +851,15 @@ bool ofc_sema_stmt_foreach_expr(
 				return false;
 			break;
 
+		case OFC_SEMA_STMT_IO_FORMAT:
+			break;
+
 		case OFC_SEMA_STMT_IO_WRITE:
 			if (stmt->io_write.unit && !ofc_sema_expr_foreach(
 				stmt->io_write.unit, param, func))
 				return false;
-			if (stmt->io_write.format_expr && !ofc_sema_expr_foreach(
-				stmt->io_write.format_expr, param, func))
+			if (stmt->io_write.format && !ofc_sema_expr_foreach(
+				stmt->io_write.format, param, func))
 				return false;
 			if (stmt->io_write.iostat && !ofc_sema_expr_foreach(
 				stmt->io_write.iostat, param, func))
@@ -783,8 +882,8 @@ bool ofc_sema_stmt_foreach_expr(
 			if (stmt->io_read.unit && !ofc_sema_expr_foreach(
 				stmt->io_read.unit, param, func))
 				return false;
-			if (stmt->io_read.format_expr && !ofc_sema_expr_foreach(
-				stmt->io_read.format_expr, param, func))
+			if (stmt->io_read.format && !ofc_sema_expr_foreach(
+				stmt->io_read.format, param, func))
 				return false;
 			if (stmt->io_read.iostat && !ofc_sema_expr_foreach(
 				stmt->io_read.iostat, param, func))
@@ -810,8 +909,8 @@ bool ofc_sema_stmt_foreach_expr(
 			break;
 
 		case OFC_SEMA_STMT_IO_PRINT:
-			if (stmt->io_print.format_expr && !ofc_sema_expr_foreach(
-				stmt->io_print.format_expr, param, func))
+			if (stmt->io_print.format && !ofc_sema_expr_foreach(
+				stmt->io_print.format, param, func))
 				return false;
 			if (stmt->io_print.iolist
 				&& !ofc_sema_expr_list_foreach(
@@ -1058,6 +1157,9 @@ bool ofc_sema_stmt_print(
 
 		case OFC_SEMA_STMT_ASSIGN:
 			return ofc_sema_stmt_assign_print(cs, stmt);
+
+		case OFC_SEMA_STMT_IO_FORMAT:
+			return ofc_sema_stmt_io_format_print(cs, stmt);
 
 		case OFC_SEMA_STMT_IO_WRITE:
 			return ofc_sema_stmt_write_print(cs, stmt);

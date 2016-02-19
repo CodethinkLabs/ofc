@@ -25,17 +25,12 @@ typedef struct
 const char* ofc_sema_format_str_rep(
 	const ofc_parse_format_desc_e type);
 
-bool ofc_sema_format(
-	ofc_sema_scope_t* scope,
-	const ofc_parse_stmt_t* stmt);
-bool ofc_sema_format_print(ofc_colstr_t* cs,
-	ofc_sema_format_t* format);
-void ofc_sema_format_delete(
-	ofc_sema_format_t* format);
-
 bool ofc_sema_compare_desc_expr_type(
 	unsigned type_desc,
 	unsigned type_expr);
+
+bool ofc_sema_format_desc(
+	const ofc_parse_format_desc_t* desc);
 
 const ofc_sema_type_t* ofc_sema_format_desc_type(
 	const ofc_parse_format_desc_t* desc);

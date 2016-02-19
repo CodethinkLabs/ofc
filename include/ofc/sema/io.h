@@ -46,8 +46,7 @@ typedef enum
 } ofc_sema_call_arg_e;
 
 bool ofc_sema_io_compare_types(
-	ofc_sema_scope_t* scope,
-	const ofc_parse_stmt_t* stmt,
+	const ofc_sema_stmt_t* stmt,
 	const ofc_sema_lhs_t* lhs,
 	ofc_sema_expr_t** expr,
 	const ofc_sema_type_t* type,
@@ -57,30 +56,25 @@ bool ofc_sema_io_compare_types(
 	unsigned* offset);
 
 ofc_parse_format_desc_list_t* ofc_sema_io_data_format(
-	ofc_sema_format_t* format, unsigned iolist_len);
+	const ofc_parse_format_desc_list_t* format, unsigned iolist_len);
 unsigned ofc_sema_io_data_format_count(
-	ofc_sema_format_t* format);
+	const ofc_parse_format_desc_list_t* format);
 
 bool ofc_sema_io_format_iolist_compare(
-	ofc_sema_scope_t* scope,
-	const ofc_parse_stmt_t* stmt,
+	const ofc_sema_stmt_t* stmt,
 	ofc_parse_format_desc_list_t* format_list,
 	ofc_sema_expr_list_t* iolist);
 bool ofc_sema_io_format_input_list_compare(
-	ofc_sema_scope_t* scope,
-	const ofc_parse_stmt_t* stmt,
+	const ofc_sema_stmt_t* stmt,
 	ofc_parse_format_desc_list_t* format_list,
 	ofc_sema_lhs_list_t* iolist);
-
-bool ofc_sema_io_check_label(
-	ofc_sema_scope_t* scope,
-	const ofc_parse_stmt_t* stmt,
-	bool is_format, ofc_sema_expr_t* expr,
-	ofc_sema_label_t** label_dst);
 
 bool ofc_sema_io_list_has_complex(
 	ofc_sema_lhs_list_t* ilist,
 	ofc_sema_expr_list_t* olist,
 	unsigned* count);
+
+bool ofc_sema_stmt_io_format_validate(
+	ofc_sema_stmt_t* stmt);
 
 #endif

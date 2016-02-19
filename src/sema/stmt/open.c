@@ -534,17 +534,9 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_open(
 
 	if (ca_err)
 	{
-		s.io_open.err = ofc_sema_expr(
+		s.io_open.err = ofc_sema_expr_label(
 			scope, ca_err->expr);
 		if (!s.io_open.err)
-		{
-			ofc_sema_stmt_io_open__cleanup(s);
-			return NULL;
-		}
-
-		if (!ofc_sema_io_check_label(
-			scope, stmt, false,
-			s.io_open.err, NULL))
 		{
 			ofc_sema_stmt_io_open__cleanup(s);
 			return NULL;

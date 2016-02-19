@@ -19,8 +19,7 @@
  * offset position in format_list
  */
 bool ofc_sema_io_compare_types(
-	ofc_sema_scope_t* scope,
-	const ofc_parse_stmt_t* stmt,
+	const ofc_sema_stmt_t* stmt,
 	const ofc_sema_lhs_t* lhs,
 	ofc_sema_expr_t** expr,
 	const ofc_sema_type_t* type,
@@ -46,7 +45,7 @@ bool ofc_sema_io_compare_types(
 		for (j = 0; j < array_count; j++)
 		{
 			if (!ofc_sema_io_compare_types(
-				scope, stmt, lhs, expr, type, NULL, structure, format_list, offset))
+				stmt, lhs, expr, type, NULL, structure, format_list, offset))
 				return false;
 		}
 	}
@@ -66,7 +65,7 @@ bool ofc_sema_io_compare_types(
 			if (!member) return false;
 
 			if (!ofc_sema_io_compare_types(
-				scope, stmt, lhs, expr,
+				stmt, lhs, expr,
 				member->type, member->array, member->structure,
 				format_list, offset))
 				return false;
@@ -138,7 +137,7 @@ bool ofc_sema_io_compare_types(
 				ofc_sparse_ref_t src = (lhs ? lhs->src : (*expr)->src);
 				ofc_sparse_ref_error(src,
 					"CHARACTER type KIND not supported in %s",
-					(stmt->type == OFC_PARSE_STMT_IO_WRITE ? "WRITE" : "PRINT"));
+					(stmt->type == OFC_SEMA_STMT_IO_WRITE ? "WRITE" : "PRINT"));
 			}
 		}
 	}
@@ -322,7 +321,7 @@ static bool ofc_sema_io__data_format_helper(
 }
 
 ofc_parse_format_desc_list_t* ofc_sema_io_data_format(
-	ofc_sema_format_t* format, unsigned iolist_len)
+	const ofc_parse_format_desc_list_t* format, unsigned iolist_len)
 {
 	if (!format) return NULL;
 
@@ -335,7 +334,7 @@ ofc_parse_format_desc_list_t* ofc_sema_io_data_format(
 	format_list->desc = NULL;
 
 	if (!ofc_sema_io__data_format_helper(
-		format_list, format->src, iolist_len))
+		format_list, format, iolist_len))
 	{
 		ofc_parse_format_desc_list_delete(format_list);
 		return NULL;
@@ -344,16 +343,16 @@ ofc_parse_format_desc_list_t* ofc_sema_io_data_format(
 	return format_list;
 }
 
-static unsigned ofc_sema_io__data_format_count_helper(
-	const ofc_parse_format_desc_list_t* format_src)
+unsigned ofc_sema_io_data_format_count(
+	const ofc_parse_format_desc_list_t* format)
 {
-	if (!format_src) return 0;
+	if (!format) return 0;
 
 	unsigned i, count = 0;
-	for (i = 0; i < format_src->count; i++)
+	for (i = 0; i < format->count; i++)
 	{
 		ofc_parse_format_desc_t* desc
-			= format_src->desc[i];
+			= format->desc[i];
 
 		if (ofc_parse_format_is_data_desc(desc))
 		{
@@ -364,7 +363,7 @@ static unsigned ofc_sema_io__data_format_count_helper(
 			unsigned n;
 			for (n = 0; n < desc->n; n++)
 			{
-				count += ofc_sema_io__data_format_count_helper(desc->repeat);
+				count += ofc_sema_io_data_format_count(desc->repeat);
 			}
 		}
 	}
@@ -372,17 +371,8 @@ static unsigned ofc_sema_io__data_format_count_helper(
 	return count;
 }
 
-unsigned ofc_sema_io_data_format_count(
-	ofc_sema_format_t* format)
-{
-	if (!format) return 0;
-
-	return ofc_sema_io__data_format_count_helper(format->src);
-}
-
 bool ofc_sema_io_format_iolist_compare(
-	ofc_sema_scope_t* scope,
-	const ofc_parse_stmt_t* stmt,
+	const ofc_sema_stmt_t* stmt,
 	ofc_parse_format_desc_list_t* format_list,
 	ofc_sema_expr_list_t* iolist)
 {
@@ -402,7 +392,7 @@ bool ofc_sema_io_format_iolist_compare(
 			= ofc_sema_expr_structure(*expr);
 
 		if (!ofc_sema_io_compare_types(
-			scope, stmt, NULL, expr, type, array, structure, format_list, &offset))
+			stmt, NULL, expr, type, array, structure, format_list, &offset))
 			return false;
 	}
 
@@ -410,8 +400,7 @@ bool ofc_sema_io_format_iolist_compare(
 }
 
 bool ofc_sema_io_format_input_list_compare(
-	ofc_sema_scope_t* scope,
-	const ofc_parse_stmt_t* stmt,
+	const ofc_sema_stmt_t* stmt,
 	ofc_parse_format_desc_list_t* format_list,
 	ofc_sema_lhs_list_t* iolist)
 {
@@ -428,7 +417,7 @@ bool ofc_sema_io_format_input_list_compare(
 			= ofc_sema_lhs_structure(iolist->lhs[i]);
 
 		if (!ofc_sema_io_compare_types(
-			scope, stmt, iolist->lhs[i], NULL,
+			stmt, iolist->lhs[i], NULL,
 			type, array, structure, format_list, &offset))
 			return false;
 	}
@@ -436,64 +425,141 @@ bool ofc_sema_io_format_input_list_compare(
 	return true;
 }
 
-bool ofc_sema_io_check_label(
-	ofc_sema_scope_t* scope,
-	const ofc_parse_stmt_t* stmt,
-	bool is_format, ofc_sema_expr_t* expr,
-	ofc_sema_label_t** label_dst)
+
+
+bool ofc_sema_stmt_io_format_validate(
+	ofc_sema_stmt_t* stmt)
 {
-	if (!expr) return false;
+	if (!stmt) return false;
 
-	const ofc_sema_type_t* etype
-		= ofc_sema_expr_type(expr);
-	if (!etype) return false;
-
-	ofc_sema_label_t* label_ret = NULL;
-	if (ofc_sema_type_is_integer(etype))
+	ofc_sema_expr_t* format_expr = NULL;
+	ofc_sema_lhs_list_t*  ilist = NULL;
+	ofc_sema_expr_list_t* olist = NULL;
+	switch (stmt->type)
 	{
-		const ofc_sema_typeval_t* label
-			= ofc_sema_expr_constant(expr);
-		if (label)
-		{
-			int64_t fl64 = 0;
-			if (!ofc_sema_typeval_get_integer(
-				label, &fl64) || (fl64 < 0))
-			{
-				ofc_sparse_ref_error(stmt->src,
-					"Label expression must be a positive INTEGER");
-				return false;
-			}
+		case OFC_SEMA_STMT_IO_WRITE:
+			olist = stmt->io_write.iolist;
+			format_expr = stmt->io_write.format;
+			break;
 
-			if (is_format)
-			{
-				unsigned ulabel = (unsigned)fl64;
+		case OFC_SEMA_STMT_IO_READ:
+			ilist = stmt->io_read.iolist;
+			format_expr = stmt->io_read.format;
+			break;
 
-				if (((int64_t)ulabel) != fl64)
-					return false;
+		case OFC_SEMA_STMT_IO_PRINT:
+			olist = stmt->io_print.iolist;
+			format_expr = stmt->io_print.format;
+			break;
 
-				label_ret = ofc_sema_scope_label_modify(
-					scope, ulabel);
-				if (!label_ret)
-				{
-					ofc_sparse_ref_error(expr->src,
-						"Label %u not defined", ulabel);
-					return false;
-				}
-			}
-		}
-		else
-		{
-			ofc_sparse_ref_warning(stmt->src,
-				"Using a variable for a label is deprecated");
-		}
+		default:
+			return false;
 	}
-	else
+
+	if ((!ilist && !olist)
+		|| !format_expr)
+		return true;
+
+	ofc_sema_label_t* label
+		= format_expr->label;
+	if (!format_expr->is_label)
+	{
+		/* TODO - Check CHARACTER FORMAT descriptors. */
+		return true;
+	}
+	else if (!label)
+	{
+		/* Label isn't resolvable at compile-time */
+		return true;
+	}
+
+	if ((label->type != OFC_SEMA_LABEL_STMT)
+		|| !label->stmt
+		|| (label->stmt->type != OFC_SEMA_STMT_IO_FORMAT))
 	{
 		ofc_sparse_ref_error(stmt->src,
-			"Expected label in IO argument");
+			"FORMAT label must point to a FORMAT statement");
 		return false;
 	}
 
-	if (label_dst) *label_dst = label_ret;
-	return true;
+	const ofc_parse_format_desc_list_t* format
+		= label->stmt->io_format.format;
+	if (!format) format = label->stmt->io_format.src;
+	if (!format) return false;
+
+	unsigned data_desc_count
+		= ofc_sema_io_data_format_count(format);
+
+	unsigned iolist_len = 0;
+	if (ilist ? !ofc_sema_lhs_list_elem_count(ilist, &iolist_len)
+		: !ofc_sema_expr_list_elem_count(olist, &iolist_len))
+	{
+		/* iolist has variable length; we can't check it at compile-time. */
+		return true;
+	}
+
+	if (iolist_len == 0)
+	{
+		if (data_desc_count > 0)
+		{
+			ofc_sparse_ref_warning(format_expr->src,
+				"No IO list in formatted IO statement");
+		}
+
+		/* iolist is empty; nothing to validate. */
+		return true;
+	}
+
+	/* Complex types count as two elements for an iolist. */
+	unsigned count = 0;
+	if (!ofc_sema_io_list_has_complex(
+		ilist, olist, &count))
+		return false;
+	iolist_len += count;
+
+	if (data_desc_count == 0)
+	{
+		if (iolist_len > 0)
+		{
+			ofc_sparse_ref_warning(stmt->io_print.format->src,
+				"No data edit descriptors in FORMAT list");
+		}
+
+		/* No data descriptors to check. */
+		return true;
+	}
+
+	if (iolist_len < data_desc_count)
+	{
+		ofc_sparse_ref_warning(stmt->io_print.format->src,
+			"IO list shorter than FORMAT list,"
+			" last FORMAT data descriptors will be ignored");
+	}
+	else if ((iolist_len % data_desc_count) != 0)
+	{
+		ofc_sparse_ref_warning(stmt->io_print.format->src,
+			"IO list length is not a multiple of FORMAT list length");
+	}
+
+	/* Create a format list of same length as iolist
+	 * with only data edit descriptors  */
+	ofc_parse_format_desc_list_t* format_list
+		= ofc_sema_io_data_format(format, iolist_len);
+	if (!format_list) return false;
+
+	/* Compare iolist with format */
+	bool success;
+	if (ilist)
+	{
+		success = ofc_sema_io_format_input_list_compare(
+			stmt, format_list, ilist);
+	}
+	else
+	{
+		success = ofc_sema_io_format_iolist_compare(
+			stmt, format_list, olist);
+	}
+
+	ofc_parse_format_desc_list_delete(format_list);
+	return success;
 }

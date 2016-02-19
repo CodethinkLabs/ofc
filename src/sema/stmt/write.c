@@ -21,7 +21,7 @@ static void ofc_sema_stmt_io_write__cleanup(
 	ofc_sema_stmt_t s)
 {
 	ofc_sema_expr_delete(s.io_write.unit);
-	ofc_sema_expr_delete(s.io_write.format_expr);
+	ofc_sema_expr_delete(s.io_write.format);
 	ofc_sema_expr_delete(s.io_write.advance);
 	ofc_sema_expr_delete(s.io_write.err);
 	ofc_sema_expr_delete(s.io_write.iostat);
@@ -42,7 +42,6 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 	s.type = OFC_SEMA_STMT_IO_WRITE;
 	s.io_write.unit         = NULL;
 	s.io_write.stdout       = false;
-	s.io_write.format_expr  = NULL;
 	s.io_write.format       = NULL;
 	s.io_write.format_ldio  = false;
 	s.io_write.formatted    = false;
@@ -219,16 +218,16 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 	{
 		s.io_write.formatted = true;
 
-		s.io_write.format_expr = ofc_sema_expr(
+		s.io_write.format = ofc_sema_expr(
 			scope, ca_format->expr);
-		if (!s.io_write.format_expr)
+		if (!s.io_write.format)
 		{
 			ofc_sema_stmt_io_write__cleanup(s);
 			return NULL;
 		}
 
 		const ofc_sema_type_t* etype
-			= ofc_sema_expr_type(s.io_write.format_expr);
+			= ofc_sema_expr_type(s.io_write.format);
 		if (!etype)
 		{
 			ofc_sema_stmt_io_write__cleanup(s);
@@ -237,34 +236,9 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 
 		if (ofc_sema_type_is_integer(etype))
 		{
-			ofc_sema_label_t* label;
-			if (!ofc_sema_io_check_label(
-				scope, stmt, true,
-				s.io_write.format_expr, &label))
-			{
-				ofc_sema_stmt_io_write__cleanup(s);
-				return NULL;
-			}
-
-			if (label)
-			{
-				if (label->type != OFC_SEMA_LABEL_FORMAT)
-				{
-					ofc_sparse_ref_error(stmt->src,
-						"Label expression must be a FORMAT statement in WRITE");
-					ofc_sema_stmt_io_write__cleanup(s);
-					return NULL;
-				}
-
-				s.io_write.format = label->format;
-				label->used = true;
-			}
+			s.io_write.format->is_label = true;
 		}
-		else if (etype->type == OFC_SEMA_TYPE_CHARACTER)
-		{
-			/* TODO - Check we can resolve this as a format descriptor. */
-		}
-		else
+		else if (etype->type != OFC_SEMA_TYPE_CHARACTER)
 		{
 			/* TODO - Support INTEGER array formats. */
 
@@ -410,17 +384,9 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 
 	if (ca_err)
 	{
-		s.io_write.err = ofc_sema_expr(
+		s.io_write.err = ofc_sema_expr_label(
 			scope, ca_err->expr);
 		if (!s.io_write.err)
-		{
-			ofc_sema_stmt_io_write__cleanup(s);
-			return NULL;
-		}
-
-		if (!ofc_sema_io_check_label(
-			scope, stmt, false,
-			s.io_write.err, NULL))
 		{
 			ofc_sema_stmt_io_write__cleanup(s);
 			return NULL;
@@ -437,77 +403,6 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 		{
 			ofc_sema_stmt_io_write__cleanup(s);
 			return NULL;
-		}
-	}
-
-	if (s.io_write.format)
-	{
-		/* Count elements in iolist */
-		unsigned iolist_len = 0;
-		bool iolist_len_var
-			= (s.io_write.iolist
-				&& !ofc_sema_expr_list_elem_count(
-					s.io_write.iolist, &iolist_len));
-
-		if (iolist_len > 0)
-		{
-			unsigned count = 0;
-			if (!ofc_sema_io_list_has_complex(
-				NULL, s.io_write.iolist, &count))
-			{
-				ofc_sema_stmt_io_write__cleanup(s);
-				return NULL;
-			}
-			iolist_len += count;
-		}
-
-		unsigned data_desc_count
-			= ofc_sema_io_data_format_count(s.io_write.format);
-
-		if ((data_desc_count > 0) && (iolist_len > 0))
-		{
-			if (iolist_len < data_desc_count)
-			{
-				ofc_sparse_ref_warning(stmt->src,
-					"IO list shorter than FORMAT list,"
-					" last FORMAT data descriptors will be ignored");
-			}
-			else if ((iolist_len % data_desc_count) != 0)
-			{
-				ofc_sparse_ref_warning(stmt->src,
-					"IO list length is not a multiple of FORMAT list length");
-			}
-
-			/* Create a format list of same length as iolist
-			 * with only data edit descriptors  */
-			ofc_parse_format_desc_list_t* format_list
-				= ofc_sema_io_data_format(s.io_write.format, iolist_len);
-			if (!format_list)
-			{
-				ofc_sema_stmt_io_write__cleanup(s);
-				return NULL;
-			}
-
-			/* Compare iolist with format */
-			bool fail = !ofc_sema_io_format_iolist_compare(
-				scope, stmt, format_list, s.io_write.iolist);
-			ofc_parse_format_desc_list_delete(format_list);
-			if (fail)
-			{
-				ofc_sema_stmt_io_write__cleanup(s);
-				return NULL;
-			}
-		}
-		else if (iolist_len > 0)
-		{
-			ofc_sparse_ref_warning(stmt->src,
-				"No data edit descriptors in FORMAT list");
-		}
-		else if ((data_desc_count > 0)
-			&& !iolist_len_var)
-		{
-			ofc_sparse_ref_warning(stmt->src,
-				"No IO list in WRITE statement");
 		}
 	}
 
@@ -572,7 +467,7 @@ bool ofc_sema_stmt_write_print(ofc_colstr_t* cs,
 	else if (stmt->io_write.formatted)
 	{
 		if (!ofc_sema_stmt_write__print_optional(
-			cs, "FMT", stmt->io_write.format_expr))
+			cs, "FMT", stmt->io_write.format))
 			return false;
 	}
 

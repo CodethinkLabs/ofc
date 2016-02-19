@@ -21,7 +21,7 @@ void ofc_sema_stmt_io_read__cleanup(
 	ofc_sema_stmt_t s)
 {
 	ofc_sema_expr_delete(s.io_read.unit);
-	ofc_sema_expr_delete(s.io_read.format_expr);
+	ofc_sema_expr_delete(s.io_read.format);
 	ofc_sema_expr_delete(s.io_read.advance);
 	ofc_sema_expr_delete(s.io_read.end);
 	ofc_sema_expr_delete(s.io_read.eor);
@@ -44,7 +44,6 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 	s.type = OFC_SEMA_STMT_IO_READ;
 	s.io_read.unit         = NULL;
 	s.io_read.stdin        = false;
-	s.io_read.format_expr  = NULL;
 	s.io_read.format       = NULL;
 	s.io_read.format_ldio  = false;
 	s.io_read.formatted    = false;
@@ -256,20 +255,20 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 		s.io_read.format_ldio = true;
 		s.io_read.formatted   = true;
 	}
-	else if (ca_format&& (ca_format->type == OFC_PARSE_CALL_ARG_EXPR))
+	else if (ca_format && (ca_format->type == OFC_PARSE_CALL_ARG_EXPR))
 	{
 		s.io_read.formatted   = true;
 
-		s.io_read.format_expr = ofc_sema_expr(
+		s.io_read.format = ofc_sema_expr(
 			scope, ca_format->expr);
-		if (!s.io_read.format_expr)
+		if (!s.io_read.format)
 		{
 			ofc_sema_stmt_io_read__cleanup(s);
 			return NULL;
 		}
 
 		const ofc_sema_type_t* etype
-			= ofc_sema_expr_type(s.io_read.format_expr);
+			= ofc_sema_expr_type(s.io_read.format);
 		if (!etype)
 		{
 			ofc_sema_stmt_io_read__cleanup(s);
@@ -278,34 +277,9 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 
 		if (ofc_sema_type_is_integer(etype))
 		{
-			ofc_sema_label_t* label;
-			if (!ofc_sema_io_check_label(
-				scope, stmt, true,
-				s.io_read.format_expr, &label))
-			{
-				ofc_sema_stmt_io_read__cleanup(s);
-				return NULL;
-			}
-
-			if (label)
-			{
-				if (label->type != OFC_SEMA_LABEL_FORMAT)
-				{
-					ofc_sparse_ref_error(stmt->src,
-						"Label expression must be a FORMAT statement in READ");
-					ofc_sema_stmt_io_read__cleanup(s);
-					return NULL;
-				}
-
-				s.io_read.format = label->format;
-				label->used = true;
-			}
+			s.io_read.format->is_label = true;
 		}
-		else if (etype->type == OFC_SEMA_TYPE_CHARACTER)
-		{
-			/* TODO - Check we can resolve this as a format descriptor. */
-		}
-		else
+		else if (etype->type != OFC_SEMA_TYPE_CHARACTER)
 		{
 			/* TODO - Support INTEGER array formats. */
 
@@ -383,17 +357,9 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 
 	if (ca_end)
 	{
-		s.io_read.end = ofc_sema_expr(
+		s.io_read.end = ofc_sema_expr_label(
 			scope, ca_end->expr);
 		if (!s.io_read.end)
-		{
-			ofc_sema_stmt_io_read__cleanup(s);
-			return NULL;
-		}
-
-		if (!ofc_sema_io_check_label(
-			scope, stmt, false,
-			s.io_read.end, NULL))
 		{
 			ofc_sema_stmt_io_read__cleanup(s);
 			return NULL;
@@ -402,17 +368,9 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 
 	if (ca_eor)
 	{
-		s.io_read.eor = ofc_sema_expr(
+		s.io_read.eor = ofc_sema_expr_label(
 			scope, ca_eor->expr);
 		if (!s.io_read.eor)
-		{
-			ofc_sema_stmt_io_read__cleanup(s);
-			return NULL;
-		}
-
-		if (!ofc_sema_io_check_label(
-			scope, stmt, false,
-			s.io_read.eor, NULL))
 		{
 			ofc_sema_stmt_io_read__cleanup(s);
 			return NULL;
@@ -421,17 +379,9 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 
 	if (ca_err)
 	{
-		s.io_read.err = ofc_sema_expr(
+		s.io_read.err = ofc_sema_expr_label(
 			scope, ca_err->expr);
 		if (!s.io_read.err)
-		{
-			ofc_sema_stmt_io_read__cleanup(s);
-			return NULL;
-		}
-
-		if (!ofc_sema_io_check_label(
-			scope, stmt, false,
-			s.io_read.err, NULL))
 		{
 			ofc_sema_stmt_io_read__cleanup(s);
 			return NULL;
@@ -562,73 +512,6 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 		}
 	}
 
-	unsigned iolist_len = 0;
-	if (s.io_read.format
-		&& ofc_sema_lhs_list_elem_count(
-			s.io_read.iolist, &iolist_len))
-	{
-		if (iolist_len > 0)
-		{
-			unsigned count = 0;
-			if (!ofc_sema_io_list_has_complex(
-				s.io_read.iolist, NULL, &count))
-			{
-				ofc_sema_stmt_io_read__cleanup(s);
-				return NULL;
-			}
-			iolist_len += count;
-		}
-
-		unsigned data_desc_count
-			= ofc_sema_io_data_format_count(s.io_read.format);
-
-		if ((data_desc_count > 0) && (iolist_len > 0))
-		{
-			if (iolist_len < data_desc_count)
-			{
-				ofc_sparse_ref_warning(stmt->src,
-					"IO list shorter than FORMAT list,"
-					" last FORMAT data descriptors will be ignored");
-			}
-			else if ((iolist_len % data_desc_count) != 0)
-			{
-				ofc_sparse_ref_warning(stmt->src,
-					"IO list length is not a multiple of FORMAT list length");
-			}
-
-			/* Create a format list of same length as iolist
-			 * with only data edit descriptors  */
-			ofc_parse_format_desc_list_t* format_list
-				= ofc_sema_io_data_format(s.io_read.format, iolist_len);
-			if (!format_list)
-			{
-				ofc_sema_stmt_io_read__cleanup(s);
-				return NULL;
-			}
-
-			/* Compare iolist with format */
-			bool fail = !ofc_sema_io_format_input_list_compare(
-				scope, stmt, format_list, s.io_read.iolist);
-			ofc_parse_format_desc_list_delete(format_list);
-			if (fail)
-			{
-				ofc_sema_stmt_io_read__cleanup(s);
-				return NULL;
-			}
-		}
-		else if (iolist_len > 0)
-		{
-			ofc_sparse_ref_warning(stmt->src,
-				"No data edit descriptors in FORMAT list");
-		}
-		else if (data_desc_count > 0)
-		{
-			ofc_sparse_ref_warning(stmt->src,
-				"No IO list in READ statement");
-		}
-
-	}
-
 	ofc_sema_stmt_t* as
 		= ofc_sema_stmt_alloc(s);
 	if (!as)
@@ -690,7 +573,7 @@ bool ofc_sema_stmt_read_print(ofc_colstr_t* cs,
 	else if (stmt->io_read.formatted)
 	{
 		if (!ofc_sema_stmt_read__print_optional(
-			cs,	"FMT", stmt->io_read.format_expr))
+			cs,	"FMT", stmt->io_read.format))
 			return false;
 	}
 
@@ -733,7 +616,6 @@ bool ofc_sema_stmt_read_print(ofc_colstr_t* cs,
 
 	if (!ofc_colstr_atomic_writef(cs, ")"))
 		return false;
-
 
 	if (stmt->io_read.iolist)
 	{

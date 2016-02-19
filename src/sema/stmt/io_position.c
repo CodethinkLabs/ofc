@@ -196,22 +196,12 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_position(
 
 	if (ca_err)
 	{
-		s.io_position.err = ofc_sema_expr(
+		s.io_position.err = ofc_sema_expr_label(
 			scope, ca_err->expr);
 		if (!s.io_position.err)
 		{
 			ofc_sema_expr_delete(s.io_position.unit);
 			ofc_sema_expr_delete(s.io_position.iostat);
-			return NULL;
-		}
-
-		if (!ofc_sema_io_check_label(
-			scope, stmt, false,
-			s.io_position.err, NULL))
-		{
-			ofc_sema_expr_delete(s.io_position.unit);
-			ofc_sema_expr_delete(s.io_position.iostat);
-			ofc_sema_expr_delete(s.io_position.err);
 			return NULL;
 		}
 	}

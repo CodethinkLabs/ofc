@@ -241,7 +241,7 @@ static ofc_sema_stmt_t* ofc_sema_stmt_do__block(
 	{
 		as->do_block.block
 			= ofc_sema_stmt_list(
-				scope, stmt->do_block.block);
+				scope, as, stmt->do_block.block);
 		if (!as->do_block.block)
 		{
 			ofc_sema_stmt_delete(as);
@@ -346,7 +346,7 @@ static ofc_sema_stmt_t* ofc_sema_stmt_do_while__block(
 	{
 		as->do_while_block.block
 			= ofc_sema_stmt_list(
-				scope, stmt->do_while_block.block);
+				scope, as, stmt->do_while_block.block);
 
 		if (!as->do_while_block.block)
 		{

@@ -191,7 +191,7 @@ static ofc_sema_stmt_t* ofc_sema_stmt_if__then(
 	if (stmt->if_then.block_then)
 	{
 		as->if_then.block_then = ofc_sema_stmt_list(
-			scope, stmt->if_then.block_then);
+			scope, as, stmt->if_then.block_then);
 		if (!as->if_then.block_then)
 		{
 			ofc_sema_stmt_delete(as);
@@ -207,7 +207,7 @@ static ofc_sema_stmt_t* ofc_sema_stmt_if__then(
 	if (stmt->if_then.block_else)
 	{
 		as->if_then.block_else = ofc_sema_stmt_list(
-			scope, stmt->if_then.block_else);
+			scope, as, stmt->if_then.block_else);
 		if (!as->if_then.block_else)
 		{
 			ofc_sema_stmt_delete(as);

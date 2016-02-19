@@ -20,6 +20,7 @@ typedef enum
 {
 	OFC_SEMA_STMT_ASSIGNMENT = 0,
 	OFC_SEMA_STMT_ASSIGN,
+	OFC_SEMA_STMT_IO_FORMAT,
 	OFC_SEMA_STMT_IO_WRITE,
 	OFC_SEMA_STMT_IO_READ,
 	OFC_SEMA_STMT_IO_PRINT,
@@ -94,12 +95,17 @@ struct ofc_sema_stmt_s
 
 		struct
 		{
+			const ofc_parse_format_desc_list_t* src;
+			ofc_parse_format_desc_list_t*       format;
+		} io_format;
+
+		struct
+		{
 			ofc_sema_expr_t* unit;
 			bool             stdout;
 
 			/* TODO - Namelist. */
-			ofc_sema_expr_t*   format_expr;
-			ofc_sema_format_t* format;
+			ofc_sema_expr_t*   format;
 			bool               format_ldio;
 			bool               formatted;
 
@@ -117,8 +123,7 @@ struct ofc_sema_stmt_s
 			bool             stdin;
 
 			/* TODO - Namelist. */
-			ofc_sema_expr_t*   format_expr;
-			ofc_sema_format_t* format;
+			ofc_sema_expr_t*   format;
 			bool               format_ldio;
 			bool               formatted;
 
@@ -137,8 +142,7 @@ struct ofc_sema_stmt_s
 
 		struct
 		{
-			ofc_sema_expr_t*      format_expr;
-			ofc_sema_format_t*    format;
+			ofc_sema_expr_t*      format;
 			bool                  format_asterisk;
 			ofc_sema_expr_list_t* iolist;
 		} io_print;
@@ -308,6 +312,9 @@ ofc_sema_stmt_t* ofc_sema_stmt_assignment(
 ofc_sema_stmt_t* ofc_sema_stmt_assign(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
+ofc_sema_stmt_t* ofc_sema_stmt_io_format(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt);
 ofc_sema_stmt_t* ofc_sema_stmt_io_write(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
@@ -365,6 +372,7 @@ struct ofc_sema_stmt_list_s
 ofc_sema_stmt_list_t* ofc_sema_stmt_list_create(void);
 ofc_sema_stmt_list_t* ofc_sema_stmt_list(
 	ofc_sema_scope_t* scope,
+	ofc_sema_stmt_t*  block,
 	const ofc_parse_stmt_list_t* body);
 
 void ofc_sema_stmt_list_delete(

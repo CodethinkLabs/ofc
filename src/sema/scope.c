@@ -164,15 +164,6 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 
 
 
-static bool ofc_sema_scope__body_scan_format(
-	const ofc_parse_stmt_t* stmt,
-	ofc_sema_scope_t* scope)
-{
-	if (!stmt) return false;
-	return ((stmt->type != OFC_PARSE_STMT_FORMAT)
-		|| ofc_sema_format(scope, stmt));
-}
-
 static bool ofc_sema_scope__body_scan_equivalence(
 	const ofc_parse_stmt_t* stmt,
 	ofc_sema_scope_t* scope)
@@ -228,6 +219,27 @@ static bool ofc_sema_scope__body_label_resolve(
 	return true;
 }
 
+static bool ofc_sema_scope__body_format_validate(
+	ofc_sema_stmt_t* stmt,
+	ofc_sema_scope_t* scope)
+{
+	(void)scope;
+
+	if (!stmt) return false;
+
+	switch (stmt->type)
+	{
+		case OFC_SEMA_STMT_IO_WRITE:
+		case OFC_SEMA_STMT_IO_READ:
+		case OFC_SEMA_STMT_IO_PRINT:
+			return ofc_sema_stmt_io_format_validate(stmt);
+		default:
+			break;
+	}
+
+	return true;
+}
+
 static bool ofc_sema_scope__body(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_list_t* body)
@@ -238,11 +250,6 @@ static bool ofc_sema_scope__body(
 	if (!body)
 		return true;
 
-	/* Initial scan for FORMAT statements */
-	if (!ofc_parse_stmt_list_foreach(body, scope,
-		(void*)ofc_sema_scope__body_scan_format))
-		return false;
-
 	/* Generate specifiers for EQUIVALENCE statements */
 	if (!ofc_parse_stmt_list_foreach(body, scope,
 		(void*)ofc_sema_scope__body_scan_equivalence))
@@ -251,12 +258,17 @@ static bool ofc_sema_scope__body(
 	if (scope->stmt)
 		return false;
 
-	scope->stmt = ofc_sema_stmt_list(scope, body);
+	scope->stmt = ofc_sema_stmt_list(scope, NULL, body);
 	if (!scope->stmt) return false;
 
 	/* Resolve labels */
 	if (!ofc_sema_stmt_list_foreach_expr(scope->stmt, scope,
 		(void*)ofc_sema_scope__body_label_resolve))
+		return false;
+
+	/* Validate FORMAT descriptors. */
+	if (!ofc_sema_stmt_list_foreach(scope->stmt, scope,
+		(void*)ofc_sema_scope__body_format_validate))
 		return false;
 
 	/* Declare arguments */
@@ -1520,13 +1532,6 @@ static bool ofc_sema_scope_body__print(
 	{
 		ofc_file_error(NULL, NULL,
 			"Failed to print stmt list");
-		return false;
-	}
-	if (scope->label
-		&& !ofc_sema_format_label_list_print(cs, indent, scope->label->format))
-	{
-		ofc_file_error(NULL, NULL,
-			"Failed to print format label list");
 		return false;
 	}
 

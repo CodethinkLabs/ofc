@@ -19,7 +19,6 @@
 typedef enum
 {
 	OFC_SEMA_LABEL_STMT = 0,
-	OFC_SEMA_LABEL_FORMAT,
 	OFC_SEMA_LABEL_END_BLOCK,
 	OFC_SEMA_LABEL_END_SCOPE,
 
@@ -35,32 +34,22 @@ typedef struct
 	{
 		const ofc_sema_scope_t* scope;
 		const ofc_sema_stmt_t*  stmt;
-		ofc_sema_format_t*      format;
 	};
 
 	bool used;
 } ofc_sema_label_t;
 
-struct ofc_sema_format_label_list_s
-{
-	unsigned count;
-	ofc_sema_label_t** format;
-};
-
 typedef struct
 {
-	/* This references statements and formats. */
-	ofc_hashmap_t*                label;
+	/* This references all labels. */
+	ofc_hashmap_t* label;
 
 	/* This owns the statement labels. */
-	ofc_hashmap_t*                stmt;
+	ofc_hashmap_t* stmt;
 
 	/* These own the end block/scope labels. */
 	ofc_hashmap_t* end_block;
 	ofc_hashmap_t* end_scope;
-
-	/* This owns the format labels. */
-	ofc_sema_format_label_list_t* format;
 } ofc_sema_label_map_t;
 
 ofc_sema_label_map_t* ofc_sema_label_map_create(void);
@@ -76,10 +65,6 @@ bool ofc_sema_label_map_add_end_block(
 bool ofc_sema_label_map_add_end_scope(
 	ofc_sema_label_map_t* map, unsigned label,
 	const ofc_sema_scope_t* end_scope);
-bool ofc_sema_label_map_add_format(
-	const ofc_parse_stmt_t* stmt,
-	ofc_sema_label_map_t* map, unsigned label,
-	ofc_sema_format_t* format);
 
 const ofc_sema_label_t* ofc_sema_label_map_find(
 	const ofc_sema_label_map_t* map, unsigned label);
@@ -95,18 +80,5 @@ const ofc_sema_label_t* ofc_sema_label_map_find_end_block(
 const ofc_sema_label_t* ofc_sema_label_map_find_end_scope(
 	const ofc_sema_label_map_t* map,
 	const ofc_sema_scope_t*     scope);
-
-ofc_sema_format_label_list_t* ofc_sema_format_label_list_create(void);
-void ofc_sema_format_label_list_delete(
-	ofc_sema_format_label_list_t* label_list);
-
-bool ofc_sema_format_label_list_add(
-	ofc_sema_format_label_list_t* list,
-	ofc_sema_label_t* format);
-bool ofc_sema_format_label_list_print(
-	ofc_colstr_t* cs, unsigned indent,
-	ofc_sema_format_label_list_t* list);
-bool ofc_sema_format_label_print(ofc_colstr_t* cs,
-	ofc_sema_label_t* label);
 
 #endif
