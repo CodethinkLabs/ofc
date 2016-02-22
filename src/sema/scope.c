@@ -1749,3 +1749,79 @@ void ofc_sema_scope_list_delete(
 	free(list->scope);
 	free(list);
 }
+
+bool ofc_sema_scope_list_foreach(
+	ofc_sema_scope_list_t* list, void* param,
+	bool (*func)(ofc_sema_scope_t* scope, void* param))
+{
+	if (!list || !func)
+		return false;
+
+	unsigned i;
+	for (i = 0; i < list->count; i++)
+	{
+		if (!func(list->scope[i], param))
+			return false;
+	}
+
+	return true;
+}
+
+
+
+bool ofc_sema_scope_foreach_scope(
+	ofc_sema_scope_t* scope, void* param,
+	bool (*func)(ofc_sema_scope_t* scope, void* param))
+{
+	if (!scope || !func)
+		return false;
+
+	if (scope->child
+		&& !ofc_sema_scope_list_foreach(
+			scope->child, param, func))
+		return false;
+
+	if (scope->decl
+		&& !ofc_sema_decl_list_foreach_scope(
+			scope->decl, param, func))
+		return false;
+
+	return func(scope, param);
+}
+
+bool ofc_sema_scope_foreach_decl(
+	ofc_sema_scope_t* scope, void* param,
+	bool (*func)(ofc_sema_decl_t* decl, void* param))
+{
+	if (!scope)
+		return false;
+
+	if (scope->decl
+		&& !ofc_sema_decl_list_foreach(
+			scope->decl, param, func))
+		return false;
+
+	return true;
+}
+
+bool ofc_sema_scope_foreach_structure(
+	ofc_sema_scope_t* scope, void* param,
+	bool (*func)(ofc_sema_structure_t* structure, void* param))
+{
+	if (!scope)
+		return false;
+
+	if (scope->structure
+		&& !ofc_sema_structure_list_foreach(
+			scope->structure, param, func))
+		return false;
+
+	if (scope->derived_type
+		&& !ofc_sema_structure_list_foreach(
+			scope->derived_type, param, func))
+		return false;
+
+	return true;
+}
+
+

@@ -852,3 +852,20 @@ bool ofc_sema_structure_list_print(
 
 	return true;
 }
+
+bool ofc_sema_structure_list_foreach(
+	ofc_sema_structure_list_t* list, void* param,
+	bool (*func)(ofc_sema_structure_t* structure, void* param))
+{
+	if (!list || !func)
+		return false;
+
+	unsigned i;
+	for (i = 0; i < list->count; i++)
+	{
+		if (!func(list->structure[i], param))
+			return false;
+	}
+
+	return true;
+}

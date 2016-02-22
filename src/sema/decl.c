@@ -1728,6 +1728,21 @@ const ofc_sema_type_t* ofc_sema_decl_base_type(
 }
 
 
+bool ofc_sema_decl_foreach_scope(
+	ofc_sema_decl_t* decl, void* param,
+	bool (*func)(ofc_sema_scope_t* scope, void* param))
+{
+	if (!decl || !func)
+		return false;
+
+	if (decl->func && !ofc_sema_scope_foreach_scope(
+		decl->func, param, func))
+		return false;
+
+	return true;
+}
+
+
 static const ofc_str_ref_t* ofc_sema_decl__key(
 	const ofc_sema_decl_t* decl)
 {
@@ -1916,23 +1931,30 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 
 	const ofc_sema_type_t* type = NULL;
 	bool is_pointer = false;
-	if (decl->type->type == OFC_SEMA_TYPE_RECORD)
+	if (decl->type->type == OFC_SEMA_TYPE_TYPE)
 	{
-		return (ofc_colstr_atomic_writef(cs, "RECORD")
-			&& ofc_colstr_atomic_writef(cs, " ")
-			&& ofc_colstr_atomic_writef(cs, "/")
-			&& ofc_sema_structure_print_name(cs, decl->structure)
-			&& ofc_colstr_atomic_writef(cs, "/")
-			&& ofc_colstr_atomic_writef(cs, " ")
-			&& ofc_sema_decl_print_name(cs, decl));
-	}
-	else if (decl->type->type == OFC_SEMA_TYPE_TYPE)
-	{
-		if (!ofc_colstr_atomic_writef(cs, "TYPE")
-			|| !ofc_colstr_atomic_writef(cs, "(")
-			|| !ofc_sema_structure_print_name(cs, decl->structure)
-			|| !ofc_colstr_atomic_writef(cs, ")"))
+		if (!decl->structure)
 			return false;
+
+		if (decl->structure->type
+			== OFC_SEMA_STRUCTURE_F90_TYPE)
+		{
+			if (!ofc_colstr_atomic_writef(cs, "TYPE")
+				|| !ofc_colstr_atomic_writef(cs, "(")
+				|| !ofc_sema_structure_print_name(cs, decl->structure)
+				|| !ofc_colstr_atomic_writef(cs, ")"))
+				return false;
+		}
+		else
+		{
+			return (ofc_colstr_atomic_writef(cs, "RECORD")
+				&& ofc_colstr_atomic_writef(cs, " ")
+				&& ofc_colstr_atomic_writef(cs, "/")
+				&& ofc_sema_structure_print_name(cs, decl->structure)
+				&& ofc_colstr_atomic_writef(cs, "/")
+				&& ofc_colstr_atomic_writef(cs, " ")
+				&& ofc_sema_decl_print_name(cs, decl));
+		}
 	}
 	else
 	{
@@ -2593,6 +2615,42 @@ bool ofc_sema_decl_list_print(
 
 		if (!ofc_sema_decl_print_data_init(cs, indent,
 			decl_list->decl[i]))
+			return false;
+	}
+
+	return true;
+}
+
+
+bool ofc_sema_decl_list_foreach(
+	ofc_sema_decl_list_t* list, void* param,
+	bool (*func)(ofc_sema_decl_t* decl, void* param))
+{
+	if (!list || !func)
+		return false;
+
+	unsigned i;
+	for (i = 0; i < list->count; i++)
+	{
+		if (!func(list->decl[i], param))
+			return false;
+	}
+
+	return true;
+}
+
+bool ofc_sema_decl_list_foreach_scope(
+	ofc_sema_decl_list_t* list, void* param,
+	bool (*func)(ofc_sema_scope_t* scope, void* param))
+{
+	if (!list)
+		return false;
+
+	unsigned i;
+	for (i = 0; i < list->count; i++)
+	{
+		if (!ofc_sema_decl_foreach_scope(
+			list->decl[i], param, func))
 			return false;
 	}
 

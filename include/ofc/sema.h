@@ -57,4 +57,6 @@ typedef struct ofc_sema_format_label_list_s ofc_sema_format_label_list_t;
 #include <ofc/sema/implicit.h>
 #include <ofc/sema/scope.h>
 
+#include <ofc/sema/pass.h>
+
 #endif

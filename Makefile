@@ -3,7 +3,7 @@ FRONTEND_DEBUG = $(FRONTEND)-debug
 
 BASE = src/
 
-SRC_DIR = . prep parse sema reformat parse/stmt sema/stmt
+SRC_DIR = . prep parse sema reformat parse/stmt sema/stmt sema/pass
 SRC_DIR_BASE = $(addprefix $(BASE),$(SRC_DIR))
 LDFLAGS = -lm
 CFLAGS_COMMON = -Wall -Wextra -Werror -MD -MP -I include

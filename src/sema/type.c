@@ -530,20 +530,14 @@ const ofc_sema_type_t* ofc_sema_type_spec(
 				kind, len, spec->len_var);
 			break;
 
+		/* RECORD is only needed for specifiers. */
 		case OFC_SEMA_TYPE_TYPE:
-			if ((spec->len != 0)
-				|| spec->len_var
-				|| (kind != 1))
-				return false;
-			type = ofc_sema_type_type();
-			break;
-
 		case OFC_SEMA_TYPE_RECORD:
 			if ((spec->len != 0)
 				|| spec->len_var
 				|| (kind != 1))
 				return false;
-			type = ofc_sema_type_record();
+			type = ofc_sema_type_type();
 			break;
 
 		default:

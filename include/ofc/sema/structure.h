@@ -133,4 +133,8 @@ bool ofc_sema_structure_list_print(
 	ofc_colstr_t* cs, unsigned indent,
 	const ofc_sema_structure_list_t* list);
 
+bool ofc_sema_structure_list_foreach(
+	ofc_sema_structure_list_t* list, void* param,
+	bool (*func)(ofc_sema_structure_t* structure, void* param));
+
 #endif

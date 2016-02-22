@@ -184,4 +184,19 @@ bool ofc_sema_scope_list_print(
 void ofc_sema_scope_list_delete(
 	ofc_sema_scope_list_t* list);
 
+bool ofc_sema_scope_list_foreach(
+	ofc_sema_scope_list_t* list, void* param,
+	bool (*func)(ofc_sema_scope_t* scope, void* param));
+
+
+bool ofc_sema_scope_foreach_scope(
+	ofc_sema_scope_t* scope, void* param,
+	bool (*func)(ofc_sema_scope_t* scope, void* param));
+bool ofc_sema_scope_foreach_decl(
+	ofc_sema_scope_t* scope, void* param,
+	bool (*func)(ofc_sema_decl_t* decl, void* param));
+bool ofc_sema_scope_foreach_structure(
+	ofc_sema_scope_t* scope, void* param,
+	bool (*func)(ofc_sema_structure_t* structure, void* param));
+
 #endif
