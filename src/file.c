@@ -328,6 +328,29 @@ static bool line_empty(const char* ptr, unsigned len)
 	return true;
 }
 
+static void ofc_file__print_include_loc(
+	const ofc_file_t* include_file,
+	const ofc_file_t* parent_file)
+{
+	if (!include_file || !parent_file)
+		return;
+
+	if (parent_file->parent)
+		ofc_file__print_include_loc(parent_file, parent_file->parent);
+
+	unsigned incl_row, incl_col;
+	bool incl_pos = ofc_file_get_position(
+	parent_file, ofc_sparse_file_pointer(
+			include_file->include_stmt.sparse,
+			include_file->include_stmt.string.base),
+		&incl_row, &incl_col);
+
+	fprintf(stderr, "%s:", parent_file->path);
+	if (incl_pos)
+		fprintf(stderr, "%u,%u:", (incl_row + 1), incl_col);
+	fprintf(stderr, "\n  ");
+}
+
 static void ofc_file__debug_va(
 	const ofc_file_t* file,
 	const char* sol, const char* ptr,
@@ -341,33 +364,17 @@ static void ofc_file__debug_va(
 
 	if (file)
 	{
+		const ofc_file_t* include_file = file;
+		const ofc_file_t* parent_file = file->parent;
+
+		ofc_file__print_include_loc(include_file, parent_file);
+
 		if (file->path)
 			fprintf(stderr, "%s:", file->path);
 		if (positional)
 			fprintf(stderr, "%u,%u:", (row + 1), col);
 
-		if (file->parent)
-			fprintf(stderr, "\n  ");
-
-		const ofc_file_t* include_file = file;
-		const ofc_file_t* parent_file = file->parent;
-		while (parent_file)
-		{
-			unsigned incl_row, incl_col;
-			bool incl_pos = ofc_file_get_position(
-				parent_file, ofc_sparse_file_pointer(
-					include_file->include_stmt.sparse,
-					include_file->include_stmt.string.base),
-				&incl_row, &incl_col);
-
-			fprintf(stderr, "Include:%s:", parent_file->path);
-			if (incl_pos)
-				fprintf(stderr, "%u,%u:", (incl_row + 1), incl_col);
-			fprintf(stderr, "\n  ");
-
-			include_file = parent_file;
-			parent_file = parent_file->parent;
-		}
+		fprintf(stderr, "\n  ");
 	}
 
 	if (!file->parent)
