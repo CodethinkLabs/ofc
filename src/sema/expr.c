@@ -205,6 +205,7 @@ static ofc_sema_expr_t* ofc_sema_expr__create(
 
 	expr->is_alt_return = false;
 	expr->is_label      = false;
+	expr->is_format     = false;
 
 	switch (type)
 	{

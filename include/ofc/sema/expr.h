@@ -62,6 +62,7 @@ struct ofc_sema_expr_s
 
 	bool is_alt_return;
 	bool is_label;
+	bool is_format;
 
 	union
 	{

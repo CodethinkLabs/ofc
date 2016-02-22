@@ -212,6 +212,14 @@ static bool ofc_sema_scope__body_label_resolve(
 			return false;
 		}
 
+		if ((label->type == OFC_SEMA_LABEL_STMT)
+			&& label->stmt && !expr->is_format
+			&& (label->stmt->type == OFC_SEMA_STMT_IO_FORMAT))
+		{
+			ofc_sparse_ref_warning(expr->src,
+				"Jumping to a FORMAT statement");
+		}
+
 		expr->label = label;
 		label->used = true;
 	}

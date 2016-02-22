@@ -277,7 +277,8 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_read(
 
 		if (ofc_sema_type_is_integer(etype))
 		{
-			s.io_read.format->is_label = true;
+			s.io_read.format->is_label  = true;
+			s.io_read.format->is_format = true;
 		}
 		else if (etype->type != OFC_SEMA_TYPE_CHARACTER)
 		{
