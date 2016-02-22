@@ -1057,7 +1057,7 @@ ofc_sema_lhs_t* ofc_sema_lhs_copy_replace(
 				copy->slice.slice
 					= ofc_sema_array_slice_copy_replace(
 						lhs->slice.slice, replace, with);
-				/* TODO - SLICE - Recalculate dimensions. */
+
 				copy->slice.dims
 					= ofc_sema_array_copy_replace(
 						lhs->slice.dims, replace, with);
