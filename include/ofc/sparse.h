@@ -17,10 +17,23 @@
 #define __ofc_sparse_h__
 
 #include <stdbool.h>
+
+
+typedef struct ofc_sparse_s ofc_sparse_t;
+
+
+#include "ofc/str_ref.h"
+
+typedef struct
+{
+	const ofc_sparse_t* sparse;
+	ofc_str_ref_t       string;
+} ofc_sparse_ref_t;
+
+
 #include "file.h"
 #include "label_table.h"
 
-typedef struct ofc_sparse_s ofc_sparse_t;
 
 ofc_sparse_t* ofc_sparse_create_file(ofc_file_t* file);
 ofc_sparse_t* ofc_sparse_create_child(ofc_sparse_t* parent);
@@ -58,14 +71,6 @@ char* ofc_sparse_include_path(
 	const ofc_sparse_t* sparse, const char* path);
 
 
-#include "ofc/str_ref.h"
-
-typedef struct
-{
-	const ofc_sparse_t* sparse;
-	ofc_str_ref_t       string;
-} ofc_sparse_ref_t;
-
 #define OFC_SPARSE_REF_EMPTY (ofc_sparse_ref_t){ \
 	.sparse = NULL, .string = { .base = NULL, .size = 0 } }
 
@@ -94,6 +99,8 @@ static inline bool ofc_sparse_ref_print(
 	ofc_colstr_t* cs, ofc_sparse_ref_t ref)
 	{ return ofc_str_ref_print(cs, ref.string); }
 
+const char* ofc_sparse_file_pointer(
+	const ofc_sparse_t* sparse, const char* ptr);
 
 #include <stdarg.h>
 

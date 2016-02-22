@@ -18,7 +18,7 @@
 #include <string.h>
 
 #include "ofc/fctype.h"
-#include "ofc/sparse.h"
+#include "ofc/file.h"
 
 
 typedef struct
@@ -419,6 +419,15 @@ static const char* ofc_sparse__file_pointer(
 	}
 
 	return pptr;
+}
+
+const char* ofc_sparse_file_pointer(
+	const ofc_sparse_t* sparse, const char* ptr)
+{
+	if (!sparse || !ptr)
+		return NULL;
+
+	return ofc_sparse__file_pointer(sparse, ptr, NULL);
 }
 
 void ofc_sparse_error_va(

@@ -28,6 +28,21 @@
 extern ofc_global_opts_t global_opts;
 
 
+struct ofc_file_s
+{
+	const ofc_file_t*      parent;
+
+	ofc_sparse_ref_t include_stmt;
+
+	char*                    path;
+	ofc_file_include_list_t* include;
+	char*                    strz;
+	ofc_lang_opts_t          opts;
+	unsigned                 size;
+	unsigned                 ref;
+};
+
+
 static char* ofc_file__read(const char* path, unsigned* size)
 {
 	int fd = open(path, O_RDONLY);
@@ -125,7 +140,7 @@ static char* ofc_file__base_parent_path(
 
 ofc_file_t* ofc_file_create_include(
 	const char* path, ofc_lang_opts_t opts,
-	const ofc_file_t* parent_file, const char* include_ptr)
+	const ofc_file_t* parent_file, ofc_sparse_ref_t include_stmt)
 {
 	ofc_file_t* file = NULL;
 
@@ -141,6 +156,7 @@ ofc_file_t* ofc_file_create_include(
 			if (file)
 			{
 				file->parent = parent_file;
+				file->include_stmt = include_stmt;
 				file->include = parent_file->include;
 
 				free(rpath);
@@ -157,6 +173,7 @@ ofc_file_t* ofc_file_create_include(
 	if (!file) return NULL;
 
 	file->parent = parent_file;
+	file->include_stmt = include_stmt;
 	file->include = parent_file->include;
 
 	free(rpath);
@@ -248,32 +265,32 @@ bool ofc_file_get_position(
 }
 
 
-ofc_file_include_list_t* ofc_file_include_list_create(void)
-{
-	ofc_file_include_list_t* list
-		= (ofc_file_include_list_t*)malloc(
-			sizeof(ofc_file_include_list_t));
-	if (!list) return NULL;
-
-	list->count = 0;
-	list->path = NULL;
-	return list;
-}
-
-bool ofc_file_include_list_add(
-	ofc_file_include_list_t* list,
+bool ofc_file_include_list_add_create(
+	ofc_file_t* file,
 	char* path)
 {
-	if (!list || !path)
+	if (!file || !path)
 		return false;
 
+	if (!file->include)
+	{
+		file->include = (ofc_file_include_list_t*)malloc(
+			sizeof(ofc_file_include_list_t));
+
+		if (!file->include)
+			return false;
+
+		file->include->count = 0;
+		file->include->path = NULL;
+	}
+
 	char** nlist
-		= (char**)realloc(list->path,
-			(sizeof(char*) * (list->count + 1)));
+		= (char**)realloc(file->include->path,
+			(sizeof(char*) * (file->include->count + 1)));
 	if (!nlist) return NULL;
 
-	list->path = nlist;
-	list->path[list->count++] = strdup(path);
+	file->include->path = nlist;
+	file->include->path[file->include->count++] = strdup(path);
 
 	return true;
 }
@@ -331,12 +348,25 @@ static void ofc_file__debug_va(
 
 		if (file->parent)
 			fprintf(stderr, "\n  ");
-		const ofc_file_t* include_file = file->parent;
-		while (include_file)
+
+		const ofc_file_t* include_file = file;
+		const ofc_file_t* parent_file = file->parent;
+		while (parent_file)
 		{
-			fprintf(stderr, "Include:%s\n  ",
-				include_file->path);
-			include_file = include_file->parent;
+			unsigned incl_row, incl_col;
+			bool incl_pos = ofc_file_get_position(
+				parent_file, ofc_sparse_file_pointer(
+					include_file->include_stmt.sparse,
+					include_file->include_stmt.string.base),
+				&incl_row, &incl_col);
+
+			fprintf(stderr, "Include:%s:", parent_file->path);
+			if (incl_pos)
+				fprintf(stderr, "%u,%u:", (incl_row + 1), incl_col);
+			fprintf(stderr, "\n  ");
+
+			include_file = parent_file;
+			parent_file = parent_file->parent;
 		}
 	}
 

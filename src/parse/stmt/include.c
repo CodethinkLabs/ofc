@@ -58,8 +58,11 @@ unsigned ofc_parse_stmt_include(
 
 	ofc_string_delete(spath);
 
+	ofc_sparse_ref_t include_stmt = ofc_sparse_ref(src, ptr, i);
+
 	stmt->include.file = ofc_file_create_include(
-		path, ofc_sparse_lang_opts(src), ofc_sparse_file(src), ptr);
+		path, ofc_sparse_lang_opts(src),
+		ofc_sparse_file(src), include_stmt);
 
 	if (!stmt->include.file)
 	{

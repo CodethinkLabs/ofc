@@ -125,7 +125,7 @@ static bool set_file__str(
 	switch (arg_type)
 	{
 		case INCLUDE:
-			if (!ofc_file_include_list_add(file->include, str))
+			if (!ofc_file_include_list_add_create(file, str))
 				return false;
 			break;
 
@@ -393,8 +393,6 @@ bool ofc_cliarg_parse(
 		fprintf(stderr, "\nError: Failed read source file '%s'\n", path);
 		return false;
 	}
-
-	(*file)->include = ofc_file_include_list_create();
 
 	if (source_file_ext
 		&& (strcasecmp(source_file_ext, "F90") == 0))
