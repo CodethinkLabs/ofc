@@ -183,6 +183,9 @@ const ofc_sema_type_t* ofc_sema_decl_type(
 const ofc_sema_type_t* ofc_sema_decl_base_type(
 	const ofc_sema_decl_t* decl);
 
+bool ofc_sema_decl_foreach_expr(
+	ofc_sema_decl_t* decl, void* param,
+	bool (*func)(ofc_sema_expr_t* expr, void* param));
 bool ofc_sema_decl_foreach_scope(
 	ofc_sema_decl_t* decl, void* param,
 	bool (*func)(ofc_sema_scope_t* scope, void* param));
@@ -234,6 +237,9 @@ bool ofc_sema_decl_list_print(
 bool ofc_sema_decl_list_foreach(
 	ofc_sema_decl_list_t* list, void* param,
 	bool (*func)(ofc_sema_decl_t* decl, void* param));
+bool ofc_sema_decl_list_foreach_expr(
+	ofc_sema_decl_list_t* list, void* param,
+	bool (*func)(ofc_sema_expr_t* expr, void* param));
 bool ofc_sema_decl_list_foreach_scope(
 	ofc_sema_decl_list_t* list, void* param,
 	bool (*func)(ofc_sema_scope_t* scope, void* param));

@@ -736,6 +736,28 @@ bool ofc_sema_structure_print(
 }
 
 
+bool ofc_sema_structure_foreach_expr(
+	ofc_sema_structure_t* structure, void* param,
+	bool (*func)(ofc_sema_expr_t* expr, void* param))
+{
+	if (!structure)
+		return false;
+
+	unsigned i;
+	for (i = 0; i < structure->count; i++)
+	{
+		if (structure->member[i]
+			&& !structure->member[i]->is_structure
+			&& structure->member[i]->decl
+			&& !ofc_sema_decl_foreach_expr(
+				structure->member[i]->decl, param, func))
+			return false;
+	}
+
+	return true;
+}
+
+
 
 static const ofc_str_ref_t* ofc_structure__name(
 	const ofc_sema_structure_t* structure)
@@ -864,6 +886,25 @@ bool ofc_sema_structure_list_foreach(
 	for (i = 0; i < list->count; i++)
 	{
 		if (!func(list->structure[i], param))
+			return false;
+	}
+
+	return true;
+}
+
+bool ofc_sema_structure_list_foreach_expr(
+	ofc_sema_structure_list_t* list, void* param,
+	bool (*func)(ofc_sema_expr_t* expr, void* param))
+{
+	if (!list)
+		return false;
+
+	unsigned i;
+	for (i = 0; i < list->count; i++)
+	{
+		if (list->structure[i]
+			&& !ofc_sema_structure_foreach_expr(
+				list->structure[i], param, func))
 			return false;
 	}
 

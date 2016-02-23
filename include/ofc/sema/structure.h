@@ -107,6 +107,10 @@ bool ofc_sema_structure_print(
 	ofc_colstr_t* cs, unsigned indent,
 	const ofc_sema_structure_t* structure);
 
+bool ofc_sema_structure_foreach_expr(
+	ofc_sema_structure_t* structure, void* param,
+	bool (*func)(ofc_sema_expr_t* expr, void* param));
+
 
 typedef struct
 {
@@ -136,5 +140,8 @@ bool ofc_sema_structure_list_print(
 bool ofc_sema_structure_list_foreach(
 	ofc_sema_structure_list_t* list, void* param,
 	bool (*func)(ofc_sema_structure_t* structure, void* param));
+bool ofc_sema_structure_list_foreach_expr(
+	ofc_sema_structure_list_t* list, void* param,
+	bool (*func)(ofc_sema_expr_t* expr, void* param));
 
 #endif

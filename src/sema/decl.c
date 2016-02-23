@@ -1728,6 +1728,48 @@ const ofc_sema_type_t* ofc_sema_decl_base_type(
 }
 
 
+bool ofc_sema_decl_foreach_expr(
+	ofc_sema_decl_t* decl, void* param,
+	bool (*func)(ofc_sema_expr_t* expr, void* param))
+{
+	if (!decl || !func)
+		return false;
+
+	if (decl->array && !ofc_sema_array_foreach_expr(
+		decl->array, param, func))
+		return false;
+
+	if (ofc_sema_decl_is_composite(decl))
+	{
+		if (decl->init_array)
+		{
+			unsigned count;
+			if (!ofc_sema_decl_elem_count(
+				decl, &count))
+				return false;
+
+			unsigned i;
+			for (i = 0; i < count; i++)
+			{
+				if (decl->init_array[i].is_substring
+					|| !decl->init_array[i].expr)
+					continue;
+
+				if (!func(decl->init_array[i].expr, param))
+					return false;
+			}
+		}
+	}
+	else
+	{
+		if (!decl->init.is_substring && decl->init.expr
+			&& !func(decl->init.expr, param))
+			return false;
+	}
+
+	return true;
+}
+
 bool ofc_sema_decl_foreach_scope(
 	ofc_sema_decl_t* decl, void* param,
 	bool (*func)(ofc_sema_scope_t* scope, void* param))
@@ -2633,6 +2675,24 @@ bool ofc_sema_decl_list_foreach(
 	for (i = 0; i < list->count; i++)
 	{
 		if (!func(list->decl[i], param))
+			return false;
+	}
+
+	return true;
+}
+
+bool ofc_sema_decl_list_foreach_expr(
+	ofc_sema_decl_list_t* list, void* param,
+	bool (*func)(ofc_sema_expr_t* expr, void* param))
+{
+	if (!list)
+		return false;
+
+	unsigned i;
+	for (i = 0; i < list->count; i++)
+	{
+		if (!ofc_sema_decl_foreach_expr(
+			list->decl[i], param, func))
 			return false;
 	}
 

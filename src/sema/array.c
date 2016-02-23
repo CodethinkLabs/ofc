@@ -388,6 +388,28 @@ bool ofc_sema_array_print_brackets(
 }
 
 
+bool ofc_sema_array_foreach_expr(
+	ofc_sema_array_t* array, void* param,
+	bool (*func)(ofc_sema_expr_t* expr, void* param))
+{
+	if (!array || !func)
+		return false;
+
+	unsigned i;
+	for (i = 0; i < array->dimensions; i++)
+	{
+		if (array->segment[i].first
+			&& !func(array->segment[i].first, param))
+			return false;
+		if (array->segment[i].last
+			&& !func(array->segment[i].last, param))
+			return false;
+	}
+
+	return true;
+}
+
+
 
 ofc_sema_array_index_t* ofc_sema_array_index(
 	ofc_sema_scope_t*              scope,

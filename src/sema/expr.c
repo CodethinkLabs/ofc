@@ -2002,6 +2002,14 @@ const ofc_sema_type_t* ofc_sema_expr_type(
 	return ofc_sema_expr_type(expr->a);
 }
 
+bool ofc_sema_expr_type_is_character(
+	const ofc_sema_expr_t* expr)
+{
+	if (!expr) return NULL;
+	return ofc_sema_type_is_character(
+		ofc_sema_expr_type(expr));
+}
+
 
 
 bool ofc_sema_expr_validate_uint(

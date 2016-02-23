@@ -60,6 +60,10 @@ bool ofc_sema_array_print_brackets(
 	ofc_colstr_t* cs,
 	const ofc_sema_array_t* array);
 
+bool ofc_sema_array_foreach_expr(
+	ofc_sema_array_t* array, void* param,
+	bool (*func)(ofc_sema_expr_t* expr, void* param));
+
 
 typedef struct
 {

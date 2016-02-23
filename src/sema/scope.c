@@ -1822,6 +1822,55 @@ bool ofc_sema_scope_foreach_decl(
 	return true;
 }
 
+bool ofc_sema_scope_foreach_stmt(
+	ofc_sema_scope_t* scope, void* param,
+	bool (*func)(ofc_sema_stmt_t* stmt, void* param))
+{
+	if (!scope)
+		return false;
+
+	if (scope->stmt
+		&& !ofc_sema_stmt_list_foreach(
+			scope->stmt, param, func))
+		return false;
+
+	return true;
+}
+
+bool ofc_sema_scope_foreach_expr(
+	ofc_sema_scope_t* scope, void* param,
+	bool (*func)(ofc_sema_expr_t* expr, void* param))
+{
+	if (!scope || !func)
+		return false;
+
+	if ((scope->type == OFC_SEMA_SCOPE_STMT_FUNC)
+		&& scope->expr && !func(scope->expr, param))
+		return false;
+
+	if (scope->structure
+		&& !ofc_sema_structure_list_foreach_expr(
+			scope->structure, param, func))
+		return false;
+
+	if (scope->derived_type
+		&& !ofc_sema_structure_list_foreach_expr(
+			scope->derived_type, param, func))
+		return false;
+
+	if (scope->decl
+		&& !ofc_sema_decl_list_foreach_expr(
+			scope->decl, param, func))
+		return false;
+
+	if (scope->stmt
+		&& !ofc_sema_stmt_list_foreach_expr(
+			scope->stmt, param, func))
+		return false;
+
+	return true;
+}
+
 bool ofc_sema_scope_foreach_structure(
 	ofc_sema_scope_t* scope, void* param,
 	bool (*func)(ofc_sema_structure_t* structure, void* param))

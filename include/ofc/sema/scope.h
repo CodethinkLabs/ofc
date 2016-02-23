@@ -195,6 +195,12 @@ bool ofc_sema_scope_foreach_scope(
 bool ofc_sema_scope_foreach_decl(
 	ofc_sema_scope_t* scope, void* param,
 	bool (*func)(ofc_sema_decl_t* decl, void* param));
+bool ofc_sema_scope_foreach_stmt(
+	ofc_sema_scope_t* scope, void* param,
+	bool (*func)(ofc_sema_stmt_t* stmt, void* param));
+bool ofc_sema_scope_foreach_expr(
+	ofc_sema_scope_t* scope, void* param,
+	bool (*func)(ofc_sema_expr_t* expr, void* param));
 bool ofc_sema_scope_foreach_structure(
 	ofc_sema_scope_t* scope, void* param,
 	bool (*func)(ofc_sema_structure_t* structure, void* param));
