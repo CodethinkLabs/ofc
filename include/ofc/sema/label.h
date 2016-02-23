@@ -45,7 +45,9 @@ ofc_sparse_ref_t ofc_sema_label_src(
 
 typedef struct
 {
-	unsigned           count;
+	unsigned size;
+	unsigned count;
+
 	ofc_sema_label_t** label;
 
 	/* These references all labels. */
@@ -87,5 +89,8 @@ const ofc_sema_label_t* ofc_sema_label_map_find_end_block(
 const ofc_sema_label_t* ofc_sema_label_map_find_end_scope(
 	const ofc_sema_label_map_t* map,
 	const ofc_sema_scope_t*     scope);
+
+void ofc_sema_label_map_remove(
+	ofc_sema_label_map_t* map, ofc_sema_label_t* label);
 
 #endif
