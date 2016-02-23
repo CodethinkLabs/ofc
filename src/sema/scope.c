@@ -248,6 +248,83 @@ static bool ofc_sema_scope__body_format_validate(
 	return true;
 }
 
+static bool ofc_sema_scope__body_validate(
+	ofc_sema_scope_t* scope)
+{
+	if (!scope)
+		return false;
+
+	/* Warn about unused specifiers. */
+	if (scope->spec && scope->spec->list)
+	{
+		unsigned i;
+		for (i = 0; i < scope->spec->list->count; i++)
+		{
+			const ofc_sema_spec_t* spec
+				= scope->spec->list->spec[i];
+			if (!spec) continue;
+
+			if (ofc_sparse_ref_empty(spec->name))
+				continue;
+
+			const ofc_sema_decl_t* decl
+				= ofc_sema_scope_decl_find(
+					scope, spec->name.string, true);
+			if (!decl && !spec->used)
+			{
+				ofc_sparse_ref_warning(spec->name,
+					"Variable '%.*s' specified but not used",
+					spec->name.string.size,
+					spec->name.string.base);
+			}
+		}
+	}
+
+	/* Warn about unused declarations. */
+	if (scope->decl)
+	{
+		unsigned i;
+		for (i = 0; i < scope->decl->count; i++)
+		{
+			const ofc_sema_decl_t* decl
+				= scope->decl->decl_ref[i];
+			if (!decl || decl->used
+				|| decl->is_common
+				|| ofc_sparse_ref_empty(decl->name))
+				continue;
+
+			/* TODO - Warn properly about unreferenced procedures. */
+			if(ofc_sema_decl_is_procedure(decl))
+				continue;
+
+			if (decl->is_argument)
+			{
+				ofc_sparse_ref_warning(decl->name,
+					"Unused argument '%.*s'",
+					decl->name.string.size,
+					decl->name.string.base);
+			}
+			else if (decl->is_return)
+			{
+				ofc_sparse_ref_warning(decl->name,
+					"FUNCTION '%.*s' provides return value",
+					decl->name.string.size,
+					decl->name.string.base);
+			}
+			else if (!ofc_sema_decl_is_parameter(decl)
+				&& !ofc_sema_decl_is_common(decl))
+			{
+				ofc_sparse_ref_warning(decl->name,
+					"Variable '%.*s' declared but not used",
+					decl->name.string.size,
+					decl->name.string.base);
+			}
+		}
+	}
+
+	return true;
+}
+
 static bool ofc_sema_scope__body(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_list_t* body)
@@ -364,75 +441,7 @@ static bool ofc_sema_scope__body(
 		(void*)ofc_sema_scope__body_sema_equivalence))
 		return false;
 
-	/* Warn about unused specifiers. */
-	if (scope->spec && scope->spec->list)
-	{
-		unsigned i;
-		for (i = 0; i < scope->spec->list->count; i++)
-		{
-			const ofc_sema_spec_t* spec
-				= scope->spec->list->spec[i];
-			if (!spec) continue;
-
-			if (ofc_sparse_ref_empty(spec->name))
-				continue;
-
-			const ofc_sema_decl_t* decl
-				= ofc_sema_scope_decl_find(
-					scope, spec->name.string, true);
-			if (!decl)
-			{
-				ofc_sparse_ref_warning(spec->name,
-					"Variable '%.*s' specified but not used",
-					spec->name.string.size,
-					spec->name.string.base);
-			}
-		}
-	}
-
-	/* Warn about unused declarations. */
-	if (scope->decl)
-	{
-		unsigned i;
-		for (i = 0; i < scope->decl->count; i++)
-		{
-			const ofc_sema_decl_t* decl
-				= scope->decl->decl_ref[i];
-			if (!decl || decl->used
-				|| decl->is_common
-				|| ofc_sparse_ref_empty(decl->name))
-				continue;
-
-			/* TODO - Warn properly about unreferenced procedures. */
-			if(ofc_sema_decl_is_procedure(decl))
-				continue;
-
-			if (decl->is_argument)
-			{
-				ofc_sparse_ref_warning(decl->name,
-					"Unused argument '%.*s'",
-					decl->name.string.size,
-					decl->name.string.base);
-			}
-			else if (decl->is_return)
-			{
-				ofc_sparse_ref_warning(decl->name,
-					"FUNCTION '%.*s' provides return value",
-					decl->name.string.size,
-					decl->name.string.base);
-			}
-			else if (!ofc_sema_decl_is_parameter(decl)
-				&& !ofc_sema_decl_is_common(decl))
-			{
-				ofc_sparse_ref_warning(decl->name,
-					"Variable '%.*s' declared but not used",
-					decl->name.string.size,
-					decl->name.string.base);
-			}
-		}
-	}
-
-	return true;
+	return ofc_sema_scope__body_validate(scope);
 }
 
 bool ofc_sema_scope__check_namespace_collision(
@@ -972,22 +981,25 @@ ofc_sema_scope_t* ofc_sema_scope_stmt_func(
 		for (i = 0; i < func->args->count; i++)
 		{
 			ofc_sema_spec_t* spec
-				= ofc_sema_scope_spec_modify(
+				= ofc_sema_scope_spec_find_final(
 					scope, func->args->arg[i].name);
 
-			ofc_sema_spec_t* aspec = ofc_sema_spec_copy(spec);
-			if (!aspec || !ofc_sema_spec_map_add(func->spec, aspec))
+			ofc_sema_decl_t* decl = ofc_sema_decl_spec(
+				func, func->args->arg[i].name, spec, NULL);
+			ofc_sema_spec_delete(spec);
+			if (!decl)
 			{
-				ofc_sema_spec_delete(aspec);
 				ofc_sema_scope_delete(func);
 				return NULL;
 			}
-			aspec->is_argument = true;
-			aspec->is_return   = false;
-			aspec->used        = false;
+			decl->is_argument = true;
+			decl->is_return   = false;
 
 			/* Mark specifiers for stmt func arguments as used. */
-			ofc_sema_spec_mark_used(scope, spec);
+			ofc_sema_spec_t* pspec
+				= ofc_sema_scope_spec_modify(
+					scope, func->args->arg[i].name);
+			ofc_sema_spec_mark_used(scope, pspec);
 		}
 	}
 
@@ -1001,6 +1013,12 @@ ofc_sema_scope_t* ofc_sema_scope_stmt_func(
 
 	if (!ofc_sema_decl_init_func(
 		decl, func))
+	{
+		ofc_sema_scope_delete(func);
+		return NULL;
+	}
+
+	if (!ofc_sema_scope__body_validate(func))
 	{
 		ofc_sema_scope_delete(func);
 		return NULL;
