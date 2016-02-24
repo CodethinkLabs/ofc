@@ -251,7 +251,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 			return NULL;
 		}
 
-		if (type->kind != kind)
+		if (type && (type->kind != kind))
 		{
 			ofc_sparse_ref_error(literal->src,
 				"Expected kind doesn't match literal kind");

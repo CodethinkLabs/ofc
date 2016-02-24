@@ -126,9 +126,10 @@ typedef struct
 
 static const ofc_sema_intrinsic__param_t ofc_sema_intrinsic__param[] =
 {
-	{ OFC_SEMA_INTRINSIC__TYPE_ANY   , 0, 0, 0, 1, 0 }, /* ANY  */
-	{ OFC_SEMA_INTRINSIC__TYPE_SAME  , 0, 0, 0, 1, 0 }, /* SAME */
-	{ OFC_SEMA_INTRINSIC__TYPE_SCALAR, 0, 0, 0, 1, 0 }, /* SCALAR */
+	{ OFC_SEMA_INTRINSIC__TYPE_ANY     , 0, 0, 0, 1, 0 }, /* ANY  */
+	{ OFC_SEMA_INTRINSIC__TYPE_SAME    , 0, 0, 0, 1, 0 }, /* SAME */
+	{ OFC_SEMA_INTRINSIC__TYPE_SCALAR  , 0, 0, 0, 1, 0 }, /* SCALAR */
+	{ OFC_SEMA_INTRINSIC__TYPE_CALLBACK, 0, 0, 0, 1, 0 }, /* CALLBACK */
 
 	{ 0, OFC_SEMA_TYPE_LOGICAL  , 0, 0, 1, 0 }, /* LOGICAL */
 	{ 0, OFC_SEMA_TYPE_INTEGER  , 0, 0, 1, 0 }, /* INTEGER */
@@ -147,8 +148,6 @@ static const ofc_sema_intrinsic__param_t ofc_sema_intrinsic__param[] =
 	{ 0, OFC_SEMA_TYPE_COMPLEX, 2, 0, 1, 0 }, /* DEF_DOUBLE_COMPLEX */
 
 	{ 0, OFC_SEMA_TYPE_INTEGER, 5, 0, 1, 0 }, /* DEF_HALF_INTEGER */
-
-	{ 0, OFC_SEMA_TYPE_INTEGER, 0, 0, 1, 0 }, /* INTEGER_KIND */
 
 	{ 0, OFC_SEMA_TYPE_INTEGER,  3, 0, 1, 0 }, /* INTEGER_1 */
 	{ 0, OFC_SEMA_TYPE_INTEGER,  6, 0, 1, 0 }, /* INTEGER_2 */
@@ -169,9 +168,10 @@ static const ofc_sema_intrinsic__param_t ofc_sema_intrinsic__param[] =
 
 typedef enum
 {
-	IP_ANY = 0, /* Any type */
-	IP_SAME,    /* Same as argument */
-	IP_SCALAR,  /* Any scalar type */
+	IP_ANY = 0,  /* Any type */
+	IP_SAME,     /* Same as argument */
+	IP_SCALAR,   /* Any scalar type */
+	IP_CALLBACK, /* Use a callback to determine return type. */
 
 	IP_LOGICAL,
 	IP_INTEGER,
@@ -190,10 +190,6 @@ typedef enum
 	IP_DEF_DOUBLE_COMPLEX,
 
 	IP_DEF_HALF_INTEGER,
-
-	IP_INTEGER_KIND,
-	/* Represents an INTEGER initialization expression
-	   indicating the kind parameter of the result.*/
 
 	IP_INTEGER_1,
 	IP_INTEGER_2,
@@ -361,105 +357,147 @@ static const ofc_sema_intrinsic_op_t ofc_sema_intrinsic__op_list[] =
 };
 
 
+
+static const ofc_sema_type_t* ofc_sema_intrinsic__char_rt(
+	const ofc_sema_expr_list_t* args)
+{
+	unsigned kind = 1;
+	if (args->count >= 2)
+	{
+		const ofc_sema_type_t* type
+			= ofc_sema_expr_type(args->expr[1]);
+		if (!type) return NULL;
+		kind = type->kind;
+	}
+
+	return ofc_sema_type_create_character(
+		kind, 1, false);
+}
+
+static const ofc_sema_type_t* ofc_sema_intrinsic__transfer_rt(
+	const ofc_sema_expr_list_t* args)
+{
+	if (args->count < 2)
+		return NULL;
+
+	if (args->count >= 3)
+	{
+		/* TODO - INTRINSIC - Use 3rd parameter as array size if present. */
+		ofc_sparse_ref_error(args->expr[2]->src,
+			"TRANSFER SIZE argument not yet supported");
+		return NULL;
+	}
+
+	return ofc_sema_expr_type(args->expr[1]);
+}
+
+
 typedef struct
 {
 	const char*                 name;
 	unsigned                    arg_min, arg_max;
 	ofc_sema_intrinsic__param_e return_type;
 	ofc_sema_intrinsic__param_e arg_type[3];
+
+	const ofc_sema_type_t* (*return_type_callback)(const ofc_sema_expr_list_t*);
 } ofc_sema_intrinsic_func_t;
 
 static const ofc_sema_intrinsic_func_t ofc_sema_intrinsic__func_list[] =
 {
-	{ "MClock",  0, 0, IP_INTEGER_1, { 0 } },
-	{ "MClock8", 0, 0, IP_INTEGER_2, { 0 } },
-	{ "FDate",   0, 0, IP_CHARACTER, { 0 } },
-	{ "Second",  0, 0, IP_DEF_REAL,  { 0 } },
+	{ "MClock",  0, 0, IP_INTEGER_1, { 0 }, NULL },
+	{ "MClock8", 0, 0, IP_INTEGER_2, { 0 }, NULL },
+	{ "FDate",   0, 0, IP_CHARACTER, { 0 }, NULL },
+	{ "Second",  0, 0, IP_DEF_REAL,  { 0 }, NULL },
 
-	{ "Loc",      1, 1, IP_DEF_INTEGER, { IP_ANY           } },
-	{ "IRand",    0, 1, IP_DEF_INTEGER, { IP_INTEGER       } },
-	{ "LnBlnk",   1, 1, IP_DEF_INTEGER, { IP_CHARACTER     } },
-	{ "IsaTty",   1, 1, IP_LOGICAL,     { IP_INTEGER       } },
-	{ "Len",      1, 1, IP_INTEGER_1,   { IP_CHARACTER     } },
-	{ "AImag",    1, 1, IP_REAL,        { IP_DEF_COMPLEX   } },
-	{ "Len_Trim", 1, 1, IP_DEF_INTEGER, { IP_CHARACTER     } },
-	{ "AChar",    1, 1, IP_CHARACTER,   { IP_INTEGER       } },
-	{ "IChar",    1, 1, IP_DEF_INTEGER, { IP_CHARACTER_1   } },
-	{ "BesJ0",    1, 1, IP_REAL,        { IP_REAL          } },
-	{ "BesJ1",    1, 1, IP_REAL,        { IP_REAL          } },
-	{ "BesJN",    1, 1, IP_DEF_INTEGER, { IP_REAL          } },
-	{ "BesY0",    1, 1, IP_REAL,        { IP_REAL          } },
-	{ "BesY1",    1, 1, IP_REAL,        { IP_REAL          } },
-	{ "CTime",    1, 1, IP_CHARACTER,   { IP_INTEGER       } },
-	{ "DErF",     1, 1, IP_DEF_DOUBLE,  { IP_DEF_DOUBLE    } },
-	{ "DErFC",    1, 1, IP_DEF_DOUBLE,  { IP_DEF_DOUBLE    } },
-	{ "ErF",      1, 1, IP_REAL,        { IP_REAL          } },
-	{ "ErFC",     1, 1, IP_REAL,        { IP_REAL          } },
-	{ "ETime",    1, 1, IP_DEF_REAL,    { IP_DEF_REAL_A2   } },
-	{ "FTell",    1, 1, IP_DEF_INTEGER, { IP_INTEGER       } },
-	{ "GetCWD",   1, 1, IP_DEF_INTEGER, { IP_CHARACTER_OUT } },
-	{ "HostNm",   1, 1, IP_DEF_INTEGER, { IP_CHARACTER_OUT } },
-	{ "TtyNam",   1, 1, IP_CHARACTER,   { IP_INTEGER       } },
+	{ "Loc",      1, 1, IP_DEF_INTEGER, { IP_ANY           }, NULL },
+	{ "IRand",    0, 1, IP_DEF_INTEGER, { IP_INTEGER       }, NULL },
+	{ "LnBlnk",   1, 1, IP_DEF_INTEGER, { IP_CHARACTER     }, NULL },
+	{ "IsaTty",   1, 1, IP_LOGICAL,     { IP_INTEGER       }, NULL },
+	{ "Len",      1, 1, IP_INTEGER_1,   { IP_CHARACTER     }, NULL },
+	{ "AImag",    1, 1, IP_REAL,        { IP_DEF_COMPLEX   }, NULL },
+	{ "Len_Trim", 1, 1, IP_DEF_INTEGER, { IP_CHARACTER     }, NULL },
+	{ "AChar",    1, 1, IP_CHARACTER,   { IP_INTEGER       }, NULL },
+	{ "IChar",    1, 1, IP_DEF_INTEGER, { IP_CHARACTER_1   }, NULL },
+	{ "BesJ0",    1, 1, IP_REAL,        { IP_REAL          }, NULL },
+	{ "BesJ1",    1, 1, IP_REAL,        { IP_REAL          }, NULL },
+	{ "BesJN",    1, 1, IP_DEF_INTEGER, { IP_REAL          }, NULL },
+	{ "BesY0",    1, 1, IP_REAL,        { IP_REAL          }, NULL },
+	{ "BesY1",    1, 1, IP_REAL,        { IP_REAL          }, NULL },
+	{ "CTime",    1, 1, IP_CHARACTER,   { IP_INTEGER       }, NULL },
+	{ "DErF",     1, 1, IP_DEF_DOUBLE,  { IP_DEF_DOUBLE    }, NULL },
+	{ "DErFC",    1, 1, IP_DEF_DOUBLE,  { IP_DEF_DOUBLE    }, NULL },
+	{ "ErF",      1, 1, IP_REAL,        { IP_REAL          }, NULL },
+	{ "ErFC",     1, 1, IP_REAL,        { IP_REAL          }, NULL },
+	{ "ETime",    1, 1, IP_DEF_REAL,    { IP_DEF_REAL_A2   }, NULL },
+	{ "FTell",    1, 1, IP_DEF_INTEGER, { IP_INTEGER       }, NULL },
+	{ "GetCWD",   1, 1, IP_DEF_INTEGER, { IP_CHARACTER_OUT }, NULL },
+	{ "HostNm",   1, 1, IP_DEF_INTEGER, { IP_CHARACTER_OUT }, NULL },
+	{ "TtyNam",   1, 1, IP_CHARACTER,   { IP_INTEGER       }, NULL },
 
-	{ "Stat",   2, 2, IP_DEF_INTEGER, { IP_CHARACTER, IP_INTEGER_A13_OUT } },
-	{ "LStat",  2, 2, IP_DEF_INTEGER, { IP_CHARACTER, IP_INTEGER_A13_OUT } },
-	{ "FStat",  2, 2, IP_DEF_INTEGER, { IP_INTEGER  , IP_INTEGER_A13_OUT } },
-	{ "Access", 2, 2, IP_DEF_INTEGER, { IP_CHARACTER, IP_CHARACTER       } },
-	{ "LGe",    2, 2, IP_LOGICAL,     { IP_CHARACTER, IP_CHARACTER       } },
-	{ "LGt",    2, 2, IP_LOGICAL,     { IP_CHARACTER, IP_CHARACTER       } },
-	{ "LLe",    2, 2, IP_LOGICAL,     { IP_CHARACTER, IP_CHARACTER       } },
-	{ "LLt",    2, 2, IP_LOGICAL,     { IP_CHARACTER, IP_CHARACTER       } },
-	{ "LShift", 2, 2, IP_DEF_INTEGER, { IP_INTEGER  , IP_INTEGER         } },
-	{ "IShft",  2, 2, IP_DEF_INTEGER, { IP_INTEGER  , IP_INTEGER         } },
-	{ "BesYN",  2, 2, IP_REAL,        { IP_INTEGER  , IP_REAL            } },
-	{ "Char",   1, 2, IP_CHARACTER,   { IP_INTEGER  , IP_INTEGER_KIND    } },
-	/* TODO - Return char must have the same kind as optional integer argument */
+	{ "Stat",   2, 2, IP_DEF_INTEGER, { IP_CHARACTER, IP_INTEGER_A13_OUT }, NULL },
+	{ "LStat",  2, 2, IP_DEF_INTEGER, { IP_CHARACTER, IP_INTEGER_A13_OUT }, NULL },
+	{ "FStat",  2, 2, IP_DEF_INTEGER, { IP_INTEGER  , IP_INTEGER_A13_OUT }, NULL },
+	{ "Access", 2, 2, IP_DEF_INTEGER, { IP_CHARACTER, IP_CHARACTER       }, NULL },
+	{ "LGe",    2, 2, IP_LOGICAL,     { IP_CHARACTER, IP_CHARACTER       }, NULL },
+	{ "LGt",    2, 2, IP_LOGICAL,     { IP_CHARACTER, IP_CHARACTER       }, NULL },
+	{ "LLe",    2, 2, IP_LOGICAL,     { IP_CHARACTER, IP_CHARACTER       }, NULL },
+	{ "LLt",    2, 2, IP_LOGICAL,     { IP_CHARACTER, IP_CHARACTER       }, NULL },
+	{ "LShift", 2, 2, IP_DEF_INTEGER, { IP_INTEGER  , IP_INTEGER         }, NULL },
+	{ "IShft",  2, 2, IP_DEF_INTEGER, { IP_INTEGER  , IP_INTEGER         }, NULL },
+	{ "BesYN",  2, 2, IP_REAL,        { IP_INTEGER  , IP_REAL            }, NULL },
 
-	{ "IShftC", 3, 3, IP_INTEGER, { IP_INTEGER, IP_INTEGER, IP_INTEGER } },
+	{ "IShftC", 3, 3, IP_INTEGER, { IP_INTEGER, IP_INTEGER, IP_INTEGER }, NULL },
 
-	{ NULL, 0, 0, 0, { 0 } }
+	{ "Char", 1, 2, IP_CALLBACK, { IP_INTEGER  , IP_INTEGER },
+		ofc_sema_intrinsic__char_rt },
+
+	{ "TRANSFER", 2, 3, IP_CALLBACK, { IP_ANY, IP_ANY, IP_INTEGER },
+		ofc_sema_intrinsic__transfer_rt },
+
+	{ NULL, 0, 0, 0, { 0 }, NULL }
 };
 
 static const ofc_sema_intrinsic_func_t ofc_sema_intrinsic__subr_list[] =
 {
-	{ "ITime",  1, 1, 0, { IP_INTEGER_A3_OUT } },
-	{ "FDate",  1, 1, 0, { IP_CHARACTER_OUT  } },
-	{ "Second", 1, 1, 0, { IP_REAL_OUT       } },
+	{ "ITime",  1, 1, 0, { IP_INTEGER_A3_OUT }, NULL },
+	{ "FDate",  1, 1, 0, { IP_CHARACTER_OUT  }, NULL },
+	{ "Second", 1, 1, 0, { IP_REAL_OUT       }, NULL },
 
-	{ "ChDir",  1, 2, 0, { IP_CHARACTER      , IP_INTEGER_OUT   } },
-	{ "LTime",  2, 2, 0, { IP_INTEGER        , IP_CHARACTER_OUT } },
-	{ "CTime",  2, 2, 0, { IP_INTEGER        , IP_CHARACTER_OUT } },
-	{ "DTime",  2, 2, 0, { IP_DEF_REAL_A2_OUT, IP_REAL_OUT      } },
-	{ "ETime",  2, 2, 0, { IP_DEF_REAL_A2_OUT, IP_REAL_OUT      } },
-	{ "FGet",   1, 2, 0, { IP_CHARACTER_OUT  , IP_INTEGER_OUT   } },
-	{ "FPut",   1, 2, 0, { IP_CHARACTER      , IP_INTEGER_OUT   } },
-	{ "FTell",  2, 2, 0, { IP_INTEGER        , IP_INTEGER_OUT   } },
-	{ "GetCWD", 1, 2, 0, { IP_CHARACTER_OUT  , IP_INTEGER_OUT   } },
-	{ "HostNm", 1, 2, 0, { IP_CHARACTER_OUT  , IP_INTEGER_OUT   } },
-	{ "System", 1, 2, 0, { IP_CHARACTER      , IP_INTEGER_OUT   } },
-	{ "TtyNam", 2, 2, 0, { IP_INTEGER        , IP_CHARACTER_OUT } },
-	{ "UMask",  1, 2, 0, { IP_INTEGER        , IP_INTEGER_OUT   } },
-	{ "Unlink", 1, 2, 0, { IP_CHARACTER      , IP_INTEGER_OUT   } },
+	{ "ChDir",  1, 2, 0, { IP_CHARACTER      , IP_INTEGER_OUT   }, NULL },
+	{ "LTime",  2, 2, 0, { IP_INTEGER        , IP_CHARACTER_OUT }, NULL },
+	{ "CTime",  2, 2, 0, { IP_INTEGER        , IP_CHARACTER_OUT }, NULL },
+	{ "DTime",  2, 2, 0, { IP_DEF_REAL_A2_OUT, IP_REAL_OUT      }, NULL },
+	{ "ETime",  2, 2, 0, { IP_DEF_REAL_A2_OUT, IP_REAL_OUT      }, NULL },
+	{ "FGet",   1, 2, 0, { IP_CHARACTER_OUT  , IP_INTEGER_OUT   }, NULL },
+	{ "FPut",   1, 2, 0, { IP_CHARACTER      , IP_INTEGER_OUT   }, NULL },
+	{ "FTell",  2, 2, 0, { IP_INTEGER        , IP_INTEGER_OUT   }, NULL },
+	{ "GetCWD", 1, 2, 0, { IP_CHARACTER_OUT  , IP_INTEGER_OUT   }, NULL },
+	{ "HostNm", 1, 2, 0, { IP_CHARACTER_OUT  , IP_INTEGER_OUT   }, NULL },
+	{ "System", 1, 2, 0, { IP_CHARACTER      , IP_INTEGER_OUT   }, NULL },
+	{ "TtyNam", 2, 2, 0, { IP_INTEGER        , IP_CHARACTER_OUT }, NULL },
+	{ "UMask",  1, 2, 0, { IP_INTEGER        , IP_INTEGER_OUT   }, NULL },
+	{ "Unlink", 1, 2, 0, { IP_CHARACTER      , IP_INTEGER_OUT   }, NULL },
 
-	{ "ChMod",  2, 3, 0, { IP_CHARACTER, IP_CHARACTER      , IP_INTEGER_OUT } },
-	{ "SymLnk", 2, 3, 0, { IP_CHARACTER, IP_CHARACTER      , IP_INTEGER_OUT } },
-	{ "Kill",   2, 3, 0, { IP_INTEGER  , IP_INTEGER        , IP_INTEGER_OUT } },
-	{ "Stat",   2, 3, 0, { IP_CHARACTER, IP_INTEGER_A13_OUT, IP_INTEGER_OUT } },
-	{ "FStat",  2, 3, 0, { IP_INTEGER  , IP_INTEGER_A13_OUT, IP_INTEGER_OUT } },
-	{ "LStat",  2, 3, 0, { IP_CHARACTER, IP_INTEGER_A13_OUT, IP_INTEGER_OUT } },
-	{ "Alarm",  2, 3, 0, { IP_INTEGER  , IP_INTEGER_A13    , IP_INTEGER_OUT } },
-	{ "FGetC",  2, 3, 0, { IP_INTEGER  , IP_CHARACTER_OUT  , IP_INTEGER_OUT } },
-	{ "FPutC",  2, 3, 0, { IP_INTEGER  , IP_CHARACTER      , IP_INTEGER_OUT } },
-	{ "Link",   2, 3, 0, { IP_CHARACTER, IP_CHARACTER      , IP_INTEGER_OUT } },
-	{ "Rename", 2, 3, 0, { IP_CHARACTER, IP_CHARACTER      , IP_INTEGER_OUT } },
+	{ "ChMod",  2, 3, 0, { IP_CHARACTER, IP_CHARACTER      , IP_INTEGER_OUT }, NULL },
+	{ "SymLnk", 2, 3, 0, { IP_CHARACTER, IP_CHARACTER      , IP_INTEGER_OUT }, NULL },
+	{ "Kill",   2, 3, 0, { IP_INTEGER  , IP_INTEGER        , IP_INTEGER_OUT }, NULL },
+	{ "Stat",   2, 3, 0, { IP_CHARACTER, IP_INTEGER_A13_OUT, IP_INTEGER_OUT }, NULL },
+	{ "FStat",  2, 3, 0, { IP_INTEGER  , IP_INTEGER_A13_OUT, IP_INTEGER_OUT }, NULL },
+	{ "LStat",  2, 3, 0, { IP_CHARACTER, IP_INTEGER_A13_OUT, IP_INTEGER_OUT }, NULL },
+	{ "Alarm",  2, 3, 0, { IP_INTEGER  , IP_INTEGER_A13    , IP_INTEGER_OUT }, NULL },
+	{ "FGetC",  2, 3, 0, { IP_INTEGER  , IP_CHARACTER_OUT  , IP_INTEGER_OUT }, NULL },
+	{ "FPutC",  2, 3, 0, { IP_INTEGER  , IP_CHARACTER      , IP_INTEGER_OUT }, NULL },
+	{ "Link",   2, 3, 0, { IP_CHARACTER, IP_CHARACTER      , IP_INTEGER_OUT }, NULL },
+	{ "Rename", 2, 3, 0, { IP_CHARACTER, IP_CHARACTER      , IP_INTEGER_OUT }, NULL },
 
-	{ NULL, 0, 0, 0, { 0 } }
+	{ NULL, 0, 0, 0, { 0 }, NULL }
 };
 
 
 static const ofc_sema_type_t* ofc_sema_intrinsic__param_rtype(
 	ofc_sema_intrinsic__param_e param,
-	const ofc_sema_expr_list_t* args)
+	const ofc_sema_expr_list_t* args,
+	const ofc_sema_type_t* (*callback)(const ofc_sema_expr_list_t*))
 {
 	if (param >= IP_COUNT)
 		return NULL;
@@ -492,8 +530,8 @@ static const ofc_sema_type_t* ofc_sema_intrinsic__param_rtype(
 			break;
 
 		case OFC_SEMA_INTRINSIC__TYPE_CALLBACK:
-			/* TODO - Special magic. */
-			return NULL;
+			if (!callback) return NULL;
+			return callback(args);
 
 		default:
 			return NULL;
@@ -1117,12 +1155,13 @@ const ofc_sema_type_t* ofc_sema_intrinsic_type(
 		case OFC_SEMA_INTRINSIC_OP:
 			if (!intrinsic->op) return NULL;
 			return ofc_sema_intrinsic__param_rtype(
-				intrinsic->func->return_type, args);
+				intrinsic->func->return_type, args, NULL);
 
 		case OFC_SEMA_INTRINSIC_FUNC:
 			if (!intrinsic->func) return NULL;
 			return ofc_sema_intrinsic__param_rtype(
-				intrinsic->func->return_type, args);
+				intrinsic->func->return_type, args,
+				intrinsic->func->return_type_callback);
 
 		/* Intrinsic subroutines have no return type*/
 		case OFC_SEMA_INTRINSIC_SUBR:
