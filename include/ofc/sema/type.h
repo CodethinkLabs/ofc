@@ -83,7 +83,8 @@ const ofc_sema_type_t* ofc_sema_type_double_complex_default(void);
 const ofc_sema_type_t* ofc_sema_type_byte_default(void);
 const ofc_sema_type_t* ofc_sema_type_subroutine(void);
 const ofc_sema_type_t* ofc_sema_type_type(void);
-const ofc_sema_type_t* ofc_sema_type_record(void);
+
+const ofc_sema_type_t* ofc_sema_type_scalar(const ofc_sema_type_t* type);
 
 uint8_t ofc_sema_type_hash(
 	const ofc_sema_type_t* type);

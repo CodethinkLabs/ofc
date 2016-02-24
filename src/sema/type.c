@@ -479,17 +479,21 @@ const ofc_sema_type_t* ofc_sema_type_type(void)
 	return type;
 }
 
-const ofc_sema_type_t* ofc_sema_type_record(void)
+
+const ofc_sema_type_t* ofc_sema_type_scalar(
+	const ofc_sema_type_t* type)
 {
-	static const ofc_sema_type_t* record = NULL;
+	if (!type)
+		return NULL;
 
-	if (!record)
-	{
-		record = ofc_sema_type__create(
-			OFC_SEMA_TYPE_RECORD, 0, 0, false, NULL);
-	}
+	if (ofc_sema_type_is_scalar(type))
+		return type;
 
-	return record;
+	if (type->type == OFC_SEMA_TYPE_COMPLEX)
+		return ofc_sema_type_create_primitive(
+			OFC_SEMA_TYPE_REAL, type->kind);
+
+	return NULL;
 }
 
 
