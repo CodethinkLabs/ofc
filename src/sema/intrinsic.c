@@ -104,13 +104,11 @@ typedef enum
 typedef enum
 {
 	OFC_SEMA_INTRINSIC__TYPE_NORMAL = 0,
-
 	OFC_SEMA_INTRINSIC__TYPE_ANY,
-
-	/* Same as argument */
-	OFC_SEMA_INTRINSIC__TYPE_SAME,
-
 	OFC_SEMA_INTRINSIC__TYPE_SCALAR,
+
+	/* Same as argument(s) */
+	OFC_SEMA_INTRINSIC__TYPE_SAME,
 
 	/* Return type calculated in callback */
 	OFC_SEMA_INTRINSIC__TYPE_CALLBACK,
@@ -422,48 +420,40 @@ static const ofc_sema_intrinsic_func_t ofc_sema_intrinsic__func_list[] =
 	{ NULL, 0, 0, 0, { 0 } }
 };
 
-
-typedef struct
+static const ofc_sema_intrinsic_func_t ofc_sema_intrinsic__subr_list[] =
 {
-	const char*                  name;
-	unsigned                     arg_min, arg_max;
-	ofc_sema_intrinsic__param_e  arg_type[3];
-} ofc_sema_intrinsic_subr_t;
+	{ "ITime",  1, 1, 0, { IP_INTEGER_A3_OUT } },
+	{ "FDate",  1, 1, 0, { IP_CHARACTER_OUT  } },
+	{ "Second", 1, 1, 0, { IP_REAL_OUT       } },
 
-static const ofc_sema_intrinsic_subr_t ofc_sema_intrinsic__subr_list[] =
-{
-	{ "ITime",  1, 1, { IP_INTEGER_A3_OUT } },
-	{ "FDate",  1, 1, { IP_CHARACTER_OUT  } },
-	{ "Second", 1, 1, { IP_REAL_OUT       } },
+	{ "ChDir",  1, 2, 0, { IP_CHARACTER      , IP_INTEGER_OUT   } },
+	{ "LTime",  2, 2, 0, { IP_INTEGER        , IP_CHARACTER_OUT } },
+	{ "CTime",  2, 2, 0, { IP_INTEGER        , IP_CHARACTER_OUT } },
+	{ "DTime",  2, 2, 0, { IP_DEF_REAL_A2_OUT, IP_REAL_OUT      } },
+	{ "ETime",  2, 2, 0, { IP_DEF_REAL_A2_OUT, IP_REAL_OUT      } },
+	{ "FGet",   1, 2, 0, { IP_CHARACTER_OUT  , IP_INTEGER_OUT   } },
+	{ "FPut",   1, 2, 0, { IP_CHARACTER      , IP_INTEGER_OUT   } },
+	{ "FTell",  2, 2, 0, { IP_INTEGER        , IP_INTEGER_OUT   } },
+	{ "GetCWD", 1, 2, 0, { IP_CHARACTER_OUT  , IP_INTEGER_OUT   } },
+	{ "HostNm", 1, 2, 0, { IP_CHARACTER_OUT  , IP_INTEGER_OUT   } },
+	{ "System", 1, 2, 0, { IP_CHARACTER      , IP_INTEGER_OUT   } },
+	{ "TtyNam", 2, 2, 0, { IP_INTEGER        , IP_CHARACTER_OUT } },
+	{ "UMask",  1, 2, 0, { IP_INTEGER        , IP_INTEGER_OUT   } },
+	{ "Unlink", 1, 2, 0, { IP_CHARACTER      , IP_INTEGER_OUT   } },
 
-	{ "ChDir",  1, 2, { IP_CHARACTER      , IP_INTEGER_OUT   } },
-	{ "LTime",  2, 2, { IP_INTEGER        , IP_CHARACTER_OUT } },
-	{ "CTime",  2, 2, { IP_INTEGER        , IP_CHARACTER_OUT } },
-	{ "DTime",  2, 2, { IP_DEF_REAL_A2_OUT, IP_REAL_OUT      } },
-	{ "ETime",  2, 2, { IP_DEF_REAL_A2_OUT, IP_REAL_OUT      } },
-	{ "FGet",   1, 2, { IP_CHARACTER_OUT  , IP_INTEGER_OUT   } },
-	{ "FPut",   1, 2, { IP_CHARACTER      , IP_INTEGER_OUT   } },
-	{ "FTell",  2, 2, { IP_INTEGER        , IP_INTEGER_OUT   } },
-	{ "GetCWD", 1, 2, { IP_CHARACTER_OUT  , IP_INTEGER_OUT   } },
-	{ "HostNm", 1, 2, { IP_CHARACTER_OUT  , IP_INTEGER_OUT   } },
-	{ "System", 1, 2, { IP_CHARACTER      , IP_INTEGER_OUT   } },
-	{ "TtyNam", 2, 2, { IP_INTEGER        , IP_CHARACTER_OUT } },
-	{ "UMask",  1, 2, { IP_INTEGER        , IP_INTEGER_OUT   } },
-	{ "Unlink", 1, 2, { IP_CHARACTER      , IP_INTEGER_OUT   } },
+	{ "ChMod",  2, 3, 0, { IP_CHARACTER, IP_CHARACTER      , IP_INTEGER_OUT } },
+	{ "SymLnk", 2, 3, 0, { IP_CHARACTER, IP_CHARACTER      , IP_INTEGER_OUT } },
+	{ "Kill",   2, 3, 0, { IP_INTEGER  , IP_INTEGER        , IP_INTEGER_OUT } },
+	{ "Stat",   2, 3, 0, { IP_CHARACTER, IP_INTEGER_A13_OUT, IP_INTEGER_OUT } },
+	{ "FStat",  2, 3, 0, { IP_INTEGER  , IP_INTEGER_A13_OUT, IP_INTEGER_OUT } },
+	{ "LStat",  2, 3, 0, { IP_CHARACTER, IP_INTEGER_A13_OUT, IP_INTEGER_OUT } },
+	{ "Alarm",  2, 3, 0, { IP_INTEGER  , IP_INTEGER_A13    , IP_INTEGER_OUT } },
+	{ "FGetC",  2, 3, 0, { IP_INTEGER  , IP_CHARACTER_OUT  , IP_INTEGER_OUT } },
+	{ "FPutC",  2, 3, 0, { IP_INTEGER  , IP_CHARACTER      , IP_INTEGER_OUT } },
+	{ "Link",   2, 3, 0, { IP_CHARACTER, IP_CHARACTER      , IP_INTEGER_OUT } },
+	{ "Rename", 2, 3, 0, { IP_CHARACTER, IP_CHARACTER      , IP_INTEGER_OUT } },
 
-	{ "ChMod",  2, 3, { IP_CHARACTER, IP_CHARACTER      , IP_INTEGER_OUT } },
-	{ "SymLnk", 2, 3, { IP_CHARACTER, IP_CHARACTER      , IP_INTEGER_OUT } },
-	{ "Kill",   2, 3, { IP_INTEGER  , IP_INTEGER        , IP_INTEGER_OUT } },
-	{ "Stat",   2, 3, { IP_CHARACTER, IP_INTEGER_A13_OUT, IP_INTEGER_OUT } },
-	{ "FStat",  2, 3, { IP_INTEGER  , IP_INTEGER_A13_OUT, IP_INTEGER_OUT } },
-	{ "LStat",  2, 3, { IP_CHARACTER, IP_INTEGER_A13_OUT, IP_INTEGER_OUT } },
-	{ "Alarm",  2, 3, { IP_INTEGER  , IP_INTEGER_A13    , IP_INTEGER_OUT } },
-	{ "FGetC",  2, 3, { IP_INTEGER  , IP_CHARACTER_OUT  , IP_INTEGER_OUT } },
-	{ "FPutC",  2, 3, { IP_INTEGER  , IP_CHARACTER      , IP_INTEGER_OUT } },
-	{ "Link",   2, 3, { IP_CHARACTER, IP_CHARACTER      , IP_INTEGER_OUT } },
-	{ "Rename", 2, 3, { IP_CHARACTER, IP_CHARACTER      , IP_INTEGER_OUT } },
-
-	{ NULL, 0, 0, { 0 } }
+	{ NULL, 0, 0, 0, { 0 } }
 };
 
 
@@ -600,7 +590,6 @@ struct ofc_sema_intrinsic_s
 	{
 		const ofc_sema_intrinsic_op_t*   op;
 		const ofc_sema_intrinsic_func_t* func;
-		const ofc_sema_intrinsic_subr_t* subr;
 	};
 };
 
@@ -640,24 +629,6 @@ static ofc_sema_intrinsic_t* ofc_sema_intrinsic__create_func(
 	return intrinsic;
 }
 
-static ofc_sema_intrinsic_t* ofc_sema_intrinsic__create_subr(
-	const ofc_sema_intrinsic_subr_t* subr)
-{
-	if (!subr)
-		return NULL;
-
-	ofc_sema_intrinsic_t* intrinsic
-		= (ofc_sema_intrinsic_t*)malloc(
-			sizeof(ofc_sema_intrinsic_t));
-	if (!intrinsic) return NULL;
-
-	intrinsic->name = ofc_str_ref_from_strz(subr->name);
-	intrinsic->type = OFC_SEMA_INTRINSIC_SUBR;
-	intrinsic->subr = subr;
-
-	return intrinsic;
-}
-
 static void ofc_sema_intrinsic__delete(
 	ofc_sema_intrinsic_t* intrinsic)
 {
@@ -686,7 +657,7 @@ static void ofc_sema_intrinsic__term(void)
 	ofc_hashmap_delete(ofc_sema_intrinsic__subr_map);
 }
 
-static bool ofc_sema_intrinisc__op_map_init(void)
+static bool ofc_sema_intrinsic__op_map_init(void)
 {
 	ofc_sema_intrinsic__op_map = ofc_hashmap_create(
 		(void*)ofc_str_ref_ptr_hash_ci,
@@ -778,7 +749,7 @@ static bool ofc_sema_intrinsic__subr_map_init(void)
 	for (i = 0; ofc_sema_intrinsic__subr_list[i].name; i++)
 	{
 		ofc_sema_intrinsic_t* intrinsic
-			= ofc_sema_intrinsic__create_subr(
+			= ofc_sema_intrinsic__create_func(
 				&ofc_sema_intrinsic__subr_list[i]);
 		if (!intrinsic)
 		{
@@ -811,7 +782,7 @@ static bool ofc_sema_intrinsic__init(void)
 		return true;
 
 	/* TODO - Set case sensitivity based on lang_opts? */
-	if (!ofc_sema_intrinisc__op_map_init()
+	if (!ofc_sema_intrinsic__op_map_init()
 		|| !ofc_sema_intrinsic__func_map_init()
 		|| !ofc_sema_intrinsic__subr_map_init())
 		return false;
@@ -843,19 +814,131 @@ const ofc_sema_intrinsic_t* ofc_sema_intrinsic(
 	return NULL;
 }
 
+static const ofc_sema_type_t* ofc_sema_intrinsic__param_type(
+	const ofc_sema_expr_t* expr,
+	ofc_sema_intrinsic__param_e param,
+	bool* valid)
+{
+	if (!expr || (param >= IP_COUNT))
+		return NULL;
+
+	const ofc_sema_type_t* type
+		= ofc_sema_expr_type(expr);
+
+	ofc_sema_intrinsic__param_t p
+		= ofc_sema_intrinsic__param[param];
+	switch (p.type_type)
+	{
+		case OFC_SEMA_INTRINSIC__TYPE_NORMAL:
+			break;
+
+		case OFC_SEMA_INTRINSIC__TYPE_ANY:
+			if (valid) *valid = true;
+			return type;
+
+		case OFC_SEMA_INTRINSIC__TYPE_SCALAR:
+			if (valid) *valid = ofc_sema_type_is_scalar(type);
+			return ofc_sema_type_scalar(type);
+
+		/* Arguments can't be SAME or CALLBACK. */
+		default:
+			return NULL;
+	}
+
+	if (!type) return NULL;
+
+	if ((p.type == OFC_SEMA_TYPE_CHARACTER)
+		&& (type->type == OFC_SEMA_TYPE_CHARACTER)
+		&& ((p.kind == 0) || (type->kind == p.kind))
+		&& ((p.size == 0) || type->len_var || (p.size == type->len)))
+	{
+		if (valid) *valid = true;
+		return type;
+	}
+
+	if ((p.type == type->type)
+		&& (p.kind == 0))
+	{
+		switch (p.type)
+		{
+			case OFC_SEMA_TYPE_LOGICAL:
+			case OFC_SEMA_TYPE_BYTE:
+			case OFC_SEMA_TYPE_INTEGER:
+			case OFC_SEMA_TYPE_REAL:
+			case OFC_SEMA_TYPE_COMPLEX:
+				if (valid) *valid = true;
+				return type;
+			default:
+				break;
+		}
+	}
+
+	const ofc_sema_type_t* ctype = NULL;
+	switch (p.type)
+	{
+		case OFC_SEMA_TYPE_CHARACTER:
+			ctype = ofc_sema_type_create_character(
+				(p.kind != 0 ? p.kind : 1), p.size, (p.size == 0));
+			break;
+
+		case OFC_SEMA_TYPE_LOGICAL:
+		case OFC_SEMA_TYPE_BYTE:
+		case OFC_SEMA_TYPE_INTEGER:
+		case OFC_SEMA_TYPE_REAL:
+		case OFC_SEMA_TYPE_COMPLEX:
+			ctype = ofc_sema_type_create_primitive(
+				p.type, (p.kind != 0 ? p.kind : 1));
+			break;
+
+		default:
+			return NULL;
+	}
+
+	/* TODO - INTRINSIC - Promote when KIND isn't specified and types differ. */
+
+	if (valid) *valid = ofc_sema_type_compatible(ctype, type);
+	return ctype;
+}
+
+static ofc_sema_expr_t* ofc_sema_intrinsic__param_cast(
+	const ofc_sema_expr_t* expr,
+	ofc_sema_intrinsic__param_e param,
+	bool* valid)
+{
+	if (!expr || (param >= IP_COUNT))
+		return NULL;
+
+	const ofc_sema_type_t* type
+		= ofc_sema_expr_type(expr);
+	if (!type) return NULL;
+
+	const ofc_sema_type_t* ctype
+		= ofc_sema_intrinsic__param_type(
+			expr, param, valid);
+	if (!ctype) return NULL;
+
+	ofc_sema_expr_t* copy
+		= ofc_sema_expr_copy(expr);
+	if (ofc_sema_type_compatible(type, ctype))
+		return copy;
+
+	ofc_sema_expr_t* cast
+		= ofc_sema_expr_cast(copy, ctype);
+	if (!cast)
+	{
+		ofc_sema_expr_delete(copy);
+		return NULL;
+	}
+	return cast;
+}
+
 static ofc_sema_expr_list_t* ofc_sema_intrinsic_cast__op(
 	ofc_sparse_ref_t src,
 	const ofc_sema_intrinsic_t* intrinsic,
-	ofc_sema_expr_list_t* args)
+	const ofc_sema_expr_list_t* args)
 {
 	if (!intrinsic || !args
-		|| (args->count == 0))
-	{
-		ofc_sema_expr_list_delete(args);
-		return NULL;
-	}
-
-	if ((intrinsic->type != OFC_SEMA_INTRINSIC_OP)
+		|| (intrinsic->type != OFC_SEMA_INTRINSIC_OP)
 		|| !intrinsic->op)
 		return NULL;
 
@@ -863,7 +946,6 @@ static ofc_sema_expr_list_t* ofc_sema_intrinsic_cast__op(
 	{
 		ofc_sparse_ref_error(src,
 			"Not enough arguments for intrinsic function.");
-		ofc_sema_expr_list_delete(args);
 		return NULL;
 	}
 	if ((intrinsic->op->arg_max != 0)
@@ -871,119 +953,17 @@ static ofc_sema_expr_list_t* ofc_sema_intrinsic_cast__op(
 	{
 		ofc_sparse_ref_error(src,
 			"Too many arguments for intrinsic function.");
-		ofc_sema_expr_list_delete(args);
 		return NULL;
 	}
 
-	const ofc_sema_type_t* stype = NULL;
-	switch (intrinsic->op->arg_type)
-	{
-		case IP_DEF_LOGICAL:
-			stype = ofc_sema_type_logical_default();
-			break;
-
-		case IP_DEF_INTEGER:
-			stype = ofc_sema_type_integer_default();
-			break;
-
-		case IP_DEF_REAL:
-			stype = ofc_sema_type_real_default();
-			break;
-
-		case IP_DEF_COMPLEX:
-			stype = ofc_sema_type_complex_default();
-			break;
-
-		case IP_DEF_DOUBLE:
-			stype = ofc_sema_type_double_default();
-			break;
-
-		case IP_DEF_DOUBLE_COMPLEX:
-			stype = ofc_sema_type_double_complex_default();
-			break;
-
-		case IP_DEF_HALF_INTEGER:
-			stype = ofc_sema_type_create_primitive(
-				OFC_SEMA_TYPE_INTEGER, 5);
-			break;
-
-		case IP_INTEGER_1:
-			stype = ofc_sema_type_create_primitive(
-				OFC_SEMA_TYPE_INTEGER, 3);
-			break;
-
-		case IP_INTEGER_2:
-			stype = ofc_sema_type_create_primitive(
-				OFC_SEMA_TYPE_INTEGER, 6);
-			break;
-
-		case IP_INTEGER_4:
-			stype = ofc_sema_type_create_primitive(
-				OFC_SEMA_TYPE_INTEGER, 12);
-			break;
-
-		default:
-			break;
-	}
-
-	const ofc_sema_type_t* ptype = stype;
-	const ofc_sema_type_t* at[args->count];
-
+	const ofc_sema_type_t* ctype = NULL;
 	unsigned i;
 	for (i = 0; i < args->count; i++)
 	{
-		at[i] = ofc_sema_expr_type(args->expr[i]);
-
-		const ofc_sema_type_t* atype = at[i];
-		if (!atype)
-		{
-			ofc_sema_expr_list_delete(args);
-			return NULL;
-		}
-
-		bool valid = false;
-		switch (intrinsic->op->arg_type)
-		{
-			case IP_ANY:
-				valid = true;
-				break;
-
-			case IP_SCALAR:
-				valid = ofc_sema_type_is_scalar(atype);
-				break;
-
-			case IP_LOGICAL:
-				valid = ofc_sema_type_is_logical(atype);
-				break;
-
-			case IP_INTEGER:
-				valid = ofc_sema_type_is_integer(atype);
-				break;
-
-			case IP_REAL:
-				valid = (atype->type == OFC_SEMA_TYPE_REAL);
-				break;
-
-			case IP_COMPLEX:
-				valid = (atype->type == OFC_SEMA_TYPE_COMPLEX);
-				break;
-
-			case IP_DEF_LOGICAL:
-			case IP_DEF_INTEGER:
-			case IP_DEF_REAL:
-			case IP_DEF_COMPLEX:
-			case IP_DEF_DOUBLE:
-			case IP_DEF_DOUBLE_COMPLEX:
-			case IP_DEF_HALF_INTEGER:
-			case IP_INTEGER_1:
-			case IP_INTEGER_2:
-			case IP_INTEGER_4:
-				valid = ofc_sema_type_compatible(atype, stype);
-				break;
-
-			default:
-				break;
-		}
+		bool valid = true;
+		const ofc_sema_type_t* atype
+			= ofc_sema_intrinsic__param_type(
+				args->expr[i], intrinsic->op->arg_type, &valid);
 
 		if (!valid)
 		{
@@ -991,55 +971,75 @@ static ofc_sema_expr_list_t* ofc_sema_intrinsic_cast__op(
 				"Incorrect argument type for intrinsic.");
 		}
 
-		if (!stype)
-			ptype = (ptype ? ofc_sema_type_promote(ptype, atype) : atype);
+		ctype = (ctype
+			? ofc_sema_type_promote(ctype, atype)
+			: atype);
+		if (!ctype) return NULL;
 	}
+
+	ofc_sema_expr_list_t* cargs
+		= ofc_sema_expr_list_create();
+	if (!cargs) return NULL;
 
 	for (i = 0; i < args->count; i++)
 	{
-		const ofc_sema_type_t* atype = at[i];
+		ofc_sema_expr_t* carg
+			= ofc_sema_expr_copy(args->expr[i]);
+		if (!carg)
+		{
+			ofc_sema_expr_list_delete(cargs);
+			return NULL;
+		}
 
-		if (!ofc_sema_type_compatible(atype, ptype))
+		const ofc_sema_type_t* atype
+			= ofc_sema_expr_type(carg);
+
+		if (!ofc_sema_type_compatible(
+			atype, ctype))
 		{
 			ofc_sema_expr_t* cast
-				= ofc_sema_expr_cast(
-					args->expr[i], ptype);
+				= ofc_sema_expr_cast(carg, ctype);
 			if (!cast)
 			{
-				ofc_sparse_ref_error(args->expr[i]->src,
+				ofc_sparse_ref_error(carg->src,
 					"Incompatible argument type for intrinsic.");
-				ofc_sema_expr_list_delete(args);
+				ofc_sema_expr_delete(carg);
+				ofc_sema_expr_list_delete(cargs);
 				return NULL;
 			}
+			carg = cast;
+		}
 
-			args->expr[i] = cast;
+		if (!ofc_sema_expr_list_add(cargs, carg))
+		{
+			ofc_sema_expr_delete(carg);
+			ofc_sema_expr_list_delete(cargs);
+			return NULL;
 		}
 	}
 
-	return args;
+	return cargs;
 }
 
 static ofc_sema_expr_list_t* ofc_sema_intrinsic_cast__func(
 	ofc_sparse_ref_t src,
 	const ofc_sema_intrinsic_t* intrinsic,
-	ofc_sema_expr_list_t* args)
+	const ofc_sema_expr_list_t* args)
 {
-	if (!intrinsic || !args
-		|| (args->count == 0))
-	{
-		ofc_sema_expr_list_delete(args);
+	if (!intrinsic || !args)
 		return NULL;
-	}
 
 	if ((intrinsic->type != OFC_SEMA_INTRINSIC_FUNC)
-		|| !intrinsic->func)
+		&& (intrinsic->type != OFC_SEMA_INTRINSIC_SUBR))
+		return NULL;
+
+	if (!intrinsic->func)
 		return NULL;
 
 	if (args->count < intrinsic->func->arg_min)
 	{
 		ofc_sparse_ref_error(src,
 			"Not enough arguments for intrinsic function.");
-		ofc_sema_expr_list_delete(args);
 		return NULL;
 	}
 	if ((intrinsic->func->arg_max != 0)
@@ -1047,171 +1047,49 @@ static ofc_sema_expr_list_t* ofc_sema_intrinsic_cast__func(
 	{
 		ofc_sparse_ref_error(src,
 			"Too many arguments for intrinsic function.");
-		ofc_sema_expr_list_delete(args);
 		return NULL;
 	}
 
+	/* TODO - Handle array arguments. */
 
-	const ofc_sema_type_t* at[args->count];
+	ofc_sema_expr_list_t* cargs
+		= ofc_sema_expr_list_create();
+	if (!cargs) return NULL;
 
 	unsigned i;
 	for (i = 0; i < args->count; i++)
 	{
-		const ofc_sema_type_t* stype = NULL;
-		switch (intrinsic->func->arg_type[i])
+		bool valid = true;
+		ofc_sema_expr_t* carg
+			= ofc_sema_intrinsic__param_cast(
+				args->expr[i], intrinsic->func->arg_type[i], &valid);
+		if (!carg)
 		{
-			case IP_DEF_LOGICAL:
-				stype = ofc_sema_type_logical_default();
-				break;
-
-			case IP_INTEGER:
-			case IP_DEF_INTEGER:
-				stype = ofc_sema_type_integer_default();
-				break;
-
-			case IP_DEF_REAL:
-				stype = ofc_sema_type_real_default();
-				break;
-
-			case IP_DEF_COMPLEX:
-				stype = ofc_sema_type_complex_default();
-				break;
-
-			case IP_DEF_DOUBLE:
-				stype = ofc_sema_type_double_default();
-				break;
-
-			case IP_DEF_DOUBLE_COMPLEX:
-				stype = ofc_sema_type_double_complex_default();
-				break;
-
-			case IP_CHARACTER:
-				stype = ofc_sema_type_create_character(
-					1, 1, true);
-				break;
-
-			case IP_DEF_HALF_INTEGER:
-				stype = ofc_sema_type_create_primitive(
-					OFC_SEMA_TYPE_INTEGER, 5);
-				break;
-
-			case IP_INTEGER_1:
-				stype = ofc_sema_type_create_primitive(
-					OFC_SEMA_TYPE_INTEGER, 3);
-				break;
-
-			case IP_INTEGER_2:
-				stype = ofc_sema_type_create_primitive(
-					OFC_SEMA_TYPE_INTEGER, 6);
-				break;
-
-			case IP_INTEGER_4:
-				stype = ofc_sema_type_create_primitive(
-					OFC_SEMA_TYPE_INTEGER, 12);
-				break;
-
-			case IP_CHARACTER_1:
-				stype = ofc_sema_type_create_character(
-					1, 1, false);
-				break;
-
-			default:
-				break;
-		}
-
-		at[i] = ofc_sema_expr_type(args->expr[i]);
-
-		const ofc_sema_type_t* atype = at[i];
-		if (!atype)
-		{
-			ofc_sema_expr_list_delete(args);
+			ofc_sema_expr_list_delete(cargs);
 			return NULL;
-		}
-
-		bool valid = false;
-		switch (intrinsic->func->arg_type[i])
-		{
-			case IP_ANY:
-				valid = true;
-				break;
-
-			case IP_SCALAR:
-				valid = ofc_sema_type_is_scalar(atype);
-				break;
-
-			case IP_LOGICAL:
-				valid = ofc_sema_type_is_logical(atype);
-				break;
-
-			case IP_INTEGER:
-				valid = ofc_sema_type_is_integer(atype);
-				break;
-
-			case IP_REAL:
-				valid = (atype->type == OFC_SEMA_TYPE_REAL);
-				break;
-
-			case IP_COMPLEX:
-				valid = (atype->type == OFC_SEMA_TYPE_COMPLEX);
-				break;
-
-			case IP_CHARACTER:
-				valid = (atype->type == OFC_SEMA_TYPE_CHARACTER);
-				break;
-
-			case IP_CHARACTER_1:
-			case IP_DEF_LOGICAL:
-			case IP_DEF_INTEGER:
-			case IP_DEF_REAL:
-			case IP_DEF_COMPLEX:
-			case IP_DEF_DOUBLE:
-			case IP_DEF_DOUBLE_COMPLEX:
-			case IP_DEF_HALF_INTEGER:
-			case IP_INTEGER_1:
-			case IP_INTEGER_2:
-			case IP_INTEGER_4:
-				valid = ofc_sema_type_compatible(atype, stype);
-				break;
-
-			default:
-				break;
-		}
-
-		if (intrinsic->func->arg_type[i] != IP_ANY
-			&& !ofc_sema_type_compatible(atype, stype))
-		{
-			ofc_sema_expr_t* cast
-				= ofc_sema_expr_cast(
-					args->expr[i], stype);
-			if (!cast)
-			{
-				ofc_sparse_ref_error(args->expr[i]->src,
-					"Incompatible argument type for intrinsic.");
-				ofc_sema_expr_list_delete(args);
-				return NULL;
-			}
-			else
-			{
-				valid = true;
-			}
-
-			args->expr[i] = cast;
 		}
 
 		if (!valid)
 		{
-			ofc_sparse_ref_warning(args->expr[i]->src,
+			ofc_sparse_ref_warning(carg->src,
 				"Incorrect argument type for intrinsic.");
+		}
+
+		if (!ofc_sema_expr_list_add(cargs, carg))
+		{
+			ofc_sema_expr_delete(carg);
+			ofc_sema_expr_list_delete(cargs);
+			return NULL;
 		}
 	}
 
-	return args;
+	return cargs;
 }
 
 ofc_sema_expr_list_t* ofc_sema_intrinsic_cast(
 	ofc_sparse_ref_t src,
 	const ofc_sema_intrinsic_t* intrinsic,
-	ofc_sema_expr_list_t* args)
+	const ofc_sema_expr_list_t* args)
 {
 	switch (intrinsic->type)
 	{
@@ -1219,11 +1097,8 @@ ofc_sema_expr_list_t* ofc_sema_intrinsic_cast(
 			return ofc_sema_intrinsic_cast__op(src, intrinsic, args);
 
 		case OFC_SEMA_INTRINSIC_FUNC:
-			return ofc_sema_intrinsic_cast__func(src, intrinsic, args);
-
-		/* TODO - Handle intrinsic subroutines */
 		case OFC_SEMA_INTRINSIC_SUBR:
-			break;
+			return ofc_sema_intrinsic_cast__func(src, intrinsic, args);
 
 		default:
 			break;

@@ -859,8 +859,9 @@ static ofc_sema_expr_t* ofc_sema_expr__intrinsic(
 		if (!name->array.index->range)
 			return NULL;
 
-		args = ofc_sema_expr_list_create();
-		if (!args) return NULL;
+		ofc_sema_expr_list_t* rargs
+			= ofc_sema_expr_list_create();
+		if (!rargs) return NULL;
 
 		unsigned i;
 		for (i = 0; i < name->array.index->count; i++)
@@ -871,7 +872,7 @@ static ofc_sema_expr_t* ofc_sema_expr__intrinsic(
 			if (!range || range->is_slice
 				|| range->last || range->stride)
 			{
-				ofc_sema_expr_list_delete(args);
+				ofc_sema_expr_list_delete(rargs);
 				return NULL;
 			}
 
@@ -879,20 +880,21 @@ static ofc_sema_expr_t* ofc_sema_expr__intrinsic(
 				= ofc_sema_expr(scope, range->first);
 			if (!expr)
 			{
-				ofc_sema_expr_list_delete(args);
+				ofc_sema_expr_list_delete(rargs);
 				return NULL;
 			}
 
-			if (!ofc_sema_expr_list_add(args, expr))
+			if (!ofc_sema_expr_list_add(rargs, expr))
 			{
 				ofc_sema_expr_delete(expr);
-				ofc_sema_expr_list_delete(args);
+				ofc_sema_expr_list_delete(rargs);
 				return NULL;
 			}
 		}
 
 		args = ofc_sema_intrinsic_cast(
-			name->src, intrinsic, args);
+			name->src, intrinsic, rargs);
+		ofc_sema_expr_list_delete(rargs);
 		if (!args) return NULL;
 	}
 
@@ -2207,17 +2209,34 @@ ofc_sema_expr_list_t* ofc_sema_expr_list_copy_replace(
 
 	ofc_sema_expr_list_t* copy
 		= (ofc_sema_expr_list_t*)malloc(
-			sizeof(ofc_sema_expr_list_t)
-			+ (sizeof(ofc_sema_expr_t) * list->count));
+			sizeof(ofc_sema_expr_list_t));
 	if (!copy) return NULL;
+
+	copy->expr = (ofc_sema_expr_t**)malloc(
+		(sizeof(ofc_sema_expr_t) * list->count));
+	if (!copy->expr)
+	{
+		free(copy);
+		return NULL;
+	}
 
 	copy->count = list->count;
 
+	bool fail = false;
 	unsigned i;
 	for (i = 0; i < copy->count; i++)
 	{
+		const ofc_sema_expr_t* expr = list->expr[i];
 		copy->expr[i] = ofc_sema_expr_copy_replace(
-			list->expr[i], replace, with);
+			expr, replace, with);
+		if (copy->expr[i] == NULL)
+			fail = true;
+	}
+
+	if (fail)
+	{
+		ofc_sema_expr_list_delete(copy);
+		return NULL;
 	}
 
 	return copy;
