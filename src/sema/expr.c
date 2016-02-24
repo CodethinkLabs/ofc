@@ -1490,19 +1490,15 @@ static ofc_sema_expr_t* ofc_sema_expr__implicit_do(
 	}
 	else
 	{
-		expr->implicit_do.expr = ofc_sema_expr__create(OFC_SEMA_EXPR_LHS);
+		expr->implicit_do.expr
+			= ofc_sema_expr__variable(
+				scope, id->dlist, false);
 		if (!expr->implicit_do.expr)
 		{
 			ofc_sema_expr_delete(expr);
 			return NULL;
 		}
-		expr->implicit_do.expr->lhs = ofc_sema_lhs(
-			scope, id->dlist);
-		if (!expr->implicit_do.expr->lhs)
-		{
-			ofc_sema_expr_delete(expr);
-			return NULL;
-		}
+
 		expr->implicit_do.expr->src = id->dlist->src;
 	}
 
