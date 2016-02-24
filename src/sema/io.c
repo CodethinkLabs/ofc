@@ -521,7 +521,7 @@ bool ofc_sema_stmt_io_format_validate(
 	{
 		if (iolist_len > 0)
 		{
-			ofc_sparse_ref_warning(stmt->io_print.format->src,
+			ofc_sparse_ref_warning(format_expr->src,
 				"No data edit descriptors in FORMAT list");
 		}
 
@@ -531,13 +531,13 @@ bool ofc_sema_stmt_io_format_validate(
 
 	if (iolist_len < data_desc_count)
 	{
-		ofc_sparse_ref_warning(stmt->io_print.format->src,
+		ofc_sparse_ref_warning(format_expr->src,
 			"IO list shorter than FORMAT list,"
 			" last FORMAT data descriptors will be ignored");
 	}
 	else if ((iolist_len % data_desc_count) != 0)
 	{
-		ofc_sparse_ref_warning(stmt->io_print.format->src,
+		ofc_sparse_ref_warning(format_expr->src,
 			"IO list length is not a multiple of FORMAT list length");
 	}
 
