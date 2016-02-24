@@ -13,16 +13,36 @@
  * limitations under the License.
  */
 
-#ifndef __ofc_sema_pass_h__
-#define __ofc_sema_pass_h__
+#include "ofc/sema.h"
 
-bool ofc_sema_pass_struct_type(
-	ofc_sema_scope_t* scope);
+static bool ofc_sema_pass_unref_label__scope(
+	ofc_sema_scope_t* scope, void* param)
+{
+	(void)param;
+
+	if (!scope)
+		return false;
+
+	if (scope->label)
+	{
+		unsigned i;
+		for (i = 0; i < scope->label->size; i++)
+		{
+			ofc_sema_label_t* label = scope->label->label[i];
+
+			if (label && !label->used)
+				ofc_sema_label_map_remove(scope->label, label);
+		}
+	}
+	return true;
+}
+
 bool ofc_sema_pass_unref_label(
-	ofc_sema_scope_t* scope);
+	ofc_sema_scope_t* scope)
+{
+	if (!scope)
+		return false;
 
-bool ofc_sema_pass_char_transfer(
-	ofc_sema_scope_t* scope);
-
-
-#endif
+	return ofc_sema_scope_foreach_scope(
+		scope, NULL, ofc_sema_pass_unref_label__scope);
+}
