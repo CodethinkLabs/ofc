@@ -636,8 +636,6 @@ static bool ofc_sema_stmt_list__entry(
 	{
 		ofc_sparse_ref_warning(stmt->src,
 			"Unlabelled CONTINUE statement has no effect");
-		ofc_sema_stmt_delete(s);
-		return true;
 	}
 
 	if (!ofc_sema_stmt_list_add(list, s))
