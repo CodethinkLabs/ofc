@@ -643,7 +643,8 @@ ofc_sema_array_index_t* ofc_sema_array_index_from_offset(
 	index->dimensions = array->dimensions;
 	for (i = 0; i < array->dimensions; i++)
 	{
-		index->index[i] = ofc_sema_expr_integer(idx[i]);
+		index->index[i] = ofc_sema_expr_integer(
+			idx[i], OFC_SEMA_KIND_DEFAULT);
 
 		if (!index->index[i])
 			success = false;
@@ -715,7 +716,8 @@ ofc_sema_array_index_t* ofc_sema_array_slice_index_from_offset(
 	index->dimensions = slice->dimensions;
 	for (i = 0; i < slice->dimensions; i++)
 	{
-		index->index[i] = ofc_sema_expr_integer(idx[i]);
+		index->index[i] = ofc_sema_expr_integer(
+			idx[i], OFC_SEMA_KIND_DEFAULT);
 		if (!index->index[i])
 			success = false;
 	}
@@ -1170,7 +1172,8 @@ ofc_sema_array_t* ofc_sema_array_slice_dims(
 			first = ofc_sema_expr_copy(
 				array->segment[i].first);
 		else
-			first = ofc_sema_expr_integer(1);
+			first = ofc_sema_expr_integer(
+				1, OFC_SEMA_KIND_DEFAULT);
 
 		ofc_sema_expr_t* last;
 		if (slice->segment[i].last)
@@ -1189,7 +1192,8 @@ ofc_sema_array_t* ofc_sema_array_slice_dims(
 		ofc_sema_expr_delete(first);
 
 		ofc_sema_expr_t* unity
-			= ofc_sema_expr_integer(1);
+			= ofc_sema_expr_integer(
+				1, OFC_SEMA_KIND_DEFAULT);
 
 		/* last - first + 1 */
 		ofc_sema_expr_t* expr
@@ -1236,7 +1240,8 @@ ofc_sema_array_t* ofc_sema_array_slice_dims(
 		ofc_sema_expr_delete(unity);
 
 		dims->segment[j].first
-			= ofc_sema_expr_integer(1);
+			= ofc_sema_expr_integer(
+				1, OFC_SEMA_KIND_DEFAULT);
 
 		j++;
 	}

@@ -20,9 +20,7 @@ typedef struct ofc_sema_intrinsic_s ofc_sema_intrinsic_t;
 
 bool ofc_sema_intrinsic_name_reserved(const char* name);
 
-const ofc_sema_intrinsic_t* ofc_sema_intrinsic(
-	const ofc_sema_scope_t* scope,
-	ofc_str_ref_t name);
+const ofc_sema_intrinsic_t* ofc_sema_intrinsic(ofc_str_ref_t name);
 
 ofc_sema_expr_list_t* ofc_sema_intrinsic_cast(
 	ofc_sparse_ref_t src,
@@ -36,6 +34,9 @@ ofc_sema_typeval_t* ofc_sema_intrinsic_constant(
 const ofc_sema_type_t* ofc_sema_intrinsic_type(
 	const ofc_sema_intrinsic_t* intrinsic,
 	const ofc_sema_expr_list_t* args);
+
+const ofc_sema_intrinsic_t* ofc_sema_intrinsic_cast_func(
+	const ofc_sema_type_t* type);
 
 bool ofc_sema_intrinsic_print(
 	ofc_colstr_t* cs,

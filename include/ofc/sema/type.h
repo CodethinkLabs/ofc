@@ -46,7 +46,8 @@ struct ofc_sema_type_s
 
 		struct
 		{
-			unsigned kind;
+			ofc_sema_kind_e kind;
+
 			unsigned len;
 			bool     len_var;
 		};
@@ -64,9 +65,9 @@ const char* ofc_sema_type_str_cast_rep(
 	const ofc_sema_type_t* type);
 
 const ofc_sema_type_t* ofc_sema_type_create_primitive(
-	ofc_sema_type_e type, unsigned kind);
+	ofc_sema_type_e type, ofc_sema_kind_e kind);
 const ofc_sema_type_t* ofc_sema_type_create_character(
-	unsigned kind, unsigned len, bool len_var);
+	ofc_sema_kind_e kind, unsigned len, bool len_var);
 const ofc_sema_type_t* ofc_sema_type_create_pointer(
 	ofc_sema_type_t* target);
 const ofc_sema_type_t* ofc_sema_type_create_function(
@@ -118,6 +119,9 @@ bool ofc_sema_type_is_procedure(const ofc_sema_type_t* type);
 
 const ofc_sema_type_t* ofc_sema_type_base(const ofc_sema_type_t* type);
 
+const ofc_sema_type_t* ofc_sema_character_pad_to_type(
+	const ofc_sema_type_t* character,
+	const ofc_sema_type_t* type);
 const ofc_sema_type_t* ofc_sema_type_promote(
 	const ofc_sema_type_t* a,
 	const ofc_sema_type_t* b);
@@ -135,6 +139,6 @@ bool ofc_sema_type_print(
 
 
 bool ofc_sema_type_kind_size(
-	unsigned def, unsigned kind, unsigned* size);
+	unsigned def, ofc_sema_kind_e kind, unsigned* size);
 
 #endif

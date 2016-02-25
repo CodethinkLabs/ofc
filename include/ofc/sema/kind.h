@@ -13,14 +13,26 @@
  * limitations under the License.
  */
 
-#ifndef __ofc_sema_pass_h__
-#define __ofc_sema_pass_h__
+#ifndef __ofc_sema_kind_h__
+#define __ofc_sema_kind_h__
 
-bool ofc_sema_pass_struct_type(
-	ofc_sema_scope_t* scope);
+/* We follow the old GNU fortran KIND notation:
+	http://gcc.gnu.org/onlinedocs/gcc-3.4.4/g77/Kind-Notation.html */
 
-bool ofc_sema_pass_char_transfer(
-	ofc_sema_scope_t* scope);
-
+typedef enum
+{
+	OFC_SEMA_KIND_NONE    =  0,
+	OFC_SEMA_KIND_DEFAULT =  1,
+	OFC_SEMA_KIND_DOUBLE  =  2,
+	OFC_SEMA_KIND_1_BYTE  =  3,
+	OFC_SEMA_KIND_QUAD    =  4,
+	OFC_SEMA_KIND_HALF    =  5,
+	OFC_SEMA_KIND_2_BYTE  =  6,
+	OFC_SEMA_KIND_POINTER =  7,
+	OFC_SEMA_KIND_4_BYTE  = 12,
+	OFC_SEMA_KIND_8_BYTE  = 24,
+	OFC_SEMA_KIND_QUARTER = 25,
+	OFC_SEMA_KIND_10_BYTE = 30,
+} ofc_sema_kind_e;
 
 #endif

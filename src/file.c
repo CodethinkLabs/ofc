@@ -377,7 +377,7 @@ static void ofc_file__debug_va(
 		fprintf(stderr, "\n  ");
 	}
 
-	if (!file->parent)
+	if (!file || !file->parent)
 		fprintf(stderr, " ");
 	vfprintf(stderr, format, args);
 	fprintf(stderr, "\n");

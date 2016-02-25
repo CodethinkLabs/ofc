@@ -948,7 +948,8 @@ ofc_sema_lhs_t* ofc_sema_lhs_elem_get(
 
 			ofc_sema_typeval_t* dinit
 				= ofc_sema_typeval_create_real(
-					doffset, OFC_SPARSE_REF_EMPTY);
+					doffset, OFC_SEMA_KIND_NONE,
+					OFC_SPARSE_REF_EMPTY);
 			if (!dinit) return NULL;
 
 			ofc_sema_typeval_t* init

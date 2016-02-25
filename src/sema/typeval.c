@@ -13,6 +13,8 @@
  * limitations under the License.
  */
 
+#include <inttypes.h>
+
 #include <math.h>
 #include <tgmath.h>
 #ifdef complex
@@ -259,8 +261,8 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 			return NULL;
 		}
 	}
-	if (kind == 0)
-		kind = 1;
+	if (kind == OFC_SEMA_KIND_NONE)
+		kind = OFC_SEMA_KIND_DEFAULT;
 
 	if (i < size)
 	{
@@ -269,7 +271,8 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 		return NULL;
 	}
 
-	if (is_byte && (kind != 1) && (kind != 3))
+	if (is_byte && (kind != OFC_SEMA_KIND_DEFAULT)
+		&& (kind != OFC_SEMA_KIND_1_BYTE))
 	{
 		ofc_sparse_ref_error(literal->src,
 			"Byte can never have a KIND larger than 1 byte");
@@ -316,8 +319,8 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 
 static bool ofc_sema_typeval__real(
 	const ofc_parse_literal_t* literal,
-	ofc_str_ref_t number, unsigned  ikind,
-	long double*  value , unsigned* okind)
+	ofc_str_ref_t number, ofc_sema_kind_e  ikind,
+	long double*  value , ofc_sema_kind_e* okind)
 {
 	if (!value)
 		return false;
@@ -366,13 +369,13 @@ static bool ofc_sema_typeval__real(
 		switch (toupper(ptr[i++]))
 		{
 			case 'E':
-				kind = 1;
+				kind = OFC_SEMA_KIND_DEFAULT;
 				break;
 			case 'D':
-				kind = 2;
+				kind = OFC_SEMA_KIND_DOUBLE;
 				break;
 			case 'Q':
-				kind = 4;
+				kind = OFC_SEMA_KIND_QUAD;
 				break;
 			default:
 				return false;
@@ -431,7 +434,7 @@ static bool ofc_sema_typeval__real(
 			ukind = nkind;
 		}
 
-		if ((kind != 0)
+		if ((kind != OFC_SEMA_KIND_NONE)
 			&& (kind != ukind))
 		{
 			ofc_sparse_ref_error(literal->src,
@@ -442,16 +445,16 @@ static bool ofc_sema_typeval__real(
 		kind = ukind;
 	}
 
-	if ((ikind != 0) && (ikind != kind))
+	if ((ikind != OFC_SEMA_KIND_NONE) && (ikind != kind))
 	{
 		ofc_sparse_ref_error(literal->src,
 			"Expected kind doesn't match literal kind");
 		return false;
 	}
-	kind = (kind > 0 ? kind : ikind);
+	kind = (kind != OFC_SEMA_KIND_NONE ? kind : ikind);
 
-	if (kind == 0)
-		kind = 1;
+	if (kind == OFC_SEMA_KIND_NONE)
+		kind = OFC_SEMA_KIND_DEFAULT;
 
 	unsigned ksize;
 	if (!ofc_sema_type_kind_size(
@@ -782,12 +785,12 @@ static ofc_sema_typeval_t* ofc_sema_typeval__byte_literal(
 }
 
 
-ofc_sema_typeval_t* ofc_sema_typeval_create_unsigned(
-	unsigned value, ofc_sparse_ref_t ref)
+ofc_sema_typeval_t* ofc_sema_typeval_create_integer(
+	int value, ofc_sema_kind_e kind,
+	ofc_sparse_ref_t ref)
 {
-	unsigned kind = 12;
-	if ((value >> 31) != 0)
-		kind = 24;
+	if (kind == OFC_SEMA_KIND_NONE)
+		kind = OFC_SEMA_KIND_4_BYTE;
 
 	const ofc_sema_type_t* type
 		= ofc_sema_type_create_primitive(
@@ -802,17 +805,26 @@ ofc_sema_typeval_t* ofc_sema_typeval_create_unsigned(
 	typeval->type = type;
 	typeval->integer = value;
 	typeval->src = ref;
+
+	if (!ofc_sema_typeval__in_range(typeval))
+	{
+		ofc_sema_typeval_delete(typeval);
+		return NULL;
+	}
+
 	return typeval;
 }
 
-ofc_sema_typeval_t* ofc_sema_typeval_create_integer(
-	int value, ofc_sparse_ref_t ref)
+ofc_sema_typeval_t* ofc_sema_typeval_create_logical(
+	bool value, unsigned kind,
+	ofc_sparse_ref_t ref)
 {
-	unsigned kind = 12;
+	if (kind == OFC_SEMA_KIND_NONE)
+		kind = OFC_SEMA_KIND_DEFAULT;
 
 	const ofc_sema_type_t* type
 		= ofc_sema_type_create_primitive(
-			OFC_SEMA_TYPE_INTEGER, kind);
+			OFC_SEMA_TYPE_LOGICAL, kind);
 	if (!type) return NULL;
 
 	ofc_sema_typeval_t* typeval
@@ -821,15 +833,17 @@ ofc_sema_typeval_t* ofc_sema_typeval_create_integer(
 	if (!typeval) return NULL;
 
 	typeval->type = type;
-	typeval->integer = value;
+	typeval->logical = value;
 	typeval->src = ref;
 	return typeval;
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_create_real(
-	long double value, ofc_sparse_ref_t ref)
+	long double value, ofc_sema_kind_e kind,
+	ofc_sparse_ref_t ref)
 {
-	unsigned kind = 30;
+	if (kind == OFC_SEMA_KIND_NONE)
+		kind = OFC_SEMA_KIND_10_BYTE;
 
 	const ofc_sema_type_t* type
 		= ofc_sema_type_create_primitive(
@@ -846,6 +860,32 @@ ofc_sema_typeval_t* ofc_sema_typeval_create_real(
 	typeval->src  = ref;
 	return typeval;
 }
+
+ofc_sema_typeval_t* ofc_sema_typeval_create_complex(
+	long double real, long double imaginary,
+	ofc_sema_kind_e kind,
+	ofc_sparse_ref_t ref)
+{
+	if (kind == OFC_SEMA_KIND_NONE)
+		kind = OFC_SEMA_KIND_10_BYTE;
+
+	const ofc_sema_type_t* type
+		= ofc_sema_type_create_primitive(
+			OFC_SEMA_TYPE_COMPLEX, kind);
+	if (!type) return NULL;
+
+	ofc_sema_typeval_t* typeval
+		= (ofc_sema_typeval_t*)malloc(
+			sizeof(ofc_sema_typeval_t));
+	if (!typeval) return NULL;
+
+	typeval->type = type;
+	typeval->complex.real = real;
+	typeval->complex.imaginary = imaginary;
+	typeval->src  = ref;
+	return typeval;
+}
+
 
 
 ofc_sema_typeval_t* ofc_sema_typeval_literal(
@@ -1841,7 +1881,8 @@ ofc_sema_typeval_t* ofc_sema_typeval_eq(
 
 	ofc_sema_typeval_t tv;
 	tv.type = ofc_sema_type_create_primitive(
-		OFC_SEMA_TYPE_LOGICAL, 1);
+		OFC_SEMA_TYPE_LOGICAL,
+		OFC_SEMA_KIND_DEFAULT);
 
 	tv.src = OFC_SPARSE_REF_EMPTY;
 	ofc_sparse_ref_bridge(
@@ -1900,7 +1941,8 @@ ofc_sema_typeval_t* ofc_sema_typeval_ne(
 
 	ofc_sema_typeval_t tv;
 	tv.type = ofc_sema_type_create_primitive(
-		OFC_SEMA_TYPE_LOGICAL, 1);
+		OFC_SEMA_TYPE_LOGICAL,
+		OFC_SEMA_KIND_DEFAULT);
 
 	tv.src = OFC_SPARSE_REF_EMPTY;
 	ofc_sparse_ref_bridge(
@@ -1959,7 +2001,8 @@ ofc_sema_typeval_t* ofc_sema_typeval_lt(
 
 	ofc_sema_typeval_t tv;
 	tv.type = ofc_sema_type_create_primitive(
-		OFC_SEMA_TYPE_LOGICAL, 1);
+		OFC_SEMA_TYPE_LOGICAL,
+		OFC_SEMA_KIND_DEFAULT);
 
 	tv.src = OFC_SPARSE_REF_EMPTY;
 	ofc_sparse_ref_bridge(
@@ -2030,7 +2073,8 @@ ofc_sema_typeval_t* ofc_sema_typeval_le(
 
 	ofc_sema_typeval_t tv;
 	tv.type = ofc_sema_type_create_primitive(
-		OFC_SEMA_TYPE_LOGICAL, 1);
+		OFC_SEMA_TYPE_LOGICAL,
+		OFC_SEMA_KIND_DEFAULT);
 
 	tv.src = OFC_SPARSE_REF_EMPTY;
 	ofc_sparse_ref_bridge(
@@ -2101,7 +2145,8 @@ ofc_sema_typeval_t* ofc_sema_typeval_gt(
 
 	ofc_sema_typeval_t tv;
 	tv.type = ofc_sema_type_create_primitive(
-		OFC_SEMA_TYPE_LOGICAL, 1);
+		OFC_SEMA_TYPE_LOGICAL,
+		OFC_SEMA_KIND_DEFAULT);
 
 	tv.src = OFC_SPARSE_REF_EMPTY;
 	ofc_sparse_ref_bridge(
@@ -2172,7 +2217,8 @@ ofc_sema_typeval_t* ofc_sema_typeval_ge(
 
 	ofc_sema_typeval_t tv;
 	tv.type = ofc_sema_type_create_primitive(
-		OFC_SEMA_TYPE_LOGICAL, 1);
+		OFC_SEMA_TYPE_LOGICAL,
+		OFC_SEMA_KIND_DEFAULT);
 
 	tv.src = OFC_SPARSE_REF_EMPTY;
 	ofc_sparse_ref_bridge(
@@ -2334,7 +2380,8 @@ ofc_sema_typeval_t* ofc_sema_typeval_eqv(
 
 	ofc_sema_typeval_t tv;
 	tv.type = ofc_sema_type_create_primitive(
-		OFC_SEMA_TYPE_LOGICAL, 1);
+		OFC_SEMA_TYPE_LOGICAL,
+		OFC_SEMA_KIND_DEFAULT);
 
 	tv.src = OFC_SPARSE_REF_EMPTY;
 	ofc_sparse_ref_bridge(
@@ -2367,7 +2414,8 @@ ofc_sema_typeval_t* ofc_sema_typeval_neqv(
 
 	ofc_sema_typeval_t tv;
 	tv.type = ofc_sema_type_create_primitive(
-		OFC_SEMA_TYPE_LOGICAL, 1);
+		OFC_SEMA_TYPE_LOGICAL,
+		OFC_SEMA_KIND_DEFAULT);
 
 	tv.src = OFC_SPARSE_REF_EMPTY;
 	ofc_sparse_ref_bridge(
@@ -2391,23 +2439,88 @@ ofc_sema_typeval_t* ofc_sema_typeval_neqv(
 
 #include <float.h>
 
-bool ofc_sema_typeval_print(ofc_colstr_t*cs,
+bool ofc_sema_typeval_can_print(
 	const ofc_sema_typeval_t* typeval)
 {
-	if (!cs || !typeval)
+	if (!typeval || !typeval->type)
 		return false;
 
+	unsigned kind = typeval->type->kind;
 	switch (typeval->type->type)
 	{
 		case OFC_SEMA_TYPE_LOGICAL:
+			return (kind == OFC_SEMA_KIND_DEFAULT);
+
+		case OFC_SEMA_TYPE_BYTE:
+			return ((kind == OFC_SEMA_KIND_DEFAULT)
+				|| (kind == OFC_SEMA_KIND_1_BYTE));
+
+		case OFC_SEMA_TYPE_INTEGER:
+			return (kind == OFC_SEMA_KIND_DEFAULT);
+
+		case OFC_SEMA_TYPE_REAL:
+			switch (kind)
+			{
+				case OFC_SEMA_KIND_DEFAULT:
+				case OFC_SEMA_KIND_DOUBLE:
+				case OFC_SEMA_KIND_QUAD:
+					return true;
+				default:
+					break;
+			}
+			break;
+
+		case OFC_SEMA_TYPE_COMPLEX:
+			return (kind == OFC_SEMA_KIND_DEFAULT);
+
+		case OFC_SEMA_TYPE_CHARACTER:
+			return ((kind == OFC_SEMA_KIND_DEFAULT)
+				|| (kind == OFC_SEMA_KIND_1_BYTE));
+
+		default:
+			break;
+
+	}
+
+	return false;
+}
+
+bool ofc_sema_typeval_print(ofc_colstr_t*cs,
+	const ofc_sema_typeval_t* typeval)
+{
+	if (!cs || !typeval
+		|| !typeval->type)
+		return false;
+
+	unsigned kind = typeval->type->kind;
+	switch (typeval->type->type)
+	{
+		case OFC_SEMA_TYPE_LOGICAL:
+			if (kind != OFC_SEMA_KIND_DEFAULT)
+			{
+				/* TODO - TYPEVAL - Print alternative LOGICAL KINDs. */
+				return false;
+			}
+
 			if (typeval->logical)
 				return ofc_colstr_atomic_writef(cs, ".TRUE.");
 			else
 				return ofc_colstr_atomic_writef(cs, ".FALSE.");
 
 		case OFC_SEMA_TYPE_BYTE:
+			if ((kind != OFC_SEMA_KIND_DEFAULT)
+				&& (kind != OFC_SEMA_KIND_1_BYTE))
+				return false;
+			return ofc_colstr_atomic_writef(cs, "%" PRId64,
+				typeval->integer);
+
 		case OFC_SEMA_TYPE_INTEGER:
-			return ofc_colstr_atomic_writef(cs, "%d",
+			if (kind != OFC_SEMA_KIND_DEFAULT)
+			{
+				/* TODO - TYPEVAL - Print alternative INTEGER KINDs. */
+				return false;
+			}
+			return ofc_colstr_atomic_writef(cs, "%" PRId64,
 				typeval->integer);
 
 		case OFC_SEMA_TYPE_REAL:
@@ -2441,18 +2554,18 @@ bool ofc_sema_typeval_print(ofc_colstr_t*cs,
 
 				char* kind_postfix = NULL;
 				char kind_exp = '\0';
-				switch (typeval->type->kind)
+				switch (kind)
 				{
-					case 1:
+					case OFC_SEMA_KIND_DEFAULT:
 						break;
-					case 2:
+					case OFC_SEMA_KIND_DOUBLE:
 						kind_exp = 'D';
 						break;
-					case 4:
+					case OFC_SEMA_KIND_QUAD:
 						kind_exp = 'Q';
 						break;
 					default:
-						/* TODO - Support other kinds. */
+						/* TODO - TYPEVAL - Print alternative REAL KINDs. */
 						return false;
 				}
 
@@ -2482,6 +2595,7 @@ bool ofc_sema_typeval_print(ofc_colstr_t*cs,
 			}
 
 		case OFC_SEMA_TYPE_COMPLEX:
+			/* TODO - TYPEVAL - Print different COMPLEX KINDs. */
 			if (!ofc_colstr_atomic_writef(cs, "(")
 				|| !ofc_colstr_atomic_writef(cs, "%Lg",
 					typeval->complex.real)
@@ -2494,6 +2608,13 @@ bool ofc_sema_typeval_print(ofc_colstr_t*cs,
 			return true;
 
 		case OFC_SEMA_TYPE_CHARACTER:
+			if ((kind != OFC_SEMA_KIND_DEFAULT)
+				&& (kind != OFC_SEMA_KIND_1_BYTE))
+			{
+				/* TODO - TYPEVAL - Print alternative CHARACTER KINDs. */
+				return false;
+			}
+
 			return ofc_colstr_writef(cs, "\"%.*s\"",
 				typeval->type->len, typeval->character);
 

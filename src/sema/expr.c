@@ -59,38 +59,40 @@ typedef struct
 	ofc_sema_expr__op_type_e allow_real;
 	ofc_sema_expr__op_type_e allow_complex;
 	ofc_sema_expr__op_type_e allow_character;
+
+	bool promote;
 } ofc_sema_expr__rule_t;
 
 static ofc_sema_expr__rule_t ofc_sema_expr__rule[] =
 {
-	{ NULL, 0, 0, 0, 0, 0 }, /* CONSTANT */
-	{ NULL, 0, 0, 0, 0, 0 }, /* LHS */
-	{ NULL, 0, 0, 0, 0, 0 }, /* CAST */
-	{ NULL, 0, 0, 0, 0, 0 }, /* INTRINSIC */
-	{ NULL, 0, 0, 0, 0, 0 }, /* FUNCTION */
-	{ NULL, 0, 0, 0, 0, 0 }, /* IMPLICIT_DO */
+	{ NULL, 0, 0, 0, 0, 0, 0 }, /* CONSTANT */
+	{ NULL, 0, 0, 0, 0, 0, 0 }, /* LHS */
+	{ NULL, 0, 0, 0, 0, 0, 0 }, /* CAST */
+	{ NULL, 0, 0, 0, 0, 0, 0 }, /* INTRINSIC */
+	{ NULL, 0, 0, 0, 0, 0, 0 }, /* FUNCTION */
+	{ NULL, 0, 0, 0, 0, 0, 0 }, /* IMPLICIT_DO */
 
-	{ NULL, 0, 1, 1, 1, 0 }, /* POWER */
-	{ NULL, 0, 1, 1, 1, 0 }, /* MULTIPLY */
-	{ NULL, 0, 0, 0, 0, 1 }, /* CONCAT */
-	{ NULL, 0, 1, 1, 1, 0 }, /* DIVIDE */
-	{ NULL, 0, 1, 1, 1, 0 }, /* ADD */
-	{ NULL, 0, 1, 1, 1, 0 }, /* SUBTRACT */
-	{ NULL, 0, 1, 1, 1, 0 }, /* NEGATE */
+	{ NULL, 0, 1, 1, 1, 0, 0 }, /* POWER */
+	{ NULL, 0, 1, 1, 1, 0, 1 }, /* MULTIPLY */
+	{ NULL, 0, 0, 0, 0, 1, 0 }, /* CONCAT */
+	{ NULL, 0, 1, 1, 1, 0, 1 }, /* DIVIDE */
+	{ NULL, 0, 1, 1, 1, 0, 1 }, /* ADD */
+	{ NULL, 0, 1, 1, 1, 0, 1 }, /* SUBTRACT */
+	{ NULL, 0, 1, 1, 1, 0, 1 }, /* NEGATE */
 
-	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 2, 1, 1, 1, 1 }, /* EQ */
-	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 2, 1, 1, 1, 1 }, /* NE */
-	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 2, 1, 1, 0, 2 }, /* LT */
-	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 2, 1, 1, 0, 2 }, /* LE */
-	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 2, 1, 1, 0, 2 }, /* GT */
-	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 2, 1, 1, 0, 2 }, /* GE */
+	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 2, 1, 1, 1, 1, 1 }, /* EQ */
+	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 2, 1, 1, 1, 1, 1 }, /* NE */
+	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 2, 1, 1, 0, 2, 1 }, /* LT */
+	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 2, 1, 1, 0, 2, 1 }, /* LE */
+	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 2, 1, 1, 0, 2, 1 }, /* GT */
+	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 2, 1, 1, 0, 2, 1 }, /* GE */
 
-	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 1, 1, 0, 0, 0 }, /* NOT */
-	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 1, 1, 0, 0, 0 }, /* AND */
-	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 1, 1, 0, 0, 0 }, /* OR */
+	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 1, 1, 0, 0, 0, 1 }, /* NOT */
+	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 1, 1, 0, 0, 0, 1 }, /* AND */
+	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 1, 1, 0, 0, 0, 1 }, /* OR */
 
-	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 1, 0, 0, 0, 0 }, /* EQV */
-	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 1, 0, 0, 0, 0 }, /* NEQV */
+	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 1, 0, 0, 0, 0, 1 }, /* EQV */
+	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 1, 0, 0, 0, 0, 1 }, /* NEQV */
 };
 
 static ofc_sema_expr__op_type_e ofc_sema_expr_type_allowed(
@@ -313,16 +315,22 @@ ofc_sema_expr_t* ofc_sema_expr_copy_replace(
 
 		case OFC_SEMA_EXPR_INTRINSIC:
 			copy->intrinsic = expr->intrinsic;
-			copy->args      = ofc_sema_expr_list_copy_replace(
-				expr->args, replace, with);
-			success = (copy->args != NULL);
+			if (expr->args)
+			{
+				copy->args = ofc_sema_expr_list_copy_replace(
+					expr->args, replace, with);
+				success = (copy->args != NULL);
+			}
 			break;
 
 		case OFC_SEMA_EXPR_FUNCTION:
 			copy->function = expr->function;
-			copy->args     = ofc_sema_expr_list_copy_replace(
-				expr->args, replace, with);
-			success = (copy->args != NULL);
+			if (expr->args)
+			{
+				copy->args = ofc_sema_expr_list_copy_replace(
+					expr->args, replace, with);
+				success = (copy->args != NULL);
+			}
 			break;
 
 		case OFC_SEMA_EXPR_IMPLICIT_DO:
@@ -457,6 +465,46 @@ ofc_sema_expr_t* ofc_sema_expr_cast(
 	return cast;
 }
 
+ofc_sema_expr_t* ofc_sema_expr_cast_intrinsic(
+	ofc_sema_expr_t* expr, const ofc_sema_type_t* type)
+{
+	if (!expr)
+		return NULL;
+
+	const ofc_sema_intrinsic_t* intrinsic
+		= ofc_sema_intrinsic_cast_func(type);
+	if (!intrinsic) return NULL;
+
+	ofc_sema_expr_t* cast
+		= ofc_sema_expr__create(
+			OFC_SEMA_EXPR_INTRINSIC);
+	if (!cast) return NULL;
+
+	ofc_sema_expr_list_t* args
+		= ofc_sema_expr_list_create();
+	if (!ofc_sema_expr_list_add(args, expr))
+	{
+		ofc_sema_expr_list_delete(args);
+		ofc_sema_expr_delete(cast);
+		return NULL;
+	}
+
+	cast->args = ofc_sema_intrinsic_cast(
+		expr->src, intrinsic, args);
+	ofc_sema_expr_list_delete(args);
+	if (!cast->args)
+	{
+		ofc_sema_expr_delete(cast);
+		return NULL;
+	}
+
+	cast->intrinsic = intrinsic;
+	cast->constant = ofc_sema_intrinsic_constant(
+		cast->intrinsic, cast->args);
+
+	return cast;
+}
+
 ofc_sema_expr_t* ofc_sema_expr_typeval(
 	ofc_sema_typeval_t* typeval)
 {
@@ -472,14 +520,15 @@ ofc_sema_expr_t* ofc_sema_expr_typeval(
 	return expr;
 }
 
-ofc_sema_expr_t* ofc_sema_expr_integer(int value)
+ofc_sema_expr_t* ofc_sema_expr_integer(
+	int value, ofc_sema_kind_e kind)
 {
 	ofc_sema_expr_t* expr
 		= ofc_sema_expr__create(OFC_SEMA_EXPR_CONSTANT);
 	if (!expr) return NULL;
 
 	expr->constant = ofc_sema_typeval_create_integer(
-		value, OFC_SPARSE_REF_EMPTY);
+		value, kind, OFC_SPARSE_REF_EMPTY);
 	if (!expr->constant)
 	{
 		ofc_sema_expr_delete(expr);
@@ -568,75 +617,33 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 			ofc_parse_operator_str_rep(op));
 	}
 
-	if ((at->type == OFC_SEMA_TYPE_CHARACTER)
-		&& (bt->type == OFC_SEMA_TYPE_CHARACTER))
+	if (ofc_sema_expr__rule[type].promote)
 	{
-		unsigned asize, bsize;
-		if (!ofc_sema_type_base_size(at, &asize)
-			|| !ofc_sema_type_base_size(bt, &bsize))
+		if ((at->type == OFC_SEMA_TYPE_CHARACTER)
+			&& (bt->type == OFC_SEMA_TYPE_CHARACTER))
 		{
-			ofc_sema_expr_delete(bs);
-			ofc_sema_expr_delete(as);
-			return NULL;
-		}
-
-		if (asize < bsize)
-		{
-			at = ofc_sema_type_create_character(
-				bt->kind, at->len, at->len_var);
-			if (!at)
+			unsigned asize, bsize;
+			if (!ofc_sema_type_base_size(at, &asize)
+				|| !ofc_sema_type_base_size(bt, &bsize))
 			{
 				ofc_sema_expr_delete(bs);
 				ofc_sema_expr_delete(as);
 				return NULL;
 			}
 
-			ofc_sema_expr_t* cast
-				= ofc_sema_expr_cast(as, at);
-			if (!cast)
+			if (asize < bsize)
 			{
-				ofc_sema_expr_delete(bs);
-				ofc_sema_expr_delete(as);
-				return NULL;
-			}
-			as = cast;
-		}
-		else
-		{
-			bt = ofc_sema_type_create_character(
-				at->kind, bt->len, bt->len_var);
-			if (!bt)
-			{
-				ofc_sema_expr_delete(bs);
-				ofc_sema_expr_delete(as);
-				return NULL;
-			}
+				at = ofc_sema_type_create_character(
+					bt->kind, at->len, at->len_var);
+				if (!at)
+				{
+					ofc_sema_expr_delete(bs);
+					ofc_sema_expr_delete(as);
+					return NULL;
+				}
 
-			ofc_sema_expr_t* cast
-				= ofc_sema_expr_cast(bs, bt);
-			if (!cast)
-			{
-				ofc_sema_expr_delete(bs);
-				ofc_sema_expr_delete(as);
-				return NULL;
-			}
-			bs = cast;
-		}
-	}
-	else if (!ofc_sema_type_compatible(at, bt))
-	{
-		if (type == OFC_SEMA_EXPR_AND
-			|| type == OFC_SEMA_EXPR_OR
-			|| type == OFC_SEMA_EXPR_EQV
-			|| type == OFC_SEMA_EXPR_NEQV)
-		{
-			const ofc_sema_type_t* logtype
-				= ofc_sema_type_logical_default();
-
-			if (!ofc_sema_type_compatible(at, logtype))
-			{
 				ofc_sema_expr_t* cast
-					= ofc_sema_expr_cast(as, logtype);
+					= ofc_sema_expr_cast(as, at);
 				if (!cast)
 				{
 					ofc_sema_expr_delete(bs);
@@ -645,11 +652,19 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 				}
 				as = cast;
 			}
-
-			if (!ofc_sema_type_compatible(bt, logtype))
+			else
 			{
+				bt = ofc_sema_type_create_character(
+					at->kind, bt->len, bt->len_var);
+				if (!bt)
+				{
+					ofc_sema_expr_delete(bs);
+					ofc_sema_expr_delete(as);
+					return NULL;
+				}
+
 				ofc_sema_expr_t* cast
-					= ofc_sema_expr_cast(bs, logtype);
+					= ofc_sema_expr_cast(bs, bt);
 				if (!cast)
 				{
 					ofc_sema_expr_delete(bs);
@@ -659,46 +674,83 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 				bs = cast;
 			}
 		}
-		else
+		else if (!ofc_sema_type_compatible(at, bt))
 		{
-			const ofc_sema_type_t* ptype
-				= ofc_sema_type_promote(at, bt);
-			if (!ptype)
+			if (type == OFC_SEMA_EXPR_AND
+				|| type == OFC_SEMA_EXPR_OR
+				|| type == OFC_SEMA_EXPR_EQV
+				|| type == OFC_SEMA_EXPR_NEQV)
 			{
-				ofc_sparse_ref_error(a->src,
-					"Incompatible types (%s, %s) in operator %s",
-					ofc_sema_type_str_rep(at),
-					ofc_sema_type_str_rep(bt),
-					ofc_parse_operator_str_rep(op));
-				ofc_sema_expr_delete(bs);
-				ofc_sema_expr_delete(as);
-				return NULL;
-			}
+				const ofc_sema_type_t* logtype
+					= ofc_sema_type_logical_default();
 
-			if (!ofc_sema_type_compatible(at, ptype))
-			{
-				ofc_sema_expr_t* cast
-					= ofc_sema_expr_cast(as, ptype);
-				if (!cast)
+				if (!ofc_sema_type_compatible(at, logtype))
 				{
+					ofc_sema_expr_t* cast
+						= ofc_sema_expr_cast(as, logtype);
+					if (!cast)
+					{
+						ofc_sema_expr_delete(bs);
+						ofc_sema_expr_delete(as);
+						return NULL;
+					}
+					as = cast;
+				}
+
+				if (!ofc_sema_type_compatible(bt, logtype))
+				{
+					ofc_sema_expr_t* cast
+						= ofc_sema_expr_cast(bs, logtype);
+					if (!cast)
+					{
+						ofc_sema_expr_delete(bs);
+						ofc_sema_expr_delete(as);
+						return NULL;
+					}
+					bs = cast;
+				}
+			}
+			else
+			{
+				const ofc_sema_type_t* ptype
+					= ofc_sema_type_promote(at, bt);
+				if (!ptype)
+				{
+					ofc_sparse_ref_error(a->src,
+						"Incompatible types (%s, %s) in operator %s",
+						ofc_sema_type_str_rep(at),
+						ofc_sema_type_str_rep(bt),
+						ofc_parse_operator_str_rep(op));
 					ofc_sema_expr_delete(bs);
 					ofc_sema_expr_delete(as);
 					return NULL;
 				}
-				as = cast;
-			}
 
-			if (!ofc_sema_type_compatible(bt, ptype))
-			{
-				ofc_sema_expr_t* cast
-					= ofc_sema_expr_cast(bs, ptype);
-				if (!cast)
+				if (!ofc_sema_type_compatible(at, ptype))
 				{
-					ofc_sema_expr_delete(bs);
-					ofc_sema_expr_delete(as);
-					return NULL;
+					ofc_sema_expr_t* cast
+						= ofc_sema_expr_cast(as, ptype);
+					if (!cast)
+					{
+						ofc_sema_expr_delete(bs);
+						ofc_sema_expr_delete(as);
+						return NULL;
+					}
+					as = cast;
 				}
-				bs = cast;
+
+				if (!ofc_sema_type_compatible(bt, ptype))
+				{
+					ofc_sema_expr_t* cast
+						= ofc_sema_expr_cast(bs, ptype);
+					if (!cast)
+					{
+						ofc_sema_expr_delete(bs);
+						ofc_sema_expr_delete(as);
+						return NULL;
+					}
+					bs = cast;
+				}
 			}
 		}
 	}
@@ -1074,7 +1126,7 @@ static ofc_sema_expr_t* ofc_sema_expr__variable(
 	if (!spec && !decl)
 	{
 		intrinsic = ofc_sema_intrinsic(
-			scope, base_name.string);
+			base_name.string);
 	}
 
 	ofc_sema_expr_t* expr;
@@ -1785,7 +1837,8 @@ ofc_sema_expr_t* ofc_sema_expr_elem_get(
 
 			ofc_sema_typeval_t* dinit
 				= ofc_sema_typeval_create_real(
-					doffset, OFC_SPARSE_REF_EMPTY);
+					doffset, OFC_SEMA_KIND_NONE,
+					OFC_SPARSE_REF_EMPTY);
 			if (!dinit) return NULL;
 
 			ofc_sema_typeval_t* init
@@ -2522,30 +2575,21 @@ bool ofc_sema_expr_print(
 			break;
 
 		case OFC_SEMA_EXPR_CAST:
-			if (!expr->constant
-				|| !ofc_sema_expr__root_is_constant(expr->cast.expr)
-				|| !ofc_sema_typeval_print(cs, expr->constant))
-			{
-				#ifdef OFC_PRINT_SEMA_IMPLICIT_CAST
-				const char* cast
-					= ofc_sema_type_str_cast_rep(
-						expr->cast.type);
-				if (cast)
-				{
-					if (!ofc_colstr_atomic_writef(cs, "%s", cast)
-						|| !ofc_colstr_atomic_writef(cs, "(")
-						|| !ofc_sema_expr_print(cs, expr->cast.expr)
-						|| !ofc_colstr_atomic_writef(cs, ")"))
-						return false;
-				}
-				else
-				#endif
-				{
-					if (!ofc_sema_expr_print(cs, expr->cast.expr))
-						return false;
-				}
-			}
+		{
+			bool print_const = (expr->constant
+				&& ofc_sema_typeval_can_print(expr->constant)
+				&& ofc_sema_expr__root_is_constant(expr->cast.expr));
+			if (print_const
+				&& ofc_sema_expr_type_is_character(expr->cast.expr)
+				&& !ofc_sema_expr_type_is_character(expr))
+				print_const = false;
+
+			if (print_const
+				? !ofc_sema_typeval_print(cs, expr->constant)
+				: !ofc_sema_expr_print(cs, expr->cast.expr))
+				return false;
 			break;
+		}
 
 		case OFC_SEMA_EXPR_INTRINSIC:
 			if(!ofc_sema_intrinsic_print(cs, expr->intrinsic)

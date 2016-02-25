@@ -118,7 +118,7 @@ typedef struct
 {
 	ofc_sema_intrinsic__type_e type_type;
 	ofc_sema_type_e            type;
-	unsigned                   kind;
+	ofc_sema_kind_e            kind;
 	unsigned                   size;
 	bool                       intent_in;
 	bool                       intent_out;
@@ -126,43 +126,43 @@ typedef struct
 
 static const ofc_sema_intrinsic__param_t ofc_sema_intrinsic__param[] =
 {
-	{ OFC_SEMA_INTRINSIC__TYPE_ANY     , 0, 0, 0, 1, 0 }, /* ANY  */
-	{ OFC_SEMA_INTRINSIC__TYPE_SAME    , 0, 0, 0, 1, 0 }, /* SAME */
-	{ OFC_SEMA_INTRINSIC__TYPE_SCALAR  , 0, 0, 0, 1, 0 }, /* SCALAR */
-	{ OFC_SEMA_INTRINSIC__TYPE_CALLBACK, 0, 0, 0, 1, 0 }, /* CALLBACK */
+	{ OFC_SEMA_INTRINSIC__TYPE_ANY     , OFC_SEMA_KIND_NONE, 0, 0, 1, 0 }, /* ANY  */
+	{ OFC_SEMA_INTRINSIC__TYPE_SAME    , OFC_SEMA_KIND_NONE, 0, 0, 1, 0 }, /* SAME */
+	{ OFC_SEMA_INTRINSIC__TYPE_SCALAR  , OFC_SEMA_KIND_NONE, 0, 0, 1, 0 }, /* SCALAR */
+	{ OFC_SEMA_INTRINSIC__TYPE_CALLBACK, OFC_SEMA_KIND_NONE, 0, 0, 1, 0 }, /* CALLBACK */
 
-	{ 0, OFC_SEMA_TYPE_LOGICAL  , 0, 0, 1, 0 }, /* LOGICAL */
-	{ 0, OFC_SEMA_TYPE_INTEGER  , 0, 0, 1, 0 }, /* INTEGER */
-	{ 0, OFC_SEMA_TYPE_REAL     , 0, 0, 1, 0 }, /* REAL */
-	{ 0, OFC_SEMA_TYPE_COMPLEX  , 0, 0, 1, 0 }, /* COMPLEX */
-	{ 0, OFC_SEMA_TYPE_CHARACTER, 0, 0, 1, 0 }, /* CHARACTER */
+	{ 0, OFC_SEMA_TYPE_LOGICAL  , OFC_SEMA_KIND_NONE, 0, 1, 0 }, /* LOGICAL */
+	{ 0, OFC_SEMA_TYPE_INTEGER  , OFC_SEMA_KIND_NONE, 0, 1, 0 }, /* INTEGER */
+	{ 0, OFC_SEMA_TYPE_REAL     , OFC_SEMA_KIND_NONE, 0, 1, 0 }, /* REAL */
+	{ 0, OFC_SEMA_TYPE_COMPLEX  , OFC_SEMA_KIND_NONE, 0, 1, 0 }, /* COMPLEX */
+	{ 0, OFC_SEMA_TYPE_CHARACTER, OFC_SEMA_KIND_NONE, 0, 1, 0 }, /* CHARACTER */
 
-	{ 0, OFC_SEMA_TYPE_CHARACTER, 0, 1, 1, 0 }, /* CHARACTER_1 */
+	{ 0, OFC_SEMA_TYPE_CHARACTER, OFC_SEMA_KIND_NONE, 1, 1, 0 }, /* CHARACTER_1 */
 
-	{ 0, OFC_SEMA_TYPE_LOGICAL, 1, 0, 1, 0 }, /* DEF_LOGICAL */
-	{ 0, OFC_SEMA_TYPE_INTEGER, 1, 0, 1, 0 }, /* DEF_INTEGER */
-	{ 0, OFC_SEMA_TYPE_REAL   , 1, 0, 1, 0 }, /* DEF_REAL */
-	{ 0, OFC_SEMA_TYPE_COMPLEX, 1, 0, 1, 0 }, /* DEF_COMPLEX */
+	{ 0, OFC_SEMA_TYPE_LOGICAL, OFC_SEMA_KIND_DEFAULT, 0, 1, 0 }, /* DEF_LOGICAL */
+	{ 0, OFC_SEMA_TYPE_INTEGER, OFC_SEMA_KIND_DEFAULT, 0, 1, 0 }, /* DEF_INTEGER */
+	{ 0, OFC_SEMA_TYPE_REAL   , OFC_SEMA_KIND_DEFAULT, 0, 1, 0 }, /* DEF_REAL */
+	{ 0, OFC_SEMA_TYPE_COMPLEX, OFC_SEMA_KIND_DEFAULT, 0, 1, 0 }, /* DEF_COMPLEX */
 
-	{ 0, OFC_SEMA_TYPE_REAL   , 2, 0, 1, 0 }, /* DEF_DOUBLE */
-	{ 0, OFC_SEMA_TYPE_COMPLEX, 2, 0, 1, 0 }, /* DEF_DOUBLE_COMPLEX */
+	{ 0, OFC_SEMA_TYPE_REAL   , OFC_SEMA_KIND_DOUBLE, 0, 1, 0 }, /* DEF_DOUBLE */
+	{ 0, OFC_SEMA_TYPE_COMPLEX, OFC_SEMA_KIND_DOUBLE, 0, 1, 0 }, /* DEF_DOUBLE_COMPLEX */
 
-	{ 0, OFC_SEMA_TYPE_INTEGER, 5, 0, 1, 0 }, /* DEF_HALF_INTEGER */
+	{ 0, OFC_SEMA_TYPE_INTEGER, OFC_SEMA_KIND_HALF, 0, 1, 0 }, /* DEF_HALF_INTEGER */
 
-	{ 0, OFC_SEMA_TYPE_INTEGER,  3, 0, 1, 0 }, /* INTEGER_1 */
-	{ 0, OFC_SEMA_TYPE_INTEGER,  6, 0, 1, 0 }, /* INTEGER_2 */
-	{ 0, OFC_SEMA_TYPE_INTEGER, 12, 0, 1, 0 }, /* INTEGER_4 */
+	{ 0, OFC_SEMA_TYPE_INTEGER, OFC_SEMA_KIND_1_BYTE, 0, 1, 0 }, /* INTEGER_1 */
+	{ 0, OFC_SEMA_TYPE_INTEGER, OFC_SEMA_KIND_2_BYTE, 0, 1, 0 }, /* INTEGER_2 */
+	{ 0, OFC_SEMA_TYPE_INTEGER, OFC_SEMA_KIND_4_BYTE, 0, 1, 0 }, /* INTEGER_4 */
 
-	{ 0, OFC_SEMA_TYPE_REAL, 1, 2, 1, 0 }, /* DEF_REAL_A2 */
-	{ 0, OFC_SEMA_TYPE_REAL, 1, 2, 0, 1 }, /* DEF_REAL_A2_OUT */
+	{ 0, OFC_SEMA_TYPE_REAL, OFC_SEMA_KIND_DEFAULT, 2, 1, 0 }, /* DEF_REAL_A2 */
+	{ 0, OFC_SEMA_TYPE_REAL, OFC_SEMA_KIND_DEFAULT, 2, 0, 1 }, /* DEF_REAL_A2_OUT */
 
-	{ 0, OFC_SEMA_TYPE_CHARACTER, 0, 0, 0, 1 }, /* CHARACTER_OUT */
-	{ 0, OFC_SEMA_TYPE_INTEGER  , 0, 0, 0, 1 }, /* INTEGER_OUT */
-	{ 0, OFC_SEMA_TYPE_REAL     , 0, 0, 0, 1 }, /* REAL_OUT */
+	{ 0, OFC_SEMA_TYPE_CHARACTER, OFC_SEMA_KIND_NONE, 0, 0, 1 }, /* CHARACTER_OUT */
+	{ 0, OFC_SEMA_TYPE_INTEGER  , OFC_SEMA_KIND_NONE, 0, 0, 1 }, /* INTEGER_OUT */
+	{ 0, OFC_SEMA_TYPE_REAL     , OFC_SEMA_KIND_NONE, 0, 0, 1 }, /* REAL_OUT */
 
-	{ 0, OFC_SEMA_TYPE_INTEGER, 0,  3, 0, 1 }, /* INTEGER_A3_OUT */
-	{ 0, OFC_SEMA_TYPE_INTEGER, 0, 13, 1, 0 }, /* INTEGER_A13 */
-	{ 0, OFC_SEMA_TYPE_INTEGER, 0, 13, 0, 1 }, /* INTEGER_A13_OUT */
+	{ 0, OFC_SEMA_TYPE_INTEGER, OFC_SEMA_KIND_NONE,  3, 0, 1 }, /* INTEGER_A3_OUT */
+	{ 0, OFC_SEMA_TYPE_INTEGER, OFC_SEMA_KIND_NONE, 13, 1, 0 }, /* INTEGER_A13 */
+	{ 0, OFC_SEMA_TYPE_INTEGER, OFC_SEMA_KIND_NONE, 13, 0, 1 }, /* INTEGER_A13_OUT */
 };
 
 
@@ -379,7 +379,7 @@ static const ofc_sema_intrinsic_op_t ofc_sema_intrinsic__op_list[] =
 static const ofc_sema_type_t* ofc_sema_intrinsic__char_rt(
 	const ofc_sema_expr_list_t* args)
 {
-	unsigned kind = 1;
+	ofc_sema_kind_e kind = OFC_SEMA_KIND_DEFAULT;
 	if (args->count >= 2)
 	{
 		const ofc_sema_type_t* type
@@ -395,7 +395,7 @@ static const ofc_sema_type_t* ofc_sema_intrinsic__char_rt(
 static const ofc_sema_type_t* ofc_sema_intrinsic__ichar_rt(
 	const ofc_sema_expr_list_t* args)
 {
-	unsigned kind = 1;
+	ofc_sema_kind_e kind = OFC_SEMA_KIND_DEFAULT;
 	if (args->count >= 2)
 	{
 		const ofc_sema_type_t* type
@@ -539,8 +539,9 @@ static ofc_sema_typeval_t* ofc_sema_intrinsic__transfer_tv(
 
 	/* TODO - INTRINSIC - Retain location in typeval. */
 	ofc_sema_typeval_t* rtv
-		= ofc_sema_typeval_create_unsigned(
-			0, OFC_SPARSE_REF_EMPTY);
+		= ofc_sema_typeval_create_integer(
+			0, OFC_SEMA_KIND_DEFAULT,
+			OFC_SPARSE_REF_EMPTY);
 	if (!rtv) return NULL;
 	rtv->type = rtype;
 
@@ -825,7 +826,7 @@ static const ofc_sema_type_t* ofc_sema_intrinsic__param_rtype(
 		return NULL;
 
 	if (!rtype && stype
-		&& (p.kind == 0))
+		&& (p.kind == OFC_SEMA_KIND_NONE))
 	{
 		if (p.type == stype->type)
 		{
@@ -858,10 +859,11 @@ static const ofc_sema_type_t* ofc_sema_intrinsic__param_rtype(
 		if (p.type == OFC_SEMA_TYPE_CHARACTER)
 		{
 			unsigned kind = p.kind;
-			if ((kind == 0)
+			if ((kind == OFC_SEMA_KIND_NONE)
 				&& ofc_sema_type_is_character(stype))
 				kind = stype->kind;
-			if (kind == 0) kind = 1;
+			if (kind == OFC_SEMA_KIND_NONE)
+				kind = OFC_SEMA_KIND_DEFAULT;
 
 			rtype = ofc_sema_type_create_character(
 				kind, p.size, (p.size == 0));
@@ -881,12 +883,13 @@ static const ofc_sema_type_t* ofc_sema_intrinsic__param_rtype(
 			}
 
 			unsigned kind = p.kind;
-			if (kind == 0) kind = 1;
+			if (kind == OFC_SEMA_KIND_NONE)
+				kind = OFC_SEMA_KIND_DEFAULT;
 
 			rtype = ofc_sema_type_create_primitive(
 				p.type, kind);
 
-			if (p.kind == 0)
+			if (p.kind == OFC_SEMA_KIND_NONE)
 			{
 				rtype = ofc_sema_type_promote(
 					rtype, stype);
@@ -1112,24 +1115,18 @@ static bool ofc_sema_intrinsic__init(void)
 }
 
 
-const ofc_sema_intrinsic_t* ofc_sema_intrinsic(
-	const ofc_sema_scope_t* scope,
-	ofc_str_ref_t name)
+const ofc_sema_intrinsic_t* ofc_sema_intrinsic(ofc_str_ref_t name)
 {
 	if (!ofc_sema_intrinsic__init())
 		return NULL;
 
-	(void)scope;
-
 	const ofc_sema_intrinsic_t* op = ofc_hashmap_find(
 		ofc_sema_intrinsic__op_map, &name);
-	if (op)
-		return op;
+	if (op) return op;
 
 	const ofc_sema_intrinsic_t* func = ofc_hashmap_find(
 		ofc_sema_intrinsic__func_map, &name);
-	if (func)
-		return func;
+	if (func) return func;
 
 	return NULL;
 }
@@ -1169,7 +1166,7 @@ static const ofc_sema_type_t* ofc_sema_intrinsic__param_type(
 
 	if ((p.type == OFC_SEMA_TYPE_CHARACTER)
 		&& (type->type == OFC_SEMA_TYPE_CHARACTER)
-		&& ((p.kind == 0) || (type->kind == p.kind))
+		&& ((p.kind == OFC_SEMA_KIND_NONE) || (type->kind == p.kind))
 		&& ((p.size == 0) || type->len_var || (p.size == type->len)))
 	{
 		if (valid) *valid = true;
@@ -1198,7 +1195,9 @@ static const ofc_sema_type_t* ofc_sema_intrinsic__param_type(
 	{
 		case OFC_SEMA_TYPE_CHARACTER:
 			ctype = ofc_sema_type_create_character(
-				(p.kind != 0 ? p.kind : 1), p.size, (p.size == 0));
+				(p.kind != OFC_SEMA_KIND_NONE
+					? p.kind : OFC_SEMA_KIND_DEFAULT),
+				p.size, (p.size == 0));
 			break;
 
 		case OFC_SEMA_TYPE_LOGICAL:
@@ -1207,7 +1206,8 @@ static const ofc_sema_type_t* ofc_sema_intrinsic__param_type(
 		case OFC_SEMA_TYPE_REAL:
 		case OFC_SEMA_TYPE_COMPLEX:
 			ctype = ofc_sema_type_create_primitive(
-				p.type, (p.kind != 0 ? p.kind : 1));
+				p.type, (p.kind != OFC_SEMA_KIND_NONE
+					? p.kind : OFC_SEMA_KIND_DEFAULT));
 			break;
 
 		default:
@@ -1479,6 +1479,36 @@ const ofc_sema_type_t* ofc_sema_intrinsic_type(
 
 		default:
 			break;
+	}
+
+	return NULL;
+}
+
+const ofc_sema_intrinsic_t* ofc_sema_intrinsic_cast_func(
+	const ofc_sema_type_t* type)
+{
+	if (!type)
+		return NULL;
+
+	unsigned i;
+	for (i = 0; ofc_sema_intrinsic__op_list[i].name; i++)
+	{
+		if (ofc_sema_intrinsic__op_list[i].constant
+			!= ofc_sema_intrinsic_op__constant_cast)
+			continue;
+
+		const ofc_sema_type_t* ctype
+			= ofc_sema_intrinsic__param_rtype(
+				ofc_sema_intrinsic__op_list[i].return_type, NULL, NULL);
+
+		if (ofc_sema_type_compare(ctype, type))
+		{
+			/* TODO - INTRINSIC - Find a neater way to do this lookup. */
+			const ofc_sema_intrinsic_t* intrinsic
+				= ofc_sema_intrinsic(ofc_str_ref_from_strz(
+					ofc_sema_intrinsic__op_list[i].name));
+			if (intrinsic) return intrinsic;
+		}
 	}
 
 	return NULL;

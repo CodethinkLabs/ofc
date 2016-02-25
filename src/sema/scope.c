@@ -1863,7 +1863,8 @@ bool ofc_sema_scope_foreach_expr(
 			scope->decl, param, func))
 		return false;
 
-	if (scope->stmt
+	if ((scope->type != OFC_SEMA_SCOPE_STMT_FUNC)
+		&& scope->stmt
 		&& !ofc_sema_stmt_list_foreach_expr(
 			scope->stmt, param, func))
 		return false;

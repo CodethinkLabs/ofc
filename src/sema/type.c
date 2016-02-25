@@ -20,9 +20,9 @@
 
 
 static bool ofc_sema_type__kind_valid(
-	unsigned kind)
+	ofc_sema_kind_e kind)
 {
-	if (kind == 0)
+	if (kind == OFC_SEMA_KIND_NONE)
 		return false;
 
 	if ((kind & (kind - 1)) == 0)
@@ -31,7 +31,7 @@ static bool ofc_sema_type__kind_valid(
 	if ((kind % 3) == 0)
 		return true;
 
-	if (kind == 7)
+	if (kind == OFC_SEMA_KIND_POINTER)
 		return true;
 
 	if ((kind % 5) == 0)
@@ -41,13 +41,13 @@ static bool ofc_sema_type__kind_valid(
 }
 
 static bool ofc_sema_type__kind_absolute(
-	unsigned kind)
+	ofc_sema_kind_e kind)
 {
 	return ((kind > 0) && ((kind % 3) == 0));
 }
 
 bool ofc_sema_type_kind_size(
-	unsigned def, unsigned kind, unsigned* size)
+	unsigned def, ofc_sema_kind_e kind, unsigned* size)
 {
 	if (ofc_sema_type__kind_absolute(kind))
 	{
@@ -55,7 +55,7 @@ bool ofc_sema_type_kind_size(
 		return true;
 	}
 
-	if (kind == 7)
+	if (kind == OFC_SEMA_KIND_POINTER)
 	{
 		if (size) *size = ofc_target_pointer_size_get();
 		return true;
@@ -210,7 +210,7 @@ static void ofc_sema_type__map_cleanup(void)
 
 static const ofc_sema_type_t* ofc_sema_type__create(
 	ofc_sema_type_e type,
-	unsigned kind, unsigned len, bool len_var,
+	ofc_sema_kind_e kind, unsigned len, bool len_var,
 	const ofc_sema_type_t* subtype)
 {
 	switch (type)
@@ -218,8 +218,8 @@ static const ofc_sema_type_t* ofc_sema_type__create(
 		case OFC_SEMA_TYPE_BYTE:
 			if ((len != 0) || len_var)
 				return NULL;
-			if ((kind != 1)
-				&& (kind != 3))
+			if ((kind != OFC_SEMA_KIND_DEFAULT)
+				&& (kind != OFC_SEMA_KIND_1_BYTE))
 				return NULL;
 			break;
 
@@ -281,7 +281,7 @@ static const ofc_sema_type_t* ofc_sema_type__create(
 			stype.kind, &bsize) && (bsize == 1))
 		{
 			stype.type = OFC_SEMA_TYPE_BYTE;
-			stype.kind = 1;
+			stype.kind = OFC_SEMA_KIND_DEFAULT;
 		}
 	}
 
@@ -308,7 +308,7 @@ static const ofc_sema_type_t* ofc_sema_type__create(
 
 const ofc_sema_type_t* ofc_sema_type_create_primitive(
 	ofc_sema_type_e type,
-	unsigned kind)
+	ofc_sema_kind_e kind)
 {
 	switch (type)
 	{
@@ -327,7 +327,7 @@ const ofc_sema_type_t* ofc_sema_type_create_primitive(
 }
 
 const ofc_sema_type_t* ofc_sema_type_create_character(
-	unsigned kind, unsigned len, bool len_var)
+	ofc_sema_kind_e kind, unsigned len, bool len_var)
 {
 	return ofc_sema_type__create(
 		OFC_SEMA_TYPE_CHARACTER, kind, len, len_var, NULL);
@@ -337,7 +337,7 @@ const ofc_sema_type_t* ofc_sema_type_create_pointer(
 	ofc_sema_type_t* target)
 {
 	return ofc_sema_type__create(
-		OFC_SEMA_TYPE_POINTER, 0, 0, false, target);
+		OFC_SEMA_TYPE_POINTER, OFC_SEMA_KIND_NONE, 0, false, target);
 }
 
 const ofc_sema_type_t* ofc_sema_type_create_function(
@@ -350,7 +350,7 @@ const ofc_sema_type_t* ofc_sema_type_create_function(
 		return NULL;
 
 	return ofc_sema_type__create(
-		OFC_SEMA_TYPE_FUNCTION, 0, 0, false, type);
+		OFC_SEMA_TYPE_FUNCTION, OFC_SEMA_KIND_NONE, 0, false, type);
 }
 
 
@@ -361,7 +361,8 @@ const ofc_sema_type_t* ofc_sema_type_logical_default(void)
 	if (!logical)
 	{
 		logical = ofc_sema_type_create_primitive(
-			OFC_SEMA_TYPE_LOGICAL, 1);
+			OFC_SEMA_TYPE_LOGICAL,
+			OFC_SEMA_KIND_DEFAULT);
 	}
 
 	return logical;
@@ -374,7 +375,8 @@ const ofc_sema_type_t* ofc_sema_type_integer_default(void)
 	if (!integer)
 	{
 		integer = ofc_sema_type_create_primitive(
-			OFC_SEMA_TYPE_INTEGER, 1);
+			OFC_SEMA_TYPE_INTEGER,
+			OFC_SEMA_KIND_DEFAULT);
 	}
 
 	return integer;
@@ -387,7 +389,8 @@ const ofc_sema_type_t* ofc_sema_type_real_default(void)
 	if (!real)
 	{
 		real = ofc_sema_type_create_primitive(
-			OFC_SEMA_TYPE_REAL, 1);
+			OFC_SEMA_TYPE_REAL,
+			OFC_SEMA_KIND_DEFAULT);
 	}
 
 	return real;
@@ -404,7 +407,8 @@ const ofc_sema_type_t* ofc_sema_type_double_default(void)
 		if (!real) return NULL;
 
 		dbl = ofc_sema_type_create_primitive(
-			OFC_SEMA_TYPE_REAL, 2);
+			OFC_SEMA_TYPE_REAL,
+			OFC_SEMA_KIND_DOUBLE);
 	}
 
 	return dbl;
@@ -417,7 +421,8 @@ const ofc_sema_type_t* ofc_sema_type_complex_default(void)
 	if (!complex)
 	{
 		complex = ofc_sema_type_create_primitive(
-			OFC_SEMA_TYPE_COMPLEX, 1);
+			OFC_SEMA_TYPE_COMPLEX,
+			OFC_SEMA_KIND_DEFAULT);
 	}
 
 	return complex;
@@ -434,7 +439,8 @@ const ofc_sema_type_t* ofc_sema_type_double_complex_default(void)
 		if (!real) return NULL;
 
 		dbl_complex = ofc_sema_type_create_primitive(
-			OFC_SEMA_TYPE_COMPLEX, 2);
+			OFC_SEMA_TYPE_COMPLEX,
+			OFC_SEMA_KIND_DOUBLE);
 	}
 
 	return dbl_complex;
@@ -447,7 +453,8 @@ const ofc_sema_type_t* ofc_sema_type_byte_default(void)
 	if (!byte)
 	{
 		byte = ofc_sema_type_create_primitive(
-			OFC_SEMA_TYPE_BYTE, 1);
+			OFC_SEMA_TYPE_BYTE,
+			OFC_SEMA_KIND_DEFAULT);
 	}
 
 	return byte;
@@ -460,7 +467,7 @@ const ofc_sema_type_t* ofc_sema_type_subroutine(void)
 	if (!subroutine)
 	{
 		subroutine = ofc_sema_type__create(
-			OFC_SEMA_TYPE_SUBROUTINE, 0, 0, false, NULL);
+			OFC_SEMA_TYPE_SUBROUTINE, OFC_SEMA_KIND_NONE, 0, false, NULL);
 	}
 
 	return subroutine;
@@ -473,7 +480,7 @@ const ofc_sema_type_t* ofc_sema_type_type(void)
 	if (!type)
 	{
 		type = ofc_sema_type__create(
-			OFC_SEMA_TYPE_TYPE, 0, 0, false, NULL);
+			OFC_SEMA_TYPE_TYPE, OFC_SEMA_KIND_NONE, 0, false, NULL);
 	}
 
 	return type;
@@ -507,7 +514,8 @@ const ofc_sema_type_t* ofc_sema_type_spec(
 		return NULL;
 
 	unsigned kind = spec->kind;
-	if (kind == 0) kind = 1;
+	if (kind == OFC_SEMA_KIND_NONE)
+		kind = OFC_SEMA_KIND_DEFAULT;
 
 	unsigned len = spec->len;
 
@@ -539,7 +547,7 @@ const ofc_sema_type_t* ofc_sema_type_spec(
 		case OFC_SEMA_TYPE_RECORD:
 			if ((spec->len != 0)
 				|| spec->len_var
-				|| (kind != 1))
+				|| (kind != OFC_SEMA_KIND_DEFAULT))
 				return false;
 			type = ofc_sema_type_type();
 			break;
@@ -818,6 +826,32 @@ const ofc_sema_type_t* ofc_sema_type_base(
 static unsigned umax(unsigned a, unsigned b)
 	{ return (a > b ? a : b); }
 
+const ofc_sema_type_t* ofc_sema_character_pad_to_type(
+	const ofc_sema_type_t* character,
+	const ofc_sema_type_t* type)
+{
+	if (!character || !type
+		|| (character->type != OFC_SEMA_TYPE_CHARACTER))
+		return NULL;
+
+	unsigned tsize;
+	if (!ofc_sema_type_size(type, &tsize))
+		return NULL;
+
+	unsigned ksize;
+	if (!ofc_sema_type_kind_size(
+		1, character->kind, &ksize))
+		return NULL;
+
+	unsigned len = (tsize + (ksize - 1)) / ksize;
+	if (!character->len_var
+		&& (character->len >= len))
+		return character;
+
+	return ofc_sema_type_create_character(
+		character->kind, len, false);
+}
+
 const ofc_sema_type_t* ofc_sema_type_promote(
 	const ofc_sema_type_t* a,
 	const ofc_sema_type_t* b)
@@ -876,9 +910,6 @@ const ofc_sema_type_t* ofc_sema_type_promote(
 	if (b->type == OFC_SEMA_TYPE_COMPLEX)
 		bsize /= 2;
 
-	unsigned size = umax(asize, bsize);
-	unsigned kind = (3 * size);
-
 	bool logical = ((a->type == OFC_SEMA_TYPE_LOGICAL)
 		|| (b->type == OFC_SEMA_TYPE_LOGICAL));
 	bool integer = ((a->type == OFC_SEMA_TYPE_INTEGER)
@@ -892,20 +923,55 @@ const ofc_sema_type_t* ofc_sema_type_promote(
 
 	if (logical && integer)
 	{
+		ofc_sema_kind_e kind
+			= (asize > bsize ? a->kind : b->kind);
 		return ofc_sema_type_create_primitive(
 			OFC_SEMA_TYPE_INTEGER, kind);
 	}
-	else if (real && (logical || integer))
+	else if (real && complex)
 	{
-		/* TODO - Take mantissa bits into account. */
-
-		return ofc_sema_type_create_primitive(
-			OFC_SEMA_TYPE_REAL, kind);
-	}
-	else if (complex && (real || logical || integer))
-	{
+		ofc_sema_kind_e kind
+			= (asize > bsize ? a->kind : b->kind);
 		return ofc_sema_type_create_primitive(
 			OFC_SEMA_TYPE_COMPLEX, kind);
+	}
+	else if ((real || complex) && (logical || integer))
+	{
+		ofc_sema_kind_e k[] =
+		{
+			OFC_SEMA_KIND_DEFAULT,
+			OFC_SEMA_KIND_DOUBLE,
+			OFC_SEMA_KIND_QUAD,
+
+			OFC_SEMA_KIND_NONE
+		};
+
+		unsigned size = umax(asize, bsize);
+
+		/* TODO - TYPE - Find a better way to type promote. */
+		ofc_sema_kind_e kind
+			= OFC_SEMA_KIND_NONE;
+
+		unsigned i;
+		for (i = 0; k[i] != OFC_SEMA_KIND_NONE; i++)
+		{
+			unsigned ksize;
+			if (!ofc_sema_type_kind_size(
+				ofc_target_real_size_get(), k[i], &ksize))
+				continue;
+
+			/* TODO - TYPE - Take mantissa bits into account. */
+			if (ksize >= size)
+			{
+				kind = k[i];
+				break;
+			}
+		}
+		if (kind == OFC_SEMA_KIND_NONE)
+			return NULL;
+
+		return ofc_sema_type_create_primitive(
+			(complex ? OFC_SEMA_TYPE_COMPLEX : OFC_SEMA_TYPE_REAL), kind);
 	}
 
 	/* We can't promote characters or pointers. */
@@ -1087,7 +1153,7 @@ bool ofc_sema_type_print(
 	{
 		case OFC_SEMA_TYPE_REAL:
 		case OFC_SEMA_TYPE_COMPLEX:
-			print_double = (type->kind == 2);
+			print_double = (type->kind == OFC_SEMA_KIND_DOUBLE);
 			break;
 		default:
 			break;
@@ -1123,7 +1189,8 @@ bool ofc_sema_type_print(
 
 	bool print_len = ((type->type == OFC_SEMA_TYPE_CHARACTER)
 		&& (type->len != 1));
-	bool print_kind = ((type->kind != 1) && !kind_abs && !print_double);
+	bool print_kind = ((type->kind != OFC_SEMA_KIND_DEFAULT)
+		&& !kind_abs && !print_double);
 
 	if (print_len || print_kind)
 	{

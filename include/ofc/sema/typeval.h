@@ -38,12 +38,21 @@ typedef struct
 	};
 } ofc_sema_typeval_t;
 
-ofc_sema_typeval_t* ofc_sema_typeval_create_unsigned(
-	unsigned value, ofc_sparse_ref_t ref);
+
+ofc_sema_typeval_t* ofc_sema_typeval_create_logical(
+	bool value, ofc_sema_kind_e kind,
+	ofc_sparse_ref_t ref);
 ofc_sema_typeval_t* ofc_sema_typeval_create_integer(
-	int value, ofc_sparse_ref_t ref);
+	int value, ofc_sema_kind_e kind,
+	ofc_sparse_ref_t ref);
 ofc_sema_typeval_t* ofc_sema_typeval_create_real(
-	long double value, ofc_sparse_ref_t ref);
+	long double value, ofc_sema_kind_e kind,
+	ofc_sparse_ref_t ref);
+ofc_sema_typeval_t* ofc_sema_typeval_create_complex(
+	long double real, long double imaginary,
+	ofc_sema_kind_e kind,
+	ofc_sparse_ref_t ref);
+
 ofc_sema_typeval_t* ofc_sema_typeval_literal(
 	const ofc_parse_literal_t* literal,
 	const ofc_sema_type_t* type);
@@ -140,6 +149,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_eqv(
 ofc_sema_typeval_t* ofc_sema_typeval_neqv(
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b);
+
+bool ofc_sema_typeval_can_print(
+	const ofc_sema_typeval_t* typeval);
 
 bool ofc_sema_typeval_print(ofc_colstr_t*cs,
 	const ofc_sema_typeval_t* typeval);
