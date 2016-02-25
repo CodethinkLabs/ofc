@@ -127,6 +127,16 @@ int main(int argc, const char* argv[])
 		return EXIT_FAILURE;
 	}
 
+	/* TODO - Add a command line argument for this pass. */
+	if (!ofc_sema_pass_unlabelled_continue(sema))
+	{
+		ofc_file_error(file, NULL, "Failed 'Remove unlabelled continue statements' semantic pass");
+		ofc_sema_scope_delete(sema);
+		ofc_parse_stmt_list_delete(program);
+		ofc_sparse_delete(condense);
+		return EXIT_FAILURE;
+	}
+
 	if (global_opts.sema_print)
 	{
 		ofc_colstr_t* cs = ofc_colstr_create(72, 0);
