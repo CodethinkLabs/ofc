@@ -224,7 +224,6 @@ static ofc_sema_typeval_t* ofc_sema_intrinsic_op__constant_cast(
 		ofc_sema_intrinsic_type(intrinsic, args));
 }
 
-
 typedef struct
 {
 	const char*                 name;
@@ -426,6 +425,247 @@ static const ofc_sema_type_t* ofc_sema_intrinsic__transfer_rt(
 	return ofc_sema_expr_type(args->expr[1]);
 }
 
+static ofc_sema_typeval_t* ofc_sema_intrinsic__transfer_tv(
+	const ofc_sema_intrinsic_t* intrinsic,
+	const ofc_sema_expr_list_t* args)
+{
+	(void)intrinsic;
+
+	/* TODO - INTRINSIC - Use 3rd parameter as array size if present. */
+	if ((args->count < 2)
+		|| (args->count >= 3))
+		return NULL;
+
+	const ofc_sema_typeval_t* atv
+		= ofc_sema_expr_constant(args->expr[1]);
+	if (!atv) return NULL;
+
+	const ofc_sema_type_t* atype = atv->type;
+	if (!atype) return NULL;
+
+	const ofc_sema_type_t* rtype
+		= ofc_sema_intrinsic__transfer_rt(args);
+
+	unsigned asize, rsize;
+	if (!ofc_sema_type_size(atype, &asize)
+		|| !ofc_sema_type_size(rtype, &rsize))
+		return NULL;
+
+	uint8_t buff[asize];
+	memset(buff, 0x00, asize);
+
+	const void* src = buff;
+	switch (atv->type->type)
+	{
+		case OFC_SEMA_TYPE_LOGICAL:
+			buff[0] = (atv->logical ? 1 : 0);
+			break;
+
+		case OFC_SEMA_TYPE_INTEGER:
+		case OFC_SEMA_TYPE_BYTE:
+			if (asize > 8)
+				return NULL;
+			src = &atv->integer;
+			break;
+
+		case OFC_SEMA_TYPE_REAL:
+		{
+			if (asize == 4)
+			{
+				float f32 = atv->real;
+				memcpy(buff, &f32, 4);
+			}
+			else if (asize == 8)
+			{
+				double f64 = atv->real;
+				memcpy(buff, &f64, 8);
+			}
+			else if (asize == 10)
+			{
+				long double f80 = atv->real;
+				memcpy(buff, &f80, 10);
+			}
+			else
+			{
+				return NULL;
+			}
+			break;
+		}
+
+		case OFC_SEMA_TYPE_COMPLEX:
+		{
+			if (asize == 8)
+			{
+				float f32[2] =
+				{
+					atv->complex.real,
+					atv->complex.imaginary
+				};
+				memcpy(buff, f32, 8);
+			}
+			else if (asize == 16)
+			{
+				double f64[2] =
+				{
+					atv->complex.real,
+					atv->complex.imaginary
+				};
+				memcpy(buff, f64, 16);
+			}
+			else if (asize == 20)
+			{
+				long double f80[2] =
+				{
+					atv->complex.real,
+					atv->complex.imaginary
+				};
+				memcpy(buff, f80, 20);
+			}
+			else
+			{
+				return NULL;
+			}
+			break;
+		}
+
+		case OFC_SEMA_TYPE_CHARACTER:
+			src = atv->character;
+			if (!src) return NULL;
+			break;
+
+		default:
+			return NULL;
+	}
+
+	/* TODO - INTRINSIC - Retain location in typeval. */
+	ofc_sema_typeval_t* rtv
+		= ofc_sema_typeval_create_unsigned(
+			0, OFC_SPARSE_REF_EMPTY);
+	if (!rtv) return NULL;
+	rtv->type = rtype;
+
+	if (ofc_sema_type_is_character(rtype))
+	{
+		rtv->character = (char*)malloc(rsize);
+		if (!rtv->character)
+		{
+			ofc_sema_typeval_delete(rtv);
+			return NULL;
+		}
+
+		if (asize > rsize)
+			asize = rsize;
+
+		memset(rtv->character, 0x00, rsize);
+		memcpy(rtv->character, src, asize);
+	}
+	else
+	{
+		switch (rtype->type)
+		{
+			case OFC_SEMA_TYPE_LOGICAL:
+			{
+				uint8_t zero[asize];
+				memset(zero, 0x00, asize);
+				rtv->logical = (memcmp(src, zero, asize) != 0);
+				break;
+			}
+
+			case OFC_SEMA_TYPE_INTEGER:
+			case OFC_SEMA_TYPE_BYTE:
+				/* We can't fold constants this large. */
+				if (rsize > 8)
+				{
+					ofc_sema_typeval_delete(rtv);
+					return NULL;
+				}
+
+				if (asize < rsize)
+					rsize = asize;
+
+				rtv->integer = 0;
+				memcpy(&rtv->integer, src, rsize);
+				break;
+
+			case OFC_SEMA_TYPE_REAL:
+			{
+				if (asize > rsize)
+					asize = rsize;
+
+				if (rsize == 4)
+				{
+					float f32 = 0.0f;
+					memcpy(&f32, src, asize);
+					rtv->real = f32;
+				}
+				else if (rsize == 8)
+				{
+					double f64 = 0.0;
+					memcpy(&f64, src, asize);
+					rtv->real = f64;
+				}
+				else if (rsize == 10)
+				{
+					long double f80 = 0.0;
+					memcpy(&f80, src, asize);
+					rtv->real = f80;
+				}
+				else
+				{
+					/* We can't fold obscure float constants. */
+					ofc_sema_typeval_delete(rtv);
+					return NULL;
+				}
+
+				break;
+			}
+
+			case OFC_SEMA_TYPE_COMPLEX:
+			{
+				if (asize > rsize)
+					asize = rsize;
+
+				if (rsize == 8)
+				{
+					float f32[2] = { 0.0f, 0.0f };
+					memcpy(f32, src, asize);
+					rtv->complex.real = f32[0];
+					rtv->complex.imaginary = f32[1];
+				}
+				else if (rsize == 16)
+				{
+					double f64[2] = { 0.0, 0.0 };
+					memcpy(f64, src, asize);
+					rtv->complex.real = f64[0];
+					rtv->complex.imaginary = f64[1];
+				}
+				else if (rsize == 20)
+				{
+					long double f80[2] = { 0.0, 0.0 };
+					memcpy(f80, src, asize);
+					rtv->complex.real = f80[0];
+					rtv->complex.imaginary = f80[1];
+				}
+				else
+				{
+					/* We can't fold obscure float constants. */
+					ofc_sema_typeval_delete(rtv);
+					return NULL;
+				}
+
+				break;
+			}
+
+			default:
+				ofc_sema_typeval_delete(rtv);
+				return NULL;
+		}
+	}
+
+	return rtv;
+}
+
+
 
 typedef struct
 {
@@ -493,7 +733,8 @@ static const ofc_sema_intrinsic_func_t ofc_sema_intrinsic__func_list[] =
 		ofc_sema_intrinsic__ichar_rt, NULL },
 
 	{ "Transfer", 2, 3, IP_CALLBACK, { IP_ANY, IP_ANY, IP_INTEGER },
-		ofc_sema_intrinsic__transfer_rt, NULL },
+		ofc_sema_intrinsic__transfer_rt,
+		ofc_sema_intrinsic__transfer_tv },
 
 	{ NULL, 0, 0, 0, { 0 }, NULL, NULL }
 };
