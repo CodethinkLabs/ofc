@@ -765,10 +765,31 @@ bool ofc_sema_stmt_list_add(
 		= (ofc_sema_stmt_t**)realloc(list->stmt,
 			(sizeof(ofc_sema_stmt_t*) * (list->count + 1)));
 	if (!nstmt) return NULL;
-
 	list->stmt = nstmt;
+
 	list->stmt[list->count++] = stmt;
+
 	return true;
+}
+
+bool ofc_sema_stmt_list_remove(
+	ofc_sema_stmt_list_t* list,
+	ofc_sema_stmt_t* stmt)
+{
+	if (!list || !stmt)
+		return false;
+
+	unsigned i;
+	for (i = 0; i < list->count; i++)
+	{
+		if (list->stmt[i] == stmt)
+		{
+			list->stmt[i] = NULL;
+			return true;
+		}
+	}
+
+	return false;
 }
 
 unsigned ofc_sema_stmt_list_count(
@@ -1150,6 +1171,8 @@ bool ofc_sema_stmt_print(
 	ofc_sema_label_map_t* label_map,
 	const ofc_sema_stmt_t* stmt)
 {
+	if (!stmt) return false;
+
 	switch (stmt->type)
 	{
 		case OFC_SEMA_STMT_ASSIGNMENT:
@@ -1289,28 +1312,30 @@ bool ofc_sema_stmt_list_print(
 	unsigned i;
 	for (i = 0; i < stmt_list->count; i++)
 	{
-		const ofc_sema_label_t* label
-			= ofc_sema_label_map_find_stmt(
-				label_map, stmt_list->stmt[i]);
-		if (label)
+		if (stmt_list->stmt[i])
 		{
-			unsigned label_num = label->number;
-			if (!ofc_colstr_newline(cs, indent, &label_num))
-				return false;
-		}
-		else
-		{
-			if (!ofc_colstr_newline(cs, indent, NULL))
-				return false;
-		}
+			const ofc_sema_label_t* label
+				= ofc_sema_label_map_find_stmt(
+					label_map, stmt_list->stmt[i]);
+			if (label)
+			{
+				unsigned label_num = label->number;
+				if (!ofc_colstr_newline(cs, indent, &label_num))
+					return false;
+			}
+			else
+			{
+				if (!ofc_colstr_newline(cs, indent, NULL))
+					return false;
+			}
 
-		if (!ofc_sema_stmt_print(
-			cs, indent, label_map,
-			stmt_list->stmt[i]))
-		{
-			ofc_file_error(NULL, NULL, "Failed to print statement: %s",
-				ofc_sema_stmt__str_rep(stmt_list->stmt[i]));
-			return false;
+			if (!ofc_sema_stmt_print(cs, indent,
+				label_map, stmt_list->stmt[i]))
+			{
+				ofc_file_error(NULL, NULL, "Failed to print statement: %s",
+					ofc_sema_stmt__str_rep(stmt_list->stmt[i]));
+				return false;
+			}
 		}
 	}
 	return true;
