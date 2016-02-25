@@ -20,6 +20,8 @@ bool ofc_sema_pass_struct_type(
 	ofc_sema_scope_t* scope);
 bool ofc_sema_pass_unref_label(
 	ofc_sema_scope_t* scope);
+bool ofc_sema_pass_unlabelled_format(
+	ofc_sema_scope_t* scope);
 
 bool ofc_sema_pass_char_transfer(
 	ofc_sema_scope_t* scope);
