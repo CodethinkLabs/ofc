@@ -910,6 +910,9 @@ static ofc_sema_expr_t* ofc_sema_expr__intrinsic(
 	expr->intrinsic = intrinsic;
 	expr->args      = args;
 
+	expr->constant = ofc_sema_intrinsic_constant(
+		intrinsic, args);
+
 	expr->src = OFC_SPARSE_REF_EMPTY;
 	ofc_sparse_ref_bridge(
 		name->parent->src, name->src,
