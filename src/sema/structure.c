@@ -382,20 +382,17 @@ ofc_sema_decl_t* ofc_sema_structure_member_get_decl_name(
 		return member->decl;
 	}
 
-	if (!member)
+	unsigned i;
+	for (i = 0; i < structure->count; i++)
 	{
-		unsigned i;
-		for (i = 0; i < structure->count; i++)
-		{
-			if (!ofc_sema_structure__member_anon(
-				structure->member[i]))
-				continue;
+		if (!ofc_sema_structure__member_anon(
+			structure->member[i]))
+			continue;
 
-			ofc_sema_decl_t* decl
-				= ofc_sema_structure_member_get_decl_name(
-					member->structure, name);
-			if (decl) return decl;
-		}
+		ofc_sema_decl_t* decl
+			= ofc_sema_structure_member_get_decl_name(
+				member->structure, name);
+		if (decl) return decl;
 	}
 
 	return NULL;
