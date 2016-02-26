@@ -172,10 +172,35 @@ static const char* is_escape(char c)
 	return NULL;
 }
 
-bool ofc_colstr_write_escaped(
-	ofc_colstr_t* cstr, const char* base, unsigned size)
+bool ofc_colstr_write_quoted(
+	ofc_colstr_t* cstr,
+	const char* prefix, char quote,
+	const char* base, unsigned size)
 {
-	if (!base || (size == 0))
+	if (size < 2)
+	{
+		return ofc_colstr_atomic_writef(
+			cstr, "%s%c%.*s%c", (prefix ? prefix : ""),
+			quote, size, base, quote);
+	}
+
+	if (!ofc_colstr_atomic_writef(
+		cstr, "%s%c%c", (prefix ? prefix : ""), quote, base[0]))
+		return false;
+
+	return ofc_colstr_writef(
+		cstr, "%.*s%c", (size - 1), &base[1], quote);
+}
+
+bool ofc_colstr_write_escaped(
+	ofc_colstr_t* cstr, char quote,
+	const char* base, unsigned size)
+{
+	if (size == 0)
+		return ofc_colstr_write_quoted(
+			cstr, NULL, quote, NULL, 0);
+
+	if (!base)
 		return false;
 
 	unsigned esize = size;
@@ -205,8 +230,8 @@ bool ofc_colstr_write_escaped(
 		}
 	}
 
-	return ofc_colstr_write(
-		cstr, estr, esize);
+	return ofc_colstr_write_quoted(
+		cstr, NULL, quote, estr, esize);
 }
 
 

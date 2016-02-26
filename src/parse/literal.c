@@ -739,30 +739,22 @@ bool ofc_parse_literal_print(
 			return ofc_str_ref_print(
 				cs, literal.number);
 		case OFC_PARSE_LITERAL_BINARY:
-			return (ofc_colstr_atomic_writef(cs, "B\"")
-				&& ofc_str_ref_print(cs, literal.number)
-				&& ofc_colstr_atomic_writef(cs, "\""));
+			return ofc_colstr_write_quoted(cs, "B", '\"',
+				literal.number.base, literal.number.size);
 		case OFC_PARSE_LITERAL_OCTAL:
-			return (ofc_colstr_atomic_writef(cs, "O\"")
-				&& ofc_str_ref_print(cs, literal.number)
-				&& ofc_colstr_atomic_writef(cs, "\""));
+			return ofc_colstr_write_quoted(cs, "O", '\"',
+				literal.number.base, literal.number.size);
 		case OFC_PARSE_LITERAL_HEX:
-			return (ofc_colstr_atomic_writef(cs, "Z\"")
-				&& ofc_str_ref_print(cs, literal.number)
-				&& ofc_colstr_atomic_writef(cs, "\""));
+			return ofc_colstr_write_quoted(cs, "Z", '\"',
+				literal.number.base, literal.number.size);
 		case OFC_PARSE_LITERAL_HOLLERITH:
 			return (ofc_colstr_atomic_writef(cs, "%uH%s",
 				ofc_string_length(literal.string),
 				ofc_string_strz(literal.string)));
 		case OFC_PARSE_LITERAL_CHARACTER:
-			if (!ofc_colstr_writef(cs, "\""))
-				return false;
-			if (!ofc_string_empty(literal.string)
-				&& !ofc_colstr_write_escaped(cs,
+			return ofc_colstr_write_escaped(cs, '\"',
 					ofc_string_strz(literal.string),
-					ofc_string_length(literal.string)))
-				return false;
-			return ofc_colstr_writef(cs, "\"");
+					ofc_string_length(literal.string));
 		case OFC_PARSE_LITERAL_COMPLEX:
 			return ofc_colstr_atomic_writef(cs, "(%.*s, %.*s)",
 				literal.complex.real.size,

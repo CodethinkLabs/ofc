@@ -2615,8 +2615,8 @@ bool ofc_sema_typeval_print(ofc_colstr_t*cs,
 				return false;
 			}
 
-			return ofc_colstr_writef(cs, "\"%.*s\"",
-				typeval->type->len, typeval->character);
+			return ofc_colstr_write_escaped(cs, '\"',
+				typeval->character, typeval->type->len);
 
 		default:
 			break;

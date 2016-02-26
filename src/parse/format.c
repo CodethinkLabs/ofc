@@ -321,14 +321,9 @@ bool ofc_parse_format_desc_print(
 				return false;
 			break;
 		case OFC_PARSE_FORMAT_DESC_STRING:
-			if (!ofc_colstr_writef(cs, "\""))
-				return false;
-			if (!ofc_string_empty(desc->string)
-				&& !ofc_colstr_write_escaped(cs,
+			if (!ofc_colstr_write_escaped(cs, '\"',
 					ofc_string_strz(desc->string),
 					ofc_string_length(desc->string)))
-				return false;
-			if (!ofc_colstr_writef(cs, "\""))
 				return false;
 			break;
 		case OFC_PARSE_FORMAT_DESC_REPEAT:

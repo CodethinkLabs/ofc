@@ -2122,9 +2122,6 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 
 				if (decl->init_array[i].is_substring)
 				{
-					if (!ofc_colstr_writef(cs, "\""))
-						return false;
-
 					unsigned len;
 					for (len = 0; len < type->len; len++)
 					{
@@ -2132,11 +2129,8 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 							break;
 					}
 
-					if (!ofc_colstr_write_escaped(cs,
+					if (!ofc_colstr_write_escaped(cs, '\"',
 						decl->init_array[i].substring.string, len))
-						return false;
-
-					if (!ofc_colstr_writef(cs, "\""))
 						return false;
 				}
 				else if (!ofc_sema_expr_print(
@@ -2167,9 +2161,6 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 		{
 			if (decl->init.is_substring)
 			{
-				if (!ofc_colstr_writef(cs, "\""))
-					return false;
-
 				unsigned len;
 				for (len = 0; len < type->len; len++)
 				{
@@ -2177,11 +2168,8 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 						break;
 				}
 
-				if (!ofc_colstr_write_escaped(cs,
+				if (!ofc_colstr_write_escaped(cs, '\"',
 					decl->init.substring.string, len))
-					return false;
-
-				if (!ofc_colstr_writef(cs, "\""))
 					return false;
 			}
 			else if (!ofc_sema_expr_print(cs, decl->init.expr))
@@ -2237,9 +2225,8 @@ static bool ofc_sema_decl_print_data_init__ssc(
 
 	*first = false;
 
-	return (ofc_colstr_writef(cs, "\"")
-		&& ofc_colstr_write_escaped(cs, &string[base], size)
-		&& ofc_colstr_writef(cs, "\""));
+	return ofc_colstr_write_escaped(
+		cs, '\"', &string[base], size);
 }
 
 bool ofc_sema_decl_print_data_init(ofc_colstr_t* cs,
@@ -2348,10 +2335,8 @@ bool ofc_sema_decl_print_data_init(ofc_colstr_t* cs,
 					}
 				}
 
-				if (!ofc_colstr_writef(cs, "\"")
-					|| !ofc_colstr_write_escaped(cs,
-						decl->init_array[i].substring.string, l)
-					|| !ofc_colstr_writef(cs, "\""))
+				if (!ofc_colstr_write_escaped(cs, '\"',
+						decl->init_array[i].substring.string, l))
 					return false;
 			}
 			else
@@ -2437,10 +2422,8 @@ bool ofc_sema_decl_print_data_init(ofc_colstr_t* cs,
 					}
 				}
 
-				if (!ofc_colstr_writef(cs, "\"")
-					|| !ofc_colstr_write_escaped(cs,
-						decl->init_array[i].substring.string, l)
-					|| !ofc_colstr_writef(cs, "\""))
+				if (!ofc_colstr_write_escaped(cs, '\"',
+						decl->init_array[i].substring.string, l))
 					return false;
 			}
 			else

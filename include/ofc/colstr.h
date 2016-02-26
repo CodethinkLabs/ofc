@@ -32,8 +32,14 @@ bool ofc_colstr_newline(
 
 #include <stdarg.h>
 
+bool ofc_colstr_write_quoted(
+	ofc_colstr_t* cstr,
+	const char* prefix, char quote,
+	const char* base, unsigned size);
+
 bool ofc_colstr_write_escaped(
-	ofc_colstr_t* cstr, const char* base, unsigned size);
+	ofc_colstr_t* cstr, char quote,
+	const char* base, unsigned size);
 
 bool ofc_colstr_write(
 	ofc_colstr_t* cstr, const char* base, unsigned size);
