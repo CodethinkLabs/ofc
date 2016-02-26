@@ -24,6 +24,7 @@
 
 #include "ofc/lang_opts.h"
 #include "ofc/global_opts.h"
+#include "ofc/print_opts.h"
 #include "ofc/file.h"
 
 typedef enum
@@ -40,6 +41,8 @@ typedef enum
 	FREE_FORM,
 	TAB_FORM,
 	TAB_WIDTH,
+	INDENT_WIDTH,
+	INDENT_MAX_LEVEL,
 	DEBUG,
 	COLUMNS,
 	CASE_SEN,
@@ -51,6 +54,7 @@ typedef enum
 typedef enum
 {
 	GLOB_NONE = 0,
+	PRIN_INT,
 	LANG_NONE,
 	LANG_INT,
 	FILE_STR,
@@ -90,6 +94,7 @@ bool ofc_cliarg_parse(
     const char* argv[],
 	ofc_file_t** file,
 	ofc_lang_opts_t* lang_opts,
+	ofc_print_opts_t* print_opts,
 	ofc_global_opts_t* global_opts);
 
 void print_usage(const char* name);

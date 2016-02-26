@@ -30,12 +30,13 @@ int main(int argc, const char* argv[])
 {
 	global_opts = OFC_GLOBAL_OPTS_DEFAULT;
 
-	ofc_lang_opts_t lang_opts = OFC_LANG_OPTS_DEFAULT;
+	ofc_lang_opts_t lang_opts   = OFC_LANG_OPTS_DEFAULT;
+	ofc_print_opts_t print_opts = OFC_PRINT_OPTS_DEFAULT;
 
 	ofc_file_t* file = NULL;
 
 	if (!ofc_cliarg_parse(argc, argv,
-		&file, &lang_opts, &global_opts))
+		&file, &lang_opts, &print_opts, &global_opts))
 		return EXIT_FAILURE;
 
 	ofc_sparse_t* condense = ofc_prep(file);

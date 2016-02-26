@@ -59,6 +59,29 @@ static bool set_global_opts__flag(
 	return true;
 }
 
+static bool set_print_opts__num(
+	ofc_print_opts_t* print_opts,
+	int arg_type, unsigned value)
+{
+	if (!print_opts)
+		return false;
+
+    switch (arg_type)
+	{
+		case INDENT_WIDTH:
+			print_opts->indent_width = value;
+			break;
+		case INDENT_MAX_LEVEL:
+			print_opts->indent_max_level = value;
+			break;
+
+		default:
+			return false;
+	}
+
+	return true;
+}
+
 static bool set_lang_opts__flag(
 	ofc_lang_opts_t* lang_opts,
 	int arg_type)
@@ -155,6 +178,8 @@ static const ofc_cliarg_body_t cliargs[] =
 	{ DEBUG,                 "debug",                 '\0', "Sets debug mode",                            LANG_NONE, 0, true  },
 	{ COLUMNS,               "columns",               '\0', "Sets number of columns to <n>",              LANG_INT,  1, true  },
 	{ CASE_SEN,              "case-sen",              '\0', "Sets case sensitive mode",                   LANG_NONE, 0, true  },
+	{ INDENT_WIDTH,          "indent-width",          '\0', "Sets indent width <n>",                      PRIN_INT,  1, true  },
+	{ INDENT_MAX_LEVEL,      "indent-max-level",      '\0', "Sets maximum indent level <n>",              PRIN_INT,  1, true  },
 	{ INCLUDE,               "include",               '\0', "Set include paths <s>",                      FILE_STR,  1, false },
 };
 
@@ -229,6 +254,7 @@ static bool resolve_param_str(const char* arg_string)
 
 static bool ofc_cliarg__apply(
 	ofc_global_opts_t* global_opts,
+	ofc_print_opts_t* print_opts,
 	ofc_lang_opts_t* lang_opts,
 	ofc_file_t* file,
 	const ofc_cliarg_t* arg)
@@ -247,6 +273,9 @@ static bool ofc_cliarg__apply(
 		case LANG_INT:
 			return set_lang_opts__num(lang_opts, arg_type, arg->value);
 
+		case PRIN_INT:
+			return set_print_opts__num(print_opts, arg_type, arg->value);
+
 		case FILE_STR:
 			return set_file__str(file, arg_type, arg->str);
 
@@ -259,6 +288,7 @@ static bool ofc_cliarg__apply(
 
 static bool ofc_cliarg_list__apply(
 	ofc_global_opts_t* global_opts,
+	ofc_print_opts_t* print_opts,
 	ofc_lang_opts_t* lang_opts,
 	ofc_file_t* file,
 	ofc_cliarg_list_t* list)
@@ -266,7 +296,8 @@ static bool ofc_cliarg_list__apply(
 	unsigned i;
 	for (i = 0; i < list->count; i++)
 	{
-		if (!ofc_cliarg__apply(global_opts, lang_opts, file, list->arg[i]))
+		if (!ofc_cliarg__apply(global_opts, print_opts,
+			lang_opts, file, list->arg[i]))
 			return false;
 	}
 
@@ -278,6 +309,7 @@ bool ofc_cliarg_parse(
     const char* argv[],
 	ofc_file_t** file,
 	ofc_lang_opts_t* lang_opts,
+	ofc_print_opts_t* print_opts,
 	ofc_global_opts_t* global_opts)
 {
 	const char* program_name = argv[0];
@@ -317,6 +349,7 @@ bool ofc_cliarg_parse(
 						break;
 
 					case LANG_INT:
+					case PRIN_INT:
 					{
 						int param = -1;
 						if (!resolve_param_pos_int(argv[i++], &param))
@@ -398,7 +431,7 @@ bool ofc_cliarg_parse(
 		&& (strcasecmp(source_file_ext, "F90") == 0))
 		*lang_opts = OFC_LANG_OPTS_F90;
 
-	if (!ofc_cliarg_list__apply(global_opts, lang_opts, *file, args_list))
+	if (!ofc_cliarg_list__apply(global_opts, print_opts, lang_opts, *file, args_list))
 		return false;
 
 	ofc_cliarg_list_delete(args_list);
@@ -474,6 +507,7 @@ ofc_cliarg_t* ofc_cliarg_create(
 		switch (arg_body->param_type)
 		{
 			case LANG_INT:
+			case PRIN_INT:
 				arg->value = *((int*)param);
 				break;
 
