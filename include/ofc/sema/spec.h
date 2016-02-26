@@ -62,7 +62,7 @@ typedef struct
 	ofc_sema_spec_list_t* list;
 }ofc_sema_spec_map_t;
 
-const ofc_sema_spec_t OFC_SEMA_SPEC_DEFAULT;
+extern const ofc_sema_spec_t OFC_SEMA_SPEC_DEFAULT;
 
 bool ofc_sema_spec_is_dynamic_array(
 	const ofc_sema_spec_t* spec);
