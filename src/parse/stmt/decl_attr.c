@@ -82,6 +82,9 @@ unsigned ofc_parse_stmt_decl_attr_automatic(
 		src, ptr, debug, OFC_PARSE_KEYWORD_AUTOMATIC, stmt);
 	if (i == 0) return 0;
 
+	ofc_parse_debug_warning(debug, ofc_sparse_ref(src, ptr, i),
+		"Use of AUTOMATIC keyword is non-standard and deprecated, ignoring");
+
 	stmt->type = OFC_PARSE_STMT_DECL_ATTR_AUTOMATIC;
 	return i;
 }

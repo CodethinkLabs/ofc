@@ -120,13 +120,6 @@ static ofc_sema_decl_t* ofc_sema_decl__spec(
 			return NULL;
 		}
 
-		if (spec->is_automatic)
-		{
-			ofc_sparse_ref_error(name,
-				"Structure members cannot be AUTOMATIC");
-			return NULL;
-		}
-
 		if (spec->is_volatile)
 		{
 			ofc_sparse_ref_error(name,
@@ -154,13 +147,6 @@ static ofc_sema_decl_t* ofc_sema_decl__spec(
 		{
 			ofc_sparse_ref_error(name,
 				"Procedures cannot be STATIC");
-			return NULL;
-		}
-
-		if (spec->is_automatic)
-		{
-			ofc_sparse_ref_error(name,
-				"Procedures cannot be AUTOMATIC");
 			return NULL;
 		}
 
@@ -2047,14 +2033,6 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 		if (!ofc_colstr_atomic_writef(cs, ",")
 			|| !ofc_colstr_atomic_writef(cs, " ")
 			|| !ofc_colstr_atomic_writef(cs, "SAVE"))
-			return false;
-	}
-
-	if (decl->is_automatic)
-	{
-		if (!ofc_colstr_atomic_writef(cs, ",")
-			|| !ofc_colstr_atomic_writef(cs, " ")
-			|| !ofc_colstr_atomic_writef(cs, "AUTOMATIC"))
 			return false;
 	}
 

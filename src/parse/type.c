@@ -84,6 +84,9 @@ static unsigned ofc_parse_decl_attr(
 					"Duplicate definition of AUTOMATIC decl attribute");
 			}
 
+			ofc_parse_debug_warning(debug, ofc_sparse_ref(src, &ptr[i], l),
+				"Use of AUTOMATIC keyword is non-standard and deprecated, ignoring");
+
 			attr->is_automatic = true;
 			i += l;
 			continue;
