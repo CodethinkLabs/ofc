@@ -496,9 +496,10 @@ ofc_cliarg_t* ofc_cliarg_create(
 	const ofc_cliarg_body_t* arg_body,
 	const void* param)
 {
-	ofc_cliarg_t* arg = (ofc_cliarg_t*)malloc(sizeof(ofc_cliarg_t));
-	if (!arg)
-		return NULL;
+	ofc_cliarg_t* arg
+		= (ofc_cliarg_t*)malloc(
+			sizeof(ofc_cliarg_t));
+	if (!arg) return NULL;
 
 	arg->body = arg_body;
 
@@ -516,6 +517,7 @@ ofc_cliarg_t* ofc_cliarg_create(
 				break;
 
 			default:
+				free(arg);
 				return NULL;
 		}
 	}

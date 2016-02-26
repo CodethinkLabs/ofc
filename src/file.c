@@ -132,7 +132,7 @@ static char* ofc_file__include_path(
 static char* ofc_file__base_parent_path(
 	const ofc_file_t* file)
 {
-    if (file->parent)
+    if (file && file->parent)
 		return ofc_file__base_parent_path(file->parent);
 
 	return file->path;
@@ -169,6 +169,7 @@ ofc_file_t* ofc_file_create_include(
 	char* bpath = ofc_file__base_parent_path(parent_file);
 	char* rpath = ofc_file__include_path(bpath, path);
 	file = ofc_file_create(rpath, opts);
+	free(rpath);
 	if (!parent_file) return file;
 	if (!file) return NULL;
 
@@ -176,7 +177,6 @@ ofc_file_t* ofc_file_create_include(
 	file->include_stmt = include_stmt;
 	file->include = parent_file->include;
 
-	free(rpath);
 	return file;
 }
 
@@ -421,7 +421,7 @@ static void ofc_file__debug_va(
 	}
 }
 
-static bool ofc_file__error_count = 0;
+static unsigned ofc_file__error_count = 0;
 
 bool ofc_file_no_errors(void)
 {
