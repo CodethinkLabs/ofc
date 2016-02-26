@@ -60,7 +60,7 @@ int main(int argc, const char* argv[])
 
 	if (global_opts.parse_print)
 	{
-		ofc_colstr_t* cs = ofc_colstr_create(72, 0);
+		ofc_colstr_t* cs = ofc_colstr_create(print_opts, 72, 0);
 		if (!ofc_parse_stmt_list_print(cs, 0, program))
 		{
 			ofc_file_error(file, NULL, "Failed to print parse tree");
@@ -140,7 +140,7 @@ int main(int argc, const char* argv[])
 
 	if (global_opts.sema_print)
 	{
-		ofc_colstr_t* cs = ofc_colstr_create(72, 0);
+		ofc_colstr_t* cs = ofc_colstr_create(print_opts, 72, 0);
 		if (!ofc_sema_scope_print(cs, 0, sema))
 		{
 			ofc_file_error(file, NULL, "Failed to print semantic tree");

@@ -17,10 +17,12 @@
 #define __ofc_colstr_h__
 
 #include <stdbool.h>
+#include "ofc/print_opts.h"
 
 typedef struct ofc_colstr_s ofc_colstr_t;
 
 ofc_colstr_t* ofc_colstr_create(
+	const ofc_print_opts_t print_opts,
 	unsigned cols, unsigned ext);
 void ofc_colstr_delete(ofc_colstr_t* cstr);
 

@@ -22,6 +22,8 @@
 
 struct ofc_colstr_s
 {
+	ofc_print_opts_t print_opts;
+
 	unsigned size, max;
 	char* base;
 	unsigned col, col_max, col_ext;
@@ -31,6 +33,7 @@ struct ofc_colstr_s
 
 
 ofc_colstr_t* ofc_colstr_create(
+	const ofc_print_opts_t print_opts,
 	unsigned cols, unsigned ext)
 {
 	if (cols == 0)
@@ -45,13 +48,14 @@ ofc_colstr_t* ofc_colstr_create(
 			sizeof(ofc_colstr_t));
 	if (!cstr) return NULL;
 
-	cstr->size     = 0;
-	cstr->max      = 0;
-	cstr->base     = NULL;
-	cstr->col      = 0;
-	cstr->col_max  = cols;
-	cstr->col_ext  = ext;
-	cstr->oversize = false;
+	cstr->print_opts = print_opts;
+	cstr->size       = 0;
+	cstr->max        = 0;
+	cstr->base       = NULL;
+	cstr->col        = 0;
+	cstr->col_max    = cols;
+	cstr->col_ext    = ext;
+	cstr->oversize   = false;
 
 	return cstr;
 }
@@ -124,16 +128,13 @@ bool ofc_colstr_newline(
 	cstr->size += 6;
 	cstr->col = 6;
 
-	const unsigned indent_max    = 4;
-	const unsigned indent_spaces = 2;
-
-	if (indent > indent_max)
-		indent = indent_max;
+	if (indent > cstr->print_opts.indent_max_level)
+		indent = cstr->print_opts.indent_max_level;
 
 	for (i = 0; i < indent; i++)
 	{
 		unsigned j;
-		for (j = 0; j < indent_spaces; j++)
+		for (j = 0; j < cstr->print_opts.indent_width; j++)
 		{
 			if (!ofc_colstr_atomic_writef(cstr, " "))
 				return false;
