@@ -124,12 +124,20 @@ bool ofc_colstr_newline(
 	cstr->size += 6;
 	cstr->col = 6;
 
-	unsigned indent_level;
-	for (indent_level = 0; indent_level < indent; indent_level++)
+	const unsigned indent_max    = 4;
+	const unsigned indent_spaces = 2;
+
+	if (indent > indent_max)
+		indent = indent_max;
+
+	for (i = 0; i < indent; i++)
 	{
-		/* TODO - Make the number of spaces to indent a lang opt? */
-		if (!ofc_colstr_atomic_writef(cstr, "  "))
-			return false;
+		unsigned j;
+		for (j = 0; j < indent_spaces; j++)
+		{
+			if (!ofc_colstr_atomic_writef(cstr, " "))
+				return false;
+		}
 	}
 
 	cstr->oversize = false;
