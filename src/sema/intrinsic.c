@@ -1115,20 +1115,27 @@ static bool ofc_sema_intrinsic__init(void)
 }
 
 
-const ofc_sema_intrinsic_t* ofc_sema_intrinsic(ofc_str_ref_t name)
+const ofc_sema_intrinsic_t* ofc_sema_intrinsic(
+	ofc_str_ref_t name, bool case_sensitive)
 {
 	if (!ofc_sema_intrinsic__init())
 		return NULL;
 
-	const ofc_sema_intrinsic_t* op = ofc_hashmap_find(
-		ofc_sema_intrinsic__op_map, &name);
-	if (op) return op;
-
 	const ofc_sema_intrinsic_t* func = ofc_hashmap_find(
-		ofc_sema_intrinsic__func_map, &name);
-	if (func) return func;
+		ofc_sema_intrinsic__op_map, &name);
+	if (!func)
+	{
+		func = ofc_hashmap_find(
+			ofc_sema_intrinsic__func_map, &name);
+		if (!func) return NULL;
+	}
 
-	return NULL;
+	if (case_sensitive
+		&& !ofc_str_ref_equal(
+			name, func->name))
+		return NULL;
+
+	return func;
 }
 
 static const ofc_sema_type_t* ofc_sema_intrinsic__param_type(
@@ -1506,7 +1513,7 @@ const ofc_sema_intrinsic_t* ofc_sema_intrinsic_cast_func(
 			/* TODO - INTRINSIC - Find a neater way to do this lookup. */
 			const ofc_sema_intrinsic_t* intrinsic
 				= ofc_sema_intrinsic(ofc_str_ref_from_strz(
-					ofc_sema_intrinsic__op_list[i].name));
+					ofc_sema_intrinsic__op_list[i].name), false);
 			if (intrinsic) return intrinsic;
 		}
 	}

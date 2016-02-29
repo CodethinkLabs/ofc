@@ -117,7 +117,7 @@ static bool ofc_sema_pass_char_transfer__expr(
 
 	/* TODO - INTRINSIC - Find a neater way to resolve intrinsics. */
 	const ofc_sema_intrinsic_t* intrinsic
-		= ofc_sema_intrinsic(ofc_str_ref_from_strz("TRANSFER"));
+		= ofc_sema_intrinsic(ofc_str_ref_from_strz("TRANSFER"), false);
 	if (!intrinsic)
 	{
 		ofc_sema_expr_delete(mold);

@@ -20,7 +20,8 @@ typedef struct ofc_sema_intrinsic_s ofc_sema_intrinsic_t;
 
 bool ofc_sema_intrinsic_name_reserved(const char* name);
 
-const ofc_sema_intrinsic_t* ofc_sema_intrinsic(ofc_str_ref_t name);
+const ofc_sema_intrinsic_t* ofc_sema_intrinsic(
+	ofc_str_ref_t name, bool case_sensitive);
 
 ofc_sema_expr_list_t* ofc_sema_intrinsic_cast(
 	ofc_sparse_ref_t src,
