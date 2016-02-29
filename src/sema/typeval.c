@@ -2485,6 +2485,76 @@ bool ofc_sema_typeval_can_print(
 	return false;
 }
 
+static bool ofc_sema_typeval_print__real(ofc_colstr_t*cs,
+	long double real, unsigned size, unsigned kind)
+{
+	unsigned dig = LDBL_DIG;
+	if (size != 0)
+	{
+		if (size < 4)
+			dig = FLT_DIG;
+		else if (size < 8)
+			dig = DBL_DIG;
+	}
+
+	char fmt[32];
+	sprintf(fmt, "%%.%uLG", dig);
+
+	char buff[64];
+	sprintf(buff, fmt, real);
+
+	unsigned i;
+	for (i = 0; buff[i] != '\0'; i++)
+	{
+		if ((buff[i] == '.')
+			|| (toupper(buff[i]) == 'E'))
+			break;
+	}
+	if (buff[i] == '\0')
+		strcat(buff, ".0");
+
+	char* kind_postfix = NULL;
+	char kind_exp = '\0';
+	switch (kind)
+	{
+		case OFC_SEMA_KIND_DEFAULT:
+			break;
+		case OFC_SEMA_KIND_DOUBLE:
+			kind_exp = 'D';
+			break;
+		case OFC_SEMA_KIND_QUAD:
+			kind_exp = 'Q';
+			break;
+		default:
+			/* TODO - TYPEVAL - Print alternative REAL KINDs. */
+			return false;
+	}
+
+	if (kind_exp)
+	{
+		for (i = 0; buff[i] != '\0'; i++)
+		{
+			if (toupper(buff[i]) == 'E')
+			{
+				buff[i] = kind_exp;
+				break;
+			}
+		}
+		if (buff[i] == '\0')
+		{
+			buff[i] = kind_exp;
+			buff[i + 1] = '0';
+			buff[i + 2] = '\0';
+		}
+	}
+	else if (kind_postfix)
+	{
+		strcat(buff, kind_postfix);
+	}
+
+	return ofc_colstr_atomic_writef(cs, "%s", buff);
+}
+
 bool ofc_sema_typeval_print(ofc_colstr_t*cs,
 	const ofc_sema_typeval_t* typeval)
 {
@@ -2524,88 +2594,31 @@ bool ofc_sema_typeval_print(ofc_colstr_t*cs,
 				typeval->integer);
 
 		case OFC_SEMA_TYPE_REAL:
-			{
-				unsigned dig = LDBL_DIG;
-				unsigned size;
-				if (ofc_sema_type_size(
-					typeval->type, &size))
-				{
-					if (size < 4)
-						dig = FLT_DIG;
-					else if (size < 8)
-						dig = DBL_DIG;
-				}
+		{
+			unsigned size = 0;
+			ofc_sema_type_size(
+				typeval->type, &size);
 
-				char fmt[32];
-				sprintf(fmt, "%%.%uLG", dig);
-
-				char buff[64];
-				sprintf(buff, fmt, typeval->real);
-
-				unsigned i;
-				for (i = 0; buff[i] != '\0'; i++)
-				{
-					if ((buff[i] == '.')
-						|| (toupper(buff[i]) == 'E'))
-						break;
-				}
-				if (buff[i] == '\0')
-					strcat(buff, ".0");
-
-				char* kind_postfix = NULL;
-				char kind_exp = '\0';
-				switch (kind)
-				{
-					case OFC_SEMA_KIND_DEFAULT:
-						break;
-					case OFC_SEMA_KIND_DOUBLE:
-						kind_exp = 'D';
-						break;
-					case OFC_SEMA_KIND_QUAD:
-						kind_exp = 'Q';
-						break;
-					default:
-						/* TODO - TYPEVAL - Print alternative REAL KINDs. */
-						return false;
-				}
-
-				if (kind_exp)
-				{
-					for (i = 0; buff[i] != '\0'; i++)
-					{
-						if (toupper(buff[i]) == 'E')
-						{
-							buff[i] = kind_exp;
-							break;
-						}
-					}
-					if (buff[i] == '\0')
-					{
-						buff[i] = kind_exp;
-						buff[i + 1] = '0';
-						buff[i + 2] = '\0';
-					}
-				}
-				else if (kind_postfix)
-				{
-					strcat(buff, kind_postfix);
-				}
-
-				return ofc_colstr_atomic_writef(cs, "%s", buff);
-			}
+			return ofc_sema_typeval_print__real(
+				cs, typeval->real, size, kind);
+		}
 
 		case OFC_SEMA_TYPE_COMPLEX:
-			/* TODO - TYPEVAL - Print different COMPLEX KINDs. */
-			if (!ofc_colstr_atomic_writef(cs, "(")
-				|| !ofc_colstr_atomic_writef(cs, "%Lg",
-					typeval->complex.real)
-				|| !ofc_colstr_atomic_writef(cs, ",")
-				|| !ofc_colstr_atomic_writef(cs, " ")
-				|| !ofc_colstr_atomic_writef(cs, "%Lg",
-					typeval->complex.imaginary)
-				|| !ofc_colstr_atomic_writef(cs, ")"))
-				return false;
-			return true;
+		{
+			unsigned size = 0;
+			ofc_sema_type_size(
+				typeval->type, &size);
+			size /= 2;
+
+			return (ofc_colstr_atomic_writef(cs, "(")
+				&& ofc_sema_typeval_print__real(
+					cs, typeval->complex.real, size, kind)
+				&& ofc_colstr_atomic_writef(cs, ",")
+				&& ofc_colstr_atomic_writef(cs, " ")
+				&& ofc_sema_typeval_print__real(
+					cs, typeval->complex.imaginary, size, kind)
+				&& ofc_colstr_atomic_writef(cs, ")"));
+		}
 
 		case OFC_SEMA_TYPE_CHARACTER:
 			if ((kind != OFC_SEMA_KIND_DEFAULT)
