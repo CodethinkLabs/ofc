@@ -114,7 +114,7 @@ bool ofc_sema_structure_foreach_expr(
 
 typedef struct
 {
-	unsigned count;
+	unsigned count, size;
 	ofc_sema_structure_t** structure;
 	ofc_hashmap_t* map;
 } ofc_sema_structure_list_t;
@@ -125,6 +125,9 @@ void ofc_sema_structure_list_delete(
 	ofc_sema_structure_list_t* list);
 
 bool ofc_sema_structure_list_add(
+	ofc_sema_structure_list_t* list,
+	ofc_sema_structure_t* structure);
+void ofc_sema_structure_list_remove(
 	ofc_sema_structure_list_t* list,
 	ofc_sema_structure_t* structure);
 

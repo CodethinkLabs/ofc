@@ -17,24 +17,29 @@
 
 
 static bool ofc_sema_pass_struct_type__struct(
-	ofc_sema_structure_t* structure, void* param)
+	ofc_sema_structure_t* structure, ofc_sema_scope_t* scope)
 {
-	(void)param;
-
-	if (!structure)
+	if (!structure || !scope)
 		return false;
 
-	if (structure->type == OFC_SEMA_STRUCTURE_VAX_STRUCTURE)
+	if (structure->type != OFC_SEMA_STRUCTURE_VAX_STRUCTURE)
+		return true;
+
+	if (ofc_sema_structure_is_nested(structure))
 	{
-		if (ofc_sema_structure_is_nested(structure))
-		{
-			ofc_sparse_ref_warning(structure->name,
-				"VAX STRUCTURE is nested an can't be converted to a TYPE");
-		}
-		else
-		{
-			structure->type = OFC_SEMA_STRUCTURE_F90_TYPE;
-		}
+		ofc_sparse_ref_warning(structure->name,
+			"VAX STRUCTURE is nested an can't be converted to a TYPE");
+	}
+	else
+	{
+		if (!ofc_sema_structure_list_add(
+			scope->derived_type, structure))
+			return false;
+
+		structure->type = OFC_SEMA_STRUCTURE_F90_TYPE;
+
+		ofc_sema_structure_list_remove(
+			scope->structure, structure);
 	}
 
 	return true;
@@ -48,8 +53,12 @@ static bool ofc_sema_pass_struct_type__scope(
 	if (!scope)
 		return false;
 
-	return ofc_sema_scope_foreach_structure(
-		scope, NULL, ofc_sema_pass_struct_type__struct);
+	if (!scope->structure)
+		return true;
+
+	return ofc_sema_structure_list_foreach(
+		scope->structure, (void*)scope,
+		(void*)ofc_sema_pass_struct_type__struct);
 }
 
 bool ofc_sema_pass_struct_type(

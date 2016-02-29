@@ -788,6 +788,7 @@ ofc_sema_structure_list_t* ofc_sema_structure_list_create(
 	}
 
 	list->count = 0;
+	list->size  = 0;
 	list->structure = NULL;
 
 	return list;
@@ -824,18 +825,63 @@ bool ofc_sema_structure_list_add(
 		list, structure->name.string))
 		return false;
 
-	ofc_sema_structure_t** nstructure
-		= (ofc_sema_structure_t**)realloc(list->structure,
-			(sizeof(ofc_sema_structure_t*) * (list->count + 1)));
-	if (!nstructure) return false;
-	list->structure = nstructure;
+	unsigned slot;
+	if (list->count >= list->size)
+	{
+		unsigned nsize = (list->count + 1);
+		ofc_sema_structure_t** nstructure
+			= (ofc_sema_structure_t**)realloc(list->structure,
+				(sizeof(ofc_sema_structure_t*) * nsize));
+		if (!nstructure) return false;
+		list->structure = nstructure;
+
+		slot = list->count;
+		list->structure[slot] = NULL;
+		list->size = nsize;
+	}
+	else
+	{
+		unsigned i;
+		for (i = 0; i < list->size; i++)
+		{
+			if (!list->structure[i])
+			{
+				slot = i;
+				break;
+			}
+		}
+		if (i >= list->size)
+			return false;
+	}
 
 	if (!ofc_hashmap_add(
 		list->map, structure))
 		return false;
 
-	list->structure[list->count++] = structure;
+	list->structure[slot] = structure;
+	list->count++;
 	return true;
+}
+
+void ofc_sema_structure_list_remove(
+	ofc_sema_structure_list_t* list,
+	ofc_sema_structure_t* structure)
+{
+	if (!list || !structure)
+		return;
+
+	ofc_hashmap_remove(
+		list->map, structure);
+
+	unsigned i;
+	for (i = 0; i < list->size; i++)
+	{
+		if (list->structure[i] == structure)
+		{
+			list->structure[i] = NULL;
+			list->count--;
+		}
+	}
 }
 
 
@@ -862,9 +908,10 @@ bool ofc_sema_structure_list_print(
 		return false;
 
 	unsigned i;
-	for (i = 0; i < list->count; i++)
+	for (i = 0; i < list->size; i++)
 	{
-		if (!ofc_sema_structure_print(
+		if (list->structure[i]
+			&& !ofc_sema_structure_print(
 			cs, indent, list->structure[i]))
 			return false;
 	}
@@ -882,7 +929,8 @@ bool ofc_sema_structure_list_foreach(
 	unsigned i;
 	for (i = 0; i < list->count; i++)
 	{
-		if (!func(list->structure[i], param))
+		if (list->structure[i]
+			&& !func(list->structure[i], param))
 			return false;
 	}
 
