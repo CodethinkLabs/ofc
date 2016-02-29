@@ -22,7 +22,8 @@
 
 
 static unsigned ofc_prep_unformat__blank_or_comment(
-	const char* src, ofc_lang_opts_t opts)
+	const ofc_file_t* file, const char* src,
+	ofc_lang_opts_t opts)
 {
 	if (!src)
 		return 0;
@@ -30,6 +31,13 @@ static unsigned ofc_prep_unformat__blank_or_comment(
 	bool is_comment
 		= ((toupper(src[0]) == 'C') || (src[0] == '*')
 			|| (opts.debug && (toupper(src[0]) == 'D')));
+
+	if (is_comment && strncasecmp(&src[1], "$PRAGMA", 7) == 0)
+	{
+		/* TODO - PRAGMA - Store these for processing later. */
+		ofc_file_warning(file, &src[1],
+			"$PRAGMA not supported, ignoring");
+	}
 
 	if ((opts.form != OFC_LANG_FORM_FIXED)
 		&& (opts.form != OFC_LANG_FORM_TAB))
@@ -483,7 +491,7 @@ static bool ofc_prep_unformat__fixed_form(
 		unsigned len, col;
 
 		len = ofc_prep_unformat__blank_or_comment(
-			&src[pos], opts);
+			file, &src[pos], opts);
 		pos += len;
 		if (len > 0) continue;
 
@@ -605,7 +613,7 @@ static bool ofc_prep_unformat__free_form(
 		unsigned len, col;
 
 		len = ofc_prep_unformat__blank_or_comment(
-			&src[pos], opts);
+			file, &src[pos], opts);
 		pos += len;
 		if (len > 0) {
 			continue;
