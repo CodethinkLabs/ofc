@@ -1,5 +1,6 @@
 # OFC - Open Fortran Compiler
 
+[![Build Status](https://travis-ci.org/CodethinkLabs/ofc.svg?branch=master)](https://travis-ci.org/CodethinkLabs/ofc)
 
 ## Overview
 
