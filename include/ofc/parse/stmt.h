@@ -28,6 +28,7 @@ typedef enum
 	OFC_PARSE_STMT_EMPTY,
 	OFC_PARSE_STMT_ERROR,
 	OFC_PARSE_STMT_INCLUDE,
+	OFC_PARSE_STMT_USE,
 	OFC_PARSE_STMT_PROGRAM,
 	OFC_PARSE_STMT_SUBROUTINE,
 	OFC_PARSE_STMT_FUNCTION,
@@ -105,6 +106,13 @@ struct ofc_parse_stmt_s
 			ofc_file_t*   file;
 			ofc_sparse_t* src;
 		} include;
+
+		struct
+		{
+			ofc_sparse_ref_t       module;
+			ofc_parse_lhs_list_t*  rename;
+			ofc_parse_decl_list_t* only;
+		} use;
 
 		ofc_parse_implicit_list_t* implicit;
 

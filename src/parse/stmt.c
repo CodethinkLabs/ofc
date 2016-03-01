@@ -20,6 +20,10 @@ unsigned ofc_parse_stmt_include(
 	ofc_parse_debug_t* debug,
 	ofc_parse_stmt_t* stmt,
 	ofc_parse_stmt_list_t* list);
+unsigned ofc_parse_stmt_use(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_stmt_t* stmt);
 unsigned ofc_parse_stmt_program(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
@@ -533,6 +537,7 @@ ofc_parse_stmt_t* ofc_parse_stmt(
 
 		case 'U':
 			if (i == 0) i = ofc_parse_stmt_union(src, ptr, debug, &stmt);
+			if (i == 0) i = ofc_parse_stmt_use(src, ptr, debug, &stmt);
 			break;
 
 		case 'V':
@@ -622,6 +627,8 @@ void ofc_parse_stmt_delete(
 bool ofc_parse_stmt_program_print(
 	ofc_colstr_t* cs, unsigned indent,
 	const ofc_parse_stmt_t* stmt);
+bool ofc_parse_stmt_use_print(
+	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt);
 bool ofc_parse_stmt_assign_print(
 	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt);
 bool ofc_parse_stmt_decl_print(
@@ -690,6 +697,10 @@ bool ofc_parse_stmt_print(
 			/* We no longer print INCLUDEs since the content is printed. */
 			break;
 
+		case OFC_PARSE_STMT_USE:
+			if (!ofc_parse_stmt_use_print(cs, stmt))
+				return false;
+			break;
 		case OFC_PARSE_STMT_PROGRAM:
 		case OFC_PARSE_STMT_SUBROUTINE:
 		case OFC_PARSE_STMT_FUNCTION:

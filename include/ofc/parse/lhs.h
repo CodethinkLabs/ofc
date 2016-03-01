@@ -28,6 +28,7 @@ typedef enum
 	OFC_PARSE_LHS_MEMBER_TYPE,
 	OFC_PARSE_LHS_MEMBER_STRUCTURE,
 	OFC_PARSE_LHS_IMPLICIT_DO,
+	OFC_PARSE_LHS_ALIAS,
 } ofc_parse_lhs_e;
 
 
@@ -64,6 +65,12 @@ struct ofc_parse_lhs_s
 				} star_len;
 			};
 		};
+
+		struct
+		{
+			ofc_sparse_ref_t target;
+			ofc_sparse_ref_t name;
+		} alias;
 
 		ofc_parse_implicit_do_t* implicit_do;
 	};
@@ -108,6 +115,10 @@ ofc_parse_lhs_list_t* ofc_parse_lhs_list(
 	ofc_parse_debug_t* debug,
 	unsigned* len);
 ofc_parse_lhs_list_t* ofc_parse_lhs_list_bracketed(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	unsigned* len);
+ofc_parse_lhs_list_t* ofc_parse_lhs_alias_list(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
 	unsigned* len);

@@ -234,7 +234,6 @@ static ofc_parse_lhs_t* ofc_parse_lhs__star_len(
 	return alhs;
 }
 
-
 static ofc_parse_lhs_t* ofc_parse_lhs__member(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
@@ -396,6 +395,43 @@ ofc_parse_lhs_t* ofc_parse_lhs_variable(
 		src, ptr, debug, false, false ,len);
 }
 
+ofc_parse_lhs_t* ofc_parse_lhs_alias(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	unsigned* len)
+{
+	ofc_parse_lhs_t lhs;
+
+	unsigned dpos = ofc_parse_debug_position(debug);
+
+	lhs.type = OFC_PARSE_LHS_ALIAS;
+	unsigned i = ofc_parse_name(
+		src, ptr, debug, &lhs.alias.target);
+	if (i == 0)
+		return NULL;
+
+    if ((ptr[i++] == '=')
+		&& (ptr[i++] == '>'))
+	{
+		unsigned rlen = ofc_parse_name(
+			src, &ptr[i], debug, &lhs.alias.name);
+		if (rlen == 0)
+			return NULL;
+		i += rlen;
+	}
+	else
+	{
+		return NULL;
+	}
+
+	if (len) *len = i;
+
+	ofc_parse_lhs_t* alhs
+		= ofc_parse_lhs__alloc(lhs);
+	return alhs;
+}
+
+
 ofc_parse_lhs_t* ofc_parse_lhs(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
@@ -445,6 +481,12 @@ bool ofc_parse_lhs_print(
 	{
 		case OFC_PARSE_LHS_VARIABLE:
 			return ofc_sparse_ref_print(cs, lhs->variable);
+		case OFC_PARSE_LHS_ALIAS:
+			return (ofc_sparse_ref_print(cs, lhs->alias.target)
+				&& ofc_colstr_atomic_writef(cs, " ")
+				&& ofc_colstr_atomic_writef(cs, "=>")
+				&& ofc_colstr_atomic_writef(cs, " ")
+				&& ofc_sparse_ref_print(cs, lhs->alias.name));
 		case OFC_PARSE_LHS_ARRAY:
 			if (!ofc_parse_lhs_print(
 				cs, lhs->parent, is_decl))
@@ -609,6 +651,34 @@ ofc_parse_lhs_list_t* ofc_parse_lhs_list_bracketed(
 	{
 		ofc_parse_lhs_list_delete(list);
 		ofc_parse_debug_rewind(debug, dpos);
+		return NULL;
+	}
+
+	if (len) *len = i;
+	return list;
+}
+
+ofc_parse_lhs_list_t* ofc_parse_lhs_alias_list(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	unsigned* len)
+{
+	ofc_parse_lhs_list_t* list
+		= (ofc_parse_lhs_list_t*)malloc(
+			sizeof(ofc_parse_lhs_list_t));
+	if (!list) return NULL;
+
+	list->count = 0;
+	list->lhs = NULL;
+
+	unsigned i = ofc_parse_list(
+		src, ptr, debug, ',',
+		&list->count, (void***)&list->lhs,
+		(void*)ofc_parse_lhs_alias,
+		(void*)ofc_parse_lhs_delete);
+	if (i == 0)
+	{
+		free(list);
 		return NULL;
 	}
 

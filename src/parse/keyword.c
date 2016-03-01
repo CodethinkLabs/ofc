@@ -23,6 +23,8 @@
 static const char* ofc_parse_keyword__name[] =
 {
 	"INCLUDE",
+	"USE",
+	"ONLY",
 
 	"PROGRAM",
 	"SUBROUTINE",
