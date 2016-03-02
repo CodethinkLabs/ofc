@@ -250,6 +250,42 @@ ofc_parse_format_desc_t* ofc_parse_format_desc(
 	return desc;
 }
 
+bool ofc_parse_format_desc_compare(
+	const ofc_parse_format_desc_t* a,
+	const ofc_parse_format_desc_t* b)
+{
+	if (!a || !b) return false;
+
+	if (a->type != b->type) return false;
+
+	if (a->n != b->n) return false;
+
+	if (a->type == OFC_PARSE_FORMAT_DESC_STRING)
+		return ofc_string_equal(*a->string, *b->string);
+
+	if (a->type == OFC_PARSE_FORMAT_DESC_REPEAT)
+	{
+		if (a->repeat->count != b->repeat->count)
+			return false;
+
+		unsigned i;
+		for (i = 0; i < a->repeat->count; i++)
+		{
+			if (!ofc_parse_format_desc_compare(
+				a->repeat->desc[i], b->repeat->desc[i]))
+				return false;
+		}
+		return true;
+	}
+
+	if ((a->w != b->w)
+		|| (a->d != b->d)
+		|| (a->e != b->e))
+		return false;
+
+	return true;
+}
+
 void ofc_parse_format_desc_delete(
 	ofc_parse_format_desc_t* desc)
 {
@@ -269,6 +305,40 @@ void ofc_parse_format_desc_delete(
 			break;
 	}
 	free(desc);
+}
+
+bool ofc_parse_format_desc_elem_count(
+	const ofc_parse_format_desc_t* desc,
+	unsigned* count)
+{
+	if (!desc)
+		return false;
+
+	if (desc->type == OFC_PARSE_FORMAT_DESC_REPEAT)
+	{
+		unsigned i, re_count, counter = 0;
+		for (i = 0; i < desc->repeat->count; i++)
+		{
+			if (!ofc_parse_format_desc_elem_count(
+				desc->repeat->desc[i], &re_count))
+				return false;
+			counter += re_count;
+		}
+
+		unsigned times = (desc->n_set ? desc->n : 1);
+		if (count) *count = times * counter;
+	}
+
+	if (!ofc_parse_format_is_data_desc(desc))
+	{
+		if (count) *count = 1;
+	}
+	else
+	{
+		if (count) *count = (desc->n_set ? desc->n : 1);
+	}
+
+	return true;
 }
 
 const char* ofc_parse_format_desc__name[] =
@@ -393,6 +463,36 @@ static void ofc_parse_format_desc__cleanup(
 	}
 }
 
+static ofc_parse_format_desc_t* ofc_parse_format_desc__create(
+	ofc_parse_format_desc_e type)
+{
+	if (type >= OFC_PARSE_FORMAT_DESC_COUNT)
+		return NULL;
+
+	ofc_parse_format_desc_t* desc
+		= (ofc_parse_format_desc_t*)malloc(
+			sizeof(ofc_parse_format_desc_t));
+	if (!desc) return NULL;
+
+	desc->type = type;
+	desc->src  = OFC_SPARSE_REF_EMPTY;
+
+	switch(desc->type)
+	{
+		case OFC_PARSE_FORMAT_DESC_STRING:
+		case OFC_PARSE_FORMAT_DESC_HOLLERITH:
+			desc->string = NULL;
+			break;
+		case OFC_PARSE_FORMAT_DESC_REPEAT:
+			desc->repeat = NULL;
+			break;
+		default:
+			break;
+	}
+
+	return desc;
+}
+
 static bool ofc_parse_format_desc__clone(
 	ofc_parse_format_desc_t* dst, const ofc_parse_format_desc_t* src)
 {
@@ -429,6 +529,21 @@ static ofc_parse_format_desc_t* ofc_parse_format_desc__alloc(
 	if (!adesc) return NULL;
 	*adesc = desc;
 	return adesc;
+}
+
+ofc_parse_format_desc_t* ofc_parse_format_desc_create_repeat(
+	ofc_parse_format_desc_list_t* list, unsigned n)
+{
+	ofc_parse_format_desc_t* desc
+		= ofc_parse_format_desc__create(
+			OFC_PARSE_FORMAT_DESC_REPEAT);
+	if (!desc) return NULL;
+
+	desc->n_set  = true;
+	desc->n      = n;
+	desc->repeat = list;
+
+	return desc;
 }
 
 ofc_parse_format_desc_t* ofc_parse_format_desc_copy(
@@ -500,6 +615,7 @@ ofc_parse_format_desc_list_t* ofc_parse_format_desc_list(
 	return list;
 }
 
+
 void ofc_parse_format_desc_list_delete(
 	ofc_parse_format_desc_list_t* list)
 {
@@ -525,8 +641,37 @@ bool ofc_parse_format_desc_list_print(
 
 }
 
-bool ofc_parse_format_is_data_desc(
+ofc_parse_format_desc_list_t* ofc_parse_format_desc_list_create(void)
+{
+	ofc_parse_format_desc_list_t* list
+		= (ofc_parse_format_desc_list_t*)malloc(
+			sizeof(ofc_parse_format_desc_list_t));
+	if (!list) return NULL;
+
+	list->count = 0;
+	list->desc  = NULL;
+	return list;
+}
+
+bool ofc_parse_format_desc_list_add(
+	ofc_parse_format_desc_list_t* list,
 	ofc_parse_format_desc_t* desc)
+{
+	if (!list || !desc)
+		return false;
+
+	ofc_parse_format_desc_t** ndesc
+		= (ofc_parse_format_desc_t**)realloc(list->desc,
+			(sizeof(ofc_parse_format_desc_t*) * (list->count + 1)));
+	if (!ndesc) return NULL;
+
+	list->desc = ndesc;
+	list->desc[list->count++] = desc;
+	return true;
+}
+
+bool ofc_parse_format_is_data_desc(
+	const ofc_parse_format_desc_t* desc)
 {
 	if (!desc)
 		return false;

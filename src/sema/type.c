@@ -83,6 +83,26 @@ bool ofc_sema_type_kind_size(
 	return true;
 }
 
+ofc_sema_kind_e ofc_sema_type_get_kind(
+	const ofc_sema_type_t* type)
+{
+	if (!type) return -1;
+
+	switch (type->type)
+	{
+		case OFC_SEMA_TYPE_LOGICAL:
+		case OFC_SEMA_TYPE_INTEGER:
+		case OFC_SEMA_TYPE_REAL:
+		case OFC_SEMA_TYPE_COMPLEX:
+		case OFC_SEMA_TYPE_BYTE:
+		case OFC_SEMA_TYPE_CHARACTER:
+			return type->kind;
+		default:
+			break;
+	}
+
+	return -1;
+}
 
 
 static ofc_hashmap_t* ofc_sema_type__map = NULL;

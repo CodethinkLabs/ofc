@@ -76,5 +76,13 @@ bool ofc_sema_io_list_has_complex(
 
 bool ofc_sema_stmt_io_format_validate(
 	ofc_sema_stmt_t* stmt);
+bool ofc_sema_stmt_io_format_validate_defaults(
+	ofc_sema_stmt_t* stmt, ofc_sema_stmt_t* format_stmt);
 
+bool ofc_sema_io_format_iolist_check_def(
+	ofc_sema_stmt_t* stmt,
+	ofc_sema_expr_list_t* iolist);
+bool ofc_sema_io_format_input_list_check_def(
+	ofc_sema_stmt_t* stmt,
+	ofc_sema_lhs_list_t* ilist);
 #endif

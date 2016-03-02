@@ -246,6 +246,48 @@ static bool ofc_sema_scope__body_format_validate(
 	return true;
 }
 
+static bool ofc_sema_scope__body_format_validate_defaults_against(
+	ofc_sema_stmt_t* stmt,
+	ofc_sema_stmt_t* format_stmt)
+{
+	(void)format_stmt;
+
+	if (!stmt) return false;
+
+	switch (stmt->type)
+	{
+		case OFC_SEMA_STMT_IO_WRITE:
+		case OFC_SEMA_STMT_IO_READ:
+		case OFC_SEMA_STMT_IO_PRINT:
+			return ofc_sema_stmt_io_format_validate_defaults(stmt, format_stmt);
+		default:
+			break;
+	}
+
+	return true;
+}
+
+static bool ofc_sema_scope__body_format_validate_defaults(
+	ofc_sema_stmt_t* stmt,
+	ofc_sema_scope_t* scope)
+{
+	(void)scope;
+
+	if (!stmt) return false;
+
+	switch (stmt->type)
+	{
+		case OFC_SEMA_STMT_IO_FORMAT:
+			/* Validate FORMAT descriptors defaults. */
+			return ofc_sema_stmt_list_foreach(scope->stmt, stmt,
+				(void*)ofc_sema_scope__body_format_validate_defaults_against);
+		default:
+			break;
+	}
+
+	return true;
+}
+
 static bool ofc_sema_scope__body_validate(
 	ofc_sema_scope_t* scope)
 {
@@ -371,6 +413,11 @@ static bool ofc_sema_scope__body(
 	/* Validate FORMAT descriptors. */
 	if (!ofc_sema_stmt_list_foreach(scope->stmt, scope,
 		(void*)ofc_sema_scope__body_format_validate))
+		return false;
+
+	/* Validate FORMAT descriptors defaults. */
+	if (!ofc_sema_stmt_list_foreach(scope->stmt, scope,
+		(void*)ofc_sema_scope__body_format_validate_defaults))
 		return false;
 
 	/* Declare arguments */

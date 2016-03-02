@@ -262,6 +262,301 @@ bool ofc_sema_format_desc(
 	return true;
 }
 
+/* Defaults from https://docs.oracle.com/cd/E19957-01/805-4939/6j4m0vnc3/index.html#z4000743817c */
+ofc_parse_format_desc_t* ofc_sema_format_desc_set_def(
+	const ofc_parse_format_desc_t* desc,
+	const ofc_sema_expr_t* expr,
+	const ofc_sema_lhs_t* lhs)
+{
+	if (!desc)
+		return NULL;
+
+	const ofc_sema_type_t* type;
+	if (expr)
+	{
+		type = ofc_sema_expr_type(expr);
+		if (!type) return NULL;
+	}
+	else
+	{
+		type = ofc_sema_lhs_type(lhs);
+		if (!type) return NULL;
+	}
+
+	ofc_sema_kind_e kind
+		= ofc_sema_type_get_kind(type);
+
+	ofc_parse_format_desc_t* copy
+		= ofc_parse_format_desc_copy(desc);
+	if (!copy) return NULL;
+
+	switch (desc->type)
+	{
+		case OFC_PARSE_FORMAT_DESC_E:
+		case OFC_PARSE_FORMAT_DESC_G:
+		case OFC_PARSE_FORMAT_DESC_REAL:
+		case OFC_PARSE_FORMAT_DESC_D:
+		{
+			if ((type->type != OFC_SEMA_TYPE_REAL)
+				&& (type->type != OFC_SEMA_TYPE_COMPLEX))
+				break;
+
+			switch (kind)
+			{
+				case OFC_SEMA_KIND_4_BYTE:
+					if (!desc->e_set)
+					{
+						copy->e_set = true;
+						copy->e = 2;
+					}
+					if (!desc->d_set)
+					{
+						copy->d_set = true;
+						copy->d = 7;
+					}
+					if (!desc->w_set)
+					{
+						copy->w_set = true;
+						copy->w = 15;
+					}
+					break;
+				case OFC_SEMA_KIND_8_BYTE:
+					if (!desc->e_set)
+					{
+						copy->e_set = true;
+						copy->e = 2;
+					}
+					if (!desc->d_set)
+					{
+						copy->d_set = true;
+						copy->d = 16;
+					}
+					if (!desc->w_set)
+					{
+						copy->w_set = true;
+						copy->w = 25;
+					}
+					break;
+				case OFC_SEMA_KIND_16_BYTE:
+					if (!desc->e_set)
+					{
+						copy->e_set = true;
+						copy->e = 3;
+					}
+					if (!desc->d_set)
+					{
+						copy->d_set = true;
+						copy->d = 33;
+					}
+					if (!desc->w_set)
+					{
+						copy->w_set = true;
+						copy->w = 42;
+					}
+					break;
+
+				default:
+					break;
+			}
+			break;
+		}
+		case OFC_PARSE_FORMAT_DESC_BINARY:
+		case OFC_PARSE_FORMAT_DESC_OCTAL:
+		case OFC_PARSE_FORMAT_DESC_HEX:
+		{
+			if ((type->type == OFC_SEMA_TYPE_REAL)
+				&& (kind == OFC_SEMA_KIND_4_BYTE))
+			{
+				if (!desc->w_set)
+				{
+					copy->w_set = true;
+					copy->w = 12;
+				}
+			}
+			else if ((type->type == OFC_SEMA_TYPE_REAL)
+				&& (kind == OFC_SEMA_KIND_8_BYTE))
+			{
+				if (!desc->w_set)
+				{
+					copy->w_set = true;
+					copy->w = 23;
+				}
+			}
+			else if (((type->type == OFC_SEMA_TYPE_REAL)
+					|| (type->type == OFC_SEMA_TYPE_COMPLEX))
+				&& (kind == OFC_SEMA_KIND_16_BYTE))
+			{
+				if (!desc->w_set)
+				{
+					copy->w_set = true;
+					copy->w = 44;
+				}
+			}
+			else if ((type->type == OFC_SEMA_TYPE_BYTE)
+				&& (kind == OFC_SEMA_KIND_1_BYTE))
+			{
+				if (!desc->w_set)
+				{
+					copy->w_set = true;
+					copy->w = 7;
+				}
+			}
+			else if (((type->type == OFC_SEMA_TYPE_INTEGER)
+					|| (type->type == OFC_SEMA_TYPE_LOGICAL))
+				&& (kind == OFC_SEMA_KIND_2_BYTE))
+			{
+				if (!desc->w_set)
+				{
+					copy->w_set = true;
+					copy->w = 7;
+				}
+			}
+			else if (((type->type == OFC_SEMA_TYPE_INTEGER)
+					|| (type->type == OFC_SEMA_TYPE_LOGICAL))
+				&& (kind == OFC_SEMA_KIND_4_BYTE))
+			{
+				if (!desc->w_set)
+				{
+					copy->w_set = true;
+					copy->w = 12;
+				}
+			}
+			break;
+		}
+		case OFC_PARSE_FORMAT_DESC_INTEGER:
+		{
+			if ((type->type == OFC_SEMA_TYPE_BYTE)
+				&& (kind == OFC_SEMA_KIND_1_BYTE))
+			{
+				if (!desc->w_set)
+				{
+					copy->w_set = true;
+					copy->w = 7;
+				}
+			}
+			else if (((type->type == OFC_SEMA_TYPE_INTEGER)
+					|| (type->type == OFC_SEMA_TYPE_LOGICAL))
+				&& (kind == OFC_SEMA_KIND_2_BYTE))
+			{
+				if (!desc->w_set)
+				{
+					copy->w_set = true;
+					copy->w = 7;
+				}
+			}
+			else if (((type->type == OFC_SEMA_TYPE_INTEGER)
+					|| (type->type == OFC_SEMA_TYPE_LOGICAL))
+				&& (kind == OFC_SEMA_KIND_4_BYTE))
+			{
+				if (!desc->w_set)
+				{
+					copy->w_set = true;
+					copy->w = 12;
+				}
+			}
+			break;
+		}
+		case OFC_PARSE_FORMAT_DESC_LOGICAL:
+		{
+			/* Oracle default for L is 2, but gfortran default is 1 */
+			break;
+		}
+		case OFC_PARSE_FORMAT_DESC_CHARACTER:
+		{
+			if ((type->type == OFC_SEMA_TYPE_LOGICAL)
+				&& (kind == OFC_SEMA_KIND_1_BYTE))
+			{
+				if (!desc->w_set)
+				{
+					copy->w_set = true;
+					copy->w = 1;
+				}
+			}
+			else if (((type->type == OFC_SEMA_TYPE_INTEGER)
+					|| (type->type == OFC_SEMA_TYPE_LOGICAL))
+				&& (kind == OFC_SEMA_KIND_2_BYTE))
+			{
+				if (!desc->w_set)
+				{
+					copy->w_set = true;
+					copy->w = 2;
+				}
+			}
+			else if (((type->type == OFC_SEMA_TYPE_INTEGER)
+					|| (type->type == OFC_SEMA_TYPE_LOGICAL))
+				&& (kind == OFC_SEMA_KIND_4_BYTE))
+			{
+				if (!desc->w_set)
+				{
+					copy->w_set = true;
+					copy->w = 4;
+				}
+			}
+			else if (((type->type == OFC_SEMA_TYPE_REAL)
+					|| (type->type == OFC_SEMA_TYPE_COMPLEX))
+				&& (kind == OFC_SEMA_KIND_4_BYTE))
+			{
+				if (!desc->w_set)
+				{
+					copy->w_set = true;
+					copy->w = 4;
+				}
+			}
+			else if (((type->type == OFC_SEMA_TYPE_REAL)
+					|| (type->type == OFC_SEMA_TYPE_COMPLEX))
+				&& (kind == OFC_SEMA_KIND_8_BYTE))
+			{
+				if (!desc->w_set)
+				{
+					copy->w_set = true;
+					copy->w = 8;
+				}
+			}
+			else if (((type->type == OFC_SEMA_TYPE_REAL)
+					|| (type->type == OFC_SEMA_TYPE_COMPLEX))
+				&& (kind == OFC_SEMA_KIND_16_BYTE))
+			{
+				if (!desc->w_set)
+				{
+					copy->w_set = true;
+					copy->w = 16;
+				}
+			}
+			break;
+		}
+		case OFC_PARSE_FORMAT_DESC_REAL_SCALE:
+			if (!desc->n_set)
+			{
+				copy->n_set = true;
+				copy->n = 0;
+			}
+			break;
+
+		case OFC_PARSE_FORMAT_DESC_X:
+			if (!desc->n_set)
+			{
+				copy->n_set = true;
+				copy->n = 1;
+			}
+			break;
+
+		case OFC_PARSE_FORMAT_DESC_TL:
+		case OFC_PARSE_FORMAT_DESC_TR:
+			if (!desc->w_set)
+			{
+				copy->w_set = true;
+				copy->w = 1;
+			}
+			break;
+
+		default:
+			break;
+	}
+
+	return copy;
+}
+
+
 const ofc_sema_type_t* ofc_sema_format_desc_type(
 	const ofc_parse_format_desc_t* desc)
 {

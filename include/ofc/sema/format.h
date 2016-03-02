@@ -20,6 +20,7 @@ typedef struct
 {
 	const ofc_parse_format_desc_list_t* src;
 	ofc_parse_format_desc_list_t*       format;
+	bool is_default_possible;
 } ofc_sema_format_t;
 
 const char* ofc_sema_format_str_rep(
@@ -35,4 +36,8 @@ bool ofc_sema_format_desc(
 const ofc_sema_type_t* ofc_sema_format_desc_type(
 	const ofc_parse_format_desc_t* desc);
 
+ofc_parse_format_desc_t* ofc_sema_format_desc_set_def(
+	const ofc_parse_format_desc_t* desc,
+	const ofc_sema_expr_t* expr,
+	const ofc_sema_lhs_t* lhs);
 #endif

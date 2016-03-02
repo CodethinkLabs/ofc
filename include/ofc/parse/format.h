@@ -93,13 +93,16 @@ ofc_parse_format_desc_t* ofc_parse_format_desc(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
 	unsigned* len);
+bool ofc_parse_format_desc_compare(
+	const ofc_parse_format_desc_t* a,
+	const ofc_parse_format_desc_t* b);
 void ofc_parse_format_desc_delete(
 	ofc_parse_format_desc_t* desc);
 bool ofc_parse_format_desc_print(
 	ofc_colstr_t* cs, const ofc_parse_format_desc_t* desc);
 
 bool ofc_parse_format_is_data_desc(
-	ofc_parse_format_desc_t* desc);
+	const ofc_parse_format_desc_t* desc);
 
 ofc_parse_format_desc_list_t* ofc_parse_format_desc_list(
 	const ofc_sparse_t* src, const char* ptr,
@@ -109,9 +112,21 @@ void ofc_parse_format_desc_list_delete(
 	ofc_parse_format_desc_list_t* list);
 bool ofc_parse_format_desc_list_print(
 	ofc_colstr_t* cs, const ofc_parse_format_desc_list_t* list);
+ofc_parse_format_desc_list_t* ofc_parse_format_desc_list_create(void);
+bool ofc_parse_format_desc_list_add(
+	ofc_parse_format_desc_list_t* list,
+	ofc_parse_format_desc_t* desc);
+
+ofc_parse_format_desc_t* ofc_parse_format_desc_create_repeat(
+	ofc_parse_format_desc_list_t* list, unsigned n);
 
 ofc_parse_format_desc_t* ofc_parse_format_desc_copy(
 	const ofc_parse_format_desc_t* desc);
 ofc_parse_format_desc_list_t* ofc_parse_format_desc_list_copy(
 	const ofc_parse_format_desc_list_t* list);
+
+bool ofc_parse_format_desc_elem_count(
+	const ofc_parse_format_desc_t* desc,
+	unsigned* count);
+
 #endif

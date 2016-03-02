@@ -97,6 +97,7 @@ struct ofc_sema_stmt_s
 		{
 			const ofc_parse_format_desc_list_t* src;
 			ofc_parse_format_desc_list_t*       format;
+			bool is_default_possible;
 		} io_format;
 
 		struct

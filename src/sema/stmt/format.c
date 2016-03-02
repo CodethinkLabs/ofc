@@ -44,6 +44,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_format(
 	s.type = OFC_SEMA_STMT_IO_FORMAT;
 	s.io_format.src = stmt->format;
 	s.io_format.format = NULL;
+	s.io_format.is_default_possible = true;
 
 	ofc_sema_stmt_t* as
 		= ofc_sema_stmt_alloc(s);

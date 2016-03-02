@@ -87,6 +87,9 @@ const ofc_sema_type_t* ofc_sema_type_type(void);
 
 const ofc_sema_type_t* ofc_sema_type_scalar(const ofc_sema_type_t* type);
 
+ofc_sema_kind_e ofc_sema_type_get_kind(
+	const ofc_sema_type_t* type);
+
 uint8_t ofc_sema_type_hash(
 	const ofc_sema_type_t* type);
 

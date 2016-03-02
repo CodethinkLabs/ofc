@@ -33,6 +33,7 @@ typedef enum
 	OFC_SEMA_KIND_8_BYTE  = 24,
 	OFC_SEMA_KIND_QUARTER = 25,
 	OFC_SEMA_KIND_10_BYTE = 30,
+	OFC_SEMA_KIND_16_BYTE = 48,
 } ofc_sema_kind_e;
 
 #endif
