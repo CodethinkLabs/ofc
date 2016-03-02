@@ -24,6 +24,8 @@ void ofc_sema_implicit_delete(
 
 bool ofc_sema_implicit_none(
 	ofc_sema_implicit_t* implicit);
+bool ofc_sema_implicit_set_undefined(
+	ofc_sema_implicit_t* implicit, char c);
 bool ofc_sema_implicit_set(
 	ofc_sema_implicit_t* implicit,
 	ofc_sema_spec_t spec, char c);

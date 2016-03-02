@@ -60,6 +60,7 @@ static const char* ofc_parse_keyword__name[] =
 
 	"IMPLICIT",
 	"IMPLICIT NONE",
+	"UNDEFINED",
 
 	"COMMON",
 	"NAMELIST",

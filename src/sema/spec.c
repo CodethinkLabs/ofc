@@ -315,10 +315,6 @@ ofc_sema_spec_t* ofc_sema_spec(
 		}
 	}
 
-	s.is_static    = ptype->attr.is_static;
-	s.is_automatic = ptype->attr.is_automatic;
-	s.is_volatile  = ptype->attr.is_volatile;
-
 	ofc_sema_spec_t* spec
 		= (ofc_sema_spec_t*)malloc(
 			sizeof(ofc_sema_spec_t));
@@ -373,6 +369,49 @@ ofc_sema_spec_t* ofc_sema_spec_copy(
 	}
 
 	return copy;
+}
+
+bool ofc_sema_spec_overlay(
+	ofc_sema_spec_t* base,
+	const ofc_sema_spec_t* overlay)
+{
+	if (!base)
+		return false;
+	if (!overlay)
+		return true;
+
+	/* We don't overlay array dimensions because there's no case
+	   where this function is used that we'd want to do that. */
+
+	if (base->type_implicit)
+	{
+		base->type_implicit = overlay->type_implicit;
+		base->type          = overlay->type;
+		base->kind          = overlay->kind;
+		base->len           = overlay->len;
+		base->len_var       = overlay->len_var;
+	}
+	else
+	{
+		if ((base->type == overlay->type)
+			&& (base->kind == 0))
+			base->kind = overlay->kind;
+
+		if ((base->len == 0)
+			&& !base->len_var)
+		{
+			base->len     = overlay->len;
+			base->len_var = overlay->len_var;
+		}
+	}
+
+	base->is_static    |= overlay->is_static;
+	base->is_automatic |= overlay->is_automatic;
+	base->is_volatile  |= overlay->is_volatile;
+	base->is_intrinsic |= overlay->is_intrinsic;
+	base->is_external  |= overlay->is_external;
+
+	return true;
 }
 
 

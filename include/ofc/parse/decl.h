@@ -18,6 +18,32 @@
 
 typedef struct
 {
+    bool is_static;
+	bool is_automatic;
+	bool is_volatile;
+	bool is_intrinsic;
+	bool is_external;
+} ofc_parse_decl_attr_t;
+
+static const ofc_parse_decl_attr_t ofc_parse_decl_attr_default =
+{
+	.is_static    = false,
+	.is_automatic = false,
+	.is_volatile  = false,
+	.is_intrinsic = false,
+	.is_external  = false,
+};
+
+unsigned ofc_parse_decl_attr(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_decl_attr_t* attr);
+bool ofc_parse_decl_attr_print(
+	ofc_colstr_t* cs, const ofc_parse_decl_attr_t* attr);
+
+
+typedef struct
+{
 	ofc_sparse_ref_t record;
 
 	ofc_parse_lhs_t* lhs;

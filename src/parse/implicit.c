@@ -105,13 +105,29 @@ ofc_parse_implicit_t* ofc_parse_implicit(
 	ofc_parse_debug_t* debug,
 	unsigned* len)
 {
-	ofc_parse_implicit_t implicit;
+	ofc_parse_implicit_t implicit =
+	{
+		.undefined = false,
+		.type = NULL,
+		.attr = ofc_parse_decl_attr_default,
+		.mask = 0,
+	};
 
 	unsigned dpos = ofc_parse_debug_position(debug);
 
-	unsigned i;
-	implicit.type = ofc_parse_type(src, ptr, debug, &i);
-	if (!implicit.type) return NULL;
+	unsigned i = ofc_parse_keyword(
+		src, ptr, debug, OFC_PARSE_KEYWORD_UNDEFINED);
+	implicit.undefined = (i != 0);
+	if (i == 0)
+	{
+		i = ofc_parse_decl_attr(
+			src, ptr, debug, &implicit.attr);
+	}
+	if (i == 0)
+	{
+		implicit.type = ofc_parse_type(src, ptr, debug, &i);
+		if (!implicit.type) return NULL;
+	}
 
 	unsigned l = ofc_parse_implicit__mask_list(
 		src, &ptr[i], debug, &implicit.mask);
@@ -154,7 +170,11 @@ bool ofc_parse_implicit_print(
 	if (!implicit)
 		return false;
 
-	if (!ofc_parse_type_print_f77(
+	if (!ofc_parse_decl_attr_print(
+		cs, &implicit->attr))
+		return false;
+
+	if (implicit->type && !ofc_parse_type_print_f77(
 		cs, implicit->type))
 		return false;
 

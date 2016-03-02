@@ -42,79 +42,6 @@ const char* ofc_parse_type_str_rep(
 	return ofc_parse_type__name[type];
 }
 
-static unsigned ofc_parse_decl_attr(
-	const ofc_sparse_t* src, const char* ptr,
-	ofc_parse_debug_t* debug,
-	ofc_parse_decl_attr_t* attr)
-{
-	attr->is_static    = false;
-	attr->is_automatic = false;
-	attr->is_volatile  = false;
-
-	unsigned i = 0;
-	while (true)
-	{
-		unsigned l;
-		l = ofc_parse_keyword(
-			src, &ptr[i], debug,
-			OFC_PARSE_KEYWORD_STATIC);
-		if (l > 0)
-		{
-			if (attr->is_static)
-			{
-				ofc_parse_debug_warning(debug,
-					ofc_sparse_ref(src, &ptr[i], l),
-					"Duplicate definition of STATIC decl attribute");
-			}
-
-			attr->is_static = true;
-			i += l;
-			continue;
-		}
-
-		l = ofc_parse_keyword(
-			src, &ptr[i], debug,
-			OFC_PARSE_KEYWORD_AUTOMATIC);
-		if (l > 0)
-		{
-			if (attr->is_automatic)
-			{
-				ofc_parse_debug_warning(debug,
-					ofc_sparse_ref(src, &ptr[i], l),
-					"Duplicate definition of AUTOMATIC decl attribute");
-			}
-
-			ofc_parse_debug_warning(debug, ofc_sparse_ref(src, &ptr[i], l),
-				"Use of AUTOMATIC keyword is non-standard and deprecated, ignoring");
-
-			attr->is_automatic = true;
-			i += l;
-			continue;
-		}
-
-		l = ofc_parse_keyword(
-			src, &ptr[i], debug,
-			OFC_PARSE_KEYWORD_VOLATILE);
-		if (l > 0)
-		{
-			if (attr->is_volatile)
-			{
-				ofc_parse_debug_warning(debug,
-					ofc_sparse_ref(src, &ptr[i], l),
-					"Duplicate definition of VOLATILE decl attribute");
-			}
-
-			attr->is_volatile = true;
-			i += l;
-			continue;
-		}
-
-		break;
-	}
-
-	return i;
-}
-
 static ofc_parse_type_t* ofc_parse_type__alloc(ofc_parse_type_t type)
 {
 	ofc_parse_type_t* atype
@@ -164,12 +91,10 @@ ofc_parse_type_t* ofc_parse_type(
 	unsigned dpos = ofc_parse_debug_position(debug);
 
 	ofc_parse_type_t type;
-	unsigned i = ofc_parse_decl_attr(
-		src, ptr, debug, &type.attr);
-
 	type.type = OFC_PARSE_TYPE_NONE;
-	unsigned j;
-	for (j = 0; ofc_parse_type__keyword_map[j].type != OFC_PARSE_TYPE_NONE; j++)
+
+	unsigned i, j;
+	for (i = 0, j = 0; ofc_parse_type__keyword_map[j].type != OFC_PARSE_TYPE_NONE; j++)
 	{
 		unsigned kw_len = ofc_parse_keyword(src, &ptr[i], debug,
 			ofc_parse_type__keyword_map[j].keyword);

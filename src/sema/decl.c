@@ -724,6 +724,22 @@ static bool ofc_sema_decl__decl(
 			return false;
 		}
 
+		ofc_sema_spec_t* fspec
+			= ofc_sema_scope_spec_find_final(
+				scope, spec.name);
+		if (fspec)
+		{
+			bool overlaid
+				= ofc_sema_spec_overlay(
+					nspec, fspec);
+			ofc_sema_spec_delete(fspec);
+			if (!overlaid)
+			{
+				ofc_sema_array_delete(array);
+				return false;
+			}
+		}
+
 		decl = ofc_sema_decl__spec(
 			scope, structure,
 			spec.name, nspec,

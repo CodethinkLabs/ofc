@@ -16,6 +16,103 @@
 #include "ofc/parse.h"
 
 
+unsigned ofc_parse_decl_attr(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_decl_attr_t* attr)
+{
+	if (!attr)
+		return 0;
+
+	static const ofc_parse_keyword_e kw[] =
+	{
+		OFC_PARSE_KEYWORD_STATIC,
+		OFC_PARSE_KEYWORD_AUTOMATIC,
+		OFC_PARSE_KEYWORD_VOLATILE,
+		OFC_PARSE_KEYWORD_INTRINSIC,
+		OFC_PARSE_KEYWORD_EXTERNAL,
+	};
+
+	bool* param[] =
+	{
+		&attr->is_static,
+		&attr->is_automatic,
+		&attr->is_volatile,
+		&attr->is_intrinsic,
+		&attr->is_external,
+		NULL
+	};
+
+	unsigned i;
+	for (i = 0; param[i]; i++)
+	{
+		unsigned l = ofc_parse_keyword(
+			src, ptr, debug, kw[i]);
+		if (l != 0)
+		{
+			if (!(param[i]))
+			{
+				ofc_parse_debug_warning(debug,
+					ofc_sparse_ref(src, ptr, l),
+					"Duplicate definition of %s decl attribute",
+					ofc_parse_keyword_name(kw[i]));
+			}
+
+			*(param[i]) = true;
+			return l;
+		}
+	}
+
+	return 0;
+}
+
+bool ofc_parse_decl_attr_print(
+	ofc_colstr_t* cs, const ofc_parse_decl_attr_t* attr)
+{
+	if (!cs || !attr)
+		return false;
+
+	bool first = true;
+
+	static const ofc_parse_keyword_e kw[] =
+	{
+		OFC_PARSE_KEYWORD_STATIC,
+		OFC_PARSE_KEYWORD_AUTOMATIC,
+		OFC_PARSE_KEYWORD_VOLATILE,
+		OFC_PARSE_KEYWORD_INTRINSIC,
+		OFC_PARSE_KEYWORD_EXTERNAL,
+	};
+
+	bool param[] =
+	{
+		attr->is_static,
+		attr->is_automatic,
+		attr->is_volatile,
+		attr->is_intrinsic,
+		attr->is_external,
+	};
+
+	unsigned i;
+	for (i = 0; i < 5; i++)
+	{
+		if (!param[i])
+			continue;
+
+		if (!first && !ofc_colstr_writef(cs, " "))
+			return false;
+
+		if (!ofc_colstr_atomic_writef(cs,
+			"%s", ofc_parse_keyword_name(kw[i])))
+			return false;
+
+		first = false;
+	}
+
+	return true;
+}
+
+
+
 static ofc_parse_decl_t* ofc_parse__decl(
 	const ofc_sparse_t* src, const char* ptr,
 	bool is_f90,

@@ -84,6 +84,17 @@ bool ofc_sema_implicit_none(ofc_sema_implicit_t* implicit)
 	return true;
 }
 
+bool ofc_sema_implicit_set_undefined(
+	ofc_sema_implicit_t* implicit, char c)
+{
+	if (!implicit || !isalpha(c))
+		return false;
+
+	unsigned i = (toupper(c) - 'A');
+	implicit->spec[i] = OFC_SEMA_SPEC_DEFAULT;
+	return true;
+}
+
 bool ofc_sema_implicit_set(
 	ofc_sema_implicit_t* implicit,
 	ofc_sema_spec_t spec, char c)
@@ -92,8 +103,12 @@ bool ofc_sema_implicit_set(
 		return false;
 
 	unsigned i = (toupper(c) - 'A');
-	implicit->spec[i] = spec;
 
+	if (!ofc_sema_spec_overlay(
+		&spec, &implicit->spec[i]))
+		return false;
+
+	implicit->spec[i] = spec;
 	return true;
 }
 
@@ -111,34 +126,15 @@ ofc_sema_spec_t* ofc_sema_implicit_apply(
 		: ofc_sema_spec_create(name));
 	if (!copy) return NULL;
 
-	const ofc_sema_spec_t* i
+	const ofc_sema_spec_t* overlay
 		= &implicit->spec[toupper(name.string.base[0]) - 'A'];
 
-	if (copy->type_implicit)
+	if (!ofc_sema_spec_overlay(
+		copy, overlay))
 	{
-		copy->type_implicit = i->type_implicit;
-		copy->type          = i->type;
-		copy->kind          = i->kind;
+		ofc_sema_spec_delete(copy);
+		return NULL;
 	}
-	else if (!i->type_implicit
-		&& (copy->type == i->type)
-		&& (copy->kind == 0))
-	{
-		copy->kind = i->kind;
-	}
-
-	if ((copy->len == 0)
-		&& !copy->len_var)
-	{
-		copy->len     = i->len;
-		copy->len_var = i->len_var;
-	}
-
-	copy->is_static    |= i->is_static;
-	copy->is_automatic |= i->is_automatic;
-	copy->is_volatile  |= i->is_volatile;
-	copy->is_intrinsic |= i->is_intrinsic;
-	copy->is_external  |= i->is_external;
 
 	return copy;
 }
@@ -174,27 +170,50 @@ bool ofc_sema_implicit(
 		const ofc_parse_implicit_t* rule
 			= stmt->implicit->rule[i];
 
-		ofc_sema_spec_t* spec
-			= ofc_sema_spec(scope, rule->type);
-		if (!spec) return false;
-
-		/* Can't make IMPLICIT rules with array dimensions. */
-		if (spec->array)
+		if (rule->undefined)
 		{
-			ofc_sema_spec_delete(spec);
-			return false;
+			unsigned c, m;
+			for (c = 'A', m = 1; c <= 'Z'; c++, m <<= 1)
+			{
+				if ((rule->mask & m)
+					&& !ofc_sema_implicit_set_undefined(
+						implicit, c))
+					return false;
+			}
 		}
-
-		unsigned c, m;
-		for (c = 'A', m = 1; c <= 'Z'; c++, m <<= 1)
+		else
 		{
-			if ((rule->mask & m)
-				&& !ofc_sema_implicit_set(
-					implicit, *spec, c))
+			ofc_sema_spec_t* spec;
+			if (rule->type)
+				spec = ofc_sema_spec(scope, rule->type);
+			else
+				spec = ofc_sema_spec_create(OFC_SPARSE_REF_EMPTY);
+			if (!spec) return false;
+
+			spec->is_static    |= rule->attr.is_static;
+			spec->is_automatic |= rule->attr.is_automatic;
+			spec->is_volatile  |= rule->attr.is_volatile;
+			spec->is_intrinsic |= rule->attr.is_intrinsic;
+			spec->is_external  |= rule->attr.is_external;
+
+			/* Can't make IMPLICIT rules with array dimensions. */
+			if (spec->array)
+			{
+				ofc_sema_spec_delete(spec);
 				return false;
-		}
+			}
 
-		ofc_sema_spec_delete(spec);
+			unsigned c, m;
+			for (c = 'A', m = 1; c <= 'Z'; c++, m <<= 1)
+			{
+				if ((rule->mask & m)
+					&& !ofc_sema_implicit_set(
+						implicit, *spec, c))
+					return false;
+			}
+
+			ofc_sema_spec_delete(spec);
+		}
 	}
 
 	return true;

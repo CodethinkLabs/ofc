@@ -18,8 +18,10 @@
 
 typedef struct
 {
-	ofc_parse_type_t* type;
-	uint32_t          mask; /* A..Z -> 0..25 */
+	bool                  undefined;
+	ofc_parse_type_t*     type;
+	ofc_parse_decl_attr_t attr;
+	uint32_t              mask; /* A..Z -> 0..25 */
 } ofc_parse_implicit_t;
 
 typedef struct

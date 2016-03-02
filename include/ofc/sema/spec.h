@@ -84,6 +84,10 @@ bool ofc_sema_spec_print(
 void ofc_sema_spec_delete(
 	ofc_sema_spec_t* spec);
 
+bool ofc_sema_spec_overlay(
+	ofc_sema_spec_t* base,
+	const ofc_sema_spec_t* overlay);
+
 bool ofc_sema_spec_mark_used(
 	ofc_sema_scope_t* scope,
 	ofc_sema_spec_t* spec);

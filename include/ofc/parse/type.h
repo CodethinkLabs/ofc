@@ -37,18 +37,10 @@ typedef enum
 
 typedef struct
 {
-	bool is_static;
-	bool is_volatile;
-	bool is_automatic;
-} ofc_parse_decl_attr_t;
-
-typedef struct
-{
 	ofc_sparse_ref_t           src;
 
 	ofc_parse_type_e           type;
 	ofc_sparse_ref_t           type_name;
-	ofc_parse_decl_attr_t      attr;
 	unsigned                   size;
 	ofc_parse_expr_t*          count_expr;
 	bool                       count_var;
