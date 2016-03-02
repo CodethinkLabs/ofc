@@ -497,6 +497,7 @@ ofc_parse_stmt_t* ofc_parse_stmt(
 
 		case 'M':
 			if (i == 0) i = ofc_parse_stmt_map(src, ptr, debug, &stmt);
+			if (i == 0) i = ofc_parse_stmt_module(src, ptr, debug, &stmt);
 			break;
 
 		case 'N':
@@ -704,6 +705,7 @@ bool ofc_parse_stmt_print(
 		case OFC_PARSE_STMT_PROGRAM:
 		case OFC_PARSE_STMT_SUBROUTINE:
 		case OFC_PARSE_STMT_FUNCTION:
+		case OFC_PARSE_STMT_MODULE:
 		case OFC_PARSE_STMT_BLOCK_DATA:
 			if (!ofc_parse_stmt_program_print(
 				cs, indent, stmt))

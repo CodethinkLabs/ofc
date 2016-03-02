@@ -29,6 +29,7 @@ static const char* ofc_parse_keyword__name[] =
 	"PROGRAM",
 	"SUBROUTINE",
 	"FUNCTION",
+	"MODULE",
 	"BLOCK DATA",
 
 	"STRUCTURE",

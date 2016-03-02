@@ -244,6 +244,40 @@ unsigned ofc_parse_stmt_function(
 }
 
 
+unsigned ofc_parse_stmt_module(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_stmt_t* stmt)
+{
+	unsigned dpos = ofc_parse_debug_position(debug);
+
+	stmt->program.name = OFC_SPARSE_REF_EMPTY;
+	unsigned i = ofc_parse_keyword_named(
+		src, ptr, debug,
+		OFC_PARSE_KEYWORD_MODULE,
+		&stmt->program.name);
+	if (i == 0) return 0;
+
+	unsigned len = ofc_parse_stmt_program__body(
+		src, &ptr[i], debug,
+		OFC_PARSE_KEYWORD_MODULE, stmt);
+	if (len == 0)
+	{
+		ofc_parse_debug_rewind(debug, dpos);
+		return 0;
+	}
+	i += len;
+
+	stmt->program.type = NULL;
+	stmt->program.args = NULL;
+
+	stmt->type = OFC_PARSE_STMT_MODULE;
+
+	return i;
+
+}
+
+
 unsigned ofc_parse_stmt_block_data(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
@@ -296,6 +330,7 @@ bool ofc_parse_stmt_program_print(
 		case OFC_PARSE_STMT_PROGRAM:
 		case OFC_PARSE_STMT_SUBROUTINE:
 		case OFC_PARSE_STMT_FUNCTION:
+		case OFC_PARSE_STMT_MODULE:
 		case OFC_PARSE_STMT_BLOCK_DATA:
 			break;
 		default:
@@ -323,6 +358,9 @@ bool ofc_parse_stmt_program_print(
 		case OFC_PARSE_STMT_FUNCTION:
 			kwstr = "FUNCTION";
 			has_args = true;
+			break;
+		case OFC_PARSE_STMT_MODULE:
+			kwstr = "MODULE";
 			break;
 		case OFC_PARSE_STMT_BLOCK_DATA:
 			kwstr = "BLOCK DATA";
