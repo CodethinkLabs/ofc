@@ -280,10 +280,10 @@ static unsigned ofc_parse_literal__hollerith(
 }
 
 
-ofc_string_t* ofc_parse_character(
+ofc_string_t* ofc_parse__character(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
-	unsigned* len)
+	unsigned* len, bool quiet)
 {
 	unsigned i = 0;
 
@@ -315,7 +315,9 @@ ofc_string_t* ofc_parse_character(
 	}
 	if (ptr[i++] != quote)
 	{
-		ofc_sparse_error_ptr(src, ptr, "Unterminated string");
+		if (!quiet)
+			ofc_sparse_error_ptr(
+				src, ptr, "Unterminated string");
 		return NULL;
 	}
 
@@ -328,8 +330,9 @@ ofc_string_t* ofc_parse_character(
 			|| (pptr[j] == '\n')
 			|| (pptr[j] == '\0'))
 		{
-			ofc_sparse_error_ptr(src, ptr,
-				"Unexpected end of line in character constant");
+			if (!quiet)
+				ofc_sparse_error_ptr(src, ptr,
+					"Unexpected end of line in character constant");
 			return NULL;
 		}
 
@@ -445,14 +448,23 @@ ofc_string_t* ofc_parse_character(
 	return string;
 }
 
+ofc_string_t* ofc_parse_character(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	unsigned* len)
+{
+	return ofc_parse__character(
+		src, ptr, debug, len, false);
+}
+
 static unsigned ofc_parse_literal__character(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
 	ofc_parse_literal_t* literal)
 {
 	unsigned len = 0;
-	literal->string = ofc_parse_character(
-		src, ptr, debug, &len);
+	literal->string = ofc_parse__character(
+		src, ptr, debug, &len, true);
 	if (!literal->string) return 0;
 
 	literal->type = OFC_PARSE_LITERAL_CHARACTER;
