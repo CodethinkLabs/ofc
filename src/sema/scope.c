@@ -80,9 +80,8 @@ static bool ofc_sema_scope__add_child(
 
 
 static ofc_sema_scope_t* ofc_sema_scope__create(
-	ofc_sema_scope_t*      parent,
-	const ofc_lang_opts_t* lang_opts,
-	ofc_sema_scope_e       type)
+	ofc_sema_scope_t* parent,
+	ofc_sema_scope_e  type)
 {
 	ofc_sema_scope_t* scope
 		= (ofc_sema_scope_t*)malloc(
@@ -94,18 +93,14 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 	scope->parent = parent;
 	scope->child  = NULL;
 
-	scope->lang_opts = lang_opts;
-	if (!scope->lang_opts && parent)
-		scope->lang_opts = parent->lang_opts;
-
-	ofc_lang_opts_t opts = ofc_sema_scope_get_lang_opts(scope);
-
 	scope->type = type;
 	scope->name = OFC_STR_REF_EMPTY;
 	scope->args = NULL;
 
-	scope->spec  = ofc_sema_spec_map_create(opts.case_sensitive);
-	scope->decl  = ofc_sema_decl_list_create(opts.case_sensitive);
+	scope->spec = ofc_sema_spec_map_create(
+		global_opts.case_sensitive);
+	scope->decl = ofc_sema_decl_list_create(
+		global_opts.case_sensitive);
 
 	scope->external = false;
 	scope->intrinsic = false;
@@ -132,13 +127,16 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 		if (!scope->implicit)
 			scope->implicit = ofc_sema_implicit_create();
 
-		scope->common = ofc_sema_common_map_create(opts.case_sensitive);
+		scope->common = ofc_sema_common_map_create(
+			global_opts.case_sensitive);
 		scope->equiv  = ofc_sema_equiv_list_create();
 
 		scope->structure
-			= ofc_sema_structure_list_create(opts.case_sensitive);
+			= ofc_sema_structure_list_create(
+				global_opts.case_sensitive);
 		scope->derived_type
-			= ofc_sema_structure_list_create(opts.case_sensitive);
+			= ofc_sema_structure_list_create(
+				global_opts.case_sensitive);
 
 		scope->label = ofc_sema_label_map_create();
 
@@ -572,7 +570,7 @@ bool ofc_sema_scope_subroutine(
 
 
 	ofc_sema_scope_t* sub_scope
-		= ofc_sema_scope__create(scope, NULL,
+		= ofc_sema_scope__create(scope,
 			OFC_SEMA_SCOPE_SUBROUTINE);
 	if (!sub_scope) return false;
 	sub_scope->src  = stmt->src;
@@ -644,7 +642,7 @@ bool ofc_sema_scope_function(
 		return false;
 
 	ofc_sema_scope_t* func_scope
-		= ofc_sema_scope__create(scope, NULL,
+		= ofc_sema_scope__create(scope,
 			OFC_SEMA_SCOPE_FUNCTION);
 	if (!func_scope) return false;
 	func_scope->src  = stmt->src;
@@ -819,7 +817,6 @@ bool ofc_sema_scope_function(
 }
 
 ofc_sema_scope_t* ofc_sema_scope_global(
-	const ofc_lang_opts_t* lang_opts,
 	const ofc_parse_stmt_list_t* list)
 {
 	if (!list)
@@ -827,10 +824,8 @@ ofc_sema_scope_t* ofc_sema_scope_global(
 
 	ofc_sema_scope_t* scope
 		= ofc_sema_scope__create(
-			NULL, lang_opts, OFC_SEMA_SCOPE_GLOBAL);
+			NULL, OFC_SEMA_SCOPE_GLOBAL);
 	if (!scope) return NULL;
-
-	scope->lang_opts = lang_opts;
 
 	if (!ofc_sema_scope__body(scope, list))
 	{
@@ -867,7 +862,7 @@ ofc_sema_scope_t* ofc_sema_scope_program(
 
 	ofc_sema_scope_t* program
 		= ofc_sema_scope__create(
-			scope, NULL, OFC_SEMA_SCOPE_PROGRAM);
+			scope, OFC_SEMA_SCOPE_PROGRAM);
 	if (!program) return NULL;
 
 	program->src  = stmt->src;
@@ -946,7 +941,7 @@ ofc_sema_scope_t* ofc_sema_scope_stmt_func(
 
 	ofc_sema_scope_t* func
 		= ofc_sema_scope__create(
-			scope, NULL, OFC_SEMA_SCOPE_STMT_FUNC);
+			scope, OFC_SEMA_SCOPE_STMT_FUNC);
 	if (!func)
 	{
 		ofc_sema_spec_delete(spec);
@@ -1058,7 +1053,7 @@ ofc_sema_scope_t* ofc_sema_scope_block_data(
 
 	ofc_sema_scope_t* block_data
 		= ofc_sema_scope__create(
-			scope, NULL, OFC_SEMA_SCOPE_BLOCK_DATA);
+			scope, OFC_SEMA_SCOPE_BLOCK_DATA);
 	if (!block_data) return NULL;
 
 	block_data->src  = stmt->src;
@@ -1108,18 +1103,6 @@ const ofc_str_ref_t* ofc_sema_scope_get_name(
 	const ofc_sema_scope_t* scope)
 {
 	return (!scope ? NULL : &scope->name);
-}
-
-ofc_lang_opts_t ofc_sema_scope_get_lang_opts(
-	const ofc_sema_scope_t* scope)
-{
-	if (!scope)
-		return OFC_LANG_OPTS_F77;
-
-	if (scope->lang_opts)
-		return *scope->lang_opts;
-
-	return ofc_sema_scope_get_lang_opts(scope->parent);
 }
 
 

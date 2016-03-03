@@ -45,6 +45,7 @@ unsigned ofc_parse_stmt_include(
 
 	if (!ofc_is_end_statement(&ptr[i], NULL))
 	{
+		ofc_string_delete(spath);
 		ofc_parse_debug_rewind(debug, dpos);
 		return 0;
 	}
@@ -60,9 +61,12 @@ unsigned ofc_parse_stmt_include(
 
 	ofc_sparse_ref_t include_stmt = ofc_sparse_ref(src, ptr, i);
 
+	const ofc_lang_opts_t* lang_opts
+		= ofc_sparse_lang_opts(src);
+	if (!lang_opts) return 0;
+
 	stmt->include.file = ofc_file_create_include(
-		path, ofc_sparse_lang_opts(src),
-		ofc_sparse_file(src), include_stmt);
+		path, *lang_opts, ofc_sparse_file(src), include_stmt);
 
 	if (!stmt->include.file)
 	{

@@ -44,8 +44,6 @@ struct ofc_sema_scope_s
 	ofc_sema_scope_t*      parent;
 	ofc_sema_scope_list_t* child;
 
-	const ofc_lang_opts_t* lang_opts;
-
 	ofc_sema_scope_e     type;
 	ofc_str_ref_t        name;
 	ofc_sema_arg_list_t* args;
@@ -78,7 +76,6 @@ bool ofc_sema_scope__check_namespace_collision(
 	char* namespace, ofc_sparse_ref_t ref);
 
 ofc_sema_scope_t* ofc_sema_scope_global(
-	const ofc_lang_opts_t* lang_opts,
 	const ofc_parse_stmt_list_t* list);
 
 ofc_sema_scope_t* ofc_sema_scope_program(
@@ -109,8 +106,6 @@ void ofc_sema_scope_delete(
 	ofc_sema_scope_t* scope);
 
 const ofc_str_ref_t* ofc_sema_scope_get_name(
-	const ofc_sema_scope_t* scope);
-ofc_lang_opts_t ofc_sema_scope_get_lang_opts(
 	const ofc_sema_scope_t* scope);
 
 const ofc_sema_implicit_t* ofc_sema_scope_implicit(

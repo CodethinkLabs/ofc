@@ -18,6 +18,7 @@
 
 #include <ofc/parse.h>
 #include <ofc/hashmap.h>
+#include <ofc/global_opts.h>
 
 typedef struct ofc_sema_stmt_s     ofc_sema_stmt_t;
 typedef struct ofc_sema_scope_s    ofc_sema_scope_t;

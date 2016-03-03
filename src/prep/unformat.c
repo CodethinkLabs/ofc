@@ -23,14 +23,14 @@
 
 static unsigned ofc_prep_unformat__blank_or_comment(
 	const ofc_file_t* file, const char* src,
-	ofc_lang_opts_t opts)
+	const ofc_lang_opts_t* opts)
 {
-	if (!src)
+	if (!src || !opts)
 		return 0;
 
 	bool is_comment
 		= ((toupper(src[0]) == 'C') || (src[0] == '*')
-			|| (opts.debug && (toupper(src[0]) == 'D')));
+			|| (opts->debug && (toupper(src[0]) == 'D')));
 
 	if (is_comment && strncasecmp(&src[1], "$PRAGMA", 7) == 0)
 	{
@@ -39,8 +39,8 @@ static unsigned ofc_prep_unformat__blank_or_comment(
 			"$PRAGMA not supported, ignoring");
 	}
 
-	if ((opts.form != OFC_LANG_FORM_FIXED)
-		&& (opts.form != OFC_LANG_FORM_TAB))
+	if ((opts->form != OFC_LANG_FORM_FIXED)
+		&& (opts->form != OFC_LANG_FORM_TAB))
 		is_comment = false;
 
 	if (src[0] == '!')
@@ -50,7 +50,7 @@ static unsigned ofc_prep_unformat__blank_or_comment(
 
 	if (!is_comment)
 	{
-		for (; (i < opts.columns) && (src[i] !='\0')
+		for (; (i < opts->columns) && (src[i] !='\0')
 			&& !ofc_is_vspace(src[i]) && ofc_is_hspace(src[i]); i++)
 		{
 			if (src[i] == '\t')
@@ -58,10 +58,10 @@ static unsigned ofc_prep_unformat__blank_or_comment(
 		}
 	}
 
-	bool ignore = is_comment || (i >= opts.columns);
+	bool ignore = is_comment || (i >= opts->columns);
 	if (!ignore)
 	{
-		switch (opts.form)
+		switch (opts->form)
 		{
 			case OFC_LANG_FORM_FIXED:
 				ignore = ((i != 5) && (src[i] == '!'));
@@ -84,11 +84,12 @@ static unsigned ofc_prep_unformat__blank_or_comment(
 }
 
 static unsigned ofc_prep_unformat__fixed_form_label(
-	const ofc_file_t* file, const char* src, ofc_lang_opts_t opts,
+	const ofc_file_t* file, const char* src,
+	const ofc_lang_opts_t* opts,
 	bool* has_label, unsigned* label, bool* continuation,
 	unsigned* column)
 {
-	if (!src)
+	if (!src || !opts)
 		return 0;
 
 	bool seen_digit = false;
@@ -97,10 +98,10 @@ static unsigned ofc_prep_unformat__fixed_form_label(
 	unsigned col;
 
 	unsigned i = 0;
-	if ((toupper(src[i]) == 'D') && !opts.debug)
+	if ((toupper(src[i]) == 'D') && !opts->debug)
 		i += 1;
 
-	if (opts.form == OFC_LANG_FORM_TAB)
+	if (opts->form == OFC_LANG_FORM_TAB)
 	{
 		for (; (src[i] != '\0') && !ofc_is_vspace(src[i]) && (src[i] != '\t') && (src[i] != '!'); i++)
 		{
@@ -130,12 +131,12 @@ static unsigned ofc_prep_unformat__fixed_form_label(
 			&& (src[i] != '!'))
 		{
 			/* Skip tab. */
-			col += opts.tab_width;
+			col += opts->tab_width;
 			i += 1;
 
 			is_cont = (isdigit(src[i]) && (src[i] != '0'));
 			if (is_cont)
-				col += (src[i++] == '\t' ? opts.tab_width : 1);
+				col += (src[i++] == '\t' ? opts->tab_width : 1);
 		}
 	}
 	else
@@ -154,7 +155,7 @@ static unsigned ofc_prep_unformat__fixed_form_label(
 				return 0;
 			}
 
-			col += (src[i] == '\t' ? opts.tab_width : 1);
+			col += (src[i] == '\t' ? opts->tab_width : 1);
 		}
 
 		/* Empty maybe labelled statement */
@@ -165,7 +166,7 @@ static unsigned ofc_prep_unformat__fixed_form_label(
 			is_cont = (!ofc_is_hspace(src[i]) && (src[i] != '0'));
 
 			/* Skip contuation character. */
-			col += (src[i++] == '\t' ? opts.tab_width : 1);
+			col += (src[i++] == '\t' ? opts->tab_width : 1);
 		}
 	}
 
@@ -227,10 +228,11 @@ static const pre_state_t PRE_STATE_DEFAULT =
 
 static unsigned ofc_prep_unformat__fixed_form_code(
 	unsigned* col, pre_state_t* state,
-	const ofc_file_t* file, const char* src, ofc_lang_opts_t opts,
+	const ofc_file_t* file, const char* src,
+	const ofc_lang_opts_t* opts,
 	ofc_sparse_t* sparse)
 {
-	if (!src)
+	if (!src || !opts)
 		return 0;
 
 	unsigned hollerith_size   = 0;
@@ -238,7 +240,7 @@ static unsigned ofc_prep_unformat__fixed_form_code(
 	bool     hollerith_too_long = false;
 
 	unsigned i;
-	for (i = 0; (*col < opts.columns) && !ofc_is_vspace(src[i]) && (src[i] != '\0'); i++)
+	for (i = 0; (*col < opts->columns) && !ofc_is_vspace(src[i]) && (src[i] != '\0'); i++)
 	{
 		if (state->string_delim != '\0')
 		{
@@ -319,7 +321,7 @@ static unsigned ofc_prep_unformat__fixed_form_code(
 			}
 		}
 
-		*col += (src[i] == '\t' ? opts.tab_width : 1);
+		*col += (src[i] == '\t' ? opts->tab_width : 1);
 	}
 
 	if (sparse && !ofc_sparse_append_strn(
@@ -331,7 +333,8 @@ static unsigned ofc_prep_unformat__fixed_form_code(
 
 static unsigned ofc_prep_unformat__free_form_code(
 	unsigned* col, pre_state_t* state,
-	const ofc_file_t* file, const char* src, ofc_lang_opts_t opts,
+	const ofc_file_t* file, const char* src,
+	const ofc_lang_opts_t* opts,
 	ofc_sparse_t* sparse, bool* continuation)
 {
 	if (!src)
@@ -351,7 +354,7 @@ static unsigned ofc_prep_unformat__free_form_code(
 	}
 
 	unsigned i;
-	for (i = 0; (*col < opts.columns) && !ofc_is_vspace(src[i]) && (src[i] != '\0'); i++)
+	for (i = 0; (*col < opts->columns) && !ofc_is_vspace(src[i]) && (src[i] != '\0'); i++)
 	{
 		/* Allow the last ampersand prior to a bang comment as continuation. */
 		if (!ofc_is_hspace(src[i]) && (src[i] != '!'))
@@ -448,7 +451,7 @@ static unsigned ofc_prep_unformat__free_form_code(
 			}
 		}
 
-		*col += (src[i] == '\t' ? opts.tab_width : 1);
+		*col += (src[i] == '\t' ? opts->tab_width : 1);
 	}
 
 	unsigned code_len = i;
@@ -471,8 +474,11 @@ static bool ofc_prep_unformat__fixed_form(
 	const ofc_file_t* file, ofc_sparse_t* sparse)
 {
 	const char*     src   = ofc_file_get_strz(file);
-	ofc_lang_opts_t opts  = ofc_file_get_lang_opts(file);
 	pre_state_t     state = PRE_STATE_DEFAULT;
+
+	const ofc_lang_opts_t* opts
+		= ofc_file_get_lang_opts(file);
+	if (!opts) return false;
 
 	bool first_code_line = true;
 
@@ -536,11 +542,11 @@ static bool ofc_prep_unformat__fixed_form(
 		if (!continuation)
 		{
 			for(; ofc_is_hspace(src[pos]); pos++)
-				col += (src[pos] == '\t' ? opts.tab_width : 1);
+				col += (src[pos] == '\t' ? opts->tab_width : 1);
 			state = PRE_STATE_DEFAULT;
 		}
 
-		bool has_code = ((col < opts.columns)
+		bool has_code = ((col < opts->columns)
 			&& (src[pos] != '\0')
 			&& !ofc_is_vspace(src[pos]));
 
@@ -592,8 +598,11 @@ static bool ofc_prep_unformat__free_form(
 	const ofc_file_t* file, ofc_sparse_t* sparse)
 {
 	const char*     src   = ofc_file_get_strz(file);
-	ofc_lang_opts_t opts  = ofc_file_get_lang_opts(file);
 	pre_state_t     state = PRE_STATE_DEFAULT;
+
+	const ofc_lang_opts_t* opts
+		= ofc_file_get_lang_opts(file);
+	if (!opts) return false;
 
 	bool first_code_line = true;
 	bool continuation = false;
@@ -652,10 +661,10 @@ static bool ofc_prep_unformat__free_form(
 		if (!continuation)
 		{
 			for(; ofc_is_hspace(src[pos]); pos++)
-				col += (src[pos] == '\t' ? opts.tab_width : 1);
+				col += (src[pos] == '\t' ? opts->tab_width : 1);
 		}
 
-		bool has_code = ((col < opts.columns)
+		bool has_code = ((col < opts->columns)
 			&& (src[pos] != '\0')
 			&& !ofc_is_vspace(src[pos]));
 
@@ -706,12 +715,16 @@ static bool ofc_prep_unformat__free_form(
 
 ofc_sparse_t* ofc_prep_unformat(ofc_file_t* file)
 {
+	const ofc_lang_opts_t* lang_opts
+		= ofc_file_get_lang_opts(file);
+	if (!lang_opts) return NULL;
+
 	ofc_sparse_t* unformat
 		= ofc_sparse_create_file(file);
 	if (!unformat) return NULL;
 
 	bool success = false;
-	switch (ofc_file_get_lang_opts(file).form)
+	switch (lang_opts->form)
 	{
 		case OFC_LANG_FORM_FIXED:
 		case OFC_LANG_FORM_TAB:

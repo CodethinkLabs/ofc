@@ -1125,10 +1125,8 @@ static ofc_sema_expr_t* ofc_sema_expr__variable(
 	const ofc_sema_intrinsic_t* intrinsic = NULL;
 	if (!spec && !decl)
 	{
-		ofc_lang_opts_t opts
-			= ofc_sema_scope_get_lang_opts(scope);
 		intrinsic = ofc_sema_intrinsic(
-			base_name.string, opts.case_sensitive);
+			base_name.string, global_opts.case_sensitive);
 	}
 
 	ofc_sema_expr_t* expr;

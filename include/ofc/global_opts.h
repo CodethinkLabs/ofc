@@ -20,6 +20,8 @@
 
 typedef struct
 {
+	bool case_sensitive;
+
 	bool no_warn;
 	bool no_warn_equiv_type;
 	bool no_warn_name_keyword;
@@ -27,12 +29,13 @@ typedef struct
 	bool parse_only;
 	bool parse_print;
 	bool sema_print;
-
 } ofc_global_opts_t;
 
 static const ofc_global_opts_t
 	OFC_GLOBAL_OPTS_DEFAULT =
 {
+	.case_sensitive        = false,
+
 	.no_warn               = false,
 	.no_warn_equiv_type    = false,
 	.no_warn_name_keyword  = false,
@@ -41,5 +44,7 @@ static const ofc_global_opts_t
 	.parse_print           = false,
 	.sema_print            = false,
 };
+
+extern ofc_global_opts_t global_opts;
 
 #endif

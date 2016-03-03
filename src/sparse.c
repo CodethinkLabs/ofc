@@ -339,12 +339,14 @@ const char* ofc_sparse_parent_pointer(
 }
 
 
-ofc_lang_opts_t ofc_sparse_lang_opts(const ofc_sparse_t* sparse)
+const ofc_lang_opts_t* ofc_sparse_lang_opts(const ofc_sparse_t* sparse)
 {
 	if (!sparse)
-		return OFC_LANG_OPTS_F77;
+		return NULL;
+
 	if (sparse->file)
 		return ofc_file_get_lang_opts(sparse->file);
+
 	return ofc_sparse_lang_opts(sparse->parent);
 }
 

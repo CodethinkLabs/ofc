@@ -39,7 +39,9 @@ void ofc_file_delete(ofc_file_t* file);
 const char* ofc_file_get_path(const ofc_file_t* file);
 const char* ofc_file_get_include(const ofc_file_t* file);
 const char* ofc_file_get_strz(const ofc_file_t* file);
-ofc_lang_opts_t ofc_file_get_lang_opts(const ofc_file_t* file);
+const ofc_lang_opts_t* ofc_file_get_lang_opts(const ofc_file_t* file);
+
+ofc_lang_opts_t* ofc_file_modify_lang_opts(ofc_file_t* file);
 
 char* ofc_file_include_path(
 	const ofc_file_t* file, const char* path);

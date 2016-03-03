@@ -225,9 +225,16 @@ const char* ofc_file_get_strz(const ofc_file_t* file)
 	return (file ? file->strz : NULL);
 }
 
-ofc_lang_opts_t ofc_file_get_lang_opts(const ofc_file_t* file)
+const ofc_lang_opts_t* ofc_file_get_lang_opts(const ofc_file_t* file)
 {
-	return (file ? file->opts : OFC_LANG_OPTS_F77);
+	if (!file) return NULL;
+	return &file->opts;
+}
+
+ofc_lang_opts_t* ofc_file_modify_lang_opts(ofc_file_t* file)
+{
+	if (!file) return NULL;
+	return &file->opts;
 }
 
 

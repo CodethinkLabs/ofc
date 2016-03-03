@@ -93,7 +93,6 @@ bool ofc_cliarg_parse(
 	int argc,
     const char* argv[],
 	ofc_file_t** file,
-	ofc_lang_opts_t* lang_opts,
 	ofc_print_opts_t* print_opts,
 	ofc_global_opts_t* global_opts);
 

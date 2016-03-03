@@ -25,6 +25,9 @@ static bool set_global_opts__flag(
 
 	switch (arg_type)
 	{
+		case CASE_SEN:
+			global->case_sensitive = true;
+			break;
 		case NO_WARN:
 			global->no_warn = true;
 			break;
@@ -93,9 +96,6 @@ static bool set_lang_opts__flag(
 	{
 		case DEBUG:
 			lang_opts->debug = true;
-			break;
-		case CASE_SEN:
-			lang_opts->case_sensitive = true;
 			break;
 
 		case FIXED_FORM:
@@ -177,7 +177,7 @@ static const ofc_cliarg_body_t cliargs[] =
 	{ TAB_WIDTH,             "tab-width",             '\0', "Sets tab width <n>",                         LANG_INT,  1, true  },
 	{ DEBUG,                 "debug",                 '\0', "Sets debug mode",                            LANG_NONE, 0, true  },
 	{ COLUMNS,               "columns",               '\0', "Sets number of columns to <n>",              LANG_INT,  1, true  },
-	{ CASE_SEN,              "case-sen",              '\0', "Sets case sensitive mode",                   LANG_NONE, 0, true  },
+	{ CASE_SEN,              "case-sen",              '\0', "Sets case sensitive mode",                   GLOB_NONE, 0, true  },
 	{ INDENT_WIDTH,          "indent-width",          '\0', "Sets indent width <n>",                      PRIN_INT,  1, true  },
 	{ INDENT_MAX_LEVEL,      "indent-max-level",      '\0', "Sets maximum indent level <n>",              PRIN_INT,  1, true  },
 	{ INCLUDE,               "include",               '\0', "Set include paths <s>",                      FILE_STR,  1, false },
@@ -308,7 +308,6 @@ bool ofc_cliarg_parse(
 	int argc,
     const char* argv[],
 	ofc_file_t** file,
-	ofc_lang_opts_t* lang_opts,
 	ofc_print_opts_t* print_opts,
 	ofc_global_opts_t* global_opts)
 {
@@ -420,18 +419,26 @@ bool ofc_cliarg_parse(
 	const char* path = argv[argc - 1];
 	const char* source_file_ext = get_file_ext(path);
 
-	*file = ofc_file_create(path, *lang_opts);
+	ofc_lang_opts_t lang_opts = OFC_LANG_OPTS_F77;
+
+	if (source_file_ext
+		&& (strcasecmp(source_file_ext, "F90") == 0))
+		lang_opts = OFC_LANG_OPTS_F90;
+
+	*file = ofc_file_create(path, lang_opts);
 	if (!*file)
 	{
 		fprintf(stderr, "\nError: Failed read source file '%s'\n", path);
 		return false;
 	}
 
-	if (source_file_ext
-		&& (strcasecmp(source_file_ext, "F90") == 0))
-		*lang_opts = OFC_LANG_OPTS_F90;
+	ofc_lang_opts_t* lang_opts_ptr
+		= ofc_file_modify_lang_opts(*file);
+	if (!lang_opts_ptr) return false;
 
-	if (!ofc_cliarg_list__apply(global_opts, print_opts, lang_opts, *file, args_list))
+	if (!ofc_cliarg_list__apply(
+		global_opts, print_opts, lang_opts_ptr,
+		*file, args_list))
 		return false;
 
 	ofc_cliarg_list_delete(args_list);

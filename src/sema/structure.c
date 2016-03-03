@@ -34,6 +34,10 @@ static ofc_sema_structure_t* ofc_sema__structure(
 	if (!stmt)
 		return NULL;
 
+	const ofc_lang_opts_t* opts
+		= ofc_sparse_lang_opts(stmt->src.sparse);
+	if (!opts) return NULL;
+
 	ofc_sema_structure_e type;
 	switch (stmt->type)
 	{
@@ -58,13 +62,11 @@ static ofc_sema_structure_t* ofc_sema__structure(
 			sizeof(ofc_sema_structure_t));
 	if (!structure) return NULL;
 
-	ofc_lang_opts_t opts
-		= ofc_sparse_lang_opts(stmt->src.sparse);
 	structure->map = ofc_hashmap_create(
-		(void*)(opts.case_sensitive
+		(void*)(global_opts.case_sensitive
 			? ofc_str_ref_ptr_hash
 			: ofc_str_ref_ptr_hash_ci),
-		(void*)(opts.case_sensitive
+		(void*)(global_opts.case_sensitive
 			? ofc_str_ref_ptr_equal
 			: ofc_str_ref_ptr_equal_ci),
 		(void*)ofc_structure__member_name,

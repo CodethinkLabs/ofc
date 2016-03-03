@@ -31,7 +31,6 @@ typedef struct
 	unsigned        tab_width;
 	bool            debug;
 	unsigned        columns;
-	bool            case_sensitive;
 } ofc_lang_opts_t;
 
 static const ofc_lang_opts_t OFC_LANG_OPTS_F77 =
@@ -40,7 +39,6 @@ static const ofc_lang_opts_t OFC_LANG_OPTS_F77 =
 	.tab_width      = 8,
 	.debug          = false,
 	.columns        = 72,
-	.case_sensitive = false,
 };
 
 static const ofc_lang_opts_t OFC_LANG_OPTS_F77_TAB =
@@ -49,7 +47,6 @@ static const ofc_lang_opts_t OFC_LANG_OPTS_F77_TAB =
 	.tab_width      = 1,
 	.debug          = false,
 	.columns        = 72,
-	.case_sensitive = false,
 };
 
 static const ofc_lang_opts_t OFC_LANG_OPTS_F90 =
@@ -58,10 +55,6 @@ static const ofc_lang_opts_t OFC_LANG_OPTS_F90 =
 	.tab_width      = 8,
 	.debug          = false,
 	.columns        = 132,
-	.case_sensitive = false,
 };
-
-#define OFC_LANG_OPTS_DEFAULT \
-		OFC_LANG_OPTS_F77
 
 #endif
