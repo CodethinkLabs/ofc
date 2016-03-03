@@ -36,6 +36,10 @@ unsigned ofc_parse_stmt_function(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
 	ofc_parse_stmt_t* stmt);
+unsigned ofc_parse_stmt_module(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_stmt_t* stmt);
 unsigned ofc_parse_stmt_block_data(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
@@ -79,6 +83,10 @@ unsigned ofc_parse_stmt_equivalence(
 	ofc_parse_stmt_t* stmt);
 
 unsigned ofc_parse_stmt_continue(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_stmt_t* stmt);
+unsigned ofc_parse_stmt_contains(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
 	ofc_parse_stmt_t* stmt);
@@ -456,6 +464,7 @@ ofc_parse_stmt_t* ofc_parse_stmt(
 
 		case 'C':
 			if (i == 0) i = ofc_parse_stmt_continue(src, ptr, debug, &stmt);
+			if (i == 0) i = ofc_parse_stmt_contains(src, ptr, debug, &stmt);
 			if (i == 0) i = ofc_parse_stmt_cycle(src, ptr, debug, &stmt);
 			if (i == 0) i = ofc_parse_stmt_call(src, ptr, debug, &stmt);
 			if (i == 0) i = ofc_parse_stmt_common(src, ptr, debug, &stmt);
@@ -628,6 +637,8 @@ void ofc_parse_stmt_delete(
 bool ofc_parse_stmt_program_print(
 	ofc_colstr_t* cs, unsigned indent,
 	const ofc_parse_stmt_t* stmt);
+bool ofc_parse_stmt_contains_print(
+	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt);
 bool ofc_parse_stmt_use_print(
 	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt);
 bool ofc_parse_stmt_assign_print(
@@ -714,6 +725,10 @@ bool ofc_parse_stmt_print(
 		case OFC_PARSE_STMT_IMPLICIT_NONE:
 		case OFC_PARSE_STMT_IMPLICIT:
 			if (!ofc_parse_stmt_implicit_print(cs, stmt))
+				return false;
+			break;
+		case OFC_PARSE_STMT_CONTAINS:
+			if (!ofc_parse_stmt_contains_print(cs, stmt))
 				return false;
 			break;
 		case OFC_PARSE_STMT_CALL:

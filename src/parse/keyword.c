@@ -32,6 +32,8 @@ static const char* ofc_parse_keyword__name[] =
 	"MODULE",
 	"BLOCK DATA",
 
+	"CONTAINS",
+
 	"STRUCTURE",
 	"UNION",
 	"MAP",

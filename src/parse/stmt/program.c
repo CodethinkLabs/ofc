@@ -258,6 +258,9 @@ unsigned ofc_parse_stmt_module(
 		&stmt->program.name);
 	if (i == 0) return 0;
 
+	if (ptr[i] == '\n')
+		i++;
+
 	unsigned len = ofc_parse_stmt_program__body(
 		src, &ptr[i], debug,
 		OFC_PARSE_KEYWORD_MODULE, stmt);
