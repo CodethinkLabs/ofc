@@ -1980,8 +1980,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 		if (!decl->structure)
 			return false;
 
-		if (decl->structure->type
-			== OFC_SEMA_STRUCTURE_F90_TYPE)
+		if (ofc_sema_structure_is_derived_type(decl->structure))
 		{
 			if (!ofc_colstr_atomic_writef(cs, "TYPE")
 				|| !ofc_colstr_atomic_writef(cs, "(")

@@ -21,6 +21,7 @@ typedef enum
 	OFC_SEMA_STRUCTURE_VAX_STRUCTURE,
 	OFC_SEMA_STRUCTURE_VAX_UNION,
 	OFC_SEMA_STRUCTURE_F90_TYPE,
+	OFC_SEMA_STRUCTURE_F90_TYPE_SEQUENCE,
 } ofc_sema_structure_e;
 
 typedef struct ofc_sema_structure_s ofc_sema_structure_t;
@@ -68,6 +69,8 @@ bool ofc_sema_structure_member_add_structure(
 bool ofc_sema_structure_is_union(
 	const ofc_sema_structure_t* structure);
 bool ofc_sema_structure_is_nested(
+	const ofc_sema_structure_t* structure);
+bool ofc_sema_structure_is_derived_type(
 	const ofc_sema_structure_t* structure);
 
 bool ofc_sema_structure_member_count(

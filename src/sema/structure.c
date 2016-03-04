@@ -481,6 +481,25 @@ bool ofc_sema_structure_is_nested(
 	return false;
 }
 
+bool ofc_sema_structure_is_derived_type(
+	const ofc_sema_structure_t* structure)
+{
+	if (!structure)
+		return false;
+
+	switch (structure->type)
+	{
+		case OFC_SEMA_STRUCTURE_F90_TYPE:
+		case OFC_SEMA_STRUCTURE_F90_TYPE_SEQUENCE:
+			return true;
+
+		default:
+			break;
+	}
+
+	return false;
+}
+
 
 bool ofc_sema_structure_size(
 	const ofc_sema_structure_t* structure,
@@ -609,8 +628,8 @@ bool ofc_sema_structure_elem_print(
 		return false;
 
 	char msym = '%';
-	if (structure->type
-		!= OFC_SEMA_STRUCTURE_F90_TYPE)
+
+	if (!ofc_sema_structure_is_derived_type(structure))
 		msym = '.';
 
 	if (!ofc_colstr_atomic_writef(cs, "%c", msym))
@@ -675,6 +694,7 @@ bool ofc_sema_structure_print(
 	switch (structure->type)
 	{
 		case OFC_SEMA_STRUCTURE_F90_TYPE:
+		case OFC_SEMA_STRUCTURE_F90_TYPE_SEQUENCE:
 			kwstr = "TYPE";
 			break;
 
@@ -699,6 +719,13 @@ bool ofc_sema_structure_print(
 		if (!ofc_colstr_atomic_writef(cs, " ")
 			|| !ofc_sparse_ref_print(cs, structure->name))
 			return false;
+	}
+
+	if (structure->type == OFC_SEMA_STRUCTURE_F90_TYPE_SEQUENCE)
+	{
+		if (!ofc_colstr_newline(cs, (indent + 1), NULL)
+			|| !ofc_colstr_atomic_writef(cs, "SEQUENCE"))
+		return false;
 	}
 
 	unsigned i;

@@ -341,13 +341,13 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 				}
 
 				if ((lhs->type == OFC_PARSE_LHS_MEMBER_TYPE)
-					&& (structure->type != OFC_SEMA_STRUCTURE_F90_TYPE))
+					&& !ofc_sema_structure_is_derived_type(structure))
 				{
 					ofc_sparse_ref_warning(lhs->src,
 						"Dereferencing member of a VAX struct using F90 syntax");
 				}
 				else if ((lhs->type == OFC_PARSE_LHS_MEMBER_STRUCTURE)
-					&& (structure->type == OFC_SEMA_STRUCTURE_F90_TYPE))
+					&& ofc_sema_structure_is_derived_type(structure))
 				{
 					ofc_sparse_ref_warning(lhs->src,
 						"Dereferencing member of an F90 TYPE using VAX syntax");
@@ -1670,8 +1670,7 @@ bool ofc_sema_lhs_print(
 				char member = '%';
 				ofc_sema_structure_t* structure
 					= ofc_sema_lhs_structure(lhs->parent);
-				if (structure && (structure->type
-					!= OFC_SEMA_STRUCTURE_F90_TYPE))
+				if (!ofc_sema_structure_is_derived_type(structure))
 					member = '.';
 
 				if (!ofc_colstr_atomic_writef(cs, "%c", member)
