@@ -191,6 +191,11 @@ ofc_sema_stmt_t* ofc_sema_stmt(
 			s = ofc_sema_stmt_entry(scope, stmt);
 			break;
 
+		case OFC_PARSE_STMT_SEQUENCE:
+			ofc_sparse_ref_error(stmt->src,
+				"SEQUENCE only valid inside TYPE");
+			break;
+
 		default:
 			ofc_sparse_ref_error(stmt->src,
 				"Unsuported statement");

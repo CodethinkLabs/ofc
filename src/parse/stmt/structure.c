@@ -203,6 +203,19 @@ unsigned ofc_parse_stmt_map(
 	return i;
 }
 
+unsigned ofc_parse_stmt_sequence(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_stmt_t* stmt)
+{
+	unsigned i = ofc_parse_keyword(
+		src, ptr, debug, OFC_PARSE_KEYWORD_SEQUENCE);
+	if (i == 0) return 0;
+
+	stmt->type = OFC_PARSE_STMT_SEQUENCE;
+	return i;
+}
+
 
 bool ofc_parse_stmt_structure_print(
 	ofc_colstr_t* cs, unsigned indent,
@@ -252,4 +265,13 @@ bool ofc_parse_stmt_structure_print(
 		return false;
 
 	return ofc_colstr_atomic_writef(cs, "END %s", kwstr);
+}
+
+bool ofc_parse_stmt_sequence_print(
+	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt)
+{
+	if (!cs || !stmt
+		|| (stmt->type != OFC_PARSE_STMT_SEQUENCE))
+		return false;
+	return ofc_colstr_atomic_writef(cs, "SEQUENCE");
 }

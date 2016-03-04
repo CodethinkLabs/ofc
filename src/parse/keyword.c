@@ -33,6 +33,7 @@ static const char* ofc_parse_keyword__name[] =
 	"UNION",
 	"MAP",
 	"RECORD",
+	"SEQUENCE",
 
 	"IF",
 	"THEN",

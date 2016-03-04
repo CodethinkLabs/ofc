@@ -176,6 +176,10 @@ unsigned ofc_parse_stmt_map(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
 	ofc_parse_stmt_t* stmt);
+unsigned ofc_parse_stmt_sequence(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_stmt_t* stmt);
 
 unsigned ofc_parse_stmt_io_open(
 	const ofc_sparse_t* src, const char* ptr,
@@ -519,6 +523,7 @@ ofc_parse_stmt_t* ofc_parse_stmt(
 			if (i == 0) i = ofc_parse_stmt_save(src, ptr, debug, &stmt);
 			if (i == 0) i = ofc_parse_stmt_decl_attr_static(src, ptr, debug, &stmt);
 			if (i == 0) i = ofc_parse_stmt_structure(src, ptr, debug, &stmt);
+			if (i == 0) i = ofc_parse_stmt_sequence(src, ptr, debug, &stmt);
 			break;
 
 		case 'T':
@@ -662,6 +667,8 @@ bool ofc_parse_stmt_go_to_print(
 bool ofc_parse_stmt_structure_print(
 	ofc_colstr_t* cs, unsigned indent,
 	const ofc_parse_stmt_t* stmt);
+bool ofc_parse_stmt_sequence_print(
+	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt);
 bool ofc_parse_stmt_io_print(
 	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt);
 bool ofc_parse_stmt_print_accept_print(
@@ -777,6 +784,10 @@ bool ofc_parse_stmt_print(
 		case OFC_PARSE_STMT_UNION:
 		case OFC_PARSE_STMT_MAP:
 			if (!ofc_parse_stmt_structure_print(cs, indent, stmt))
+				return false;
+			break;
+		case OFC_PARSE_STMT_SEQUENCE:
+			if (!ofc_parse_stmt_sequence_print(cs, stmt))
 				return false;
 			break;
 		case OFC_PARSE_STMT_IO_OPEN:

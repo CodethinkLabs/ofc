@@ -104,6 +104,31 @@ static ofc_sema_structure_t* ofc_sema__structure(
 					return NULL;
 				}
 			}
+			else if (stmt->structure.block->stmt[i]
+				&& (stmt->structure.block->stmt[i]->type
+					== OFC_PARSE_STMT_SEQUENCE))
+			{
+				if (structure->type
+					== OFC_SEMA_STRUCTURE_F90_TYPE_SEQUENCE)
+				{
+					ofc_sparse_ref_warning(
+						stmt->structure.block->stmt[i]->src,
+						"Redundant SEQUENCE statement in TYPE");
+				}
+				else if (structure->type
+					!= OFC_SEMA_STRUCTURE_F90_TYPE)
+				{
+					ofc_sparse_ref_warning(
+						stmt->structure.block->stmt[i]->src,
+						"SEQUENCE statement invalid"
+						" for VAX structures, ignoring");
+				}
+				else
+				{
+					structure->type
+						= OFC_SEMA_STRUCTURE_F90_TYPE_SEQUENCE;
+				}
+			}
 			else if (!ofc_sema_decl_member(scope, structure,
 				stmt->structure.block->stmt[i]))
 			{
