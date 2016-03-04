@@ -22,7 +22,6 @@ typedef enum
 {
 	OFC_LANG_FORM_FIXED = 0,
 	OFC_LANG_FORM_FREE,
-	OFC_LANG_FORM_TAB,
 } ofc_lang_form_e;
 
 typedef struct
@@ -37,14 +36,6 @@ static const ofc_lang_opts_t OFC_LANG_OPTS_F77 =
 {
 	.form           = OFC_LANG_FORM_FIXED,
 	.tab_width      = 8,
-	.debug          = false,
-	.columns        = 72,
-};
-
-static const ofc_lang_opts_t OFC_LANG_OPTS_F77_TAB =
-{
-	.form           = OFC_LANG_FORM_TAB,
-	.tab_width      = 1,
 	.debug          = false,
 	.columns        = 72,
 };

@@ -39,8 +39,7 @@ static unsigned ofc_prep_unformat__blank_or_comment(
 			"$PRAGMA not supported, ignoring");
 	}
 
-	if ((opts->form != OFC_LANG_FORM_FIXED)
-		&& (opts->form != OFC_LANG_FORM_TAB))
+	if (opts->form != OFC_LANG_FORM_FIXED)
 		is_comment = false;
 
 	if (src[0] == '!')
@@ -64,10 +63,7 @@ static unsigned ofc_prep_unformat__blank_or_comment(
 		switch (opts->form)
 		{
 			case OFC_LANG_FORM_FIXED:
-				ignore = ((i != 5) && (src[i] == '!'));
-				break;
-			case OFC_LANG_FORM_TAB:
-				ignore = ((t == 1) && (src[i] == '!'));
+				ignore = (((i != 5) || (t > 0)) && (src[i] == '!'));
 				break;
 			default:
 				ignore = (src[i] == '!');
@@ -87,7 +83,7 @@ static unsigned ofc_prep_unformat__fixed_form_label(
 	const ofc_file_t* file, const char* src,
 	const ofc_lang_opts_t* opts,
 	bool* has_label, unsigned* label, bool* continuation,
-	unsigned* column)
+	bool* extend)
 {
 	if (!src || !opts)
 		return 0;
@@ -95,85 +91,69 @@ static unsigned ofc_prep_unformat__fixed_form_label(
 	bool seen_digit = false;
 	unsigned label_value = 0;
 	bool is_cont = false;
-	unsigned col;
+	bool was_tab = false;
+
+	/* Infinite length continuation line.
+		https://gcc.gnu.org/onlinedocs/gcc-3.4.5/g77/Ampersands.html#Ampersands */
+	if (src[0] == '&')
+	{
+		if (has_label   ) *has_label	= false;
+		if (label       ) *label        = 0;
+		if (continuation) *continuation = true;
+		if (extend      ) *extend       = true;
+		return 1;
+	}
 
 	unsigned i = 0;
 	if ((toupper(src[i]) == 'D') && !opts->debug)
 		i += 1;
 
-	if (opts->form == OFC_LANG_FORM_TAB)
+	for (; (i < 5) && !was_tab && (src[i] != '\0')
+		&& !ofc_is_vspace(src[i]) && (src[i] != '!'); i++)
 	{
-		for (; (src[i] != '\0') && !ofc_is_vspace(src[i]) && (src[i] != '\t') && (src[i] != '!'); i++)
+		if (isdigit(src[i]))
 		{
-			if (isdigit(src[i]))
-			{
-				seen_digit = true;
-				unsigned nvalue = (label_value * 10) + (src[i] - '0');
-				if (((nvalue / 10) != label_value)
-					|| ((nvalue % 10U) != (unsigned)(src[i] - '0')))
-				{
-					ofc_file_error(file, &src[i],
-						"Label number too large");
-					return 0;
-				}
-			}
-			else if (!ofc_is_hspace(src[i]))
-			{
-				ofc_file_error(file, &src[i],
-					"Unexpected character in label");
-				return 0;
-			}
+			seen_digit = true;
+			label_value = (label_value * 10) + (src[i] - '0');
 		}
-
-		col = i;
-		if ((src[i] != '\0')
-			&& !ofc_is_vspace(src[i])
-			&& (src[i] != '!'))
+		else if (src[i] == '\t')
 		{
-			/* Skip tab. */
-			col += opts->tab_width;
-			i += 1;
-
-			is_cont = (isdigit(src[i]) && (src[i] != '0'));
-			if (is_cont)
-				col += (src[i++] == '\t' ? opts->tab_width : 1);
+			was_tab = true;
+		}
+		else if (!ofc_is_hspace(src[i]))
+		{
+			ofc_file_error(file, &src[i],
+				"Unexpected character in label");
+			return 0;
 		}
 	}
-	else
+
+	if (!was_tab && (i == 5)
+		&& (src[i] == '\t'))
 	{
-		for (col = i; (col < 5) && (src[i] != '\0') && !ofc_is_vspace(src[i]) && (src[i] != '!'); i++)
-		{
-			if (isdigit(src[i]))
-			{
-				seen_digit = true;
-				label_value = (label_value * 10) + (src[i] - '0');
-			}
-			else if (!ofc_is_hspace(src[i]))
-			{
-				ofc_file_error(file, &src[i],
-					"Unexpected character in label");
-				return 0;
-			}
+		i++;
+		was_tab = true;
+	}
 
-			col += (src[i] == '\t' ? opts->tab_width : 1);
-		}
-
-		/* Empty maybe labelled statement */
-		if ((col == 5)
-			&& (src[i] != '\0')
-			&& !ofc_is_vspace(src[i]))
-		{
-			is_cont = (!ofc_is_hspace(src[i]) && (src[i] != '0'));
-
-			/* Skip contuation character. */
-			col += (src[i++] == '\t' ? opts->tab_width : 1);
-		}
+	/* Empty maybe labelled statement */
+	if (was_tab)
+	{
+		/* After a tab, only a non-zero digit can represent a continuation
+			https://docs.oracle.com/cd/E19205-01/819-5263/aevlv/index.html */
+		is_cont = (isdigit(src[i]) && (src[i] != '0'));
+		if (is_cont) i++;
+	}
+	else if (i == 5)
+	{
+		is_cont = ((src[i] != '\0') && !ofc_is_vspace(src[i])
+			&& !ofc_is_hspace(src[i]) && (src[i] != '0'));
+		i++;
 	}
 
 	if (has_label   ) *has_label	= seen_digit;
 	if (label       ) *label        = label_value;
 	if (continuation) *continuation = is_cont;
-	if (column      ) *column       = col;
+	if (extend      ) *extend       = was_tab;
 	return i;
 }
 
@@ -229,7 +209,7 @@ static const pre_state_t PRE_STATE_DEFAULT =
 static unsigned ofc_prep_unformat__fixed_form_code(
 	unsigned* col, pre_state_t* state,
 	const ofc_file_t* file, const char* src,
-	const ofc_lang_opts_t* opts,
+	const ofc_lang_opts_t* opts, bool extend,
 	ofc_sparse_t* sparse)
 {
 	if (!src || !opts)
@@ -240,7 +220,8 @@ static unsigned ofc_prep_unformat__fixed_form_code(
 	bool     hollerith_too_long = false;
 
 	unsigned i;
-	for (i = 0; (*col < opts->columns) && !ofc_is_vspace(src[i]) && (src[i] != '\0'); i++)
+	for (i = 0; (extend || (*col < opts->columns))
+		&& !ofc_is_vspace(src[i]) && (src[i] != '\0'); i++)
 	{
 		if (state->string_delim != '\0')
 		{
@@ -321,7 +302,9 @@ static unsigned ofc_prep_unformat__fixed_form_code(
 			}
 		}
 
-		*col += (src[i] == '\t' ? opts->tab_width : 1);
+		if (src[i] == '\t')
+			extend = true;
+		(*col)++;
 	}
 
 	if (sparse && !ofc_sparse_append_strn(
@@ -354,7 +337,8 @@ static unsigned ofc_prep_unformat__free_form_code(
 	}
 
 	unsigned i;
-	for (i = 0; (*col < opts->columns) && !ofc_is_vspace(src[i]) && (src[i] != '\0'); i++)
+	for (i = 0; (*col < opts->columns)
+		&& !ofc_is_vspace(src[i]) && (src[i] != '\0'); i++)
 	{
 		/* Allow the last ampersand prior to a bang comment as continuation. */
 		if (!ofc_is_hspace(src[i]) && (src[i] != '!'))
@@ -505,10 +489,15 @@ static bool ofc_prep_unformat__fixed_form(
 		unsigned label = 0;
 		bool continuation = false;
 
-		len = ofc_prep_unformat__fixed_form_label(
+		/* Extend lines are unlimited in length.
+			Fixed-form lines containing a tab are extended.
+			https://gcc.gnu.org/onlinedocs/gcc-3.4.5/g77/Tabs.html#Tabs */
+		bool extend = false;
+
+		col = ofc_prep_unformat__fixed_form_label(
 			file, &src[pos], opts,
-			&has_label, &label, &continuation, &col);
-		if (len == 0) return false;
+			&has_label, &label, &continuation, &extend);
+		if (col == 0) return false;
 
 		if (first_code_line && continuation)
 		{
@@ -536,17 +525,20 @@ static bool ofc_prep_unformat__fixed_form(
 				"Label attached to blank line, will be ignored");
 		}
 
-		pos += len;
+		pos += col;
 
 		/* Skip initial space. */
 		if (!continuation)
 		{
-			for(; ofc_is_hspace(src[pos]); pos++)
-				col += (src[pos] == '\t' ? opts->tab_width : 1);
+			for(; ofc_is_hspace(src[pos]); pos++, col++)
+			{
+				if (src[pos] == '\t')
+					extend = true;
+			}
 			state = PRE_STATE_DEFAULT;
 		}
 
-		bool has_code = ((col < opts->columns)
+		bool has_code = ((extend || (col < opts->columns))
 			&& (src[pos] != '\0')
 			&& !ofc_is_vspace(src[pos]));
 
@@ -567,7 +559,7 @@ static bool ofc_prep_unformat__fixed_form(
 
 			/* Append non-empty line to output. */
 			len = ofc_prep_unformat__fixed_form_code(
-				&col, &state, file, &src[pos], opts, sparse);
+				&col, &state, file, &src[pos], opts, extend, sparse);
 			pos += len;
 			if (len == 0) return false;
 
@@ -727,7 +719,6 @@ ofc_sparse_t* ofc_prep_unformat(ofc_file_t* file)
 	switch (lang_opts->form)
 	{
 		case OFC_LANG_FORM_FIXED:
-		case OFC_LANG_FORM_TAB:
 			success = ofc_prep_unformat__fixed_form(file, unformat);
 			break;
 		case OFC_LANG_FORM_FREE:

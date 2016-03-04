@@ -104,9 +104,6 @@ static bool set_lang_opts__flag(
 		case FREE_FORM:
 			lang_opts->form = OFC_LANG_FORM_FREE;
 			break;
-		case TAB_FORM:
-			lang_opts->form = OFC_LANG_FORM_TAB;
-			break;
 
 		default:
 			return false;
@@ -173,7 +170,6 @@ static const ofc_cliarg_body_t cliargs[] =
 	{ SEMA_TREE,             "sema-tree",             '\0', "Prints the semantic analysis tree",          GLOB_NONE, 0, true  },
 	{ FIXED_FORM,            "free-form",             '\0', "Sets free form type",                        LANG_NONE, 0, true  },
 	{ FREE_FORM,             "fixed-form",            '\0', "Sets fixed form type",                       LANG_NONE, 0, true  },
-	{ TAB_FORM,              "tab-form",              '\0', "Sets tabbed form type",                      LANG_NONE, 0, true  },
 	{ TAB_WIDTH,             "tab-width",             '\0', "Sets tab width <n>",                         LANG_INT,  1, true  },
 	{ DEBUG,                 "debug",                 '\0', "Sets debug mode",                            LANG_NONE, 0, true  },
 	{ COLUMNS,               "columns",               '\0', "Sets number of columns to <n>",              LANG_INT,  1, true  },
