@@ -379,7 +379,8 @@ static bool ofc_sema_scope__body(
 		return false;
 
 	scope->stmt = ofc_sema_stmt_list(scope, NULL, body);
-	if (!scope->stmt) return false;
+	if (!scope->stmt)
+		return false;
 
 	/* Finalize declarations. */
 	if (!ofc_sema_scope_foreach_decl(scope, NULL,
@@ -752,7 +753,8 @@ ofc_sema_scope_t* ofc_sema_scope_global(
 	ofc_sema_scope_t* scope
 		= ofc_sema_scope__create(
 			NULL, OFC_SEMA_SCOPE_GLOBAL);
-	if (!scope) return NULL;
+	if (!scope)
+		return NULL;
 
 	if (!ofc_sema_scope__body(scope, list))
 	{
@@ -965,6 +967,53 @@ ofc_sema_scope_t* ofc_sema_scope_stmt_func(
 	}
 
 	return func;
+}
+
+ofc_sema_scope_t* ofc_sema_scope_module(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt)
+{
+	if (!scope || !stmt
+		|| (stmt->type != OFC_PARSE_STMT_MODULE))
+		return NULL;
+
+	ofc_sparse_ref_t name = stmt->program.name;
+	if (ofc_sparse_ref_empty(name))
+		return NULL;
+
+	ofc_sema_scope_t* module
+		= ofc_sema_scope__create(
+			scope, NULL, OFC_SEMA_SCOPE_MODULE);
+	if (!module)
+	{
+		ofc_sema_scope_delete(module);
+		return NULL;
+	}
+	module->src  = stmt->src;
+	module->name = stmt->program.name.string;
+
+	if (stmt->program.end_has_label
+		&& !ofc_sema_label_map_add_end_scope(
+			module->label, stmt->program.end_label, module))
+	{
+		ofc_sema_scope_delete(module);
+		return NULL;
+	}
+
+	if (!ofc_sema_scope__body(
+		module, stmt->program.body))
+	{
+		ofc_sema_scope_delete(module);
+		return NULL;
+	}
+
+	if (!ofc_sema_scope__add_child(scope, module))
+	{
+		ofc_sema_scope_delete(module);
+		return NULL;
+	}
+
+	return module;
 }
 
 bool ofc_sema_scope_block_data_name_exists(

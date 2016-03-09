@@ -81,6 +81,10 @@ static ofc_sema_stmt_t* ofc_sema_stmt_simple(
 			st = OFC_SEMA_STMT_CONTINUE;
 			break;
 
+		case OFC_PARSE_STMT_CONTAINS:
+			st = OFC_SEMA_STMT_CONTAINS;
+			break;
+
 		default:
 			return NULL;
 	}
@@ -113,6 +117,10 @@ ofc_sema_stmt_t* ofc_sema_stmt(
 			break;
 
 		case OFC_PARSE_STMT_CONTINUE:
+			s = ofc_sema_stmt_simple(stmt->type);
+			break;
+
+		case OFC_PARSE_STMT_CONTAINS:
 			s = ofc_sema_stmt_simple(stmt->type);
 			break;
 
@@ -550,6 +558,9 @@ static bool ofc_sema_stmt_list__entry(
 
 		case OFC_PARSE_STMT_PROGRAM:
 			return ofc_sema_scope_program(scope, stmt);
+
+		case OFC_PARSE_STMT_MODULE:
+			return ofc_sema_scope_module(scope, stmt);
 
 		case OFC_PARSE_STMT_BLOCK_DATA:
 			return ofc_sema_scope_block_data(scope, stmt);
@@ -1026,6 +1037,7 @@ bool ofc_sema_stmt_foreach_expr(
 			break;
 
 		case OFC_SEMA_STMT_CONTINUE:
+		case OFC_SEMA_STMT_CONTAINS:
 			break;
 
 		case OFC_SEMA_STMT_IF_COMPUTED:
