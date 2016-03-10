@@ -91,6 +91,25 @@ struct ofc_sema_decl_list_s
 	ofc_hashmap_t* map;
 };
 
+typedef struct
+{
+	ofc_str_ref_t   name;
+	ofc_sema_decl_t* decl;
+} ofc_sema_decl_alias_t;
+
+typedef struct
+{
+	unsigned count;
+
+	ofc_sema_decl_alias_t** list;
+	ofc_hashmap_t*          map;
+} ofc_sema_decl_alias_map_t;
+
+ofc_sema_decl_alias_map_t*
+	ofc_sema_decl_alias_map_create(void);
+void ofc_sema_decl_alias_map_delete(
+	ofc_sema_decl_alias_map_t* map);
+
 ofc_sema_decl_t* ofc_sema_decl_create(
 	const ofc_sema_implicit_t* implicit,
 	ofc_sparse_ref_t name);

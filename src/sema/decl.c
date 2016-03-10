@@ -829,6 +829,63 @@ void ofc_sema_decl_delete(
 	free(decl);
 }
 
+static const ofc_str_ref_t* ofc_sema_decl_alias__key(
+	const ofc_sema_decl_alias_t* alias)
+{
+	return (alias ? &(alias->name) : NULL);
+}
+
+
+ofc_sema_decl_alias_t* ofc_sema_decl_alias_create(
+	const ofc_str_ref_t name,
+	ofc_sema_decl_t* decl)
+{
+	ofc_sema_decl_alias_t* alias
+		= (ofc_sema_decl_alias_t*)malloc(
+			sizeof(ofc_sema_decl_alias_t));
+	if (!alias) return NULL;
+
+	alias->name = name;
+	alias->decl = decl;
+
+	return alias;
+}
+
+
+ofc_sema_decl_alias_map_t* ofc_sema_decl_alias_map_create(void)
+{
+	ofc_sema_decl_alias_map_t* map
+		= (ofc_sema_decl_alias_map_t*)malloc(
+			sizeof(ofc_sema_decl_alias_map_t));
+	if (!map) return NULL;
+
+	map->count = 0;
+	map->list = NULL;
+
+	map->map = ofc_hashmap_create(
+		(void*)ofc_str_ref_ptr_hash_ci,
+		(void*)ofc_str_ref_ptr_equal_ci,
+		(void*)ofc_sema_decl_alias__key,
+		NULL);
+
+	if (!map->map)
+	{
+		ofc_sema_decl_alias_map_delete(map);
+		return NULL;
+	}
+
+	return map;
+}
+
+void ofc_sema_decl_alias_map_delete(
+	ofc_sema_decl_alias_map_t* map)
+{
+	if (!map) return;
+
+	ofc_hashmap_delete(map->map);
+	if (map->list) free(map->list);
+	free(map);
+}
 
 bool ofc_sema_decl_init(
 	ofc_sema_decl_t* decl,
