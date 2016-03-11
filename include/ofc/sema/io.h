@@ -50,8 +50,6 @@ bool ofc_sema_io_compare_types(
 	const ofc_sema_lhs_t* lhs,
 	ofc_sema_expr_t** expr,
 	const ofc_sema_type_t* type,
-	const ofc_sema_array_t* array,
-	ofc_sema_structure_t* structure,
 	ofc_parse_format_desc_list_t* format_list,
 	unsigned* offset);
 

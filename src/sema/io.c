@@ -23,127 +23,82 @@ bool ofc_sema_io_compare_types(
 	const ofc_sema_lhs_t* lhs,
 	ofc_sema_expr_t** expr,
 	const ofc_sema_type_t* type,
-	const ofc_sema_array_t* array,
-	ofc_sema_structure_t* structure,
 	ofc_parse_format_desc_list_t* format_list,
 	unsigned* offset)
 {
 	if (!type || !format_list || (!lhs && !expr))
 		return false;
 
-	/* Compare base type of array for each
-	 * element of the array
-	 */
-	if (array)
+	if (ofc_sema_type_is_complex(type))
 	{
-		unsigned array_count;
-		if (!ofc_sema_array_total(
-			array, &array_count))
-			return false;
-
 		unsigned j;
-		for (j = 0; j < array_count; j++)
+		for (j = 0; j < 2; j++)
 		{
-			if (!ofc_sema_io_compare_types(
-				stmt, lhs, expr, type, NULL, structure, format_list, offset))
+			ofc_parse_format_desc_t* desc
+				= format_list->desc[(*offset)++];
+			if (!desc)
 				return false;
-		}
-	}
-	/* Compare each member of the structure to the format list */
-	else if (structure)
-	{
-		unsigned elem_count;
-		if (!ofc_sema_structure_elem_count(
-			structure, &elem_count))
-			return false;
 
-		unsigned j;
-		for (j = 0; j < elem_count; j++)
-		{
-			const ofc_sema_decl_t* member
-				= ofc_sema_structure_elem_get(structure, j);
-			if (!member) return false;
-
-			if (!ofc_sema_io_compare_types(
-				stmt, lhs, expr,
-				member->type, member->array, member->structure,
-				format_list, offset))
-				return false;
-		}
-	}
-	/* If it's not array nor structure, compare types directly */
-	else
-	{
-		if (ofc_sema_type_is_complex(type))
-		{
-			unsigned j;
-			for (j = 0; j < 2; j++)
+			if (!ofc_sema_compare_desc_expr_type(desc->type, type->type))
 			{
-				ofc_parse_format_desc_t* desc
-					= format_list->desc[(*offset)++];
-				if (!desc)
-					return false;
-
-				if (!ofc_sema_compare_desc_expr_type(desc->type, type->type))
-				{
-					ofc_sparse_ref_warning((!expr ? lhs->src : (*expr)->src),
-						"Trying to format a %s output  with a %s FORMAT descriptor",
-						ofc_sema_format_str_rep(desc->type),
-						ofc_sema_type_str_rep(type));
-				}
+				ofc_sparse_ref_warning((!expr ? lhs->src : (*expr)->src),
+					"Trying to format a %s output  with a %s FORMAT descriptor",
+					ofc_sema_format_str_rep(desc->type),
+					ofc_sema_type_str_rep(type));
 			}
-			return true;
 		}
+		return true;
+	}
 
-		ofc_parse_format_desc_t* desc
-			= format_list->desc[(*offset)++];
-		if (!desc) return false;
+	ofc_parse_format_desc_t* desc
+		= format_list->desc[(*offset)++];
+	if (!desc) return false;
 
-		if (!ofc_sema_compare_desc_expr_type(desc->type, type->type))
+	if (!ofc_sema_compare_desc_expr_type(desc->type, type->type))
+	{
+		if (!expr)
 		{
-			if (!expr)
+			ofc_sparse_ref_warning(lhs->src,
+				"Trying to format a %s output  with a %s FORMAT descriptor",
+				ofc_sema_format_str_rep(desc->type),
+				ofc_sema_type_str_rep(type));
+		}
+		else
+		{
+			const ofc_sema_type_t* dtype
+				= ofc_sema_format_desc_type(desc);
+
+			ofc_sema_expr_t* cast
+				= ofc_sema_expr_cast(*expr, dtype);
+			if (!cast)
 			{
-				ofc_sparse_ref_warning(lhs->src,
+				ofc_sparse_ref_warning((*expr)->src,
 					"Trying to format a %s output  with a %s FORMAT descriptor",
 					ofc_sema_format_str_rep(desc->type),
 					ofc_sema_type_str_rep(type));
 			}
 			else
 			{
-				const ofc_sema_type_t* dtype
-					= ofc_sema_format_desc_type(desc);
-
-				ofc_sema_expr_t* cast
-					= ofc_sema_expr_cast(*expr, dtype);
-				if (!cast)
-				{
-					ofc_sparse_ref_warning((*expr)->src,
-						"Trying to format a %s output  with a %s FORMAT descriptor",
-						ofc_sema_format_str_rep(desc->type),
-						ofc_sema_type_str_rep(type));
-				}
-				else
-				{
-					*expr = cast;
-				}
+				*expr = cast;
 			}
 		}
-		else if (desc->type == OFC_PARSE_FORMAT_DESC_CHARACTER)
+	}
+	else if (desc->type == OFC_PARSE_FORMAT_DESC_CHARACTER)
+	{
+		unsigned csize;
+		if (!ofc_sema_type_base_size(type, &csize)
+			|| (csize != 1))
 		{
-			unsigned csize;
-			if (!ofc_sema_type_base_size(type, &csize)
-				|| (csize != 1))
-			{
-				ofc_sparse_ref_t src = (lhs ? lhs->src : (*expr)->src);
-				ofc_sparse_ref_error(src,
-					"CHARACTER type KIND not supported in %s",
-					(stmt->type == OFC_SEMA_STMT_IO_WRITE ? "WRITE" : "PRINT"));
-			}
+			ofc_sparse_ref_t src = (lhs ? lhs->src : (*expr)->src);
+			ofc_sparse_ref_error(src,
+				"CHARACTER type KIND not supported in %s",
+				(stmt->type == OFC_SEMA_STMT_IO_WRITE ? "WRITE" : "PRINT"));
 		}
 	}
 
 	return true;
 }
+
 
 bool ofc_sema_io_list_has_complex(
 	ofc_sema_lhs_list_t* ilist,
@@ -219,19 +174,15 @@ static bool ofc_sema_io__data_format_helper_body(
 		unsigned i;
 		for (i = 0; (i < desc->n) && (*iolist_len > 0); i++)
 		{
-			size_t nsize = (sizeof(ofc_parse_format_desc_t*)
-				* (format_list->count + 1));
-			ofc_parse_format_desc_t** ndesc
-				= (ofc_parse_format_desc_t**)realloc(
-					format_list->desc, nsize);
-			if (!ndesc) return false;
-
 			ofc_parse_format_desc_t* cdesc
 				= ofc_parse_format_desc_copy(desc);
 			if (!cdesc) return false;
 
-			format_list->desc = ndesc;
-			format_list->desc[format_list->count++] = cdesc;
+			if (!ofc_parse_format_desc_list_add(format_list, cdesc))
+			{
+				ofc_parse_format_desc_delete(cdesc);
+				return false;
+			}
 
 			(*iolist_len)--;
 		}
@@ -326,12 +277,7 @@ ofc_parse_format_desc_list_t* ofc_sema_io_data_format(
 	if (!format) return NULL;
 
 	ofc_parse_format_desc_list_t* format_list
-		= (ofc_parse_format_desc_list_t*)malloc(
-			sizeof(ofc_parse_format_desc_list_t));
-	if (!format_list) return NULL;
-
-	format_list->count = 0;
-	format_list->desc = NULL;
+		= ofc_parse_format_desc_list_create();
 
 	if (!ofc_sema_io__data_format_helper(
 		format_list, format, iolist_len))
@@ -718,19 +664,17 @@ bool ofc_sema_io_format_iolist_compare(
 	unsigned i, offset = 0;
 	for (i = 0; i < iolist->count; i++)
 	{
-		ofc_sema_expr_t** expr
-			= &iolist->expr[i];
+		ofc_sema_expr_t* pexpr
+			= ofc_sema_expr_list_elem_get(iolist, i);
 
 		const ofc_sema_type_t* type
-			= ofc_sema_expr_type(*expr);
-		const ofc_sema_array_t* array
-			= ofc_sema_expr_array(*expr);
-		ofc_sema_structure_t* structure
-			= ofc_sema_expr_structure(*expr);
+			= ofc_sema_expr_type(pexpr);
 
 		if (!ofc_sema_io_compare_types(
-			stmt, NULL, expr, type, array, structure, format_list, &offset))
+			stmt, NULL, &pexpr, type, format_list, &offset))
 			return false;
+
+		ofc_sema_expr_delete(pexpr);
 	}
 
 	return true;
@@ -746,17 +690,16 @@ bool ofc_sema_io_format_input_list_compare(
 	unsigned i, offset = 0;
 	for (i = 0; i < iolist->count; i++)
 	{
+		ofc_sema_lhs_t* lhs
+			= ofc_sema_lhs_list_elem_get(iolist, i);
 		const ofc_sema_type_t* type
-			= ofc_sema_lhs_type(iolist->lhs[i]);
-		const ofc_sema_array_t* array
-			= ofc_sema_lhs_array(iolist->lhs[i]);
-		ofc_sema_structure_t* structure
-			= ofc_sema_lhs_structure(iolist->lhs[i]);
+			= ofc_sema_lhs_type(lhs);
 
 		if (!ofc_sema_io_compare_types(
-			stmt, iolist->lhs[i], NULL,
-			type, array, structure, format_list, &offset))
+			stmt, lhs, NULL, type, format_list, &offset))
 			return false;
+
+		ofc_sema_lhs_delete(lhs);
 	}
 
 	return true;
