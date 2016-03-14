@@ -1,4 +1,4 @@
-/* Copyright 2015 Codethink Ltd.
+/* Copyright 2016 Codethink Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,23 @@
  * limitations under the License.
  */
 
-#include "ofc/sema.h"
+#ifndef __ofc_sema_module_h__
+#define __ofc_sema_module_h__
 
-bool ofc_sema_stmt_use(
-	ofc_sema_scope_t* scope,
-	const ofc_parse_stmt_t* stmt)
+struct ofc_sema_module_s
 {
-	if (!scope || !stmt
-		|| (stmt->type != OFC_PARSE_STMT_USE))
-		return false;
+	ofc_sema_scope_t* scope;
 
-	// Find the module scope?  Might need a scope search by name function.
+	ofc_sema_decl_alias_map_t* rename;
+	ofc_sema_decl_list_t*      only;
+} ;
+
+struct ofc_sema_module_list_s
+{
+	unsigned 			count;
+	ofc_sema_module_t** module;
+};
 
 
-}
+
+#endif

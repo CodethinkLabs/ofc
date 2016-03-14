@@ -54,11 +54,11 @@ struct ofc_sema_scope_s
 
 	ofc_sema_implicit_t*  implicit;
 
-	ofc_sema_common_map_t*     common;
-	ofc_sema_decl_list_t*      decl;
-	ofc_sema_equiv_list_t*     equiv;
-	ofc_sema_decl_alias_map_t* alias;
-	ofc_sema_label_map_t*      label;
+	ofc_sema_common_map_t*  common;
+	ofc_sema_decl_list_t*   decl;
+	ofc_sema_equiv_list_t*  equiv;
+	ofc_sema_module_list_t* module;
+	ofc_sema_label_map_t*   label;
 	/* namelist_list_map */
 
 	ofc_sema_structure_list_t* structure;

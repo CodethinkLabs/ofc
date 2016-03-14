@@ -1,0 +1,92 @@
+/* Copyright 2016 Codethink Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "ofc/sema.h"
+
+ofc_sema_module_t* ofc_sema_module_create(
+	ofc_sema_scope_t* mscope,
+	ofc_sema_decl_list_t* only,
+	ofc_sema_decl_alias_map_t* rename)
+{
+	if (!mscope) return NULL;
+
+	ofc_sema_module_t* module
+		= (ofc_sema_module_t*)malloc(
+			sizeof(ofc_sema_module_t));
+	if (!module) return NULL;
+
+	module->scope  = mscope;
+	module->only   = only;
+	module->rename = rename;
+
+	return module;
+}
+
+void ofc_sema_module_delete(
+	ofc_sema_module_t* module)
+{
+	if (!module) return;
+
+	ofc_sema_decl_alias_map_delete(module->rename);
+	ofc_sema_decl_list_delete(module->only);
+
+	free(module);
+}
+
+ofc_sema_module_list_t* ofc_sema_module_list_create()
+{
+	ofc_sema_module_list_t* list
+		= (ofc_sema_module_list_t*)malloc(
+			sizeof(ofc_sema_module_list_t));
+	if (!list) return NULL;
+
+	list->count  = 0;
+	list->module = NULL;
+
+	return list;
+}
+
+bool ofc_sema_module_list_add(
+	ofc_sema_module_list_t* list,
+	ofc_sema_module_t* module)
+{
+	if (!list || !module)
+		return false;
+
+	ofc_sema_module_t** nmodule
+		= (ofc_sema_module_t**)realloc(list->module,
+			(sizeof(ofc_sema_module_t*) * (list->count + 1)));
+	if (!nmodule) return false;
+	list->module = nmodule;
+
+    list->module[list->count++] = module;
+
+	return true;
+}
+
+void ofc_sema_module_list_delete(
+	ofc_sema_module_list_t* list)
+{
+	if (list->module)
+	{
+		unsigned i;
+		for (i = 0; i < list->count; i++)
+			ofc_sema_module_delete(list->module[i]);
+
+		free (list->module);
+	}
+
+	free (list);
+}

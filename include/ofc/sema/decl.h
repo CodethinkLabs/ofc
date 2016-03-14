@@ -91,19 +91,19 @@ struct ofc_sema_decl_list_s
 	ofc_hashmap_t* map;
 };
 
-typedef struct
+struct ofc_sema_decl_alias_s
 {
 	ofc_str_ref_t   name;
 	ofc_sema_decl_t* decl;
-} ofc_sema_decl_alias_t;
+};
 
-typedef struct
+struct ofc_sema_decl_alias_map_s
 {
 	unsigned count;
 
 	ofc_sema_decl_alias_t** list;
 	ofc_hashmap_t*          map;
-} ofc_sema_decl_alias_map_t;
+};
 
 ofc_sema_decl_alias_map_t*
 	ofc_sema_decl_alias_map_create(void);
