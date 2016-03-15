@@ -854,6 +854,13 @@ ofc_sema_scope_t* ofc_sema_scope_stmt_func(
 	if (edecl)
 	{
 		rdecl = ofc_sema_decl_copy(edecl);
+		if (!ofc_sema_decl_list_add(
+			func->decl, rdecl))
+		{
+			ofc_sema_decl_delete(rdecl);
+			ofc_sema_scope_delete(func);
+			return NULL;
+		}
 	}
 	else
 	{
