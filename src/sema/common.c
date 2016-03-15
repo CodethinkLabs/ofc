@@ -26,7 +26,6 @@ ofc_sema_common_t* ofc_sema_common_create(
 
 	common->count = 0;
 	common->decl  = NULL;
-	common->spec  = NULL;
 	common->save  = false;
 
 	common->name = name;
@@ -40,15 +39,14 @@ void ofc_sema_common_delete(
 		return;
 
 	free(common->decl);
-	free(common->spec);
 	free(common);
 }
 
 bool ofc_sema_common_add(
-	ofc_sema_common_t* common,
-	ofc_sema_spec_t*   spec)
+	ofc_sema_common_t*     common,
+	const ofc_sema_decl_t* decl)
 {
-	if (!common || !spec)
+	if (!common || !decl)
 		return false;
 
 	const ofc_sema_decl_t** ndecl
@@ -57,30 +55,8 @@ bool ofc_sema_common_add(
 	if (!ndecl) return false;
 	common->decl = ndecl;
 
-	ofc_sema_spec_t** nspec
-		= realloc(common->spec,
-			sizeof(const ofc_sema_spec_t*) * (common->count + 1));
-	if (!nspec) return false;
-	common->spec = nspec;
-
-	common->decl[common->count] = NULL;
-	common->spec[common->count] = spec;
+	common->decl[common->count] = decl;
 	common->count++;
-	return true;
-}
-
-bool ofc_sema_common_define(
-	ofc_sema_common_t* common,
-	unsigned offset,
-	const ofc_sema_decl_t* decl)
-{
-	if (!common || (offset >= common->count))
-		return false;
-
-	if (common->decl[offset])
-		return (common->decl[offset] == decl);
-
-	common->decl[offset] = decl;
 	return true;
 }
 
@@ -89,18 +65,6 @@ bool ofc_sema_common_save(
 {
 	if (!common)
 		return false;
-
-	if (common->save)
-		return true;
-
-	unsigned i;
-	for (i = 0; i < common->count; i++)
-	{
-		/* TODO - Support applying STATIC attribute
-		          to existing declarations? */
-		if (common->decl[i])
-			return false;
-	}
 
 	common->save = true;
 	return true;

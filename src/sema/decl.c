@@ -30,8 +30,16 @@ static void ofc_sema_decl_init__delete(
 	}
 }
 
+
+bool ofc_sema_decl_is_final(
+	const ofc_sema_decl_t* decl)
+{
+	return (decl->was_written || decl->was_read
+		|| ofc_sema_decl_has_initializer(decl, NULL));
+}
+
 ofc_sema_decl_t* ofc_sema_decl_create(
-	const ofc_sema_type_t* type,
+	const ofc_sema_implicit_t* implicit,
 	ofc_sparse_ref_t name)
 {
 	ofc_sema_decl_t* decl
@@ -39,12 +47,37 @@ ofc_sema_decl_t* ofc_sema_decl_create(
 			sizeof(ofc_sema_decl_t));
 	if (!decl) return NULL;
 
-	decl->type = type;
 	decl->name = name;
+
+	decl->type = NULL;
+	decl->type_implicit = true;
+
+	decl->is_static    = false;
+	decl->is_automatic = false;
+	decl->is_volatile  = false;
+	decl->is_intrinsic = false;
+	decl->is_external  = false;
+
+	if (implicit && !ofc_sparse_ref_empty(name))
+	{
+		if (!ofc_sema_implicit_attr(
+			implicit, name,
+			&decl->type,
+			&decl->is_static,
+			&decl->is_automatic,
+			&decl->is_volatile,
+			&decl->is_intrinsic,
+			&decl->is_external))
+		{
+			free(decl);
+			return NULL;
+		}
+	}
 
 	decl->func      = NULL;
 	decl->array     = NULL;
 	decl->structure = NULL;
+	decl->common    = false;
 
 	if (ofc_sema_decl_is_composite(decl))
 	{
@@ -57,401 +90,267 @@ ofc_sema_decl_t* ofc_sema_decl_create(
 	}
 
 	decl->is_parameter = false;
-
-	decl->is_static    = false;
-	decl->is_volatile  = false;
-	decl->is_automatic = false;
-
 	decl->is_target    = false;
 
 	decl->is_equiv     = false;
-	decl->is_common    = false;
 	decl->is_argument  = false;
 	decl->is_return    = false;
-	decl->has_spec     = false;
 
-	decl->used = false;
+	decl->was_read    = false;
+	decl->was_written = false;
+	decl->is_stmt_func_arg = false;
 
 	decl->refcnt = 0;
 	return decl;
 }
 
-static ofc_sema_decl_t* ofc_sema_decl__spec(
+
+bool ofc_sema_decl_type_finalize(
+	ofc_sema_decl_t* decl)
+{
+	if (!decl || !decl->type)
+		return false;
+
+	const ofc_sema_type_t* ktype = decl->type;
+	if (decl->type->kind == OFC_SEMA_KIND_NONE)
+	{
+		switch (decl->type->type)
+		{
+			case OFC_SEMA_TYPE_LOGICAL:
+			case OFC_SEMA_TYPE_INTEGER:
+			case OFC_SEMA_TYPE_REAL:
+			case OFC_SEMA_TYPE_COMPLEX:
+			case OFC_SEMA_TYPE_BYTE:
+			case OFC_SEMA_TYPE_CHARACTER:
+				ktype = ofc_sema_type_set_kind(
+					decl->type, OFC_SEMA_KIND_DEFAULT);
+				if (!ktype) return false;
+				break;
+
+			default:
+				break;
+		}
+	}
+
+	const ofc_sema_type_t* ltype = ktype;
+	if (ofc_sema_type_is_character(ktype)
+		&& (ktype->len == 0) && !ktype->len_var)
+	{
+		ltype = ofc_sema_type_set_len(ktype, 1, false);
+		if (!ltype) return false;
+	}
+
+	const ofc_sema_type_t* ftype = ltype;
+	if ((decl->is_external || decl->is_intrinsic)
+		&& !ofc_sema_type_is_procedure(ltype))
+	{
+		ftype = ofc_sema_type_create_function(ltype);
+		if (!ftype) return false;
+	}
+
+	decl->type = ftype;
+	decl->type_implicit = false;
+	return true;
+}
+
+
+bool ofc_sema_decl_function(
+	ofc_sema_decl_t* decl)
+{
+	if (!decl)
+		return false;
+
+	if (ofc_sema_decl_is_function(decl))
+		return true;
+
+	if (decl->is_stmt_func_arg
+		|| ofc_sema_decl_is_final(decl)
+		|| !ofc_sema_decl_type_finalize(decl))
+		return false;
+
+	if (ofc_sema_decl_is_function(decl))
+		return true;
+
+	const ofc_sema_type_t* ftype
+		= ofc_sema_type_create_function(decl->type);
+	if (!ftype) return false;
+
+	decl->type = ftype;
+	return true;
+}
+
+bool ofc_sema_decl_subroutine(
+	ofc_sema_decl_t* decl)
+{
+	if (!decl)
+		return false;
+
+	if (decl->type && !decl->type_implicit)
+		return false;
+
+	decl->type = ofc_sema_type_subroutine();
+	if (!decl->type) return false;
+
+	decl->type_implicit = false;
+	return true;
+}
+
+bool ofc_sema_decl_type_set(
+	ofc_sema_decl_t*       decl,
+	const ofc_sema_type_t* type,
+	ofc_sparse_ref_t       err_pos)
+{
+	if (!decl || !type)
+		return false;
+
+	if (!decl->type
+		|| decl->type_implicit)
+	{
+		decl->type = type;
+		decl->type_implicit = false;
+		return true;
+	}
+
+	if (decl->type->type != type->type)
+	{
+		ofc_sparse_ref_error(err_pos,
+			"Redefining typed declaration as a different type");
+		return false;
+	}
+
+	const ofc_sema_type_t* dtype = decl->type;
+
+	if ((dtype->kind != type->kind)
+		&& (type->kind != OFC_SEMA_KIND_NONE))
+	{
+		if (dtype->kind != OFC_SEMA_KIND_NONE)
+		{
+			ofc_sparse_ref_error(err_pos,
+				"Redefining typed declaration with a different KIND");
+			return false;
+		}
+
+		dtype = ofc_sema_type_set_kind(
+				dtype, type->kind);
+		if (!dtype) return false;
+	}
+
+	if (ofc_sema_type_is_character(dtype)
+		&& ((type->len != 0) || type->len_var)
+		&& ((dtype->len != type->len)
+			|| (dtype->len_var != type->len_var)))
+	{
+		if (dtype->len != 0)
+		{
+			ofc_sparse_ref_error(err_pos,
+				"Redefining typed declaration with a different LEN");
+			return false;
+		}
+
+		if (type->len != 0)
+		{
+			dtype = ofc_sema_type_set_len(
+				dtype, type->len, false);
+		}
+		else if ((dtype->len == 0)
+			&& type->len_var)
+		{
+			dtype = ofc_sema_type_set_len(
+				dtype, 0, true);
+		}
+
+		if (!dtype) return false;
+	}
+
+	decl->type = dtype;
+	decl->type_implicit = false;
+	return true;
+}
+
+bool ofc_sema_decl_array_set(
+	ofc_sema_decl_t*  decl,
+	ofc_sema_array_t* array,
+	ofc_sparse_ref_t  err_pos)
+{
+	if (!decl || !array)
+		return false;
+
+	if (decl->array)
+	{
+		if (!ofc_sema_array_compare(
+			decl->array, array))
+		{
+			ofc_sparse_ref_error(err_pos,
+				"Conflicting array dimensions specified");
+			return false;
+		}
+
+		ofc_sparse_ref_warning(err_pos,
+			"Redundant array dimension specification");
+		ofc_sema_array_delete(array);
+		return true;
+	}
+
+	if (ofc_sema_decl_is_final(decl))
+	{
+		ofc_sparse_ref_error(err_pos,
+			"Can't modify dimensions of declaration after use");
+		return false;
+	}
+
+	decl->array = array;
+	return true;
+}
+
+bool ofc_sema_decl_mark_used(
+	ofc_sema_decl_t* decl,
+	bool written, bool read)
+{
+    if (!decl)
+		return false;
+
+	if (!written && !read)
+		return true;
+
+	if (!ofc_sema_decl_type_finalize(decl))
+		return false;
+
+	if (written)
+		decl->was_written = true;
+	if (read)
+		decl->was_read = true;
+	return true;
+}
+
+
+static bool ofc_sema_decl__elem(
 	ofc_sema_scope_t*       scope,
-	ofc_sema_structure_t*   member_of,
-	ofc_sparse_ref_t        name,
-	ofc_sema_spec_t*        spec,
-	const ofc_sema_array_t* array,
-	bool                    is_procedure,
-	bool                    is_function)
-{
-	if (!spec)
-		return NULL;
-
-	if (spec->common && member_of)
-	{
-		/* This should never happen. */
-		return NULL;
-	}
-
-	if (spec->common && (spec->is_static
-		|| spec->is_automatic || spec->is_volatile
-		|| spec->is_intrinsic || spec->is_external))
-	{
-		/* TODO - Work out if VOLATILE should be allowed. */
-		ofc_sparse_ref_error(name,
-			"COMMON block entries can't have declaration attributes.");
-		return NULL;
-	}
-
-	if (member_of)
-	{
-		if (is_procedure)
-		{
-			ofc_sparse_ref_error(name,
-				"Structure members cannot be a procedure");
-			return NULL;
-		}
-
-		if (spec->is_static)
-		{
-			ofc_sparse_ref_error(name,
-				"Structure members cannot be STATIC");
-			return NULL;
-		}
-
-		if (spec->is_volatile)
-		{
-			ofc_sparse_ref_error(name,
-				"Structure members cannot be VOLATILE");
-			return NULL;
-		}
-
-		if (spec->is_intrinsic)
-		{
-			ofc_sparse_ref_error(name,
-				"Structure members cannot be INTRINSIC");
-			return NULL;
-		}
-
-		if (spec->is_external)
-		{
-			ofc_sparse_ref_error(name,
-				"Structure members cannot be EXTERNAL");
-			return NULL;
-		}
-	}
-	else if (is_procedure)
-	{
-		if (spec->is_static)
-		{
-			ofc_sparse_ref_error(name,
-				"Procedures cannot be STATIC");
-			return NULL;
-		}
-
-		if (spec->is_volatile)
-		{
-			ofc_sparse_ref_error(name,
-				"Procedures cannot be VOLATILE");
-			return NULL;
-		}
-
-		if (spec->is_intrinsic
-			&& spec->is_external)
-		{
-			ofc_sparse_ref_error(name,
-				"A procedure cannot be INTRINSIC and EXTERNAL");
-			return NULL;
-		}
-
-		if (!is_function)
-		{
-			if (!spec->type_implicit
-				|| (spec->kind > 0)
-				|| (spec->len > 0)
-				|| spec->len_var)
-			{
-				ofc_sparse_ref_error(name,
-					"A SUBROUTINE cannot have a specified type");
-				return NULL;
-			}
-		}
-	}
-	else
-	{
-		if (spec->is_intrinsic)
-		{
-			ofc_sparse_ref_error(name,
-				"Only procedures may be INTRINSIC");
-			return NULL;
-		}
-
-		if (spec->is_external)
-		{
-			ofc_sparse_ref_error(name,
-				"Only procedures may be EXTERNAL");
-			return NULL;
-		}
-
-		if (spec->is_static
-			&& spec->is_automatic)
-		{
-			ofc_sparse_ref_error(name,
-				"Declaration cannot be AUTOMATIC and STATIC");
-			return NULL;
-		}
-	}
-
-	if (spec->array)
-	{
-		if (array)
-		{
-			if (!ofc_sema_array_compare(
-				array, spec->array))
-			{
-				ofc_sparse_ref_error(name,
-					"Conflicting array dimensions in declaration");
-				return NULL;
-			}
-
-			ofc_sparse_ref_warning(name,
-				"Repetition of array dimensions in declaration");
-		}
-
-		array = spec->array;
-	}
-
-	ofc_sema_structure_t* structure = NULL;
-	if ((spec->type == OFC_SEMA_TYPE_TYPE)
-		|| (spec->type == OFC_SEMA_TYPE_RECORD))
-	{
-		if (!spec->structure)
-			return NULL;
-		structure = spec->structure;
-	}
-
-	const ofc_sema_type_t* type
-		= ofc_sema_type_spec(spec);
-	if (!type) return NULL;
-
-	if (is_procedure)
-	{
-		type = (is_function
-			? ofc_sema_type_create_function(type)
-			: ofc_sema_type_subroutine());
-		if (!type) return NULL;
-	}
-
-	ofc_sema_decl_t* decl
-		= ofc_sema_decl_create(type, name);
-	if (!decl) return NULL;
-
-	if (array)
-	{
-		decl->array = ofc_sema_array_copy(array);
-		if (!decl->array)
-		{
-			ofc_sema_decl_delete(decl);
-			return NULL;
-		}
-
-		decl->init_array = NULL;
-	}
-
-	if (structure)
-	{
-		if (!ofc_sema_structure_reference(structure))
-		{
-			ofc_sema_decl_delete(decl);
-			return NULL;
-		}
-
-		decl->structure = structure;
-		decl->init_array = NULL;
-	}
-
-	decl->is_static    = spec->is_static;
-	decl->is_automatic = spec->is_automatic;
-	decl->is_volatile  = spec->is_volatile;
-	decl->is_intrinsic = spec->is_intrinsic;
-	decl->is_external  = spec->is_external;
-
-	decl->is_equiv    = spec->is_equiv;
-	decl->is_argument = spec->is_argument;
-	decl->is_return   = spec->is_return;
-
-	decl->has_spec = spec->used;
-
-	if (member_of)
-	{
-		if (!ofc_sema_structure_member_add_decl(
-				member_of, decl))
-		{
-			ofc_sema_decl_delete(decl);
-			return NULL;
-		}
-	}
-	else
-	{
-
-		if (!ofc_sema_scope_decl_add(
-			scope, decl))
-		{
-			ofc_sema_decl_delete(decl);
-			return NULL;
-		}
-	}
-
-	if (spec->common)
-	{
-		if (!ofc_sema_common_define(
-			spec->common, spec->common_offset, decl))
-		{
-			/* This should never happen. */
-			abort();
-		}
-
-		decl->is_common = true;
-	}
-
-	return decl;
-}
-
-ofc_sema_decl_t* ofc_sema_decl_spec(
-	ofc_sema_scope_t*       scope,
-	ofc_sparse_ref_t        name,
-	ofc_sema_spec_t*        spec,
-	const ofc_sema_array_t* array)
-{
-	return ofc_sema_decl__spec(
-		scope, NULL, name, spec, array, false, false);
-}
-
-ofc_sema_decl_t* ofc_sema_decl_implicit(
-	ofc_sema_scope_t*       scope,
-	ofc_sparse_ref_t        name,
-	const ofc_sema_array_t* array)
-{
-	ofc_sema_spec_t* spec
-		= ofc_sema_scope_spec_find_final(scope, name);
-	if (!spec) return NULL;
-
-	ofc_sema_decl_t* decl;
-	if (spec->is_external
-		|| spec->is_intrinsic)
-	{
-		if (spec->type_implicit)
-		{
-			decl = ofc_sema_decl_subroutine(
-				scope, name);
-		}
-		else
-		{
-			decl = ofc_sema_decl_function(
-				scope, name, spec);
-		}
-	}
-	else
-	{
-		decl = ofc_sema_decl_spec(
-			scope, name, spec, array);
-	}
-
-	ofc_sema_spec_delete(spec);
-	return decl;
-}
-
-ofc_sema_decl_t* ofc_sema_decl_implicit_lhs(
-	ofc_sema_scope_t*       scope,
-	const ofc_parse_lhs_t*  lhs)
-{
-	if (!scope || !lhs)
-		return NULL;
-
-	ofc_sema_array_t* array = NULL;
-	ofc_sparse_ref_t base_name;
-	if (!ofc_parse_lhs_base_name(
-		*lhs, &base_name))
-		return NULL;
-
-	switch (lhs->type)
-	{
-		case OFC_PARSE_LHS_VARIABLE:
-			break;
-		case OFC_PARSE_LHS_ARRAY:
-			array = ofc_sema_array(
-				scope, lhs->array.index);
-			if (!array) return NULL;
-			break;
-		default:
-			break;
-	}
-
-	ofc_sema_decl_t* decl
-		= ofc_sema_decl_implicit(
-			scope, base_name, array);
-	ofc_sema_array_delete(array);
-	return decl;
-}
-
-
-ofc_sema_decl_t* ofc_sema_decl_function(
-	ofc_sema_scope_t*  scope,
-	ofc_sparse_ref_t   name,
-	ofc_sema_spec_t*   spec)
-{
-	return ofc_sema_decl__spec(
-		scope, NULL, name, spec, NULL, true, true);
-}
-
-ofc_sema_decl_t* ofc_sema_decl_subroutine(
-	ofc_sema_scope_t* scope,
-	ofc_sparse_ref_t  name)
-{
-	ofc_sema_spec_t* spec
-		= ofc_sema_scope_spec_find_final(
-			scope, name);
-	ofc_sema_decl_t* decl = ofc_sema_decl__spec(
-		scope, NULL, name, spec, NULL, true, false);
-	ofc_sema_spec_delete(spec);
-	return decl;
-}
-
-
-static bool ofc_sema_decl__decl(
-	ofc_sema_scope_t*       scope,
-	ofc_sema_spec_t         spec,
+	const ofc_sema_type_t*  type,
+	ofc_sema_structure_t**  type_struct,
 	ofc_sema_structure_t*   structure,
 	const ofc_parse_decl_t* pdecl)
 {
 	if (!pdecl || !pdecl->lhs)
 		return false;
 
-	if (!ofc_sparse_ref_empty(pdecl->record))
-	{
-		/* We intentionally override the existing structure. */
-		spec.structure = ofc_sema_scope_structure_find(
-			scope, pdecl->record.string);
-		if (!spec.structure)
-		{
-			spec.structure = ofc_sema_scope_derived_type_find(
-				scope, pdecl->record.string);
-			if (!spec.structure)
-			{
-				ofc_sparse_ref_error(pdecl->record,
-					"Referencing undefined STRUCTURE in RECORD statement");
-				return false;
-			}
-			ofc_sparse_ref_warning(pdecl->record,
-				"Referencing Fortran 90 TYPE in VAX RECORD statement");
-		}
-	}
-
-	bool is_decl = ((structure != NULL)
-		|| pdecl->init_clist || pdecl->init_expr);
-
 	const ofc_parse_lhs_t* lhs = pdecl->lhs;
+
+	ofc_sparse_ref_t name;
+	if (!ofc_parse_lhs_base_name(*lhs, &name))
+		return false;
+
+	ofc_sema_decl_t* decl;
+	if (structure)
+	{
+		decl = ofc_sema_structure_decl_find_create(
+			structure, name);
+	}
+	else
+	{
+		decl = ofc_sema_scope_decl_find_create(
+			scope, name, false);
+	}
+	if (!decl) return false;
 
 	ofc_sema_array_t* array = NULL;
 	if (lhs->type == OFC_PARSE_LHS_ARRAY)
@@ -470,17 +369,20 @@ static bool ofc_sema_decl__decl(
 
 	if (lhs->type == OFC_PARSE_LHS_STAR_LEN)
 	{
-		if (spec.type_implicit)
+		if (!type)
+			type = type;
+
+		if (!type)
 		{
 			ofc_sparse_ref_error(lhs->src,
-				"Can't specify a star LEN/KIND for an implied type");
+				"Can't specify a star LEN/KIND for an undefined type");
 			ofc_sema_array_delete(array);
 			return false;
 		}
 
 		if (lhs->star_len.var)
 		{
-			if (spec.type != OFC_SEMA_TYPE_CHARACTER)
+			if (!ofc_sema_type_is_character(type))
 			{
 				ofc_sparse_ref_error(lhs->src,
 					"Only CHARACTER types may have an assumed length");
@@ -488,15 +390,21 @@ static bool ofc_sema_decl__decl(
 				return false;
 			}
 
-			if (spec.len > 0)
+			if (type && (type->len != 0))
 			{
 				ofc_sparse_ref_warning(lhs->src,
-					"Overriding specified star length in %s list",
-					(is_decl ? "decl" : "specifier"));
+					"Overriding specified star length in decl list");
 			}
 
-			spec.len     = 0;
-			spec.len_var = true;
+			const ofc_sema_type_t* ntype
+				= ofc_sema_type_set_len(
+					type, 0, true);
+			if (!ntype)
+			{
+				ofc_sema_array_delete(array);
+				return false;
+			}
+			type = ntype;
 		}
 		else
 		{
@@ -520,38 +428,54 @@ static bool ofc_sema_decl__decl(
 				return false;
 			}
 
-			if (spec.type == OFC_SEMA_TYPE_CHARACTER)
+			if (ofc_sema_type_is_character(type))
 			{
-				if (spec.len_var
-					|| ((spec.len > 0) && (spec.len != star_len)))
+				if (type && (type->len != 0)
+					&& (type->len != star_len))
 				{
 					ofc_sparse_ref_warning(lhs->src,
-						"Overriding specified LEN in %s list",
-						(is_decl ? "decl" : "specifier"));
+						"Overriding specified LEN in decl list");
 				}
 
-				spec.len     = star_len;
-				spec.len_var = false;
+				const ofc_sema_type_t* ntype
+					= ofc_sema_type_set_len(
+						type, star_len, false);
+				if (!ntype)
+				{
+					ofc_sema_array_delete(array);
+					return false;
+				}
+				type = ntype;
 			}
 			else
 			{
 				if (star_len == 0)
 				{
 					ofc_sparse_ref_error(lhs->src,
-						"Star size must be non-zero");
+						"Star KIND must be non-zero");
 					ofc_sema_array_delete(array);
 					return false;
 				}
 
-				if ((spec.kind != 0)
-					&& ((star_len * 3) != spec.kind))
+				if (type && (type->kind != OFC_SEMA_KIND_NONE)
+					&& (type->kind != star_len))
 				{
 					ofc_sparse_ref_warning(lhs->src,
-						"Overriding specified KIND in %s list",
-						(is_decl ? "decl" : "specifier"));
+						"Overriding specified KIND in decl list");
 				}
 
-				spec.kind = (star_len * 3);
+				ofc_sema_kind_e kind
+					= (star_len * OFC_SEMA_KIND_1_BYTE);
+
+				const ofc_sema_type_t* ntype
+					= ofc_sema_type_set_kind(
+						type, kind);
+				if (!ntype)
+				{
+					ofc_sema_array_delete(array);
+					return false;
+				}
+				type = ntype;
 			}
 		}
 
@@ -561,6 +485,87 @@ static bool ofc_sema_decl__decl(
 			ofc_sema_array_delete(array);
 			return false;
 		}
+	}
+
+	if (!ofc_sparse_ref_empty(pdecl->record))
+	{
+		if (!decl->type_implicit)
+		{
+			ofc_sparse_ref_error(pdecl->record,
+				"Redefining typed declaration as RECORD");
+			ofc_sema_array_delete(array);
+			return false;
+		}
+
+		ofc_sema_structure_t* rstruct
+			= ofc_sema_scope_structure_find(
+				scope, pdecl->record.string);
+		if (!rstruct)
+		{
+			rstruct = ofc_sema_scope_derived_type_find(
+				scope, pdecl->record.string);
+			if (!rstruct)
+			{
+				ofc_sparse_ref_error(pdecl->record,
+					"Referencing undefined STRUCTURE in RECORD statement");
+				ofc_sema_array_delete(array);
+				return false;
+			}
+			ofc_sparse_ref_warning(pdecl->record,
+				"Referencing Fortran 90 TYPE in VAX RECORD statement");
+		}
+
+		if (decl->structure)
+		{
+			if (decl->structure != rstruct)
+			{
+				ofc_sparse_ref_error(pdecl->record,
+					"Redefining declaration as RECORD of a different type");
+				ofc_sema_array_delete(array);
+				return false;
+			}
+			ofc_sparse_ref_warning(pdecl->record,
+				"Duplicate RECORD statement");
+		}
+		else
+		{
+			if (!ofc_sema_structure_reference(rstruct))
+			{
+				ofc_sema_array_delete(array);
+				return false;
+			}
+
+			decl->structure = rstruct;
+			if (type_struct)
+				*type_struct = rstruct;
+		}
+
+		decl->type = ofc_sema_type_type();
+		if (!decl->type)
+		{
+			ofc_sema_array_delete(array);
+			return false;
+		}
+		decl->type_implicit = false;
+	}
+	else if (type_struct && *type_struct)
+	{
+		if (!ofc_sema_structure_reference(*type_struct))
+			return false;
+
+		decl->structure = *type_struct;
+		decl->type = ofc_sema_type_type();
+		if (!decl->type)
+		{
+			ofc_sema_array_delete(array);
+			return false;
+		}
+		decl->type_implicit = false;
+	}
+	else if (type && !ofc_sema_decl_type_set(decl, type, name))
+	{
+		ofc_sema_array_delete(array);
+		return false;
 	}
 
 	if (lhs->type == OFC_PARSE_LHS_ARRAY)
@@ -585,198 +590,73 @@ static bool ofc_sema_decl__decl(
 		}
 	}
 
-	if (array)
-	{
-		if (spec.array)
-		{
-			/* This shouldn't ever happen since arrays
-			   can't be specified on the LHS of a declaration. */
-			ofc_sema_array_delete(array);
-			return false;
-		}
-	}
-	else if (spec.array)
-	{
-		array = ofc_sema_array_copy(spec.array);
-		if (!array) return false;
-	}
-	spec.array = array;
-
 	if (lhs->type != OFC_PARSE_LHS_VARIABLE)
 	{
 		ofc_sema_array_delete(array);
 		return false;
 	}
 
-	if (!ofc_parse_lhs_base_name(
-		*lhs, &spec.name))
+	if (array)
 	{
-		ofc_sema_array_delete(array);
-		return false;
-	}
-
-	ofc_sema_decl_t* decl = NULL;
-	if (!structure)
-	{
-		decl = ofc_sema_scope_decl_find_modify(
-			scope, spec.name.string, true);
-	}
-
-	ofc_sema_spec_t* nspec = &spec;
-	if (!structure)
-	{
-		if (decl != NULL)
+		if ((structure || !ofc_sema_scope_is_procedure(scope))
+			&& !ofc_sema_array_total(array, NULL))
 		{
-			/* TODO - Handle specifications which are compatible. */
-
 			ofc_sparse_ref_error(lhs->src,
-				"Specification of declared variable");
+				"Dynamically sized arrays are only valid in procedures");
 			ofc_sema_array_delete(array);
 			return false;
 		}
 
-		nspec = ofc_sema_scope_spec_modify(
-			scope, spec.name);
-		if (!nspec)
+		if (decl->array)
 		{
-			ofc_sema_array_delete(array);
-			return false;
-		}
-
-		/* Overlay the spec on the existing one. */
-		if (!spec.type_implicit)
-		{
-			if (!nspec->type_implicit
-				&& ((nspec->type != spec.type)
-					|| (nspec->structure != spec.structure)))
+			if (!ofc_sema_array_compare(
+				decl->array, array))
 			{
+				ofc_sparse_ref_error(lhs->src,
+					"Multiple incompatible definitions of array dimensions");
 				ofc_sema_array_delete(array);
 				return false;
 			}
-
-			nspec->type_implicit = spec.type_implicit;
-			nspec->type          = spec.type;
-
-			if (spec.kind != 0)
-				nspec->kind = spec.kind;
-
-			if (spec.structure)
-			{
-				if (nspec->structure
-					? (nspec->structure != spec.structure)
-					: !ofc_sema_structure_reference(spec.structure))
-				{
-					ofc_sema_array_delete(array);
-					return false;
-				}
-				nspec->structure = spec.structure;
-			}
+			ofc_sparse_ref_warning(lhs->src,
+				"Redefinition of array dimensions");
+			ofc_sema_array_delete(array);
 		}
-
-		if (spec.array)
+		else
 		{
-			if (nspec->array)
-			{
-				bool conflict = !ofc_sema_array_compare(
-					nspec->array, spec.array);
-				ofc_sema_array_delete(array);
-				if (conflict) return false;
-			}
-			else
-			{
-				nspec->array = spec.array;
-			}
+			/* TODO - Don't re-size existing decl. */
+			decl->array = array;
 		}
-		array = NULL;
-
-		if ((spec.len != 0)
-			|| spec.len_var)
-		{
-			nspec->len     = spec.len;
-			nspec->len_var = spec.len_var;
-		}
-
-		nspec->is_static    |= spec.is_static;
-		nspec->is_automatic |= spec.is_automatic;
-		nspec->is_volatile  |= spec.is_volatile;
-		nspec->is_intrinsic |= spec.is_intrinsic;
-		nspec->is_external  |= spec.is_external;
 	}
 
-	if (ofc_sema_spec_is_dynamic_array(nspec)
-		&& !ofc_sema_scope_is_procedure(scope))
+	if (pdecl->init_expr)
 	{
-		ofc_sparse_ref_error(lhs->src,
-			"Dynamically sized arrays are only valid in procedures");
-		ofc_sema_array_delete(array);
-		return false;
-	}
-
-	if (is_decl)
-	{
-		if (decl != NULL)
-		{
-			/* TODO - Handle redeclarations which match original. */
-
-			ofc_sparse_ref_error(lhs->src,
-				"Redeclaration of declared variable");
-			ofc_sema_array_delete(array);
+		if (!ofc_sema_decl_type_finalize(decl))
 			return false;
-		}
 
-		ofc_sema_spec_t* fspec
-			= ofc_sema_scope_spec_find_final(
-				scope, spec.name);
-		if (fspec)
-		{
-			bool overlaid
-				= ofc_sema_spec_overlay(
-					nspec, fspec);
-			ofc_sema_spec_delete(fspec);
-			if (!overlaid)
-			{
-				ofc_sema_array_delete(array);
-				return false;
-			}
-		}
+		ofc_sema_expr_t* init_expr
+			= ofc_sema_expr(scope, pdecl->init_expr);
+		if (!init_expr) return false;
 
-		decl = ofc_sema_decl__spec(
-			scope, structure,
-			spec.name, nspec,
-			NULL, false, false);
-		ofc_sema_array_delete(array);
-		if (!decl) return false;
+		bool initialized = ofc_sema_decl_init(
+			decl, init_expr);
+		ofc_sema_expr_delete(init_expr);
+		if (!initialized) return false;
+	}
+	else if (pdecl->init_clist)
+	{
+		if (!ofc_sema_decl_type_finalize(decl))
+			return false;
 
-		if (pdecl->init_expr)
-		{
-			ofc_sema_expr_t* init_expr
-				= ofc_sema_expr(scope, pdecl->init_expr);
-			if (!init_expr)
-				return false;
+		ofc_sema_expr_list_t* init_clist
+			= ofc_sema_expr_list_clist(
+				scope, pdecl->init_clist);
+		if (!init_clist) return false;
 
-			bool initialized = ofc_sema_decl_init(
-				decl, init_expr);
-			ofc_sema_expr_delete(init_expr);
-
-			if (!initialized)
-				return false;
-		}
-		else if (pdecl->init_clist)
-		{
-			ofc_sema_expr_list_t* init_clist
-				= ofc_sema_expr_list_clist(
-					scope, pdecl->init_clist);
-			if (!init_clist)
-				return false;
-
-			bool initialized = ofc_sema_decl_init_array(
-				decl, NULL, init_clist->count,
-				(const ofc_sema_expr_t**)init_clist->expr);
-			ofc_sema_expr_list_delete(init_clist);
-
-			if (!initialized)
-				return false;
-		}
+		bool initialized = ofc_sema_decl_init_array(
+			decl, NULL, init_clist->count,
+			(const ofc_sema_expr_t**)init_clist->expr);
+		ofc_sema_expr_list_delete(init_clist);
+		if (!initialized) return false;
 	}
 
 	return true;
@@ -791,26 +671,25 @@ bool ofc_sema_decl(
 		|| (stmt->type != OFC_PARSE_STMT_DECL))
 		return false;
 
-	ofc_sema_spec_t* spec = ofc_sema_spec(
-		scope, stmt->decl.type);
-	if (!spec) return false;
+	ofc_sema_structure_t* type_struct = NULL;
+	const ofc_sema_type_t* type = ofc_sema_type(
+		scope, stmt->decl.type, &type_struct);
+	if (!type) return false;
 
 	unsigned count = stmt->decl.decl->count;
 	if (count == 0) return false;
 
+	bool success = true;
+
 	unsigned i;
 	for (i = 0; i < count; i++)
 	{
-		if (!ofc_sema_decl__decl(
-			scope, *spec, NULL, stmt->decl.decl->decl[i]))
-		{
-			ofc_sema_spec_delete(spec);
-			return false;
-		}
+		if (!ofc_sema_decl__elem(
+			scope, type, &type_struct, NULL, stmt->decl.decl->decl[i]))
+			success = false;
 	}
 
-	ofc_sema_spec_delete(spec);
-	return true;
+	return success;
 }
 
 bool ofc_sema_decl_member(
@@ -821,40 +700,84 @@ bool ofc_sema_decl_member(
 	if (!stmt || !scope
 		|| !stmt->decl.type || !stmt->decl.decl
 		|| (stmt->type != OFC_PARSE_STMT_DECL))
-		return NULL;
+		return false;
 
-	ofc_sema_spec_t* spec = ofc_sema_spec(
-		scope, stmt->decl.type);
-	if (!spec) return NULL;
-
-	if (ofc_sema_spec_is_dynamic_array(spec))
-	{
-		ofc_sparse_ref_error(stmt->src,
-			"Structure members cannot be dynamically sized arrays");
-		ofc_sema_spec_delete(spec);
-		return NULL;
-	}
+	ofc_sema_structure_t* type_struct = NULL;
+	const ofc_sema_type_t* type = ofc_sema_type(
+		scope, stmt->decl.type, &type_struct);
+	if (!type) return false;
 
 	unsigned count = stmt->decl.decl->count;
-	if (count == 0) return NULL;
+	if (count == 0) return false;
+
+	bool success = true;
 
 	unsigned i;
 	for (i = 0; i < count; i++)
 	{
-		if (!ofc_sema_decl__decl(
-			scope, *spec, structure,
+		if (!ofc_sema_decl__elem(
+			scope, type, &type_struct, structure,
 			stmt->decl.decl->decl[i]))
+			success = false;
+	}
+
+	return success;
+}
+
+
+ofc_sema_decl_t* ofc_sema_decl_copy(
+	ofc_sema_decl_t* decl)
+{
+	if (!decl)
+		return NULL;
+
+	if (ofc_sema_decl_has_initializer(decl, NULL))
+	{
+		/* TODO - Support copying initializers. */
+		return false;
+	}
+
+	if (decl->func != NULL)
+	{
+		/* TODO - Support copying decl's with scopes. */
+		return false;
+	}
+
+	ofc_sema_decl_t* copy
+		= ofc_sema_decl_create(NULL, decl->name);
+	if (!copy) return NULL;
+
+	memcpy(copy, decl, sizeof(ofc_sema_decl_t));
+	copy->refcnt = 0;
+
+	copy->array     = NULL;
+	copy->structure = NULL;
+	copy->func      = NULL;
+	copy->common    = NULL;
+
+	if (decl->array)
+	{
+		copy->array = ofc_sema_array_copy(decl->array);
+		if (!copy->array)
 		{
-			ofc_sema_spec_delete(spec);
+			ofc_sema_decl_delete(copy);
 			return NULL;
 		}
 	}
 
-	ofc_sema_spec_delete(spec);
-	return true;
+	if (decl->structure)
+	{
+		if (!ofc_sema_structure_reference(
+			decl->structure))
+		{
+			ofc_sema_decl_delete(copy);
+			return NULL;
+		}
+		copy->structure = decl->structure;
+	}
+
+	return copy;
 }
-
-
 
 bool ofc_sema_decl_reference(
 	ofc_sema_decl_t* decl)
@@ -915,7 +838,8 @@ bool ofc_sema_decl_init(
 		|| ofc_sema_decl_is_procedure(decl))
 		return false;
 
-	if (decl->used)
+	if (decl->was_written
+		|| decl->was_read)
 	{
 		ofc_sparse_ref_error(init->src,
 			"Can't initialize declaration after use");
@@ -1030,10 +954,12 @@ bool ofc_sema_decl_init_offset(
 	const ofc_sema_expr_t* init)
 {
 	if (!decl || !init || !decl->type
-		|| ofc_sema_decl_is_procedure(decl))
+		|| ofc_sema_decl_is_procedure(decl)
+		|| !ofc_sema_decl_type_finalize(decl))
 		return false;
 
-	if (decl->used)
+	if (decl->was_written
+		|| decl->was_read)
 	{
 		ofc_sparse_ref_error(init->src,
 			"Can't initialize declaration after use");
@@ -1168,13 +1094,15 @@ bool ofc_sema_decl_init_array(
 	const ofc_sema_expr_t** init)
 {
 	if (!decl || !init
-		|| ofc_sema_decl_is_procedure(decl))
+		|| ofc_sema_decl_is_procedure(decl)
+		|| !ofc_sema_decl_type_finalize(decl))
 		return false;
 
 	if (count == 0)
 		return true;
 
-	if (decl->used)
+	if (decl->was_written
+		|| decl->was_read)
 	{
 		ofc_sparse_ref_error(init[0]->src,
 			"Can't initialize declaration after use");
@@ -1321,11 +1249,12 @@ bool ofc_sema_decl_init_substring(
 	const ofc_sema_expr_t* first,
 	const ofc_sema_expr_t* last)
 {
-	if (!decl || !init
-		|| !first || !last)
+	if (!decl || !init || !first || !last
+		|| !ofc_sema_decl_type_finalize(decl))
 		return false;
 
-	if (decl->used)
+	if (decl->was_written
+		|| decl->was_read)
 	{
 		ofc_sparse_ref_error(init->src,
 			"Can't initialize declaration after use");
@@ -1625,7 +1554,7 @@ bool ofc_sema_decl_is_common(
 	const ofc_sema_decl_t* decl)
 {
 	if (!decl) return false;
-	return decl->is_common;
+	return (decl->common != NULL);
 }
 
 
@@ -1965,17 +1894,13 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 	if (!decl || !decl->type)
 		return false;
 
-	/* If there's a used specifier we print that instead and handle
-	   initialization later using a DATA statement. */
-	if (decl->has_spec)
-		return true;
-
 	if (!ofc_colstr_newline(cs, indent, NULL))
 		return false;
 
 	const ofc_sema_type_t* type = NULL;
 	bool is_pointer = false;
-	if (decl->type->type == OFC_SEMA_TYPE_TYPE)
+	if ((decl->type->type == OFC_SEMA_TYPE_TYPE)
+		|| (decl->type->type == OFC_SEMA_TYPE_RECORD))
 	{
 		if (!decl->structure)
 			return false;
@@ -2256,7 +2181,7 @@ bool ofc_sema_decl_print_data_init(ofc_colstr_t* cs,
 		decl, &complete))
 		return true;
 
-	if (complete && !decl->has_spec)
+	if (complete)
 		return true;
 
 	if (!ofc_colstr_newline(cs, indent, NULL)
@@ -2613,9 +2538,27 @@ bool ofc_sema_decl_list_print(
 		return false;
 
 	unsigned i;
+
+	/* Print PARAMETERs before other declarations. */
 	for (i = 0; i < decl_list->count; i++)
 	{
-		/* Don't print specifiers for declared procedures. */
+		if (!ofc_sema_decl_is_parameter(
+			decl_list->decl[i]))
+			continue;
+
+		if (!ofc_sema_decl_print(cs, indent,
+			decl_list->decl[i]))
+			return false;
+	}
+
+	for (i = 0; i < decl_list->count; i++)
+	{
+		/* Skip PARAMETERs since we printed those first. */
+		if (ofc_sema_decl_is_parameter(
+			decl_list->decl[i]))
+			continue;
+
+		/* Don't print prototypes for declared procedures. */
 		if (ofc_sema_decl_is_procedure(decl_list->decl[i])
 			|| decl_list->decl[i]->is_return)
 			continue;

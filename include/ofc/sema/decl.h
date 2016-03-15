@@ -37,12 +37,15 @@ typedef struct
 
 struct ofc_sema_decl_s
 {
+	ofc_sparse_ref_t name;
+
+	bool type_implicit;
 	const ofc_sema_type_t* type;
-	ofc_sparse_ref_t       name;
 
 	ofc_sema_scope_t*     func;
 	ofc_sema_array_t*     array;
 	ofc_sema_structure_t* structure;
+	ofc_sema_common_t*    common;
 
 	union
 	__attribute__((__packed__))
@@ -51,23 +54,22 @@ struct ofc_sema_decl_s
 		ofc_sema_decl_init_t* init_array;
 	};
 
-	bool is_parameter;
-
-    bool is_static;
+	bool is_static;
 	bool is_automatic;
 	bool is_volatile;
 	bool is_intrinsic;
 	bool is_external;
 
+	bool is_parameter;
 	bool is_target;
 
 	bool is_equiv;
-	bool is_common;
 	bool is_argument;
 	bool is_return;
-	bool has_spec;
 
-	bool used;
+	bool was_read;
+	bool was_written;
+	bool is_stmt_func_arg;
 
 	unsigned refcnt;
 };
@@ -90,31 +92,30 @@ struct ofc_sema_decl_list_s
 };
 
 ofc_sema_decl_t* ofc_sema_decl_create(
-	const ofc_sema_type_t* type,
+	const ofc_sema_implicit_t* implicit,
 	ofc_sparse_ref_t name);
+ofc_sema_decl_t* ofc_sema_decl_copy(
+	ofc_sema_decl_t* decl);
 bool ofc_sema_decl_reference(
 	ofc_sema_decl_t* decl);
 
-ofc_sema_decl_t* ofc_sema_decl_spec(
-	ofc_sema_scope_t*       scope,
-	ofc_sparse_ref_t        name,
-	ofc_sema_spec_t*        spec,
-	const ofc_sema_array_t* array);
-ofc_sema_decl_t* ofc_sema_decl_implicit(
-	ofc_sema_scope_t*       scope,
-	ofc_sparse_ref_t        name,
-	const ofc_sema_array_t* array);
-ofc_sema_decl_t* ofc_sema_decl_implicit_lhs(
-	ofc_sema_scope_t*       scope,
-	const ofc_parse_lhs_t*  lhs);
+bool ofc_sema_decl_type_set(
+	ofc_sema_decl_t*       decl,
+	const ofc_sema_type_t* type,
+	ofc_sparse_ref_t       err_pos);
+bool ofc_sema_decl_type_finalize(
+	ofc_sema_decl_t* decl);
 
-ofc_sema_decl_t* ofc_sema_decl_function(
-	ofc_sema_scope_t* scope,
-	ofc_sparse_ref_t  name,
-	ofc_sema_spec_t*  spec);
-ofc_sema_decl_t* ofc_sema_decl_subroutine(
-	ofc_sema_scope_t* scope,
-	ofc_sparse_ref_t  name);
+bool ofc_sema_decl_array_set(
+	ofc_sema_decl_t*  decl,
+	ofc_sema_array_t* array,
+	ofc_sparse_ref_t  err_pos);
+
+bool ofc_sema_decl_is_final(
+	const ofc_sema_decl_t* decl);
+bool ofc_sema_decl_mark_used(
+	ofc_sema_decl_t* decl,
+	bool written, bool read);
 
 bool ofc_sema_decl(
 	ofc_sema_scope_t* scope,
@@ -124,6 +125,11 @@ bool ofc_sema_decl_member(
 	ofc_sema_structure_t* structure,
 	const ofc_parse_stmt_t* stmt);
 void ofc_sema_decl_delete(
+	ofc_sema_decl_t* decl);
+
+bool ofc_sema_decl_function(
+	ofc_sema_decl_t* decl);
+bool ofc_sema_decl_subroutine(
 	ofc_sema_decl_t* decl);
 
 bool ofc_sema_decl_init(

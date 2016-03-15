@@ -23,14 +23,11 @@
 typedef struct ofc_sema_stmt_s     ofc_sema_stmt_t;
 typedef struct ofc_sema_scope_s    ofc_sema_scope_t;
 typedef struct ofc_sema_type_s     ofc_sema_type_t;
-typedef struct ofc_sema_spec_s     ofc_sema_spec_t;
 typedef struct ofc_sema_expr_s     ofc_sema_expr_t;
 typedef struct ofc_sema_lhs_s      ofc_sema_lhs_t;
 typedef struct ofc_sema_decl_s     ofc_sema_decl_t;
 typedef struct ofc_sema_implicit_s ofc_sema_implicit_t;
 
-
-typedef struct ofc_sema_spec_list_s         ofc_sema_spec_list_t;
 typedef struct ofc_sema_decl_list_s         ofc_sema_decl_list_t;
 typedef struct ofc_sema_expr_list_s         ofc_sema_expr_list_t;
 typedef struct ofc_sema_stmt_list_s         ofc_sema_stmt_list_t;
@@ -52,7 +49,6 @@ typedef struct ofc_sema_format_label_list_s ofc_sema_format_label_list_t;
 
 #include <ofc/sema/stmt.h>
 #include <ofc/sema/type.h>
-#include <ofc/sema/spec.h>
 #include <ofc/sema/expr.h>
 #include <ofc/sema/lhs.h>
 #include <ofc/sema/decl.h>

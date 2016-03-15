@@ -238,13 +238,15 @@ static const ofc_sema_type_t* ofc_sema_type__create(
 		case OFC_SEMA_TYPE_BYTE:
 			if ((len != 0) || len_var)
 				return NULL;
-			if ((kind != OFC_SEMA_KIND_DEFAULT)
+			if ((kind != OFC_SEMA_KIND_NONE)
+				&& (kind != OFC_SEMA_KIND_DEFAULT)
 				&& (kind != OFC_SEMA_KIND_1_BYTE))
 				return NULL;
 			break;
 
 		case OFC_SEMA_TYPE_CHARACTER:
-			if (!ofc_sema_type__kind_valid(kind))
+			if ((kind != OFC_SEMA_KIND_NONE)
+				&& !ofc_sema_type__kind_valid(kind))
 				return NULL;
 			break;
 
@@ -252,8 +254,10 @@ static const ofc_sema_type_t* ofc_sema_type__create(
 		case OFC_SEMA_TYPE_INTEGER:
 		case OFC_SEMA_TYPE_REAL:
 		case OFC_SEMA_TYPE_COMPLEX:
-			if (!ofc_sema_type__kind_valid(kind)
-				|| (len != 0) || len_var)
+			if ((kind != OFC_SEMA_KIND_NONE)
+				&& !ofc_sema_type__kind_valid(kind))
+				return NULL;
+			if ((len != 0) || len_var)
 				return NULL;
 			break;
 
@@ -371,6 +375,333 @@ const ofc_sema_type_t* ofc_sema_type_create_function(
 
 	return ofc_sema_type__create(
 		OFC_SEMA_TYPE_FUNCTION, OFC_SEMA_KIND_NONE, 0, false, type);
+}
+
+
+const ofc_sema_type_t* ofc_sema_type(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_type_t* ptype,
+	ofc_sema_structure_t** structure)
+{
+    if (!ptype)
+		return NULL;
+
+	ofc_sema_structure_t* struct_type = NULL;
+	ofc_sema_type_e etype;
+	switch (ptype->type)
+	{
+		case OFC_PARSE_TYPE_NONE:
+			return NULL;
+
+		case OFC_PARSE_TYPE_LOGICAL:
+			etype = OFC_SEMA_TYPE_LOGICAL;
+			break;
+
+		case OFC_PARSE_TYPE_CHARACTER:
+			etype = OFC_SEMA_TYPE_CHARACTER;
+			break;
+
+		case OFC_PARSE_TYPE_INTEGER:
+			etype = OFC_SEMA_TYPE_INTEGER;
+			break;
+
+		case OFC_PARSE_TYPE_REAL:
+		case OFC_PARSE_TYPE_DOUBLE_PRECISION:
+			etype = OFC_SEMA_TYPE_REAL;
+			break;
+
+		case OFC_PARSE_TYPE_COMPLEX:
+		case OFC_PARSE_TYPE_DOUBLE_COMPLEX:
+			etype = OFC_SEMA_TYPE_COMPLEX;
+			break;
+
+		case OFC_PARSE_TYPE_BYTE:
+			etype = OFC_SEMA_TYPE_BYTE;
+			break;
+
+		case OFC_PARSE_TYPE_TYPE:
+			etype = OFC_SEMA_TYPE_TYPE;
+			struct_type = ofc_sema_scope_derived_type_find(
+				scope, ptype->type_name.string);
+			if (!struct_type)
+			{
+				struct_type = ofc_sema_scope_structure_find(
+					scope, ptype->type_name.string);
+				if (!struct_type)
+				{
+					ofc_sparse_ref_error(ptype->type_name,
+						"Referencing undefined TYPE name");
+					return NULL;
+				}
+				ofc_sparse_ref_warning(ptype->type_name,
+					"Referencing STRUCTURE in TYPE declaration");
+			}
+			break;
+
+		case OFC_PARSE_TYPE_RECORD:
+			etype = OFC_SEMA_TYPE_RECORD;
+			break;
+
+		default:
+			return NULL;
+	}
+
+	unsigned len     = 0;
+	bool     len_var = ptype->count_var;
+	if (ptype->count_expr)
+	{
+		if (len_var)
+		{
+			ofc_sparse_ref_error(ptype->src,
+				"Type LEN specified as both fixed and variable");
+			return NULL;
+		}
+
+		ofc_sema_expr_t* expr
+			= ofc_sema_expr(scope, ptype->count_expr);
+
+		bool resolved = ofc_sema_expr_resolve_uint(expr, &len);
+		ofc_sema_expr_delete(expr);
+
+		if (!resolved)
+		{
+			ofc_sparse_ref_error(ptype->count_expr->src,
+				"Type LEN expression couldn't be resolved");
+			return NULL;
+		}
+
+		if (len == 0)
+		{
+			ofc_sparse_ref_error(ptype->count_expr->src,
+				"Type LEN must be greater than zero");
+			return NULL;
+		}
+	}
+
+	ofc_sema_kind_e kind = OFC_SEMA_KIND_NONE;
+	switch (ptype->type)
+	{
+		case OFC_PARSE_TYPE_DOUBLE_PRECISION:
+		case OFC_PARSE_TYPE_DOUBLE_COMPLEX:
+			if (ptype->size != 0)
+			{
+				ofc_sparse_ref_error(ptype->count_expr->src,
+					"Can't specify size of DOUBLE type");
+				return NULL;
+			}
+			kind = OFC_SEMA_KIND_DOUBLE;
+			break;
+		default:
+			if (ptype->size > 0)
+				kind = (OFC_SEMA_KIND_1_BYTE * ptype->size);
+			break;
+	}
+
+	if (ptype->params)
+	{
+		unsigned i;
+		for (i = 0; i < ptype->params->count; i++)
+		{
+			/* TODO - Handle unnamed kind, len */
+			if (ofc_str_ref_equal_strz_ci(
+				ptype->params->call_arg[i]->name.string, "LEN"))
+			{
+				if (ptype->params->call_arg[i]->type
+					== OFC_PARSE_CALL_ARG_ASTERISK)
+				{
+					if (len > 0)
+					{
+						ofc_sparse_ref_error(ptype->src,
+							"Type LEN specified as both fixed and variable");
+						return NULL;
+					}
+
+					len_var = true;
+				}
+				else
+				{
+					if (ptype->params->call_arg[i]->type
+						!= OFC_PARSE_CALL_ARG_EXPR)
+						return NULL;
+
+					ofc_sema_expr_t* expr = ofc_sema_expr(
+						scope, ptype->params->call_arg[i]->expr);
+					if (!expr) return NULL;
+
+					unsigned plen;
+					bool resolved = ofc_sema_expr_resolve_uint(expr, &plen);
+					ofc_sema_expr_delete(expr);
+					if (!resolved)
+					{
+						ofc_sparse_ref_error(ptype->src,
+							"Type LEN expression couldn't be resolved");
+						return NULL;
+					}
+
+					if (plen == 0)
+					{
+						ofc_sparse_ref_error(ptype->src,
+							"Type LEN paramater must be greater than zero");
+						return NULL;
+					}
+
+					if (len_var)
+					{
+						ofc_sparse_ref_error(ptype->src,
+							"Type LEN specified as both fixed and variable");
+						return NULL;
+					}
+					else if (len > 0)
+					{
+						if(len != plen)
+						{
+							ofc_sparse_ref_error(ptype->src,
+								"Conflicting type LEN specifications");
+							return NULL;
+						}
+
+						ofc_sparse_ref_warning(ptype->src,
+							"Multiple type LEN specifications");
+					}
+
+					len = plen;
+				}
+			}
+			else if (ofc_str_ref_equal_strz_ci(
+				ptype->params->call_arg[i]->name.string, "KIND"))
+			{
+				if (ptype->params->call_arg[i]->type
+					!= OFC_PARSE_CALL_ARG_EXPR)
+					return NULL;
+
+				ofc_sema_expr_t* expr = ofc_sema_expr(
+					scope, ptype->params->call_arg[i]->expr);
+				if (!expr) return NULL;
+
+				unsigned pkind;
+				bool resolved = ofc_sema_expr_resolve_uint(expr, &pkind);
+				ofc_sema_expr_delete(expr);
+				if (!resolved)
+				{
+					ofc_sparse_ref_error(ptype->src,
+						"Type KIND expression couldn't be resolved");
+					return NULL;
+				}
+
+				if (pkind == OFC_SEMA_KIND_NONE)
+				{
+					ofc_sparse_ref_error(ptype->src,
+						"Type KIND paramater must be greater than zero");
+					return NULL;
+				}
+
+				if (kind != OFC_SEMA_KIND_NONE)
+				{
+					if (kind != pkind)
+					{
+						ofc_sparse_ref_error(ptype->src,
+							"Conflicting type KIND specifications");
+						return NULL;
+					}
+
+					ofc_sparse_ref_warning(ptype->src,
+						"Multiple type KIND specifications");
+				}
+
+				kind = pkind;
+			}
+			else
+			{
+				ofc_sparse_ref_error(ptype->src,
+					"Unknown parameter in type");
+				return NULL;
+			}
+		}
+	}
+
+	if (etype == OFC_SEMA_TYPE_BYTE)
+	{
+		if ((kind != OFC_SEMA_KIND_NONE)
+			&& (kind != OFC_SEMA_KIND_DEFAULT)
+			&& (kind != OFC_SEMA_KIND_1_BYTE))
+		{
+			ofc_sparse_ref_error(ptype->src,
+				"BYTE kind must represent a size of 1");
+			return NULL;
+		}
+	}
+
+	const ofc_sema_type_t* type;
+	switch (etype)
+	{
+		case OFC_SEMA_TYPE_LOGICAL:
+		case OFC_SEMA_TYPE_INTEGER:
+		case OFC_SEMA_TYPE_REAL:
+		case OFC_SEMA_TYPE_COMPLEX:
+		case OFC_SEMA_TYPE_BYTE:
+			type = ofc_sema_type_create_primitive(
+				etype, kind);
+			break;
+
+		case OFC_SEMA_TYPE_CHARACTER:
+			type = ofc_sema_type_create_character(
+				kind, len, len_var);
+			break;
+
+		case OFC_SEMA_TYPE_TYPE:
+			type = ofc_sema_type_type();
+			break;
+
+		case OFC_SEMA_TYPE_RECORD:
+			type = ofc_sema_type_record();
+			break;
+
+		default:
+			return NULL;
+	}
+	if (!type) return NULL;
+
+	if (structure) *structure = struct_type;
+	return type;
+}
+
+
+const ofc_sema_type_t* ofc_sema_type_set_kind(
+	const ofc_sema_type_t* type, ofc_sema_kind_e kind)
+{
+	if (!type)
+		return NULL;
+
+	switch (type->type)
+	{
+		case OFC_SEMA_TYPE_LOGICAL:
+		case OFC_SEMA_TYPE_INTEGER:
+		case OFC_SEMA_TYPE_REAL:
+		case OFC_SEMA_TYPE_COMPLEX:
+		case OFC_SEMA_TYPE_BYTE:
+			return ofc_sema_type_create_primitive(
+				type->type, kind);
+		case OFC_SEMA_TYPE_CHARACTER:
+			return ofc_sema_type_create_character(
+				kind, type->len, type->len_var);
+		default:
+			break;
+	}
+
+	return NULL;
+}
+
+const ofc_sema_type_t* ofc_sema_type_set_len(
+	const ofc_sema_type_t* type, unsigned len, bool len_var)
+{
+	if (!type)
+		return NULL;
+
+	if (type->type != OFC_SEMA_TYPE_CHARACTER)
+		return NULL;
+
+	return ofc_sema_type_create_character(
+		type->kind, len, len_var);
 }
 
 
@@ -506,6 +837,19 @@ const ofc_sema_type_t* ofc_sema_type_type(void)
 	return type;
 }
 
+const ofc_sema_type_t* ofc_sema_type_record(void)
+{
+	static const ofc_sema_type_t* type = NULL;
+
+	if (!type)
+	{
+		type = ofc_sema_type__create(
+			OFC_SEMA_TYPE_RECORD, OFC_SEMA_KIND_NONE, 0, false, NULL);
+	}
+
+	return type;
+}
+
 
 const ofc_sema_type_t* ofc_sema_type_scalar(
 	const ofc_sema_type_t* type)
@@ -521,62 +865,6 @@ const ofc_sema_type_t* ofc_sema_type_scalar(
 			OFC_SEMA_TYPE_REAL, type->kind);
 
 	return NULL;
-}
-
-
-const ofc_sema_type_t* ofc_sema_type_spec(
-	const ofc_sema_spec_t* spec)
-{
-	if (!spec)
-		return NULL;
-
-	if (spec->type_implicit)
-		return NULL;
-
-	unsigned kind = spec->kind;
-	if (kind == OFC_SEMA_KIND_NONE)
-		kind = OFC_SEMA_KIND_DEFAULT;
-
-	unsigned len = spec->len;
-
-	const ofc_sema_type_t* type;
-	switch (spec->type)
-	{
-		case OFC_SEMA_TYPE_LOGICAL:
-		case OFC_SEMA_TYPE_INTEGER:
-		case OFC_SEMA_TYPE_REAL:
-		case OFC_SEMA_TYPE_COMPLEX:
-		case OFC_SEMA_TYPE_BYTE:
-			if ((spec->len != 0)
-				|| spec->len_var)
-				return NULL;
-			type = ofc_sema_type_create_primitive(
-				spec->type, kind);
-			break;
-
-		case OFC_SEMA_TYPE_CHARACTER:
-			if (!spec->len_var
-				&& (spec->len == 0))
-				len = 1;
-			type = ofc_sema_type_create_character(
-				kind, len, spec->len_var);
-			break;
-
-		/* RECORD is only needed for specifiers. */
-		case OFC_SEMA_TYPE_TYPE:
-		case OFC_SEMA_TYPE_RECORD:
-			if ((spec->len != 0)
-				|| spec->len_var
-				|| (kind != OFC_SEMA_KIND_DEFAULT))
-				return false;
-			type = ofc_sema_type_type();
-			break;
-
-		default:
-			return NULL;
-	}
-
-	return type;
 }
 
 
@@ -608,7 +896,8 @@ static bool ofc_sema_type__compare(
 					&& (a->len != b->len))
 					return false;
 			}
-			else if (a->len != b->len)
+			else if ((a->len != b->len)
+				|| (a->len_var != b->len_var))
 				return false;
 			break;
 

@@ -42,6 +42,8 @@ struct ofc_sema_structure_s
 	ofc_sparse_ref_t      name;
 	ofc_sema_structure_e  type;
 
+	ofc_sema_implicit_t* implicit;
+
 	unsigned count;
 	ofc_sema_structure_member_t** member;
 
@@ -59,9 +61,9 @@ bool ofc_sema_structure_reference(
 void ofc_sema_structure_delete(
 	ofc_sema_structure_t* structure);
 
-bool ofc_sema_structure_member_add_decl(
+ofc_sema_decl_t* ofc_sema_structure_decl_find_create(
 	ofc_sema_structure_t* structure,
-	ofc_sema_decl_t*      member);
+	ofc_sparse_ref_t name);
 bool ofc_sema_structure_member_add_structure(
 	ofc_sema_structure_t* structure,
 	ofc_sema_structure_t* member);

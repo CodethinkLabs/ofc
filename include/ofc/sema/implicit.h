@@ -22,20 +22,37 @@ ofc_sema_implicit_t* ofc_sema_implicit_copy(
 void ofc_sema_implicit_delete(
 	ofc_sema_implicit_t* implicit);
 
-bool ofc_sema_implicit_none(
-	ofc_sema_implicit_t* implicit);
-bool ofc_sema_implicit_set_undefined(
-	ofc_sema_implicit_t* implicit, char c);
-bool ofc_sema_implicit_set(
-	ofc_sema_implicit_t* implicit,
-	ofc_sema_spec_t spec, char c);
-ofc_sema_spec_t* ofc_sema_implicit_apply(
-	const ofc_sema_implicit_t* implicit,
-	ofc_sparse_ref_t           name,
-	const ofc_sema_spec_t*     spec);
-
 bool ofc_sema_implicit(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
+
+const ofc_sema_type_t* ofc_sema_implicit_type(
+	const ofc_sema_implicit_t* implicit,
+	ofc_sparse_ref_t name);
+bool ofc_sema_implicit_static(
+	const ofc_sema_implicit_t* implicit,
+	ofc_sparse_ref_t name);
+bool ofc_sema_implicit_automatic(
+	const ofc_sema_implicit_t* implicit,
+	ofc_sparse_ref_t name);
+bool ofc_sema_implicit_volatile(
+	const ofc_sema_implicit_t* implicit,
+	ofc_sparse_ref_t name);
+bool ofc_sema_implicit_intrinsic(
+	const ofc_sema_implicit_t* implicit,
+	ofc_sparse_ref_t name);
+bool ofc_sema_implicit_external(
+	const ofc_sema_implicit_t* implicit,
+	ofc_sparse_ref_t name);
+
+bool ofc_sema_implicit_attr(
+	const ofc_sema_implicit_t* implicit,
+	ofc_sparse_ref_t name,
+	const ofc_sema_type_t** type,
+	bool* is_static,
+	bool* is_automatic,
+	bool* is_volatile,
+	bool* is_intrinsic,
+	bool* is_external);
 
 #endif

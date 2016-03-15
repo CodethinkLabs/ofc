@@ -1116,14 +1116,12 @@ static ofc_sema_expr_t* ofc_sema_expr__variable(
 		*name, &base_name))
 		return NULL;
 
-	const ofc_sema_spec_t* spec
-		= ofc_sema_scope_spec_find(scope, base_name);
 	const ofc_sema_decl_t* decl
 		= ofc_sema_scope_decl_find(
 			scope, base_name.string, false);
 
 	const ofc_sema_intrinsic_t* intrinsic = NULL;
-	if (!spec && !decl)
+	if (!decl)
 	{
 		intrinsic = ofc_sema_intrinsic(
 			base_name.string, global_opts.case_sensitive);
@@ -1154,13 +1152,8 @@ static ofc_sema_expr_t* ofc_sema_expr__variable(
 		bool is_function = false;
 		if (decl)
 		{
-			is_array = ofc_sema_decl_is_array(decl);
+			is_array    = ofc_sema_decl_is_array(decl);
 			is_function = ofc_sema_decl_is_function(decl);
-		}
-		else if (spec)
-		{
-			is_array    = (spec->array != NULL);
-			is_function = (spec->is_intrinsic || spec->is_external);
 		}
 
 		if ((is_function || !is_array)
@@ -1175,17 +1168,20 @@ static ofc_sema_expr_t* ofc_sema_expr__variable(
 				return NULL;
 			}
 
-			ofc_sema_spec_t* fspec
-				= ofc_sema_scope_spec_find_final(
-					scope, base_name);
 			ofc_sema_decl_t* fdecl
-				= ofc_sema_decl_function(
-					scope, base_name, fspec);
-			ofc_sema_spec_delete(fspec);
+				= ofc_sema_scope_decl_find_create(
+					scope, base_name, false);
 			if (!fdecl)
 			{
 				ofc_sparse_ref_error(name->parent->src,
 					"No complete IMPLICIT rule or specifier for function");
+				return NULL;
+			}
+
+			if (!ofc_sema_decl_function(fdecl))
+			{
+				ofc_sparse_ref_error(name->src,
+					"Declaration cannot be used as a function");
 				return NULL;
 			}
 
@@ -1196,7 +1192,7 @@ static ofc_sema_expr_t* ofc_sema_expr__variable(
 				ofc_sparse_ref_error(name->src,
 					"Invalid invocation of function");
 			}
-			else if (!spec)
+			else if (!decl)
 			{
 				ofc_sparse_ref_warning(name->src,
 					"Implicit function declaration");
@@ -1383,7 +1379,8 @@ static ofc_sema_expr_t* ofc_sema_expr__implicit_do(
 		ofc_sema_expr_delete(expr);
 		return NULL;
 	}
-	if (!ofc_sema_lhs_mark_used(iter_lhs))
+	if (!ofc_sema_lhs_mark_used(
+		iter_lhs, true, true))
 	{
 		ofc_sema_lhs_delete(iter_lhs);
 		ofc_sema_expr_delete(expr);

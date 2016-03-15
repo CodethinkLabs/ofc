@@ -80,6 +80,17 @@ static ofc_sema_structure_t* ofc_sema__structure(
 	structure->name = stmt->structure.name;
 	structure->type = type;
 
+	const ofc_sema_implicit_t* simplicit
+		= ofc_sema_scope_implicit(scope);
+
+	structure->implicit
+		= ofc_sema_implicit_copy(simplicit);
+	if (simplicit && !structure->implicit)
+	{
+		free(structure);
+		return NULL;
+	}
+
 	structure->count  = 0;
 	structure->member = NULL;
 
@@ -131,6 +142,20 @@ static ofc_sema_structure_t* ofc_sema__structure(
 			}
 			else if (!ofc_sema_decl_member(scope, structure,
 				stmt->structure.block->stmt[i]))
+			{
+				ofc_sema_structure_delete(structure);
+				return NULL;
+			}
+		}
+
+		for (i = 0; i < structure->count; i++)
+		{
+			if (!structure->member[i]
+				|| structure->member[i]->is_structure)
+				continue;
+
+			if (!ofc_sema_decl_type_finalize(
+				structure->member[i]->decl))
 			{
 				ofc_sema_structure_delete(structure);
 				return NULL;
@@ -216,6 +241,9 @@ void ofc_sema_structure_delete(
 		return;
 	}
 
+	ofc_sema_implicit_delete(
+		structure->implicit);
+
 	ofc_hashmap_delete(structure->map);
 
 	unsigned i;
@@ -277,7 +305,7 @@ static bool ofc_sema_structure__member_add(
 	return true;
 }
 
-bool ofc_sema_structure_member_add_decl(
+static bool ofc_sema_structure__member_add_decl(
 	ofc_sema_structure_t* structure,
 	ofc_sema_decl_t*      member)
 {
@@ -300,6 +328,32 @@ bool ofc_sema_structure_member_add_decl(
 	}
 
 	return true;
+}
+
+ofc_sema_decl_t* ofc_sema_structure_decl_find_create(
+	ofc_sema_structure_t* structure,
+	ofc_sparse_ref_t name)
+{
+	if (!structure)
+		return NULL;
+
+	ofc_sema_decl_t* decl
+		= ofc_sema_structure_member_get_decl_name(
+			structure, name.string);
+	if (decl) return decl;
+
+	decl = ofc_sema_decl_create(
+		structure->implicit, name);
+	if (!decl) return NULL;
+
+	if (!ofc_sema_structure__member_add_decl(
+		structure, decl))
+	{
+		ofc_sema_decl_delete(decl);
+		return NULL;
+	}
+
+	return decl;
 }
 
 bool ofc_sema_structure_member_add_structure(

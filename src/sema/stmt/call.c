@@ -28,32 +28,18 @@ ofc_sema_stmt_t* ofc_sema_stmt_call(
 	s.type = OFC_SEMA_STMT_CALL;
 
 	ofc_sema_decl_t* subroutine
-		= ofc_sema_scope_decl_find_modify(
-			scope, stmt->call_entry.name.string, false);
-	if (!subroutine)
-	{
-		const ofc_sema_type_t* type
-			= ofc_sema_type_subroutine();
+		= ofc_sema_scope_decl_find_create(
+			scope, stmt->call_entry.name, false);
 
-		subroutine = ofc_sema_decl_create(
-			type, stmt->call_entry.name);
-		if (!subroutine) return NULL;
-
-		if (!ofc_sema_scope_decl_add(
-			scope, subroutine))
-		{
-			ofc_sema_decl_delete(subroutine);
-			return NULL;
-		}
-	}
-	else if (!ofc_sema_decl_is_subroutine(subroutine))
+	if (!ofc_sema_decl_is_subroutine(subroutine)
+		&& !ofc_sema_decl_subroutine(subroutine))
 	{
 		ofc_sparse_ref_error(stmt->src,
 			"CALL target must be a valid SUBROUTINE");
 		return NULL;
 	}
 
-	subroutine->used = true;
+	ofc_sema_decl_mark_used(subroutine, false, true);
 	s.call.subroutine = subroutine;
 
 	s.call.args = NULL;

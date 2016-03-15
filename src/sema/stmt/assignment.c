@@ -40,20 +40,13 @@ bool ofc_sema_stmt_is_stmt_func(
 		*(stmt->assignment->name), &base_name))
 		return NULL;
 
-	ofc_sema_spec_t* spec
-		= ofc_sema_scope_spec_find_final(
-			scope, base_name);
-	if (spec)
-	{
-		bool is_array = (spec->array != NULL);
-		ofc_sema_spec_delete(spec);
-		if (is_array) return false;
-	}
-
 	const ofc_sema_decl_t* decl
 		= ofc_sema_scope_decl_find(
 			scope, base_name.string, false);
-	return (decl == NULL);
+	if (!decl) return true;
+
+	return (!ofc_sema_decl_is_array(decl)
+		&& !ofc_sema_decl_is_final(decl));
 }
 
 ofc_sema_stmt_t* ofc_sema_stmt_assignment(
@@ -71,6 +64,13 @@ ofc_sema_stmt_t* ofc_sema_stmt_assignment(
 	s.assignment.dest = ofc_sema_lhs(
 		scope, stmt->assignment->name);
 	if (!s.assignment.dest) return NULL;
+
+	if (!ofc_sema_lhs_mark_used(
+		s.assignment.dest, true, false))
+	{
+		ofc_sema_lhs_delete(s.assignment.dest);
+		return NULL;
+	}
 
 	s.assignment.expr = ofc_sema_expr(
 		scope, stmt->assignment->init);
@@ -111,13 +111,6 @@ ofc_sema_stmt_t* ofc_sema_stmt_assignment(
 	{
 		ofc_sema_expr_delete(s.assignment.expr);
 		ofc_sema_lhs_delete(s.assignment.dest);
-		return NULL;
-	}
-
-	if (!ofc_sema_lhs_mark_used(
-		s.assignment.dest))
-	{
-		ofc_sema_stmt_delete(as);
 		return NULL;
 	}
 

@@ -1267,7 +1267,8 @@ static const char* ofc_sema_stmt__name[] =
 {
 	"ASSIGNMENT",
 	"ASSIGN",
-	"WRITE",
+	"IO_FORMAT",
+	"IO_WRITE",
 	"IO_READ",
 	"IO_PRINT",
 	"IO_REWIND",
@@ -1299,7 +1300,7 @@ static const char* ofc_sema_stmt__str_rep(
 	const ofc_sema_stmt_t* stmt)
 {
 	if (!stmt || (stmt->type >= OFC_SEMA_STMT_COUNT))
-		return "<ERROR: SEMA STATEMENT NOT MATCHED>";
+		return NULL;
 
 	return ofc_sema_stmt__name[stmt->type];
 }

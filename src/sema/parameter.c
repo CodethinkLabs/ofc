@@ -28,6 +28,11 @@ static ofc_sema_decl_t* ofc_sema_parameter__assign(
 		*(assign->name), &base_name))
 		return NULL;
 
+	ofc_sema_decl_t* decl
+		= ofc_sema_scope_decl_find_create(
+			scope, base_name, true);
+	if (!decl) return NULL;
+
 	ofc_sema_expr_t* init_expr = ofc_sema_expr(
 		scope, assign->init);
 	if (!init_expr) return NULL;
@@ -40,40 +45,42 @@ static ofc_sema_decl_t* ofc_sema_parameter__assign(
 		return NULL;
 	}
 
-	ofc_sema_spec_t* spec
-		= ofc_sema_scope_spec_modify(
-			scope, base_name);
-	if (!spec)
+	if (decl->type_implicit)
 	{
-		ofc_sema_expr_delete(init_expr);
-		return NULL;
+		decl->type = type;
+	}
+	else
+	{
+		if ((decl->type->kind == 0)
+			&& (type->kind != 0))
+		{
+			const ofc_sema_type_t* ntype
+				= ofc_sema_type_set_kind(
+					decl->type, type->kind);
+			if (!ntype)
+			{
+				ofc_sema_expr_delete(init_expr);
+				return NULL;
+			}
+			decl->type = ntype;
+		}
+
+		if ((decl->type->len == 0)
+			&& ((type->len != 0) || type->len_var))
+		{
+			const ofc_sema_type_t* ntype
+				= ofc_sema_type_set_len(
+					decl->type, type->len, type->len_var);
+			if (!ntype)
+			{
+				ofc_sema_expr_delete(init_expr);
+				return NULL;
+			}
+			decl->type = ntype;
+		}
 	}
 
-	if (spec->type_implicit)
-	{
-		spec->type = type->type;
-		spec->type_implicit = false;
-	}
-	if (spec->kind == 0)
-		spec->kind = type->kind;
-	if ((spec->len == 0) && !spec->len_var)
-	{
-		spec->len      = type->len;
-		spec->len_var  = type->len_var;
-	}
-
-
-	ofc_sema_lhs_t* lhs = ofc_sema_lhs_local(
-		scope, assign->name);
-	if (!lhs)
-	{
-		ofc_sema_expr_delete(init_expr);
-		return NULL;
-	}
-
-	ofc_sema_decl_t* decl = lhs->decl;
-	ofc_sema_lhs_delete(lhs);
-	if (!decl)
+	if (!ofc_sema_decl_type_finalize(decl))
 	{
 		ofc_sema_expr_delete(init_expr);
 		return NULL;

@@ -52,20 +52,10 @@ bool ofc_sema_stmt_dimension(
 			*lhs, &base_name))
 			return false;
 
-		const ofc_sema_decl_t* decl
-			= ofc_sema_scope_decl_find(
-				scope, base_name.string, true);
-		if (decl)
-		{
-			ofc_sparse_ref_error(lhs->src,
-				"Can't modify dimensions of declaration after use");
-			return false;
-		}
-
-		ofc_sema_spec_t* spec
-			= ofc_sema_scope_spec_modify(
-				scope, base_name);
-		if (!spec)
+		ofc_sema_decl_t* decl
+			= ofc_sema_scope_decl_find_create(
+				scope, base_name, true);
+		if (!decl)
 		{
 			ofc_sparse_ref_error(lhs->src,
 				"No declaration for '%.*s' and no valid IMPLICIT rule.",
@@ -78,25 +68,11 @@ bool ofc_sema_stmt_dimension(
 				scope, lhs->array.index);
 		if (!array) return false;
 
-		if (spec->array)
+		if (!ofc_sema_decl_array_set(
+			decl, array, lhs->src))
 		{
-			bool conflict = !ofc_sema_array_compare(
-				spec->array, array);
 			ofc_sema_array_delete(array);
-
-			if (conflict)
-			{
-				ofc_sparse_ref_error(lhs->src,
-					"Conflicting array dimension specifications");
-				return false;
-			}
-
-			ofc_sparse_ref_warning(lhs->src,
-				"Multiple array dimension specifications");
-		}
-		else
-		{
-			spec->array = array;
+			return false;
 		}
 	}
 

@@ -54,7 +54,6 @@ struct ofc_sema_scope_s
 	ofc_sema_implicit_t*  implicit;
 
 	ofc_sema_common_map_t* common;
-	ofc_sema_spec_map_t*   spec;
 	ofc_sema_decl_list_t*  decl;
 	ofc_sema_equiv_list_t* equiv;
 	ofc_sema_label_map_t*  label;
@@ -73,7 +72,7 @@ struct ofc_sema_scope_s
 
 bool ofc_sema_scope__check_namespace_collision(
 	ofc_sema_scope_t* scope,
-	char* namespace, ofc_sparse_ref_t ref);
+	const char* name_space, ofc_sparse_ref_t ref);
 
 ofc_sema_scope_t* ofc_sema_scope_global(
 	const ofc_parse_stmt_list_t* list);
@@ -118,24 +117,18 @@ const ofc_sema_label_t* ofc_sema_scope_label_find(
 ofc_sema_label_t* ofc_sema_scope_label_modify(
 	ofc_sema_scope_t* scope, unsigned label);
 
-const ofc_sema_spec_t* ofc_sema_scope_spec_find(
-	const ofc_sema_scope_t* scope, ofc_sparse_ref_t name);
-ofc_sema_spec_t* ofc_sema_scope_spec_modify(
-	ofc_sema_scope_t* scope, ofc_sparse_ref_t name);
-ofc_sema_spec_t* ofc_sema_scope_spec_find_final(
-	const ofc_sema_scope_t* scope, ofc_sparse_ref_t name);
-
 bool ofc_sema_scope_equiv_add(
 	ofc_sema_scope_t* scope, ofc_sema_equiv_t* equiv);
 
-bool ofc_sema_scope_decl_name_exists(
-	ofc_sema_scope_t* scope, ofc_str_ref_t name);
-bool ofc_sema_scope_decl_add(
-	ofc_sema_scope_t* scope, ofc_sema_decl_t* decl);
 const ofc_sema_decl_t* ofc_sema_scope_decl_find(
 	const ofc_sema_scope_t* scope, ofc_str_ref_t name, bool local);
 ofc_sema_decl_t* ofc_sema_scope_decl_find_modify(
 	ofc_sema_scope_t* scope, ofc_str_ref_t name, bool local);
+ofc_sema_decl_t* ofc_sema_scope_decl_find_create_ns(
+	ofc_sema_scope_t* scope, ofc_sparse_ref_t name,
+	bool local, const char* name_space);
+ofc_sema_decl_t* ofc_sema_scope_decl_find_create(
+	ofc_sema_scope_t* scope, ofc_sparse_ref_t name, bool local);
 
 bool ofc_sema_scope_derived_type_add(
 	ofc_sema_scope_t* scope,

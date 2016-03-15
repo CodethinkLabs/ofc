@@ -46,12 +46,7 @@ bool ofc_sema_stmt_save(
 			if (!common) return NULL;
 
 			if (!ofc_sema_common_save(common))
-			{
-				/* TODO - Allow this. */
-				ofc_sparse_ref_error(save->common,
-					"Can't mark a COMMON block as STATIC after use");
 				return false;
-			}
 		}
 		else
 		{
@@ -63,36 +58,25 @@ bool ofc_sema_stmt_save(
 				*(save->lhs), &base_name))
 				return false;
 
-			const ofc_sema_decl_t* decl
-				= ofc_sema_scope_decl_find(
-					scope, base_name.string, true);
-			if (decl)
+			ofc_sema_decl_t* decl
+				= ofc_sema_scope_decl_find_create(
+					scope, base_name, true);
+			if (!decl) return false;
+
+			if (decl->is_automatic)
 			{
-				/* TODO - Allow application of STATIC attribute to decl. */
 				ofc_sparse_ref_error(save->lhs->src,
-					"Using SAVE on existing declaration not yet supported");
+					"Can't SAVE an AUTOMATIC declaration");
 				return false;
 			}
 
-			ofc_sema_spec_t* spec
-				= ofc_sema_scope_spec_modify(
-					scope, base_name);
-			if (!spec) return false;
-
-			if (spec->is_automatic)
-			{
-				ofc_sparse_ref_error(save->lhs->src,
-					"Can't SAVE an AUTOMATIC variable");
-				return false;
-			}
-
-			if (spec->is_static)
+			if (decl->is_static)
 			{
 				ofc_sparse_ref_warning(save->lhs->src,
-					"SAVE on STATIC variable is redundant");
+					"Redundant definition of SAVE/STATIC attribute");
 			}
 
-			spec->is_static = true;
+			decl->is_static = true;
 		}
 	}
 

@@ -44,24 +44,14 @@ ofc_sema_stmt_t* ofc_sema_stmt_entry(
 				continue;
 
 			ofc_sema_decl_t* decl
-				= ofc_sema_scope_decl_find_modify(
-					scope, arg.name.string, true);
-			if (decl)
+				= ofc_sema_scope_decl_find_create(
+					scope, arg.name, true);
+			if (!decl)
 			{
-				decl->is_argument = true;
+				ofc_sema_arg_list_delete(s.entry.args);
+				return NULL;
 			}
-			else
-			{
-				ofc_sema_spec_t* spec
-					= ofc_sema_scope_spec_modify(
-						scope, arg.name);
-				if (!spec)
-				{
-					ofc_sema_arg_list_delete(s.entry.args);
-					return NULL;
-				}
-				spec->is_argument = true;
-			}
+			decl->is_argument = true;
 		}
 	}
 

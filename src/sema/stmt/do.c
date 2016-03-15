@@ -30,7 +30,8 @@ static bool ofc_sema_stmt__loop_control(
 		scope, parse_init->name);
 	if (!*sema_iter) return false;
 
-	if (!ofc_sema_lhs_mark_used(*sema_iter))
+	if (!ofc_sema_lhs_mark_used(
+		*sema_iter, true, true))
 	{
 		ofc_sema_lhs_delete(*sema_iter);
 		return false;

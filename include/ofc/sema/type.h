@@ -54,15 +54,17 @@ struct ofc_sema_type_s
 	};
 };
 
-const ofc_sema_type_t* ofc_sema_type_spec(
-	const ofc_sema_spec_t* spec);
-
 const char* ofc_sema_type_str_rep(
 	const ofc_sema_type_t* type);
 const char* ofc_sema_type_enum_str_rep(
 	const ofc_sema_type_e type_enum);
 const char* ofc_sema_type_str_cast_rep(
 	const ofc_sema_type_t* type);
+
+const ofc_sema_type_t* ofc_sema_type(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_type_t* ptype,
+	ofc_sema_structure_t** structure);
 
 const ofc_sema_type_t* ofc_sema_type_create_primitive(
 	ofc_sema_type_e type, ofc_sema_kind_e kind);
@@ -73,7 +75,10 @@ const ofc_sema_type_t* ofc_sema_type_create_pointer(
 const ofc_sema_type_t* ofc_sema_type_create_function(
 	const ofc_sema_type_t* type);
 
-typedef const ofc_sema_type_t* (*ofc_sema_type_f)(void);
+const ofc_sema_type_t* ofc_sema_type_set_kind(
+	const ofc_sema_type_t* type, ofc_sema_kind_e kind);
+const ofc_sema_type_t* ofc_sema_type_set_len(
+	const ofc_sema_type_t* type, unsigned len, bool len_var);
 
 const ofc_sema_type_t* ofc_sema_type_logical_default(void);
 const ofc_sema_type_t* ofc_sema_type_integer_default(void);
@@ -84,6 +89,7 @@ const ofc_sema_type_t* ofc_sema_type_double_complex_default(void);
 const ofc_sema_type_t* ofc_sema_type_byte_default(void);
 const ofc_sema_type_t* ofc_sema_type_subroutine(void);
 const ofc_sema_type_t* ofc_sema_type_type(void);
+const ofc_sema_type_t* ofc_sema_type_record(void);
 
 const ofc_sema_type_t* ofc_sema_type_scalar(const ofc_sema_type_t* type);
 

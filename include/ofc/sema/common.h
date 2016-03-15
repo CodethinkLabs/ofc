@@ -22,7 +22,6 @@ typedef struct
 
 	unsigned                count;
 	const ofc_sema_decl_t** decl;
-	ofc_sema_spec_t** spec;
 
 	bool save;
 } ofc_sema_common_t;
@@ -42,11 +41,6 @@ void ofc_sema_common_delete(
 
 bool ofc_sema_common_add(
 	ofc_sema_common_t* common,
-	ofc_sema_spec_t* spec);
-
-bool ofc_sema_common_define(
-	ofc_sema_common_t* common,
-	unsigned offset,
 	const ofc_sema_decl_t* decl);
 
 bool ofc_sema_common_save(

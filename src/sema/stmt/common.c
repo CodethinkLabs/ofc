@@ -78,52 +78,35 @@ bool ofc_sema_stmt_common(
 				return false;
 			}
 
-			ofc_sema_spec_t* spec
-				= ofc_sema_scope_spec_modify(
-					scope, base_name);
-			if (!spec)
+			ofc_sema_decl_t* decl
+				= ofc_sema_scope_decl_find_create(
+					scope, base_name, true);
+			if (!decl)
 			{
 				ofc_sema_array_delete(array);
 				return false;
 			}
 
-			if (spec->common
-				&& (spec->common != common))
+			if (decl->common
+				&& (decl->common != common))
 			{
 				ofc_sparse_ref_error(lhs->src,
-					"Specifier used in multiple COMMON blocks");
+					"Declaration used in multiple COMMON blocks");
 				ofc_sema_array_delete(array);
 				return false;
 			}
 
-			if (array)
+			if (array && !ofc_sema_decl_array_set(decl, array, lhs->src))
 			{
-				if (spec->array)
-				{
-					bool conflict = !ofc_sema_array_compare(
-						spec->array, array);
-					ofc_sema_array_delete(array);
-					if (conflict)
-					{
-						ofc_sparse_ref_error(lhs->src,
-							"Conflicting array definition in COMMON list");
-						return false;
-					}
-				}
-				else
-				{
-					spec->array = array;
-				}
+				ofc_sema_array_delete(array);
+				return false;
 			}
 
-			if (!spec->common)
+			if (!decl->common)
 			{
-				unsigned offset = common->count;
-				if (!ofc_sema_common_add(common, spec))
+				if (!ofc_sema_common_add(common, decl))
 					return false;
-
-				spec->common        = common;
-				spec->common_offset = offset;
+				decl->common = common;
 			}
 		}
 	}

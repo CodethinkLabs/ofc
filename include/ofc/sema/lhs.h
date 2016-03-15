@@ -136,7 +136,8 @@ ofc_sema_typeval_t* ofc_sema_lhs_parameter(
 	const ofc_sema_lhs_t* lhs);
 
 bool ofc_sema_lhs_mark_used(
-	ofc_sema_lhs_t* lhs);
+	ofc_sema_lhs_t* lhs,
+	bool written, bool read);
 
 bool ofc_sema_lhs_compare(
 	const ofc_sema_lhs_t* a,
@@ -186,7 +187,8 @@ bool ofc_sema_lhs_list_init(
 	const ofc_sema_expr_list_t* init);
 
 bool ofc_sema_lhs_list_mark_used(
-	ofc_sema_lhs_list_t* lhs);
+	ofc_sema_lhs_list_t* lhs,
+	bool written, bool read);
 
 bool ofc_sema_lhs_list_print(
 	ofc_colstr_t* cs,

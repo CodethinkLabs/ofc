@@ -27,29 +27,28 @@ ofc_sema_stmt_t* ofc_sema_stmt_assign(
 
 	ofc_sema_stmt_t s;
 	ofc_sema_decl_t* dest
-		= ofc_sema_scope_decl_find_modify(
-			scope, stmt->assign.variable.string, false);
-	if (!dest)
-	{
-		ofc_sema_spec_t* spec = ofc_sema_scope_spec_modify(
-			scope, stmt->assign.variable);
-		if (!spec) return false;
+		= ofc_sema_scope_decl_find_create(
+			scope, stmt->assign.variable, false);
+	if (!dest) return false;
 
-		if (spec->type != OFC_SEMA_TYPE_INTEGER)
+	if (!ofc_sema_type_is_integer(dest->type))
+	{
+		const ofc_sema_type_t* ptype
+			= ofc_sema_type_create_primitive(
+				OFC_SEMA_TYPE_INTEGER, OFC_SEMA_KIND_NONE);
+		if (!ptype) return NULL;
+
+		if (!ofc_sema_decl_type_set(
+			dest, ptype, stmt->assign.variable))
 		{
-			if (!spec->type_implicit)
-			{
-				ofc_sparse_ref_warning(stmt->assign.variable,
-					"IMPLICIT declaration of variable in ASSIGN destination"
-					" as non-INTEGER makes no sense, declaring as INTEGER.");
-			}
-			spec->type_implicit = false;
-			spec->type = OFC_SEMA_TYPE_INTEGER;
+			ofc_sparse_ref_error(stmt->src,
+				"ASSIGN destination must be of type INTEGER.");
+			return NULL;
 		}
 
-		dest = ofc_sema_decl_spec(
-			scope, stmt->assign.variable, spec, NULL);
-		if (!dest) return false;
+		ofc_sparse_ref_warning(stmt->assign.variable,
+			"IMPLICIT declaration of variable in ASSIGN destination"
+			" as non-INTEGER makes no sense, declaring as INTEGER.");
 	}
 	s.assign.dest = dest;
 
@@ -57,15 +56,6 @@ ofc_sema_stmt_t* ofc_sema_stmt_assign(
 		scope, stmt->assign.label);
 	if (!s.assign.label) return false;
 
-	const ofc_sema_type_t* dtype
-		= ofc_sema_decl_type(s.assign.dest);
-	if (!ofc_sema_type_is_integer(dtype))
-	{
-		ofc_sparse_ref_error(stmt->src,
-			"ASSIGN destination must be of type INTEGER.");
-		ofc_sema_expr_delete(s.assign.label);
-		return NULL;
-	}
 	s.type = OFC_SEMA_STMT_ASSIGN;
 	s.src = stmt->src;
 
@@ -77,7 +67,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_assign(
 		return NULL;
 	}
 
-	dest->used = true;
+	dest->was_written = true;
 	return as;
 }
 

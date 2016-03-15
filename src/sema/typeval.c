@@ -642,7 +642,8 @@ static ofc_sema_typeval_t* ofc_sema_typeval__character_literal(
 
 	if (!typeval.type)
 	{
-		typeval.type = ofc_sema_type_create_character(1, size, false);
+		typeval.type = ofc_sema_type_create_character(
+			OFC_SEMA_KIND_DEFAULT, size, false);
 		if (!typeval.type)
 		{
 			/* This should never happen. */

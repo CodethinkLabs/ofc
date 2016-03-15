@@ -443,18 +443,14 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 	}
 
 	ofc_sema_decl_t* decl
-		= ofc_sema_scope_decl_find_modify(
-			scope, lhs->variable.string, force_local);
+		= ofc_sema_scope_decl_find_create(
+			scope, lhs->variable, force_local);
 	if (!decl)
 	{
-		decl = ofc_sema_decl_implicit_lhs(scope, lhs);
-		if (!decl)
-		{
-			ofc_sparse_ref_error(lhs->src,
-				"No declaration for '%.*s' and no valid IMPLICIT rule.",
-				lhs->variable.string.size, lhs->variable.string.base);
-			return NULL;
-		}
+		ofc_sparse_ref_error(lhs->src,
+			"No declaration for '%.*s' and no valid IMPLICIT rule.",
+			lhs->variable.string.size, lhs->variable.string.base);
+		return NULL;
 	}
 
 	if (!is_expr && !is_dummy_arg
@@ -480,11 +476,12 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 	slhs->type      = OFC_SEMA_LHS_DECL;
 	slhs->src       = lhs->src;
 	slhs->decl      = decl;
-	slhs->data_type = decl->type;
 	slhs->refcnt    = 0;
 
 	if (is_expr || is_dummy_arg)
-		decl->used = true;
+		ofc_sema_decl_mark_used(decl, false, true);
+	slhs->data_type = decl->type;
+
 	return slhs;
 }
 
@@ -572,7 +569,8 @@ static ofc_sema_lhs_t* ofc_sema_lhs__implicit_do(
 		ofc_sema_lhs_delete(lhs);
 		return NULL;
 	}
-	if (!ofc_sema_lhs_mark_used(iter_lhs))
+	if (!ofc_sema_lhs_mark_used(
+		iter_lhs, true, true))
 	{
 		ofc_sema_lhs_delete(iter_lhs);
 		ofc_sema_lhs_delete(lhs);
@@ -1458,7 +1456,8 @@ ofc_sema_typeval_t* ofc_sema_lhs_parameter(
 
 
 bool ofc_sema_lhs_mark_used(
-	ofc_sema_lhs_t* lhs)
+	ofc_sema_lhs_t* lhs,
+	bool written, bool read)
 {
 	if (!lhs)
 		return false;
@@ -1466,21 +1465,23 @@ bool ofc_sema_lhs_mark_used(
 	switch (lhs->type)
 	{
 		case OFC_SEMA_LHS_DECL:
-			if (!lhs->decl)
+			if (!ofc_sema_decl_mark_used(
+				lhs->decl, written, read))
 				return false;
-			lhs->decl->used = true;
+			lhs->data_type = ofc_sema_decl_type(lhs->decl);
 			return true;
 
 		case OFC_SEMA_LHS_IMPLICIT_DO:
 			return ofc_sema_lhs_mark_used(
-				lhs->implicit_do.lhs);
+				lhs->implicit_do.lhs,
+				written, read);
 
 		default:
 			break;
 	}
 
 	return ofc_sema_lhs_mark_used(
-		lhs->parent);
+		lhs->parent, written, read);
 }
 
 
@@ -1920,7 +1921,8 @@ bool ofc_sema_lhs_list_init(
 
 
 bool ofc_sema_lhs_list_mark_used(
-	ofc_sema_lhs_list_t* lhs)
+	ofc_sema_lhs_list_t* lhs,
+	bool written, bool read)
 {
 	if (!lhs)
 		return false;
@@ -1929,7 +1931,8 @@ bool ofc_sema_lhs_list_mark_used(
 	unsigned i;
 	for (i = 0; i < lhs->count; i++)
 	{
-		if (!ofc_sema_lhs_mark_used(lhs->lhs[i]))
+		if (!ofc_sema_lhs_mark_used(
+			lhs->lhs[i], written, read))
 			success = false;
 	}
 
