@@ -427,7 +427,7 @@ static bool ofc_sema_stmt_write__print_optional(
 	if (!ofc_colstr_atomic_writef(cs, ",")
 		|| !ofc_colstr_atomic_writef(cs, " ")
 		|| !ofc_colstr_atomic_writef(cs, name)
-		|| !ofc_colstr_atomic_writef(cs, "= ")
+		|| !ofc_colstr_atomic_writef(cs, "=")
 		|| !ofc_sema_expr_print(cs, expr))
 		return false;
 
