@@ -846,9 +846,20 @@ ofc_sema_scope_t* ofc_sema_scope_stmt_func(
 	if (!func) return NULL;
 	func->src = stmt->src;
 
-	ofc_sema_decl_t* rdecl
-		= ofc_sema_scope_decl_find_create_ns(
+	ofc_sema_decl_t* edecl
+		= ofc_sema_scope_decl_find_modify(
+			scope, base_name.string, true);
+
+	ofc_sema_decl_t* rdecl;
+	if (edecl)
+	{
+		rdecl = ofc_sema_decl_copy(edecl);
+	}
+	else
+	{
+		rdecl = ofc_sema_scope_decl_find_create_ns(
 			func, base_name, true, NULL);
+	}
 	if (!rdecl || !rdecl->type)
 	{
 		ofc_sparse_ref_error(stmt->src,
