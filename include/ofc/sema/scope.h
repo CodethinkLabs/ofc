@@ -168,6 +168,14 @@ ofc_sema_scope_list_t* ofc_sema_scope_list_create(void);
 ofc_sema_scope_t* ofc_sema_scope_list_find_name(
 	ofc_sema_scope_list_t* list,
 	ofc_str_ref_t name);
+ofc_sema_scope_t* ofc_sema_scope_find_type_name(
+	ofc_sema_scope_t* scope,
+	ofc_sema_scope_e type,
+	ofc_str_ref_t name);
+ofc_sema_scope_t* ofc_sema_scope_find_module_name(
+	ofc_sema_scope_t* scope,
+	ofc_str_ref_t name);
+
 bool ofc_sema_scope_list_add(
 	ofc_sema_scope_list_t* list,
 	ofc_sema_scope_t* scope);

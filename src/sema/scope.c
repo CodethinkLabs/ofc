@@ -1647,6 +1647,67 @@ ofc_sema_scope_t* ofc_sema_scope_list_find_name(
 	return NULL;
 }
 
+static ofc_sema_scope_t* ofc_sema_scope_list__find_type_name(
+	ofc_sema_scope_list_t* list,
+	ofc_sema_scope_e type,
+	ofc_str_ref_t name)
+{
+	if (!list)
+		return NULL;
+
+	unsigned i;
+	for (i = 0; i < list->count; i++)
+	{
+		if (ofc_str_ref_equal_ci(list->scope[i]->name, name)
+			&& (list->scope[i]->type == type))
+				return list->scope[i];
+	}
+
+	return NULL;
+}
+
+
+ofc_sema_scope_t* ofc_sema_scope_find_type_name(
+	ofc_sema_scope_t* scope,
+	ofc_sema_scope_e type,
+	ofc_str_ref_t name)
+{
+	if (!scope)
+		return NULL;
+
+	ofc_sema_scope_t* match
+		= ofc_sema_scope_list__find_type_name(
+			scope->child, type, name);
+
+	if (match)
+		return match;
+
+	if (scope->parent)
+	{
+		match = ofc_sema_scope_find_type_name(
+			scope->parent, type, name);
+
+		if (match)
+			return match;
+	}
+
+	return NULL;
+}
+
+ofc_sema_scope_t* ofc_sema_scope_find_module_name(
+	ofc_sema_scope_t* scope,
+	ofc_str_ref_t name)
+{
+	if (!scope)
+		return NULL;
+
+	/* It might be safe to assume that a module is never
+	   in the child scope list but for now this gives
+	   full coverage. */
+	return ofc_sema_scope_find_type_name(
+		scope, OFC_SEMA_SCOPE_MODULE, name);
+}
+
 ofc_sema_scope_list_t* ofc_sema_scope_list_create(void)
 {
 	ofc_sema_scope_list_t* list
