@@ -2651,6 +2651,7 @@ bool ofc_sema_expr_print(
 				/* Print unary expression */
 				if (!ofc_colstr_atomic_writef(cs, "%s",
 						ofc_sema_expr__operator[expr->type])
+					|| !ofc_colstr_atomic_writef(cs, " ")
 					|| !ofc_sema_expr_print(cs, expr->a))
 						return false;
 			}
