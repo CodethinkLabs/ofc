@@ -105,8 +105,17 @@ struct ofc_sema_decl_alias_map_s
 	ofc_hashmap_t*          map;
 };
 
+ofc_sema_decl_alias_t* ofc_sema_decl_alias_create(
+	const ofc_str_ref_t name,
+	const ofc_sema_decl_t* decl);
+void ofc_sema_decl_alias_delete(
+	ofc_sema_decl_alias_t* alias);
+
 ofc_sema_decl_alias_map_t*
 	ofc_sema_decl_alias_map_create(void);
+bool ofc_sema_decl_alias_map_add(
+	ofc_sema_decl_alias_map_t* map,
+	ofc_sema_decl_alias_t* alias);
 void ofc_sema_decl_alias_map_delete(
 	ofc_sema_decl_alias_map_t* map);
 
