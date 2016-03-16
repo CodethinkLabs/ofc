@@ -2338,17 +2338,6 @@ bool ofc_sema_expr_list_elem_count(
 			expr, &elem_count))
 			return false;
 
-		const ofc_sema_array_t* array
-			= ofc_sema_expr_array(expr);
-		if (array)
-		{
-			unsigned acount = 1;
-			if (!ofc_sema_array_total(
-				array, &acount))
-				return false;
-			elem_count *= acount;
-		}
-
 		if (expr->repeat > 1)
 			elem_count *= expr->repeat;
 
