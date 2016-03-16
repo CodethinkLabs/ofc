@@ -128,5 +128,13 @@ ofc_parse_format_desc_list_t* ofc_parse_format_desc_list_copy(
 bool ofc_parse_format_desc_elem_count(
 	const ofc_parse_format_desc_t* desc,
 	unsigned* count);
+bool ofc_parse_format_desc_list_elem_count(
+	const ofc_parse_format_desc_list_t* list,
+	unsigned* count);
+
+ofc_parse_format_desc_t* ofc_parse_format_desc_elem_get(
+	const ofc_parse_format_desc_t* desc, unsigned offset);
+ofc_parse_format_desc_t* ofc_parse_format_desc_list_elem_get(
+	const ofc_parse_format_desc_list_t* list, unsigned offset);
 
 #endif

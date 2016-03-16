@@ -50,21 +50,18 @@ bool ofc_sema_io_compare_types(
 	const ofc_sema_lhs_t* lhs,
 	ofc_sema_expr_t** expr,
 	const ofc_sema_type_t* type,
-	ofc_parse_format_desc_list_t* format_list,
-	unsigned* offset);
+	ofc_parse_format_desc_t* desc);
 
-ofc_parse_format_desc_list_t* ofc_sema_io_data_format(
-	const ofc_parse_format_desc_list_t* format, unsigned iolist_len);
 unsigned ofc_sema_io_data_format_count(
 	const ofc_parse_format_desc_list_t* format);
 
 bool ofc_sema_io_format_iolist_compare(
 	const ofc_sema_stmt_t* stmt,
-	ofc_parse_format_desc_list_t* format_list,
+	const ofc_parse_format_desc_list_t* format_list,
 	ofc_sema_expr_list_t* iolist);
 bool ofc_sema_io_format_input_list_compare(
 	const ofc_sema_stmt_t* stmt,
-	ofc_parse_format_desc_list_t* format_list,
+	const ofc_parse_format_desc_list_t* format_list,
 	ofc_sema_lhs_list_t* iolist);
 
 bool ofc_sema_io_list_has_complex(

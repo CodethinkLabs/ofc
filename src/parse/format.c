@@ -316,29 +316,36 @@ bool ofc_parse_format_desc_elem_count(
 
 	if (desc->type == OFC_PARSE_FORMAT_DESC_REPEAT)
 	{
-		unsigned i, re_count, counter = 0;
-		for (i = 0; i < desc->repeat->count; i++)
-		{
-			if (!ofc_parse_format_desc_elem_count(
-				desc->repeat->desc[i], &re_count))
-				return false;
-			counter += re_count;
-		}
+		unsigned counter;
+		if (!ofc_parse_format_desc_list_elem_count(
+			desc->repeat, &counter))
+			return false;
 
 		unsigned times = (desc->n_set ? desc->n : 1);
 		if (count) *count = times * counter;
 	}
-
-	if (!ofc_parse_format_is_data_desc(desc))
-	{
-		if (count) *count = 1;
-	}
-	else
+	else if (ofc_parse_format_is_data_desc(desc))
 	{
 		if (count) *count = (desc->n_set ? desc->n : 1);
 	}
+	else
+	{
+		if (count) *count = 1;
+	}
 
 	return true;
+}
+
+ofc_parse_format_desc_t* ofc_parse_format_desc_elem_get(
+	const ofc_parse_format_desc_t* desc, unsigned offset)
+{
+	if (!desc)
+		return NULL;
+
+	if (desc->type == OFC_PARSE_FORMAT_DESC_REPEAT)
+		return ofc_parse_format_desc_list_elem_get(desc->repeat, offset);
+
+	return ofc_parse_format_desc_copy(desc);
 }
 
 const char* ofc_parse_format_desc__name[] =
@@ -667,6 +674,70 @@ bool ofc_parse_format_desc_list_add(
 
 	list->desc = ndesc;
 	list->desc[list->count++] = desc;
+	return true;
+}
+
+ofc_parse_format_desc_t* ofc_parse_format_desc_list_elem_get(
+	const ofc_parse_format_desc_list_t* list, unsigned offset)
+{
+	if (!list)
+		return NULL;
+
+	unsigned e = offset;
+	unsigned i;
+	for (i = 0; i < list->count; i++)
+	{
+		ofc_parse_format_desc_t* desc
+			= list->desc[i];
+
+		unsigned elem_count;
+		if (!ofc_parse_format_desc_elem_count(
+			desc, &elem_count))
+			return NULL;
+
+		if (e < elem_count)
+		{
+			if (elem_count == 1
+				&& desc->type != OFC_PARSE_FORMAT_DESC_REPEAT)
+				return ofc_parse_format_desc_copy(desc);
+
+			if (desc->type == OFC_PARSE_FORMAT_DESC_REPEAT)
+			{
+				if (!ofc_parse_format_desc_list_elem_count(
+					desc->repeat, &elem_count))
+					return NULL;
+			}
+
+			return ofc_parse_format_desc_elem_get(
+				desc, (e % elem_count));
+		}
+		else
+		{
+			e -= elem_count;
+		}
+	}
+
+	return NULL;
+}
+
+bool ofc_parse_format_desc_list_elem_count(
+	const ofc_parse_format_desc_list_t* list,
+	unsigned* count)
+{
+	if (!list)
+		return false;
+
+	unsigned i, re_count, counter = 0;
+	for (i = 0; i < list->count; i++)
+	{
+		if (!ofc_parse_format_desc_elem_count(
+			list->desc[i], &re_count))
+			return false;
+		counter += re_count;
+	}
+
+	if (count) *count = counter;
+
 	return true;
 }
 
