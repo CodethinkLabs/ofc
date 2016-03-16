@@ -31,5 +31,21 @@ struct ofc_sema_module_list_s
 };
 
 
+ofc_sema_module_t* ofc_sema_module_create(
+	ofc_sema_scope_t* mscope,
+	ofc_sema_decl_list_t* only,
+	ofc_sema_decl_alias_map_t* rename);
+
+void ofc_sema_module_delete(
+	ofc_sema_module_t* module);
+
+ofc_sema_module_list_t* ofc_sema_module_list_create();
+
+bool ofc_sema_module_list_add(
+	ofc_sema_module_list_t* list,
+	ofc_sema_module_t* module);
+
+void ofc_sema_module_list_delete(
+	ofc_sema_module_list_t* list);
 
 #endif
