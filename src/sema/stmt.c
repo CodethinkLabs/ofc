@@ -604,6 +604,9 @@ static bool ofc_sema_stmt_list__entry(
 		case OFC_PARSE_STMT_MAP:
 			return ofc_sema_structure(scope, stmt);
 
+		case OFC_PARSE_STMT_USE:
+			return ofc_sema_stmt_use(scope, stmt);
+
 		case OFC_PARSE_STMT_NAMELIST:
 		case OFC_PARSE_STMT_POINTER:
 			ofc_sparse_ref_error(stmt->src,
