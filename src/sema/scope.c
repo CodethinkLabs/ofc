@@ -1442,6 +1442,15 @@ static bool ofc_sema_scope_body__print(
 	if (!cs || !scope)
 		return false;
 
+	if (scope->module &&
+		!ofc_sema_module_list_print(
+			cs, indent, scope->module))
+	{
+		ofc_file_error(NULL, NULL,
+			"Failed to print module list");
+		return false;
+	}
+
 	switch (scope->type)
 	{
 		case OFC_SEMA_SCOPE_GLOBAL:
@@ -1542,6 +1551,9 @@ bool ofc_sema_scope_print(
 			break;
 		case OFC_SEMA_SCOPE_FUNCTION:
 			kwstr = "FUNCTION";
+			break;
+		case OFC_SEMA_SCOPE_MODULE:
+			kwstr = "MODULE";
 			break;
 		case OFC_SEMA_SCOPE_BLOCK_DATA:
 			kwstr = "BLOCK DATA";

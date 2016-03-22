@@ -1225,6 +1225,9 @@ bool ofc_sema_stmt_print(
 		case OFC_SEMA_STMT_IO_INQUIRE:
 			return ofc_sema_stmt_io_inquire_print(cs, stmt);
 
+		case OFC_SEMA_STMT_CONTAINS:
+			return ofc_colstr_atomic_writef(cs, "CONTAINS");
+
 		case OFC_SEMA_STMT_CONTINUE:
 			return ofc_colstr_atomic_writef(cs, "CONTINUE");
 

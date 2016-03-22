@@ -114,6 +114,11 @@ bool ofc_sema_stmt_use(
 		= ofc_sema_module_create(
 			mscope, olist, rlist);
 
+	if (!module) return false;
+
+	if (!scope->module)
+		scope->module = ofc_sema_module_list_create();
+
 	ofc_sema_module_list_add(
 		scope->module, module);
 

@@ -39,6 +39,10 @@ ofc_sema_module_t* ofc_sema_module_create(
 void ofc_sema_module_delete(
 	ofc_sema_module_t* module);
 
+bool ofc_sema_module_print(
+	ofc_colstr_t* cs,
+	ofc_sema_module_t* module);
+
 ofc_sema_module_list_t* ofc_sema_module_list_create();
 
 bool ofc_sema_module_list_add(
@@ -46,6 +50,10 @@ bool ofc_sema_module_list_add(
 	ofc_sema_module_t* module);
 
 void ofc_sema_module_list_delete(
+	ofc_sema_module_list_t* list);
+
+bool ofc_sema_module_list_print(
+	ofc_colstr_t* cs, unsigned indent,
 	ofc_sema_module_list_t* list);
 
 #endif
