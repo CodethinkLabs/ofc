@@ -51,7 +51,7 @@ bool ofc_sema_stmt_use(
 				return false;
 
 			ofc_str_ref_t tname
-				= rename->lhs[i]->alias.name.string;
+				= rename->lhs[i]->alias.target.string;
 
 			const ofc_sema_decl_t* tdecl
 				= ofc_sema_scope_decl_find(
@@ -65,8 +65,11 @@ bool ofc_sema_stmt_use(
 				return false;
 			}
 
+			ofc_str_ref_t rname
+				= rename->lhs[i]->alias.name.string;
+
 			ofc_sema_decl_alias_t* alias
-				= ofc_sema_decl_alias_create(tname, tdecl);
+				= ofc_sema_decl_alias_create(rname, tdecl);
 
 			if (!ofc_sema_decl_alias_map_add(rlist, alias))
 			{

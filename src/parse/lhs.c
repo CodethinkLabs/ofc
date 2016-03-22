@@ -406,7 +406,7 @@ ofc_parse_lhs_t* ofc_parse_lhs_alias(
 
 	lhs.type = OFC_PARSE_LHS_ALIAS;
 	unsigned i = ofc_parse_name(
-		src, ptr, debug, &lhs.alias.target);
+		src, ptr, debug, &lhs.alias.name);
 	if (i == 0)
 		return NULL;
 
@@ -414,7 +414,7 @@ ofc_parse_lhs_t* ofc_parse_lhs_alias(
 		&& (ptr[i++] == '>'))
 	{
 		unsigned rlen = ofc_parse_name(
-			src, &ptr[i], debug, &lhs.alias.name);
+			src, &ptr[i], debug, &lhs.alias.target);
 		if (rlen == 0)
 			return NULL;
 		i += rlen;
