@@ -846,6 +846,9 @@ bool ofc_sema_decl_init(
 		return false;
 	}
 
+	if (!ofc_sema_decl_type_finalize(decl))
+		return false;
+
 	if (!ofc_sema_expr_is_constant(init))
 	{
 		ofc_sparse_ref_error(init->src,
@@ -965,6 +968,9 @@ bool ofc_sema_decl_init_offset(
 			"Can't initialize declaration after use");
 		return false;
 	}
+
+	if (!ofc_sema_decl_type_finalize(decl))
+		return false;
 
 	if (!decl->type)
 		return false;
@@ -1108,6 +1114,9 @@ bool ofc_sema_decl_init_array(
 			"Can't initialize declaration after use");
 		return false;
 	}
+
+	if (!ofc_sema_decl_type_finalize(decl))
+		return false;
 
 	if (!decl->type)
 		return false;
