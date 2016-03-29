@@ -20,8 +20,6 @@ unsigned ofc_parse_stmt_contains(
 	ofc_parse_debug_t* debug,
 	ofc_parse_stmt_t* stmt)
 {
-	unsigned dpos = ofc_parse_debug_position(debug);
-
 	unsigned i = ofc_parse_keyword(
 		src, ptr, debug, OFC_PARSE_KEYWORD_CONTAINS);
 	if (i == 0)

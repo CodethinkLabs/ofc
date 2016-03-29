@@ -402,8 +402,6 @@ ofc_parse_lhs_t* ofc_parse_lhs_alias(
 {
 	ofc_parse_lhs_t lhs;
 
-	unsigned dpos = ofc_parse_debug_position(debug);
-
 	lhs.type = OFC_PARSE_LHS_ALIAS;
 	unsigned i = ofc_parse_name(
 		src, ptr, debug, &lhs.alias.name);
