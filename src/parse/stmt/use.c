@@ -15,6 +15,7 @@
 
 #include "ofc/parse.h"
 
+
 unsigned ofc_parse_stmt_use(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
@@ -53,9 +54,8 @@ unsigned ofc_parse_stmt_use(
 	if (ptr[i] == ',')
 	{
 		i++;
-		len = 0;
 		len = ofc_parse_keyword(
-		src, &ptr[i], debug, OFC_PARSE_KEYWORD_ONLY);
+			src, &ptr[i], debug, OFC_PARSE_KEYWORD_ONLY);
 		if (len == 0)
 		{
 			ofc_sparse_error(src, ofc_str_ref(&ptr[i], i),
@@ -75,11 +75,10 @@ unsigned ofc_parse_stmt_use(
 			return 0;
 		}
 
-		len = 0;
 		ofc_parse_decl_list_t* only
 			= ofc_parse_decl_list(
 				src, &ptr[i], true, debug, &len);
-		if (len == 0)
+		if (!only)
 		{
 			only = NULL;
 			ofc_sparse_warning(src, ofc_str_ref(&ptr[i], i),
@@ -116,17 +115,17 @@ bool ofc_parse_stmt_use_print(
 
 	if (stmt->use.rename
 		&& (!ofc_colstr_atomic_writef(cs, ",")
-		|| !ofc_colstr_atomic_writef(cs, " ")
-		|| !ofc_parse_lhs_list_print(cs, stmt->use.rename, false)))
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_parse_lhs_list_print(cs, stmt->use.rename, false)))
 		return false;
 
 	if (stmt->use.only
 		&& (!ofc_colstr_atomic_writef(cs, ",")
-		|| !ofc_colstr_atomic_writef(cs, " ")
-		|| !ofc_colstr_atomic_writef(cs, "ONLY")
-		|| !ofc_colstr_atomic_writef(cs, ":")
-		|| !ofc_colstr_atomic_writef(cs, " ")
-		|| !ofc_parse_decl_list_print(cs, stmt->use.only)))
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_colstr_atomic_writef(cs, "ONLY")
+			|| !ofc_colstr_atomic_writef(cs, ":")
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_parse_decl_list_print(cs, stmt->use.only)))
 		return false;
 
 	return true;
