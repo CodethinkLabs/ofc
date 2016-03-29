@@ -108,7 +108,8 @@ bool ofc_sema_stmt_use(
 				return false;
 			}
 
-			if (!ofc_sema_decl_list_add(olist, decl))
+			if (!ofc_sema_decl_list_add(olist, decl)
+				|| !ofc_sema_decl_reference(decl))
 				return false;
 		}
 	}

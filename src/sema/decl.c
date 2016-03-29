@@ -848,6 +848,12 @@ ofc_sema_decl_alias_t* ofc_sema_decl_alias_create(
 	alias->name = name;
 	alias->decl = decl;
 
+	if (!ofc_sema_decl_reference(decl))
+	{
+		ofc_sema_decl_alias_delete(alias);
+		return false;
+	}
+
 	return alias;
 }
 

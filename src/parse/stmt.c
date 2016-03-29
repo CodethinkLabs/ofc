@@ -257,9 +257,14 @@ static void ofc_parse_stmt__cleanup(
 			ofc_sparse_delete(stmt.include.src);
 			ofc_file_delete(stmt.include.file);
 			break;
+		case OFC_PARSE_STMT_USE:
+			ofc_parse_lhs_list_delete(stmt.use.rename);
+			ofc_parse_decl_list_delete(stmt.use.only);
+			break;
 		case OFC_PARSE_STMT_PROGRAM:
 		case OFC_PARSE_STMT_SUBROUTINE:
 		case OFC_PARSE_STMT_FUNCTION:
+		case OFC_PARSE_STMT_MODULE:
 		case OFC_PARSE_STMT_BLOCK_DATA:
 			ofc_parse_stmt_list_delete(stmt.program.body);
 			ofc_parse_call_arg_list_delete(stmt.program.args);

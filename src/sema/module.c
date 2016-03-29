@@ -156,6 +156,8 @@ bool ofc_sema_module_list_add(
 void ofc_sema_module_list_delete(
 	ofc_sema_module_list_t* list)
 {
+	if (!list) return;
+
 	if (list->module)
 	{
 		unsigned i;

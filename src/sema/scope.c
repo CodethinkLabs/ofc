@@ -41,6 +41,8 @@ void ofc_sema_scope_delete(
 	ofc_sema_structure_list_delete(scope->structure);
 	ofc_sema_structure_list_delete(scope->derived_type);
 
+	ofc_sema_module_list_delete(scope->module);
+
 	switch (scope->type)
 	{
 		case OFC_SEMA_SCOPE_STMT_FUNC:
@@ -95,6 +97,8 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 	scope->type = type;
 	scope->name = OFC_STR_REF_EMPTY;
 	scope->args = NULL;
+
+	scope->module = NULL;
 
 	scope->decl = ofc_sema_decl_list_create(
 		global_opts.case_sensitive);
