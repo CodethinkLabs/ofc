@@ -53,8 +53,8 @@ bool ofc_sema_stmt_use(
 			ofc_str_ref_t tname
 				= rename->lhs[i]->alias.target.string;
 
-			const ofc_sema_decl_t* tdecl
-				= ofc_sema_scope_decl_find(
+			ofc_sema_decl_t* tdecl
+				= ofc_sema_scope_decl_find_modify(
 					mscope, tname, true);
 
 			if (!tdecl)
@@ -97,8 +97,8 @@ bool ofc_sema_stmt_use(
 			ofc_str_ref_t name
 				= sparse_ref.string;
 
-			const ofc_sema_decl_t* decl
-				= ofc_sema_scope_decl_find(
+			ofc_sema_decl_t* decl
+				= ofc_sema_scope_decl_find_modify(
 					mscope, name, true);
 
 			if (!decl)

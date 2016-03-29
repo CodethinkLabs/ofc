@@ -837,8 +837,8 @@ static const ofc_str_ref_t* ofc_sema_decl_alias__key(
 
 
 ofc_sema_decl_alias_t* ofc_sema_decl_alias_create(
-	const ofc_str_ref_t name,
-	const ofc_sema_decl_t* decl)
+	ofc_str_ref_t name,
+	ofc_sema_decl_t* decl)
 {
 	ofc_sema_decl_alias_t* alias
 		= (ofc_sema_decl_alias_t*)malloc(

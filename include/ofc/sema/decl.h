@@ -93,7 +93,7 @@ struct ofc_sema_decl_list_s
 
 struct ofc_sema_decl_alias_s
 {
-	ofc_str_ref_t   name;
+	ofc_str_ref_t    name;
 	ofc_sema_decl_t* decl;
 };
 
@@ -106,8 +106,8 @@ struct ofc_sema_decl_alias_map_s
 };
 
 ofc_sema_decl_alias_t* ofc_sema_decl_alias_create(
-	const ofc_str_ref_t name,
-	const ofc_sema_decl_t* decl);
+	ofc_str_ref_t name,
+	ofc_sema_decl_t* decl);
 void ofc_sema_decl_alias_delete(
 	ofc_sema_decl_alias_t* alias);
 
