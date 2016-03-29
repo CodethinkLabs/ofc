@@ -25,8 +25,6 @@
 #include "ofc/file.h"
 #include "ofc/global_opts.h"
 
-extern ofc_global_opts_t global_opts;
-
 
 struct ofc_file_s
 {

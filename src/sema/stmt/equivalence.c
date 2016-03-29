@@ -16,8 +16,6 @@
 #include "ofc/sema.h"
 #include "ofc/global_opts.h"
 
-extern ofc_global_opts_t global_opts;
-
 
 bool ofc_sema_stmt_equivalence(
 	ofc_sema_scope_t* scope,
