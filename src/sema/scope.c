@@ -987,7 +987,7 @@ ofc_sema_scope_t* ofc_sema_scope_module(
 
 	ofc_sema_scope_t* module
 		= ofc_sema_scope__create(
-			scope, NULL, OFC_SEMA_SCOPE_MODULE);
+			scope, OFC_SEMA_SCOPE_MODULE);
 	if (!module)
 	{
 		ofc_sema_scope_delete(module);
