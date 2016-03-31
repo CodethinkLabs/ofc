@@ -98,7 +98,34 @@ ofc_file_t* ofc_file_create(const char* path, ofc_lang_opts_t opts)
 	return file;
 }
 
-static char* ofc_file__include_path(
+static char* ofc_file__include_path_search(
+	const char* path, const char* file)
+{
+	if (!path)
+		return strdup(file);
+
+	unsigned path_len = strlen(path);
+
+	if (path_len == 0)
+		return strdup(file);
+
+	bool needs_slash = (path[path_len - 1] != '/');
+
+	unsigned rpath_len = path_len + strlen(file)
+		+ (needs_slash ? 1 : 0);
+
+	char* rpath = malloc(rpath_len + 1);
+	if (!rpath) return NULL;
+
+	strcpy(rpath, path);
+	if (needs_slash)
+		strcat(rpath, "/");
+	strcat(rpath, file);
+
+	return rpath;
+}
+
+static char* ofc_file__include_path_relative(
 	const char* file, const char* path)
 {
 	if (!file)
@@ -148,7 +175,8 @@ ofc_file_t* ofc_file_create_include(
 		unsigned i;
 		for (i = 0; i < include->count; i++)
 		{
-			char* rpath = ofc_file__include_path(include->path[i], path);
+			char* rpath = ofc_file__include_path_search(
+				include->path[i], path);
 			file = ofc_file_create(rpath, opts);
 
 			if (file)
@@ -165,7 +193,7 @@ ofc_file_t* ofc_file_create_include(
 	}
 
 	char* bpath = ofc_file__base_parent_path(parent_file);
-	char* rpath = ofc_file__include_path(bpath, path);
+	char* rpath = ofc_file__include_path_relative(bpath, path);
 	file = ofc_file_create(rpath, opts);
 	free(rpath);
 	if (!parent_file) return file;
