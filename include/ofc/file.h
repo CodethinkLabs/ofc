@@ -27,6 +27,12 @@ typedef struct
 
 typedef struct ofc_file_s ofc_file_t;
 
+typedef struct
+{
+	unsigned     count;
+	ofc_file_t** file;
+} ofc_file_list_t;
+
 #include "sparse.h"
 
 /* Path must be valid for as long as the ofc_file_t* is */
@@ -36,11 +42,12 @@ ofc_file_t* ofc_file_create_include(
 	const ofc_file_t* parent_file, ofc_sparse_ref_t include_stmt);
 bool ofc_file_reference(ofc_file_t* file);
 void ofc_file_delete(ofc_file_t* file);
+
 const char* ofc_file_get_path(const ofc_file_t* file);
 const char* ofc_file_get_include(const ofc_file_t* file);
 const char* ofc_file_get_strz(const ofc_file_t* file);
-const ofc_lang_opts_t* ofc_file_get_lang_opts(const ofc_file_t* file);
 
+const ofc_lang_opts_t* ofc_file_get_lang_opts(const ofc_file_t* file);
 ofc_lang_opts_t* ofc_file_modify_lang_opts(ofc_file_t* file);
 
 char* ofc_file_include_path(
@@ -49,6 +56,11 @@ char* ofc_file_include_path(
 bool ofc_file_get_position(
 	const ofc_file_t* file, const char* ptr,
 	unsigned* row, unsigned* col);
+
+ofc_file_list_t* ofc_file_list_create(void);
+bool ofc_file_list_add(
+	ofc_file_list_t* list, ofc_file_t* file);
+void ofc_file_list_delete(ofc_file_list_t* list);
 
 bool ofc_file_include_list_add_create(
 	ofc_file_t* file, char* path);

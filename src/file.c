@@ -298,6 +298,47 @@ bool ofc_file_get_position(
 }
 
 
+ofc_file_list_t* ofc_file_list_create(void)
+{
+    ofc_file_list_t* list
+		= (ofc_file_list_t*)malloc(
+			sizeof(ofc_file_list_t));
+	if (!list) return NULL;
+
+	list->count = 0;
+	list->file  = NULL;
+
+	return list;
+}
+
+bool ofc_file_list_add(
+	ofc_file_list_t* list, ofc_file_t* file)
+{
+	if (!list || !file) return false;
+
+	ofc_file_t** nlist = (ofc_file_t**)realloc(list->file,
+		(sizeof(ofc_file_t*) * (list->count + 1)));
+	if (!nlist) return false;
+
+	list->file = nlist;
+	list->file[list->count++] = file;
+
+	return true;
+}
+
+void ofc_file_list_delete(
+	ofc_file_list_t* list)
+{
+	if (!list) return;
+
+	unsigned i;
+	for (i = 0; i < list->count; i++)
+		ofc_file_delete(list->file[i]);
+
+	free(list->file);
+	free(list);
+}
+
 bool ofc_file_include_list_add_create(
 	ofc_file_t* file,
 	char* path)
