@@ -41,7 +41,7 @@ int main(int argc, const char* argv[])
 	unsigned i;
 	for (i = 0; i < file_list->count; i++)
 	{
-		ofc_file_t* file = file_list[i];
+		ofc_file_t* file = file_list->file[i];
 
 		ofc_sparse_t* condense = ofc_prep(file);
 		if (!condense)
@@ -50,7 +50,6 @@ int main(int argc, const char* argv[])
 				ofc_file_error(file, NULL, "Failed to preprocess source file");
 			return EXIT_FAILURE;
 		}
-		ofc_file_delete(file);
 
 		ofc_parse_stmt_list_t* program
 			= ofc_parse_file(condense);
@@ -162,5 +161,6 @@ int main(int argc, const char* argv[])
 		ofc_sparse_delete(condense);
 	}
 
+	ofc_file_list_delete(file_list);
 	return EXIT_SUCCESS;
 }

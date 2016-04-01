@@ -300,10 +300,57 @@ static bool ofc_cliarg_list__apply(
 	return true;
 }
 
+typedef struct
+{
+	unsigned count;
+	char**   path;
+} ofc_cliarg_path_list_t;
+
+static ofc_cliarg_path_list_t* ofc_cliarg_path_list_create(void)
+{
+	ofc_cliarg_path_list_t* path_list
+		= (ofc_cliarg_path_list_t*)malloc(
+			sizeof(ofc_cliarg_path_list_t));
+	if (!path_list) return NULL;
+
+	path_list->count = 0;
+	path_list->path  = NULL;
+
+	return path_list;
+}
+
+static bool ofc_cliarg_path_list_add(ofc_cliarg_path_list_t* path_list,
+	const char* path)
+{
+	if (!path_list || !path) return false;
+
+	char** nlist = (char**)realloc(path_list->path,
+		(sizeof(char*) * (path_list->count + 1)));
+	if (!nlist) return NULL;
+
+	path_list->path = nlist;
+	path_list->path[path_list->count++] = strdup(path);
+
+	return true;
+}
+
+static void ofc_cliarg_path_list_delete(ofc_cliarg_path_list_t* path_list)
+{
+	if (!path_list) return;
+
+	unsigned i;
+	for (i = 0; i < path_list->count; i++)
+		free(path_list->path[i]);
+
+	free(path_list->path);
+	free(path_list);
+}
+
+
 bool ofc_cliarg_parse(
 	int argc,
     const char* argv[],
-	ofc_file_t** file,
+	ofc_file_list_t** file_list,
 	ofc_print_opts_t* print_opts,
 	ofc_global_opts_t* global_opts)
 {
@@ -316,10 +363,11 @@ bool ofc_cliarg_parse(
 		return false;
 	}
 
-	ofc_cliarg_list_t* args_list = ofc_cliarg_list_create();
+	ofc_cliarg_path_list_t* path_list = ofc_cliarg_path_list_create();
+	ofc_cliarg_list_t*      args_list = ofc_cliarg_list_create();
 
 	unsigned i = 1;
-	while (i < (unsigned)argc - 1)
+	while (i < (unsigned)argc)
 	{
 		if (argv[i][0] == '-')
 		{
@@ -406,38 +454,43 @@ bool ofc_cliarg_parse(
 		}
 		else
 		{
-			fprintf(stderr, "Error: Expected flags followed by file path: %s\n", argv[i]);
-			print_usage(program_name);
-			return false;
+			/* Argument with no preceding dash is assumed to be a source file path */
+			if (!ofc_cliarg_path_list_add(path_list, argv[i]))
+				return false;
+			i++;
 		}
 	}
 
-	const char* path = argv[argc - 1];
-	const char* source_file_ext = get_file_ext(path);
-
-	ofc_lang_opts_t lang_opts = OFC_LANG_OPTS_F77;
-
-	if (source_file_ext
-		&& (strcasecmp(source_file_ext, "F90") == 0))
-		lang_opts = OFC_LANG_OPTS_F90;
-
-	*file = ofc_file_create(path, lang_opts);
-	if (!*file)
+	unsigned j;
+	for (j = 0; j < path_list->count; j++)
 	{
-		fprintf(stderr, "\nError: Failed read source file '%s'\n", path);
-		return false;
+		char* path = path_list->path[j];
+		const char* source_file_ext = get_file_ext(path);
+
+		ofc_lang_opts_t lang_opts = OFC_LANG_OPTS_F77;
+		if (source_file_ext && (strcasecmp(source_file_ext, "F90") == 0))
+			lang_opts = OFC_LANG_OPTS_F90;
+
+		ofc_file_t* file = ofc_file_create(path, lang_opts);
+		if (!file)
+		{
+			fprintf(stderr, "\nError: Failed read source file '%s'\n", path);
+			return false;
+		}
+
+		ofc_lang_opts_t* lang_opts_ptr = ofc_file_modify_lang_opts(file);
+		if (!lang_opts_ptr) return false;
+
+		if (!ofc_cliarg_list__apply(global_opts, print_opts,
+			lang_opts_ptr, file, args_list))
+			return false;
+
+		if (!ofc_file_list_add(*file_list, file))
+			return false;
 	}
 
-	ofc_lang_opts_t* lang_opts_ptr
-		= ofc_file_modify_lang_opts(*file);
-	if (!lang_opts_ptr) return false;
-
-	if (!ofc_cliarg_list__apply(
-		global_opts, print_opts, lang_opts_ptr,
-		*file, args_list))
-		return false;
-
 	ofc_cliarg_list_delete(args_list);
+	ofc_cliarg_path_list_delete(path_list);
 
 	return true;
 }

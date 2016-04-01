@@ -91,7 +91,7 @@ typedef struct
 bool ofc_cliarg_parse(
 	int argc,
     const char* argv[],
-	ofc_file_t** file,
+	ofc_file_list_t** file,
 	ofc_print_opts_t* print_opts,
 	ofc_global_opts_t* global_opts);
 
