@@ -30,7 +30,8 @@ int main(int argc, const char* argv[])
 {
 	global_opts = OFC_GLOBAL_OPTS_DEFAULT;
 
-	ofc_print_opts_t print_opts = OFC_PRINT_OPTS_DEFAULT;
+	ofc_print_opts_t print_opts         = OFC_PRINT_OPTS_DEFAULT;
+	ofc_sema_pass_opts_t sema_pass_opts = OFC_SEMA_PASS_OPTS_DEFAULT;
 
 	ofc_file_list_t* file_list = ofc_file_list_create();
 
@@ -89,51 +90,8 @@ int main(int argc, const char* argv[])
 			}
 		}
 
-		/* TODO - Add a command line argument for this pass. */
-		if (!ofc_sema_pass_struct_type(sema))
+		if (!ofc_sema_run_passes(file, &sema_pass_opts, sema))
 		{
-			ofc_file_error(file, NULL, "Failed 'STRUCTURE to TYPE' semantic pass");
-			ofc_sema_scope_delete(sema);
-			ofc_parse_stmt_list_delete(program);
-			ofc_sparse_delete(condense);
-			return EXIT_FAILURE;
-		}
-
-		/* TODO - Add a command line argument for this pass. */
-		if (!ofc_sema_pass_char_transfer(sema))
-		{
-			ofc_file_error(file, NULL, "Failed 'string cast TRANSFER' semantic pass");
-			ofc_sema_scope_delete(sema);
-			ofc_parse_stmt_list_delete(program);
-			ofc_sparse_delete(condense);
-			return EXIT_FAILURE;
-		}
-
-		/* TODO - Add a command line argument for this pass. */
-		if (!ofc_sema_pass_unref_label(sema))
-		{
-			ofc_file_error(file, NULL, "Failed 'Remove unused labels' semantic pass");
-			ofc_sema_scope_delete(sema);
-			ofc_parse_stmt_list_delete(program);
-			ofc_sparse_delete(condense);
-			return EXIT_FAILURE;
-		}
-
-
-		/* TODO - Add a command line argument for this pass. */
-		if (!ofc_sema_pass_unlabelled_format(sema))
-		{
-			ofc_file_error(file, NULL, "Failed 'Remove unlabelled format statements' semantic pass");
-			ofc_sema_scope_delete(sema);
-			ofc_parse_stmt_list_delete(program);
-			ofc_sparse_delete(condense);
-			return EXIT_FAILURE;
-		}
-
-		/* TODO - Add a command line argument for this pass. */
-		if (!ofc_sema_pass_unlabelled_continue(sema))
-		{
-			ofc_file_error(file, NULL, "Failed 'Remove unlabelled continue statements' semantic pass");
 			ofc_sema_scope_delete(sema);
 			ofc_parse_stmt_list_delete(program);
 			ofc_sparse_delete(condense);
