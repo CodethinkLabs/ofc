@@ -25,6 +25,7 @@
 #include "ofc/lang_opts.h"
 #include "ofc/global_opts.h"
 #include "ofc/print_opts.h"
+#include "ofc/sema_pass_opts.h"
 #include "ofc/file.h"
 
 typedef enum

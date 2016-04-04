@@ -13,25 +13,26 @@
  * limitations under the License.
  */
 
-#ifndef __ofc_sema_pass_h__
-#define __ofc_sema_pass_h__
+#ifndef __ofc_sema_pass_opts_h__
+#define __ofc_sema_pass_opts_h__
 
-#include"ofc/sema_pass_opts.h"
+typedef struct
+{
+	bool struct_type;
+	bool char_transfer;
+	bool unref_label;
+	bool unlabelled_format;
+	bool unlabelled_continue;
+} ofc_sema_pass_opts_t;
 
-bool ofc_sema_pass_struct_type(
-	ofc_sema_scope_t* scope);
-bool ofc_sema_pass_unref_label(
-	ofc_sema_scope_t* scope);
-bool ofc_sema_pass_unlabelled_format(
-	ofc_sema_scope_t* scope);
-bool ofc_sema_pass_unlabelled_continue(
-	ofc_sema_scope_t* scope);
-bool ofc_sema_pass_char_transfer(
-	ofc_sema_scope_t* scope);
-
-bool ofc_sema_run_passes(
-	ofc_file_t* file,
-	ofc_sema_pass_opts_t* sema_pass_opts,
-	ofc_sema_scope_t* scope);
+static const ofc_sema_pass_opts_t
+	OFC_SEMA_PASS_OPTS_DEFAULT =
+{
+	.struct_type = true,
+	.char_transfer = true,
+	.unref_label = true,
+	.unlabelled_format = true,
+	.unlabelled_continue = true,
+};
 
 #endif
