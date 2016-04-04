@@ -31,7 +31,7 @@ static bool ofc_sema_pass_char_transfer__expr(
 
 	const ofc_sema_type_t* type
 		= ofc_sema_expr_type(expr->cast.expr);
-	if (!type) return NULL;
+	if (!type) return false;
 
 	const ofc_sema_type_t* ctype
 		= ofc_sema_expr_type(expr);
@@ -135,10 +135,10 @@ static bool ofc_sema_pass_char_transfer__expr(
 	{
 		const ofc_sema_type_t* pad_type
 			= ofc_sema_character_pad_to_type(type, ctype);
-		if (!pad_type) return NULL;
+		if (!pad_type) return false;
 
 		cast = ofc_sema_expr_cast(expr->cast.expr, pad_type);
-		if (!cast) return NULL;
+		if (!cast) return false;
 	}
 
 	ofc_sema_expr_list_t* args
