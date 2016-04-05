@@ -825,6 +825,8 @@ bool ofc_sema_stmt_list_foreach(
 	unsigned i;
 	for (i = 0; i < list->count; i++)
 	{
+		if (!list->stmt[i]) continue;
+
 		ofc_sema_stmt_t* stmt = list->stmt[i];
 
 		if (!func(stmt, param))
@@ -1175,6 +1177,8 @@ bool ofc_sema_stmt_list_foreach_expr(
 	unsigned i;
 	for (i = 0; i < list->count; i++)
 	{
+		if (!list->stmt[i]) continue;
+
 		if (!ofc_sema_stmt_foreach_expr(
 			list->stmt[i], param, func))
 			return false;
