@@ -47,7 +47,11 @@ typedef enum
 	COLUMNS,
 	CASE_SEN,
 	INCLUDE,
-
+	SEMA_STRUCT_TYPE,
+	SEMA_CHAR_TRANSFER,
+	SEMA_UNREF_LABEL,
+	SEMA_UNLAB_FORMAT,
+	SEMA_UNLAB_CONT,
 	INVALID
 } ofc_cliarg_e;
 
@@ -58,6 +62,7 @@ typedef enum
 	LANG_NONE,
 	LANG_INT,
 	FILE_STR,
+	SEMA_PASS,
 
 } ofc_cliarg_param_e;
 
@@ -94,7 +99,8 @@ bool ofc_cliarg_parse(
     const char* argv[],
 	ofc_file_list_t** file,
 	ofc_print_opts_t* print_opts,
-	ofc_global_opts_t* global_opts);
+	ofc_global_opts_t* global_opts,
+	ofc_sema_pass_opts_t* sema_pass_opts);
 
 void print_usage(const char* name);
 

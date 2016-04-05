@@ -135,6 +135,38 @@ static bool set_lang_opts__num(
 	return true;
 }
 
+static bool set_sema_pass_opts_flag(
+	ofc_sema_pass_opts_t* sema_pass_opts,
+	int arg_type)
+{
+	if (!sema_pass_opts)
+		return false;
+
+	switch (arg_type)
+	{
+		case SEMA_STRUCT_TYPE:
+			sema_pass_opts->struct_type = false;
+			break;
+		case SEMA_CHAR_TRANSFER:
+			sema_pass_opts->char_transfer = false;
+			break;
+		case SEMA_UNREF_LABEL:
+			sema_pass_opts->unref_label = false;
+			break;
+		case SEMA_UNLAB_FORMAT:
+			sema_pass_opts->unlabelled_format = false;
+			break;
+		case SEMA_UNLAB_CONT:
+			sema_pass_opts->unlabelled_continue = false;
+			break;
+
+		default:
+			return false;
+	}
+
+	return true;
+}
+
 static bool set_file__str(
 	ofc_file_t* file,
 	int arg_type, char* str)
@@ -159,7 +191,7 @@ static bool set_file__str(
 
 static const ofc_cliarg_body_t cliargs[] =
 {
-	/*ENUM                  NAME                    FLAG  DESCRIPTION                            PARAM_TYPE PARAMS EXCLUSIVE */
+	/*ENUM                   NAME                     FLAG  DESCRIPTION                           PARAM_TYPE PARAMS EXCLUSIVE */
 	{ NO_WARN,               "no-warn",               '\0', "Suppress OFC warnings",                      GLOB_NONE, 0, true  },
 	{ NO_WARN_EQUIV_TYPE,    "no-warn-equiv-type",    '\0', "Suppress EQUIVALENCE type mismatch warning", GLOB_NONE, 0, true  },
 	{ NO_WARN_NAME_KEYWORD,  "no-warn-name-keyword",  '\0', "Suppress language keyword in name warning",  GLOB_NONE, 0, true  },
@@ -177,6 +209,11 @@ static const ofc_cliarg_body_t cliargs[] =
 	{ INDENT_WIDTH,          "indent-width",          '\0', "Sets indent width <n>",                      PRIN_INT,  1, true  },
 	{ INDENT_MAX_LEVEL,      "indent-max-level",      '\0', "Sets maximum indent level <n>",              PRIN_INT,  1, true  },
 	{ INCLUDE,               "include",               '\0', "Set include paths <s>",                      FILE_STR,  1, false },
+	{ SEMA_STRUCT_TYPE,      "no-sema-struct-type",   '\0', "Disable struct to type semantic pass",       SEMA_PASS, 0, true  },
+	{ SEMA_CHAR_TRANSFER,    "no-sema-char-transfer", '\0', "Disable char to transfer semantic pass",     SEMA_PASS, 0, true  },
+	{ SEMA_UNREF_LABEL,      "no-sema-unref-label",   '\0', "Disable unreferenced label semantic pass",   SEMA_PASS, 0, true  },
+	{ SEMA_UNLAB_FORMAT,     "no-sema-unref-format",  '\0', "Disable unreferenced format semantic pass",  SEMA_PASS, 0, true  },
+	{ SEMA_UNLAB_CONT,       "no-sema-unlab-cont",    '\0', "Disable struct to type semantic pass",       SEMA_PASS, 0, true  },
 };
 
 static const char *get_file_ext(const char *path)
@@ -252,6 +289,7 @@ static bool ofc_cliarg__apply(
 	ofc_global_opts_t* global_opts,
 	ofc_print_opts_t* print_opts,
 	ofc_lang_opts_t* lang_opts,
+	ofc_sema_pass_opts_t* sema_pass_opts,
 	ofc_file_t* file,
 	const ofc_cliarg_t* arg)
 {
@@ -262,18 +300,16 @@ static bool ofc_cliarg__apply(
 	{
 		case GLOB_NONE:
 			return set_global_opts__flag(global_opts, arg_type);
-
 		case LANG_NONE:
 			return set_lang_opts__flag(lang_opts, arg_type);
-
 		case LANG_INT:
 			return set_lang_opts__num(lang_opts, arg_type, arg->value);
-
 		case PRIN_INT:
 			return set_print_opts__num(print_opts, arg_type, arg->value);
-
 		case FILE_STR:
 			return set_file__str(file, arg_type, arg->str);
+		case SEMA_PASS:
+			return set_sema_pass_opts_flag(sema_pass_opts, arg_type);
 
 		default:
 			break;;
@@ -286,6 +322,7 @@ static bool ofc_cliarg_list__apply(
 	ofc_global_opts_t* global_opts,
 	ofc_print_opts_t* print_opts,
 	ofc_lang_opts_t* lang_opts,
+	ofc_sema_pass_opts_t* sema_pass_opts,
 	ofc_file_t* file,
 	ofc_cliarg_list_t* list)
 {
@@ -293,7 +330,7 @@ static bool ofc_cliarg_list__apply(
 	for (i = 0; i < list->count; i++)
 	{
 		if (!ofc_cliarg__apply(global_opts, print_opts,
-			lang_opts, file, list->arg[i]))
+			lang_opts, sema_pass_opts, file, list->arg[i]))
 			return false;
 	}
 
@@ -352,7 +389,8 @@ bool ofc_cliarg_parse(
     const char* argv[],
 	ofc_file_list_t** file_list,
 	ofc_print_opts_t* print_opts,
-	ofc_global_opts_t* global_opts)
+	ofc_global_opts_t* global_opts,
+	ofc_sema_pass_opts_t* sema_pass_opts)
 {
 	const char* program_name = argv[0];
 
@@ -388,6 +426,7 @@ bool ofc_cliarg_parse(
 				{
 					case GLOB_NONE:
 					case LANG_NONE:
+					case SEMA_PASS:
 						resolved_arg = ofc_cliarg_create(arg_body, NULL);
 						break;
 
@@ -482,7 +521,7 @@ bool ofc_cliarg_parse(
 		if (!lang_opts_ptr) return false;
 
 		if (!ofc_cliarg_list__apply(global_opts, print_opts,
-			lang_opts_ptr, file, args_list))
+			lang_opts_ptr, sema_pass_opts, file, args_list))
 			return false;
 
 		if (!ofc_file_list_add(*file_list, file))
