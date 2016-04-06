@@ -25,33 +25,33 @@ static bool ofc_cliarg_global_opts__set_flag(
 
 	switch (arg_type)
 	{
-		case CASE_SEN:
+		case OFC_CLIARG_CASE_SEN:
 			global->case_sensitive = true;
 			break;
-		case NO_WARN:
+		case OFC_CLIARG_NO_WARN:
 			global->no_warn = true;
 			break;
-		case NO_WARN_EQUIV_TYPE:
+		case OFC_CLIARG_NO_WARN_EQUIV_TYPE:
 			global->no_warn_equiv_type = true;
 			break;
-		case NO_WARN_NAME_KEYWORD:
+		case OFC_CLIARG_NO_WARN_NAME_KEYWORD:
 			global->no_warn_name_keyword = true;
 			break;
-		case NO_WARN_NAMESPACE_COL:
+		case OFC_CLIARG_NO_WARN_NAMESPACE_COL:
 			global->no_warn_namespace_col = true;
 			break;
-		case NO_WARN_PEDANTIC:
+		case OFC_CLIARG_NO_WARN_PEDANTIC:
 			global->no_warn_equiv_type    = true;
 			global->no_warn_name_keyword  = true;
 			global->no_warn_namespace_col = true;
 			break;
-		case PARSE_ONLY:
+		case OFC_CLIARG_PARSE_ONLY:
 			global->parse_only = true;
 			break;
-		case PARSE_TREE:
+		case OFC_CLIARG_PARSE_TREE:
 			global->parse_print = true;
 			break;
-		case SEMA_TREE:
+		case OFC_CLIARG_SEMA_TREE:
 			global->sema_print = true;
 			break;
 
@@ -71,10 +71,10 @@ static bool ofc_cliarg_print_opts__set_num(
 
     switch (arg_type)
 	{
-		case INDENT_WIDTH:
+		case OFC_CLIARG_INDENT_WIDTH:
 			print_opts->indent_width = value;
 			break;
-		case INDENT_MAX_LEVEL:
+		case OFC_CLIARG_INDENT_MAX_LEVEL:
 			print_opts->indent_max_level = value;
 			break;
 
@@ -94,14 +94,14 @@ static bool ofc_cliarg_lang_opts__set_flag(
 
 	switch (arg_type)
 	{
-		case DEBUG:
+		case OFC_CLIARG_DEBUG:
 			lang_opts->debug = true;
 			break;
 
-		case FIXED_FORM:
+		case OFC_CLIARG_FIXED_FORM:
 			lang_opts->form = OFC_LANG_FORM_FIXED;
 			break;
-		case FREE_FORM:
+		case OFC_CLIARG_FREE_FORM:
 			lang_opts->form = OFC_LANG_FORM_FREE;
 			break;
 
@@ -121,10 +121,10 @@ static bool ofc_cliarg_lang_opts__set_num(
 
 	switch (arg_type)
 	{
-		case TAB_WIDTH:
+		case OFC_CLIARG_TAB_WIDTH:
 			lang_opts->tab_width = value;
 			break;
-		case COLUMNS:
+		case OFC_CLIARG_COLUMNS:
 			lang_opts->columns = value;
 			break;
 
@@ -144,19 +144,19 @@ static bool ofc_cliarg_sema_pass_opts__set_flag(
 
 	switch (arg_type)
 	{
-		case SEMA_STRUCT_TYPE:
+		case OFC_CLIARG_SEMA_STRUCT_TYPE:
 			sema_pass_opts->struct_type = false;
 			break;
-		case SEMA_CHAR_TRANSFER:
+		case OFC_CLIARG_SEMA_CHAR_TRANSFER:
 			sema_pass_opts->char_transfer = false;
 			break;
-		case SEMA_UNREF_LABEL:
+		case OFC_CLIARG_SEMA_UNREF_LABEL:
 			sema_pass_opts->unref_label = false;
 			break;
-		case SEMA_UNLAB_FORMAT:
+		case OFC_CLIARG_SEMA_UNLAB_FORMAT:
 			sema_pass_opts->unlabelled_format = false;
 			break;
-		case SEMA_UNLAB_CONT:
+		case OFC_CLIARG_SEMA_UNLAB_CONT:
 			sema_pass_opts->unlabelled_continue = false;
 			break;
 
@@ -176,7 +176,7 @@ static bool ofc_cliarg_file__set_str(
 
 	switch (arg_type)
 	{
-		case INCLUDE:
+		case OFC_CLIARG_INCLUDE:
 			if (!ofc_file_include_list_add_create(file, str))
 				return false;
 			break;
@@ -191,29 +191,29 @@ static bool ofc_cliarg_file__set_str(
 
 static const ofc_cliarg_body_t cliargs[] =
 {
-	/*ENUM                   NAME                     FLAG  DESCRIPTION                           PARAM_TYPE PARAMS EXCLUSIVE */
-	{ NO_WARN,               "no-warn",               '\0', "Suppress OFC warnings",                      GLOB_NONE, 0, true  },
-	{ NO_WARN_EQUIV_TYPE,    "no-warn-equiv-type",    '\0', "Suppress EQUIVALENCE type mismatch warning", GLOB_NONE, 0, true  },
-	{ NO_WARN_NAME_KEYWORD,  "no-warn-name-keyword",  '\0', "Suppress language keyword in name warning",  GLOB_NONE, 0, true  },
-	{ NO_WARN_NAMESPACE_COL, "no-warn-namespace-col", '\0', "Suppress namespace collision warning",       GLOB_NONE, 0, true  },
-	{ NO_WARN_PEDANTIC,      "no-warn-pedantic",      '\0', "Suppress all pedantic warnings",             GLOB_NONE, 0, true  },
-	{ PARSE_ONLY,            "parse-only",            '\0', "Runs the parser only",                       GLOB_NONE, 0, true  },
-	{ PARSE_TREE,            "parse-tree",            '\0', "Prints the parse tree",                      GLOB_NONE, 0, true  },
-	{ SEMA_TREE,             "sema-tree",             '\0', "Prints the semantic analysis tree",          GLOB_NONE, 0, true  },
-	{ FIXED_FORM,            "free-form",             '\0', "Sets free form type",                        LANG_NONE, 0, true  },
-	{ FREE_FORM,             "fixed-form",            '\0', "Sets fixed form type",                       LANG_NONE, 0, true  },
-	{ TAB_WIDTH,             "tab-width",             '\0', "Sets tab width <n>",                         LANG_INT,  1, true  },
-	{ DEBUG,                 "debug",                 '\0', "Sets debug mode",                            LANG_NONE, 0, true  },
-	{ COLUMNS,               "columns",               '\0', "Sets number of columns to <n>",              LANG_INT,  1, true  },
-	{ CASE_SEN,              "case-sen",              '\0', "Sets case sensitive mode",                   GLOB_NONE, 0, true  },
-	{ INDENT_WIDTH,          "indent-width",          '\0', "Sets indent width <n>",                      PRIN_INT,  1, true  },
-	{ INDENT_MAX_LEVEL,      "indent-max-level",      '\0', "Sets maximum indent level <n>",              PRIN_INT,  1, true  },
-	{ INCLUDE,               "include",               '\0', "Set include paths <s>",                      FILE_STR,  1, false },
-	{ SEMA_STRUCT_TYPE,      "no-sema-struct-type",   '\0', "Disable struct to type semantic pass",       SEMA_PASS, 0, true  },
-	{ SEMA_CHAR_TRANSFER,    "no-sema-char-transfer", '\0', "Disable char to transfer semantic pass",     SEMA_PASS, 0, true  },
-	{ SEMA_UNREF_LABEL,      "no-sema-unref-label",   '\0', "Disable unreferenced label semantic pass",   SEMA_PASS, 0, true  },
-	{ SEMA_UNLAB_FORMAT,     "no-sema-unref-format",  '\0', "Disable unreferenced format semantic pass",  SEMA_PASS, 0, true  },
-	{ SEMA_UNLAB_CONT,       "no-sema-unlab-cont",    '\0', "Disable struct to type semantic pass",       SEMA_PASS, 0, true  },
+	/*ENUM                              NAME                     FLAG  DESCRIPTION                                   PARAM_TYPE          PARAMS EXCLUSIVE */
+	{ OFC_CLIARG_NO_WARN,               "no-warn",               '\0', "Suppress OFC warnings",                      OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
+	{ OFC_CLIARG_NO_WARN_EQUIV_TYPE,    "no-warn-equiv-type",    '\0', "Suppress EQUIVALENCE type mismatch warning", OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
+	{ OFC_CLIARG_NO_WARN_NAME_KEYWORD,  "no-warn-name-keyword",  '\0', "Suppress language keyword in name warning",  OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
+	{ OFC_CLIARG_NO_WARN_NAMESPACE_COL, "no-warn-namespace-col", '\0', "Suppress namespace collision warning",       OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
+	{ OFC_CLIARG_NO_WARN_PEDANTIC,      "no-warn-pedantic",      '\0', "Suppress all pedantic warnings",             OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
+	{ OFC_CLIARG_PARSE_ONLY,            "parse-only",            '\0', "Runs the parser only",                       OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
+	{ OFC_CLIARG_PARSE_TREE,            "parse-tree",            '\0', "Prints the parse tree",                      OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
+	{ OFC_CLIARG_SEMA_TREE,             "sema-tree",             '\0', "Prints the semantic analysis tree",          OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
+	{ OFC_CLIARG_FIXED_FORM,            "free-form",             '\0', "Sets free form type",                        OFC_CLIARG_PARAM_LANG_NONE, 0, true  },
+	{ OFC_CLIARG_FREE_FORM,             "fixed-form",            '\0', "Sets fixed form type",                       OFC_CLIARG_PARAM_LANG_NONE, 0, true  },
+	{ OFC_CLIARG_TAB_WIDTH,             "tab-width",             '\0', "Sets tab width <n>",                         OFC_CLIARG_PARAM_LANG_INT,  1, true  },
+	{ OFC_CLIARG_DEBUG,                 "debug",                 '\0', "Sets debug mode",                            OFC_CLIARG_PARAM_LANG_NONE, 0, true  },
+	{ OFC_CLIARG_COLUMNS,               "columns",               '\0', "Sets number of columns to <n>",              OFC_CLIARG_PARAM_LANG_INT,  1, true  },
+	{ OFC_CLIARG_CASE_SEN,              "case-sen",              '\0', "Sets case sensitive mode",                   OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
+	{ OFC_CLIARG_INDENT_WIDTH,          "indent-width",          '\0', "Sets indent width <n>",                      OFC_CLIARG_PARAM_PRIN_INT,  1, true  },
+	{ OFC_CLIARG_INDENT_MAX_LEVEL,      "indent-max-level",      '\0', "Sets maximum indent level <n>",              OFC_CLIARG_PARAM_PRIN_INT,  1, true  },
+	{ OFC_CLIARG_INCLUDE,               "include",               '\0', "Set include paths <s>",                      OFC_CLIARG_PARAM_FILE_STR,  1, false },
+	{ OFC_CLIARG_SEMA_STRUCT_TYPE,      "no-sema-struct-type",   '\0', "Disable struct to type semantic pass",       OFC_CLIARG_PARAM_SEMA_PASS, 0, true  },
+	{ OFC_CLIARG_SEMA_CHAR_TRANSFER,    "no-sema-char-transfer", '\0', "Disable char to transfer semantic pass",     OFC_CLIARG_PARAM_SEMA_PASS, 0, true  },
+	{ OFC_CLIARG_SEMA_UNREF_LABEL,      "no-sema-unref-label",   '\0', "Disable unreferenced label semantic pass",   OFC_CLIARG_PARAM_SEMA_PASS, 0, true  },
+	{ OFC_CLIARG_SEMA_UNLAB_FORMAT,     "no-sema-unref-format",  '\0', "Disable unreferenced format semantic pass",  OFC_CLIARG_PARAM_SEMA_PASS, 0, true  },
+	{ OFC_CLIARG_SEMA_UNLAB_CONT,       "no-sema-unlab-cont",    '\0', "Disable struct to type semantic pass",       OFC_CLIARG_PARAM_SEMA_PASS, 0, true  },
 };
 
 static const char* ofc_cliarg_file_ext__get(
@@ -238,7 +238,7 @@ static const ofc_cliarg_body_t*
 	ofc_cliarg_arg__resolve_name(const char* arg_string)
 {
 	unsigned i;
-	for (i = 0; i < INVALID; i++)
+	for (i = 0; i < OFC_CLIARG_INVALID; i++)
 	{
 		if (strcasecmp(cliargs[i].name, arg_string) == 0)
 			return &cliargs[i];
@@ -251,7 +251,7 @@ static const ofc_cliarg_body_t*
 	ofc_cliarg_arg__resolve_flag(const char arg_flag)
 {
 	unsigned i;
-	for (i = 0; i < INVALID; i++)
+	for (i = 0; i < OFC_CLIARG_INVALID; i++)
 	{
 		if (cliargs[i].flag == arg_flag)
 			return &cliargs[i];
@@ -303,17 +303,17 @@ static bool ofc_cliarg__apply(
 
 	switch (param_type)
 	{
-		case GLOB_NONE:
+		case OFC_CLIARG_PARAM_GLOB_NONE:
 			return ofc_cliarg_global_opts__set_flag(global_opts, arg_type);
-		case LANG_NONE:
+		case OFC_CLIARG_PARAM_LANG_NONE:
 			return ofc_cliarg_lang_opts__set_flag(lang_opts, arg_type);
-		case LANG_INT:
+		case OFC_CLIARG_PARAM_LANG_INT:
 			return ofc_cliarg_lang_opts__set_num(lang_opts, arg_type, arg->value);
-		case PRIN_INT:
+		case OFC_CLIARG_PARAM_PRIN_INT:
 			return ofc_cliarg_print_opts__set_num(print_opts, arg_type, arg->value);
-		case FILE_STR:
+		case OFC_CLIARG_PARAM_FILE_STR:
 			return ofc_cliarg_file__set_str(file, arg_type, arg->str);
-		case SEMA_PASS:
+		case OFC_CLIARG_PARAM_SEMA_PASS:
 			return ofc_cliarg_sema_pass_opts__set_flag(sema_pass_opts, arg_type);
 
 		default:
@@ -429,14 +429,14 @@ bool ofc_cliarg_parse(
 
 				switch (arg_body->param_type)
 				{
-					case GLOB_NONE:
-					case LANG_NONE:
-					case SEMA_PASS:
+					case OFC_CLIARG_PARAM_GLOB_NONE:
+					case OFC_CLIARG_PARAM_LANG_NONE:
+					case OFC_CLIARG_PARAM_SEMA_PASS:
 						resolved_arg = ofc_cliarg_create(arg_body, NULL);
 						break;
 
-					case LANG_INT:
-					case PRIN_INT:
+					case OFC_CLIARG_PARAM_LANG_INT:
+					case OFC_CLIARG_PARAM_PRIN_INT:
 					{
 						int param = -1;
 						if (!ofc_cliarg_param__resolve_int(argv[i++], &param))
@@ -449,7 +449,7 @@ bool ofc_cliarg_parse(
 						break;
 					}
 
-					case FILE_STR:
+					case OFC_CLIARG_PARAM_FILE_STR:
 					{
 						if (ofc_cliarg_param__resolve_str(argv[i]))
 						{
@@ -545,7 +545,7 @@ static unsigned ofc_cliarg_longest_name_len(void)
 	unsigned longest_name_len = 0;
 
 	unsigned i;
-	for (i = 0; i < INVALID; i++)
+	for (i = 0; i < OFC_CLIARG_INVALID; i++)
 	{
 		if (strlen(cliargs[i].name) > longest_name_len)
 			longest_name_len = strlen(cliargs[i].name);
@@ -562,17 +562,17 @@ void print_usage(const char* name)
 	unsigned name_len = ofc_cliarg_longest_name_len() + 5;
 
 	unsigned i;
-	for (i = 0; i < INVALID; i++)
+	for (i = 0; i < OFC_CLIARG_INVALID; i++)
 	{
 		unsigned line_len = 0;
 
 		switch (cliargs[i].param_type)
 		{
-			case LANG_INT:
+			case OFC_CLIARG_PARAM_LANG_INT:
 				line_len = printf("  --%s <n>", cliargs[i].name);
 				break;
 
-			case FILE_STR:
+			case OFC_CLIARG_PARAM_FILE_STR:
 				line_len = printf("  --%s <s>", cliargs[i].name);
 				break;
 
@@ -608,12 +608,12 @@ ofc_cliarg_t* ofc_cliarg_create(
 	{
 		switch (arg_body->param_type)
 		{
-			case LANG_INT:
-			case PRIN_INT:
+			case OFC_CLIARG_PARAM_LANG_INT:
+			case OFC_CLIARG_PARAM_PRIN_INT:
 				arg->value = *((int*)param);
 				break;
 
-			case FILE_STR:
+			case OFC_CLIARG_PARAM_FILE_STR:
 				arg->str = strdup((char*)param);
 				break;
 
@@ -631,7 +631,7 @@ void ofc_cliarg_delete(ofc_cliarg_t* arg)
 	if (!arg)
 		return;
 
-	if (arg->body->param_type == FILE_STR)
+	if (arg->body->param_type == OFC_CLIARG_PARAM_FILE_STR)
 		free (arg->str);
 
 	free(arg);
