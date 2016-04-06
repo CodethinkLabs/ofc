@@ -192,14 +192,14 @@ static bool ofc_cliarg_file__set_str(
 static const ofc_cliarg_body_t cliargs[] =
 {
 	/*ENUM                              NAME                     FLAG  DESCRIPTION                                   PARAM_TYPE          PARAMS EXCLUSIVE */
-	{ OFC_CLIARG_NO_WARN,               "no-warn",               '\0', "Suppress OFC warnings",                      OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
+	{ OFC_CLIARG_NO_WARN,               "no-warn",               'n',  "Suppress OFC warnings",                      OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
 	{ OFC_CLIARG_NO_WARN_EQUIV_TYPE,    "no-warn-equiv-type",    '\0', "Suppress EQUIVALENCE type mismatch warning", OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
 	{ OFC_CLIARG_NO_WARN_NAME_KEYWORD,  "no-warn-name-keyword",  '\0', "Suppress language keyword in name warning",  OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
 	{ OFC_CLIARG_NO_WARN_NAMESPACE_COL, "no-warn-namespace-col", '\0', "Suppress namespace collision warning",       OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
-	{ OFC_CLIARG_NO_WARN_PEDANTIC,      "no-warn-pedantic",      '\0', "Suppress all pedantic warnings",             OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
+	{ OFC_CLIARG_NO_WARN_PEDANTIC,      "no-warn-pedantic",      'p',  "Suppress all pedantic warnings",             OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
 	{ OFC_CLIARG_PARSE_ONLY,            "parse-only",            '\0', "Runs the parser only",                       OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
 	{ OFC_CLIARG_PARSE_TREE,            "parse-tree",            '\0', "Prints the parse tree",                      OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
-	{ OFC_CLIARG_SEMA_TREE,             "sema-tree",             '\0', "Prints the semantic analysis tree",          OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
+	{ OFC_CLIARG_SEMA_TREE,             "sema-tree",             's',  "Prints the semantic analysis tree",          OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
 	{ OFC_CLIARG_FIXED_FORM,            "free-form",             '\0', "Sets free form type",                        OFC_CLIARG_PARAM_LANG_NONE, 0, true  },
 	{ OFC_CLIARG_FREE_FORM,             "fixed-form",            '\0', "Sets fixed form type",                       OFC_CLIARG_PARAM_LANG_NONE, 0, true  },
 	{ OFC_CLIARG_TAB_WIDTH,             "tab-width",             '\0', "Sets tab width <n>",                         OFC_CLIARG_PARAM_LANG_INT,  1, true  },
@@ -479,6 +479,8 @@ bool ofc_cliarg_parse(
 				unsigned flag;
 				for (flag = 0; flag < strlen(arg_str); flag++)
 				{
+					ofc_cliarg_t* resolved_arg = NULL;
+
 					const ofc_cliarg_body_t* arg_body
 						= ofc_cliarg_arg__resolve_flag(arg_str[flag]);
 					if (!arg_body)
@@ -486,13 +488,23 @@ bool ofc_cliarg_parse(
 						fprintf(stderr, "Error: Cannot resolve flag: %s\n", argv[i]);
 						ofc_cliarg_print_usage(program_name);
 					}
-					if (arg_body->param_num > 0)
+					switch (arg_body->param_type)
 					{
-						fprintf(stderr, "Error: Cannot group flags that require a parameter: %s\n", argv[i]);
-						ofc_cliarg_print_usage(program_name);
-						return false;
+						case OFC_CLIARG_PARAM_GLOB_NONE:
+						case OFC_CLIARG_PARAM_LANG_NONE:
+						case OFC_CLIARG_PARAM_SEMA_PASS:
+							resolved_arg = ofc_cliarg_create(arg_body, NULL);
+							break;
+
+						default:
+							fprintf(stderr, "Error: Cannot group flags that require a parameter: %s\n", argv[i]);
+							ofc_cliarg_print_usage(program_name);
+							return false;
 					}
-					/* TODO - Add support for single character flags. */
+
+					if (!resolved_arg
+					|| !ofc_cliarg_list_add(args_list, resolved_arg))
+					return false;
 				}
 				i++;
 			}
