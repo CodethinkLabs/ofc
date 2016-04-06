@@ -402,7 +402,7 @@ bool ofc_cliarg_parse(
 	if (argc < 2)
 	{
 		fprintf(stderr, "Error: Expected source path\n");
-		print_usage(program_name);
+		ofc_cliarg_print_usage(program_name);
 		return false;
 	}
 
@@ -422,7 +422,7 @@ bool ofc_cliarg_parse(
 				if (!arg_body)
 				{
 					fprintf(stderr, "Error: Unable to resolve argument: %s\n", argv[i]);
-					print_usage(program_name);
+					ofc_cliarg_print_usage(program_name);
 					return false;
 				}
 				i++;
@@ -442,7 +442,7 @@ bool ofc_cliarg_parse(
 						if (!ofc_cliarg_param__resolve_int(argv[i++], &param))
 						{
 							fprintf(stderr, "Error: Expected parameter for argument: %s\n", argv[i]);
-							print_usage(program_name);
+							ofc_cliarg_print_usage(program_name);
 							return false;
 						}
 						resolved_arg = ofc_cliarg_create(arg_body, &param);
@@ -459,7 +459,7 @@ bool ofc_cliarg_parse(
 						else
 						{
 							fprintf(stderr, "Error: Expected parameter for argument: %s\n", argv[i]);
-							print_usage(program_name);
+							ofc_cliarg_print_usage(program_name);
 							return false;
 						}
 						break;
@@ -484,12 +484,12 @@ bool ofc_cliarg_parse(
 					if (!arg_body)
 					{
 						fprintf(stderr, "Error: Cannot resolve flag: %s\n", argv[i]);
-						print_usage(program_name);
+						ofc_cliarg_print_usage(program_name);
 					}
 					if (arg_body->param_num > 0)
 					{
 						fprintf(stderr, "Error: Cannot group flags that require a parameter: %s\n", argv[i]);
-						print_usage(program_name);
+						ofc_cliarg_print_usage(program_name);
 						return false;
 					}
 					/* TODO - Add support for single character flags. */
@@ -554,7 +554,7 @@ static unsigned ofc_cliarg_longest_name_len(void)
 	return longest_name_len;
 }
 
-void print_usage(const char* name)
+void ofc_cliarg_print_usage(const char* name)
 {
 	printf("%s [OPTIONS] FILE\n", name);
 	printf("Options:\n");

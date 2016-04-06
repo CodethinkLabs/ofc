@@ -102,7 +102,7 @@ bool ofc_cliarg_parse(
 	ofc_global_opts_t* global_opts,
 	ofc_sema_pass_opts_t* sema_pass_opts);
 
-void print_usage(const char* name);
+void ofc_cliarg_print_usage(const char* name);
 
 ofc_cliarg_t* ofc_cliarg_create(
 	const ofc_cliarg_body_t* arg_prop,
