@@ -16,7 +16,7 @@
 #include <ofc/cliarg.h>
 
 
-static bool set_global_opts__flag(
+static bool ofc_cliarg_global_opts__set_flag(
 	ofc_global_opts_t* global,
 	int arg_type)
 {
@@ -62,7 +62,7 @@ static bool set_global_opts__flag(
 	return true;
 }
 
-static bool set_print_opts__num(
+static bool ofc_cliarg_print_opts__set_num(
 	ofc_print_opts_t* print_opts,
 	int arg_type, unsigned value)
 {
@@ -85,7 +85,7 @@ static bool set_print_opts__num(
 	return true;
 }
 
-static bool set_lang_opts__flag(
+static bool ofc_cliarg_lang_opts__set_flag(
 	ofc_lang_opts_t* lang_opts,
 	int arg_type)
 {
@@ -112,7 +112,7 @@ static bool set_lang_opts__flag(
 	return true;
 }
 
-static bool set_lang_opts__num(
+static bool ofc_cliarg_lang_opts__set_num(
 	ofc_lang_opts_t* lang_opts,
 	int arg_type, unsigned value)
 {
@@ -135,7 +135,7 @@ static bool set_lang_opts__num(
 	return true;
 }
 
-static bool set_sema_pass_opts_flag(
+static bool ofc_cliarg_sema_pass_opts__set_flag(
 	ofc_sema_pass_opts_t* sema_pass_opts,
 	int arg_type)
 {
@@ -167,7 +167,7 @@ static bool set_sema_pass_opts_flag(
 	return true;
 }
 
-static bool set_file__str(
+static bool ofc_cliarg_file__set_str(
 	ofc_file_t* file,
 	int arg_type, char* str)
 {
@@ -216,24 +216,26 @@ static const ofc_cliarg_body_t cliargs[] =
 	{ SEMA_UNLAB_CONT,       "no-sema-unlab-cont",    '\0', "Disable struct to type semantic pass",       SEMA_PASS, 0, true  },
 };
 
-static const char *get_file_ext(const char *path)
+static const char* ofc_cliarg_file_ext__get(
+	const char* path)
 {
 	if (!path)
 		return NULL;
 
-	const char *dot = NULL;
+	const char* ext = NULL;
 	unsigned i;
 	for (i = 0; path[i] != '\0'; i++)
 	{
 		if (path[i] == '/')
-			dot = NULL;
+			ext = NULL;
 		else if (path[i] == '.')
-			dot = &path[i];
+			ext = &path[i + 1];
 	}
-  return (dot ? &dot[1] : NULL);
+	return ext;
 }
 
-static const ofc_cliarg_body_t* resolve_arg_name(const char* arg_string)
+static const ofc_cliarg_body_t*
+	ofc_cliarg_arg__resolve_name(const char* arg_string)
 {
 	unsigned i;
 	for (i = 0; i < INVALID; i++)
@@ -245,7 +247,8 @@ static const ofc_cliarg_body_t* resolve_arg_name(const char* arg_string)
 	return NULL;
 }
 
-static const ofc_cliarg_body_t* resolve_arg_flag(const char arg_flag)
+static const ofc_cliarg_body_t*
+	ofc_cliarg_arg__resolve_flag(const char arg_flag)
 {
 	unsigned i;
 	for (i = 0; i < INVALID; i++)
@@ -257,7 +260,8 @@ static const ofc_cliarg_body_t* resolve_arg_flag(const char arg_flag)
 	return NULL;
 }
 
-static bool resolve_param_pos_int(const char* arg_string, int* param_int)
+static bool ofc_cliarg_param__resolve_int(
+	const char* arg_string, int* param_int)
 {
 	unsigned i;
 	for (i = 0; i < strlen(arg_string); i++)
@@ -277,7 +281,8 @@ static bool resolve_param_pos_int(const char* arg_string, int* param_int)
 	return false;
 }
 
-static bool resolve_param_str(const char* arg_string)
+static bool ofc_cliarg_param__resolve_str(
+	const char* arg_string)
 {
 	if (!arg_string || (arg_string[0] == '-'))
 		return false;
@@ -299,17 +304,17 @@ static bool ofc_cliarg__apply(
 	switch (param_type)
 	{
 		case GLOB_NONE:
-			return set_global_opts__flag(global_opts, arg_type);
+			return ofc_cliarg_global_opts__set_flag(global_opts, arg_type);
 		case LANG_NONE:
-			return set_lang_opts__flag(lang_opts, arg_type);
+			return ofc_cliarg_lang_opts__set_flag(lang_opts, arg_type);
 		case LANG_INT:
-			return set_lang_opts__num(lang_opts, arg_type, arg->value);
+			return ofc_cliarg_lang_opts__set_num(lang_opts, arg_type, arg->value);
 		case PRIN_INT:
-			return set_print_opts__num(print_opts, arg_type, arg->value);
+			return ofc_cliarg_print_opts__set_num(print_opts, arg_type, arg->value);
 		case FILE_STR:
-			return set_file__str(file, arg_type, arg->str);
+			return ofc_cliarg_file__set_str(file, arg_type, arg->str);
 		case SEMA_PASS:
-			return set_sema_pass_opts_flag(sema_pass_opts, arg_type);
+			return ofc_cliarg_sema_pass_opts__set_flag(sema_pass_opts, arg_type);
 
 		default:
 			break;;
@@ -413,7 +418,7 @@ bool ofc_cliarg_parse(
 			{
 				ofc_cliarg_t* resolved_arg = NULL;
 				const char* arg_str = argv[i] + 2;
-				const ofc_cliarg_body_t* arg_body = resolve_arg_name(arg_str);
+				const ofc_cliarg_body_t* arg_body = ofc_cliarg_arg__resolve_name(arg_str);
 				if (!arg_body)
 				{
 					fprintf(stderr, "Error: Unable to resolve argument: %s\n", argv[i]);
@@ -434,7 +439,7 @@ bool ofc_cliarg_parse(
 					case PRIN_INT:
 					{
 						int param = -1;
-						if (!resolve_param_pos_int(argv[i++], &param))
+						if (!ofc_cliarg_param__resolve_int(argv[i++], &param))
 						{
 							fprintf(stderr, "Error: Expected parameter for argument: %s\n", argv[i]);
 							print_usage(program_name);
@@ -446,7 +451,7 @@ bool ofc_cliarg_parse(
 
 					case FILE_STR:
 					{
-						if (resolve_param_str(argv[i]))
+						if (ofc_cliarg_param__resolve_str(argv[i]))
 						{
 							resolved_arg = ofc_cliarg_create(arg_body, argv[i]);
 							i++;
@@ -474,7 +479,8 @@ bool ofc_cliarg_parse(
 				unsigned flag;
 				for (flag = 0; flag < strlen(arg_str); flag++)
 				{
-					const ofc_cliarg_body_t* arg_body = resolve_arg_flag(arg_str[flag]);
+					const ofc_cliarg_body_t* arg_body
+						= ofc_cliarg_arg__resolve_flag(arg_str[flag]);
 					if (!arg_body)
 					{
 						fprintf(stderr, "Error: Cannot resolve flag: %s\n", argv[i]);
@@ -504,7 +510,7 @@ bool ofc_cliarg_parse(
 	for (j = 0; j < path_list->count; j++)
 	{
 		char* path = path_list->path[j];
-		const char* source_file_ext = get_file_ext(path);
+		const char* source_file_ext = ofc_cliarg_file_ext__get(path);
 
 		ofc_lang_opts_t lang_opts = OFC_LANG_OPTS_F77;
 		if (source_file_ext && (strcasecmp(source_file_ext, "F90") == 0))
@@ -534,7 +540,7 @@ bool ofc_cliarg_parse(
 	return true;
 }
 
-static unsigned ofc_cliarg_longest_name_len()
+static unsigned ofc_cliarg_longest_name_len(void)
 {
 	unsigned longest_name_len = 0;
 
