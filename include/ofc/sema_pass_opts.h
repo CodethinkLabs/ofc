@@ -23,16 +23,18 @@ typedef struct
 	bool unref_label;
 	bool unlabelled_format;
 	bool unlabelled_continue;
+	bool unused_decl;
 } ofc_sema_pass_opts_t;
 
 static const ofc_sema_pass_opts_t
 	OFC_SEMA_PASS_OPTS_DEFAULT =
 {
-	.struct_type = true,
-	.char_transfer = true,
-	.unref_label = true,
-	.unlabelled_format = true,
+	.struct_type         = true,
+	.char_transfer       = true,
+	.unref_label         = true,
+	.unlabelled_format   = true,
 	.unlabelled_continue = true,
+	.unused_decl         = true,
 };
 
 #endif

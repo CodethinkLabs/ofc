@@ -22,6 +22,7 @@ typedef enum
 	OFC_SEMA_PASS_UNREF_LABEL,
 	OFC_SEMA_PASS_UNLABELLED_FORMAT,
 	OFC_SEMA_PASS_UNLABELLED_CONTINUE,
+	OFC_SEMA_PASS_UNUSED_DECL,
 
 	OFC_SEMA_PASS_COUNT
 } ofc_sema_pass_e;
@@ -41,6 +42,7 @@ static const ofc_sema_pass_t passes[] =
 	{ OFC_SEMA_PASS_UNREF_LABEL,         "remove unreferenced labels",            ofc_sema_pass_unref_label         },
 	{ OFC_SEMA_PASS_UNLABELLED_FORMAT,   "remove unlabelled format statements",   ofc_sema_pass_unlabelled_format   },
 	{ OFC_SEMA_PASS_UNLABELLED_CONTINUE, "remove unlabelled continue statements", ofc_sema_pass_unlabelled_continue },
+	{ OFC_SEMA_PASS_UNUSED_DECL,         "remove unused declarations",            ofc_sema_pass_unused_decl         },
 };
 
 bool ofc_sema_run_passes(
@@ -75,6 +77,11 @@ bool ofc_sema_run_passes(
 
 			case OFC_SEMA_PASS_CHAR_TRANSFER:
 				if(!sema_pass_opts->char_transfer)
+					continue;
+				break;
+
+			case OFC_SEMA_PASS_UNUSED_DECL:
+				if(!sema_pass_opts->unused_decl)
 					continue;
 				break;
 
