@@ -1845,6 +1845,7 @@ static ofc_sema_decl_list_t* ofc_sema_decl_list__create(
 	list->case_sensitive = case_sensitive;
 
 	list->count  = 0;
+	list->size   = 0;
 	list->decl   = NULL;
 	list->is_ref = is_ref;
 
@@ -1912,18 +1913,43 @@ bool ofc_sema_decl_list_add(
 		list, decl->name.string))
 		return false;
 
-	ofc_sema_decl_t** ndecl
-		= (ofc_sema_decl_t**)realloc(list->decl,
-			(sizeof(ofc_sema_decl_t*) * (list->count + 1)));
-	if (!ndecl) return false;
-	list->decl = ndecl;
+	unsigned slot;
+	if (list->count >= list->size)
+	{
+		unsigned nsize = list->count + 1;
+		ofc_sema_decl_t** ndecl
+			= (ofc_sema_decl_t**)realloc(list->decl,
+				(sizeof(ofc_sema_decl_t*) * nsize));
+		if (!ndecl) return false;
+		list->decl = ndecl;
 
-	if (!ofc_hashmap_add(
-		list->map, decl))
+		unsigned i;
+		for (i = list->size; i < nsize; i++)
+			list->decl[i] = NULL;
+
+		slot = list->size;
+		list->size = nsize;
+	}
+	else
+	{
+		unsigned i;
+		for (i = 0; i < list->size; i++)
+		{
+			if (list->decl[i] == NULL)
+			{
+				slot = i;
+				break;
+			}
+		}
+		if (i == list->size)
+			return false;
+	}
+
+	if (!ofc_hashmap_add(list->map, decl))
 		return false;
 
-	list->decl[list->count++] = decl;
-
+	list->decl[slot] = decl;
+	list->count++;
 	return true;
 }
 
@@ -1972,6 +1998,30 @@ ofc_sema_decl_t* ofc_sema_decl_list_find_modify(
 
 	return ofc_hashmap_find_modify(
 		list->map, &name);
+}
+
+void ofc_sema_decl_list_remove(
+	ofc_sema_decl_list_t* list, ofc_sema_decl_t* decl)
+{
+    if (!list || !decl)
+		return;
+
+	ofc_hashmap_remove(list->map, decl);
+
+	unsigned i;
+	for (i = 0; i < list->size; i++)
+	{
+		if (list->decl[i] && ofc_str_ref_equal(
+			list->decl[i]->name.string,
+			decl->name.string))
+		{
+			list->decl[i] = NULL;
+			list->count--;
+			break;
+		}
+	}
+
+	ofc_sema_decl_delete(decl);
 }
 
 const ofc_hashmap_t* ofc_sema_decl_list_map(

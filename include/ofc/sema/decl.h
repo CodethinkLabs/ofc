@@ -79,6 +79,7 @@ struct ofc_sema_decl_list_s
 	bool case_sensitive;
 	bool is_ref;
 
+	unsigned size;
 	unsigned count;
 
 	union
@@ -235,6 +236,9 @@ bool ofc_sema_decl_list_add(
 bool ofc_sema_decl_list_add_ref(
 	ofc_sema_decl_list_t* list,
 	const ofc_sema_decl_t* decl);
+void ofc_sema_decl_list_remove(
+	ofc_sema_decl_list_t* list,
+	ofc_sema_decl_t* decl);
 
 const ofc_sema_decl_t* ofc_sema_decl_list_find(
 	const ofc_sema_decl_list_t* list,
