@@ -2603,7 +2603,7 @@ bool ofc_sema_decl_list_stmt_func_print(
 	for (i = 0; i < decl_list->count; i++)
 	{
 		ofc_sema_decl_t* decl = decl_list->decl[i];
-		if (decl->func
+		if (decl && decl->func
 			&& (decl->func->type == OFC_SEMA_SCOPE_STMT_FUNC))
 		{
 			if (!ofc_colstr_newline(cs, indent, NULL)
@@ -2634,7 +2634,7 @@ bool ofc_sema_decl_list_procedure_print(
 	for (i = 0; i < decl_list->count; i++)
 	{
 		ofc_sema_decl_t* decl = decl_list->decl[i];
-		if (decl->func)
+		if (decl && decl->func)
 		{
 			if (decl->func->type == OFC_SEMA_SCOPE_SUBROUTINE)
 			{
@@ -2668,6 +2668,9 @@ bool ofc_sema_decl_list_procedure_spec_print(
 	for (i = 0; i < decl_list->count; i++)
 	{
 		ofc_sema_decl_t* decl = decl_list->decl[i];
+
+		if (!decl) continue;
+
 		if (!ofc_sema_decl_is_procedure(decl)
 			|| ofc_sema_decl_is_subroutine(decl))
 			continue;
@@ -2692,6 +2695,8 @@ bool ofc_sema_decl_list_print(
 	/* Print PARAMETERs before other declarations. */
 	for (i = 0; i < decl_list->count; i++)
 	{
+		if (!decl_list->decl[i]) continue;
+
 		if (!ofc_sema_decl_is_parameter(
 			decl_list->decl[i]))
 			continue;
@@ -2703,6 +2708,8 @@ bool ofc_sema_decl_list_print(
 
 	for (i = 0; i < decl_list->count; i++)
 	{
+		if (!decl_list->decl[i]) continue;
+
 		/* Skip PARAMETERs since we printed those first. */
 		if (ofc_sema_decl_is_parameter(
 			decl_list->decl[i]))
@@ -2710,7 +2717,7 @@ bool ofc_sema_decl_list_print(
 
 		/* Don't print prototypes for declared procedures. */
 		if (ofc_sema_decl_is_procedure(decl_list->decl[i])
-			|| decl_list->decl[i]->is_return)
+			&& (decl_list->decl[i]->is_return))
 			continue;
 
 		if (!ofc_sema_decl_print(cs, indent,
@@ -2720,6 +2727,8 @@ bool ofc_sema_decl_list_print(
 
 	for (i = 0; i < decl_list->count; i++)
 	{
+		if (!decl_list->decl[i]) continue;
+
 		if (ofc_sema_decl_is_procedure(decl_list->decl[i])
 			|| decl_list->decl[i]->is_return)
 			continue;
