@@ -157,7 +157,9 @@ static char* ofc_file__include_path_relative(
 static char* ofc_file__base_parent_path(
 	const ofc_file_t* file)
 {
-    if (file && file->parent)
+	if (!file) return NULL;
+
+	if (file->parent)
 		return ofc_file__base_parent_path(file->parent);
 
 	return file->path;
@@ -196,12 +198,12 @@ ofc_file_t* ofc_file_create_include(
 	char* rpath = ofc_file__include_path_relative(bpath, path);
 	file = ofc_file_create(rpath, opts);
 	free(rpath);
-	if (!parent_file) return file;
-	if (!file) return NULL;
-
-	file->parent = parent_file;
-	file->include_stmt = include_stmt;
-	file->include = parent_file->include;
+	if (file && parent_file)
+	{
+		file->parent = parent_file;
+		file->include_stmt = include_stmt;
+		file->include = parent_file->include;
+	}
 
 	return file;
 }
