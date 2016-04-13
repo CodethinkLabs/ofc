@@ -17,11 +17,11 @@
 
 typedef enum
 {
-	STRUCT_TYPE = 0,
-	CHAR_TRANSFER,
-	UNREF_LABEL,
-	UNLABELLED_FORMAT,
-	UNLABELLED_CONTINUE,
+	OFC_SEMA_PASS_STRUCT_TYPE = 0,
+	OFC_SEMA_PASS_CHAR_TRANSFER,
+	OFC_SEMA_PASS_UNREF_LABEL,
+	OFC_SEMA_PASS_UNLABELLED_FORMAT,
+	OFC_SEMA_PASS_UNLABELLED_CONTINUE,
 
 	OFC_SEMA_PASS_COUNT
 } ofc_sema_pass_e;
@@ -36,11 +36,11 @@ typedef struct
 
 static const ofc_sema_pass_t passes[] =
 {
-	{ STRUCT_TYPE,         "STRUCTURE to TYPE",                     ofc_sema_pass_struct_type         },
-	{ CHAR_TRANSFER,       "string cast TRANSFER",                  ofc_sema_pass_char_transfer       },
-	{ UNREF_LABEL,         "remove unreferenced labels",            ofc_sema_pass_unref_label         },
-	{ UNLABELLED_FORMAT,   "remove unlabelled format statements",   ofc_sema_pass_unlabelled_format   },
-	{ UNLABELLED_CONTINUE, "remove unlabelled continue statements", ofc_sema_pass_unlabelled_continue },
+	{ OFC_SEMA_PASS_STRUCT_TYPE,         "STRUCTURE to TYPE",                     ofc_sema_pass_struct_type         },
+	{ OFC_SEMA_PASS_CHAR_TRANSFER,       "string cast TRANSFER",                  ofc_sema_pass_char_transfer       },
+	{ OFC_SEMA_PASS_UNREF_LABEL,         "remove unreferenced labels",            ofc_sema_pass_unref_label         },
+	{ OFC_SEMA_PASS_UNLABELLED_FORMAT,   "remove unlabelled format statements",   ofc_sema_pass_unlabelled_format   },
+	{ OFC_SEMA_PASS_UNLABELLED_CONTINUE, "remove unlabelled continue statements", ofc_sema_pass_unlabelled_continue },
 };
 
 bool ofc_sema_run_passes(
@@ -53,27 +53,27 @@ bool ofc_sema_run_passes(
 	{
 		switch (i)
 		{
-			case STRUCT_TYPE:
+			case OFC_SEMA_PASS_STRUCT_TYPE:
 				if(!sema_pass_opts->struct_type)
 					continue;
 				break;
 
-			case UNREF_LABEL:
+			case OFC_SEMA_PASS_UNREF_LABEL:
 				if(!sema_pass_opts->unref_label)
 					continue;
 				break;
 
-			case UNLABELLED_FORMAT:
+			case OFC_SEMA_PASS_UNLABELLED_FORMAT:
 				if(!sema_pass_opts->unlabelled_format)
 					continue;
 				break;
 
-			case UNLABELLED_CONTINUE:
+			case OFC_SEMA_PASS_UNLABELLED_CONTINUE:
 				if(!sema_pass_opts->unlabelled_continue)
 					continue;
 				break;
 
-			case CHAR_TRANSFER:
+			case OFC_SEMA_PASS_CHAR_TRANSFER:
 				if(!sema_pass_opts->char_transfer)
 					continue;
 				break;
