@@ -1347,7 +1347,6 @@ bool ofc_sema_type_cast_valid(
 	return ((logical && integer)
 		|| (real && (logical || integer))
 		|| (complex && (real || logical || integer)));
-		return true;
 }
 
 bool ofc_sema_type_cast_is_lossless(
