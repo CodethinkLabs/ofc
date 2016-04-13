@@ -370,9 +370,6 @@ static bool ofc_sema_decl__elem(
 	if (lhs->type == OFC_PARSE_LHS_STAR_LEN)
 	{
 		if (!type)
-			type = type;
-
-		if (!type)
 		{
 			ofc_sparse_ref_error(lhs->src,
 				"Can't specify a star LEN/KIND for an undefined type");
