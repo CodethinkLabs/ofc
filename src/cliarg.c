@@ -507,8 +507,8 @@ bool ofc_cliarg_parse(
 					}
 
 					if (!resolved_arg
-					|| !ofc_cliarg_list_add(args_list, resolved_arg))
-					return false;
+						|| !ofc_cliarg_list_add(args_list, resolved_arg))
+						return false;
 				}
 				i++;
 			}
@@ -662,6 +662,7 @@ ofc_cliarg_list_t* ofc_cliarg_list_create(void)
 
 	list->count = 0;
 	list->arg   = NULL;
+
 	return list;
 }
 
