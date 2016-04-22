@@ -1891,7 +1891,7 @@ void ofc_sema_decl_list_delete(
 	if (!list->is_ref)
 	{
 		unsigned i;
-		for (i = 0; i < list->count; i++)
+		for (i = 0; i < list->size; i++)
 			ofc_sema_decl_delete(list->decl[i]);
 	}
 
@@ -2600,7 +2600,7 @@ bool ofc_sema_decl_list_stmt_func_print(
 		return false;
 
 	unsigned i;
-	for (i = 0; i < decl_list->count; i++)
+	for (i = 0; i < decl_list->size; i++)
 	{
 		ofc_sema_decl_t* decl = decl_list->decl[i];
 		if (decl && decl->func
@@ -2631,7 +2631,7 @@ bool ofc_sema_decl_list_procedure_print(
 		return false;
 
 	unsigned i;
-	for (i = 0; i < decl_list->count; i++)
+	for (i = 0; i < decl_list->size; i++)
 	{
 		ofc_sema_decl_t* decl = decl_list->decl[i];
 		if (decl && decl->func)
@@ -2665,7 +2665,7 @@ bool ofc_sema_decl_list_procedure_spec_print(
 		return false;
 
 	unsigned i;
-	for (i = 0; i < decl_list->count; i++)
+	for (i = 0; i < decl_list->size; i++)
 	{
 		ofc_sema_decl_t* decl = decl_list->decl[i];
 
@@ -2693,9 +2693,10 @@ bool ofc_sema_decl_list_print(
 	unsigned i;
 
 	/* Print PARAMETERs before other declarations. */
-	for (i = 0; i < decl_list->count; i++)
+	for (i = 0; i < decl_list->size; i++)
 	{
-		if (!decl_list->decl[i]) continue;
+		if (!decl_list->decl[i])
+			continue;
 
 		if (!ofc_sema_decl_is_parameter(
 			decl_list->decl[i]))
@@ -2706,9 +2707,10 @@ bool ofc_sema_decl_list_print(
 			return false;
 	}
 
-	for (i = 0; i < decl_list->count; i++)
+	for (i = 0; i < decl_list->size; i++)
 	{
-		if (!decl_list->decl[i]) continue;
+		if (!decl_list->decl[i])
+			continue;
 
 		/* Skip PARAMETERs since we printed those first. */
 		if (ofc_sema_decl_is_parameter(
@@ -2717,7 +2719,7 @@ bool ofc_sema_decl_list_print(
 
 		/* Don't print prototypes for declared procedures. */
 		if (ofc_sema_decl_is_procedure(decl_list->decl[i])
-			&& (decl_list->decl[i]->is_return))
+			|| (decl_list->decl[i]->is_return))
 			continue;
 
 		if (!ofc_sema_decl_print(cs, indent,
@@ -2725,9 +2727,10 @@ bool ofc_sema_decl_list_print(
 			return false;
 	}
 
-	for (i = 0; i < decl_list->count; i++)
+	for (i = 0; i < decl_list->size; i++)
 	{
-		if (!decl_list->decl[i]) continue;
+		if (!decl_list->decl[i])
+			continue;
 
 		if (ofc_sema_decl_is_procedure(decl_list->decl[i])
 			|| decl_list->decl[i]->is_return)
