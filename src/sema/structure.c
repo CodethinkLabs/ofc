@@ -795,9 +795,20 @@ bool ofc_sema_structure_print(
 	bool has_name = !ofc_sparse_ref_empty(structure->name);
 	if (has_name)
 	{
-		if (!ofc_colstr_atomic_writef(cs, " ")
-			|| !ofc_sparse_ref_print(cs, structure->name))
-			return false;
+		if (structure->type == OFC_SEMA_STRUCTURE_VAX_STRUCTURE)
+		{
+			if (!ofc_colstr_atomic_writef(cs, " ")
+				|| !ofc_colstr_atomic_writef(cs, "/")
+				|| !ofc_sparse_ref_print(cs, structure->name)
+				|| !ofc_colstr_atomic_writef(cs, "/"))
+				return false;
+		}
+		else
+		{
+			if (!ofc_colstr_atomic_writef(cs, " ")
+				|| !ofc_sparse_ref_print(cs, structure->name))
+				return false;
+		}
 	}
 
 	if (structure->type == OFC_SEMA_STRUCTURE_F90_TYPE_SEQUENCE)
@@ -911,7 +922,7 @@ void ofc_sema_structure_list_delete(
 	ofc_hashmap_delete(list->map);
 
 	unsigned i;
-	for (i = 0; i < list->count; i++)
+	for (i = 0; i < list->size; i++)
 	{
 		ofc_sema_structure_delete(
 			list->structure[i]);
@@ -1035,7 +1046,7 @@ bool ofc_sema_structure_list_foreach(
 		return false;
 
 	unsigned i;
-	for (i = 0; i < list->count; i++)
+	for (i = 0; i < list->size; i++)
 	{
 		if (list->structure[i]
 			&& !func(list->structure[i], param))
@@ -1053,7 +1064,7 @@ bool ofc_sema_structure_list_foreach_expr(
 		return false;
 
 	unsigned i;
-	for (i = 0; i < list->count; i++)
+	for (i = 0; i < list->size; i++)
 	{
 		if (list->structure[i]
 			&& !ofc_sema_structure_foreach_expr(
