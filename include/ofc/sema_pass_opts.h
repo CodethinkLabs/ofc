@@ -34,7 +34,7 @@ static const ofc_sema_pass_opts_t
 	.unref_label         = true,
 	.unlabelled_format   = true,
 	.unlabelled_continue = true,
-	.unused_decl         = true,
+	.unused_decl         = false,
 };
 
 #endif

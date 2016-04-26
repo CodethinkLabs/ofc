@@ -160,7 +160,7 @@ static bool ofc_cliarg_sema_pass_opts__set_flag(
 			sema_pass_opts->unlabelled_continue = false;
 			break;
 		case OFC_CLIARG_SEMA_UNUSED_DECL:
-			sema_pass_opts->unused_decl = false;
+			sema_pass_opts->unused_decl = true;
 			break;
 
 		default:
@@ -217,7 +217,7 @@ static const ofc_cliarg_body_t cliargs[] =
 	{ OFC_CLIARG_SEMA_UNREF_LABEL,      "no-sema-unref-label",   '\0', "Disable unreferenced label semantic pass",   OFC_CLIARG_PARAM_SEMA_PASS, 0, true  },
 	{ OFC_CLIARG_SEMA_UNLAB_FORMAT,     "no-sema-unref-format",  '\0', "Disable unreferenced format semantic pass",  OFC_CLIARG_PARAM_SEMA_PASS, 0, true  },
 	{ OFC_CLIARG_SEMA_UNLAB_CONT,       "no-sema-unlab-cont",    '\0', "Disable struct to type semantic pass",       OFC_CLIARG_PARAM_SEMA_PASS, 0, true  },
-	{ OFC_CLIARG_SEMA_UNUSED_DECL,      "no-sema_unused-decl",   '\0', "Disable unused declarations semantic pass",  OFC_CLIARG_PARAM_SEMA_PASS, 0, true  },
+	{ OFC_CLIARG_SEMA_UNUSED_DECL,      "sema-unused-decl",      '\0', "Enable unused declarations semantic pass",   OFC_CLIARG_PARAM_SEMA_PASS, 0, true  },
 };
 
 static const char* ofc_cliarg_file_ext__get(
