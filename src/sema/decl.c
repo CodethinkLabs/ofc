@@ -2003,7 +2003,7 @@ ofc_sema_decl_t* ofc_sema_decl_list_find_modify(
 void ofc_sema_decl_list_remove(
 	ofc_sema_decl_list_t* list, ofc_sema_decl_t* decl)
 {
-    if (!list || !decl)
+	if (!list || !decl)
 		return;
 
 	ofc_hashmap_remove(list->map, decl);
@@ -2719,7 +2719,7 @@ bool ofc_sema_decl_list_print(
 
 		/* Don't print prototypes for declared procedures. */
 		if (ofc_sema_decl_is_procedure(decl_list->decl[i])
-			|| (decl_list->decl[i]->is_return))
+			|| decl_list->decl[i]->is_return)
 			continue;
 
 		if (!ofc_sema_decl_print(cs, indent,

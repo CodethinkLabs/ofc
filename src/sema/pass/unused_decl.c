@@ -25,28 +25,27 @@ static bool ofc_sema_pass_unused_decl__scope(
 		return false;
 
 	/* Skip module scopes and scopes without a decl list. */
-	if (scope->decl
-		&& scope->type != OFC_SEMA_SCOPE_MODULE)
-	{
-		unsigned i;
-		for (i = 0; i < scope->decl->size; i++)
-		{
-			ofc_sema_decl_t* decl = scope->decl->decl[i];
+	if (scope->decl && (scope->type != OFC_SEMA_SCOPE_MODULE))
+		return true;
 
-			if (decl
-				&& (decl->type->type != OFC_SEMA_TYPE_FUNCTION)
-				&& (decl->type->type != OFC_SEMA_TYPE_SUBROUTINE)
-				&& !decl->is_stmt_func_arg
-				&& !decl->is_argument
-				&& !decl->was_written
-				&& !decl->was_read
-				/* TODO - Make a common flag for decl? */
-				&& !decl->common)
-			{
-				ofc_sema_decl_list_remove(scope->decl, decl);
-			}
+	unsigned i;
+	for (i = 0; i < scope->decl->size; i++)
+	{
+		ofc_sema_decl_t* decl = scope->decl->decl[i];
+
+		if (decl
+			&& (decl->type->type != OFC_SEMA_TYPE_FUNCTION)
+			&& (decl->type->type != OFC_SEMA_TYPE_SUBROUTINE)
+			&& !decl->is_stmt_func_arg
+			&& !decl->is_argument
+			&& !decl->was_written
+			&& !decl->was_read
+			&& !decl->common)
+		{
+			ofc_sema_decl_list_remove(scope->decl, decl);
 		}
 	}
+
 	return true;
 }
 
