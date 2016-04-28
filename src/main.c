@@ -36,8 +36,11 @@ int main(int argc, const char* argv[])
 	ofc_file_list_t* file_list = ofc_file_list_create();
 
 	if (!ofc_cliarg_parse(argc, argv, &file_list,
-			&print_opts, &global_opts, &sema_pass_opts))
+		&print_opts, &global_opts, &sema_pass_opts))
+	{
+		ofc_file_list_delete(file_list);
 		return EXIT_FAILURE;
+	}
 
 	unsigned i;
 	for (i = 0; i < file_list->count; i++)

@@ -536,18 +536,33 @@ bool ofc_cliarg_parse(
 		if (!file)
 		{
 			fprintf(stderr, "\nError: Failed read source file '%s'\n", path);
+			ofc_cliarg_list_delete(args_list);
+			ofc_cliarg_path_list_delete(path_list);
 			return false;
 		}
 
 		ofc_lang_opts_t* lang_opts_ptr = ofc_file_modify_lang_opts(file);
-		if (!lang_opts_ptr) return false;
+		if (!lang_opts_ptr)
+		{
+			ofc_cliarg_list_delete(args_list);
+			ofc_cliarg_path_list_delete(path_list);
+			return false;
+		}
 
 		if (!ofc_cliarg_list__apply(global_opts, print_opts,
 			lang_opts_ptr, sema_pass_opts, file, args_list))
+		{
+			ofc_cliarg_list_delete(args_list);
+			ofc_cliarg_path_list_delete(path_list);
 			return false;
+		}
 
 		if (!ofc_file_list_add(*file_list, file))
+		{
+			ofc_cliarg_list_delete(args_list);
+			ofc_cliarg_path_list_delete(path_list);
 			return false;
+		}
 	}
 
 	ofc_cliarg_list_delete(args_list);
