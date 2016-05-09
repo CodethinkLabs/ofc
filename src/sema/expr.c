@@ -1121,7 +1121,11 @@ static ofc_sema_expr_t* ofc_sema_expr__variable(
 			scope, base_name.string, false);
 
 	const ofc_sema_intrinsic_t* intrinsic = NULL;
-	if (!decl)
+	if (decl && decl->is_intrinsic)
+	{
+		intrinsic = decl->intrinsic;
+	}
+	else if (!decl)
 	{
 		intrinsic = ofc_sema_intrinsic(
 			base_name.string, global_opts.case_sensitive);

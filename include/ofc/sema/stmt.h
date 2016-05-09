@@ -303,6 +303,9 @@ bool ofc_sema_stmt_common(
 bool ofc_sema_stmt_decl_attr(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
+bool ofc_sema_stmt_intrinsic(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt);
 bool ofc_sema_stmt_save(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);

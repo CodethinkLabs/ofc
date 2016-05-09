@@ -46,6 +46,7 @@ struct ofc_sema_decl_s
 	ofc_sema_array_t*     array;
 	ofc_sema_structure_t* structure;
 	ofc_sema_common_t*    common;
+	const ofc_sema_intrinsic_t* intrinsic;
 
 	union
 	__attribute__((__packed__))
@@ -214,6 +215,8 @@ bool ofc_sema_decl_is_procedure(
 bool ofc_sema_decl_is_parameter(
 	const ofc_sema_decl_t* decl);
 bool ofc_sema_decl_is_common(
+	const ofc_sema_decl_t* decl);
+bool ofc_sema_decl_is_intrinsic(
 	const ofc_sema_decl_t* decl);
 
 bool ofc_sema_decl_has_initializer(

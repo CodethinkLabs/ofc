@@ -126,10 +126,10 @@ typedef struct
 
 static const ofc_sema_intrinsic__param_t ofc_sema_intrinsic__param[] =
 {
-	{ OFC_SEMA_INTRINSIC__TYPE_ANY     , OFC_SEMA_KIND_NONE, 0, 0, 1, 0 }, /* ANY  */
-	{ OFC_SEMA_INTRINSIC__TYPE_SAME    , OFC_SEMA_KIND_NONE, 0, 0, 1, 0 }, /* SAME */
-	{ OFC_SEMA_INTRINSIC__TYPE_SCALAR  , OFC_SEMA_KIND_NONE, 0, 0, 1, 0 }, /* SCALAR */
-	{ OFC_SEMA_INTRINSIC__TYPE_CALLBACK, OFC_SEMA_KIND_NONE, 0, 0, 1, 0 }, /* CALLBACK */
+	{ OFC_SEMA_INTRINSIC__TYPE_ANY     , 0, OFC_SEMA_KIND_NONE, 0, 1, 0 }, /* ANY  */
+	{ OFC_SEMA_INTRINSIC__TYPE_SAME    , 0, OFC_SEMA_KIND_NONE, 0, 1, 0 }, /* SAME */
+	{ OFC_SEMA_INTRINSIC__TYPE_SCALAR  , 0, OFC_SEMA_KIND_NONE, 0, 1, 0 }, /* SCALAR */
+	{ OFC_SEMA_INTRINSIC__TYPE_CALLBACK, 0, OFC_SEMA_KIND_NONE, 0, 1, 0 }, /* CALLBACK */
 
 	{ 0, OFC_SEMA_TYPE_LOGICAL  , OFC_SEMA_KIND_NONE, 0, 1, 0 }, /* LOGICAL */
 	{ 0, OFC_SEMA_TYPE_INTEGER  , OFC_SEMA_KIND_NONE, 0, 1, 0 }, /* INTEGER */
@@ -152,6 +152,9 @@ static const ofc_sema_intrinsic__param_t ofc_sema_intrinsic__param[] =
 	{ 0, OFC_SEMA_TYPE_INTEGER, OFC_SEMA_KIND_1_BYTE, 0, 1, 0 }, /* INTEGER_1 */
 	{ 0, OFC_SEMA_TYPE_INTEGER, OFC_SEMA_KIND_2_BYTE, 0, 1, 0 }, /* INTEGER_2 */
 	{ 0, OFC_SEMA_TYPE_INTEGER, OFC_SEMA_KIND_4_BYTE, 0, 1, 0 }, /* INTEGER_4 */
+
+	{ 0, OFC_SEMA_TYPE_REAL   , OFC_SEMA_KIND_16_BYTE, 0, 1, 0 }, /* REAL_16 */
+	{ 0, OFC_SEMA_TYPE_COMPLEX, OFC_SEMA_KIND_16_BYTE, 0, 1, 0 }, /* COMPLEX_32 */
 
 	{ 0, OFC_SEMA_TYPE_REAL, OFC_SEMA_KIND_DEFAULT, 2, 1, 0 }, /* DEF_REAL_A2 */
 	{ 0, OFC_SEMA_TYPE_REAL, OFC_SEMA_KIND_DEFAULT, 2, 0, 1 }, /* DEF_REAL_A2_OUT */
@@ -194,6 +197,9 @@ typedef enum
 	IP_INTEGER_1,
 	IP_INTEGER_2,
 	IP_INTEGER_4,
+
+	IP_REAL_16,
+	IP_COMPLEX_32,
 
 	IP_DEF_REAL_A2,
 	IP_DEF_REAL_A2_OUT,
@@ -242,6 +248,7 @@ static const ofc_sema_intrinsic_op_t ofc_sema_intrinsic__op_list[] =
 	{ "INT"   , 1, 1, IP_DEF_INTEGER        , IP_ANY               , ofc_sema_intrinsic_op__constant_cast },
 	{ "IFIX"  , 1, 1, IP_DEF_INTEGER        , IP_DEF_REAL          , ofc_sema_intrinsic_op__constant_cast },
 	{ "IDINT" , 1, 1, IP_DEF_INTEGER        , IP_DEF_DOUBLE        , ofc_sema_intrinsic_op__constant_cast },
+	{ "IQINT" , 1, 1, IP_DEF_INTEGER        , IP_REAL_16           , ofc_sema_intrinsic_op__constant_cast },
 	{ "HFIX"  , 1, 1, IP_DEF_HALF_INTEGER   , IP_ANY               , ofc_sema_intrinsic_op__constant_cast },
 	{ "INT1"  , 1, 1, IP_INTEGER_1          , IP_ANY               , ofc_sema_intrinsic_op__constant_cast },
 	{ "INT2"  , 1, 1, IP_INTEGER_2          , IP_ANY               , ofc_sema_intrinsic_op__constant_cast },
@@ -251,120 +258,204 @@ static const ofc_sema_intrinsic_op_t ofc_sema_intrinsic__op_list[] =
 	{ "REAL"  , 1, 1, IP_DEF_REAL           , IP_ANY               , ofc_sema_intrinsic_op__constant_cast },
 	{ "FLOAT" , 1, 1, IP_DEF_REAL           , IP_DEF_INTEGER       , ofc_sema_intrinsic_op__constant_cast },
 	{ "SNGL"  , 1, 1, IP_DEF_REAL           , IP_DEF_DOUBLE        , ofc_sema_intrinsic_op__constant_cast },
-	{ "DREAL" , 1, 1, IP_DEF_DOUBLE         , IP_DEF_DOUBLE_COMPLEX, ofc_sema_intrinsic_op__constant_cast },
+	{ "SNGLQ" , 1, 1, IP_DEF_REAL           , IP_REAL_16           , ofc_sema_intrinsic_op__constant_cast },
 	{ "DBLE"  , 1, 1, IP_DEF_DOUBLE         , IP_ANY               , ofc_sema_intrinsic_op__constant_cast },
-	{ "DFLOAT", 1, 1, IP_DEF_DOUBLE         , IP_ANY               , ofc_sema_intrinsic_op__constant_cast },
+	{ "DFLOAT", 1, 1, IP_DEF_DOUBLE         , IP_DEF_INTEGER       , ofc_sema_intrinsic_op__constant_cast },
+	{ "DREAL" , 1, 1, IP_DEF_DOUBLE         , IP_DEF_DOUBLE_COMPLEX, ofc_sema_intrinsic_op__constant_cast },
+	{ "DBLEQ" , 1, 1, IP_DEF_DOUBLE         , IP_REAL_16           , ofc_sema_intrinsic_op__constant_cast },
+	{ "QREAL" , 1, 1, IP_REAL_16            , IP_ANY               , ofc_sema_intrinsic_op__constant_cast },
+	{ "QFLOAT", 1, 1, IP_REAL_16            , IP_DEF_INTEGER       , ofc_sema_intrinsic_op__constant_cast },
+	/* http://kiwi.atmos.colostate.edu/rr/tidbits/xlf/pgs/lr298.htm */
+	{ "QEXT"  , 1, 1, IP_REAL_16            , IP_ANY               , ofc_sema_intrinsic_op__constant_cast },
+	{ "QEXTD" , 1, 1, IP_REAL_16            , IP_DEF_DOUBLE        , ofc_sema_intrinsic_op__constant_cast },
 	{ "CMPLX" , 1, 2, IP_DEF_COMPLEX        , IP_ANY               , ofc_sema_intrinsic_op__constant_cast },
 	{ "DCMPLX", 1, 2, IP_DEF_DOUBLE_COMPLEX , IP_ANY               , ofc_sema_intrinsic_op__constant_cast },
+	{ "QCMPLX", 1, 2, IP_COMPLEX_32         , IP_ANY               , ofc_sema_intrinsic_op__constant_cast },
 
 	/* Truncation */
 	{ "AINT", 1, 1, IP_SAME, IP_REAL      , NULL },
 	{ "DINT", 1, 1, IP_SAME, IP_DEF_DOUBLE, NULL },
+	{ "QINT", 1, 1, IP_SAME, IP_REAL_16   , NULL },
 
 	/* Rounding */
 	{ "ANINT" , 1, 1, IP_SAME       , IP_REAL      , NULL },
 	{ "DNINT" , 1, 1, IP_SAME       , IP_DEF_DOUBLE, NULL },
+	{ "QNINT" , 1, 1, IP_SAME       , IP_REAL_16   , NULL },
 	{ "NINT"  , 1, 1, IP_DEF_INTEGER, IP_REAL      , NULL },
 	{ "IDNINT", 1, 1, IP_DEF_INTEGER, IP_DEF_DOUBLE, NULL },
+	{ "IQNINT", 1, 1, IP_DEF_INTEGER, IP_REAL_16   , NULL },
 
-	{ "ABS" , 1, 1, IP_SCALAR  , IP_ANY        , NULL },
-	{ "IABS", 1, 1, IP_SAME    , IP_DEF_INTEGER, NULL },
-	{ "DABS", 1, 1, IP_SAME    , IP_DEF_DOUBLE , NULL },
-	{ "CABS", 1, 1, IP_DEF_REAL, IP_DEF_COMPLEX, NULL },
+	{ "ABS"  , 1, 1, IP_SCALAR    , IP_ANY               , NULL },
+	{ "IABS" , 1, 1, IP_SAME      , IP_DEF_INTEGER       , NULL },
+	{ "DABS" , 1, 1, IP_SAME      , IP_DEF_DOUBLE        , NULL },
+	{ "CABS" , 1, 1, IP_DEF_REAL  , IP_DEF_COMPLEX       , NULL },
+	{ "QABS" , 1, 1, IP_SAME      , IP_REAL_16           , NULL },
+	{ "ZABS" , 1, 1, IP_DEF_DOUBLE, IP_DEF_DOUBLE_COMPLEX, NULL },
+	{ "CDABS", 1, 1, IP_DEF_DOUBLE, IP_DEF_DOUBLE_COMPLEX, NULL },
+	{ "CQABS", 1, 1, IP_SAME      , IP_COMPLEX_32        , NULL },
 
 	{ "MOD"   , 2, 2, IP_SAME, IP_SCALAR    , NULL },
 	{ "AMOD"  , 2, 2, IP_SAME, IP_DEF_REAL  , NULL },
 	{ "DMOD"  , 2, 2, IP_SAME, IP_DEF_DOUBLE, NULL },
+	{ "QMOD"  , 2, 2, IP_SAME, IP_REAL_16   , NULL },
 	{ "MODULO", 2, 2, IP_SAME, IP_SCALAR    , NULL },
 
 	{ "FLOOR"  , 1, 1, IP_SAME, IP_REAL, NULL },
 	{ "CEILING", 1, 1, IP_SAME, IP_REAL, NULL },
 
+
 	/* Transfer of sign */
 	{ "SIGN" , 2, 2, IP_SAME, IP_SCALAR     , NULL },
 	{ "ISIGN", 2, 2, IP_SAME, IP_DEF_INTEGER, NULL },
 	{ "DSIGN", 2, 2, IP_SAME, IP_DEF_DOUBLE , NULL },
+	{ "QSIGN", 2, 2, IP_SAME, IP_REAL_16    , NULL },
 
 	/* Positive difference */
 	{ "DIM" , 2, 2, IP_SAME, IP_SCALAR     , NULL },
 	{ "IDIM", 2, 2, IP_SAME, IP_DEF_INTEGER, NULL },
 	{ "DDIM", 2, 2, IP_SAME, IP_DEF_DOUBLE , NULL },
+	{ "QDIM", 2, 2, IP_SAME, IP_REAL_16    , NULL },
 
 	/* Inner product */
-	{ "DRPOD", 2, 2, IP_DEF_DOUBLE, IP_DEF_REAL, NULL },
+	{ "DPROD", 2, 2, IP_DEF_DOUBLE, IP_DEF_REAL, NULL },
+	{ "QPROD", 2, 2, IP_DEF_DOUBLE, IP_REAL_16 , NULL },
 
 	{ "MAX"  , 2, 0, IP_SAME       , IP_SCALAR     , NULL },
 	{ "MAX0" , 2, 0, IP_SAME       , IP_DEF_INTEGER, NULL },
 	{ "AMAX1", 2, 0, IP_SAME       , IP_DEF_REAL   , NULL },
 	{ "DMAX1", 2, 0, IP_SAME       , IP_DEF_DOUBLE , NULL },
+	{ "QMAX1", 2, 0, IP_SAME       , IP_REAL_16    , NULL },
 	{ "AMAX0", 2, 0, IP_DEF_REAL   , IP_DEF_INTEGER, NULL },
 	{ "MAX1" , 2, 0, IP_DEF_INTEGER, IP_DEF_REAL   , NULL },
 	{ "MIN"  , 2, 0, IP_SAME       , IP_SCALAR     , NULL },
 	{ "MIN0" , 2, 0, IP_SAME       , IP_DEF_INTEGER, NULL },
 	{ "AMIN1", 2, 0, IP_SAME       , IP_DEF_REAL   , NULL },
 	{ "DMIN1", 2, 0, IP_SAME       , IP_DEF_DOUBLE , NULL },
+	{ "QMIN1", 2, 0, IP_SAME       , IP_REAL_16    , NULL },
 	{ "AMIN0", 2, 0, IP_DEF_REAL   , IP_DEF_INTEGER, NULL },
 	{ "MIN1" , 2, 0, IP_DEF_INTEGER, IP_DEF_REAL   , NULL },
 
-	{ "AIMG" , 1, 1, IP_SCALAR, IP_COMPLEX, NULL },
-	{ "CONJG", 1, 1, IP_SCALAR, IP_COMPLEX, NULL },
+	{ "IMAG" , 1, 1, IP_REAL      , IP_COMPLEX           , NULL},
+	{ "AIMAG", 1, 1, IP_DEF_REAL  , IP_DEF_COMPLEX       , NULL},
+	{ "DIMAG", 1, 1, IP_DEF_DOUBLE, IP_DEF_DOUBLE_COMPLEX, NULL},
+	{ "QIMAG", 1, 1, IP_REAL_16   , IP_COMPLEX_32        , NULL},
 
-	{ "SQRT" , 1, 1, IP_SAME, IP_ANY        , NULL },
-	{ "DSQRT", 1, 1, IP_SAME, IP_DEF_DOUBLE , NULL },
-	{ "CSQRT", 1, 1, IP_SAME, IP_DEF_COMPLEX, NULL },
+	{ "CONJG" , 1, 1, IP_SAME, IP_COMPLEX           , NULL},
+	{ "DCONJG", 1, 1, IP_SAME, IP_DEF_DOUBLE_COMPLEX, NULL},
+	{ "QCONJG", 1, 1, IP_SAME, IP_COMPLEX_32        , NULL},
 
-	{ "EXP" , 1, 1, IP_SAME, IP_ANY, NULL },
-	{ "DEXP", 1, 1, IP_SAME, IP_ANY, NULL },
-	{ "CEXP", 1, 1, IP_SAME, IP_ANY, NULL },
+	{ "SQRT"  , 1, 1, IP_SAME, IP_ANY               , NULL },
+	{ "DSQRT" , 1, 1, IP_SAME, IP_DEF_DOUBLE        , NULL },
+	{ "QSQRT" , 1, 1, IP_SAME, IP_REAL_16           , NULL },
+	{ "CSQRT" , 1, 1, IP_SAME, IP_DEF_COMPLEX       , NULL },
+	{ "ZSQRT" , 1, 1, IP_SAME, IP_DEF_DOUBLE_COMPLEX, NULL },
+	{ "CDSQRT", 1, 1, IP_SAME, IP_DEF_DOUBLE_COMPLEX, NULL },
+	{ "CQSQRT", 1, 1, IP_SAME, IP_COMPLEX_32        , NULL },
 
-	{ "LOG" , 1, 1, IP_SAME, IP_ANY        , NULL },
-	{ "ALOG", 1, 1, IP_SAME, IP_DEF_REAL   , NULL },
-	{ "DLOG", 1, 1, IP_SAME, IP_DEF_DOUBLE , NULL },
-	{ "CLOG", 1, 1, IP_SAME, IP_DEF_COMPLEX, NULL },
+	{ "CBRT"  , 1, 1, IP_SAME, IP_ANY               , NULL },
+	{ "DCBRT" , 1, 1, IP_SAME, IP_DEF_DOUBLE        , NULL },
+	{ "QCBRT" , 1, 1, IP_SAME, IP_REAL_16           , NULL },
+	{ "CCBRT" , 1, 1, IP_SAME, IP_DEF_COMPLEX       , NULL },
+	{ "ZCBRT" , 1, 1, IP_SAME, IP_DEF_DOUBLE_COMPLEX, NULL },
+	{ "CDCBRT", 1, 1, IP_SAME, IP_DEF_DOUBLE_COMPLEX, NULL },
+	{ "CQCBRT", 1, 1, IP_SAME, IP_COMPLEX_32        , NULL },
+
+	{ "EXP"  , 1, 1, IP_SAME, IP_ANY               , NULL },
+	{ "DEXP" , 1, 1, IP_SAME, IP_DEF_DOUBLE        , NULL },
+	{ "QEXP" , 1, 1, IP_SAME, IP_REAL_16           , NULL },
+	{ "CEXP" , 1, 1, IP_SAME, IP_DEF_COMPLEX       , NULL },
+	{ "ZEXP" , 1, 1, IP_SAME, IP_DEF_DOUBLE_COMPLEX, NULL },
+	{ "CDEXP", 1, 1, IP_SAME, IP_DEF_DOUBLE_COMPLEX, NULL },
+	{ "CQEXP", 1, 1, IP_SAME, IP_COMPLEX_32        , NULL },
+
+	{ "LOG"  , 1, 1, IP_SAME, IP_ANY               , NULL },
+	{ "ALOG" , 1, 1, IP_SAME, IP_DEF_REAL          , NULL },
+	{ "DLOG" , 1, 1, IP_SAME, IP_DEF_DOUBLE        , NULL },
+	{ "QLOG" , 1, 1, IP_SAME, IP_REAL_16           , NULL },
+	{ "CLOG" , 1, 1, IP_SAME, IP_DEF_COMPLEX       , NULL },
+	{ "ZLOG" , 1, 1, IP_SAME, IP_DEF_DOUBLE_COMPLEX, NULL },
+	{ "CDLOG", 1, 1, IP_SAME, IP_DEF_DOUBLE_COMPLEX, NULL },
+	{ "CQLOG", 1, 1, IP_SAME, IP_COMPLEX_32        , NULL },
 
 	{ "LOG10" , 1, 1, IP_SAME, IP_ANY       , NULL },
 	{ "ALOG10", 1, 1, IP_SAME, IP_DEF_REAL  , NULL },
 	{ "DLOG10", 1, 1, IP_SAME, IP_DEF_DOUBLE, NULL },
+	{ "QLOG10", 1, 1, IP_SAME, IP_REAL_16   , NULL },
 
-	{ "SIN" , 1, 1, IP_SAME, IP_ANY        , NULL },
-	{ "DSIN", 1, 1, IP_SAME, IP_DEF_DOUBLE , NULL },
-	{ "CSIN", 1, 1, IP_SAME, IP_DEF_COMPLEX, NULL },
+	/* Trigonometric functions */
+	{ "SIN"  , 1, 1, IP_SAME, IP_ANY               , NULL },
+	{ "DSIN" , 1, 1, IP_SAME, IP_DEF_DOUBLE        , NULL },
+	{ "CSIN" , 1, 1, IP_SAME, IP_DEF_COMPLEX       , NULL },
+	{ "QSIN" , 1, 1, IP_SAME, IP_REAL_16           , NULL },
+	{ "ZSIN" , 1, 1, IP_SAME, IP_DEF_DOUBLE_COMPLEX, NULL },
+	{ "CDSIN", 1, 1, IP_SAME, IP_DEF_DOUBLE_COMPLEX, NULL },
+	{ "CQSIN", 1, 1, IP_SAME, IP_COMPLEX_32        , NULL },
+	{ "SIND" , 1, 1, IP_SAME, IP_ANY               , NULL },
+	{ "DSIND", 1, 1, IP_SAME, IP_DEF_DOUBLE        , NULL },
+	{ "QSIND", 1, 1, IP_SAME, IP_REAL_16           , NULL },
 
-	{ "COS" , 1, 1, IP_SAME, IP_ANY        , NULL },
-	{ "DCOS", 1, 1, IP_SAME, IP_DEF_DOUBLE , NULL },
-	{ "CCOS", 1, 1, IP_SAME, IP_DEF_COMPLEX, NULL },
+	{ "COS"  , 1, 1, IP_SAME, IP_ANY               , NULL },
+	{ "DCOS" , 1, 1, IP_SAME, IP_DEF_DOUBLE        , NULL },
+	{ "CCOS" , 1, 1, IP_SAME, IP_DEF_COMPLEX       , NULL },
+	{ "QCOS" , 1, 1, IP_SAME, IP_REAL_16           , NULL },
+	{ "ZCOS" , 1, 1, IP_SAME, IP_DEF_DOUBLE_COMPLEX, NULL },
+	{ "CDCOS", 1, 1, IP_SAME, IP_DEF_DOUBLE_COMPLEX, NULL },
+	{ "CQCOS", 1, 1, IP_SAME, IP_COMPLEX_32        , NULL },
+	{ "COSD" , 1, 1, IP_SAME, IP_ANY               , NULL },
+	{ "DCOSD", 1, 1, IP_SAME, IP_DEF_DOUBLE        , NULL },
+	{ "QCOSD", 1, 1, IP_SAME, IP_REAL_16           , NULL },
 
-	{ "TAN" , 1, 1, IP_SAME, IP_ANY       , NULL },
-	{ "DTAN", 1, 1, IP_SAME, IP_DEF_DOUBLE, NULL },
+	{ "TAN"  , 1, 1, IP_SAME, IP_ANY       , NULL },
+	{ "DTAN" , 1, 1, IP_SAME, IP_DEF_DOUBLE, NULL },
+	{ "QTAN" , 1, 1, IP_SAME, IP_REAL_16   , NULL },
+	{ "TAND" , 1, 1, IP_SAME, IP_ANY       , NULL },
+	{ "DTAND", 1, 1, IP_SAME, IP_DEF_DOUBLE, NULL },
+	{ "QTAND", 1, 1, IP_SAME, IP_REAL_16   , NULL },
 
-	{ "ASIN" , 1, 1, IP_SAME, IP_ANY       , NULL },
-	{ "DASIN", 1, 1, IP_SAME, IP_DEF_DOUBLE, NULL },
+	{ "ASIN"  , 1, 1, IP_SAME, IP_ANY       , NULL },
+	{ "DASIN" , 1, 1, IP_SAME, IP_DEF_DOUBLE, NULL },
+	{ "QASIN" , 1, 1, IP_SAME, IP_REAL_16   , NULL },
+	{ "ASIND" , 1, 1, IP_SAME, IP_ANY       , NULL },
+	{ "DASIND", 1, 1, IP_SAME, IP_DEF_DOUBLE, NULL },
+	{ "QASIND", 1, 1, IP_SAME, IP_REAL_16   , NULL },
 
-	{ "ACOS" , 1, 1, IP_SAME, IP_ANY       , NULL },
-	{ "DACOS", 1, 1, IP_SAME, IP_DEF_DOUBLE, NULL },
+	{ "ACOS"  , 1, 1, IP_SAME, IP_ANY       , NULL },
+	{ "DACOS" , 1, 1, IP_SAME, IP_DEF_DOUBLE, NULL },
+	{ "QACOS" , 1, 1, IP_SAME, IP_REAL_16   , NULL },
+	{ "ACOSD" , 1, 1, IP_SAME, IP_ANY       , NULL },
+	{ "DACOSD", 1, 1, IP_SAME, IP_DEF_DOUBLE, NULL },
+	{ "QACOSD", 1, 1, IP_SAME, IP_REAL_16   , NULL },
 
 	{ "ATAN"  , 1, 2, IP_SAME, IP_ANY       , NULL },
 	{ "DATAN" , 1, 2, IP_SAME, IP_DEF_DOUBLE, NULL },
+	{ "QATAN" , 1, 2, IP_SAME, IP_REAL_16   , NULL },
 	{ "ATAN2" , 2, 2, IP_SAME, IP_ANY       , NULL },
 	{ "DATAN2", 2, 2, IP_SAME, IP_DEF_DOUBLE, NULL },
+	{ "QATAN2", 2, 2, IP_SAME, IP_REAL_16   , NULL },
 
 	{ "SINH" , 1, 1, IP_SAME, IP_ANY       , NULL },
 	{ "DSINH", 1, 1, IP_SAME, IP_DEF_DOUBLE, NULL },
+	{ "QSINH", 1, 1, IP_SAME, IP_REAL_16   , NULL },
 
 	{ "COSH" , 1, 1, IP_SAME, IP_ANY       , NULL },
 	{ "DCOSH", 1, 1, IP_SAME, IP_DEF_DOUBLE, NULL },
+	{ "QCOSH", 1, 1, IP_SAME, IP_REAL_16   , NULL },
 
-	{ "TANH"  , 1, 1, IP_SAME, IP_ANY       , NULL },
-	{ "DTANH" , 1, 1, IP_SAME, IP_DEF_DOUBLE, NULL },
+	{ "TANH" , 1, 1, IP_SAME, IP_ANY       , NULL },
+	{ "DTANH", 1, 1, IP_SAME, IP_DEF_DOUBLE, NULL },
+	{ "QTANH", 1, 1, IP_SAME, IP_REAL_16   , NULL },
 
 	{ "ASINH" , 1, 1, IP_SAME, IP_ANY       , NULL },
 	{ "DASINH", 1, 1, IP_SAME, IP_DEF_DOUBLE, NULL },
+	{ "QASINH", 1, 1, IP_SAME, IP_REAL_16   , NULL },
 
 	{ "ACOSH" , 1, 1, IP_SAME, IP_ANY       , NULL },
 	{ "DACOSH", 1, 1, IP_SAME, IP_DEF_DOUBLE, NULL },
+	{ "QACOSH", 1, 1, IP_SAME, IP_REAL_16   , NULL },
 
-	{ "ATANH"  , 1, 1, IP_SAME, IP_ANY       , NULL },
-	{ "DATANH" , 1, 1, IP_SAME, IP_DEF_DOUBLE, NULL },
+	{ "ATANH" , 1, 1, IP_SAME, IP_ANY       , NULL },
+	{ "DATANH", 1, 1, IP_SAME, IP_DEF_DOUBLE, NULL },
+	{ "QATANH", 1, 1, IP_SAME, IP_REAL_16   , NULL },
 
 	{ "IAND", 2, 2, IP_SAME, IP_INTEGER, NULL },
 	{ "IEOR", 2, 2, IP_SAME, IP_INTEGER, NULL },
@@ -372,6 +463,38 @@ static const ofc_sema_intrinsic_op_t ofc_sema_intrinsic__op_list[] =
 	{ "NOT" , 1, 1, IP_SAME, IP_INTEGER, NULL },
 
 	{ NULL, 0, 0, 0, 0, NULL }
+};
+
+/* For the specific functions that are also generic */
+static const ofc_sema_intrinsic_op_t ofc_sema_intrinsic__op_list_override[] =
+{
+	{ "AINT" , 1, 1, IP_SAME,        IP_DEF_REAL    , NULL },
+	{ "ANINT", 1, 1, IP_SAME,        IP_DEF_REAL    , NULL },
+	{ "NINT" , 1, 1, IP_DEF_INTEGER, IP_DEF_REAL    , NULL },
+	{ "ABS"  , 1, 1, IP_SAME,        IP_DEF_REAL    , NULL },
+	{ "MOD"  , 2, 2, IP_SAME,        IP_DEF_INTEGER , NULL },
+	{ "SIGN" , 2, 2, IP_SAME,        IP_DEF_REAL    , NULL },
+	{ "DIM"  , 2, 2, IP_SAME,        IP_DEF_REAL    , NULL },
+	{ "SQRT" , 1, 1, IP_SAME,        IP_DEF_REAL    , NULL },
+	{ "EXP"  , 1, 1, IP_SAME,        IP_DEF_REAL    , NULL },
+	{ "SIN"  , 1, 1, IP_SAME,        IP_DEF_REAL    , NULL },
+	{ "COS"  , 1, 1, IP_SAME,        IP_DEF_REAL    , NULL },
+	{ "TAN"  , 1, 1, IP_SAME,        IP_DEF_REAL    , NULL },
+	{ "ASIN" , 1, 1, IP_SAME,        IP_DEF_REAL    , NULL },
+	{ "ACOS" , 1, 1, IP_SAME,        IP_DEF_REAL    , NULL },
+	{ "ATAN" , 1, 2, IP_SAME,        IP_DEF_REAL    , NULL },
+	{ "ATAN2", 2, 2, IP_SAME,        IP_DEF_REAL    , NULL },
+	{ "SINH" , 1, 1, IP_SAME,        IP_DEF_REAL    , NULL },
+	{ "COSH" , 1, 1, IP_SAME,        IP_DEF_REAL    , NULL },
+	{ "TANH" , 1, 1, IP_SAME,        IP_DEF_REAL    , NULL },
+	{ "ASINH", 1, 1, IP_SAME,        IP_DEF_REAL    , NULL },
+	{ "ACOSH", 1, 1, IP_SAME,        IP_DEF_REAL    , NULL },
+	{ "ATANH", 1, 1, IP_SAME,        IP_DEF_REAL    , NULL },
+	{ "DBLE" , 1, 1, IP_DEF_DOUBLE,  IP_INTEGER     , ofc_sema_intrinsic_op__constant_cast },
+	{ "QEXT" , 1, 1, IP_REAL_16   ,  IP_DEF_INTEGER , ofc_sema_intrinsic_op__constant_cast },
+
+	{ NULL, 0, 0, 0, 0, NULL }
+
 };
 
 
@@ -673,7 +796,7 @@ typedef struct
 	const char*                 name;
 	unsigned                    arg_min, arg_max;
 	ofc_sema_intrinsic__param_e return_type;
-	ofc_sema_intrinsic__param_e arg_type[3];
+	ofc_sema_intrinsic__param_e arg_type[4];
 
 	const ofc_sema_type_t* (*return_type_callback)(const ofc_sema_expr_list_t*);
 
@@ -721,7 +844,7 @@ static const ofc_sema_intrinsic_func_t ofc_sema_intrinsic__func_list[] =
 	{ "LLe",    2, 2, IP_LOGICAL,     { IP_CHARACTER, IP_CHARACTER       }, NULL, NULL },
 	{ "LLt",    2, 2, IP_LOGICAL,     { IP_CHARACTER, IP_CHARACTER       }, NULL, NULL },
 	{ "LShift", 2, 2, IP_DEF_INTEGER, { IP_INTEGER  , IP_INTEGER         }, NULL, NULL },
-	{ "IShft",  2, 2, IP_DEF_INTEGER, { IP_INTEGER  , IP_INTEGER         }, NULL, NULL },
+	{ "IShft",  2, 2, IP_INTEGER,     { IP_INTEGER  , IP_INTEGER         }, NULL, NULL },
 	{ "BesYN",  2, 2, IP_REAL,        { IP_INTEGER  , IP_REAL            }, NULL, NULL },
 	{ "BTest",  2, 2, IP_LOGICAL,     { IP_INTEGER  , IP_INTEGER         }, NULL, NULL },
 
@@ -733,6 +856,9 @@ static const ofc_sema_intrinsic_func_t ofc_sema_intrinsic__func_list[] =
 		ofc_sema_intrinsic__char_rt, NULL },
 	{ "IChar", 1, 2, IP_CALLBACK, { IP_CHARACTER_1, IP_INTEGER },
 		ofc_sema_intrinsic__ichar_rt, NULL },
+
+	{ "Index", 2, 4, IP_INTEGER, { IP_CHARACTER, IP_CHARACTER, IP_LOGICAL, IP_INTEGER },
+		NULL, NULL },
 
 	{ "Transfer", 2, 3, IP_CALLBACK, { IP_ANY, IP_ANY, IP_INTEGER },
 		ofc_sema_intrinsic__transfer_rt,
@@ -970,13 +1096,15 @@ static const ofc_str_ref_t* ofc_sema_intrinsic__key(
 	return &intrinsic->name;
 }
 
-static ofc_hashmap_t* ofc_sema_intrinsic__op_map   = NULL;
-static ofc_hashmap_t* ofc_sema_intrinsic__func_map = NULL;
-static ofc_hashmap_t* ofc_sema_intrinsic__subr_map = NULL;
+static ofc_hashmap_t* ofc_sema_intrinsic__op_map          = NULL;
+static ofc_hashmap_t* ofc_sema_intrinsic__op_override_map = NULL;
+static ofc_hashmap_t* ofc_sema_intrinsic__func_map        = NULL;
+static ofc_hashmap_t* ofc_sema_intrinsic__subr_map        = NULL;
 
 static void ofc_sema_intrinsic__term(void)
 {
 	ofc_hashmap_delete(ofc_sema_intrinsic__op_map);
+	ofc_hashmap_delete(ofc_sema_intrinsic__op_override_map);
 	ofc_hashmap_delete(ofc_sema_intrinsic__func_map);
 	ofc_hashmap_delete(ofc_sema_intrinsic__subr_map);
 }
@@ -1013,6 +1141,45 @@ static bool ofc_sema_intrinsic__op_map_init(void)
 			ofc_hashmap_delete(
 				ofc_sema_intrinsic__op_map);
 			ofc_sema_intrinsic__op_map = NULL;
+			return false;
+		}
+	}
+
+	return true;
+}
+
+static bool ofc_sema_intrinsic__op_override_map_init(void)
+{
+	ofc_sema_intrinsic__op_override_map = ofc_hashmap_create(
+		(void*)ofc_str_ref_ptr_hash_ci,
+		(void*)ofc_str_ref_ptr_equal_ci,
+		(void*)ofc_sema_intrinsic__key,
+		(void*)ofc_sema_intrinsic__delete);
+	if (!ofc_sema_intrinsic__op_override_map)
+		return false;
+
+	unsigned i;
+	for (i = 0; ofc_sema_intrinsic__op_list_override[i].name; i++)
+	{
+		ofc_sema_intrinsic_t* intrinsic
+			= ofc_sema_intrinsic__create_op(
+				&ofc_sema_intrinsic__op_list_override[i]);
+		if (!intrinsic)
+		{
+			ofc_hashmap_delete(
+				ofc_sema_intrinsic__op_override_map);
+			ofc_sema_intrinsic__op_override_map = NULL;
+			return false;
+		}
+
+		if (!ofc_hashmap_add(
+			ofc_sema_intrinsic__op_override_map,
+			intrinsic))
+		{
+			ofc_sema_intrinsic__delete(intrinsic);
+			ofc_hashmap_delete(
+				ofc_sema_intrinsic__op_override_map);
+			ofc_sema_intrinsic__op_override_map = NULL;
 			return false;
 		}
 	}
@@ -1101,12 +1268,14 @@ static bool ofc_sema_intrinsic__subr_map_init(void)
 static bool ofc_sema_intrinsic__init(void)
 {
 	if (ofc_sema_intrinsic__op_map
+		&& ofc_sema_intrinsic__op_override_map
 		&& ofc_sema_intrinsic__func_map
 		&& ofc_sema_intrinsic__subr_map)
 		return true;
 
 	/* TODO - Set case sensitivity based on lang_opts? */
 	if (!ofc_sema_intrinsic__op_map_init()
+		|| !ofc_sema_intrinsic__op_override_map_init()
 		|| !ofc_sema_intrinsic__func_map_init()
 		|| !ofc_sema_intrinsic__subr_map_init())
 		return false;
@@ -1137,6 +1306,87 @@ const ofc_sema_intrinsic_t* ofc_sema_intrinsic(
 		return NULL;
 
 	return func;
+}
+
+bool ofc_sema_intrinsic_is_specific(
+	const ofc_sema_intrinsic_t* func)
+{
+	if (!func)
+		return false;
+
+	if (func->type == OFC_SEMA_INTRINSIC_OP)
+	{
+		return (func->op->arg_type != IP_ANY
+				&& func->op->arg_type != IP_SCALAR);
+	}
+
+	return false;
+}
+
+bool ofc_sema_stmt_intrinsic(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt)
+{
+	if (!stmt || !scope
+		|| (stmt->type != OFC_PARSE_STMT_DECL_ATTR_INTRINSIC))
+		return false;
+
+	if (!ofc_sema_intrinsic__init())
+		return NULL;
+
+	unsigned i;
+	for (i = 0; i < stmt->decl_attr.count; i++)
+	{
+		ofc_sparse_ref_t decl_name = *stmt->decl_attr.name[i];
+
+		const ofc_sema_intrinsic_t* func = ofc_hashmap_find(
+			ofc_sema_intrinsic__op_override_map, &decl_name.string);
+		if (!func)
+		{
+			func = ofc_hashmap_find(
+				ofc_sema_intrinsic__op_map, &decl_name.string);
+			if (!func)
+			{
+				ofc_sparse_ref_error(decl_name,
+					"Function '%.*s' can't be INTRINSIC",
+					decl_name.string.size, decl_name.string.base);
+				return false;
+			}
+		}
+
+		if (!ofc_sema_intrinsic_is_specific(func))
+		{
+			ofc_sparse_ref_error(decl_name,
+				"Generic function '%.*s' can't be INTRINSIC",
+				decl_name.string.size, decl_name.string.base);
+			return false;
+		}
+
+		ofc_sema_decl_t* decl
+			= ofc_sema_scope_decl_find_create(
+				scope, decl_name, true);
+		if (!decl) return false;
+
+		if (decl->is_external)
+		{
+			ofc_sparse_ref_error(decl_name,
+				"Specifying '%.*s' as EXTERNAL and INTRINSIC",
+				decl_name.string.size, decl_name.string.base);
+			return false;
+		}
+		if (decl->is_intrinsic)
+		{
+			ofc_sparse_ref_error(decl_name,
+				"Re-declaring '%.*s' as INTRINSIC",
+				decl_name.string.size, decl_name.string.base);
+			return false;
+		}
+
+		decl->is_intrinsic = true;
+		decl->intrinsic    = func;
+	}
+
+	return true;
 }
 
 static const ofc_sema_type_t* ofc_sema_intrinsic__param_type(

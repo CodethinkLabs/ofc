@@ -77,7 +77,8 @@ ofc_sema_decl_t* ofc_sema_decl_create(
 	decl->func      = NULL;
 	decl->array     = NULL;
 	decl->structure = NULL;
-	decl->common    = false;
+	decl->common    = NULL;
+	decl->intrinsic = NULL;
 
 	if (ofc_sema_decl_is_composite(decl))
 	{
@@ -351,6 +352,13 @@ static bool ofc_sema_decl__elem(
 			scope, name, false);
 	}
 	if (!decl) return false;
+
+	if (decl->is_intrinsic)
+	{
+		ofc_sparse_ref_error(lhs->src,
+			"Invalid declaration of an INTRINSIC");
+		return false;
+	}
 
 	ofc_sema_array_t* array = NULL;
 	if (lhs->type == OFC_PARSE_LHS_ARRAY)
@@ -751,6 +759,7 @@ ofc_sema_decl_t* ofc_sema_decl_copy(
 	copy->structure = NULL;
 	copy->func      = NULL;
 	copy->common    = NULL;
+	copy->intrinsic = NULL;
 
 	if (decl->array)
 	{
@@ -771,6 +780,12 @@ ofc_sema_decl_t* ofc_sema_decl_copy(
 			return NULL;
 		}
 		copy->structure = decl->structure;
+	}
+
+	if (decl->is_intrinsic)
+	{
+		copy->is_intrinsic = true;
+		copy->intrinsic = decl->intrinsic;
 	}
 
 	return copy;
@@ -1917,6 +1932,12 @@ bool ofc_sema_decl_is_common(
 	return (decl->common != NULL);
 }
 
+bool ofc_sema_decl_is_intrinsic(
+	const ofc_sema_decl_t* decl)
+{
+	return (decl && decl->is_intrinsic);
+}
+
 
 static bool ofc_sema_decl_init__used(
 	ofc_sema_decl_init_t init,
@@ -2307,6 +2328,16 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 	if (!ofc_colstr_newline(cs, indent, NULL))
 		return false;
 
+	if (decl->is_intrinsic)
+	{
+		if (!ofc_colstr_atomic_writef(cs, "INTRINSIC")
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_sema_decl_print_name(cs, decl))
+			return false;
+
+		return true;
+	}
+
 	const ofc_sema_type_t* type = NULL;
 	bool is_pointer = false;
 	if ((decl->type->type == OFC_SEMA_TYPE_TYPE)
@@ -2359,14 +2390,6 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 		if (!ofc_colstr_atomic_writef(cs, ",")
 			|| !ofc_colstr_atomic_writef(cs, " ")
 			|| !ofc_colstr_atomic_writef(cs, "EXTERNAL"))
-			return false;
-	}
-
-	if (decl->is_intrinsic)
-	{
-		if (!ofc_colstr_atomic_writef(cs, ",")
-			|| !ofc_colstr_atomic_writef(cs, " ")
-			|| !ofc_colstr_atomic_writef(cs, "INTRINSIC"))
 			return false;
 	}
 

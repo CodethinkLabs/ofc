@@ -46,7 +46,8 @@ bool ofc_sema_stmt_is_stmt_func(
 	if (!decl) return true;
 
 	return (!ofc_sema_decl_is_array(decl)
-		&& !ofc_sema_decl_is_final(decl));
+		&& !ofc_sema_decl_is_final(decl)
+		&& !ofc_sema_decl_is_intrinsic(decl));
 }
 
 ofc_sema_stmt_t* ofc_sema_stmt_assignment(

@@ -92,22 +92,6 @@ bool ofc_sema_stmt_decl_attr(
 				}
 				decl->is_external = true;
 				break;
-			case OFC_PARSE_STMT_DECL_ATTR_INTRINSIC:
-				if (decl->is_external)
-				{
-					ofc_sparse_ref_error(stmt->src,
-						"Specifying '%.*s' as EXTERNAL and INTRINSIC",
-						decl_name.string.size, decl_name.string.base);
-					return false;
-				}
-				if (decl->is_intrinsic)
-				{
-					ofc_sparse_ref_warning(stmt->src,
-						"Re-declaring '%.*s' as INTRINSIC",
-						decl_name.string.size, decl_name.string.base);
-				}
-				decl->is_intrinsic = true;
-				break;
 			default:
 				return false;
 		}
