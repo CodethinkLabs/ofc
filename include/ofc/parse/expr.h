@@ -66,6 +66,7 @@ struct ofc_parse_expr_list_s
 };
 
 
+unsigned ofc_parse_expr_precedence(ofc_parse_expr_t* expr);
 
 /* Returns a literal unsigned integer wrapped in an expression type. */
 ofc_parse_expr_t* ofc_parse_expr_integer(
@@ -76,8 +77,7 @@ ofc_parse_expr_t* ofc_parse_expr_integer(
 /* Returns a literal unsigned integer or non-array variable as an expr type. */
 ofc_parse_expr_t* ofc_parse_expr_integer_variable(
 	const ofc_sparse_t* src, const char* ptr,
-	ofc_parse_debug_t* debug,
-	unsigned* len);
+	ofc_parse_debug_t* debug, unsigned* len);
 
 ofc_parse_expr_t* ofc_parse_expr(
 	const ofc_sparse_t* src, const char* ptr,

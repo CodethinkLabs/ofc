@@ -245,7 +245,7 @@ bool ofc_parse_operator_binary(
 	return false;
 }
 
-unsigned ofc_parse_operator_precedence(
+unsigned ofc_parse_operator_precedence_binary(
 	ofc_parse_operator_e operator)
 {
 	switch (operator)
@@ -267,14 +267,30 @@ unsigned ofc_parse_operator_precedence(
 		case OFC_PARSE_OPERATOR_GT:
 		case OFC_PARSE_OPERATOR_GE:
 			return 6;
-		case OFC_PARSE_OPERATOR_NOT:
-			return 7;
 		case OFC_PARSE_OPERATOR_AND:
 			return 8;
 		case OFC_PARSE_OPERATOR_OR:
 			return 9;
 		case OFC_PARSE_OPERATOR_EQV:
 		case OFC_PARSE_OPERATOR_NEQV:
+		default:
+			break;
+
+	}
+
+	return 10;
+}
+
+unsigned ofc_parse_operator_precedence_unary(
+	ofc_parse_operator_e operator)
+{
+	switch (operator)
+	{
+		case OFC_PARSE_OPERATOR_ADD:
+		case OFC_PARSE_OPERATOR_SUBTRACT:
+			return 0;
+		case OFC_PARSE_OPERATOR_NOT:
+			return 7;
 		default:
 			break;
 

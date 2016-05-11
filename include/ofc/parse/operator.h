@@ -55,7 +55,9 @@ bool ofc_parse_operator_unary(
 bool ofc_parse_operator_binary(
 	ofc_parse_operator_e operator);
 
-unsigned ofc_parse_operator_precedence(
+unsigned ofc_parse_operator_precedence_unary(
+	ofc_parse_operator_e operator);
+unsigned ofc_parse_operator_precedence_binary(
 	ofc_parse_operator_e operator);
 
 bool ofc_parse_operator_print(
