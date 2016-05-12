@@ -116,9 +116,8 @@ static unsigned ofc_parse_stmt_go_to_computed(
 	if (ptr[i] == ',')
 		i += 1;
 
-	stmt->go_to_list.cond
-		= ofc_parse_expr_integer_variable(
-			src, &ptr[i], debug, &len);
+	stmt->go_to_list.cond = ofc_parse_expr(
+		src, &ptr[i], debug, &len);
 	if (!stmt->go_to_list.cond)
 	{
 		ofc_parse_expr_list_delete(
