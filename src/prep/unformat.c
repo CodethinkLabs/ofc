@@ -30,7 +30,7 @@ static unsigned ofc_prep_unformat__blank_or_comment(
 
 	bool is_comment
 		= ((toupper(src[0]) == 'C') || (src[0] == '*')
-			|| (opts->debug && (toupper(src[0]) == 'D')));
+			|| (!opts->debug && (toupper(src[0]) == 'D')));
 
 	if (is_comment && strncasecmp(&src[1], "$PRAGMA", 7) == 0)
 	{
