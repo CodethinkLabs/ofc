@@ -88,6 +88,8 @@ bool ofc_sema_run_passes(
 				break;
 
 			case OFC_SEMA_PASS_INTEGER_LOGICAL:
+				if(!sema_pass_opts->integer_logical)
+					continue;
 				break;
 
 			default:
