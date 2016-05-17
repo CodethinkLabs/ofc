@@ -120,6 +120,11 @@ bool ofc_sema_lhs_init_array(
 	const ofc_sema_array_t* array,
 	unsigned count,
 	const ofc_sema_expr_t** init);
+bool ofc_sema_lhs_init_substring(
+	ofc_sema_lhs_t* lhs,
+	const ofc_sema_expr_t* init,
+	const ofc_sema_expr_t* first,
+	const ofc_sema_expr_t* last);
 
 bool ofc_sema_lhs_is_array(
 	const ofc_sema_lhs_t* lhs);

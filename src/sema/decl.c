@@ -1328,20 +1328,6 @@ bool ofc_sema_decl_init_array(
 	return true;
 }
 
-bool ofc_sema_decl_init_func(
-	ofc_sema_decl_t* decl,
-	ofc_sema_scope_t* func)
-{
-	if (!ofc_sema_decl_is_procedure(decl))
-		return false;
-
-	if (decl->func)
-		return (decl->func == func);
-
-	decl->func = func;
-	return true;
-}
-
 
 bool ofc_sema_decl_init_substring(
 	ofc_sema_decl_t* decl,
@@ -1390,10 +1376,8 @@ bool ofc_sema_decl_init_substring(
 
 	if (ofc_sema_decl_is_array(decl))
 	{
-		/* TODO - Support substrings of arrays. */
-		ofc_sparse_ref_error(init->src,
-			"Substring of array type not currently supported");
-		return false;
+		return ofc_sema_decl_init_substring_offset(
+			decl, 0, init, first, last);
 	}
 
     unsigned ufirst = 1;
@@ -1557,6 +1541,282 @@ bool ofc_sema_decl_init_substring(
 			"Overlapping initialization of substring");
 	}
 
+	return true;
+}
+
+bool ofc_sema_decl_init_substring_offset(
+	ofc_sema_decl_t* decl,
+	unsigned offset,
+	const ofc_sema_expr_t* init,
+	const ofc_sema_expr_t* first,
+	const ofc_sema_expr_t* last)
+{
+	if (!decl || !init || !first || !last
+		|| ofc_sema_decl_is_procedure(decl)
+		|| !ofc_sema_decl_type_finalize(decl))
+		return false;
+
+	if (decl->was_written
+		|| decl->was_read)
+	{
+		ofc_sparse_ref_error(init->src,
+			"Can't initialize declaration after use");
+		return false;
+	}
+
+	if (!ofc_sema_decl_type_finalize(decl))
+		return false;
+
+	if (!decl->type)
+		return false;
+
+	if (!ofc_sema_decl_is_composite(decl))
+	{
+		if (offset == 0)
+			return ofc_sema_decl_init_substring(
+				decl, init, first, last);
+		return false;
+	}
+
+	unsigned elem_count;
+	if (!ofc_sema_decl_elem_count(
+		decl, &elem_count))
+	{
+		ofc_sparse_ref_error(init->src,
+			"Can't initialize element in array of unknown size");
+		return false;
+	}
+
+	if (offset >= elem_count)
+	{
+		ofc_sparse_ref_warning(init->src,
+			"Initializer destination out-of-bounds");
+		return false;
+	}
+
+	if (!ofc_sema_expr_is_constant(init))
+	{
+		ofc_sparse_ref_error(init->src,
+			"Array initializer element not constant.");
+		return false;
+	}
+
+	if (!decl->init_array)
+	{
+		decl->init_array = (ofc_sema_decl_init_t*)malloc(
+			sizeof(ofc_sema_decl_init_t) * elem_count);
+		if (!decl->init_array) return false;
+
+		unsigned i;
+		for (i = 0; i < elem_count; i++)
+		{
+			decl->init_array[i].is_substring = false;
+			decl->init_array[i].expr = NULL;
+		}
+	}
+	else if (!decl->init_array[offset].is_substring
+		&& (decl->init_array[offset].expr != NULL))
+	{
+		/* TODO - Check if substring initializer is the same as
+		          existing initializer contents and just warn. */
+
+		ofc_sparse_ref_error(init->src,
+			"Destination already has complete initializer");
+		return false;
+	}
+
+	const ofc_sema_type_t* type
+		= ofc_sema_decl_type(decl);
+	if (!ofc_sema_type_is_character(type))
+	{
+		ofc_sparse_ref_error(init->src,
+			"Substring of non-CHARACTER type isn't supported");
+		return false;
+	}
+
+	if (type->len_var)
+	{
+		ofc_sparse_ref_error(init->src,
+			"Substring of variable length CHARACTER type isn't supported");
+		return false;
+	}
+
+    unsigned ufirst = 1;
+	if (first && !ofc_sema_expr_resolve_uint(first, &ufirst))
+	{
+		ofc_sparse_ref_error(first->src,
+			"Failed to resolve substring first index");
+		return false;
+	}
+
+	unsigned ulast = type->len;
+	if (last && !ofc_sema_expr_resolve_uint(last, &ulast))
+	{
+		ofc_sparse_ref_error(last->src,
+			"Failed to resolve substring last index");
+		return false;
+	}
+
+	if (!decl->init.is_substring
+		&& (ufirst == 1)
+		&& (ulast == type->len))
+		return ofc_sema_decl_init_offset(decl, offset, init);
+
+	if (ufirst > ulast)
+	{
+		ofc_sparse_ref_error(first->src,
+			"Substring indices are reversed in initializer");
+		/* TODO - Reverse the string and initialize with it? */
+		return false;
+	}
+
+	if (ufirst == 0)
+	{
+		ofc_sparse_ref_error(first->src,
+			"Substring indices are 1-based"
+			", index zero is out-of-bounds");
+		return false;
+	}
+
+	if (ulast > type->len)
+	{
+		ofc_sparse_ref_error(last->src,
+			"Substring initializer out-of-bounds");
+		return false;
+	}
+
+	if (ufirst == ulast)
+	{
+		ofc_sparse_ref_warning(first->src,
+			"Initializing a zero-length substring has no effect");
+		return true;
+	}
+
+	const ofc_sema_typeval_t* tv
+		= ofc_sema_expr_constant(init);
+	if (!tv)
+	{
+		ofc_sparse_ref_error(init->src,
+			"Can't resolve substring initializer as constant");
+		return false;
+	}
+
+	if (!ofc_sema_type_is_character(tv->type))
+	{
+		ofc_sparse_ref_error(init->src,
+			"Substring initializer must be of type CHARACTER");
+		return false;
+	}
+
+	unsigned ss_offset = (ufirst - 1);
+	unsigned len = (ulast - ufirst) + 1;
+
+	if (tv->type->len > len)
+	{
+		ofc_sparse_ref_warning(init->src,
+			"Substring initializer too long");
+	}
+	else if (tv->type->len < len)
+	{
+		ofc_sparse_ref_warning(init->src,
+			"Substring initializer too short");
+	}
+
+	ofc_sema_typeval_t* ctv
+		= ofc_sema_typeval_cast(tv, type);
+	if (!ctv)
+	{
+		ofc_sparse_ref_error(init->src,
+			"Failed to cast substring initializer to destination KIND");
+		return false;
+	}
+
+	unsigned tsize;
+	if (!ofc_sema_type_size(type, &tsize))
+	{
+		ofc_sema_typeval_delete(ctv);
+		return false;
+	}
+
+	if (!decl->init_array[offset].is_substring)
+	{
+		char* string = (char*)malloc(tsize);
+		if (!string)
+		{
+			ofc_sema_typeval_delete(ctv);
+			return false;
+		}
+
+		bool* mask = (bool*)malloc(
+			sizeof(bool) * type->len);
+		if (!mask)
+		{
+			free(string);
+			ofc_sema_typeval_delete(ctv);
+			return false;
+		}
+
+		unsigned i;
+		for (i = 0; i < type->len; i++)
+			mask[i] = false;
+
+		decl->init_array[offset].is_substring     = true;
+		decl->init_array[offset].substring.string = string;
+		decl->init_array[offset].substring.mask   = mask;
+	}
+
+	unsigned tcsize = tsize;
+	if (type->len > 0) tcsize /= type->len;
+
+	bool overlap = false;
+	unsigned i, j;
+	for (i = ss_offset, j = 0; j < len; i++, j++)
+	{
+		if (decl->init_array[offset].substring.mask[i])
+		{
+			if (memcmp(&decl->init_array[offset].substring.string[i * tcsize],
+				&ctv->character[j * tcsize], tcsize) != 0)
+			{
+				ofc_sparse_ref_error(init->src,
+					"Re-initialization of substring,"
+					" with different value at offset %u", (i + 1));
+				ofc_sema_typeval_delete(ctv);
+				return false;
+			}
+
+			overlap = true;
+		}
+		else
+		{
+			memcpy(&decl->init_array[offset].substring.string[i * tcsize],
+				&ctv->character[j * tcsize], tcsize);
+			decl->init_array[offset].substring.mask[i] = true;
+		}
+	}
+
+	ofc_sema_typeval_delete(ctv);
+
+	if (overlap)
+	{
+		ofc_sparse_ref_warning(init->src,
+			"Overlapping initialization of substring");
+	}
+
+	return true;
+}
+
+
+bool ofc_sema_decl_init_func(
+	ofc_sema_decl_t* decl,
+	ofc_sema_scope_t* func)
+{
+	if (!ofc_sema_decl_is_procedure(decl))
+		return false;
+
+	if (decl->func)
+		return (decl->func == func);
+
+	decl->func = func;
 	return true;
 }
 

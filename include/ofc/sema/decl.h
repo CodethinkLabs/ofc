@@ -173,15 +173,22 @@ bool ofc_sema_decl_init_array(
 	const ofc_sema_array_t* array,
 	unsigned count,
 	const ofc_sema_expr_t** init);
-bool ofc_sema_decl_init_func(
-	ofc_sema_decl_t* decl,
-	ofc_sema_scope_t* func);
 
 bool ofc_sema_decl_init_substring(
 	ofc_sema_decl_t* decl,
 	const ofc_sema_expr_t* init,
 	const ofc_sema_expr_t* first,
 	const ofc_sema_expr_t* last);
+bool ofc_sema_decl_init_substring_offset(
+	ofc_sema_decl_t* decl,
+	unsigned offset,
+	const ofc_sema_expr_t* init,
+	const ofc_sema_expr_t* first,
+	const ofc_sema_expr_t* last);
+
+bool ofc_sema_decl_init_func(
+	ofc_sema_decl_t* decl,
+	ofc_sema_scope_t* func);
 
 bool ofc_sema_decl_size(
 	const ofc_sema_decl_t* decl,

@@ -1247,9 +1247,8 @@ bool ofc_sema_lhs_init(
 		}
 
 		case OFC_SEMA_LHS_SUBSTRING:
-			/* TODO - Handle nested substrings. */
-			return ofc_sema_decl_init_substring(
-				decl, init,
+			return ofc_sema_lhs_init_substring(
+				lhs->parent, init,
 				lhs->substring.first,
 				lhs->substring.last);
 
@@ -1284,6 +1283,58 @@ bool ofc_sema_lhs_init_array(
 	return ofc_sema_decl_init_array(
 		ofc_sema_lhs_decl(lhs),
 		array, count, init);
+}
+
+bool ofc_sema_lhs_init_substring(
+	ofc_sema_lhs_t* lhs,
+	const ofc_sema_expr_t* init,
+	const ofc_sema_expr_t* first,
+	const ofc_sema_expr_t* last)
+{
+	if (!lhs || !init
+		|| !first || !last)
+		return false;
+
+	ofc_sema_decl_t* decl
+		= ofc_sema_lhs_decl(lhs);
+
+	switch (lhs->type)
+	{
+		case OFC_SEMA_LHS_DECL:
+			return ofc_sema_decl_init_substring(
+				decl, init, first, last);
+
+		case OFC_SEMA_LHS_ARRAY_INDEX:
+		{
+			unsigned offset;
+			if (!ofc_sema_array_index_offset(
+				decl, lhs->index, &offset))
+				return false;
+
+			return ofc_sema_decl_init_substring_offset(
+				decl, offset, init, first, last);
+		}
+
+		case OFC_SEMA_LHS_STRUCTURE_MEMBER:
+		{
+			ofc_sema_structure_t* structure
+				= ofc_sema_lhs_structure(lhs->parent);
+			if (!structure) return false;
+
+			unsigned offset;
+			if (!ofc_sema_structure_member_offset(
+				structure, lhs->member, &offset))
+				return false;
+
+			return ofc_sema_decl_init_substring_offset(
+				decl, offset, init, first, last);
+		}
+
+		default:
+			break;
+	}
+
+	return false;
 }
 
 
