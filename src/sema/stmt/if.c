@@ -112,13 +112,22 @@ static ofc_sema_stmt_t* ofc_sema_stmt_if__statement(
 
 	const ofc_sema_type_t* type
 		= ofc_sema_expr_type(s.if_stmt.cond);
+
 	if (!ofc_sema_type_is_logical(type))
 	{
-		ofc_sparse_ref_error(stmt->if_stmt.cond->src,
-			"IF condition type must be LOGICAL.");
+		ofc_sema_expr_t* cast = ofc_sema_expr_cast(
+			s.if_stmt.cond, ofc_sema_type_logical_default());
 
-		ofc_sema_expr_delete(s.if_stmt.cond);
-		return NULL;
+		if (!cast)
+		{
+			ofc_sparse_ref_error(stmt->if_stmt.cond->src,
+				"IF condition type must be LOGICAL.");
+
+			ofc_sema_expr_delete(s.if_stmt.cond);
+			return NULL;
+		}
+
+		s.if_stmt.cond = cast;
 	}
 
 	s.if_stmt.stmt = ofc_sema_stmt(
@@ -161,11 +170,19 @@ static ofc_sema_stmt_t* ofc_sema_stmt_if__then(
 		= ofc_sema_expr_type(s.if_then.cond);
 	if (!ofc_sema_type_is_logical(type))
 	{
-		ofc_sparse_ref_error(stmt->if_stmt.cond->src,
-			"IF condition type must be LOGICAL.");
+		ofc_sema_expr_t* cast = ofc_sema_expr_cast(
+			s.if_then.cond, ofc_sema_type_logical_default());
 
-		ofc_sema_expr_delete(s.if_then.cond);
-		return NULL;
+		if (!cast)
+		{
+			ofc_sparse_ref_error(stmt->if_then.cond->src,
+				"IF condition type must be LOGICAL.");
+
+			ofc_sema_expr_delete(s.if_then.cond);
+			return NULL;
+		}
+
+		s.if_then.cond = cast;
 	}
 
 	s.if_then.block_then = NULL;
