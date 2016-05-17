@@ -30,6 +30,8 @@ bool ofc_sema_pass_char_transfer(
 	ofc_sema_scope_t* scope);
 bool ofc_sema_pass_unused_decl(
 	ofc_sema_scope_t* scope);
+bool ofc_sema_pass_integer_logical(
+	ofc_sema_scope_t* scope);
 
 bool ofc_sema_run_passes(
 	ofc_file_t* file,

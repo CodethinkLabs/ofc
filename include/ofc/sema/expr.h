@@ -186,6 +186,8 @@ const ofc_sema_type_t* ofc_sema_expr_type(
 	const ofc_sema_expr_t* expr);
 bool ofc_sema_expr_type_is_character(
 	const ofc_sema_expr_t* expr);
+bool ofc_sema_expr_type_is_integer(
+	const ofc_sema_expr_t* expr);
 
 const ofc_sema_typeval_t* ofc_sema_expr_constant(
 	const ofc_sema_expr_t* expr);

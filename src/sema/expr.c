@@ -2056,8 +2056,16 @@ const ofc_sema_type_t* ofc_sema_expr_type(
 bool ofc_sema_expr_type_is_character(
 	const ofc_sema_expr_t* expr)
 {
-	if (!expr) return NULL;
+	if (!expr) return false;
 	return ofc_sema_type_is_character(
+		ofc_sema_expr_type(expr));
+}
+
+bool ofc_sema_expr_type_is_integer(
+	const ofc_sema_expr_t* expr)
+{
+	if (!expr) return false;
+	return ofc_sema_type_is_integer(
 		ofc_sema_expr_type(expr));
 }
 
