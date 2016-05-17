@@ -35,7 +35,7 @@ typedef struct
 		} complex;
 
 		char* character;
-	};
+	} u;
 } ofc_sema_typeval_t;
 
 

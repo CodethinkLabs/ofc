@@ -1514,7 +1514,7 @@ bool ofc_sema_decl_init_substring(
 		if (decl->init.substring.mask[i])
 		{
 			if (memcmp(&decl->init.substring.string[i * tcsize],
-				&ctv->character[j * tcsize], tcsize) != 0)
+				&ctv->u.character[j * tcsize], tcsize) != 0)
 			{
 				ofc_sparse_ref_error(init->src,
 					"Re-initialization of substring,"
@@ -1528,7 +1528,7 @@ bool ofc_sema_decl_init_substring(
 		else
 		{
 			memcpy(&decl->init.substring.string[i * tcsize],
-				&ctv->character[j * tcsize], tcsize);
+				&ctv->u.character[j * tcsize], tcsize);
 			decl->init.substring.mask[i] = true;
 		}
 	}
@@ -1775,7 +1775,7 @@ bool ofc_sema_decl_init_substring_offset(
 		if (decl->init_array[offset].substring.mask[i])
 		{
 			if (memcmp(&decl->init_array[offset].substring.string[i * tcsize],
-				&ctv->character[j * tcsize], tcsize) != 0)
+				&ctv->u.character[j * tcsize], tcsize) != 0)
 			{
 				ofc_sparse_ref_error(init->src,
 					"Re-initialization of substring,"
@@ -1789,7 +1789,7 @@ bool ofc_sema_decl_init_substring_offset(
 		else
 		{
 			memcpy(&decl->init_array[offset].substring.string[i * tcsize],
-				&ctv->character[j * tcsize], tcsize);
+				&ctv->u.character[j * tcsize], tcsize);
 			decl->init_array[offset].substring.mask[i] = true;
 		}
 	}
@@ -2176,7 +2176,7 @@ bool ofc_sema_decl_list_add(
 	unsigned slot;
 	if (list->count >= list->size)
 	{
-		unsigned nsize = list->count + 1;
+                unsigned nsize = list->count + 1;  // TODO: double the size instead of just adding one?
 		ofc_sema_decl_t** ndecl
 			= (ofc_sema_decl_t**)realloc(list->decl,
 				(sizeof(ofc_sema_decl_t*) * nsize));
@@ -2193,7 +2193,7 @@ bool ofc_sema_decl_list_add(
 	else
 	{
 		unsigned i;
-		for (i = 0; i < list->size; i++)
+		for (slot = 0, i = 0; i < list->size; i++)
 		{
 			if (list->decl[i] == NULL)
 			{

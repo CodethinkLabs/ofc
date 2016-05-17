@@ -61,14 +61,14 @@ static bool ofc_sema_typeval__in_range(
 		typeval->type, &size))
 		return false;
 
-	if (size >= sizeof(typeval->integer))
+	if (size >= sizeof(typeval->u.integer))
 		return true;
 
 	int64_t imax = 1LL << ((size * 8) - 1);
 	int64_t imin = -imax;
 
-	return ((typeval->integer < imax)
-		&& (typeval->integer >= imin));
+	return ((typeval->u.integer < imax)
+		&& (typeval->u.integer >= imin));
 }
 
 static bool ofc_sema_typeval__clamp_range(
@@ -90,18 +90,18 @@ static bool ofc_sema_typeval__clamp_range(
 		typeval->type, &size))
 		return false;
 
-	if (size >= sizeof(typeval->integer))
+	if (size >= sizeof(typeval->u.integer))
 		return true;
 
 	int64_t imax = 1LL << (size * 8);
 	int64_t imin = -(imax >> 1);
 
-	if ((typeval->integer >= imax)
-		|| (typeval->integer < imin))
+	if ((typeval->u.integer >= imax)
+		|| (typeval->u.integer < imin))
 		return false;
 
-	if (typeval->integer > (imax >> 1))
-		typeval->integer |= (0xFFFFFFFFFFFFFFFFULL << (64 - (size * 8)));
+	if (typeval->u.integer > (imax >> 1))
+		typeval->u.integer |= (0xFFFFFFFFFFFFFFFFULL << (64 - (size * 8)));
 
 	return true;
 }
@@ -170,8 +170,8 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 			return NULL;
 	}
 
-	const char* ptr  = literal->number.base;
-	unsigned    size = literal->number.size;
+	const char* ptr  = literal->u.number.base;
+	unsigned    size = literal->u.number.size;
 
 	if (!ptr || (size == 0))
 		return NULL;
@@ -182,7 +182,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 		i += 1;
 
 	ofc_sema_typeval_t typeval
-		= { .type = type, .integer = 0 };
+          = { .type = type, .u = { .integer = 0 } };
 
 	bool out_of_range = false;
 	uint64_t uvalue = 0;
@@ -198,19 +198,19 @@ static ofc_sema_typeval_t* ofc_sema_typeval__integer_literal(
 
 	}
 
-	uint64_t smax = (1LL << ((sizeof(typeval.integer) * 8) - 1));
+	uint64_t smax = (1LL << ((sizeof(typeval.u.integer) * 8) - 1));
 
 	if (negate)
 	{
 		if (uvalue > smax)
 			out_of_range = true;
-		typeval.integer = -uvalue;
+		typeval.u.integer = -uvalue;
 	}
 	else
 	{
 		if (uvalue >= smax)
 			out_of_range = true;
-		typeval.integer = uvalue;
+		typeval.u.integer = uvalue;
 	}
 
 	if (out_of_range)
@@ -504,8 +504,8 @@ static ofc_sema_typeval_t* ofc_sema_typeval__real_literal(
 
 	unsigned kind = 0;
 	if (!ofc_sema_typeval__real(
-		literal, literal->number, tkind,
-		&typeval.real, &kind))
+		literal, literal->u.number, tkind,
+		&typeval.u.real, &kind))
 		return NULL;
 
 	if (!typeval.type)
@@ -547,11 +547,11 @@ static ofc_sema_typeval_t* ofc_sema_typeval__complex_literal(
 	unsigned ikind = 0;
 
 	if (!ofc_sema_typeval__real(
-		literal, literal->complex.real, tkind,
-		&typeval.complex.real, &rkind)
+		literal, literal->u.complex.real, tkind,
+		&typeval.u.complex.real, &rkind)
 		|| !ofc_sema_typeval__real(
-			literal, literal->complex.imaginary, tkind,
-			&typeval.complex.imaginary, &ikind))
+			literal, literal->u.complex.imaginary, tkind,
+			&typeval.u.complex.imaginary, &ikind))
 		return NULL;
 
 	unsigned rsize, isize;
@@ -611,11 +611,11 @@ static ofc_sema_typeval_t* ofc_sema_typeval__character_literal(
 			return NULL;
 	}
 
-	if ((literal->string->size > 0)
-		&& !literal->string->base)
+	if ((literal->u.string->size > 0)
+		&& !literal->u.string->base)
 		return NULL;
 
-	unsigned size = literal->string->size;
+	unsigned size = literal->u.string->size;
 
 	if (type)
 	{
@@ -656,38 +656,38 @@ static ofc_sema_typeval_t* ofc_sema_typeval__character_literal(
 		if (size != 1)
 			return NULL;
 
-		typeval.integer = literal->string->base[0];
+		typeval.u.integer = literal->u.string->base[0];
 	}
 	else if (size == 0)
 	{
-		typeval.character = NULL;
+		typeval.u.character = NULL;
 	}
 	else
 	{
-		typeval.character = (char*)malloc(sizeof(char) * size);
-		if (!typeval.character)
+		typeval.u.character = (char*)malloc(sizeof(char) * size);
+		if (!typeval.u.character)
 			return NULL;
 
-		if (literal->string->size > size)
+		if (literal->u.string->size > size)
 		{
 			memcpy(
-				typeval.character,
-				literal->string->base, size);
+				typeval.u.character,
+				literal->u.string->base, size);
 			ofc_sparse_ref_warning(literal->src,
 				"String truncated");
 		}
 		else
 		{
 			memcpy(
-				typeval.character,
-				literal->string->base,
-				literal->string->size);
+				typeval.u.character,
+				literal->u.string->base,
+				literal->u.string->size);
 
-			if (literal->string->size < size)
+			if (literal->u.string->size < size)
 			{
-				unsigned offset = literal->string->size;
+				unsigned offset = literal->u.string->size;
 				unsigned ssize = (size - offset);
-				memset(&typeval.character[offset], ' ', ssize);
+				memset(&typeval.u.character[offset], ' ', ssize);
 
 				ofc_sparse_ref_warning(literal->src,
 					"String padded");
@@ -699,7 +699,7 @@ static ofc_sema_typeval_t* ofc_sema_typeval__character_literal(
 
 	ofc_sema_typeval_t* atv
 		= ofc_sema_typeval__alloc(typeval);
-	if (!atv && !is_byte) free(typeval.character);
+	if (!atv && !is_byte) free(typeval.u.character);
 	return atv;
 }
 
@@ -744,9 +744,9 @@ static ofc_sema_typeval_t* ofc_sema_typeval__logical_literal(
 	}
 
 	if (is_byte)
-		typeval.integer = literal->logical;
+		typeval.u.integer = literal->u.logical;
 	else
-		typeval.logical = literal->logical;
+		typeval.u.logical = literal->u.logical;
 
 	typeval.src = literal->src;
 
@@ -804,7 +804,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_create_integer(
 	if (!typeval) return NULL;
 
 	typeval->type = type;
-	typeval->integer = value;
+	typeval->u.integer = value;
 	typeval->src = ref;
 
 	if (!ofc_sema_typeval__in_range(typeval))
@@ -834,7 +834,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_create_logical(
 	if (!typeval) return NULL;
 
 	typeval->type = type;
-	typeval->logical = value;
+	typeval->u.logical = value;
 	typeval->src = ref;
 	return typeval;
 }
@@ -857,7 +857,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_create_real(
 	if (!typeval) return NULL;
 
 	typeval->type = type;
-	typeval->real = value;
+	typeval->u.real = value;
 	typeval->src  = ref;
 	return typeval;
 }
@@ -881,8 +881,8 @@ ofc_sema_typeval_t* ofc_sema_typeval_create_complex(
 	if (!typeval) return NULL;
 
 	typeval->type = type;
-	typeval->complex.real = real;
-	typeval->complex.imaginary = imaginary;
+	typeval->u.complex.real = real;
+	typeval->u.complex.imaginary = imaginary;
 	typeval->src  = ref;
 	return typeval;
 }
@@ -942,7 +942,7 @@ void ofc_sema_typeval_delete(
 
 	if (typeval->type
 		&& (typeval->type->type == OFC_SEMA_TYPE_CHARACTER))
-		free(typeval->character);
+		free(typeval->u.character);
 
 	free(typeval);
 }
@@ -965,24 +965,24 @@ bool ofc_sema_typeval_compare(
 	switch (a->type->type)
 	{
 		case OFC_SEMA_TYPE_LOGICAL:
-			return (a->logical == b->logical);
+			return (a->u.logical == b->u.logical);
 		case OFC_SEMA_TYPE_INTEGER:
-			return (a->integer == b->integer);
+			return (a->u.integer == b->u.integer);
 		case OFC_SEMA_TYPE_REAL:
-			return (a->real == b->real);
+			return (a->u.real == b->u.real);
 		case OFC_SEMA_TYPE_COMPLEX:
-			return ((a->complex.real == b->complex.real)
-				&& (a->complex.imaginary == b->complex.imaginary));
+			return ((a->u.complex.real == b->u.complex.real)
+				&& (a->u.complex.imaginary == b->u.complex.imaginary));
 		case OFC_SEMA_TYPE_BYTE:
-			return ((a->integer & 0xFF) == (b->integer & 0xFF));
+			return ((a->u.integer & 0xFF) == (b->u.integer & 0xFF));
 		case OFC_SEMA_TYPE_CHARACTER:
 			{
 				unsigned size;
 				if (!ofc_sema_type_size(
 					a->type, &size))
 					return false;
-				return (memcmp(a->character,
-					b->character, size) == 0);
+				return (memcmp(a->u.character,
+					b->u.character, size) == 0);
 			}
 		default:
 			break;
@@ -1002,13 +1002,13 @@ bool ofc_sema_typeval_is_one(
 	switch (typeval->type->type)
 	{
 		case OFC_SEMA_TYPE_INTEGER:
-			return (typeval->integer == 1);
+			return (typeval->u.integer == 1);
 		case OFC_SEMA_TYPE_BYTE:
-			return ((typeval->integer & 0xFF) == 1);
+			return ((typeval->u.integer & 0xFF) == 1);
 		case OFC_SEMA_TYPE_REAL:
-			return (typeval->real == 1.0);
+			return (typeval->u.real == 1.0);
 		case OFC_SEMA_TYPE_COMPLEX:
-			return (typeval->complex.real == 1.0);
+			return (typeval->u.complex.real == 1.0);
 		default:
 			break;
 	}
@@ -1045,18 +1045,18 @@ ofc_sema_typeval_t* ofc_sema_typeval_copy(
 	if (copy->type->type == OFC_SEMA_TYPE_CHARACTER)
 	{
 		unsigned size = ofc_sema_typeval_size(typeval);
-		copy->character = NULL;
+		copy->u.character = NULL;
 		if (size > 0)
 		{
-			copy->character = malloc(size);
-			if (!copy->character)
+			copy->u.character = malloc(size);
+			if (!copy->u.character)
 			{
 				free(copy);
 				return NULL;
 			}
 
-			memcpy(copy->character,
-				typeval->character, size);
+			memcpy(copy->u.character,
+				typeval->u.character, size);
 		}
 	}
 
@@ -1117,8 +1117,8 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 		ofc_sparse_ref_warning(typeval->src,
 			"Casting CHARACTER to INTEGER");
 
-		tv.integer = 0;
-		memcpy(&tv.integer, typeval->character, csize);
+		tv.u.integer = 0;
+		memcpy(&tv.u.integer, typeval->u.character, csize);
 		return ofc_sema_typeval__alloc(tv);
 	}
 
@@ -1147,16 +1147,16 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 		}
 		else if (tsize < csize)
 		{
-			tv.character = (char*)malloc(len_type * csize);
+			tv.u.character = (char*)malloc(len_type * csize);
 
 			unsigned wchar;
 			for (wchar = 0; wchar < len_type; wchar += csize)
 			{
-				memcpy(&tv.character[wchar], typeval->character, tsize);
+				memcpy(&tv.u.character[wchar], typeval->u.character, tsize);
 
 				unsigned wchar_pad;
 				for (wchar_pad = 1; wchar_pad < csize; wchar_pad++)
-					tv.character[wchar + wchar_pad] = '\0';
+					tv.u.character[wchar + wchar_pad] = '\0';
 			}
 
 			if (len_tval < len_type)
@@ -1165,37 +1165,37 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 				for (pad_char = len_tval; pad_char < len_type;
 					pad_char += csize)
 				{
-					tv.character[pad_char] = ' ';
+					tv.u.character[pad_char] = ' ';
 					for(pad_byte = 1; pad_byte < csize; pad_byte++)
 					{
-						tv.character[pad_char + pad_byte] = '\0';
+						tv.u.character[pad_char + pad_byte] = '\0';
 					}
 				}
 			}
 		}
 		else
 		{
-			tv.character = (char*)malloc(len_type * csize);
+			tv.u.character = (char*)malloc(len_type * csize);
 
 			if (len_tval < len_type)
 			{
-				memcpy(tv.character, typeval->character,
+				memcpy(tv.u.character, typeval->u.character,
 					(len_tval * csize));
 
 				unsigned pad_char, pad_byte;
 				for (pad_char = (len_tval * csize); pad_char < (len_type * csize);
 					pad_char += csize)
 				{
-					tv.character[pad_char] = ' ';
+					tv.u.character[pad_char] = ' ';
 					for(pad_byte = 1; pad_byte < csize; pad_byte++)
 					{
-						tv.character[pad_char + pad_byte] = '\0';
+						tv.u.character[pad_char + pad_byte] = '\0';
 					}
 				}
 			}
 			else
 			{
-				memcpy(tv.character, typeval->character,
+				memcpy(tv.u.character, typeval->u.character,
 					(len_type * csize));
 			}
 		}
@@ -1241,7 +1241,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 			{
 				case OFC_SEMA_TYPE_INTEGER:
 				case OFC_SEMA_TYPE_BYTE:
-					tv.logical = (typeval->integer != 0);
+					tv.u.logical = (typeval->u.integer != 0);
 					break;
 				default:
 					invalid_cast = true;
@@ -1253,21 +1253,21 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 			switch (typeval->type->type)
 			{
 				case OFC_SEMA_TYPE_LOGICAL:
-					tv.integer = (typeval->logical ? 1 : 0);
+					tv.u.integer = (typeval->u.logical ? 1 : 0);
 					break;
 				case OFC_SEMA_TYPE_REAL:
-					tv.integer = (int64_t)typeval->real;
-					if ((long double)tv.integer != typeval->real)
+					tv.u.integer = (int64_t)typeval->u.real;
+					if ((long double)tv.u.integer != typeval->u.real)
 						lossy_cast = true;
 					break;
 				case OFC_SEMA_TYPE_COMPLEX:
-					tv.integer = (int64_t)typeval->complex.real;
-					if (((long double)tv.integer != typeval->complex.real)
-						|| (typeval->complex.imaginary != 0.0))
+					tv.u.integer = (int64_t)typeval->u.complex.real;
+					if (((long double)tv.u.integer != typeval->u.complex.real)
+						|| (typeval->u.complex.imaginary != 0.0))
 						lossy_cast = true;
 					break;
 				case OFC_SEMA_TYPE_BYTE:
-					tv.integer = typeval->integer;
+					tv.u.integer = typeval->u.integer;
 					break;
 				default:
 					invalid_cast = true;
@@ -1277,17 +1277,17 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 			if (csize < 8)
 			{
 				int64_t imax = 1LL << ((csize * 8) - 1);
-				if ((tv.integer < -imax)
-					|| (tv.integer >= imax))
+				if ((tv.u.integer < -imax)
+					|| (tv.u.integer >= imax))
 				{
 					lossy_cast = true;
 
 					int64_t sign_mask = -1LL;
 					sign_mask ^= (imax - 1);
 
-					tv.integer = (tv.integer < 0
-						? (tv.integer | sign_mask)
-						: (tv.integer & (imax - 1)));
+					tv.u.integer = (tv.u.integer < 0
+						? (tv.u.integer | sign_mask)
+						: (tv.u.integer & (imax - 1)));
 				}
 			}
 			break;
@@ -1297,11 +1297,11 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 			{
 				case OFC_SEMA_TYPE_INTEGER:
 				case OFC_SEMA_TYPE_BYTE:
-					tv.real = (long double)typeval->integer;
+					tv.u.real = (long double)typeval->u.integer;
 					break;
 				case OFC_SEMA_TYPE_COMPLEX:
-					tv.real = typeval->complex.real;
-					if (typeval->complex.imaginary != 0.0)
+					tv.u.real = typeval->u.complex.real;
+					if (typeval->u.complex.imaginary != 0.0)
 						lossy_cast = true;
 					break;
 				default:
@@ -1315,50 +1315,50 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 			{
 				case OFC_SEMA_TYPE_INTEGER:
 				case OFC_SEMA_TYPE_BYTE:
-					tv.complex.real = (long double)typeval->integer;
+					tv.u.complex.real = (long double)typeval->u.integer;
 					break;
 				case OFC_SEMA_TYPE_REAL:
-					tv.complex.real = typeval->real;
+					tv.u.complex.real = typeval->u.real;
 					break;
 				default:
 					invalid_cast = true;
 					break;
 			}
-			tv.complex.imaginary = 0.0;
+			tv.u.complex.imaginary = 0.0;
 			break;
 
 		case OFC_SEMA_TYPE_BYTE:
 			switch (typeval->type->type)
 			{
 				case OFC_SEMA_TYPE_LOGICAL:
-					tv.integer = (typeval->logical ? 1 : 0);
+					tv.u.integer = (typeval->u.logical ? 1 : 0);
 					break;
 				case OFC_SEMA_TYPE_REAL:
-					tv.integer = (int64_t)typeval->real;
-					if ((long double)tv.integer != typeval->real)
+					tv.u.integer = (int64_t)typeval->u.real;
+					if ((long double)tv.u.integer != typeval->u.real)
 						lossy_cast = true;
 					break;
 				case OFC_SEMA_TYPE_COMPLEX:
-					tv.integer = (int64_t)typeval->complex.real;
-					if (((long double)tv.integer != typeval->complex.real)
-						|| (typeval->complex.imaginary != 0.0))
+					tv.u.integer = (int64_t)typeval->u.complex.real;
+					if (((long double)tv.u.integer != typeval->u.complex.real)
+						|| (typeval->u.complex.imaginary != 0.0))
 						lossy_cast = true;
 					break;
 				case OFC_SEMA_TYPE_INTEGER:
 				case OFC_SEMA_TYPE_BYTE:
-					tv.integer = typeval->integer;
+					tv.u.integer = typeval->u.integer;
 					break;
 				default:
 					invalid_cast = true;
 					break;
 			}
-			if ((tv.integer < -128)
-				|| (tv.integer >= 128))
+			if ((tv.u.integer < -128)
+				|| (tv.u.integer >= 128))
 			{
 				lossy_cast = true;
-				tv.integer = (tv.integer < 0
-					? (tv.integer | 0xFFFFFFFFFFFFFF00LL)
-					: (tv.integer & 0xFF));
+				tv.u.integer = (tv.u.integer < 0
+					? (tv.u.integer | 0xFFFFFFFFFFFFFF00LL)
+					: (tv.u.integer & 0xFF));
 			}
 			break;
 
@@ -1402,9 +1402,9 @@ bool ofc_sema_typeval_get_logical(
 	{
 		if (typeval->type->type
 			== OFC_SEMA_TYPE_BYTE)
-			*logical = (typeval->integer != 0);
+			*logical = (typeval->u.integer != 0);
 		else
-			*logical = typeval->logical;
+			*logical = typeval->u.logical;
 	}
 
 	return true;
@@ -1428,13 +1428,13 @@ bool ofc_sema_typeval_get_integer(
 		if (!tv) return false;
 
 		if (integer)
-			*integer = tv->integer;
+			*integer = tv->u.integer;
 		ofc_sema_typeval_delete(tv);
 		return true;
 	}
 
 	if (integer)
-		*integer = typeval->integer;
+		*integer = typeval->u.integer;
 	return true;
 }
 
@@ -1448,20 +1448,20 @@ bool ofc_sema_typeval_get_real(
 	switch (typeval->type->type)
 	{
 		case OFC_SEMA_TYPE_LOGICAL:
-			if (real) *real = (typeval->logical ? 1.0 : 0.0);
+			if (real) *real = (typeval->u.logical ? 1.0 : 0.0);
 			break;
 
 		case OFC_SEMA_TYPE_INTEGER:
 		case OFC_SEMA_TYPE_BYTE:
-			if (real) *real = (long double)typeval->integer;
+			if (real) *real = (long double)typeval->u.integer;
 			break;
 
 		case OFC_SEMA_TYPE_REAL:
-			if (real) *real = typeval->real;
+			if (real) *real = typeval->u.real;
 			break;
 
 		case OFC_SEMA_TYPE_COMPLEX:
-			if (real) *real = typeval->complex.real;
+			if (real) *real = typeval->u.complex.real;
 			break;
 
 		default:
@@ -1482,9 +1482,9 @@ bool ofc_sema_typeval_get_complex(
 	/* TODO - Casting. */
 
 	if (real)
-		*real = typeval->complex.real;
+		*real = typeval->u.complex.real;
 	if (imaginary)
-		*real = typeval->complex.imaginary;
+		*real = typeval->u.complex.imaginary;
 	return true;
 }
 
@@ -1499,7 +1499,7 @@ bool ofc_sema_typeval_get_character(
 		== OFC_SEMA_TYPE_BYTE)
 	{
 		if (character)
-			*character = (const char*)&typeval->integer;
+			*character = (const char*)&typeval->u.integer;
 		return true;
 	}
 
@@ -1510,7 +1510,7 @@ bool ofc_sema_typeval_get_character(
 		return false;
 
 	if (character)
-		*character = typeval->character;
+		*character = typeval->u.character;
 	return true;
 }
 
@@ -1536,8 +1536,8 @@ static bool ofc_typeval_character_equal__strz(
 		return false;
 
 	return ((case_sensitive
-		? strncmp(tv->character, strz, slen)
-		: strncasecmp(tv->character, strz, slen)) == 0);
+		? strncmp(tv->u.character, strz, slen)
+		: strncasecmp(tv->u.character, strz, slen)) == 0);
 }
 
 bool ofc_typeval_character_equal_strz(
@@ -1574,36 +1574,36 @@ ofc_sema_typeval_t* ofc_sema_typeval_power(
 	switch (a->type->type)
 	{
 		case OFC_SEMA_TYPE_REAL:
-			tv.real = powl(a->real, b->real);
+			tv.u.real = powl(a->u.real, b->u.real);
 			break;
 		case OFC_SEMA_TYPE_COMPLEX:
 			{
-				long double abs = hypotl(a->complex.real, a->complex.imaginary);
+				long double abs = hypotl(a->u.complex.real, a->u.complex.imaginary);
 				if (abs == 0.0)
 				{
-					tv.complex.real      = 0.0;
-					tv.complex.imaginary = 0.0;
+					tv.u.complex.real      = 0.0;
+					tv.u.complex.imaginary = 0.0;
 					break;
 				}
-				long double arg = atan2l(a->complex.imaginary, a->complex.real);
-				long double radio = powl(abs, b->complex.real);
-				long double ang = arg * b->complex.real;
-				if (b->complex.imaginary)
+				long double arg = atan2l(a->u.complex.imaginary, a->u.complex.real);
+				long double radio = powl(abs, b->u.complex.real);
+				long double ang = arg * b->u.complex.real;
+				if (b->u.complex.imaginary)
 				{
-					radio = radio * exp(-b->complex.imaginary * arg);
-					ang = ang + (b->complex.imaginary * log(abs));
+					radio = radio * exp(-b->u.complex.imaginary * arg);
+					ang = ang + (b->u.complex.imaginary * log(abs));
 				}
-				tv.complex.real = radio * cos(ang);
-				tv.complex.imaginary = radio * sin(ang);
+				tv.u.complex.real = radio * cos(ang);
+				tv.u.complex.imaginary = radio * sin(ang);
 			}
 			break;
 		case OFC_SEMA_TYPE_INTEGER:
 		case OFC_SEMA_TYPE_BYTE:
 			{
 				long double r = powl(
-					a->integer, b->integer);
-				tv.integer = (int64_t)r;
-				if ((long double)tv.integer != r)
+					a->u.integer, b->u.integer);
+				tv.u.integer = (int64_t)r;
+				if ((long double)tv.u.integer != r)
 					return NULL;
 			}
 			break;
@@ -1634,19 +1634,19 @@ ofc_sema_typeval_t* ofc_sema_typeval_multiply(
 	switch (a->type->type)
 	{
 		case OFC_SEMA_TYPE_REAL:
-			tv.real = a->real * b->real;
+			tv.u.real = a->u.real * b->u.real;
 			break;
 		case OFC_SEMA_TYPE_COMPLEX:
-			tv.complex.real = (a->complex.real * b->complex.real)
-				- (a->complex.imaginary * b->complex.imaginary);
-			tv.complex.imaginary = (a->complex.real * b->complex.imaginary)
-				+ (b->complex.real * a->complex.imaginary);
+			tv.u.complex.real = (a->u.complex.real * b->u.complex.real)
+				- (a->u.complex.imaginary * b->u.complex.imaginary);
+			tv.u.complex.imaginary = (a->u.complex.real * b->u.complex.imaginary)
+				+ (b->u.complex.real * a->u.complex.imaginary);
 			break;
 		case OFC_SEMA_TYPE_INTEGER:
 		case OFC_SEMA_TYPE_BYTE:
-			tv.integer = a->integer * b->integer;
-			if ((b->integer != 0)
-				&& ((tv.integer / b->integer) != a->integer))
+			tv.u.integer = a->u.integer * b->u.integer;
+			if ((b->u.integer != 0)
+				&& ((tv.u.integer / b->u.integer) != a->u.integer))
 				return NULL;
 			break;
 		default:
@@ -1693,15 +1693,15 @@ ofc_sema_typeval_t* ofc_sema_typeval_concat(
 	ofc_sparse_ref_bridge(
 		a->src, b->src, &tv.src);
 
-	tv.character = (char*)malloc(sizeof(char) * len);
-	if (!tv.character) return NULL;
+	tv.u.character = (char*)malloc(sizeof(char) * len);
+	if (!tv.u.character) return NULL;
 
-	memcpy(tv.character, a->character, len_a);
-	memcpy(&tv.character[len_a], b->character, len_b);
+	memcpy(tv.u.character, a->u.character, len_a);
+	memcpy(&tv.u.character[len_a], b->u.character, len_b);
 
 	ofc_sema_typeval_t* ret
 		= ofc_sema_typeval__alloc(tv);
-	if (!ret) free(tv.character);
+	if (!ret) free(tv.u.character);
 	return ret;
 }
 
@@ -1725,29 +1725,29 @@ ofc_sema_typeval_t* ofc_sema_typeval_divide(
 	switch (a->type->type)
 	{
 		case OFC_SEMA_TYPE_REAL:
-			tv.real = a->real / b->real;
+			tv.u.real = a->u.real / b->u.real;
 			break;
 		case OFC_SEMA_TYPE_COMPLEX:
 			{
-				long double div = powl(b->complex.real, 2.0)
-					+ powl(b->complex.imaginary, 2.0);
-				tv.complex.real
-					= ((a->complex.real * b->complex.real)
-						+ (a->complex.imaginary * b->complex.imaginary)) / div;
-				tv.complex.imaginary
-					= ((a->complex.imaginary * b->complex.real)
-						- (a->complex.real * b->complex.imaginary)) / div;
+				long double div = powl(b->u.complex.real, 2.0)
+					+ powl(b->u.complex.imaginary, 2.0);
+				tv.u.complex.real
+					= ((a->u.complex.real * b->u.complex.real)
+						+ (a->u.complex.imaginary * b->u.complex.imaginary)) / div;
+				tv.u.complex.imaginary
+					= ((a->u.complex.imaginary * b->u.complex.real)
+						- (a->u.complex.real * b->u.complex.imaginary)) / div;
 			}
 			break;
 		case OFC_SEMA_TYPE_INTEGER:
 		case OFC_SEMA_TYPE_BYTE:
-			if (b->integer == 0)
+			if (b->u.integer == 0)
 			{
 				ofc_sparse_ref_error(a->src,
 					"Divide by zero");
 				return NULL;
 			}
-			tv.integer = a->integer / b->integer;
+			tv.u.integer = a->u.integer / b->u.integer;
 			break;
 		default:
 			return NULL;
@@ -1776,17 +1776,17 @@ ofc_sema_typeval_t* ofc_sema_typeval_add(
 	switch (a->type->type)
 	{
 		case OFC_SEMA_TYPE_REAL:
-			tv.real = a->real + b->real;
+			tv.u.real = a->u.real + b->u.real;
 			break;
 		case OFC_SEMA_TYPE_COMPLEX:
-			tv.complex.real = a->complex.real + b->complex.real;
-			tv.complex.imaginary
-				= a->complex.imaginary + b->complex.imaginary;
+			tv.u.complex.real = a->u.complex.real + b->u.complex.real;
+			tv.u.complex.imaginary
+				= a->u.complex.imaginary + b->u.complex.imaginary;
 				break;
 		case OFC_SEMA_TYPE_INTEGER:
 		case OFC_SEMA_TYPE_BYTE:
 			/* TODO - Detect overflow. */
-			tv.integer = a->integer + b->integer;
+			tv.u.integer = a->u.integer + b->u.integer;
 			break;
 		default:
 			return NULL;
@@ -1815,17 +1815,17 @@ ofc_sema_typeval_t* ofc_sema_typeval_subtract(
 	switch (a->type->type)
 	{
 		case OFC_SEMA_TYPE_REAL:
-			tv.real = a->real - b->real;
+			tv.u.real = a->u.real - b->u.real;
 			break;
 		case OFC_SEMA_TYPE_COMPLEX:
-			tv.complex.real = a->complex.real - b->complex.real;
-			tv.complex.imaginary
-				= a->complex.imaginary - b->complex.imaginary;
+			tv.u.complex.real = a->u.complex.real - b->u.complex.real;
+			tv.u.complex.imaginary
+				= a->u.complex.imaginary - b->u.complex.imaginary;
 			break;
 		case OFC_SEMA_TYPE_INTEGER:
 		case OFC_SEMA_TYPE_BYTE:
 			/* TODO - Detect overflow. */
-			tv.integer = a->integer - b->integer;
+			tv.u.integer = a->u.integer - b->u.integer;
 			break;
 		default:
 			return NULL;
@@ -1843,20 +1843,21 @@ ofc_sema_typeval_t* ofc_sema_typeval_negate(
 	ofc_sema_typeval_t tv;
 	tv.type = a->type;
 	tv.src  = a->src;
+        tv.u.integer = 0;
 
 	switch (a->type->type)
 	{
 		case OFC_SEMA_TYPE_REAL:
-			tv.real = -a->real;
+			tv.u.real = -a->u.real;
 			break;
 		case OFC_SEMA_TYPE_COMPLEX:
-			tv.complex.real = -a->complex.real;
-			tv.complex.imaginary = -a->complex.imaginary;
+			tv.u.complex.real = -a->u.complex.real;
+			tv.u.complex.imaginary = -a->u.complex.imaginary;
 			break;
 		case OFC_SEMA_TYPE_INTEGER:
 		case OFC_SEMA_TYPE_BYTE:
-			tv.integer = -a->integer;
-			if (-tv.integer != a->integer)
+			tv.u.integer = -a->u.integer;
+			if (-tv.u.integer != a->u.integer)
 			{
 				ofc_sparse_ref_error(a->src,
 					"Overflow in constant negate");
@@ -1904,7 +1905,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_eq(
 			|| (asize != bsize))
 			return NULL;
 
-		tv.logical = (memcmp(a->character, b->character,
+		tv.u.logical = (memcmp(a->u.character, b->u.character,
 			(a->type->len * asize)) == 0);
 	}
 	else
@@ -1912,15 +1913,15 @@ ofc_sema_typeval_t* ofc_sema_typeval_eq(
 		switch (a->type->type)
 		{
 			case OFC_SEMA_TYPE_REAL:
-				tv.logical = (a->real == b->real);
+				tv.u.logical = (a->u.real == b->u.real);
 				break;
 			case OFC_SEMA_TYPE_COMPLEX:
-				tv.logical = ((a->complex.real == b->complex.real)
-					&& (a->complex.imaginary == b->complex.imaginary));
+				tv.u.logical = ((a->u.complex.real == b->u.complex.real)
+					&& (a->u.complex.imaginary == b->u.complex.imaginary));
 				break;
 			case OFC_SEMA_TYPE_INTEGER:
 			case OFC_SEMA_TYPE_BYTE:
-				tv.logical = (a->integer == b->integer);
+				tv.u.logical = (a->u.integer == b->u.integer);
 				break;
 			default:
 				return NULL;
@@ -1964,7 +1965,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_ne(
 			|| (asize != bsize))
 			return NULL;
 
-		tv.logical = (memcmp(a->character, b->character,
+		tv.u.logical = (memcmp(a->u.character, b->u.character,
 			(a->type->len * asize)) != 0);
 	}
 	else
@@ -1972,15 +1973,15 @@ ofc_sema_typeval_t* ofc_sema_typeval_ne(
 		switch (a->type->type)
 		{
 			case OFC_SEMA_TYPE_REAL:
-				tv.logical = (a->real != b->real);
+				tv.u.logical = (a->u.real != b->u.real);
 				break;
 			case OFC_SEMA_TYPE_COMPLEX:
-				tv.logical = ((a->complex.real != b->complex.real)
-								|| (a->complex.imaginary != b->complex.imaginary));
+				tv.u.logical = ((a->u.complex.real != b->u.complex.real)
+								|| (a->u.complex.imaginary != b->u.complex.imaginary));
 				break;
 			case OFC_SEMA_TYPE_INTEGER:
 			case OFC_SEMA_TYPE_BYTE:
-				tv.logical = (a->integer != b->integer);
+				tv.u.logical = (a->u.integer != b->u.integer);
 				break;
 			default:
 				return NULL;
@@ -2028,18 +2029,18 @@ ofc_sema_typeval_t* ofc_sema_typeval_lt(
 		if (asize > 8)
 			return NULL;
 
-		tv.logical = false;
+		tv.u.logical = false;
 		unsigned i, j;
 		for (i = 0, j = 0; i < a->type->len; i++, j += asize)
 		{
 			uint64_t ac = 0, bc = 0;
-			memcpy(&ac, &a->character[j], asize);
-			memcpy(&bc, &b->character[j], asize);
+			memcpy(&ac, &a->u.character[j], asize);
+			memcpy(&bc, &b->u.character[j], asize);
 
 			if (ac == bc)
 				continue;
 
-			tv.logical = (ac < bc);
+			tv.u.logical = (ac < bc);
 			break;
 		}
 	}
@@ -2048,11 +2049,11 @@ ofc_sema_typeval_t* ofc_sema_typeval_lt(
 		switch (a->type->type)
 		{
 			case OFC_SEMA_TYPE_REAL:
-				tv.logical = (a->real < b->real);
+				tv.u.logical = (a->u.real < b->u.real);
 				break;
 			case OFC_SEMA_TYPE_INTEGER:
 			case OFC_SEMA_TYPE_BYTE:
-				tv.logical = (a->integer < b->integer);
+				tv.u.logical = (a->u.integer < b->u.integer);
 				break;
 			default:
 				return NULL;
@@ -2100,18 +2101,18 @@ ofc_sema_typeval_t* ofc_sema_typeval_le(
 		if (asize > 8)
 			return NULL;
 
-		tv.logical = true;
+		tv.u.logical = true;
 		unsigned i, j;
 		for (i = 0, j = 0; i < a->type->len; i++, j += asize)
 		{
 			uint64_t ac = 0, bc = 0;
-			memcpy(&ac, &a->character[j], asize);
-			memcpy(&bc, &b->character[j], asize);
+			memcpy(&ac, &a->u.character[j], asize);
+			memcpy(&bc, &b->u.character[j], asize);
 
 			if (ac == bc)
 				continue;
 
-			tv.logical = (ac < bc);
+			tv.u.logical = (ac < bc);
 			break;
 		}
 	}
@@ -2120,11 +2121,11 @@ ofc_sema_typeval_t* ofc_sema_typeval_le(
 		switch (a->type->type)
 		{
 			case OFC_SEMA_TYPE_REAL:
-				tv.logical = (a->real <= b->real);
+				tv.u.logical = (a->u.real <= b->u.real);
 				break;
 			case OFC_SEMA_TYPE_INTEGER:
 			case OFC_SEMA_TYPE_BYTE:
-				tv.logical = (a->integer <= b->integer);
+				tv.u.logical = (a->u.integer <= b->u.integer);
 				break;
 			default:
 				return NULL;
@@ -2172,18 +2173,18 @@ ofc_sema_typeval_t* ofc_sema_typeval_gt(
 		if (asize > 8)
 			return NULL;
 
-		tv.logical = false;
+		tv.u.logical = false;
 		unsigned i, j;
 		for (i = 0, j = 0; i < a->type->len; i++, j += asize)
 		{
 			uint64_t ac = 0, bc = 0;
-			memcpy(&ac, &a->character[j], asize);
-			memcpy(&bc, &b->character[j], asize);
+			memcpy(&ac, &a->u.character[j], asize);
+			memcpy(&bc, &b->u.character[j], asize);
 
 			if (ac == bc)
 				continue;
 
-			tv.logical = (ac > bc);
+			tv.u.logical = (ac > bc);
 			break;
 		}
 	}
@@ -2192,11 +2193,11 @@ ofc_sema_typeval_t* ofc_sema_typeval_gt(
 		switch (a->type->type)
 		{
 			case OFC_SEMA_TYPE_REAL:
-				tv.logical = (a->real > b->real);
+				tv.u.logical = (a->u.real > b->u.real);
 				break;
 			case OFC_SEMA_TYPE_INTEGER:
 			case OFC_SEMA_TYPE_BYTE:
-				tv.logical = (a->integer > b->integer);
+				tv.u.logical = (a->u.integer > b->u.integer);
 				break;
 			default:
 				return NULL;
@@ -2244,18 +2245,18 @@ ofc_sema_typeval_t* ofc_sema_typeval_ge(
 		if (asize > 8)
 			return NULL;
 
-		tv.logical = true;
+		tv.u.logical = true;
 		unsigned i, j;
 		for (i = 0, j = 0; i < a->type->len; i++, j += asize)
 		{
 			uint64_t ac = 0, bc = 0;
-			memcpy(&ac, &a->character[j], asize);
-			memcpy(&bc, &b->character[j], asize);
+			memcpy(&ac, &a->u.character[j], asize);
+			memcpy(&bc, &b->u.character[j], asize);
 
 			if (ac == bc)
 				continue;
 
-			tv.logical = (ac > bc);
+			tv.u.logical = (ac > bc);
 			break;
 		}
 	}
@@ -2264,11 +2265,11 @@ ofc_sema_typeval_t* ofc_sema_typeval_ge(
 		switch (a->type->type)
 		{
 			case OFC_SEMA_TYPE_REAL:
-				tv.logical = (a->real >= b->real);
+				tv.u.logical = (a->u.real >= b->u.real);
 				break;
 			case OFC_SEMA_TYPE_INTEGER:
 			case OFC_SEMA_TYPE_BYTE:
-				tv.logical = (a->integer >= b->integer);
+				tv.u.logical = (a->u.integer >= b->u.integer);
 				break;
 			default:
 				return NULL;
@@ -2291,10 +2292,10 @@ ofc_sema_typeval_t* ofc_sema_typeval_not(
 	switch (a->type->type)
 	{
 		case OFC_SEMA_TYPE_LOGICAL:
-			tv.logical = !a->logical;
+			tv.u.logical = !a->u.logical;
 			break;
 		case OFC_SEMA_TYPE_INTEGER:
-			tv.integer = ~a->integer;
+			tv.u.integer = ~a->u.integer;
 			break;
 		default:
 			return NULL;
@@ -2323,11 +2324,11 @@ ofc_sema_typeval_t* ofc_sema_typeval_and(
 	switch (a->type->type)
 	{
 		case OFC_SEMA_TYPE_LOGICAL:
-			tv.logical = (a->logical && b->logical);
+			tv.u.logical = (a->u.logical && b->u.logical);
 			break;
 		case OFC_SEMA_TYPE_INTEGER:
 		case OFC_SEMA_TYPE_BYTE:
-			tv.integer = a->integer & b->integer;
+			tv.u.integer = a->u.integer & b->u.integer;
 			break;
 		default:
 			return NULL;
@@ -2356,11 +2357,11 @@ ofc_sema_typeval_t* ofc_sema_typeval_or(
 	switch (a->type->type)
 	{
 		case OFC_SEMA_TYPE_LOGICAL:
-			tv.logical = (a->logical || b->logical);
+			tv.u.logical = (a->u.logical || b->u.logical);
 			break;
 		case OFC_SEMA_TYPE_INTEGER:
 		case OFC_SEMA_TYPE_BYTE:
-			tv.integer = a->integer | b->integer;
+			tv.u.integer = a->u.integer | b->u.integer;
 			break;
 		default:
 			return NULL;
@@ -2391,10 +2392,10 @@ ofc_sema_typeval_t* ofc_sema_typeval_eqv(
 	switch (a->type->type)
 	{
 		case OFC_SEMA_TYPE_LOGICAL:
-			tv.logical = (a->logical == b->logical);
+			tv.u.logical = (a->u.logical == b->u.logical);
 			break;
 		case OFC_SEMA_TYPE_BYTE:
-			tv.logical = (a->integer == b->integer);
+			tv.u.logical = (a->u.integer == b->u.integer);
 			break;
 		default:
 			return NULL;
@@ -2425,10 +2426,10 @@ ofc_sema_typeval_t* ofc_sema_typeval_neqv(
 	switch (a->type->type)
 	{
 		case OFC_SEMA_TYPE_LOGICAL:
-			tv.logical = (a->logical != b->logical);
+			tv.u.logical = (a->u.logical != b->u.logical);
 			break;
 		case OFC_SEMA_TYPE_BYTE:
-			tv.logical = (a->integer != b->integer);
+			tv.u.logical = (a->u.integer != b->u.integer);
 			break;
 		default:
 			return NULL;
@@ -2573,7 +2574,7 @@ bool ofc_sema_typeval_print(ofc_colstr_t*cs,
 				return false;
 			}
 
-			if (typeval->logical)
+			if (typeval->u.logical)
 				return ofc_colstr_atomic_writef(cs, ".TRUE.");
 			else
 				return ofc_colstr_atomic_writef(cs, ".FALSE.");
@@ -2583,7 +2584,7 @@ bool ofc_sema_typeval_print(ofc_colstr_t*cs,
 				&& (kind != OFC_SEMA_KIND_1_BYTE))
 				return false;
 			return ofc_colstr_atomic_writef(cs, "%" PRId64,
-				typeval->integer);
+				typeval->u.integer);
 
 		case OFC_SEMA_TYPE_INTEGER:
 			if (kind != OFC_SEMA_KIND_DEFAULT)
@@ -2592,7 +2593,7 @@ bool ofc_sema_typeval_print(ofc_colstr_t*cs,
 				return false;
 			}
 			return ofc_colstr_atomic_writef(cs, "%" PRId64,
-				typeval->integer);
+				typeval->u.integer);
 
 		case OFC_SEMA_TYPE_REAL:
 		{
@@ -2601,7 +2602,7 @@ bool ofc_sema_typeval_print(ofc_colstr_t*cs,
 				typeval->type, &size);
 
 			return ofc_sema_typeval_print__real(
-				cs, typeval->real, size, kind);
+				cs, typeval->u.real, size, kind);
 		}
 
 		case OFC_SEMA_TYPE_COMPLEX:
@@ -2613,11 +2614,11 @@ bool ofc_sema_typeval_print(ofc_colstr_t*cs,
 
 			return (ofc_colstr_atomic_writef(cs, "(")
 				&& ofc_sema_typeval_print__real(
-					cs, typeval->complex.real, size, kind)
+					cs, typeval->u.complex.real, size, kind)
 				&& ofc_colstr_atomic_writef(cs, ",")
 				&& ofc_colstr_atomic_writef(cs, " ")
 				&& ofc_sema_typeval_print__real(
-					cs, typeval->complex.imaginary, size, kind)
+					cs, typeval->u.complex.imaginary, size, kind)
 				&& ofc_colstr_atomic_writef(cs, ")"));
 		}
 
@@ -2630,7 +2631,7 @@ bool ofc_sema_typeval_print(ofc_colstr_t*cs,
 			}
 
 			return ofc_colstr_write_escaped(cs, '\"',
-				typeval->character, typeval->type->len);
+				typeval->u.character, typeval->type->len);
 
 		default:
 			break;
