@@ -16,6 +16,11 @@
 #include "ofc/parse.h"
 
 
+unsigned ofc_parse_stmt_program_end(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_stmt_list_t* list);
+
 bool ofc_parse_file_include(
 	const ofc_sparse_t*    src,
 	ofc_parse_stmt_list_t* list,
@@ -25,14 +30,29 @@ bool ofc_parse_file_include(
 	if (!list || !ptr)
 		return false;
 
-	unsigned len;
+	unsigned i;
 	if (!ofc_parse_stmt_sublist(
-		list, src, ptr, debug, &len))
+		list, src, ptr, debug, &i))
 		return false;
 
-	if (ptr[len] != '\0')
+	unsigned l = ofc_parse_stmt_program_end(
+		src, &ptr[i], debug, list);
+	if (l > 0)
 	{
-		ofc_sparse_error(src, ofc_str_ref(&ptr[len], 0),
+		ofc_sparse_warning(src, ofc_str_ref(&ptr[i], 0),
+			"Implicit PROGRAM statement");
+
+		i += l;
+
+		if (!ofc_parse_stmt_sublist(
+			list, src, &ptr[i], debug, &l))
+			return false;
+		i += l;
+	}
+
+	if (ptr[i] != '\0')
+	{
+		ofc_sparse_error(src, ofc_str_ref(&ptr[i], 0),
 			"Expected end of input");
 		return false;
 	}

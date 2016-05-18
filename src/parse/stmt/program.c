@@ -108,6 +108,65 @@ unsigned ofc_parse_stmt_program(
 	return i;
 }
 
+unsigned ofc_parse_stmt_program_end(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_stmt_list_t* list)
+{
+	if (!list)
+		return 0;
+
+	unsigned i = ofc_parse_keyword_end(
+		src, ptr, debug, OFC_PARSE_KEYWORD_PROGRAM, false);
+	if (i == 0) return 0;
+
+	ofc_parse_stmt_t* stmt
+		= (ofc_parse_stmt_t*)malloc(
+			sizeof(ofc_parse_stmt_t));
+	if(!stmt) return 0;
+
+	ofc_parse_stmt_list_t* body
+		= ofc_parse_stmt_list_create();
+	if (!body)
+	{
+		free(stmt);
+		return 0;
+	}
+
+	stmt->type = OFC_PARSE_STMT_PROGRAM;
+	stmt->label = 0;
+	stmt->src = ofc_sparse_ref(src, ptr, i);
+
+	if (list->count > 0)
+		ofc_sparse_ref_bridge(list->stmt[0]->src, stmt->src, &stmt->src);
+
+	stmt->program.name = OFC_SPARSE_REF_EMPTY;
+	stmt->program.type = NULL;
+	stmt->program.args = NULL;
+	stmt->program.body = body;
+
+	/* TODO - Allow handling of label 0? */
+	stmt->program.end_label = 0;
+	stmt->program.end_has_label
+		= ofc_sparse_label_find(
+			src, ptr, &stmt->program.end_label);
+
+	if (!ofc_parse_stmt_list_add(body, stmt))
+	{
+		free(stmt);
+		ofc_parse_stmt_list_delete(body);
+		return 0;
+	}
+
+	{
+		ofc_parse_stmt_list_t swap = *list;
+		*list = *body;
+		*body = swap;
+	}
+
+	return i;
+}
+
 
 unsigned ofc_parse_stmt_subroutine(
 	const ofc_sparse_t* src, const char* ptr,
@@ -324,26 +383,22 @@ unsigned ofc_parse_stmt_block_data(
 
 
 bool ofc_parse_stmt_program_print(
-	ofc_colstr_t* cs,  unsigned indent, const ofc_parse_stmt_t* stmt)
+	ofc_colstr_t* cs, unsigned indent, const ofc_parse_stmt_t* stmt)
 {
 	if (!stmt) return false;
 
+	bool implicit = false;
 	switch (stmt->type)
 	{
 		case OFC_PARSE_STMT_PROGRAM:
+			implicit = ofc_sparse_ref_empty(stmt->program.name);
+			break;
 		case OFC_PARSE_STMT_SUBROUTINE:
 		case OFC_PARSE_STMT_FUNCTION:
 		case OFC_PARSE_STMT_MODULE:
 		case OFC_PARSE_STMT_BLOCK_DATA:
 			break;
 		default:
-			return false;
-	}
-
-	if (stmt->program.type)
-	{
-		if (!ofc_parse_type_print(cs, stmt->program.type, false)
-			|| !ofc_colstr_atomic_writef(cs, " "))
 			return false;
 	}
 
@@ -372,28 +427,44 @@ bool ofc_parse_stmt_program_print(
 			return false;
 	}
 
-	if (!ofc_colstr_atomic_writef(cs, "%s", kwstr))
-				return false;
-
-	if (!ofc_sparse_ref_empty(stmt->program.name))
+	if (implicit)
 	{
-		if (!ofc_colstr_atomic_writef(cs, " ")
-			|| !ofc_sparse_ref_print(cs, stmt->program.name))
+		/* TODO - Get rid of this and the extra new-line that's printed. */
+		if (!ofc_colstr_atomic_writef(cs, "! Implicit PROGRAM"))
 			return false;
 	}
-
-	if (has_args)
+	else
 	{
-		if (!ofc_colstr_atomic_writef(cs, "("))
-			return false;
+		if (stmt->program.type)
+		{
+			if (!ofc_parse_type_print(cs, stmt->program.type, false)
+				|| !ofc_colstr_atomic_writef(cs, " "))
+				return false;
+		}
 
-		if (stmt->program.args
-			&& !ofc_parse_call_arg_list_print(
-				cs, stmt->program.args))
-			return false;
+		if (!ofc_colstr_atomic_writef(cs, "%s", kwstr))
+					return false;
 
-		if (!ofc_colstr_atomic_writef(cs, ")"))
-			return false;
+		if (!ofc_sparse_ref_empty(stmt->program.name))
+		{
+			if (!ofc_colstr_atomic_writef(cs, " ")
+				|| !ofc_sparse_ref_print(cs, stmt->program.name))
+				return false;
+		}
+
+		if (has_args)
+		{
+			if (!ofc_colstr_atomic_writef(cs, "("))
+				return false;
+
+			if (stmt->program.args
+				&& !ofc_parse_call_arg_list_print(
+					cs, stmt->program.args))
+				return false;
+
+			if (!ofc_colstr_atomic_writef(cs, ")"))
+				return false;
+		}
 	}
 
 	if (stmt->program.body

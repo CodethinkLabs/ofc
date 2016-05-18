@@ -888,24 +888,11 @@ bool ofc_parse_stmt_sublist(
 		if (!stmt) break;
 		i += slen;
 
-		if (list->count >= list->size)
+		if (!ofc_parse_stmt_list_add(list, stmt))
 		{
-			unsigned nsize = (list->size << 1);
-			if (nsize == 0) nsize = 16;
-
-			ofc_parse_stmt_t** nstmt
-				= (ofc_parse_stmt_t**)realloc(list->stmt,
-					(nsize * sizeof(ofc_parse_stmt_t*)));
-			if (!nstmt)
-			{
-				ofc_parse_stmt_delete(stmt);
-				return false;
-			}
-			list->stmt = nstmt;
-			list->size = nsize;
+			ofc_parse_stmt_delete(stmt);
+			return false;
 		}
-
-		list->stmt[list->count++] = stmt;
 
 		if (stmt->type == OFC_PARSE_STMT_ERROR)
 			break;
@@ -961,6 +948,31 @@ void ofc_parse_stmt_list_delete(
 		ofc_parse_stmt_delete(list->stmt[i]);
 	free(list->stmt);
 	free(list);
+}
+
+bool ofc_parse_stmt_list_add(
+	ofc_parse_stmt_list_t* list,
+	ofc_parse_stmt_t* stmt)
+{
+	if (!list || !stmt)
+		return false;
+
+	if (list->count >= list->size)
+	{
+		unsigned nsize = (list->size << 1);
+		if (nsize == 0) nsize = 16;
+
+		ofc_parse_stmt_t** nstmt
+			= (ofc_parse_stmt_t**)realloc(list->stmt,
+				(nsize * sizeof(ofc_parse_stmt_t*)));
+		if (!nstmt) return false;
+
+		list->stmt = nstmt;
+		list->size = nsize;
+	}
+
+	list->stmt[list->count++] = stmt;
+	return true;
 }
 
 bool ofc_parse_stmt_list_foreach(

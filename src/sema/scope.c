@@ -1559,6 +1559,7 @@ bool ofc_sema_scope_print(
 	if (!scope)
 		return false;
 
+	bool implicit = false;
 	const char* kwstr = NULL;
 	switch (scope->type)
 	{
@@ -1566,6 +1567,7 @@ bool ofc_sema_scope_print(
 			break;
 		case OFC_SEMA_SCOPE_PROGRAM:
 			kwstr = "PROGRAM";
+			implicit = ofc_str_ref_empty(scope->name);
 			break;
 		case OFC_SEMA_SCOPE_SUBROUTINE:
 			kwstr = "SUBROUTINE";
@@ -1586,7 +1588,7 @@ bool ofc_sema_scope_print(
 			return false;
 	}
 
-	if (kwstr)
+	if (kwstr && !implicit)
 	{
 		if (scope->type != OFC_SEMA_SCOPE_FUNCTION)
 		{
@@ -1645,6 +1647,9 @@ bool ofc_sema_scope_print(
 					return false;
 		}
 	}
+
+	/* TODO - Resolve potential issue with global declarations,
+	          being printed inside implicit PROGRAM scope. */
 
 	if (scope->child
 		&& !ofc_sema_scope_child__print(cs, indent, scope->child))

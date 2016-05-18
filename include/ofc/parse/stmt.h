@@ -316,6 +316,10 @@ ofc_parse_stmt_list_t* ofc_parse_stmt_list_create(void);
 void ofc_parse_stmt_list_delete(
 	ofc_parse_stmt_list_t* list);
 
+bool ofc_parse_stmt_list_add(
+	ofc_parse_stmt_list_t* list,
+	ofc_parse_stmt_t* stmt);
+
 bool ofc_parse_stmt_list_foreach(
 	const ofc_parse_stmt_list_t* list, void* context,
 	bool (*callback)(const ofc_parse_stmt_t* stmt, void* context));
