@@ -841,21 +841,6 @@ ofc_sema_scope_t* ofc_sema_scope_stmt_func(
 		|| (stmt->assignment->name->parent->type != OFC_PARSE_LHS_VARIABLE))
 		return NULL;
 
-	const ofc_parse_array_index_t* index
-		= stmt->assignment->name->array.index;
-	if (index && (index->count > 0))
-	{
-		unsigned i;
-		for (i = 0; i < index->count; i++)
-		{
-			const ofc_parse_array_range_t* range
-				= index->range[i];
-			if (range->is_slice || !range->first
-				|| range->last || range->stride)
-				return NULL;
-		}
-	}
-
 	ofc_sparse_ref_t base_name;
 	if (!ofc_parse_lhs_base_name(
 		*(stmt->assignment->name), &base_name))
@@ -903,6 +888,8 @@ ofc_sema_scope_t* ofc_sema_scope_stmt_func(
 	rdecl->is_return   = true;
 	rdecl->was_written = true;
 
+	const ofc_parse_array_index_t* index
+		= stmt->assignment->name->array.index;
 	if (index && (index->count > 0))
 	{
 		func->args = ofc_sema_arg_list_stmt_func(index);

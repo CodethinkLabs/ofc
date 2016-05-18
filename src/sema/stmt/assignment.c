@@ -30,6 +30,21 @@ bool ofc_sema_stmt_is_stmt_func(
 		!= OFC_PARSE_LHS_ARRAY)
 		return false;
 
+	const ofc_parse_array_index_t* index
+		= stmt->assignment->name->array.index;
+	if (index && (index->count > 0))
+	{
+		unsigned i;
+		for (i = 0; i < index->count; i++)
+		{
+			const ofc_parse_array_range_t* range
+				= index->range[i];
+			if (range->is_slice || !range->first
+				|| range->last || range->stride)
+				return false;
+		}
+	}
+
 	if (!stmt->assignment->name->parent
 		|| (stmt->assignment->name->parent->type
 			!= OFC_PARSE_LHS_VARIABLE))
