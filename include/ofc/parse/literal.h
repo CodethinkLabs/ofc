@@ -51,7 +51,7 @@ typedef struct
 		} complex;
 
 		bool logical;
-	};
+	} u;
 } ofc_parse_literal_t;
 
 

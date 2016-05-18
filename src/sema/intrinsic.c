@@ -458,31 +458,31 @@ static ofc_sema_typeval_t* ofc_sema_intrinsic__transfer_tv(
 	switch (atv->type->type)
 	{
 		case OFC_SEMA_TYPE_LOGICAL:
-			buff[0] = (atv->logical ? 1 : 0);
+			buff[0] = (atv->u.logical ? 1 : 0);
 			break;
 
 		case OFC_SEMA_TYPE_INTEGER:
 		case OFC_SEMA_TYPE_BYTE:
 			if (asize > 8)
 				return NULL;
-			src = &atv->integer;
+			src = &atv->u.integer;
 			break;
 
 		case OFC_SEMA_TYPE_REAL:
 		{
 			if (asize == 4)
 			{
-				float f32 = atv->real;
+				float f32 = atv->u.real;
 				memcpy(buff, &f32, 4);
 			}
 			else if (asize == 8)
 			{
-				double f64 = atv->real;
+				double f64 = atv->u.real;
 				memcpy(buff, &f64, 8);
 			}
 			else if (asize == 10)
 			{
-				long double f80 = atv->real;
+				long double f80 = atv->u.real;
 				memcpy(buff, &f80, 10);
 			}
 			else
@@ -498,8 +498,8 @@ static ofc_sema_typeval_t* ofc_sema_intrinsic__transfer_tv(
 			{
 				float f32[2] =
 				{
-					atv->complex.real,
-					atv->complex.imaginary
+					atv->u.complex.real,
+					atv->u.complex.imaginary
 				};
 				memcpy(buff, f32, 8);
 			}
@@ -507,8 +507,8 @@ static ofc_sema_typeval_t* ofc_sema_intrinsic__transfer_tv(
 			{
 				double f64[2] =
 				{
-					atv->complex.real,
-					atv->complex.imaginary
+					atv->u.complex.real,
+					atv->u.complex.imaginary
 				};
 				memcpy(buff, f64, 16);
 			}
@@ -516,8 +516,8 @@ static ofc_sema_typeval_t* ofc_sema_intrinsic__transfer_tv(
 			{
 				long double f80[2] =
 				{
-					atv->complex.real,
-					atv->complex.imaginary
+					atv->u.complex.real,
+					atv->u.complex.imaginary
 				};
 				memcpy(buff, f80, 20);
 			}
@@ -529,7 +529,7 @@ static ofc_sema_typeval_t* ofc_sema_intrinsic__transfer_tv(
 		}
 
 		case OFC_SEMA_TYPE_CHARACTER:
-			src = atv->character;
+			src = atv->u.character;
 			if (!src) return NULL;
 			break;
 
@@ -547,8 +547,8 @@ static ofc_sema_typeval_t* ofc_sema_intrinsic__transfer_tv(
 
 	if (ofc_sema_type_is_character(rtype))
 	{
-		rtv->character = (char*)malloc(rsize);
-		if (!rtv->character)
+		rtv->u.character = (char*)malloc(rsize);
+		if (!rtv->u.character)
 		{
 			ofc_sema_typeval_delete(rtv);
 			return NULL;
@@ -557,8 +557,8 @@ static ofc_sema_typeval_t* ofc_sema_intrinsic__transfer_tv(
 		if (asize > rsize)
 			asize = rsize;
 
-		memset(rtv->character, 0x00, rsize);
-		memcpy(rtv->character, src, asize);
+		memset(rtv->u.character, 0x00, rsize);
+		memcpy(rtv->u.character, src, asize);
 	}
 	else
 	{
@@ -568,7 +568,7 @@ static ofc_sema_typeval_t* ofc_sema_intrinsic__transfer_tv(
 			{
 				uint8_t zero[asize];
 				memset(zero, 0x00, asize);
-				rtv->logical = (memcmp(src, zero, asize) != 0);
+				rtv->u.logical = (memcmp(src, zero, asize) != 0);
 				break;
 			}
 
@@ -584,8 +584,8 @@ static ofc_sema_typeval_t* ofc_sema_intrinsic__transfer_tv(
 				if (asize < rsize)
 					rsize = asize;
 
-				rtv->integer = 0;
-				memcpy(&rtv->integer, src, rsize);
+				rtv->u.integer = 0;
+				memcpy(&rtv->u.integer, src, rsize);
 				break;
 
 			case OFC_SEMA_TYPE_REAL:
@@ -597,19 +597,19 @@ static ofc_sema_typeval_t* ofc_sema_intrinsic__transfer_tv(
 				{
 					float f32 = 0.0f;
 					memcpy(&f32, src, asize);
-					rtv->real = f32;
+					rtv->u.real = f32;
 				}
 				else if (rsize == 8)
 				{
 					double f64 = 0.0;
 					memcpy(&f64, src, asize);
-					rtv->real = f64;
+					rtv->u.real = f64;
 				}
 				else if (rsize == 10)
 				{
 					long double f80 = 0.0;
 					memcpy(&f80, src, asize);
-					rtv->real = f80;
+					rtv->u.real = f80;
 				}
 				else
 				{
@@ -630,22 +630,22 @@ static ofc_sema_typeval_t* ofc_sema_intrinsic__transfer_tv(
 				{
 					float f32[2] = { 0.0f, 0.0f };
 					memcpy(f32, src, asize);
-					rtv->complex.real = f32[0];
-					rtv->complex.imaginary = f32[1];
+					rtv->u.complex.real = f32[0];
+					rtv->u.complex.imaginary = f32[1];
 				}
 				else if (rsize == 16)
 				{
 					double f64[2] = { 0.0, 0.0 };
 					memcpy(f64, src, asize);
-					rtv->complex.real = f64[0];
-					rtv->complex.imaginary = f64[1];
+					rtv->u.complex.real = f64[0];
+					rtv->u.complex.imaginary = f64[1];
 				}
 				else if (rsize == 20)
 				{
 					long double f80[2] = { 0.0, 0.0 };
 					memcpy(f80, src, asize);
-					rtv->complex.real = f80[0];
-					rtv->complex.imaginary = f80[1];
+					rtv->u.complex.real = f80[0];
+					rtv->u.complex.imaginary = f80[1];
 				}
 				else
 				{

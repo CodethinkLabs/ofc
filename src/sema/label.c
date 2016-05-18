@@ -237,7 +237,7 @@ static bool ofc_smea_label_map__add_stmt(
 	unsigned slot;
 	if (map->count >= map->size)
 	{
-		unsigned nsize = map->count + 1;
+		unsigned nsize = map->count + 1;  // TODO: double the size instead of just adding one?
 		ofc_sema_label_t** nlabel
 			= (ofc_sema_label_t**)realloc(map->label,
 				(sizeof(ofc_sema_label_t*) * nsize));
@@ -254,9 +254,9 @@ static bool ofc_smea_label_map__add_stmt(
 	else
 	{
 		unsigned i;
-		for (i = 0; i < map->size; i++)
+		for (slot = 0, i = 0; i < map->size; i++)
 		{
-            if (map->label[i] == NULL)
+                        if (map->label[i] == NULL)
 			{
 				slot = i;
 				break;

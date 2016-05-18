@@ -260,7 +260,7 @@ static bool ofc_parse_expr__has_right_ambig_point(
 	{
 		case OFC_PARSE_EXPR_CONSTANT:
 			return ((expr->literal.type == OFC_PARSE_LITERAL_NUMBER)
-				&& (expr->literal.number.base[expr->literal.number.size - 1] == '.'));
+				&& (expr->literal.u.number.base[expr->literal.u.number.size - 1] == '.'));
 		case OFC_PARSE_EXPR_UNARY:
 			return ofc_parse_expr__has_right_ambig_point(expr->unary.a);
 		case OFC_PARSE_EXPR_BINARY:
@@ -282,7 +282,7 @@ static bool ofc_parse_expr__cull_right_ambig_point(
 		case OFC_PARSE_EXPR_CONSTANT:
 			if (expr->literal.type == OFC_PARSE_LITERAL_NUMBER)
 			{
-				expr->literal.number.size -= 1;
+				expr->literal.u.number.size -= 1;
 				expr->src.string.size     -= 1;
 			}
 			return true;

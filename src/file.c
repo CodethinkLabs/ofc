@@ -432,7 +432,7 @@ static void ofc_file__debug_va(
 	const char* sol, const char* ptr,
 	const char* type, const char* format, va_list args)
 {
-	unsigned row, col;
+	unsigned row = 0, col = 0;
 	bool positional = ofc_file_get_position(
 		file, ptr, &row, &col);
 

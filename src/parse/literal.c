@@ -132,7 +132,7 @@ static unsigned ofc_parse_literal__binary(
 		i += 1;
 	}
 
-	literal->number = ofc_str_ref(&ptr[base + 1], (len - 2));
+	literal->u.number = ofc_str_ref(&ptr[base + 1], (len - 2));
 	literal->type = OFC_PARSE_LITERAL_BINARY;
 	return i;
 }
@@ -169,7 +169,7 @@ static unsigned ofc_parse_literal__octal(
 		i += 1;
 	}
 
-	literal->number = ofc_str_ref(&ptr[base + 1], (len - 2));
+	literal->u.number = ofc_str_ref(&ptr[base + 1], (len - 2));
 	literal->type = OFC_PARSE_LITERAL_OCTAL;
 	return i;
 }
@@ -209,7 +209,7 @@ static unsigned ofc_parse_literal__hex(
 		i += 1;
 	}
 
-	literal->number = ofc_str_ref(&ptr[base + 1], (len - 2));
+	literal->u.number = ofc_str_ref(&ptr[base + 1], (len - 2));
 	literal->type = OFC_PARSE_LITERAL_HEX;
 	return i;
 }
@@ -270,7 +270,7 @@ static unsigned ofc_parse_literal__hollerith(
 	ofc_parse_literal_t* literal)
 {
 	unsigned len = 0;
-	literal->string = ofc_parse_hollerith(
+	literal->u.string = ofc_parse_hollerith(
 		src, ptr, debug, &len);
 
 	if (len == 0) return 0;
@@ -463,9 +463,9 @@ static unsigned ofc_parse_literal__character(
 	ofc_parse_literal_t* literal)
 {
 	unsigned len = 0;
-	literal->string = ofc_parse__character(
+	literal->u.string = ofc_parse__character(
 		src, ptr, debug, &len, true);
-	if (!literal->string) return 0;
+	if (!literal->u.string) return 0;
 
 	literal->type = OFC_PARSE_LITERAL_CHARACTER;
 	return len;
@@ -497,7 +497,7 @@ static unsigned ofc_parse_literal__logical(
 	if (ptr[i++] != '.')
 		return 0;
 
-	literal->logical = v;
+	literal->u.logical = v;
 	literal->type = OFC_PARSE_LITERAL_LOGICAL;
 	return i;
 }
@@ -579,7 +579,7 @@ unsigned ofc_parse_literal_number(
 	literal->type   = OFC_PARSE_LITERAL_NUMBER;
 	literal->kind   = k;
 	literal->src    = ofc_sparse_ref(src, ptr, i);
-	literal->number = ofc_str_ref(ptr, i);
+	literal->u.number = ofc_str_ref(ptr, i);
 	return i;
 }
 
@@ -600,7 +600,7 @@ unsigned ofc_parse_literal_integer(
 	literal->type = OFC_PARSE_LITERAL_NUMBER;
 	literal->kind = 1;
 	literal->src    = ofc_sparse_ref(src, ptr, i);
-	literal->number = ofc_str_ref(ptr, i);
+	literal->u.number = ofc_str_ref(ptr, i);
 	return i;
 }
 
@@ -644,8 +644,8 @@ static unsigned ofc_parse_literal__complex(
 	}
 
 	literal->type = OFC_PARSE_LITERAL_COMPLEX;
-	literal->complex.real	  = real.number;
-	literal->complex.imaginary = imaginary.number;
+	literal->u.complex.real	  = real.u.number;
+	literal->u.complex.imaginary = imaginary.u.number;
 
 	return i;
 }
@@ -687,7 +687,7 @@ void ofc_parse_literal_cleanup(
 	{
 		case OFC_PARSE_LITERAL_CHARACTER:
 		case OFC_PARSE_LITERAL_HOLLERITH:
-			ofc_string_delete(literal.string);
+			ofc_string_delete(literal.u.string);
 			break;
 		default:
 			break;
@@ -705,8 +705,8 @@ bool ofc_parse_literal_clone(
 	{
 		case OFC_PARSE_LITERAL_CHARACTER:
 		case OFC_PARSE_LITERAL_HOLLERITH:
-			clone.string = ofc_string_copy(src->string);
-			if (ofc_string_empty(clone.string))
+			clone.u.string = ofc_string_copy(src->u.string);
+			if (ofc_string_empty(clone.u.string))
 				return false;
 			break;
 		default:
@@ -749,33 +749,33 @@ bool ofc_parse_literal_print(
 	{
 		case OFC_PARSE_LITERAL_NUMBER:
 			return ofc_str_ref_print(
-				cs, literal.number);
+				cs, literal.u.number);
 		case OFC_PARSE_LITERAL_BINARY:
 			return ofc_colstr_write_quoted(cs, "B", '\"',
-				literal.number.base, literal.number.size);
+				literal.u.number.base, literal.u.number.size);
 		case OFC_PARSE_LITERAL_OCTAL:
 			return ofc_colstr_write_quoted(cs, "O", '\"',
-				literal.number.base, literal.number.size);
+				literal.u.number.base, literal.u.number.size);
 		case OFC_PARSE_LITERAL_HEX:
 			return ofc_colstr_write_quoted(cs, "Z", '\"',
-				literal.number.base, literal.number.size);
+				literal.u.number.base, literal.u.number.size);
 		case OFC_PARSE_LITERAL_HOLLERITH:
 			return (ofc_colstr_atomic_writef(cs, "%uH%s",
-				ofc_string_length(literal.string),
-				ofc_string_strz(literal.string)));
+				ofc_string_length(literal.u.string),
+				ofc_string_strz(literal.u.string)));
 		case OFC_PARSE_LITERAL_CHARACTER:
 			return ofc_colstr_write_escaped(cs, '\"',
-					ofc_string_strz(literal.string),
-					ofc_string_length(literal.string));
+					ofc_string_strz(literal.u.string),
+					ofc_string_length(literal.u.string));
 		case OFC_PARSE_LITERAL_COMPLEX:
 			return ofc_colstr_atomic_writef(cs, "(%.*s, %.*s)",
-				literal.complex.real.size,
-				literal.complex.real.base,
-				literal.complex.imaginary.size,
-				literal.complex.imaginary.base);
+				literal.u.complex.real.size,
+				literal.u.complex.real.base,
+				literal.u.complex.imaginary.size,
+				literal.u.complex.imaginary.base);
 		case OFC_PARSE_LITERAL_LOGICAL:
 			return ofc_colstr_atomic_writef(cs, ".%s.",
-				(literal.logical
+				(literal.u.logical
 					? "TRUE" : "FALSE"));
 		default:
 			break;
