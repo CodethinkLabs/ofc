@@ -49,6 +49,10 @@ static ofc_sema_structure_t* ofc_sema__structure(
 			type = OFC_SEMA_STRUCTURE_VAX_UNION;
 			break;
 
+		case OFC_PARSE_STMT_MAP:
+			type = OFC_SEMA_STRUCTURE_VAX_MAP;
+			break;
+
 		case OFC_PARSE_STMT_TYPE:
 			type = OFC_SEMA_STRUCTURE_F90_TYPE;
 			break;
@@ -783,6 +787,10 @@ bool ofc_sema_structure_print(
 
 		case OFC_SEMA_STRUCTURE_VAX_UNION:
 			kwstr = "UNION";
+			break;
+
+		case OFC_SEMA_STRUCTURE_VAX_MAP:
+			kwstr = "MAP";
 			break;
 
 		default:
