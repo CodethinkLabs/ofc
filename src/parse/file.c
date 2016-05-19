@@ -30,6 +30,8 @@ bool ofc_parse_file_include(
 	if (!list || !ptr)
 		return false;
 
+	unsigned dpos = ofc_parse_debug_position(debug);
+
 	unsigned i;
 	if (!ofc_parse_stmt_sublist(
 		list, src, ptr, debug, &i))
@@ -46,7 +48,10 @@ bool ofc_parse_file_include(
 
 		if (!ofc_parse_stmt_sublist(
 			list, src, &ptr[i], debug, &l))
+		{
+			ofc_parse_debug_rewind(debug, dpos);
 			return false;
+		}
 		i += l;
 	}
 
@@ -54,6 +59,7 @@ bool ofc_parse_file_include(
 	{
 		ofc_sparse_error(src, ofc_str_ref(&ptr[i], 0),
 			"Expected end of input");
+		ofc_parse_debug_rewind(debug, dpos);
 		return false;
 	}
 
@@ -73,8 +79,11 @@ ofc_parse_stmt_list_t* ofc_parse_file(const ofc_sparse_t* src)
 	if (!ofc_parse_file_include(
 		src, list, debug))
 	{
+		ofc_parse_debug_print(debug);
+		ofc_parse_debug_delete(debug);
+
 		ofc_parse_stmt_list_delete(list);
-		list = NULL;
+		return NULL;
 	}
 
 	ofc_parse_debug_print(debug);

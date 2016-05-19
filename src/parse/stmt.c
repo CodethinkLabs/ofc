@@ -879,6 +879,8 @@ bool ofc_parse_stmt_sublist(
 	if (!list)
 		return false;
 
+	unsigned dpos = ofc_parse_debug_position(debug);
+
 	unsigned i = 0;
 	while (true)
 	{
@@ -890,6 +892,7 @@ bool ofc_parse_stmt_sublist(
 
 		if (!ofc_parse_stmt_list_add(list, stmt))
 		{
+			ofc_parse_debug_rewind(debug, dpos);
 			ofc_parse_stmt_delete(stmt);
 			return false;
 		}
