@@ -470,8 +470,9 @@ ofc_sema_decl_t* ofc_sema_structure_member_get_decl_name(
 	unsigned i;
 	for (i = 0; i < structure->count; i++)
 	{
-		if (!ofc_sema_structure__member_anon(
-			structure->member[i]))
+		member = structure->member[i];
+		if (!member->is_structure
+			|| !ofc_sema_structure__member_anon(member))
 			continue;
 
 		ofc_sema_decl_t* decl
