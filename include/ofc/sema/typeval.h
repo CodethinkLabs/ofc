@@ -52,6 +52,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_create_complex(
 	long double real, long double imaginary,
 	ofc_sema_kind_e kind,
 	ofc_sparse_ref_t ref);
+ofc_sema_typeval_t* ofc_sema_typeval_create_character(
+	const char* data, ofc_sema_kind_e kind, unsigned len,
+	ofc_sparse_ref_t ref);
 
 ofc_sema_typeval_t* ofc_sema_typeval_literal(
 	const ofc_parse_literal_t* literal,

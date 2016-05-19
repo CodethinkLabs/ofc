@@ -887,6 +887,47 @@ ofc_sema_typeval_t* ofc_sema_typeval_create_complex(
 	return typeval;
 }
 
+ofc_sema_typeval_t* ofc_sema_typeval_create_character(
+	const char* data, ofc_sema_kind_e kind, unsigned len,
+	ofc_sparse_ref_t ref)
+{
+	if (len == 0)
+		return NULL;
+
+	if (kind == OFC_SEMA_KIND_NONE)
+		kind = OFC_SEMA_KIND_1_BYTE;
+
+	const ofc_sema_type_t* type
+		= ofc_sema_type_create_character(kind, len, false);
+	if (!type) return NULL;
+
+	unsigned ts;
+	if (!ofc_sema_type_size(type, &ts))
+		return NULL;
+
+	ofc_sema_typeval_t* typeval
+		= (ofc_sema_typeval_t*)malloc(
+			sizeof(ofc_sema_typeval_t));
+	if (!typeval) return NULL;
+
+	typeval->type = type;
+	typeval->character = (char*)malloc(ts);
+	typeval->src = ref;
+
+	if (!typeval->character)
+	{
+		free(typeval);
+		return NULL;
+	}
+
+	if (data)
+		memcpy(typeval->character, data, ts);
+	else
+		memset(typeval->character, 0x00, ts);
+
+	return typeval;
+}
+
 
 
 ofc_sema_typeval_t* ofc_sema_typeval_literal(

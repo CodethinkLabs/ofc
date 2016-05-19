@@ -515,6 +515,56 @@ static const ofc_sema_type_t* ofc_sema_intrinsic__char_rt(
 		kind, 1, false);
 }
 
+static ofc_sema_typeval_t* ofc_sema_intrinsic__char_tv(
+	const ofc_sema_intrinsic_t* intrinsic,
+	const ofc_sema_expr_list_t* args)
+{
+	(void)intrinsic;
+
+	if (args->count > 2)
+		return NULL;
+
+	ofc_sema_kind_e kind = OFC_SEMA_KIND_DEFAULT;
+	if (args->count > 1)
+	{
+		const ofc_sema_type_t* kt
+			= ofc_sema_expr_type(args->expr[1]);
+		if (!kt) return NULL;
+		kind = kt->kind;
+	}
+
+	const ofc_sema_typeval_t* ctv
+		= ofc_sema_expr_constant(args->expr[0]);
+	if (!ctv) return NULL;
+
+	const ofc_sema_type_t* nt = ofc_sema_type_create_character(kind, 1, false);
+
+	int64_t ic;
+	if (!ofc_sema_typeval_get_integer(ctv, &ic))
+		return NULL;
+
+	if (ic < 0)
+	{
+		ofc_sparse_ref_warning(args->expr[0]->src,
+			"Can't convert negative INTEGER to CHARACTER");
+		return NULL;
+	}
+
+	unsigned nts;
+	if (!ofc_sema_type_size(nt, &nts))
+		return NULL;
+
+	if ((nts < 8) && ((uint64_t)ic >= (1ULL << (nts * 8U))))
+	{
+		ofc_sparse_ref_warning(args->expr[0]->src,
+			"INTEGER too large to convert to CHARACTER of kind %u", kind);
+		return NULL;
+	}
+
+	return ofc_sema_typeval_create_character(
+		(char*)&ic, kind, 1, args->expr[0]->src);
+}
+
 static const ofc_sema_type_t* ofc_sema_intrinsic__ichar_rt(
 	const ofc_sema_expr_list_t* args)
 {
@@ -529,6 +579,61 @@ static const ofc_sema_type_t* ofc_sema_intrinsic__ichar_rt(
 
 	return ofc_sema_type_create_primitive(
 		OFC_SEMA_TYPE_INTEGER, kind);
+}
+
+static ofc_sema_typeval_t* ofc_sema_intrinsic__ichar_tv(
+	const ofc_sema_intrinsic_t* intrinsic,
+	const ofc_sema_expr_list_t* args)
+{
+	(void)intrinsic;
+
+	if (args->count > 2)
+		return NULL;
+
+	ofc_sema_kind_e kind = OFC_SEMA_KIND_DEFAULT;
+	if (args->count > 1)
+	{
+		const ofc_sema_type_t* kt
+			= ofc_sema_expr_type(args->expr[1]);
+		if (!kt) return NULL;
+		kind = kt->kind;
+	}
+
+	const ofc_sema_typeval_t* ctv
+		= ofc_sema_expr_constant(args->expr[0]);
+	if (!ctv || !ofc_sema_type_is_character(ctv->type))
+		return NULL;
+
+	const ofc_sema_type_t* nt
+		= ofc_sema_type_create_primitive(OFC_SEMA_TYPE_INTEGER, kind);
+
+	unsigned nts;
+	if (!ofc_sema_type_size(nt, &nts))
+		return NULL;
+
+	const ofc_sema_type_t* ct
+		= ofc_sema_type_create_character(ctv->type->kind, 1, false);
+
+	unsigned cts;
+	if (!ofc_sema_type_size(ct, &cts))
+		return NULL;
+
+	if (cts > nts)
+	{
+		ofc_sparse_ref_warning(args->expr[0]->src,
+			"CHARACTER too large to fit in INTEGER of kind %u", kind);
+		return NULL;
+	}
+
+	if (cts > 4) return NULL;
+
+	int ic = ' ';
+	if (ctv->type->len >= 1)
+		memcpy(&ic, ctv->character, cts);
+	if (ic < 0) return NULL;
+
+	return ofc_sema_typeval_create_integer(
+		ic, kind, args->expr[0]->src);
 }
 
 static const ofc_sema_type_t* ofc_sema_intrinsic__transfer_rt(
@@ -851,11 +956,13 @@ static const ofc_sema_intrinsic_func_t ofc_sema_intrinsic__func_list[] =
 	{ "IShftC", 3, 3, IP_INTEGER, { IP_INTEGER, IP_INTEGER, IP_INTEGER }, NULL, NULL },
 
 	{ "Char" , 1, 2, IP_CALLBACK, { IP_INTEGER    , IP_INTEGER },
-		ofc_sema_intrinsic__char_rt, NULL },
+		ofc_sema_intrinsic__char_rt, ofc_sema_intrinsic__char_tv },
 	{ "AChar", 1, 2, IP_CALLBACK, { IP_INTEGER    , IP_INTEGER },
-		ofc_sema_intrinsic__char_rt, NULL },
+		ofc_sema_intrinsic__char_rt, ofc_sema_intrinsic__char_tv },
 	{ "IChar", 1, 2, IP_CALLBACK, { IP_CHARACTER_1, IP_INTEGER },
-		ofc_sema_intrinsic__ichar_rt, NULL },
+		ofc_sema_intrinsic__ichar_rt, ofc_sema_intrinsic__ichar_tv },
+	{ "IAChar", 1, 2, IP_CALLBACK, { IP_CHARACTER_1, IP_INTEGER },
+		ofc_sema_intrinsic__ichar_rt, ofc_sema_intrinsic__ichar_tv },
 
 	{ "Index", 2, 4, IP_INTEGER, { IP_CHARACTER, IP_CHARACTER, IP_LOGICAL, IP_INTEGER },
 		NULL, NULL },
