@@ -205,6 +205,9 @@ bool ofc_sema_decl_is_structure(
 bool ofc_sema_decl_is_composite(
 	const ofc_sema_decl_t* decl);
 
+bool ofc_sema_decl_is_unknown_external(
+	const ofc_sema_decl_t* decl);
+
 bool ofc_sema_decl_is_subroutine(
 	const ofc_sema_decl_t* decl);
 bool ofc_sema_decl_is_function(

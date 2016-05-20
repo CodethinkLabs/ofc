@@ -109,8 +109,13 @@ ofc_sema_decl_t* ofc_sema_decl_create(
 bool ofc_sema_decl_type_finalize(
 	ofc_sema_decl_t* decl)
 {
-	if (!decl || !decl->type)
-		return false;
+	if (!decl) return false;
+
+	/* Cannot finalize the type of an unknown external symbol. */
+	if (ofc_sema_decl_is_unknown_external(decl))
+		return true;
+
+	if (!decl->type) return false;
 
 	const ofc_sema_type_t* ktype = decl->type;
 	if (decl->type->kind == OFC_SEMA_KIND_NONE)
@@ -1898,6 +1903,12 @@ bool ofc_sema_decl_is_composite(
 }
 
 
+bool ofc_sema_decl_is_unknown_external(
+	const ofc_sema_decl_t* decl)
+{
+	return (decl && decl->is_external && !decl->type);
+}
+
 bool ofc_sema_decl_is_subroutine(
 	const ofc_sema_decl_t* decl)
 {
@@ -2978,49 +2989,51 @@ bool ofc_sema_decl_list_print(
 	/* Print PARAMETERs before other declarations. */
 	for (i = 0; i < decl_list->size; i++)
 	{
-		if (!decl_list->decl[i])
+		ofc_sema_decl_t* decl = decl_list->decl[i];
+
+		if (!decl) continue;
+
+		if (!ofc_sema_decl_is_parameter(decl))
 			continue;
 
-		if (!ofc_sema_decl_is_parameter(
-			decl_list->decl[i]))
-			continue;
-
-		if (!ofc_sema_decl_print(cs, indent,
-			decl_list->decl[i]))
+		if (!ofc_sema_decl_print(cs, indent, decl))
 			return false;
 	}
 
 	for (i = 0; i < decl_list->size; i++)
 	{
-		if (!decl_list->decl[i])
-			continue;
+		ofc_sema_decl_t* decl = decl_list->decl[i];
+
+		if (!decl) continue;
 
 		/* Skip PARAMETERs since we printed those first. */
-		if (ofc_sema_decl_is_parameter(
-			decl_list->decl[i]))
+		if (ofc_sema_decl_is_parameter(decl))
 			continue;
 
 		/* Don't print prototypes for declared procedures. */
-		if (ofc_sema_decl_is_procedure(decl_list->decl[i])
-			|| decl_list->decl[i]->is_return)
+		if (ofc_sema_decl_is_procedure(decl)
+			|| decl->is_return)
 			continue;
 
-		if (!ofc_sema_decl_print(cs, indent,
-			decl_list->decl[i]))
+		/* Don't print declarations for unknown external symbols. */
+		if (ofc_sema_decl_is_unknown_external(decl))
+			continue;
+
+		if (!ofc_sema_decl_print(cs, indent, decl))
 			return false;
 	}
 
 	for (i = 0; i < decl_list->size; i++)
 	{
-		if (!decl_list->decl[i])
+		ofc_sema_decl_t* decl = decl_list->decl[i];
+
+		if (!decl) continue;
+
+		if (ofc_sema_decl_is_procedure(decl)
+			|| decl->is_return)
 			continue;
 
-		if (ofc_sema_decl_is_procedure(decl_list->decl[i])
-			|| decl_list->decl[i]->is_return)
-			continue;
-
-		if (!ofc_sema_decl_print_data_init(cs, indent,
-			decl_list->decl[i]))
+		if (!ofc_sema_decl_print_data_init(cs, indent, decl))
 			return false;
 	}
 
