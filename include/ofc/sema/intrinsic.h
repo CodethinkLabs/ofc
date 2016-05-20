@@ -39,6 +39,9 @@ const ofc_sema_type_t* ofc_sema_intrinsic_type(
 const ofc_sema_intrinsic_t* ofc_sema_intrinsic_cast_func(
 	const ofc_sema_type_t* type);
 
+bool ofc_sema_intrinsic_is_specific(
+	const ofc_sema_intrinsic_t* func);
+
 bool ofc_sema_intrinsic_print(
 	ofc_colstr_t* cs,
 	const ofc_sema_intrinsic_t* intrinsic);

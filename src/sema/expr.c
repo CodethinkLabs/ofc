@@ -1308,7 +1308,32 @@ ofc_sema_expr_t* ofc_sema_expr_dummy_arg(
 		ofc_sema_expr_t* e
 			= ofc_sema_expr__variable(
 				scope, expr->variable, true);
-		if (e) return e;
+
+		if (e)
+		{
+			ofc_sparse_ref_t base_name;
+			if (!ofc_parse_lhs_base_name(
+				*expr->variable, &base_name))
+				return NULL;
+
+			const ofc_sema_decl_t* decl
+				= ofc_sema_scope_decl_find(
+					scope, base_name.string, false);
+
+			if (decl && decl->is_intrinsic)
+			{
+				if (!ofc_sema_intrinsic_is_specific(decl->intrinsic))
+				{
+					ofc_sparse_ref_error(e->src,
+						"Generic intrinsic function '%.*s' can't be passed as an argument",
+						e->src.string.size, e->src.string.base);
+					ofc_sema_expr_delete(e);
+					return NULL;
+				}
+			}
+
+			return e;
+		}
 	}
 
 	return ofc_sema_expr(scope, expr);

@@ -1463,10 +1463,9 @@ bool ofc_sema_stmt_intrinsic(
 
 		if (!ofc_sema_intrinsic_is_specific(func))
 		{
-			ofc_sparse_ref_error(decl_name,
-				"Generic function '%.*s' can't be INTRINSIC",
+			ofc_sparse_ref_warning(decl_name,
+				"Generic function '%.*s' shouldn't be INTRINSIC",
 				decl_name.string.size, decl_name.string.base);
-			return false;
 		}
 
 		ofc_sema_decl_t* decl
