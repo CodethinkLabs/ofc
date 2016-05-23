@@ -46,6 +46,8 @@ typedef enum
 	OFC_SEMA_STMT_CALL,
 	OFC_SEMA_STMT_RETURN,
 	OFC_SEMA_STMT_ENTRY,
+	OFC_SEMA_STMT_CYCLE,
+	OFC_SEMA_STMT_EXIT,
 
 	/* Enum order must mach ofc_sema_stmt__name array
        in src/sema/stmt.c for error printing. */
@@ -354,6 +356,9 @@ ofc_sema_stmt_t* ofc_sema_stmt_go_to(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
 ofc_sema_stmt_t* ofc_sema_stmt_do(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt);
+ofc_sema_stmt_t* ofc_sema_stmt_cycle_exit(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
 ofc_sema_stmt_t* ofc_sema_stmt_call(

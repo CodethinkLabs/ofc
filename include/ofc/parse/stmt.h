@@ -286,6 +286,12 @@ struct ofc_parse_stmt_s
 			bool     end_has_label;
 			unsigned end_label;
 		} program;
+
+		struct
+		{
+			bool                has_keyword;
+			ofc_parse_keyword_e keyword;
+		} cycle_exit;
 	};
 };
 

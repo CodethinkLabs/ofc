@@ -512,3 +512,51 @@ bool ofc_sema_stmt_do_while_block_print(
 
 	return true;
 }
+
+
+
+ofc_sema_stmt_t* ofc_sema_stmt_cycle_exit(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt)
+{
+	if (!scope || !stmt
+		|| (stmt->type != OFC_PARSE_STMT_CYCLE))
+		return NULL;
+
+	ofc_sema_stmt_t s;
+	switch (stmt->type)
+	{
+		case OFC_PARSE_STMT_CYCLE:
+			s.type = OFC_SEMA_STMT_CYCLE;
+			break;
+		case OFC_PARSE_STMT_EXIT:
+			s.type = OFC_SEMA_STMT_EXIT;
+			break;
+		default:
+			return NULL;
+	}
+
+	/* TODO - Check that we're inside a loop. */
+
+	return ofc_sema_stmt_alloc(s);
+}
+
+bool ofc_sema_stmt_cycle_exit_print(
+	ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt)
+{
+	if (!stmt)
+		return false;
+
+	switch (stmt->type)
+	{
+		case OFC_PARSE_STMT_CYCLE:
+			return ofc_colstr_atomic_writef(cs, "CYCLE");
+		case OFC_PARSE_STMT_EXIT:
+			return ofc_colstr_atomic_writef(cs, "EXIT");
+		default:
+			break;
+	}
+
+	return false;
+}

@@ -38,6 +38,8 @@ bool ofc_sema_stmt_do_while_block_print(
 	ofc_colstr_t* cs, unsigned indent,
 	ofc_sema_label_map_t* label_map,
 	const ofc_sema_stmt_t* stmt);
+bool ofc_sema_stmt_cycle_exit_print(ofc_colstr_t* cs,
+	const ofc_sema_stmt_t* stmt);
 bool ofc_sema_go_to_print(ofc_colstr_t* cs,
 	const ofc_sema_stmt_t* stmt);
 bool ofc_sema_go_to_computed_print(ofc_colstr_t* cs,
@@ -174,7 +176,6 @@ ofc_sema_stmt_t* ofc_sema_stmt(
 			break;
 
 		case OFC_PARSE_STMT_GO_TO:
-
 		case OFC_PARSE_STMT_GO_TO_ASSIGNED:
 		case OFC_PARSE_STMT_GO_TO_COMPUTED:
 			s = ofc_sema_stmt_go_to(scope, stmt);
@@ -185,6 +186,11 @@ ofc_sema_stmt_t* ofc_sema_stmt(
 		case OFC_PARSE_STMT_DO_WHILE:
 		case OFC_PARSE_STMT_DO_WHILE_BLOCK:
 			s = ofc_sema_stmt_do(scope, stmt);
+			break;
+
+		case OFC_PARSE_STMT_CYCLE:
+		case OFC_PARSE_STMT_EXIT:
+			s = ofc_sema_stmt_cycle_exit(scope, stmt);
 			break;
 
 		case OFC_PARSE_STMT_CALL:
@@ -1270,6 +1276,10 @@ bool ofc_sema_stmt_print(
 			return ofc_sema_stmt_do_while_block_print(
 				cs, indent, label_map, stmt);
 
+		case OFC_SEMA_STMT_CYCLE:
+		case OFC_SEMA_STMT_EXIT:
+			return ofc_sema_stmt_cycle_exit_print(cs, stmt);
+
 		case OFC_SEMA_STMT_CALL:
 			return ofc_sema_stmt_call_print(cs, stmt);
 
@@ -1315,6 +1325,8 @@ static const char* ofc_sema_stmt__name[] =
 	"CALL",
 	"RETURN",
 	"ENTRY",
+	"CYCLE",
+	"EXIT",
 
 	NULL
 };

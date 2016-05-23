@@ -90,11 +90,7 @@ unsigned ofc_parse_stmt_contains(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
 	ofc_parse_stmt_t* stmt);
-unsigned ofc_parse_stmt_cycle(
-	const ofc_sparse_t* src, const char* ptr,
-	ofc_parse_debug_t* debug,
-	ofc_parse_stmt_t* stmt);
-unsigned ofc_parse_stmt_exit(
+unsigned ofc_parse_stmt_cycle_exit(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
 	ofc_parse_stmt_t* stmt);
@@ -470,7 +466,7 @@ ofc_parse_stmt_t* ofc_parse_stmt(
 		case 'C':
 			if (i == 0) i = ofc_parse_stmt_continue(src, ptr, debug, &stmt);
 			if (i == 0) i = ofc_parse_stmt_contains(src, ptr, debug, &stmt);
-			if (i == 0) i = ofc_parse_stmt_cycle(src, ptr, debug, &stmt);
+			if (i == 0) i = ofc_parse_stmt_cycle_exit(src, ptr, debug, &stmt);
 			if (i == 0) i = ofc_parse_stmt_call(src, ptr, debug, &stmt);
 			if (i == 0) i = ofc_parse_stmt_common(src, ptr, debug, &stmt);
 			if (i == 0) i = ofc_parse_stmt_io_close(src, ptr, debug, &stmt);
@@ -486,7 +482,7 @@ ofc_parse_stmt_t* ofc_parse_stmt(
 
 		case 'E':
 			if (i == 0) i = ofc_parse_stmt_equivalence(src, ptr, debug, &stmt);
-			if (i == 0) i = ofc_parse_stmt_exit(src, ptr, debug, &stmt);
+			if (i == 0) i = ofc_parse_stmt_cycle_exit(src, ptr, debug, &stmt);
 			if (i == 0) i = ofc_parse_stmt_io_end_file(src, ptr, debug, &stmt);
 			if (i == 0) i = ofc_parse_stmt_decl_attr_external(src, ptr, debug, &stmt);
 			if (i == 0) i = ofc_parse_stmt_entry(src, ptr, debug, &stmt);
@@ -669,9 +665,7 @@ bool ofc_parse_stmt_parameter_print(
 	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt);
 bool ofc_parse_stmt_continue_print(
 	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt);
-bool ofc_parse_stmt_cycle_print(
-	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt);
-bool ofc_parse_stmt_exit_print(
+bool ofc_parse_stmt_cycle_exit_print(
 	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt);
 bool ofc_parse_stmt_dimension_print(
 	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt);
@@ -768,11 +762,8 @@ bool ofc_parse_stmt_print(
 				return false;
 			break;
 		case OFC_PARSE_STMT_CYCLE:
-			if (!ofc_parse_stmt_cycle_print(cs, stmt))
-				return false;
-			break;
 		case OFC_PARSE_STMT_EXIT:
-			if (!ofc_parse_stmt_exit_print(cs, stmt))
+			if (!ofc_parse_stmt_cycle_exit_print(cs, stmt))
 				return false;
 			break;
 		case OFC_PARSE_STMT_STOP:
