@@ -366,6 +366,13 @@ bool ofc_sema_scope__body_decl_finalize(
 	if (!decl)
 		return true;
 
+	if (ofc_sema_decl_is_unknown_external(decl))
+	{
+		ofc_sparse_ref_warning(decl->name,
+			"External symbol is not explicitly typed after IMPLICIT NONE.");
+		return true;
+	}
+
 	return ofc_sema_decl_type_finalize(decl);
 }
 

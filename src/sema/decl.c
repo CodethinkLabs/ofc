@@ -109,13 +109,8 @@ ofc_sema_decl_t* ofc_sema_decl_create(
 bool ofc_sema_decl_type_finalize(
 	ofc_sema_decl_t* decl)
 {
-	if (!decl) return false;
-
-	/* Cannot finalize the type of an unknown external symbol. */
-	if (ofc_sema_decl_is_unknown_external(decl))
-		return true;
-
-	if (!decl->type) return false;
+	if (!decl || !decl->type)
+		return false;
 
 	const ofc_sema_type_t* ktype = decl->type;
 	if (decl->type->kind == OFC_SEMA_KIND_NONE)
