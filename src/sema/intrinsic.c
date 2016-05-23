@@ -1452,13 +1452,20 @@ bool ofc_sema_stmt_intrinsic(
 		{
 			func = ofc_hashmap_find(
 				ofc_sema_intrinsic__op_map, &decl_name.string);
-			if (!func)
-			{
-				ofc_sparse_ref_error(decl_name,
-					"Function '%.*s' can't be INTRINSIC",
-					decl_name.string.size, decl_name.string.base);
-				return false;
-			}
+		}
+
+		if (!func)
+		{
+			func = ofc_hashmap_find(
+				ofc_sema_intrinsic__func_map, &decl_name.string);
+		}
+
+		if (!func)
+		{
+			ofc_sparse_ref_error(decl_name,
+				"Function '%.*s' can't be INTRINSIC",
+				decl_name.string.size, decl_name.string.base);
+			return false;
 		}
 
 		if (!ofc_sema_intrinsic_is_specific(func))
