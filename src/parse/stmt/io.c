@@ -137,8 +137,8 @@ static unsigned ofc_parse_stmt__io(
 
 		/* We're only sure it's an IO statement if there's an IO list,
 		   otherwise this could be an implicit FUNCTION call. */
-		if (!ofc_is_end_statement(
-			&ptr[i], NULL))
+		if (!ofc_is_end_statement(&ptr[i], NULL)
+			&& stmt->io.has_brakets)
 		{
 			ofc_sparse_error_ptr(src, &ptr[i],
 				"Expected end of %s statement",
@@ -407,8 +407,8 @@ unsigned ofc_parse_stmt_io_read(
 
 		/* We're only sure it's an IO statement if there's an IO list,
 		   otherwise this could be an implicit FUNCTION call. */
-		if (!ofc_is_end_statement(
-			&ptr[i], NULL))
+		if (!ofc_is_end_statement(&ptr[i], NULL)
+			&& stmt->io.has_brakets)
 		{
 			ofc_sparse_error_ptr(src, &ptr[i],
 				"Expected end of %s statement",
