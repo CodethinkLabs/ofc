@@ -39,6 +39,8 @@ ofc_sema_stmt_t* ofc_sema_stmt_call(
 		return NULL;
 	}
 
+	if (!ofc_sema_decl_type_finalize(subroutine))
+		return NULL;
 	ofc_sema_decl_mark_used(subroutine, false, true);
 	s.call.subroutine = subroutine;
 

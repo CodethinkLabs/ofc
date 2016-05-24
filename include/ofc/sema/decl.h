@@ -39,6 +39,7 @@ struct ofc_sema_decl_s
 {
 	ofc_sparse_ref_t name;
 
+	bool type_final;
 	bool type_implicit;
 	const ofc_sema_type_t* type;
 
@@ -205,6 +206,8 @@ bool ofc_sema_decl_is_structure(
 bool ofc_sema_decl_is_composite(
 	const ofc_sema_decl_t* decl);
 
+bool ofc_sema_decl_is_external(
+	const ofc_sema_decl_t* decl);
 bool ofc_sema_decl_is_unknown_external(
 	const ofc_sema_decl_t* decl);
 

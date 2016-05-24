@@ -34,8 +34,7 @@ static void ofc_sema_decl_init__delete(
 bool ofc_sema_decl_is_final(
 	const ofc_sema_decl_t* decl)
 {
-	return (decl->was_written || decl->was_read
-		|| ofc_sema_decl_has_initializer(decl, NULL));
+	return (decl && decl->type_final);
 }
 
 ofc_sema_decl_t* ofc_sema_decl_create(
@@ -51,6 +50,7 @@ ofc_sema_decl_t* ofc_sema_decl_create(
 
 	decl->type = NULL;
 	decl->type_implicit = true;
+	decl->type_final    = false;
 
 	decl->is_static    = false;
 	decl->is_automatic = false;
@@ -141,16 +141,9 @@ bool ofc_sema_decl_type_finalize(
 		if (!ltype) return false;
 	}
 
-	const ofc_sema_type_t* ftype = ltype;
-	if ((decl->is_external || decl->is_intrinsic)
-		&& !ofc_sema_type_is_procedure(ltype))
-	{
-		ftype = ofc_sema_type_create_function(ltype);
-		if (!ftype) return false;
-	}
-
-	decl->type = ftype;
+	decl->type = ltype;
 	decl->type_implicit = false;
+	decl->type_final    = true;
 	return true;
 }
 
@@ -168,9 +161,6 @@ bool ofc_sema_decl_function(
 		|| ofc_sema_decl_is_final(decl)
 		|| !ofc_sema_decl_type_finalize(decl))
 		return false;
-
-	if (ofc_sema_decl_is_function(decl))
-		return true;
 
 	const ofc_sema_type_t* ftype
 		= ofc_sema_type_create_function(decl->type);
@@ -312,9 +302,6 @@ bool ofc_sema_decl_mark_used(
 
 	if (!written && !read)
 		return true;
-
-	if (!ofc_sema_decl_type_finalize(decl))
-		return false;
 
 	if (written)
 		decl->was_written = true;
@@ -1897,6 +1884,12 @@ bool ofc_sema_decl_is_composite(
 		|| ofc_sema_decl_is_structure(decl));
 }
 
+
+bool ofc_sema_decl_is_external(
+	const ofc_sema_decl_t* decl)
+{
+	return (decl && decl->is_external);
+}
 
 bool ofc_sema_decl_is_unknown_external(
 	const ofc_sema_decl_t* decl)

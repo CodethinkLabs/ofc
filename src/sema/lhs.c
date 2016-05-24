@@ -479,7 +479,23 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 	slhs->refcnt    = 0;
 
 	if (is_expr || is_dummy_arg)
-		ofc_sema_decl_mark_used(decl, false, true);
+	{
+		if (!is_dummy_arg
+			|| !ofc_sema_decl_is_external(decl))
+		{
+			if (!ofc_sema_decl_type_finalize(decl))
+			{
+				ofc_sema_lhs_delete(slhs);
+				return NULL;
+			}
+		}
+
+		if (!ofc_sema_decl_mark_used(decl, false, true))
+		{
+			ofc_sema_lhs_delete(slhs);
+			return NULL;
+		}
+	}
 	slhs->data_type = decl->type;
 
 	return slhs;
@@ -1516,8 +1532,8 @@ bool ofc_sema_lhs_mark_used(
 	switch (lhs->type)
 	{
 		case OFC_SEMA_LHS_DECL:
-			if (!ofc_sema_decl_mark_used(
-				lhs->decl, written, read))
+			if (!ofc_sema_decl_type_finalize(lhs->decl)
+				|| !ofc_sema_decl_mark_used(lhs->decl, written, read))
 				return false;
 			lhs->data_type = ofc_sema_decl_type(lhs->decl);
 			return true;
