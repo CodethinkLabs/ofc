@@ -28,9 +28,13 @@ static unsigned ofc_prep_unformat__blank_or_comment(
 	if (!src || !opts)
 		return 0;
 
-	bool is_comment
-		= ((toupper(src[0]) == 'C') || (src[0] == '*')
-			|| (!opts->debug && (toupper(src[0]) == 'D')));
+	bool is_comment = (src[0] == '!');
+	if (opts->form == OFC_LANG_FORM_FIXED)
+	{
+		if ((toupper(src[0]) == 'C') || (src[0] == '*')
+			|| (!opts->debug && (toupper(src[0]) == 'D')))
+			is_comment = true;
+	}
 
 	if (is_comment && strncasecmp(&src[1], "$PRAGMA", 7) == 0)
 	{
@@ -39,43 +43,37 @@ static unsigned ofc_prep_unformat__blank_or_comment(
 			"$PRAGMA not supported, ignoring");
 	}
 
-	if (opts->form != OFC_LANG_FORM_FIXED)
-		is_comment = false;
-
-	if (src[0] == '!')
-		is_comment = true;
-
 	unsigned i = 0, t = 0;
-
 	if (!is_comment)
 	{
-		for (; (i < opts->columns) && (src[i] !='\0')
+		for (; (i < opts->columns) && (src[i] != '\0')
 			&& !ofc_is_vspace(src[i]) && ofc_is_hspace(src[i]); i++)
 		{
 			if (src[i] == '\t')
 				t += 1;
 		}
-	}
 
-	bool ignore = is_comment || (i >= opts->columns);
-	if (!ignore)
-	{
-		switch (opts->form)
+		if ((opts->form == OFC_LANG_FORM_FIXED)
+			&& (i == 5) && (t == 0)
+			&& (src[i] !='\0')
+			&& !ofc_is_vspace(src[i]))
 		{
-			case OFC_LANG_FORM_FIXED:
-				ignore = (((i != 5) || (t > 0)) && (src[i] == '!'));
-				break;
-			default:
-				ignore = (src[i] == '!');
-				break;
+			for (i++; (i < opts->columns) && (src[i] != '\0')
+				&& !ofc_is_vspace(src[i]) && ofc_is_hspace(src[i]); i++)
+			{
+				if (src[i] == '\t')
+					t += 1;
+			}
 		}
+
+		is_comment = (src[i] == '!');
 	}
 
-	if (ignore)
-		for (; (src[i] != '\0') && !ofc_is_vspace(src[i]); i++);
-	else if ((src[i] != '\0') && !ofc_is_vspace(src[i]))
+	if (!is_comment && (i < opts->columns)
+		&& (src[i] != '\0') && !ofc_is_vspace(src[i]))
 		return 0;
 
+	for (; (src[i] != '\0') && !ofc_is_vspace(src[i]); i++);
 	return (ofc_is_vspace(src[i]) ? (i + 1) : i);
 }
 
