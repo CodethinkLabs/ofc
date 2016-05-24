@@ -366,7 +366,8 @@ static ofc_parse_expr_t* ofc_parse_expr__binary_insert(
 
 static ofc_parse_expr_t* ofc_parse_expr__binary(
 	ofc_parse_expr_t* a,
-	ofc_parse_debug_t* debug)
+	ofc_parse_debug_t* debug,
+	bool no_slash)
 {
 	if (!a) return NULL;
 
@@ -388,7 +389,8 @@ static ofc_parse_expr_t* ofc_parse_expr__binary(
 		op_len = ofc_parse_operator(
 			src, &ptr[a_len - 1], debug, &op);
 		if ((op_len > 0)
-			&& ofc_parse_operator_binary(op))
+			&& ofc_parse_operator_binary(op)
+			&& (!no_slash || (op != OFC_PARSE_OPERATOR_DIVIDE)))
 		{
 			ofc_parse_expr__cull_right_ambig_point(a);
 			a_len = a->src.string.size;
@@ -405,7 +407,8 @@ static ofc_parse_expr_t* ofc_parse_expr__binary(
 		op_len = ofc_parse_operator(
 			src, &ptr[a_len], debug, &op);
 		if ((op_len == 0)
-			|| !ofc_parse_operator_binary(op))
+			|| !ofc_parse_operator_binary(op)
+			|| (no_slash && (op == OFC_PARSE_OPERATOR_DIVIDE)))
 		{
 			ofc_parse_debug_rewind(debug, dpos);
 			return NULL;
@@ -436,21 +439,39 @@ static ofc_parse_expr_t* ofc_parse_expr__binary(
 	return expr;
 }
 
-ofc_parse_expr_t* ofc_parse_expr(
+static ofc_parse_expr_t* ofc_parse__expr(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
-	unsigned* len)
+	unsigned* len, bool no_slash)
 {
 	ofc_parse_expr_t* a = ofc_parse_expr__unary(
 		src, ptr, debug, NULL);
 	if (!a) return NULL;
 
 	ofc_parse_expr_t* c;
-	for (c = ofc_parse_expr__binary(a, debug); c != NULL;
-		a = c, c = ofc_parse_expr__binary(a, debug));
+	for (c = ofc_parse_expr__binary(a, debug, no_slash); c != NULL;
+		a = c, c = ofc_parse_expr__binary(a, debug, no_slash));
 
 	if (len) *len = a->src.string.size;
 	return a;
+}
+
+ofc_parse_expr_t* ofc_parse_expr(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	unsigned* len)
+{
+	return ofc_parse__expr(
+		src, ptr, debug, len, false);
+}
+
+ofc_parse_expr_t* ofc_parse_expr_no_slash(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	unsigned* len)
+{
+	return ofc_parse__expr(
+		src, ptr, debug, len, true);
 }
 
 void ofc_parse_expr_delete(
@@ -607,10 +628,10 @@ ofc_parse_expr_t* ofc_parse_expr_copy(
 
 
 
-ofc_parse_expr_list_t* ofc_parse_expr_list(
+static ofc_parse_expr_list_t* ofc_parse_expr__list(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
-	unsigned* len)
+	unsigned* len, bool no_slash)
 {
 	ofc_parse_expr_list_t* list
 		= (ofc_parse_expr_list_t*)malloc(
@@ -623,7 +644,9 @@ ofc_parse_expr_list_t* ofc_parse_expr_list(
 	unsigned l = ofc_parse_list(
 		src, ptr, debug,
 		',', &list->count, (void***)&list->expr,
-		(void*)ofc_parse_expr,
+		(void*)(no_slash
+			? ofc_parse_expr_no_slash
+			: ofc_parse_expr),
 		(void*)ofc_parse_expr_delete);
 	if (l == 0)
 	{
@@ -633,6 +656,15 @@ ofc_parse_expr_list_t* ofc_parse_expr_list(
 
 	if (len) *len = l;
 	return list;
+}
+
+ofc_parse_expr_list_t* ofc_parse_expr_list(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	unsigned* len)
+{
+	return ofc_parse_expr__list(
+		src, ptr, debug, len, false);
 }
 
 ofc_parse_expr_list_t* ofc_parse_expr_clist(
@@ -646,8 +678,8 @@ ofc_parse_expr_list_t* ofc_parse_expr_clist(
 
 	unsigned l;
 	ofc_parse_expr_list_t* clist
-		= ofc_parse_expr_list(
-			src, &ptr[i], debug, &l);
+		= ofc_parse_expr__list(
+			src, &ptr[i], debug, &l, true);
 	if (!clist) return NULL;
 	i += l;
 
