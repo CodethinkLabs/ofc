@@ -40,7 +40,7 @@ static ofc_sema_lhs_t* ofc_sema_lhs_index(
 	alhs->src       = lhs->src;
 	alhs->parent    = lhs;
 	alhs->index     = index;
-	alhs->data_type = ofc_sema_type_base(lhs->data_type);
+	alhs->data_type = lhs->data_type;
 	alhs->refcnt    = 0;
 
 	return alhs;
@@ -1547,8 +1547,40 @@ bool ofc_sema_lhs_mark_used(
 			break;
 	}
 
-	return ofc_sema_lhs_mark_used(
-		lhs->parent, written, read);
+	if (!lhs->parent)
+		return false;
+
+	const ofc_sema_type_t* ptype
+		= lhs->parent->data_type;
+	if (!ofc_sema_lhs_mark_used(
+		lhs->parent, written, read))
+		return false;
+	if (lhs->parent->data_type == ptype)
+		return true;
+
+	switch (lhs->type)
+	{
+		case OFC_SEMA_LHS_ARRAY_INDEX:
+		case OFC_SEMA_LHS_ARRAY_SLICE:
+			lhs->data_type = lhs->parent->data_type;
+			break;
+
+		case OFC_SEMA_LHS_SUBSTRING:
+			{
+				const ofc_sema_type_t* sstype
+					= ofc_sema_type_set_kind(
+						lhs->data_type, ofc_sema_type_get_kind(
+							lhs->parent->data_type));
+				if (!sstype) return false;
+				lhs->data_type = sstype;
+			}
+			break;
+
+		default:
+			break;
+	}
+
+	return true;
 }
 
 
