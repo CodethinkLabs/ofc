@@ -105,6 +105,7 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 
 	scope->external = false;
 	scope->intrinsic = false;
+	scope->save = false;
 
 	bool alloc_fail = !scope->decl;
 	if (scope->type == OFC_SEMA_SCOPE_STMT_FUNC)
@@ -1279,6 +1280,7 @@ ofc_sema_decl_t* ofc_sema_scope_decl_find__create(
 		decl = ofc_sema_decl_create(
 			ofc_sema_scope_implicit(scope), name);
 		if (!decl) return NULL;
+		decl->is_static = scope->save;
 
 		if (name_space != NULL)
 		{

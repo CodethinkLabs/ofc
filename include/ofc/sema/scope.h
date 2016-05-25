@@ -51,6 +51,7 @@ struct ofc_sema_scope_s
 
 	bool external;
 	bool intrinsic;
+	bool save;
 
 	ofc_sema_implicit_t*  implicit;
 

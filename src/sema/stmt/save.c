@@ -26,8 +26,14 @@ bool ofc_sema_stmt_save(
 
 	if (!stmt->save.list)
 	{
-		/* TODO - Mark all decl's in scope as static. */
-		return false;
+		if (scope->save)
+		{
+			ofc_sparse_ref_warning(stmt->src,
+				"Scope already marked as SAVE");
+		}
+
+		scope->save = true;
+		return true;
 	}
 
 	unsigned i;

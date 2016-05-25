@@ -21,8 +21,6 @@ unsigned ofc_parse_stmt_save(
 	ofc_parse_debug_t* debug,
 	ofc_parse_stmt_t* stmt)
 {
-	unsigned dpos = ofc_parse_debug_position(debug);
-
 	unsigned i = ofc_parse_keyword(
 		src, ptr, debug,
 		OFC_PARSE_KEYWORD_SAVE);
@@ -31,12 +29,7 @@ unsigned ofc_parse_stmt_save(
 	unsigned l;
 	stmt->save.list = ofc_parse_save_list(
 		src, &ptr[i], debug, &l);
-	if (!stmt->save.list)
-	{
-		ofc_parse_debug_rewind(debug, dpos);
-		return 0;
-	}
-	i += l;
+	if (stmt->save.list) i += l;
 
 	stmt->type = OFC_PARSE_STMT_SAVE;
 	return i;
@@ -48,7 +41,10 @@ bool ofc_parse_stmt_save_print(
 	if (!stmt)
 		return false;
 
-	return (ofc_colstr_atomic_writef(cs, "SAVE ")
-		&& ofc_parse_save_list_print(
+	if (!ofc_colstr_atomic_writef(cs, "SAVE "))
+		return false;
+
+	return (!stmt->save.list
+		|| ofc_parse_save_list_print(
 			cs, stmt->save.list));
 }
