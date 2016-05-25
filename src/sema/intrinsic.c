@@ -1002,7 +1002,7 @@ static const ofc_sema_intrinsic_func_t ofc_sema_intrinsic__func_list[] =
 
 	{ "IShftC", 3, 3, IP_INTEGER, { IP_INTEGER, IP_INTEGER, IP_INTEGER }, NULL, NULL },
 
-	{ "Len", 1, 2, IP_CALLBACK, { IP_CHARACTER },
+	{ "Len", 1, 2, IP_CALLBACK, { IP_CHARACTER, IP_INTEGER },
 		ofc_sema_intrinsic__len_rt, ofc_sema_intrinsic__len_tv },
 
 	{ "Char" , 1, 2, IP_CALLBACK, { IP_INTEGER    , IP_INTEGER },
