@@ -283,7 +283,7 @@ static unsigned ofc_parse_literal__hollerith(
 ofc_string_t* ofc_parse__character(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
-	unsigned* len, bool quiet)
+	unsigned* len, bool quiet, bool allow_escape)
 {
 	unsigned i = 0;
 
@@ -305,12 +305,13 @@ ofc_string_t* ofc_parse__character(
 			if (ptr[i + 1] != quote)
 				break;
 			is_escaped = ofc_sparse_sequential(src, &ptr[i], 2);
+			is_escaped = is_escaped && allow_escape;
 			if (!is_escaped)
 				i += 1;
 		}
 		else
 		{
-			is_escaped = !is_escaped && (ptr[i] == '\\');
+			is_escaped = allow_escape && !is_escaped && (ptr[i] == '\\');
 		}
 	}
 	if (ptr[i++] != quote)
@@ -341,6 +342,7 @@ ofc_string_t* ofc_parse__character(
 			if (pptr[j] == quote)
 			{
 				is_escaped = (pptr[j + 1] == quote);
+				is_escaped = is_escaped && allow_escape;
 				if (is_escaped)
 				{
 					j++;
@@ -361,9 +363,12 @@ ofc_string_t* ofc_parse__character(
 			}
 			else if (pptr[j] == '\\')
 			{
-				j++;
-				is_escaped = true;
-				continue;
+				is_escaped = allow_escape;
+				if (is_escaped)
+				{
+					j++;
+					continue;
+				}
 			}
 		}
 
@@ -430,11 +435,13 @@ ofc_string_t* ofc_parse__character(
 		}
 		else if (pptr[j] == '\\')
 		{
-			is_escaped = true;
+			is_escaped = allow_escape;
+			if (!is_escaped) string->base[str_pos++] = '\\';
 		}
 		else if (pptr[j] == quote)
 		{
 			is_escaped = (pptr[j + 1] == quote);
+			is_escaped = is_escaped && allow_escape;
 			if (!is_escaped)
 				for (j++; (j < str_end) && (pptr[j] != quote); j++);
 		}
@@ -448,12 +455,34 @@ ofc_string_t* ofc_parse__character(
 	return string;
 }
 
+ofc_string_t* ofc_parse__character_escaped(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	unsigned* len, bool quiet)
+{
+	return ofc_parse__character(
+		src, ptr, debug, len, quiet, true);
+}
+
+ofc_string_t* ofc_parse__character_unescaped(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	unsigned* len, bool quiet)
+{
+	return ofc_parse__character(
+		src, ptr, debug, len, quiet, false);
+}
+
 ofc_string_t* ofc_parse_character(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
 	unsigned* len)
 {
-	return ofc_parse__character(
+	ofc_string_t* str = ofc_parse__character_escaped(
+		src, ptr, debug, len, false);
+	if (str) return str;
+
+	return ofc_parse__character_unescaped(
 		src, ptr, debug, len, false);
 }
 
@@ -463,9 +492,14 @@ static unsigned ofc_parse_literal__character(
 	ofc_parse_literal_t* literal)
 {
 	unsigned len = 0;
-	literal->string = ofc_parse__character(
+	literal->string = ofc_parse__character_escaped(
 		src, ptr, debug, &len, true);
-	if (!literal->string) return 0;
+	if (!literal->string)
+	{
+		literal->string = ofc_parse__character_unescaped(
+			src, ptr, debug, &len, true);
+		if (!literal->string) return 0;
+	}
 
 	literal->type = OFC_PARSE_LITERAL_CHARACTER;
 	return len;
