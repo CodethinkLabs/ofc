@@ -499,6 +499,54 @@ static const ofc_sema_intrinsic_op_t ofc_sema_intrinsic__op_list_override[] =
 
 
 
+static const ofc_sema_type_t* ofc_sema_intrinsic__len_rt(
+	const ofc_sema_expr_list_t* args)
+{
+	ofc_sema_kind_e kind = OFC_SEMA_KIND_DEFAULT;
+	if (args->count >= 2)
+	{
+		const ofc_sema_type_t* type
+			= ofc_sema_expr_type(args->expr[1]);
+		if (!type) return NULL;
+		kind = type->kind;
+	}
+
+	return ofc_sema_type_create_primitive(
+		OFC_SEMA_TYPE_INTEGER, kind);
+}
+
+static ofc_sema_typeval_t* ofc_sema_intrinsic__len_tv(
+	const ofc_sema_intrinsic_t* intrinsic,
+	const ofc_sema_expr_list_t* args)
+{
+	(void)intrinsic;
+
+	if (args->count > 2)
+		return NULL;
+
+	ofc_sema_kind_e kind = OFC_SEMA_KIND_DEFAULT;
+	if (args->count > 1)
+	{
+		const ofc_sema_type_t* kt
+			= ofc_sema_expr_type(args->expr[1]);
+		if (!kt) return NULL;
+		kind = kt->kind;
+	}
+
+	const ofc_sema_typeval_t* ctv
+		= ofc_sema_expr_constant(args->expr[0]);
+	if (!ctv || !ofc_sema_type_is_character(ctv->type)
+		|| ctv->type->len_var)
+		return NULL;
+
+	int cl = (int)ctv->type->len;
+	if ((unsigned)cl != ctv->type->len)
+		return NULL;
+
+	return ofc_sema_typeval_create_integer(
+		cl, kind, args->expr[0]->src);
+}
+
 static const ofc_sema_type_t* ofc_sema_intrinsic__char_rt(
 	const ofc_sema_expr_list_t* args)
 {
@@ -921,7 +969,6 @@ static const ofc_sema_intrinsic_func_t ofc_sema_intrinsic__func_list[] =
 	{ "IRand",    0, 1, IP_DEF_INTEGER, { IP_INTEGER       }, NULL, NULL },
 	{ "LnBlnk",   1, 1, IP_DEF_INTEGER, { IP_CHARACTER     }, NULL, NULL },
 	{ "IsaTty",   1, 1, IP_DEF_LOGICAL, { IP_INTEGER       }, NULL, NULL },
-	{ "Len",      1, 1, IP_INTEGER_1,   { IP_CHARACTER     }, NULL, NULL },
 	{ "AImag",    1, 1, IP_REAL,        { IP_DEF_COMPLEX   }, NULL, NULL },
 	{ "Len_Trim", 1, 1, IP_DEF_INTEGER, { IP_CHARACTER     }, NULL, NULL },
 	{ "BesJ0",    1, 1, IP_REAL,        { IP_REAL          }, NULL, NULL },
@@ -954,6 +1001,9 @@ static const ofc_sema_intrinsic_func_t ofc_sema_intrinsic__func_list[] =
 	{ "BTest",  2, 2, IP_DEF_LOGICAL, { IP_INTEGER  , IP_INTEGER         }, NULL, NULL },
 
 	{ "IShftC", 3, 3, IP_INTEGER, { IP_INTEGER, IP_INTEGER, IP_INTEGER }, NULL, NULL },
+
+	{ "Len", 1, 2, IP_CALLBACK, { IP_CHARACTER },
+		ofc_sema_intrinsic__len_rt, ofc_sema_intrinsic__len_tv },
 
 	{ "Char" , 1, 2, IP_CALLBACK, { IP_INTEGER    , IP_INTEGER },
 		ofc_sema_intrinsic__char_rt, ofc_sema_intrinsic__char_tv },
