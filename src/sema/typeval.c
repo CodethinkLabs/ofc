@@ -2629,6 +2629,8 @@ bool ofc_sema_typeval_print(ofc_colstr_t*cs,
 		case OFC_SEMA_TYPE_INTEGER:
 			if (kind != OFC_SEMA_KIND_DEFAULT)
 			{
+				ofc_sparse_ref_error(typeval->src,
+					"Unable to print constant with non-default KIND");
 				/* TODO - TYPEVAL - Print alternative INTEGER KINDs. */
 				return false;
 			}
