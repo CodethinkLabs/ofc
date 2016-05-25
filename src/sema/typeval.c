@@ -1600,10 +1600,42 @@ ofc_sema_typeval_t* ofc_sema_typeval_power(
 	const ofc_sema_typeval_t* b)
 {
 	if (!a || !a->type
-		|| !b || !b->type
-		|| !ofc_sema_type_compatible(
-			a->type, b->type))
+		|| !b || !b->type)
 		return NULL;
+
+	if (!ofc_sema_type_compatible(
+		a->type, b->type))
+	{
+		const ofc_sema_type_t* ptype
+			= ofc_sema_type_promote(a->type, b->type);
+		if (!ptype) return NULL;
+
+		ofc_sema_typeval_t* ca = NULL;
+		if (!ofc_sema_type_compatible(a->type, ptype))
+		{
+			ca = ofc_sema_typeval_cast(a, ptype);
+			if (!ca) return NULL;
+			a = ca;
+		}
+
+		ofc_sema_typeval_t* cb = NULL;
+		if (!ofc_sema_type_compatible(b->type, ptype))
+		{
+			cb = ofc_sema_typeval_cast(b, ptype);
+			if (!cb)
+			{
+				ofc_sema_typeval_delete(ca);
+				return NULL;
+			}
+			b = cb;
+		}
+
+		ofc_sema_typeval_t* tv
+			= ofc_sema_typeval_power(a, b);
+		ofc_sema_typeval_delete(cb);
+		ofc_sema_typeval_delete(ca);
+		return tv;
+	}
 
 	ofc_sema_typeval_t tv;
 	tv.type = a->type;
