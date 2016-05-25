@@ -72,7 +72,7 @@ static ofc_sema_expr__rule_t ofc_sema_expr__rule[] =
 	{ NULL, 0, 0, 0, 0, 0, 0 }, /* FUNCTION */
 	{ NULL, 0, 0, 0, 0, 0, 0 }, /* IMPLICIT_DO */
 
-	{ NULL, 0, 1, 1, 1, 0, 0 }, /* POWER */
+	{ NULL, 0, 1, 1, 1, 0, 1 }, /* POWER */
 	{ NULL, 0, 1, 1, 1, 0, 1 }, /* MULTIPLY */
 	{ NULL, 0, 0, 0, 0, 1, 0 }, /* CONCAT */
 	{ NULL, 0, 1, 1, 1, 0, 1 }, /* DIVIDE */
