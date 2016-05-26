@@ -230,6 +230,126 @@ static ofc_sema_typeval_t* ofc_sema_intrinsic_op__constant_cast(
 		ofc_sema_intrinsic_type(intrinsic, args));
 }
 
+static ofc_sema_typeval_t* ofc_sema_intrinsic_op__constant_iand(
+	const ofc_sema_intrinsic_t* intrinsic,
+	const ofc_sema_expr_list_t* args)
+{
+	if (!intrinsic || !args
+		|| (args->count != 2))
+		return NULL;
+
+	const ofc_sema_typeval_t* ctv[2];
+	ctv[0] = ofc_sema_expr_constant(args->expr[0]);
+	ctv[1] = ofc_sema_expr_constant(args->expr[1]);
+	if (!ctv[0] || !ctv[1]
+		|| !ctv[0]->type || !ctv[1]->type
+		|| !ofc_sema_type_is_integer(ctv[0]->type)
+		|| !ofc_sema_type_is_integer(ctv[1]->type))
+		return NULL;
+
+	const ofc_sema_type_t* type
+		= ofc_sema_type_promote(ctv[0]->type, ctv[1]->type);
+	if (!type) return NULL;
+
+	ofc_sparse_ref_t ref = OFC_SPARSE_REF_EMPTY;
+	ofc_sparse_ref_bridge(
+		args->expr[0]->src,
+		args->expr[1]->src, &ref);
+
+	ofc_sema_typeval_t* tv
+		= ofc_sema_typeval_create_integer(0, type->kind, ref);
+	if (!tv) return NULL;
+	tv->integer = ctv[0]->integer & ctv[1]->integer;
+	return tv;
+}
+
+static ofc_sema_typeval_t* ofc_sema_intrinsic_op__constant_ieor(
+	const ofc_sema_intrinsic_t* intrinsic,
+	const ofc_sema_expr_list_t* args)
+{
+	if (!intrinsic || !args
+		|| (args->count != 2))
+		return NULL;
+
+	const ofc_sema_typeval_t* ctv[2];
+	ctv[0] = ofc_sema_expr_constant(args->expr[0]);
+	ctv[1] = ofc_sema_expr_constant(args->expr[1]);
+	if (!ctv[0] || !ctv[1]
+		|| !ctv[0]->type || !ctv[1]->type
+		|| !ofc_sema_type_is_integer(ctv[0]->type)
+		|| !ofc_sema_type_is_integer(ctv[1]->type))
+		return NULL;
+
+	const ofc_sema_type_t* type
+		= ofc_sema_type_promote(ctv[0]->type, ctv[1]->type);
+	if (!type) return NULL;
+
+	ofc_sparse_ref_t ref = OFC_SPARSE_REF_EMPTY;
+	ofc_sparse_ref_bridge(
+		args->expr[0]->src,
+		args->expr[1]->src, &ref);
+
+	ofc_sema_typeval_t* tv
+		= ofc_sema_typeval_create_integer(0, type->kind, ref);
+	if (!tv) return NULL;
+	tv->integer = ctv[0]->integer ^ ctv[1]->integer;
+	return tv;
+}
+
+static ofc_sema_typeval_t* ofc_sema_intrinsic_op__constant_ior(
+	const ofc_sema_intrinsic_t* intrinsic,
+	const ofc_sema_expr_list_t* args)
+{
+	if (!intrinsic || !args
+		|| (args->count != 2))
+		return NULL;
+
+	const ofc_sema_typeval_t* ctv[2];
+	ctv[0] = ofc_sema_expr_constant(args->expr[0]);
+	ctv[1] = ofc_sema_expr_constant(args->expr[1]);
+	if (!ctv[0] || !ctv[1]
+		|| !ctv[0]->type || !ctv[1]->type
+		|| !ofc_sema_type_is_integer(ctv[0]->type)
+		|| !ofc_sema_type_is_integer(ctv[1]->type))
+		return NULL;
+
+	const ofc_sema_type_t* type
+		= ofc_sema_type_promote(ctv[0]->type, ctv[1]->type);
+	if (!type) return NULL;
+
+	ofc_sparse_ref_t ref = OFC_SPARSE_REF_EMPTY;
+	ofc_sparse_ref_bridge(
+		args->expr[0]->src,
+		args->expr[1]->src, &ref);
+
+	ofc_sema_typeval_t* tv
+		= ofc_sema_typeval_create_integer(0, type->kind, ref);
+	if (!tv) return NULL;
+	tv->integer = ctv[0]->integer | ctv[1]->integer;
+	return tv;
+}
+
+static ofc_sema_typeval_t* ofc_sema_intrinsic_op__constant_not(
+	const ofc_sema_intrinsic_t* intrinsic,
+	const ofc_sema_expr_list_t* args)
+{
+	if (!intrinsic || !args
+		|| (args->count != 1))
+		return NULL;
+
+	const ofc_sema_typeval_t* ctv
+		= ofc_sema_expr_constant(args->expr[0]);
+	if (!ctv || !ctv->type
+		|| !ofc_sema_type_is_integer(ctv->type))
+		return NULL;
+
+	ofc_sema_typeval_t* tv
+		= ofc_sema_typeval_copy(ctv);
+	if (!tv) return NULL;
+	tv->integer = ~ctv->integer;
+	return tv;
+}
+
 typedef struct
 {
 	const char*                 name;
@@ -457,10 +577,10 @@ static const ofc_sema_intrinsic_op_t ofc_sema_intrinsic__op_list[] =
 	{ "DATANH", 1, 1, IP_SAME, IP_DEF_DOUBLE, NULL },
 	{ "QATANH", 1, 1, IP_SAME, IP_REAL_16   , NULL },
 
-	{ "IAND", 2, 2, IP_SAME, IP_INTEGER, NULL },
-	{ "IEOR", 2, 2, IP_SAME, IP_INTEGER, NULL },
-	{ "IOR" , 2, 2, IP_SAME, IP_INTEGER, NULL },
-	{ "NOT" , 1, 1, IP_SAME, IP_INTEGER, NULL },
+	{ "IAND", 2, 2, IP_SAME, IP_INTEGER, ofc_sema_intrinsic_op__constant_iand },
+	{ "IEOR", 2, 2, IP_SAME, IP_INTEGER, ofc_sema_intrinsic_op__constant_ieor },
+	{ "IOR" , 2, 2, IP_SAME, IP_INTEGER, ofc_sema_intrinsic_op__constant_ior },
+	{ "NOT" , 1, 1, IP_SAME, IP_INTEGER, ofc_sema_intrinsic_op__constant_not },
 
 	{ NULL, 0, 0, 0, 0, NULL }
 };
