@@ -2330,7 +2330,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 	unsigned indent,
 	const ofc_sema_decl_t* decl)
 {
-	if (!decl || !decl->type)
+	if (!decl)
 		return false;
 
 	if (!ofc_colstr_newline(cs, indent, NULL))
@@ -2349,6 +2349,9 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 			&& ofc_colstr_atomic_writef(cs, " ")
 			&& ofc_sema_decl_print_name(cs, decl));
 	}
+
+	if (!decl->type)
+		return false;
 
 	bool f77_parameter = false;
 	if (ofc_sema_decl_is_parameter(decl))
