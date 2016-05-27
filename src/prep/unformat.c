@@ -43,6 +43,7 @@ static unsigned ofc_prep_unformat__blank_or_comment(
 			"$PRAGMA not supported, ignoring");
 	}
 
+	bool prep_hash_warn = false;
 	unsigned i = 0, t = 0;
 	if (!is_comment)
 	{
@@ -55,9 +56,12 @@ static unsigned ofc_prep_unformat__blank_or_comment(
 
 		if ((opts->form == OFC_LANG_FORM_FIXED)
 			&& (i == 5) && (t == 0)
-			&& (src[i] !='\0')
+			&& (src[i] != '\0')
 			&& !ofc_is_vspace(src[i]))
 		{
+			if (src[i] == '#')
+				prep_hash_warn = true;
+
 			for (i++; (i < opts->columns) && (src[i] != '\0')
 				&& !ofc_is_vspace(src[i]) && ofc_is_hspace(src[i]); i++)
 			{
@@ -72,6 +76,13 @@ static unsigned ofc_prep_unformat__blank_or_comment(
 	if (!is_comment && (i < opts->columns)
 		&& (src[i] != '\0') && !ofc_is_vspace(src[i]))
 		return 0;
+
+	if (prep_hash_warn)
+	{
+		ofc_file_warning(file, &src[i],
+			"Using '#' as a continuation character"
+			" may clash with the preprocessor");
+	}
 
 	for (; (src[i] != '\0') && !ofc_is_vspace(src[i]); i++);
 	return (ofc_is_vspace(src[i]) ? (i + 1) : i);
@@ -145,6 +156,14 @@ static unsigned ofc_prep_unformat__fixed_form_label(
 	{
 		is_cont = ((src[i] != '\0') && !ofc_is_vspace(src[i])
 			&& !ofc_is_hspace(src[i]) && (src[i] != '0'));
+
+		if (src[i] == '#')
+		{
+			ofc_file_warning(file, &src[i],
+				"Using '#' as a continuation character"
+				" may clash with the preprocessor");
+		}
+
 		i++;
 	}
 
