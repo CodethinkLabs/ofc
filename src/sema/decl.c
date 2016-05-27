@@ -2329,12 +2329,16 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 
 	if (decl->is_intrinsic)
 	{
-		if (!ofc_colstr_atomic_writef(cs, "INTRINSIC")
-			|| !ofc_colstr_atomic_writef(cs, " ")
-			|| !ofc_sema_decl_print_name(cs, decl))
-			return false;
+		return (ofc_colstr_atomic_writef(cs, "INTRINSIC")
+			&& ofc_colstr_atomic_writef(cs, " ")
+			&& ofc_sema_decl_print_name(cs, decl));
+	}
 
-		return true;
+	if (ofc_sema_decl_is_unknown_external(decl))
+	{
+		return (ofc_colstr_atomic_writef(cs, "EXTERNAL")
+			&& ofc_colstr_atomic_writef(cs, " ")
+			&& ofc_sema_decl_print_name(cs, decl));
 	}
 
 	bool f77_parameter = false;
@@ -2389,14 +2393,6 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 			return false;
 
 		if (!ofc_sema_type_print(cs, type))
-			return false;
-	}
-
-	if (decl->is_external)
-	{
-		if (!ofc_colstr_atomic_writef(cs, ",")
-			|| !ofc_colstr_atomic_writef(cs, " ")
-			|| !ofc_colstr_atomic_writef(cs, "EXTERNAL"))
 			return false;
 	}
 
@@ -2570,6 +2566,15 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 	if (f77_parameter
 		&& !ofc_colstr_atomic_writef(cs, ")"))
 		return false;
+
+	if (decl->is_external)
+	{
+		if (!ofc_colstr_newline(cs, indent, NULL)
+			|| !ofc_colstr_atomic_writef(cs, "EXTERNAL")
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_sema_decl_print_name(cs, decl))
+			return false;
+	}
 
 	return true;
 }
@@ -3023,10 +3028,6 @@ bool ofc_sema_decl_list_print(
 		/* Don't print prototypes for declared procedures. */
 		if (ofc_sema_decl_is_procedure(decl)
 			|| decl->is_return)
-			continue;
-
-		/* Don't print declarations for unknown external symbols. */
-		if (ofc_sema_decl_is_unknown_external(decl))
 			continue;
 
 		if (!ofc_sema_decl_print(cs, indent, decl))
