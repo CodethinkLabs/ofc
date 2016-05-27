@@ -305,6 +305,10 @@ static bool ofc_sema_scope__body_validate(
 			if(ofc_sema_decl_is_procedure(decl))
 				continue;
 
+			/* Statement function arguments are always used. */
+			if (decl->is_stmt_func_arg)
+				continue;
+
 			if (decl->is_argument)
 			{
 				if (!decl->was_read)
