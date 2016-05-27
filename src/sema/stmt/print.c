@@ -111,10 +111,13 @@ bool ofc_sema_stmt_print_print(
 		return false;
 	}
 
-	if (!ofc_colstr_atomic_writef(cs, ",")
-		|| !ofc_colstr_atomic_writef(cs, " ")
-		|| !ofc_sema_expr_list_print(cs, stmt->io_print.iolist))
-		return false;
+	if (stmt->io_print.iolist)
+	{
+		if (!ofc_colstr_atomic_writef(cs, ",")
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_sema_expr_list_print(cs, stmt->io_print.iolist))
+			return false;
+	}
 
 	return true;
 }
