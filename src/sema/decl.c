@@ -1916,6 +1916,15 @@ bool ofc_sema_decl_is_procedure(
 		|| ofc_sema_decl_is_function(decl));
 }
 
+bool ofc_sema_decl_is_stmt_func(
+	const ofc_sema_decl_t* decl)
+{
+	if (!decl || !decl->func)
+		return false;
+	return (decl->func->type
+		== OFC_SEMA_SCOPE_STMT_FUNC);
+}
+
 
 bool ofc_sema_decl_is_parameter(
 	const ofc_sema_decl_t* decl)
@@ -2912,8 +2921,7 @@ bool ofc_sema_decl_list_stmt_func_print(
 	for (i = 0; i < decl_list->size; i++)
 	{
 		ofc_sema_decl_t* decl = decl_list->decl[i];
-		if (decl && decl->func
-			&& (decl->func->type == OFC_SEMA_SCOPE_STMT_FUNC))
+		if (ofc_sema_decl_is_stmt_func(decl))
 		{
 			if (!ofc_colstr_newline(cs, indent, NULL)
 				|| !ofc_sema_decl_print_name(cs, decl)
@@ -2981,7 +2989,8 @@ bool ofc_sema_decl_list_procedure_spec_print(
 		if (!decl) continue;
 
 		if (!ofc_sema_decl_is_procedure(decl)
-			|| ofc_sema_decl_is_subroutine(decl))
+			|| ofc_sema_decl_is_subroutine(decl)
+			|| ofc_sema_decl_is_stmt_func(decl))
 			continue;
 
 		if (!ofc_sema_decl_print(
@@ -3026,8 +3035,8 @@ bool ofc_sema_decl_list_print(
 			continue;
 
 		/* Don't print prototypes for declared procedures. */
-		if (ofc_sema_decl_is_procedure(decl)
-			|| decl->is_return)
+		if (!ofc_sema_decl_is_stmt_func(decl)
+			&& (ofc_sema_decl_is_procedure(decl) || decl->is_return))
 			continue;
 
 		if (!ofc_sema_decl_print(cs, indent, decl))

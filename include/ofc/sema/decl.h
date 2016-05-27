@@ -217,6 +217,8 @@ bool ofc_sema_decl_is_function(
 	const ofc_sema_decl_t* decl);
 bool ofc_sema_decl_is_procedure(
 	const ofc_sema_decl_t* decl);
+bool ofc_sema_decl_is_stmt_func(
+	const ofc_sema_decl_t* decl);
 
 bool ofc_sema_decl_is_parameter(
 	const ofc_sema_decl_t* decl);
