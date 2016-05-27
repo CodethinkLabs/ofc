@@ -62,6 +62,26 @@ static bool ofc_cliarg_global_opts__set_flag(
 	return true;
 }
 
+static bool ofc_cliarg_print_opts__set_flag(
+	ofc_print_opts_t* print_opts,
+	int arg_type)
+{
+	if (!print_opts)
+		return false;
+
+    switch (arg_type)
+	{
+		case OFC_CLIARG_PRINT_F77_PARAMETER:
+			print_opts->f77_parameter = true;
+			break;
+
+		default:
+			return false;
+	}
+
+	return true;
+}
+
 static bool ofc_cliarg_print_opts__set_num(
 	ofc_print_opts_t* print_opts,
 	int arg_type, unsigned value)
@@ -215,6 +235,7 @@ static const ofc_cliarg_body_t cliargs[] =
 	{ OFC_CLIARG_CASE_SEN,              "case-sen",              '\0', "Sets case sensitive mode",                   OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
 	{ OFC_CLIARG_INDENT_WIDTH,          "indent-width",          '\0', "Sets indent width <n>",                      OFC_CLIARG_PARAM_PRIN_INT,  1, true  },
 	{ OFC_CLIARG_INDENT_MAX_LEVEL,      "indent-max-level",      '\0', "Sets maximum indent level <n>",              OFC_CLIARG_PARAM_PRIN_INT,  1, true  },
+	{ OFC_CLIARG_PRINT_F77_PARAMETER,   "print-f77-parameter",   '\0', "Print PARAMETER statement separately",       OFC_CLIARG_PARAM_PRIN_NONE, 0, true  },
 	{ OFC_CLIARG_INCLUDE,               "include",               '\0', "Set include paths <s>",                      OFC_CLIARG_PARAM_FILE_STR,  1, false },
 	{ OFC_CLIARG_SEMA_STRUCT_TYPE,      "no-sema-struct-type",   '\0', "Disable struct to type semantic pass",       OFC_CLIARG_PARAM_SEMA_PASS, 0, true  },
 	{ OFC_CLIARG_SEMA_CHAR_TRANSFER,    "no-sema-char-transfer", '\0', "Disable char to transfer semantic pass",     OFC_CLIARG_PARAM_SEMA_PASS, 0, true  },
@@ -318,6 +339,8 @@ static bool ofc_cliarg__apply(
 			return ofc_cliarg_lang_opts__set_flag(lang_opts, arg_type);
 		case OFC_CLIARG_PARAM_LANG_INT:
 			return ofc_cliarg_lang_opts__set_num(lang_opts, arg_type, arg->value);
+		case OFC_CLIARG_PARAM_PRIN_NONE:
+			return ofc_cliarg_print_opts__set_flag(print_opts, arg_type);
 		case OFC_CLIARG_PARAM_PRIN_INT:
 			return ofc_cliarg_print_opts__set_num(print_opts, arg_type, arg->value);
 		case OFC_CLIARG_PARAM_FILE_STR:
@@ -440,6 +463,7 @@ bool ofc_cliarg_parse(
 				{
 					case OFC_CLIARG_PARAM_GLOB_NONE:
 					case OFC_CLIARG_PARAM_LANG_NONE:
+					case OFC_CLIARG_PARAM_PRIN_NONE:
 					case OFC_CLIARG_PARAM_SEMA_PASS:
 						resolved_arg = ofc_cliarg_create(arg_body, NULL);
 						break;

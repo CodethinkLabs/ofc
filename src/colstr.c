@@ -569,3 +569,12 @@ bool ofc_colstr_fdprint(ofc_colstr_t* cstr, int fd)
 	return (dprintf(fd, "%.*s\n",
 		cstr->size, cstr->base) > 0);
 }
+
+
+
+const ofc_print_opts_t* ofc_colstr_print_opts_get(const ofc_colstr_t* cstr)
+{
+	if (!cstr)
+		return NULL;
+	return &cstr->print_opts;
+}

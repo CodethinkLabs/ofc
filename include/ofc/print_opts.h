@@ -23,6 +23,7 @@ typedef struct
 	unsigned indent_width;
 	unsigned indent_max_level;
 
+	bool     f77_parameter;
 } ofc_print_opts_t;
 
 static const ofc_print_opts_t
@@ -30,6 +31,7 @@ static const ofc_print_opts_t
 {
 	.indent_width     = 2,
 	.indent_max_level = 4,
+	.f77_parameter    = false,
 };
 
 #endif

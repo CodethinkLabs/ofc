@@ -2337,6 +2337,14 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 		return true;
 	}
 
+	bool f77_parameter = false;
+	if (ofc_sema_decl_is_parameter(decl))
+	{
+		const ofc_print_opts_t* opts =
+			ofc_colstr_print_opts_get(cs);
+		f77_parameter = (opts && opts->f77_parameter);
+	}
+
 	const ofc_sema_type_t* type = NULL;
 	bool is_pointer = false;
 	if ((decl->type->type == OFC_SEMA_TYPE_TYPE)
@@ -2408,7 +2416,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 			return false;
 	}
 
-	if (ofc_sema_decl_is_parameter(decl))
+	if (!f77_parameter && ofc_sema_decl_is_parameter(decl))
 	{
 		if (!ofc_colstr_atomic_writef(cs, ",")
 			|| !ofc_colstr_atomic_writef(cs, " ")
@@ -2450,6 +2458,16 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 		return false;
 
 	/* TODO - Handle POINTER initializers. */
+
+	if (f77_parameter)
+	{
+		if (!ofc_colstr_newline(cs, indent, NULL)
+			|| !ofc_colstr_atomic_writef(cs, "PARAMETER")
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_colstr_atomic_writef(cs, "(")
+			|| !ofc_sema_decl_print_name(cs, decl))
+			return false;
+	}
 
 	bool init_complete = false;
 	ofc_sema_decl_has_initializer(
@@ -2548,6 +2566,10 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 				return false;
 		}
 	}
+
+	if (f77_parameter
+		&& !ofc_colstr_atomic_writef(cs, ")"))
+		return false;
 
 	return true;
 }
