@@ -45,6 +45,16 @@ To print the parse and semantic trees, use the --parse-tree and --sema-tree flag
 
 ## Testing
 
+### Dependencies
+
+Test Suite:
+    gfortran
+    valgrind
+
+Static Code Analysis:
+	cppcheck
+	clang, scanbuild
+
 ### Test Suite
 We run a test suite including the NIST F77 tests using:
 
