@@ -352,48 +352,50 @@ static unsigned ofc_parse_stmt__do_block(
 	stmt->do_block.init
 		= ofc_parse_assign_init(
 			src, &ptr[i], debug, &i);
-	if (!stmt->do_block.init)
-		return 0;
 
 	stmt->type = OFC_PARSE_STMT_DO_BLOCK;
 	stmt->do_block.last = NULL;
 	stmt->do_block.step = NULL;
 
-	if (ptr[i++] != ',')
+	if (stmt->do_block.init)
 	{
-		ofc_parse_assign_delete(stmt->do_block.init);
-		ofc_parse_debug_rewind(debug, dpos);
-		return 0;
-	}
-
-	unsigned len;
-	stmt->do_block.last = ofc_parse_expr(
-		src, &ptr[i], debug, &len);
-	if (!stmt->do_block.last)
-	{
-		ofc_parse_assign_delete(stmt->do_block.init);
-		ofc_parse_debug_rewind(debug, dpos);
-		return 0;
-	}
-	i += len;
-
-	if (ptr[i] == ',')
-	{
-		i += 1;
-
-		stmt->do_block.step = ofc_parse_expr(
-			src, &ptr[i], debug, &len);
-		if (!stmt->do_block.step)
+		if (ptr[i++] != ',')
 		{
-			ofc_parse_expr_delete(stmt->do_block.last);
+			ofc_parse_assign_delete(stmt->do_block.init);
+			ofc_parse_debug_rewind(debug, dpos);
+			return 0;
+		}
+
+		unsigned len;
+		stmt->do_block.last = ofc_parse_expr(
+			src, &ptr[i], debug, &len);
+		if (!stmt->do_block.last)
+		{
 			ofc_parse_assign_delete(stmt->do_block.init);
 			ofc_parse_debug_rewind(debug, dpos);
 			return 0;
 		}
 		i += len;
+
+		if (ptr[i] == ',')
+		{
+			i += 1;
+
+			stmt->do_block.step = ofc_parse_expr(
+				src, &ptr[i], debug, &len);
+			if (!stmt->do_block.step)
+			{
+				ofc_parse_expr_delete(stmt->do_block.last);
+				ofc_parse_assign_delete(stmt->do_block.init);
+				ofc_parse_debug_rewind(debug, dpos);
+				return 0;
+			}
+			i += len;
+		}
 	}
 
 	/* TODO - Make optional? */
+	unsigned len;
 	if (!ofc_is_end_statement(&ptr[i], &len))
 	{
 		ofc_parse_expr_delete(stmt->do_block.last);
@@ -546,13 +548,18 @@ static bool ofc_parse_stmt__do_label_print(
 static bool ofc_parse_stmt__do_block_print(
 	ofc_colstr_t* cs, unsigned indent, const ofc_parse_stmt_t* stmt)
 {
-	if (!ofc_colstr_atomic_writef(cs, "DO")
-		|| !ofc_colstr_atomic_writef(cs, " ")
+	if (!ofc_colstr_atomic_writef(cs, "DO"))
+		return false;
+
+	if (stmt->do_block.init)
+	{
+		if (!ofc_colstr_atomic_writef(cs, " ")
 		|| !ofc_parse_assign_print(cs, stmt->do_block.init)
 		|| !ofc_colstr_atomic_writef(cs, ",")
 		|| !ofc_colstr_atomic_writef(cs, " ")
 		|| !ofc_parse_expr_print(cs, stmt->do_block.last))
-		return false;
+			return false;
+	}
 
 	if (stmt->do_block.step)
 	{

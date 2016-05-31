@@ -26,6 +26,17 @@ static bool ofc_sema_stmt__loop_control(
 	ofc_sema_expr_t** sema_last,
 	ofc_sema_expr_t** sema_step)
 {
+	if (!parse_init
+		&& !parse_last
+		&& !parse_step)
+	{
+		if (sema_iter) *sema_iter = NULL;
+		if (sema_init) *sema_init = NULL;
+		if (sema_last) *sema_last = NULL;
+		if (sema_step) *sema_step = NULL;
+		return true;
+	}
+
 	*sema_iter = ofc_sema_lhs(
 		scope, parse_init->name);
 	if (!*sema_iter) return false;
@@ -428,27 +439,34 @@ bool ofc_sema_stmt_do_block_print(
 	if (!cs || (stmt->type != OFC_SEMA_STMT_DO_BLOCK))
 		return false;
 
-	if (!ofc_colstr_atomic_writef(cs, "DO ")
-		|| !ofc_sema_lhs_print(cs, stmt->do_block.iter)
-		|| !ofc_colstr_atomic_writef(cs, "=")
-		|| !ofc_colstr_atomic_writef(cs, " ")
-		|| !ofc_sema_expr_print(cs, stmt->do_block.init))
+	if (!ofc_colstr_atomic_writef(cs, "DO"))
 		return false;
 
-	if (stmt->do_block.last)
+	if (stmt->do_block.iter)
 	{
-		if (!ofc_colstr_atomic_writef(cs, ",")
+		if (!ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_sema_lhs_print(cs, stmt->do_block.iter)
+			|| !ofc_colstr_atomic_writef(cs, "=")
 			|| !ofc_colstr_atomic_writef(cs, " ")
-			|| !ofc_sema_expr_print(cs, stmt->do_block.last))
+			|| !ofc_sema_expr_print(cs, stmt->do_block.init))
 			return false;
+
+		if (stmt->do_block.last)
+		{
+			if (!ofc_colstr_atomic_writef(cs, ",")
+				|| !ofc_colstr_atomic_writef(cs, " ")
+				|| !ofc_sema_expr_print(cs, stmt->do_block.last))
+				return false;
+		}
+		if (stmt->do_block.step)
+		{
+			if (!ofc_colstr_atomic_writef(cs, ",")
+				|| !ofc_colstr_atomic_writef(cs, " ")
+				|| !ofc_sema_expr_print(cs, stmt->do_block.step))
+				return false;
+		}
 	}
-	if (stmt->do_block.step)
-	{
-		if (!ofc_colstr_atomic_writef(cs, ",")
-			|| !ofc_colstr_atomic_writef(cs, " ")
-			|| !ofc_sema_expr_print(cs, stmt->do_block.step))
-			return false;
-	}
+
 	if (!ofc_sema_stmt_list_print(
 		cs, (indent + 1), label_map,
 		stmt->do_block.block))
