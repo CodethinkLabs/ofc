@@ -18,6 +18,7 @@
 #include <string.h>
 
 #include "ofc/parse.h"
+#include "ofc/global_opts.h"
 
 
 static bool is_base_digit(
@@ -478,12 +479,16 @@ ofc_string_t* ofc_parse_character(
 	ofc_parse_debug_t* debug,
 	unsigned* len)
 {
-	ofc_string_t* str = ofc_parse__character_escaped(
+	if (!global_opts.no_escape)
+	{
+		return ofc_parse__character_escaped(
+			src, ptr, debug, len, false);
+	}
+	else
+	{
+		return ofc_parse__character_unescaped(
 		src, ptr, debug, len, false);
-	if (str) return str;
-
-	return ofc_parse__character_unescaped(
-		src, ptr, debug, len, false);
+	}
 }
 
 static unsigned ofc_parse_literal__character(
@@ -492,9 +497,13 @@ static unsigned ofc_parse_literal__character(
 	ofc_parse_literal_t* literal)
 {
 	unsigned len = 0;
-	literal->string = ofc_parse__character_escaped(
-		src, ptr, debug, &len, true);
-	if (!literal->string)
+	if (!global_opts.no_escape)
+	{
+		literal->string = ofc_parse__character_escaped(
+			src, ptr, debug, &len, true);
+		if (!literal->string) return 0;
+	}
+	else
 	{
 		literal->string = ofc_parse__character_unescaped(
 			src, ptr, debug, &len, true);
