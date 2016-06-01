@@ -441,9 +441,8 @@ static unsigned ofc_parse_stmt_io__print_type_accept(
 	stmt->io_print.format_asterisk = false;
 
 	unsigned len;
-	stmt->io_print.format
-		= ofc_parse_expr_integer_variable(
-			src, &ptr[i], debug, &len);
+	stmt->io_print.format = ofc_parse_expr(
+		src, &ptr[i], debug, &len);
 	if (!stmt->io_print.format)
 	{
 		if (ptr[i] == '*')
