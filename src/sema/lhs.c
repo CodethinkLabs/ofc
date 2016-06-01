@@ -1307,8 +1307,7 @@ bool ofc_sema_lhs_init_substring(
 	const ofc_sema_expr_t* first,
 	const ofc_sema_expr_t* last)
 {
-	if (!lhs || !init
-		|| !first || !last)
+	if (!lhs || !init || !last)
 		return false;
 
 	ofc_sema_decl_t* decl

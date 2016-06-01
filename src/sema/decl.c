@@ -1337,7 +1337,7 @@ bool ofc_sema_decl_init_substring(
 	const ofc_sema_expr_t* first,
 	const ofc_sema_expr_t* last)
 {
-	if (!decl || !init || !first || !last
+	if (!decl || !init || !last
 		|| !ofc_sema_decl_type_finalize(decl))
 		return false;
 
@@ -1553,7 +1553,7 @@ bool ofc_sema_decl_init_substring_offset(
 	const ofc_sema_expr_t* first,
 	const ofc_sema_expr_t* last)
 {
-	if (!decl || !init || !first || !last
+	if (!decl || !init || !last
 		|| ofc_sema_decl_is_procedure(decl)
 		|| !ofc_sema_decl_type_finalize(decl))
 		return false;
