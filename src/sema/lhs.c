@@ -2002,17 +2002,18 @@ bool ofc_sema_lhs_list_init(
 
 		bool success = ofc_sema_lhs_init(
 			lhs_elem, init_elem);
-
 		ofc_sema_lhs_delete(lhs_elem);
-		ofc_sema_expr_delete(init_elem);
 
 		if (!success)
 		{
 			/* TODO - Fail atomically? */
 			ofc_sparse_ref_error(init_elem->src,
 				"Invalid initializer");
+			ofc_sema_expr_delete(init_elem);
 			return false;
 		}
+
+		ofc_sema_expr_delete(init_elem);
 	}
 
 	return true;
