@@ -90,6 +90,7 @@ static ofc_sema_expr__rule_t ofc_sema_expr__rule[] =
 	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 1, 1, 0, 0, 0, 1 }, /* NOT */
 	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 1, 1, 0, 0, 0, 1 }, /* AND */
 	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 1, 1, 0, 0, 0, 1 }, /* OR */
+	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 1, 1, 0, 0, 0, 1 }, /* XOR */
 
 	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 1, 0, 0, 0, 0, 1 }, /* EQV */
 	{ OFC_SEMA_EXPR__LOGICAL_RETURN, 1, 0, 0, 0, 0, 1 }, /* NEQV */
@@ -177,6 +178,7 @@ static ofc_sema_typeval_t* (*ofc_sema_expr__resolve[])(
 	ofc_sema_typeval_not__faux_binary,
 	ofc_sema_typeval_and,
 	ofc_sema_typeval_or,
+	ofc_sema_typeval_xor,
 
 	ofc_sema_typeval_eqv,
 	ofc_sema_typeval_neqv,
@@ -422,6 +424,7 @@ static ofc_sema_expr_e ofc_sema_expr__binary_map[] =
 	OFC_SEMA_EXPR_NOT,
 	OFC_SEMA_EXPR_AND,
 	OFC_SEMA_EXPR_OR,
+	OFC_SEMA_EXPR_XOR,
 	OFC_SEMA_EXPR_EQV,
 	OFC_SEMA_EXPR_NEQV,
 };
@@ -678,6 +681,7 @@ static ofc_sema_expr_t* ofc_sema_expr__binary(
 		{
 			if (type == OFC_SEMA_EXPR_AND
 				|| type == OFC_SEMA_EXPR_OR
+				|| type == OFC_SEMA_EXPR_XOR
 				|| type == OFC_SEMA_EXPR_EQV
 				|| type == OFC_SEMA_EXPR_NEQV)
 			{
@@ -2551,6 +2555,7 @@ static const char* ofc_sema_expr__operator[] =
 	".NOT.",
 	".AND.",
 	".OR.",
+	".XOR.",
 	".EQV.",
 	".NEQV.",
 };

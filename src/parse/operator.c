@@ -34,6 +34,7 @@ static const char* ofc_parse_operator__name[] =
 		".NOT.",
 		".AND.",
 		".OR.",
+		".XOR.",
 		".EQV.",
 		".NEQV.",
 };
@@ -166,6 +167,11 @@ unsigned ofc_parse_operator(
 				op = OFC_PARSE_OPERATOR_OR;
 				size = 4;
 			}
+			else if (strncasecmp(ptr, ".XOR.", 5) == 0)
+			{
+				op = OFC_PARSE_OPERATOR_XOR;
+				size = 5;
+			}
 			else if (strncasecmp(ptr, ".EQV.", 5) == 0)
 			{
 				op = OFC_PARSE_OPERATOR_EQV;
@@ -235,6 +241,7 @@ bool ofc_parse_operator_binary(
 		case OFC_PARSE_OPERATOR_GE:
 		case OFC_PARSE_OPERATOR_AND:
 		case OFC_PARSE_OPERATOR_OR:
+		case OFC_PARSE_OPERATOR_XOR:
 		case OFC_PARSE_OPERATOR_EQV:
 		case OFC_PARSE_OPERATOR_NEQV:
 			return true;
@@ -271,6 +278,7 @@ unsigned ofc_parse_operator_precedence_binary(
 			return 8;
 		case OFC_PARSE_OPERATOR_OR:
 			return 9;
+		case OFC_PARSE_OPERATOR_XOR:
 		case OFC_PARSE_OPERATOR_EQV:
 		case OFC_PARSE_OPERATOR_NEQV:
 		default:

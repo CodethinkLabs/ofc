@@ -2442,6 +2442,39 @@ ofc_sema_typeval_t* ofc_sema_typeval_or(
 	return ofc_sema_typeval__alloc(tv);
 }
 
+ofc_sema_typeval_t* ofc_sema_typeval_xor(
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b)
+{
+	if (!a || !a->type
+		|| !b || !b->type
+		|| !ofc_sema_type_compatible(
+			a->type, b->type))
+		return NULL;
+
+	ofc_sema_typeval_t tv;
+	tv.type = a->type;
+
+	tv.src = OFC_SPARSE_REF_EMPTY;
+	ofc_sparse_ref_bridge(
+		a->src, b->src, &tv.src);
+
+	switch (a->type->type)
+	{
+		case OFC_SEMA_TYPE_LOGICAL:
+			tv.logical = (a->logical ? !b->logical : b->logical);
+			break;
+		case OFC_SEMA_TYPE_INTEGER:
+		case OFC_SEMA_TYPE_BYTE:
+			tv.integer = a->integer ^ b->integer;
+			break;
+		default:
+			return NULL;
+	}
+
+	return ofc_sema_typeval__alloc(tv);
+}
+
 ofc_sema_typeval_t* ofc_sema_typeval_eqv(
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b)
