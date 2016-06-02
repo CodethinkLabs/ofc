@@ -1168,6 +1168,8 @@ bool ofc_sema_stmt_foreach_expr(
 			break;
 
 		case OFC_SEMA_STMT_ENTRY:
+		case OFC_SEMA_STMT_CYCLE:
+		case OFC_SEMA_STMT_EXIT:
 			break;
 
 		default:

@@ -567,9 +567,9 @@ bool ofc_sema_stmt_cycle_exit_print(
 
 	switch (stmt->type)
 	{
-		case OFC_PARSE_STMT_CYCLE:
+		case OFC_SEMA_STMT_CYCLE:
 			return ofc_colstr_atomic_writef(cs, "CYCLE");
-		case OFC_PARSE_STMT_EXIT:
+		case OFC_SEMA_STMT_EXIT:
 			return ofc_colstr_atomic_writef(cs, "EXIT");
 		default:
 			break;
