@@ -537,8 +537,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_cycle_exit(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt)
 {
-	if (!scope || !stmt
-		|| (stmt->type != OFC_PARSE_STMT_CYCLE))
+	if (!scope || !stmt)
 		return NULL;
 
 	ofc_sema_stmt_t s;
