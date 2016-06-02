@@ -192,6 +192,43 @@ ofc_parse_type_t* ofc_parse_type(
 			{
 				ofc_parse_call_arg_list_delete(
 					type.params);
+
+				if (type.type == OFC_PARSE_TYPE_CHARACTER)
+				{
+					if (!type.count_expr && !type.count_var)
+					{
+						ofc_parse_expr_t* expr = ofc_parse_expr(
+							src, &ptr[i + 1], debug, &l);
+						if (expr && (ptr[i + 1 + l] == ')'))
+						{
+							i += (l + 2);
+							type.count_expr = expr;
+						}
+						else
+						{
+							ofc_parse_expr_delete(expr);
+						}
+					}
+				}
+				else if (type.size == 0)
+				{
+					unsigned bsize;
+					l = ofc_parse_unsigned(
+						src, &ptr[i + 1], debug, &bsize);
+					if ((l != 0) && (ptr[i + 1 + l] == ')'))
+					{
+						if (bsize == 0)
+						{
+							ofc_sparse_error_ptr(src, &ptr[i],
+								"Type kind must be non-zero");
+							ofc_parse_expr_delete(type.count_expr);
+							return NULL;
+						}
+
+						i += (l + 2);
+						type.size = bsize;
+					}
+				}
 			}
 		}
 	}
