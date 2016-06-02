@@ -465,6 +465,41 @@ ofc_parse_expr_t* ofc_parse_expr(
 		src, ptr, debug, len, false);
 }
 
+ofc_parse_expr_t* ofc_parse_expr_id(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	unsigned* len)
+{
+	unsigned dpos = ofc_parse_debug_position(debug);
+
+	unsigned l;
+	ofc_parse_expr_implicit_do_t* id
+		= ofc_parse_expr_implicit_do(
+			src, ptr, debug, &l);
+	if (id)
+	{
+		ofc_parse_expr_t* expr
+			= (ofc_parse_expr_t*)malloc(
+				sizeof(ofc_parse_expr_t));
+		if (!expr)
+		{
+			ofc_parse_expr_implicit_do_delete(id);
+			ofc_parse_debug_rewind(debug, dpos);
+			return NULL;
+		}
+
+		expr->type = OFC_PARSE_EXPR_IMPLICIT_DO;
+		expr->src  = ofc_sparse_ref(src, ptr, l);
+		expr->implicit_do = id;
+
+		if (len) *len = l;
+		return expr;
+	}
+
+	return ofc_parse__expr(
+		src, ptr, debug, len, false);
+}
+
 ofc_parse_expr_t* ofc_parse_expr_no_slash(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
@@ -501,6 +536,9 @@ void ofc_parse_expr_delete(
 		case OFC_PARSE_EXPR_BINARY:
 			ofc_parse_expr_delete(expr->binary.a);
 			ofc_parse_expr_delete(expr->binary.b);
+			break;
+		case OFC_PARSE_EXPR_IMPLICIT_DO:
+			ofc_parse_expr_implicit_do_delete(expr->implicit_do);
 			break;
 
 		default:
@@ -647,7 +685,7 @@ static ofc_parse_expr_list_t* ofc_parse_expr__list(
 		',', &list->count, (void***)&list->expr,
 		(void*)(no_slash
 			? ofc_parse_expr_no_slash
-			: ofc_parse_expr),
+			: ofc_parse_expr_id),
 		(void*)ofc_parse_expr_delete);
 	if (l == 0)
 	{
@@ -692,6 +730,33 @@ ofc_parse_expr_list_t* ofc_parse_expr_clist(
 
 	if (len) *len = i;
 	return clist;
+}
+
+ofc_parse_expr_list_t* ofc_parse_expr_list_copy(
+	const ofc_parse_expr_list_t* list)
+{
+	if (!list)
+		return NULL;
+
+	ofc_parse_expr_list_t* copy
+		= (ofc_parse_expr_list_t*)malloc(
+			sizeof(ofc_parse_expr_list_t));
+	if (!copy) return NULL;
+
+	copy->count = 0;
+	copy->expr = NULL;
+
+	if (!ofc_parse_list_copy(
+		&copy->count, (void***)&copy->expr,
+		list->count, (const void**)list->expr,
+		(void*)ofc_parse_expr_copy,
+		(void*)ofc_parse_expr_delete))
+	{
+		free(copy);
+		return NULL;
+	}
+
+	return copy;
 }
 
 void ofc_parse_expr_list_delete(

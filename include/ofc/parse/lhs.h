@@ -72,7 +72,7 @@ struct ofc_parse_lhs_s
 			ofc_sparse_ref_t name;
 		} alias;
 
-		ofc_parse_implicit_do_t* implicit_do;
+		ofc_parse_lhs_implicit_do_t* implicit_do;
 	};
 };
 
@@ -122,6 +122,8 @@ ofc_parse_lhs_list_t* ofc_parse_lhs_alias_list(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
 	unsigned* len);
+ofc_parse_lhs_list_t* ofc_parse_lhs_list_copy(
+	const ofc_parse_lhs_list_t* list);
 void ofc_parse_lhs_list_delete(
 	ofc_parse_lhs_list_t* list);
 bool ofc_parse_lhs_list_print(

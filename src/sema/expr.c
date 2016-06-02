@@ -337,7 +337,7 @@ ofc_sema_expr_t* ofc_sema_expr_copy_replace(
 
 		case OFC_SEMA_EXPR_IMPLICIT_DO:
 			copy->implicit_do.expr
-				= ofc_sema_expr_copy_replace(
+				= ofc_sema_expr_list_copy_replace(
 					expr->implicit_do.expr, replace, with);
 			copy->implicit_do.iter
 				= (ofc_sema_decl_reference(expr->implicit_do.iter)
@@ -1405,7 +1405,7 @@ ofc_sema_expr_t* ofc_sema_expr_alt_return(
 static ofc_sema_expr_t* ofc_sema_expr__implicit_do(
 	ofc_sema_scope_t* scope,
 	ofc_sparse_ref_t src,
-	const ofc_parse_implicit_do_t* id)
+	const ofc_parse_expr_implicit_do_t* id)
 {
 	if (!id || !id->init)
 		return NULL;
@@ -1416,8 +1416,9 @@ static ofc_sema_expr_t* ofc_sema_expr__implicit_do(
 	if (!expr) return NULL;
 	expr->src = src;
 
-	ofc_sema_lhs_t* iter_lhs = ofc_sema_lhs(
-		scope, id->init->name);
+	ofc_sema_lhs_t* iter_lhs
+		= ofc_sema_lhs_from_expr(
+			scope, id->iter);
 	if (!iter_lhs)
 	{
 		ofc_sema_expr_delete(expr);
@@ -1433,7 +1434,7 @@ static ofc_sema_expr_t* ofc_sema_expr__implicit_do(
 
 	if (iter_lhs->type != OFC_SEMA_LHS_DECL)
 	{
-		ofc_sparse_ref_error(id->init->name->src,
+		ofc_sparse_ref_error(id->iter->src,
 			"Implicit do loop iterator must be a variable");
 		ofc_sema_lhs_delete(iter_lhs);
 		ofc_sema_expr_delete(expr);
@@ -1460,7 +1461,7 @@ static ofc_sema_expr_t* ofc_sema_expr__implicit_do(
 
 	if (!ofc_sema_type_is_scalar(iter_type))
 	{
-		ofc_sparse_ref_error(id->init->name->src,
+		ofc_sparse_ref_error(id->iter->src,
 			"Implicit do loop iterator must be a scalar type");
 		ofc_sema_expr_delete(expr);
 		return NULL;
@@ -1468,12 +1469,12 @@ static ofc_sema_expr_t* ofc_sema_expr__implicit_do(
 
 	if (!ofc_sema_type_is_integer(iter_type))
 	{
-		ofc_sparse_ref_warning(id->init->name->src,
+		ofc_sparse_ref_warning(id->iter->src,
 			"Using REAL in implicit do loop iterator");
 	}
 
 	expr->implicit_do.init = ofc_sema_expr(
-		scope, id->init->init);
+		scope, id->init);
 	if (!expr->implicit_do.init)
 	{
 		ofc_sema_expr_delete(expr);
@@ -1573,11 +1574,12 @@ static ofc_sema_expr_t* ofc_sema_expr__implicit_do(
 		}
 	}
 
-	if (id->dlist && (id->dlist->type == OFC_PARSE_LHS_IMPLICIT_DO))
+
+
+	if (id->dlist && (id->dlist->count > 0))
 	{
 		expr->implicit_do.expr
-			= ofc_sema_expr__implicit_do(
-				scope, id->dlist->src, id->dlist->implicit_do);
+			= ofc_sema_expr_list_io(scope, id->dlist);
 		if (!expr->implicit_do.expr)
 		{
 			ofc_sema_expr_delete(expr);
@@ -1586,16 +1588,8 @@ static ofc_sema_expr_t* ofc_sema_expr__implicit_do(
 	}
 	else
 	{
-		expr->implicit_do.expr
-			= ofc_sema_expr__variable(
-				scope, id->dlist, false);
-		if (!expr->implicit_do.expr)
-		{
-			ofc_sema_expr_delete(expr);
-			return NULL;
-		}
-
-		expr->implicit_do.expr->src = id->dlist->src;
+		ofc_sema_expr_delete(expr);
+		return NULL;
 	}
 
 	const ofc_sema_typeval_t* ctv[3];
@@ -1683,7 +1677,7 @@ void ofc_sema_expr_delete(
 			ofc_sema_expr_list_delete(expr->args);
 			break;
 		case OFC_SEMA_EXPR_IMPLICIT_DO:
-			ofc_sema_expr_delete(expr->implicit_do.expr);
+			ofc_sema_expr_list_delete(expr->implicit_do.expr);
 			ofc_sema_decl_delete(expr->implicit_do.iter);
 			ofc_sema_expr_delete(expr->implicit_do.init);
 			ofc_sema_expr_delete(expr->implicit_do.last);
@@ -1757,16 +1751,11 @@ bool ofc_sema_expr_elem_count(
 		if (expr->implicit_do.count_var)
 			return false;
 
-		if (expr->implicit_do.expr
-			&& (expr->implicit_do.expr->type
-				== OFC_SEMA_EXPR_IMPLICIT_DO))
-		{
-			unsigned idecount;
-			if (!ofc_sema_expr_elem_count(
-				expr->implicit_do.expr, &idecount))
-				return false;
-			ecount *= idecount;
-		}
+		unsigned idecount;
+		if (!ofc_sema_expr_list_elem_count(
+			expr->implicit_do.expr, &idecount))
+			return false;
+		ecount *= idecount;
 
 		ecount *= expr->implicit_do.count;
 	}
@@ -1850,7 +1839,7 @@ ofc_sema_expr_t* ofc_sema_expr_elem_get(
 				return NULL;
 
 			unsigned sub_elem_count;
-			if (!ofc_sema_expr_elem_count(
+			if (!ofc_sema_expr_list_elem_count(
 				expr->implicit_do.expr, &sub_elem_count))
 				return NULL;
 
@@ -1896,17 +1885,44 @@ ofc_sema_expr_t* ofc_sema_expr_elem_get(
 				return NULL;
 			}
 
-			ofc_sema_expr_t* body
-				= ofc_sema_expr_copy_replace(
-					expr->implicit_do.expr,
-					expr->implicit_do.iter, iter_expr);
-			ofc_sema_expr_delete(iter_expr);
-			if (!body) return NULL;
+			ofc_sema_expr_t* rval = NULL;
+			unsigned e = sub_offset;
+			unsigned i;
+			for (i = 0; i < expr->implicit_do.expr->count; i++)
+			{
+				ofc_sema_expr_t* expr_dummy
+					= expr->implicit_do.expr->expr[i];
 
-			ofc_sema_expr_t* rval
-				= ofc_sema_expr_elem_get(
-					body, sub_offset);
-			ofc_sema_expr_delete(body);
+				unsigned elem_count;
+				if (!ofc_sema_expr_elem_count(
+					expr_dummy, &elem_count))
+					return NULL;
+
+				unsigned elem_total = elem_count;
+				if (expr_dummy->repeat > 1)
+					elem_total *= expr_dummy->repeat;
+
+				if (e < elem_total)
+				{
+
+					ofc_sema_expr_t* body
+						= ofc_sema_expr_copy_replace(
+							expr_dummy, expr->implicit_do.iter, iter_expr);
+					if (!body) return NULL;
+
+					rval = ofc_sema_expr_elem_get(
+						body, sub_offset);
+
+					ofc_sema_expr_delete(body);
+				}
+				else
+				{
+					e -= elem_total;
+				}
+			}
+
+			ofc_sema_expr_delete(iter_expr);
+
 			return rval;
 		}
 
@@ -1966,7 +1982,7 @@ bool ofc_sema_expr_compare(
 				&& ofc_sema_expr_list_compare(a->args, b->args));
 
 		case OFC_SEMA_EXPR_IMPLICIT_DO:
-			return (ofc_sema_expr_compare(
+			return (ofc_sema_expr_list_compare(
 				a->implicit_do.expr, b->implicit_do.expr)
 				&& (a->implicit_do.iter == b->implicit_do.iter)
 				&& ofc_sema_expr_compare(
@@ -2077,8 +2093,7 @@ const ofc_sema_type_t* ofc_sema_expr_type(
 			return ofc_sema_decl_base_type(
 				expr->function);
 		case OFC_SEMA_EXPR_IMPLICIT_DO:
-			return ofc_sema_expr_type(
-				expr->implicit_do.expr);
+			return NULL;
 		default:
 			break;
 	}
@@ -2203,8 +2218,7 @@ static ofc_sema_expr_list_t* ofc_sema_expr__list(
 	for (i = 0; i < list->count; i++)
 	{
 		ofc_sema_expr_t* expr;
-		if ((list->expr[i]->type == OFC_PARSE_EXPR_VARIABLE)
-			&& (list->expr[i]->variable->type == OFC_PARSE_LHS_IMPLICIT_DO))
+		if ((list->expr[i]->type == OFC_PARSE_EXPR_IMPLICIT_DO))
 		{
 			if (!allow_implicit_do)
 			{
@@ -2213,8 +2227,8 @@ static ofc_sema_expr_list_t* ofc_sema_expr__list(
 			}
 
 			expr = ofc_sema_expr__implicit_do(scope,
-				list->expr[i]->variable->src,
-				list->expr[i]->variable->implicit_do);
+				list->expr[i]->src,
+				list->expr[i]->implicit_do);
 		}
 		else
 		{
@@ -2493,7 +2507,8 @@ bool ofc_sema_expr_foreach(
 
 		case OFC_SEMA_EXPR_IMPLICIT_DO:
 			if (expr->implicit_do.expr
-				&& !func(expr->implicit_do.expr, param))
+				&& !ofc_sema_expr_list_foreach(
+					expr->implicit_do.expr, param, func))
 				return false;
 			if (expr->implicit_do.init
 				&& !func(expr->implicit_do.init, param))
@@ -2648,7 +2663,7 @@ bool ofc_sema_expr_print(
 
 		case OFC_SEMA_EXPR_IMPLICIT_DO:
 			if (!ofc_colstr_atomic_writef(cs, "(")
-				|| !ofc_sema_expr_print(cs, expr->implicit_do.expr)
+				|| !ofc_sema_expr_list_print(cs, expr->implicit_do.expr)
 				|| !ofc_colstr_atomic_writef(cs, ",")
 				|| !ofc_colstr_atomic_writef(cs, " ")
 				|| !ofc_sema_decl_print_name(cs, expr->implicit_do.iter)

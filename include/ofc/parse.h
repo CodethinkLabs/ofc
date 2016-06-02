@@ -27,7 +27,8 @@
 typedef struct ofc_parse_lhs_s ofc_parse_lhs_t;
 typedef struct ofc_parse_expr_s ofc_parse_expr_t;
 typedef struct ofc_parse_stmt_s ofc_parse_stmt_t;
-typedef struct ofc_parse_implicit_do_s ofc_parse_implicit_do_t;
+typedef struct ofc_parse_expr_implicit_do_s ofc_parse_expr_implicit_do_t;
+typedef struct ofc_parse_lhs_implicit_do_s  ofc_parse_lhs_implicit_do_t;
 
 #include <ofc/parse/list.h>
 #include <ofc/parse/keyword.h>

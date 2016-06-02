@@ -38,7 +38,7 @@ struct ofc_sema_lhs_s
 
 		struct
 		{
-			ofc_sema_lhs_t*  lhs;
+			ofc_sema_lhs_list_t* lhs;
 			ofc_sema_decl_t* iter;
 			ofc_sema_expr_t* init;
 			ofc_sema_expr_t* last;
@@ -177,6 +177,11 @@ ofc_sema_lhs_list_t* ofc_sema_lhs_list_id(
 
 ofc_sema_lhs_list_t* ofc_sema_lhs_list_create(void);
 void ofc_sema_lhs_list_delete(ofc_sema_lhs_list_t* list);
+
+ofc_sema_lhs_list_t* ofc_sema_lhs_list_copy_replace(
+	const ofc_sema_lhs_list_t* list,
+	const ofc_sema_decl_t*     replace,
+	const ofc_sema_expr_t*     with);
 
 bool ofc_sema_lhs_list_add(
 	ofc_sema_lhs_list_t* list,

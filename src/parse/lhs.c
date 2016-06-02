@@ -40,7 +40,7 @@ static void ofc_parse_lhs__cleanup(
 			ofc_parse_expr_delete(lhs.star_len.len);
 			break;
 		case OFC_PARSE_LHS_IMPLICIT_DO:
-			ofc_parse_implicit_do_delete(lhs.implicit_do);
+			ofc_parse_lhs_implicit_do_delete(lhs.implicit_do);
 			break;
 		default:
 			break;
@@ -119,7 +119,7 @@ static bool ofc_parse_lhs__clone(
 			break;
 
 		case OFC_PARSE_LHS_IMPLICIT_DO:
-			clone.implicit_do = ofc_parse_implicit_do_copy(
+			clone.implicit_do = ofc_parse_lhs_implicit_do_copy(
 				src->implicit_do);
 			if (src->implicit_do
 				&& !clone.implicit_do)
@@ -310,13 +310,7 @@ static ofc_parse_lhs_t* ofc_parse__lhs(
 	lhs.type = OFC_PARSE_LHS_VARIABLE;
 	unsigned i = ofc_parse_name(
 		src, ptr, debug, &lhs.variable);
-	if (i == 0)
-	{
-		lhs.implicit_do = ofc_parse_implicit_do(
-			src, ptr, debug, &i);
-		if (!lhs.implicit_do) return NULL;
-		lhs.type = OFC_PARSE_LHS_IMPLICIT_DO;
-	}
+	if (i == 0) return NULL;
 
 	lhs.src = ofc_sparse_ref(src, ptr, i);
 
@@ -439,6 +433,41 @@ ofc_parse_lhs_t* ofc_parse_lhs(
 		src, ptr, debug, true, false ,len);
 }
 
+ofc_parse_lhs_t* ofc_parse_lhs_id(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	unsigned* len)
+{
+	unsigned dpos = ofc_parse_debug_position(debug);
+
+	unsigned l;
+	ofc_parse_lhs_implicit_do_t* id
+		= ofc_parse_lhs_implicit_do(
+			src, ptr, debug, &l);
+	if (id)
+	{
+		ofc_parse_lhs_t* lhs
+			= (ofc_parse_lhs_t*)malloc(
+				sizeof(ofc_parse_lhs_t));
+		if (!lhs)
+		{
+			ofc_parse_lhs_implicit_do_delete(id);
+			ofc_parse_debug_rewind(debug, dpos);
+			return NULL;
+		}
+
+		lhs->type = OFC_PARSE_EXPR_IMPLICIT_DO;
+		lhs->src  = ofc_sparse_ref(src, ptr, l);
+		lhs->implicit_do = id;
+
+		if (len) *len = l;
+		return lhs;
+	}
+
+	return ofc_parse__lhs(
+		src, ptr, debug, true, false, len);
+}
+
 
 ofc_parse_lhs_t* ofc_parse_lhs_copy(
 	ofc_parse_lhs_t* lhs)
@@ -526,7 +555,7 @@ bool ofc_parse_lhs_print(
 				&& ofc_colstr_atomic_writef(cs, ".")
 				&& ofc_sparse_ref_print(cs, lhs->member.name));
 		case OFC_PARSE_LHS_IMPLICIT_DO:
-			return ofc_parse_implicit_do_print(
+			return ofc_parse_lhs_implicit_do_print(
 				cs, lhs->implicit_do);
 		default:
 			break;
@@ -616,7 +645,7 @@ ofc_parse_lhs_list_t* ofc_parse_lhs_list(
 	unsigned i = ofc_parse_list(
 		src, ptr, debug, ',',
 		&list->count, (void***)&list->lhs,
-		(void*)ofc_parse_lhs,
+		(void*)ofc_parse_lhs_id,
 		(void*)ofc_parse_lhs_delete);
 	if (i == 0)
 	{
@@ -683,6 +712,33 @@ ofc_parse_lhs_list_t* ofc_parse_lhs_alias_list(
 
 	if (len) *len = i;
 	return list;
+}
+
+ofc_parse_lhs_list_t* ofc_parse_lhs_list_copy(
+	const ofc_parse_lhs_list_t* list)
+{
+	if (!list)
+		return NULL;
+
+	ofc_parse_lhs_list_t* copy
+		= (ofc_parse_lhs_list_t*)malloc(
+			sizeof(ofc_parse_lhs_list_t));
+	if (!copy) return NULL;
+
+	copy->count = 0;
+	copy->lhs = NULL;
+
+	if (!ofc_parse_list_copy(
+		&copy->count, (void***)&copy->lhs,
+		list->count, (const void**)list->lhs,
+		(void*)ofc_parse_lhs_copy,
+		(void*)ofc_parse_lhs_delete))
+	{
+		free(copy);
+		return NULL;
+	}
+
+	return copy;
 }
 
 void ofc_parse_lhs_list_delete(

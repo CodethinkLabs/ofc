@@ -86,8 +86,12 @@ bool ofc_sema_io_list_has_complex(
 		unsigned i;
 		for (i = 0; i < ilist->count; i++)
 		{
+			ofc_sema_lhs_t* lhs
+				= ofc_sema_lhs_list_elem_get(ilist, i);
+
 			const ofc_sema_type_t* type
-				= ofc_sema_lhs_type(ilist->lhs[i]);
+				= ofc_sema_lhs_type(lhs);
+			ofc_sema_lhs_delete(lhs);
 			if (!type) return false;
 
 			if (ofc_sema_type_is_complex(type))
@@ -106,8 +110,12 @@ bool ofc_sema_io_list_has_complex(
 		unsigned i;
 		for (i = 0; i < olist->count; i++)
 		{
+			ofc_sema_expr_t* expr
+				= ofc_sema_expr_list_elem_get(olist, i);
+
 			const ofc_sema_type_t* type
-				= ofc_sema_expr_type(olist->expr[i]);
+				= ofc_sema_expr_type(expr);
+			ofc_sema_expr_delete(expr);
 			if (!type) return false;
 
 			if (ofc_sema_type_is_complex(type))

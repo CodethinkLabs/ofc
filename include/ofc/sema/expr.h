@@ -93,7 +93,7 @@ struct ofc_sema_expr_s
 
 		struct
 		{
-			ofc_sema_expr_t* expr;
+			ofc_sema_expr_list_t* expr;
 			ofc_sema_decl_t* iter;
 			ofc_sema_expr_t* init;
 			ofc_sema_expr_t* last;
