@@ -2311,7 +2311,7 @@ ofc_sema_expr_list_t* ofc_sema_expr_list_copy_replace(
 	if (!copy) return NULL;
 
 	copy->expr = (ofc_sema_expr_t**)malloc(
-		(sizeof(ofc_sema_expr_t) * list->count));
+		(sizeof(ofc_sema_expr_t*) * list->count));
 	if (!copy->expr)
 	{
 		free(copy);
