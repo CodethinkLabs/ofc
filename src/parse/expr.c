@@ -614,7 +614,8 @@ ofc_parse_expr_t* ofc_parse_expr_copy(
 			break;
 
 		default:
-			return false;
+			success = false;
+			break;
 	}
 
 	if (!success)
