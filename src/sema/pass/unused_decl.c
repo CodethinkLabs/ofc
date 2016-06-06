@@ -25,7 +25,7 @@ static bool ofc_sema_pass_unused_decl__scope(
 		return false;
 
 	/* Skip module scopes and scopes without a decl list. */
-	if (scope->decl && (scope->type != OFC_SEMA_SCOPE_MODULE))
+	if (!scope->decl || (scope->type == OFC_SEMA_SCOPE_MODULE))
 		return true;
 
 	unsigned i;
