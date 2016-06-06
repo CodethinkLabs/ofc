@@ -1115,6 +1115,9 @@ static ofc_sema_expr_t* ofc_sema_expr__variable(
 	const ofc_parse_lhs_t* name,
 	bool is_dummy_arg)
 {
+	if (!name)
+		return NULL;
+
 	ofc_sparse_ref_t base_name;
 	if (!ofc_parse_lhs_base_name(
 		*name, &base_name))
