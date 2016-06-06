@@ -1322,7 +1322,10 @@ ofc_sema_expr_t* ofc_sema_expr_dummy_arg(
 				ofc_sparse_ref_t base_name;
 				if (!ofc_parse_lhs_base_name(
 					*expr->variable, &base_name))
+				{
+					ofc_sema_expr_delete(e);
 					return NULL;
+				}
 
 				const ofc_sema_decl_t* decl
 					= ofc_sema_scope_decl_find(
