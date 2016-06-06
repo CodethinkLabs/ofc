@@ -37,6 +37,10 @@ static bool ofc_sema_stmt__loop_control(
 		return true;
 	}
 
+	if (!parse_init
+		|| !parse_last)
+		return false;
+
 	*sema_iter = ofc_sema_lhs(
 		scope, parse_init->name);
 	if (!*sema_iter) return false;
