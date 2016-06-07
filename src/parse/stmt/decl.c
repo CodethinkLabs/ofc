@@ -28,6 +28,7 @@ unsigned ofc_parse_stmt_decl(
 		src, ptr, debug, &i);
 	if (!stmt->decl.type)
 		return 0;
+	stmt->decl.save = false;
 
 	unsigned l;
 	if (stmt->decl.type->type
@@ -38,9 +39,33 @@ unsigned ofc_parse_stmt_decl(
 	}
 	else
 	{
-		bool is_f90 = ((ptr[i + 0] == ':')
-			&& (ptr[i + 1] == ':'));
-		if (is_f90) i += 2;
+		bool is_f90 = false;
+
+		l = ofc_parse_keyword(
+			src, &ptr[i + 1], debug,
+			OFC_PARSE_KEYWORD_SAVE);
+		if (l == 0) l = ofc_parse_keyword(
+			src, &ptr[i + 1], debug,
+			OFC_PARSE_KEYWORD_STATIC);
+		if (l > 0)
+		{
+			i += (1 + l);
+			stmt->decl.save = true;
+			is_f90 = true;
+		}
+
+		if ((ptr[i + 0] == ':')
+			&& (ptr[i + 1] == ':'))
+		{
+			is_f90 = true;
+			i += 2;
+		}
+		else if (is_f90)
+		{
+			ofc_parse_type_delete(stmt->decl.type);
+			ofc_parse_debug_rewind(debug, dpos);
+			return 0;
+		}
 
 		stmt->decl.decl = ofc_parse_decl_list(
 			src, &ptr[i], is_f90, debug, &l);
@@ -61,7 +86,27 @@ unsigned ofc_parse_stmt_decl(
 bool ofc_parse_stmt_decl_print(
 	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt)
 {
-	return (ofc_parse_type_print(cs, stmt->decl.type, true)
-		&& ofc_colstr_atomic_writef(cs, " ")
+	if (!stmt) return false;
+
+	if (!ofc_parse_type_print(cs, stmt->decl.type, true))
+		return false;
+
+	bool is_f90 = stmt->decl.save;
+	if (is_f90)
+	{
+		if (stmt->decl.save)
+		{
+			if (!ofc_colstr_atomic_writef(cs, ",")
+				|| !ofc_colstr_atomic_writef(cs, " ")
+				|| !ofc_colstr_atomic_writef(cs, "SAVE"))
+				return false;
+		}
+
+		if (!ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_colstr_atomic_writef(cs, "::"))
+			return false;
+	}
+
+	return (ofc_colstr_atomic_writef(cs, " ")
 		&& ofc_parse_decl_list_print(cs, stmt->decl.decl));
 }

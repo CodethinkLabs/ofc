@@ -316,6 +316,7 @@ static bool ofc_sema_decl__elem(
 	const ofc_sema_type_t*  type,
 	ofc_sema_structure_t**  type_struct,
 	ofc_sema_structure_t*   structure,
+	bool                    is_static,
 	const ofc_parse_decl_t* pdecl)
 {
 	if (!pdecl || !pdecl->lhs)
@@ -651,6 +652,9 @@ static bool ofc_sema_decl__elem(
 		if (!initialized) return false;
 	}
 
+	if (is_static)
+		decl->is_static = true;
+
 	return true;
 }
 
@@ -677,7 +681,10 @@ bool ofc_sema_decl(
 	for (i = 0; i < count; i++)
 	{
 		if (!ofc_sema_decl__elem(
-			scope, type, &type_struct, NULL, stmt->decl.decl->decl[i]))
+			scope, type,
+			&type_struct, NULL,
+			stmt->decl.save,
+			stmt->decl.decl->decl[i]))
 			success = false;
 	}
 
@@ -708,7 +715,7 @@ bool ofc_sema_decl_member(
 	for (i = 0; i < count; i++)
 	{
 		if (!ofc_sema_decl__elem(
-			scope, type, &type_struct, structure,
+			scope, type, &type_struct, structure, false,
 			stmt->decl.decl->decl[i]))
 			success = false;
 	}
