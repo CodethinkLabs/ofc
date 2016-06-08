@@ -570,7 +570,8 @@ bool ofc_parse_lhs_possible_function_call(
 	const ofc_parse_lhs_t lhs)
 {
 	if ((lhs.type != OFC_PARSE_LHS_ARRAY)
-		|| !lhs.parent)
+		|| !lhs.parent
+		|| (lhs.parent->type != OFC_PARSE_LHS_VARIABLE))
 		return false;
 
 	if (ofc_parse_lhs_possible_function_call(*lhs.parent))
