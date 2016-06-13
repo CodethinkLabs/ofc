@@ -45,6 +45,9 @@ void ofc_sema_scope_delete(
 
 	switch (scope->type)
 	{
+		case OFC_SEMA_SCOPE_SUPER:
+			break;
+
 		case OFC_SEMA_SCOPE_STMT_FUNC:
 			ofc_sema_expr_delete(scope->expr);
 			break;
@@ -103,26 +106,31 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 
 	scope->module = NULL;
 
-	scope->decl = ofc_sema_decl_list_create(
-		global_opts.case_sensitive);
-
 	scope->external = false;
 	scope->intrinsic = false;
 	scope->save = false;
 
+	scope->decl = NULL;
+
+	scope->implicit = NULL;
+
+	scope->common = NULL;
+	scope->equiv  = NULL;
+
+	scope->structure    = NULL;
+	scope->derived_type = NULL;
+
+	scope->label = NULL;
+
+	if (scope->type == OFC_SEMA_SCOPE_SUPER)
+		return scope;
+
+	scope->decl = ofc_sema_decl_list_create(
+		global_opts.case_sensitive);
+
 	bool alloc_fail = !scope->decl;
 	if (scope->type == OFC_SEMA_SCOPE_STMT_FUNC)
 	{
-		scope->implicit = NULL;
-
-		scope->common = NULL;
-		scope->equiv  = NULL;
-
-		scope->structure    = NULL;
-		scope->derived_type = NULL;
-
-		scope->label = NULL;
-
 		scope->expr = NULL;
 	}
 	else
@@ -763,7 +771,14 @@ bool ofc_sema_scope_function(
 	return true;
 }
 
+ofc_sema_scope_t* ofc_sema_scope_super(void)
+{
+	return ofc_sema_scope__create(
+		NULL, OFC_SEMA_SCOPE_SUPER);
+}
+
 ofc_sema_scope_t* ofc_sema_scope_global(
+	ofc_sema_scope_t* super,
 	ofc_parse_file_t* file)
 {
 	if (!file)
@@ -771,11 +786,17 @@ ofc_sema_scope_t* ofc_sema_scope_global(
 
 	ofc_sema_scope_t* scope
 		= ofc_sema_scope__create(
-			NULL, OFC_SEMA_SCOPE_GLOBAL);
+			super, OFC_SEMA_SCOPE_GLOBAL);
 	if (!scope) return NULL;
 
 	const ofc_parse_stmt_list_t* list = file->stmt;
 	if (!ofc_sema_scope__body(scope, list))
+	{
+		ofc_sema_scope_delete(scope);
+		return NULL;
+	}
+
+	if (super && !ofc_sema_scope__add_child(super, scope))
 	{
 		ofc_sema_scope_delete(scope);
 		return NULL;

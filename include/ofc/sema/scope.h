@@ -20,7 +20,8 @@
 
 typedef enum
 {
-	OFC_SEMA_SCOPE_GLOBAL = 0,
+	OFC_SEMA_SCOPE_SUPER = 0,
+	OFC_SEMA_SCOPE_GLOBAL,
 	OFC_SEMA_SCOPE_PROGRAM,
 	OFC_SEMA_SCOPE_STMT_FUNC,
 	OFC_SEMA_SCOPE_SUBROUTINE,
@@ -78,7 +79,9 @@ bool ofc_sema_scope__check_namespace_collision(
 	ofc_sema_scope_t* scope,
 	const char* name_space, ofc_sparse_ref_t ref);
 
+ofc_sema_scope_t* ofc_sema_scope_super(void);
 ofc_sema_scope_t* ofc_sema_scope_global(
+	ofc_sema_scope_t* super,
 	ofc_parse_file_t* list);
 
 ofc_sema_scope_t* ofc_sema_scope_program(

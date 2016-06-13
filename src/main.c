@@ -42,6 +42,14 @@ int main(int argc, const char* argv[])
 		return EXIT_FAILURE;
 	}
 
+	ofc_sema_scope_t* super
+		= ofc_sema_scope_super();
+	if (!super)
+	{
+		ofc_file_list_delete(file_list);
+		return EXIT_FAILURE;
+	}
+
 	unsigned i;
 	for (i = 0; i < file_list->count; i++)
 	{
@@ -52,6 +60,7 @@ int main(int argc, const char* argv[])
 		{
 			if (ofc_file_no_errors())
 				ofc_file_error(file, NULL, "Failed to preprocess source file");
+			ofc_sema_scope_delete(super);
 			ofc_file_list_delete(file_list);
 			return EXIT_FAILURE;
 		}
@@ -63,6 +72,7 @@ int main(int argc, const char* argv[])
 			if (ofc_file_no_errors())
 				ofc_file_error(file, NULL, "Failed to parse program");
 			ofc_sparse_delete(condense);
+			ofc_sema_scope_delete(super);
 			ofc_file_list_delete(file_list);
 			return EXIT_FAILURE;
 		}
@@ -74,6 +84,7 @@ int main(int argc, const char* argv[])
 			{
 				ofc_file_error(file, NULL, "Failed to print parse tree");
 				ofc_parse_file_delete(program);
+				ofc_sema_scope_delete(super);
 				ofc_file_list_delete(file_list);
 				return EXIT_FAILURE;
 			}
@@ -84,12 +95,13 @@ int main(int argc, const char* argv[])
 		ofc_sema_scope_t* sema = NULL;
 		if (!global_opts.parse_only)
 		{
-			sema = ofc_sema_scope_global(program);
+			sema = ofc_sema_scope_global(super, program);
 			if (!sema)
 			{
 				if (ofc_file_no_errors())
 					ofc_file_error(file, NULL, "Program failed semantic analysis");
 				ofc_parse_file_delete(program);
+				ofc_sema_scope_delete(super);
 				ofc_file_list_delete(file_list);
 				return EXIT_FAILURE;
 			}
@@ -97,7 +109,7 @@ int main(int argc, const char* argv[])
 
 		if (!ofc_sema_run_passes(file, &sema_pass_opts, sema))
 		{
-			ofc_sema_scope_delete(sema);
+			ofc_sema_scope_delete(super);
 			ofc_file_list_delete(file_list);
 			return EXIT_FAILURE;
 		}
@@ -109,17 +121,16 @@ int main(int argc, const char* argv[])
 			{
 				ofc_file_error(file, NULL, "Failed to print semantic tree");
 				ofc_colstr_delete(cs);
-				ofc_sema_scope_delete(sema);
+				ofc_sema_scope_delete(super);
 				ofc_file_list_delete(file_list);
 				return EXIT_FAILURE;
 			}
 			ofc_colstr_fdprint(cs, STDOUT_FILENO);
 			ofc_colstr_delete(cs);
 		}
-
-		ofc_sema_scope_delete(sema);
 	}
 
+	ofc_sema_scope_delete(super);
 	ofc_file_list_delete(file_list);
 	return EXIT_SUCCESS;
 }
