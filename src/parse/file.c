@@ -66,7 +66,7 @@ bool ofc_parse_file_include(
 	return true;
 }
 
-ofc_parse_stmt_list_t* ofc_parse_file(const ofc_sparse_t* src)
+ofc_parse_file_t* ofc_parse_file(ofc_sparse_t* src)
 {
 	ofc_parse_debug_t* debug
 		= ofc_parse_debug_create();
@@ -89,13 +89,38 @@ ofc_parse_stmt_list_t* ofc_parse_file(const ofc_sparse_t* src)
 	ofc_parse_debug_print(debug);
 	ofc_parse_debug_delete(debug);
 
-	return list;
+	if (!list) return NULL;
+
+
+	ofc_parse_file_t* file
+		= (ofc_parse_file_t*)malloc(
+			sizeof(ofc_parse_file_t));
+	if (!file)
+	{
+		ofc_parse_stmt_list_delete(list);
+		return NULL;
+	}
+
+	file->source = src;
+	file->stmt   = list;
+	return file;
+}
+
+void ofc_parse_file_delete(ofc_parse_file_t* file)
+{
+	if (!file)
+		return;
+
+	ofc_parse_stmt_list_delete(file->stmt);
+	ofc_sparse_delete(file->source);
+	free(file);
 }
 
 bool ofc_parse_file_print(
 	ofc_colstr_t* cs,
-	const ofc_parse_stmt_list_t* list)
+	const ofc_parse_file_t* file)
 {
-	return (ofc_parse_stmt_list_print(cs, 0, list)
+	if (!file) return false;
+	return (ofc_parse_stmt_list_print(cs, 0, file->stmt)
 		&& ofc_colstr_writef(cs, "\n"));
 }

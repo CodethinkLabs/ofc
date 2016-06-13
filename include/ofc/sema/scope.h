@@ -33,13 +33,14 @@ typedef enum
 
 typedef struct
 {
-	unsigned count;
-	ofc_sema_scope_t**       scope;
+	unsigned           count;
+	ofc_sema_scope_t** scope;
 } ofc_sema_scope_list_t;
 
 
 struct ofc_sema_scope_s
 {
+	ofc_parse_file_t* file;
 	ofc_sparse_ref_t src;
 
 	ofc_sema_scope_t*      parent;
@@ -78,7 +79,7 @@ bool ofc_sema_scope__check_namespace_collision(
 	const char* name_space, ofc_sparse_ref_t ref);
 
 ofc_sema_scope_t* ofc_sema_scope_global(
-	const ofc_parse_stmt_list_t* list);
+	ofc_parse_file_t* list);
 
 ofc_sema_scope_t* ofc_sema_scope_program(
 	ofc_sema_scope_t* scope,

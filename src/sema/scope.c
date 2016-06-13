@@ -55,6 +55,8 @@ void ofc_sema_scope_delete(
 			break;
 	}
 
+	ofc_parse_file_delete(scope->file);
+
 	free(scope);
 }
 
@@ -89,7 +91,8 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 			sizeof(ofc_sema_scope_t));
 	if (!scope) return NULL;
 
-	scope->src = OFC_SPARSE_REF_EMPTY;
+	scope->file = NULL;
+	scope->src  = OFC_SPARSE_REF_EMPTY;
 
 	scope->parent = parent;
 	scope->child  = NULL;
@@ -761,17 +764,17 @@ bool ofc_sema_scope_function(
 }
 
 ofc_sema_scope_t* ofc_sema_scope_global(
-	const ofc_parse_stmt_list_t* list)
+	ofc_parse_file_t* file)
 {
-	if (!list)
+	if (!file)
 		return NULL;
 
 	ofc_sema_scope_t* scope
 		= ofc_sema_scope__create(
 			NULL, OFC_SEMA_SCOPE_GLOBAL);
-	if (!scope)
-		return NULL;
+	if (!scope) return NULL;
 
+	const ofc_parse_stmt_list_t* list = file->stmt;
 	if (!ofc_sema_scope__body(scope, list))
 	{
 		ofc_sema_scope_delete(scope);
@@ -794,6 +797,7 @@ ofc_sema_scope_t* ofc_sema_scope_global(
 		}
 	}
 
+	scope->file = file;
 	return scope;
 }
 

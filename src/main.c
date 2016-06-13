@@ -56,7 +56,7 @@ int main(int argc, const char* argv[])
 			return EXIT_FAILURE;
 		}
 
-		ofc_parse_stmt_list_t* program
+		ofc_parse_file_t* program
 			= ofc_parse_file(condense);
 		if (!program)
 		{
@@ -70,11 +70,10 @@ int main(int argc, const char* argv[])
 		if (global_opts.parse_print)
 		{
 			ofc_colstr_t* cs = ofc_colstr_create(print_opts, 72, 0);
-			if (!ofc_parse_stmt_list_print(cs, 0, program))
+			if (!ofc_parse_file_print(cs, program))
 			{
 				ofc_file_error(file, NULL, "Failed to print parse tree");
-				ofc_parse_stmt_list_delete(program);
-				ofc_sparse_delete(condense);
+				ofc_parse_file_delete(program);
 				ofc_file_list_delete(file_list);
 				return EXIT_FAILURE;
 			}
@@ -90,8 +89,7 @@ int main(int argc, const char* argv[])
 			{
 				if (ofc_file_no_errors())
 					ofc_file_error(file, NULL, "Program failed semantic analysis");
-				ofc_parse_stmt_list_delete(program);
-				ofc_sparse_delete(condense);
+				ofc_parse_file_delete(program);
 				ofc_file_list_delete(file_list);
 				return EXIT_FAILURE;
 			}
@@ -100,8 +98,6 @@ int main(int argc, const char* argv[])
 		if (!ofc_sema_run_passes(file, &sema_pass_opts, sema))
 		{
 			ofc_sema_scope_delete(sema);
-			ofc_parse_stmt_list_delete(program);
-			ofc_sparse_delete(condense);
 			ofc_file_list_delete(file_list);
 			return EXIT_FAILURE;
 		}
@@ -114,8 +110,6 @@ int main(int argc, const char* argv[])
 				ofc_file_error(file, NULL, "Failed to print semantic tree");
 				ofc_colstr_delete(cs);
 				ofc_sema_scope_delete(sema);
-				ofc_parse_stmt_list_delete(program);
-				ofc_sparse_delete(condense);
 				ofc_file_list_delete(file_list);
 				return EXIT_FAILURE;
 			}
@@ -124,8 +118,6 @@ int main(int argc, const char* argv[])
 		}
 
 		ofc_sema_scope_delete(sema);
-		ofc_parse_stmt_list_delete(program);
-		ofc_sparse_delete(condense);
 	}
 
 	ofc_file_list_delete(file_list);
