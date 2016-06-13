@@ -41,17 +41,20 @@ unsigned ofc_parse_stmt_decl(
 	{
 		bool is_f90 = false;
 
-		l = ofc_parse_keyword(
-			src, &ptr[i + 1], debug,
-			OFC_PARSE_KEYWORD_SAVE);
-		if (l == 0) l = ofc_parse_keyword(
-			src, &ptr[i + 1], debug,
-			OFC_PARSE_KEYWORD_STATIC);
-		if (l > 0)
+		if (ptr[i] == ',')
 		{
-			i += (1 + l);
-			stmt->decl.save = true;
-			is_f90 = true;
+			l = ofc_parse_keyword(
+				src, &ptr[i + 1], debug,
+				OFC_PARSE_KEYWORD_SAVE);
+			if (l == 0) l = ofc_parse_keyword(
+				src, &ptr[i + 1], debug,
+				OFC_PARSE_KEYWORD_STATIC);
+			if (l > 0)
+			{
+				i += (1 + l);
+				stmt->decl.save = true;
+				is_f90 = true;
+			}
 		}
 
 		if ((ptr[i + 0] == ':')
