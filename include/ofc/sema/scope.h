@@ -211,4 +211,7 @@ bool ofc_sema_scope_foreach_structure(
 	ofc_sema_scope_t* scope, void* param,
 	bool (*func)(ofc_sema_structure_t* structure, void* param));
 
+void ofc_sema_scope_common_usage_print(
+	const ofc_sema_scope_t* scope);
+
 #endif

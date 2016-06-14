@@ -1956,3 +1956,46 @@ bool ofc_sema_scope_foreach_structure(
 }
 
 
+
+static bool ofc_sema_scope_common_usage_print__decl(
+	ofc_sema_decl_t* decl, void* param)
+{
+	(void)param;
+
+	if (!decl)
+		return false;
+
+	if (!decl->was_read
+		&& !decl->was_written)
+		return true;
+
+	if (!decl->common)
+		return true;
+
+	printf("/%.*s/%.*s\n",
+		decl->common->name.size,
+		decl->common->name.base,
+		decl->name.string.size,
+		decl->name.string.base);
+	return true;
+}
+
+static bool ofc_sema_scope_common_usage_print__scope(
+	ofc_sema_scope_t* scope, void* param)
+{
+	if (!scope)
+		return false;
+
+	return ofc_sema_scope_foreach_decl(
+		scope, param, ofc_sema_scope_common_usage_print__decl);
+}
+
+void ofc_sema_scope_common_usage_print(
+	const ofc_sema_scope_t* scope)
+{
+	ofc_sema_scope_common_usage_print__scope(
+		(ofc_sema_scope_t*)scope, NULL);
+	ofc_sema_scope_foreach_scope(
+		(ofc_sema_scope_t*)scope, NULL,
+		ofc_sema_scope_common_usage_print__scope);
+}

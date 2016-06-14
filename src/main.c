@@ -128,6 +128,13 @@ int main(int argc, const char* argv[])
 			ofc_colstr_fdprint(cs, STDOUT_FILENO);
 			ofc_colstr_delete(cs);
 		}
+
+		if (global_opts.common_usage_print)
+		{
+			const char* path = ofc_file_get_path(file);
+			if (path) printf("%s:\n", path);
+			ofc_sema_scope_common_usage_print(sema);
+		}
 	}
 
 	ofc_sema_scope_delete(super);

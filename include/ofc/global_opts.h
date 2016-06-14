@@ -30,6 +30,7 @@ typedef struct
 	bool parse_print;
 	bool sema_print;
 	bool no_escape;
+	bool common_usage_print;
 } ofc_global_opts_t;
 
 static const ofc_global_opts_t
@@ -44,6 +45,7 @@ static const ofc_global_opts_t
 	.parse_only            = false,
 	.parse_print           = false,
 	.sema_print            = false,
+	.common_usage_print    = false,
 	.no_escape             = false,
 };
 
