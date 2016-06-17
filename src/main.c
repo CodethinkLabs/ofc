@@ -145,6 +145,13 @@ int main(int argc, const char* argv[])
 		return EXIT_FAILURE;
 	}
 
+	if (!ofc_global_pass_args(super))
+	{
+		ofc_sema_scope_delete(super);
+		ofc_file_list_delete(file_list);
+		return EXIT_FAILURE;
+	}
+
 	ofc_sema_scope_delete(super);
 	ofc_file_list_delete(file_list);
 	return EXIT_SUCCESS;

@@ -6,4 +6,7 @@
 bool ofc_global_pass_common(
 	ofc_sema_scope_t* scope);
 
+bool ofc_global_pass_args(
+	ofc_sema_scope_t* scope);
+
 #endif
