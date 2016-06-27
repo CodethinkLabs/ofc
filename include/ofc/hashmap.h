@@ -41,4 +41,8 @@ const void* ofc_hashmap_find(const ofc_hashmap_t* map, const void* key);
 /* Don't modify the key in this function. */
 void* ofc_hashmap_find_modify(ofc_hashmap_t* map, const void* key);
 
+bool ofc_hashmap_foreach(
+	ofc_hashmap_t* map, void* param,
+	bool (*func)(void* item, void* param));
+
 #endif

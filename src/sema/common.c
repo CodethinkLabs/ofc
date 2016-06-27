@@ -71,6 +71,36 @@ bool ofc_sema_common_save(
 }
 
 
+bool ofc_sema_common_compatible(
+	const ofc_sema_common_t* a,
+	const ofc_sema_common_t* b)
+{
+	if (!a || !b)
+		return false;
+
+	if (a->count != b->count)
+		return false;
+
+	unsigned i;
+	for (i = 0; i < a->count; i++)
+	{
+		const ofc_sema_type_t* type[2];
+		type[0] = ofc_sema_decl_type(a->decl[i]);
+		type[1] = ofc_sema_decl_type(b->decl[i]);
+		if (!ofc_sema_type_compatible(type[0], type[1]))
+			return false;
+
+		unsigned size[2];
+		if (!ofc_sema_decl_size(a->decl[i], &size[0])
+			|| !ofc_sema_decl_size(a->decl[i], &size[1])
+			|| (size[0] != size[1]))
+			return false;
+	}
+
+	return true;
+}
+
+
 bool ofc_sema_common_print(
 	ofc_colstr_t* cs,
 	unsigned indent,

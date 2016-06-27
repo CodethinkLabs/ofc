@@ -1841,7 +1841,8 @@ bool ofc_sema_scope_list_foreach(
 	unsigned i;
 	for (i = 0; i < list->count; i++)
 	{
-		if (!func(list->scope[i], param))
+		if (!ofc_sema_scope_foreach_scope(
+			list->scope[i], param, func))
 			return false;
 	}
 

@@ -194,3 +194,25 @@ const void* ofc_hashmap_find(const ofc_hashmap_t* map, const void* key)
 	return (const void*)ofc_hashmap_find_modify(
 		(ofc_hashmap_t*)map, key);
 }
+
+
+bool ofc_hashmap_foreach(
+	ofc_hashmap_t* map, void* param,
+	bool (*func)(void* item, void* param))
+{
+	if (!map || !func)
+		return false;
+
+	unsigned i;
+	for (i = 0; i < 256; i++)
+	{
+		ofc_hashmap__entry_t* entry;
+		for (entry = map->base[i]; entry; entry = entry->next)
+		{
+			if (!func(entry->item, param))
+				return false;
+		}
+	}
+
+	return true;
+}

@@ -22,6 +22,7 @@
 #include "ofc/parse/file.h"
 #include "ofc/prep.h"
 #include "ofc/sema.h"
+#include "ofc/global.h"
 #include "ofc/cliarg.h"
 
 ofc_global_opts_t global_opts;
@@ -135,6 +136,13 @@ int main(int argc, const char* argv[])
 			if (path) printf("%s:\n", path);
 			ofc_sema_scope_common_usage_print(sema);
 		}
+	}
+
+	if (!ofc_global_pass_common(super))
+	{
+		ofc_sema_scope_delete(super);
+		ofc_file_list_delete(file_list);
+		return EXIT_FAILURE;
 	}
 
 	ofc_sema_scope_delete(super);
