@@ -43,20 +43,8 @@ void ofc_sema_scope_delete(
 
 	ofc_sema_module_list_delete(scope->module);
 
-	switch (scope->type)
-	{
-		case OFC_SEMA_SCOPE_SUPER:
-			break;
-
-		case OFC_SEMA_SCOPE_STMT_FUNC:
-			ofc_sema_expr_delete(scope->expr);
-			break;
-
-		default:
-			ofc_sema_stmt_list_delete(
-				scope->stmt);
-			break;
-	}
+	ofc_sema_expr_delete(scope->expr);
+	ofc_sema_stmt_list_delete(scope->stmt);
 
 	ofc_parse_file_delete(scope->file);
 
@@ -122,6 +110,9 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 
 	scope->label = NULL;
 
+	scope->expr = NULL;
+	scope->stmt = NULL;
+
 	if (scope->type == OFC_SEMA_SCOPE_SUPER)
 		return scope;
 
@@ -129,11 +120,7 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 		global_opts.case_sensitive);
 
 	bool alloc_fail = !scope->decl;
-	if (scope->type == OFC_SEMA_SCOPE_STMT_FUNC)
-	{
-		scope->expr = NULL;
-	}
-	else
+	if (scope->type != OFC_SEMA_SCOPE_STMT_FUNC)
 	{
 		scope->implicit = (parent
 			? ofc_sema_implicit_copy(parent->implicit) : NULL);
@@ -153,7 +140,7 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 
 		scope->label = ofc_sema_label_map_create();
 
-		scope->stmt = NULL;
+
 
 		if (!scope->implicit
 			|| !scope->common
@@ -1890,7 +1877,7 @@ bool ofc_sema_scope_foreach_stmt(
 	ofc_sema_scope_t* scope, void* param,
 	bool (*func)(ofc_sema_stmt_t* stmt, void* param))
 {
-	if (!scope)
+	if (!scope || !func)
 		return false;
 
 	if (scope->stmt

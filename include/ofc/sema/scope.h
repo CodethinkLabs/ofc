@@ -67,11 +67,8 @@ struct ofc_sema_scope_s
 	ofc_sema_structure_list_t* structure;
 	ofc_sema_structure_list_t* derived_type;
 
-	union
-	{
-		ofc_sema_stmt_list_t* stmt;
-		ofc_sema_expr_t*      expr;
-	};
+	ofc_sema_stmt_list_t* stmt;
+	ofc_sema_expr_t*      expr;
 };
 
 

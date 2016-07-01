@@ -3110,7 +3110,7 @@ bool ofc_sema_decl_list_foreach_scope(
 	ofc_sema_decl_list_t* list, void* param,
 	bool (*func)(ofc_sema_scope_t* scope, void* param))
 {
-	if (!list)
+	if (!list || !func)
 		return false;
 
 	unsigned i;
