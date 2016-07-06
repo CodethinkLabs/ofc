@@ -328,6 +328,14 @@ static bool ofc_global_pass_args__check(
 							ofc_sema_type_str_rep(list->call[i]->subr->type));
 					}
 				}
+
+				if (ofc_sema_expr_is_constant(actual_arg)
+					&& dummy_arg_decl->was_written)
+				{
+					ofc_sparse_ref_warning(actual_arg->src,
+						"Constant reference may be written to in %s call",
+						ofc_sema_type_str_rep(list->call[i]->subr->type));
+				}
 			}
 		}
 
