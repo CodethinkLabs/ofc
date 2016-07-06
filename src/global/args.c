@@ -266,32 +266,65 @@ static bool ofc_global_pass_args__check(
 			unsigned l;
 			for (l = 0; l < scope->args->count; l++)
 			{
+				ofc_sema_arg_t dummy_arg
+					= scope->args->arg[l];
+				ofc_sema_expr_t* actual_arg
+					= list->call[i]->args->expr[l];
+
+				if (dummy_arg.alt_return
+					&& actual_arg->is_alt_return)
+					continue;
+
+				if (dummy_arg.alt_return && !actual_arg->is_alt_return)
+				{
+					ofc_sparse_ref_warning(actual_arg->src,
+						"Incompatible argument in %s call, expected label for alternate return.",
+						ofc_sema_type_str_rep(list->call[i]->subr->type));
+					continue;
+				}
+				else if (!dummy_arg.alt_return && actual_arg->is_alt_return)
+				{
+					const ofc_sema_decl_t* dummy_arg_decl
+						= ofc_sema_scope_decl_find(
+							scope, dummy_arg.name.string, true);
+					const ofc_sema_type_t* dummy_arg_type
+						= ofc_sema_decl_type(dummy_arg_decl);
+
+					ofc_sparse_ref_warning(actual_arg->src,
+						"Incompatible alternate return argument in %s call, expected %s.",
+						ofc_sema_type_str_rep(list->call[i]->subr->type),
+						ofc_sema_type_str_rep(dummy_arg_type));
+					continue;
+				}
+
 				/* Find the declaration of the argument in the function scope */
-				const ofc_sema_decl_t* arg_decl
+				const ofc_sema_decl_t* dummy_arg_decl
 					= ofc_sema_scope_decl_find(
-						scope, scope->args->arg[l].name.string, true);
-				const ofc_sema_type_t* arg_decl_type
-					= ofc_sema_decl_type(arg_decl);
-				const ofc_sema_type_t* type
-					= ofc_sema_expr_type(list->call[i]->args->expr[l]);
-				if (!ofc_sema_type_compatible(type, arg_decl_type))
+						scope, dummy_arg.name.string, true);
+				if (!dummy_arg_decl) return false;
+
+				const ofc_sema_type_t* dummy_arg_type
+					= ofc_sema_decl_type(dummy_arg_decl);
+				const ofc_sema_type_t* actual_arg_type
+					= ofc_sema_expr_type(actual_arg);
+				if (!ofc_sema_type_compatible(actual_arg_type, dummy_arg_type))
 				{
 					if (!ofc_sema_type_cast_valid(
-						type, arg_decl_type))
+						actual_arg_type, dummy_arg_type))
 					{
-						ofc_sparse_ref_warning(list->call[i]->args->expr[l]->src,
+						ofc_sparse_ref_warning(actual_arg->src,
 							"Incompatible argument type (%s) in %s call, expected %s.",
-							ofc_sema_type_str_rep(type),
+							ofc_sema_type_str_rep(actual_arg_type),
 							ofc_sema_type_str_rep(list->call[i]->subr->type),
-							ofc_sema_type_str_rep(arg_decl_type));
+							ofc_sema_type_str_rep(dummy_arg_type));
 					}
 					else if (!ofc_sema_type_cast_is_lossless(
-						type, arg_decl_type))
+						actual_arg_type, dummy_arg_type))
 					{
-						ofc_sparse_ref_warning(list->call[i]->args->expr[l]->src,
+						ofc_sparse_ref_warning(actual_arg->src,
 							"Argument cast from %s to %s may be lossy in %s call",
-							ofc_sema_type_str_rep(type),
-							ofc_sema_type_str_rep(arg_decl_type),
+							ofc_sema_type_str_rep(actual_arg_type),
+							ofc_sema_type_str_rep(dummy_arg_type),
 							ofc_sema_type_str_rep(list->call[i]->subr->type));
 					}
 				}
