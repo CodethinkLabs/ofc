@@ -312,12 +312,13 @@ bool ofc_sema_decl_mark_used(
 
 
 static bool ofc_sema_decl__elem(
-	ofc_sema_scope_t*       scope,
-	const ofc_sema_type_t*  type,
-	ofc_sema_structure_t**  type_struct,
-	ofc_sema_structure_t*   structure,
-	bool                    is_static,
-	const ofc_parse_decl_t* pdecl)
+	ofc_sema_scope_t*        scope,
+	const ofc_sema_type_t*   type,
+	ofc_sema_structure_t**   type_struct,
+	ofc_sema_structure_t*    structure,
+	ofc_parse_array_index_t* dimension,
+	bool                     is_static,
+	const ofc_parse_decl_t*  pdecl)
 {
 	if (!pdecl || !pdecl->lhs)
 		return false;
@@ -348,12 +349,34 @@ static bool ofc_sema_decl__elem(
 		return false;
 	}
 
-	ofc_sema_array_t* array = NULL;
+	ofc_sema_array_t* array = ofc_sema_array(scope, dimension);
 	if (lhs->type == OFC_PARSE_LHS_ARRAY)
 	{
-		array = ofc_sema_array(
-			scope, lhs->array.index);
-		if (!array) return false;
+		ofc_sema_array_t* lhs_array
+			= ofc_sema_array(scope, lhs->array.index);
+		if (!lhs_array) return false;
+
+		if (array)
+		{
+			bool conflict = !ofc_sema_array_compare(array, lhs_array);
+			ofc_sema_array_delete(lhs_array);
+			if (conflict)
+			{
+				ofc_sparse_ref_error(lhs->src,
+					"Multiple incompatible definitions of array dimensions");
+				ofc_sema_array_delete(array);
+				return false;
+			}
+			else
+			{
+				ofc_sparse_ref_warning(lhs->src,
+					"Redefinition of array dimensions");
+			}
+		}
+		else
+		{
+			array = lhs_array;
+		}
 
 		lhs = lhs->parent;
 		if (!lhs)
@@ -683,6 +706,7 @@ bool ofc_sema_decl(
 		if (!ofc_sema_decl__elem(
 			scope, type,
 			&type_struct, NULL,
+			stmt->decl.dimension,
 			stmt->decl.save,
 			stmt->decl.decl->decl[i]))
 			success = false;
@@ -715,7 +739,9 @@ bool ofc_sema_decl_member(
 	for (i = 0; i < count; i++)
 	{
 		if (!ofc_sema_decl__elem(
-			scope, type, &type_struct, structure, false,
+			scope, type, &type_struct, structure,
+			stmt->decl.dimension,
+			false,
 			stmt->decl.decl->decl[i]))
 			success = false;
 	}

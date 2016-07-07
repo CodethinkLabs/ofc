@@ -29,6 +29,7 @@ unsigned ofc_parse_stmt_decl(
 	if (!stmt->decl.type)
 		return 0;
 	stmt->decl.save = false;
+	stmt->decl.dimension = NULL;
 
 	unsigned l;
 	if (stmt->decl.type->type
@@ -41,7 +42,7 @@ unsigned ofc_parse_stmt_decl(
 	{
 		bool is_f90 = false;
 
-		if (ptr[i] == ',')
+		while (ptr[i] == ',')
 		{
 			l = ofc_parse_keyword(
 				src, &ptr[i + 1], debug,
@@ -54,7 +55,39 @@ unsigned ofc_parse_stmt_decl(
 				i += (1 + l);
 				stmt->decl.save = true;
 				is_f90 = true;
+				continue;
 			}
+
+			l = ofc_parse_keyword(
+				src, &ptr[i + 1], debug,
+				OFC_PARSE_KEYWORD_DIMENSION);
+			if (l > 0)
+			{
+				i += (1 + l);
+
+				if (stmt->decl.dimension)
+				{
+					ofc_parse_type_delete(stmt->decl.type);
+					ofc_parse_debug_rewind(debug, dpos);
+					return 0;
+				}
+
+				stmt->decl.dimension = ofc_parse_array_index(
+					src, &ptr[i], debug, &l);
+				if (!stmt->decl.dimension)
+				{
+					ofc_parse_type_delete(stmt->decl.type);
+					ofc_parse_debug_rewind(debug, dpos);
+					return 0;
+				}
+				i += l;
+				is_f90 = true;
+				continue;
+			}
+
+			ofc_parse_type_delete(stmt->decl.type);
+			ofc_parse_debug_rewind(debug, dpos);
+			return 0;
 		}
 
 		if ((ptr[i + 0] == ':')
@@ -102,6 +135,16 @@ bool ofc_parse_stmt_decl_print(
 			if (!ofc_colstr_atomic_writef(cs, ",")
 				|| !ofc_colstr_atomic_writef(cs, " ")
 				|| !ofc_colstr_atomic_writef(cs, "SAVE"))
+				return false;
+		}
+
+		if (stmt->decl.dimension)
+		{
+			if (!ofc_colstr_atomic_writef(cs, ",")
+				|| !ofc_colstr_atomic_writef(cs, " ")
+				|| !ofc_colstr_atomic_writef(cs, "DIMENSION")
+				|| !ofc_parse_array_index_print(
+					cs, stmt->decl.dimension, true))
 				return false;
 		}
 

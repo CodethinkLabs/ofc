@@ -277,6 +277,7 @@ static void ofc_parse_stmt__cleanup(
 			ofc_parse_call_arg_list_delete(stmt.call_entry.args);
 			break;
 		case OFC_PARSE_STMT_DECL:
+			ofc_parse_array_index_delete(stmt.decl.dimension);
 			ofc_parse_type_delete(stmt.decl.type);
 			ofc_parse_decl_list_delete(stmt.decl.decl);
 			break;
