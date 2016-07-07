@@ -29,6 +29,7 @@ unsigned ofc_parse_stmt_decl(
 	if (!stmt->decl.type)
 		return 0;
 	stmt->decl.save = false;
+	stmt->decl.parameter = false;
 	stmt->decl.dimension = NULL;
 
 	unsigned l;
@@ -54,6 +55,17 @@ unsigned ofc_parse_stmt_decl(
 			{
 				i += (1 + l);
 				stmt->decl.save = true;
+				is_f90 = true;
+				continue;
+			}
+
+			l = ofc_parse_keyword(
+				src, &ptr[i + 1], debug,
+				OFC_PARSE_KEYWORD_PARAMETER);
+			if (l > 0)
+			{
+				i += (1 + l);
+				stmt->decl.parameter = true;
 				is_f90 = true;
 				continue;
 			}
@@ -127,7 +139,9 @@ bool ofc_parse_stmt_decl_print(
 	if (!ofc_parse_type_print(cs, stmt->decl.type, true))
 		return false;
 
-	bool is_f90 = stmt->decl.save;
+	bool is_f90 = (stmt->decl.save
+		|| stmt->decl.parameter
+		|| stmt->decl.dimension);
 	if (is_f90)
 	{
 		if (stmt->decl.save)
@@ -135,6 +149,14 @@ bool ofc_parse_stmt_decl_print(
 			if (!ofc_colstr_atomic_writef(cs, ",")
 				|| !ofc_colstr_atomic_writef(cs, " ")
 				|| !ofc_colstr_atomic_writef(cs, "SAVE"))
+				return false;
+		}
+
+		if (stmt->decl.parameter)
+		{
+			if (!ofc_colstr_atomic_writef(cs, ",")
+				|| !ofc_colstr_atomic_writef(cs, " ")
+				|| !ofc_colstr_atomic_writef(cs, "PARAMETER"))
 				return false;
 		}
 

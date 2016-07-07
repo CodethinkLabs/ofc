@@ -127,6 +127,7 @@ struct ofc_parse_stmt_s
 		struct
 		{
 			bool                     save;
+			bool                     parameter;
 			ofc_parse_array_index_t* dimension;
 			ofc_parse_type_t*        type;
 			ofc_parse_decl_list_t*   decl;

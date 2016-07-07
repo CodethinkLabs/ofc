@@ -318,6 +318,7 @@ static bool ofc_sema_decl__elem(
 	ofc_sema_structure_t*    structure,
 	ofc_parse_array_index_t* dimension,
 	bool                     is_static,
+	bool                     is_parameter,
 	const ofc_parse_decl_t*  pdecl)
 {
 	if (!pdecl || !pdecl->lhs)
@@ -677,6 +678,8 @@ static bool ofc_sema_decl__elem(
 
 	if (is_static)
 		decl->is_static = true;
+	if (is_parameter)
+		decl->is_parameter = true;
 
 	return true;
 }
@@ -686,8 +689,8 @@ bool ofc_sema_decl(
 	const ofc_parse_stmt_t* stmt)
 {
 	if (!stmt || !scope
-		|| !stmt->decl.type || !stmt->decl.decl
-		|| (stmt->type != OFC_PARSE_STMT_DECL))
+		|| (stmt->type != OFC_PARSE_STMT_DECL)
+		|| !stmt->decl.type || !stmt->decl.decl)
 		return false;
 
 	ofc_sema_structure_t* type_struct = NULL;
@@ -708,6 +711,7 @@ bool ofc_sema_decl(
 			&type_struct, NULL,
 			stmt->decl.dimension,
 			stmt->decl.save,
+			stmt->decl.parameter,
 			stmt->decl.decl->decl[i]))
 			success = false;
 	}
@@ -721,8 +725,10 @@ bool ofc_sema_decl_member(
 	const ofc_parse_stmt_t* stmt)
 {
 	if (!stmt || !scope
+		|| (stmt->type != OFC_PARSE_STMT_DECL)
 		|| !stmt->decl.type || !stmt->decl.decl
-		|| (stmt->type != OFC_PARSE_STMT_DECL))
+		|| stmt->decl.save)
+
 		return false;
 
 	ofc_sema_structure_t* type_struct = NULL;
@@ -742,6 +748,7 @@ bool ofc_sema_decl_member(
 			scope, type, &type_struct, structure,
 			stmt->decl.dimension,
 			false,
+			stmt->decl.parameter,
 			stmt->decl.decl->decl[i]))
 			success = false;
 	}
