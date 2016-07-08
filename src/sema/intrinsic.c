@@ -1650,6 +1650,36 @@ bool ofc_sema_stmt_intrinsic(
 				scope, decl_name, true);
 		if (!decl) return false;
 
+		if (decl->type_implicit
+			&& ofc_sema_intrinsic_is_specific(func))
+		{
+			ofc_sema_intrinsic__param_t p;
+			if (func->op->return_type == IP_SAME)
+			{
+				p = ofc_sema_intrinsic__param[func->op->arg_type];
+			}
+			else
+			{
+				p = ofc_sema_intrinsic__param[func->op->return_type];
+			}
+
+			const ofc_sema_type_t* rtype
+				= ofc_sema_type_create_function(
+					ofc_sema_type_create_primitive(p.type, p.kind));
+			if (!rtype) return false;
+
+			if (!ofc_sema_decl_type_set(
+				decl, rtype, decl_name))
+				return false;
+		}
+		else if (decl->type_implicit)
+		{
+			/* Generic functions can't have a type */
+			if (!ofc_sema_decl_type_set(
+				decl, NULL, decl_name))
+				return false;
+		}
+
 		if (decl->is_external)
 		{
 			ofc_sparse_ref_error(decl_name,
