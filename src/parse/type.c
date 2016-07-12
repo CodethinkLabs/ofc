@@ -197,16 +197,24 @@ ofc_parse_type_t* ofc_parse_type(
 				{
 					if (!type.count_expr && !type.count_var)
 					{
-						ofc_parse_expr_t* expr = ofc_parse_expr(
-							src, &ptr[i + 1], debug, &l);
-						if (expr && (ptr[i + 1 + l] == ')'))
+						if ((ptr[i + 1] == '*') && (ptr[i + 2] == ')'))
 						{
-							i += (l + 2);
-							type.count_expr = expr;
+							i += 3;
+							type.count_var = true;
 						}
 						else
 						{
-							ofc_parse_expr_delete(expr);
+							ofc_parse_expr_t* expr = ofc_parse_expr(
+								src, &ptr[i + 1], debug, &l);
+							if (expr && (ptr[i + 1 + l] == ')'))
+							{
+								i += (l + 2);
+								type.count_expr = expr;
+							}
+							else
+							{
+								ofc_parse_expr_delete(expr);
+							}
 						}
 					}
 				}
