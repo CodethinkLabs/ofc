@@ -71,6 +71,7 @@ static ofc_sema_expr__rule_t ofc_sema_expr__rule[] =
 	{ NULL, 0, 0, 0, 0, 0, 0 }, /* INTRINSIC */
 	{ NULL, 0, 0, 0, 0, 0, 0 }, /* FUNCTION */
 	{ NULL, 0, 0, 0, 0, 0, 0 }, /* IMPLICIT_DO */
+	{ NULL, 0, 0, 0, 0, 0, 0 }, /* ARRAY */
 
 	{ NULL, 0, 1, 1, 1, 0, 0 }, /* POWER */
 	{ NULL, 0, 1, 1, 1, 0, 1 }, /* MULTIPLY */
@@ -159,6 +160,7 @@ static ofc_sema_typeval_t* (*ofc_sema_expr__resolve[])(
 	NULL, /* INTRINSIC */
 	NULL, /* FUNCTION */
 	NULL, /* IMPLICIT_DO */
+	NULL, /* ARRAY */
 
 	ofc_sema_typeval_power,
 	ofc_sema_typeval_multiply,
@@ -236,6 +238,9 @@ static ofc_sema_expr_t* ofc_sema_expr__create(
 			expr->implicit_do.init = NULL;
 			expr->implicit_do.last = NULL;
 			expr->implicit_do.step = NULL;
+			break;
+		case OFC_SEMA_EXPR_ARRAY:
+			expr->array = NULL;
 			break;
 		default:
 			expr->a = NULL;
@@ -358,6 +363,12 @@ ofc_sema_expr_t* ofc_sema_expr_copy_replace(
 				success = false;
 			if (expr->implicit_do.step
 				&& !copy->implicit_do.step)
+				success = false;
+			break;
+
+		case OFC_SEMA_EXPR_ARRAY:
+			copy->array = ofc_sema_expr_list_copy(expr->array);
+			if (expr->array && !copy->array)
 				success = false;
 			break;
 
@@ -890,6 +901,28 @@ static ofc_sema_expr_t* ofc_sema_expr__literal(
 	return expr;
 }
 
+static ofc_sema_expr_t* ofc_sema_expr__array(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_expr_list_t* array)
+{
+	ofc_sema_expr_list_t* list
+		= ofc_sema_expr_list(scope, array);
+	if (array && !list) return NULL;
+
+	ofc_sema_expr_t* expr
+		= ofc_sema_expr__create(
+			OFC_SEMA_EXPR_ARRAY);
+	if (!expr)
+	{
+		ofc_sema_expr_list_delete(list);
+		return NULL;
+	}
+
+	expr->array = list;
+	expr->src = array->src;
+	return expr;
+}
+
 static ofc_sema_expr_t* ofc_sema_expr__intrinsic(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_lhs_t* name,
@@ -1263,6 +1296,9 @@ ofc_sema_expr_t* ofc_sema_expr(
 			return ofc_sema_expr__binary(
 				scope, expr->binary.operator,
 				expr->binary.a, expr->binary.b);
+		case OFC_PARSE_EXPR_ARRAY:
+			return ofc_sema_expr__array(
+				scope, expr->array);
 		default:
 			break;
 	}
@@ -1683,6 +1719,9 @@ void ofc_sema_expr_delete(
 			ofc_sema_expr_delete(expr->implicit_do.last);
 			ofc_sema_expr_delete(expr->implicit_do.step);
 			break;
+		case OFC_SEMA_EXPR_ARRAY:
+			ofc_sema_expr_list_delete(expr->array);
+			break;
 		default:
 			ofc_sema_expr_delete(expr->b);
 			ofc_sema_expr_delete(expr->a);
@@ -1758,6 +1797,17 @@ bool ofc_sema_expr_elem_count(
 		ecount *= idecount;
 
 		ecount *= expr->implicit_do.count;
+	}
+	else if (expr->type == OFC_SEMA_EXPR_ARRAY)
+	{
+		if (!expr->array)
+		{
+			if (count) *count = 0;
+			return true;
+		}
+
+		return ofc_sema_expr_list_elem_count(
+			expr->array, count);
 	}
 
 	const ofc_sema_array_t* array
@@ -1926,6 +1976,10 @@ ofc_sema_expr_t* ofc_sema_expr_elem_get(
 			return rval;
 		}
 
+		case OFC_SEMA_EXPR_ARRAY:
+			return ofc_sema_expr_list_elem_get(
+				expr->array, offset);
+
 		default:
 			break;
 	}
@@ -1991,6 +2045,12 @@ bool ofc_sema_expr_compare(
 					a->implicit_do.last, b->implicit_do.last)
 				&& ofc_sema_expr_compare_def_one(
 					a->implicit_do.step, b->implicit_do.step));
+
+		case OFC_SEMA_EXPR_ARRAY:
+			if (!a->array && !b->array)
+				return true;
+			return ofc_sema_expr_list_compare(
+				a->array, b->array);
 
 		default:
 			break;
@@ -2093,6 +2153,7 @@ const ofc_sema_type_t* ofc_sema_expr_type(
 			return ofc_sema_decl_base_type(
 				expr->function);
 		case OFC_SEMA_EXPR_IMPLICIT_DO:
+		case OFC_SEMA_EXPR_ARRAY:
 			return NULL;
 		default:
 			break;
@@ -2521,6 +2582,12 @@ bool ofc_sema_expr_foreach(
 				return false;
 			break;
 
+		case OFC_SEMA_EXPR_ARRAY:
+			if (!expr->array)
+				return true;
+			return ofc_sema_expr_list_foreach(
+				expr->array, param, func);
+
 		default:
 			if ((expr->a && !func(expr->a, param))
 				|| (expr->b && !func(expr->b, param)))
@@ -2559,6 +2626,7 @@ static const char* ofc_sema_expr__operator[] =
 	NULL, /* INTRINSIC */
 	NULL, /* FUNCTION */
 	NULL, /* IMPLICIT_DO */
+	NULL, /* ARRAY */
 
 	"**",
 	"*",
@@ -2685,6 +2753,17 @@ bool ofc_sema_expr_print(
 			}
 
 			if (!ofc_colstr_atomic_writef(cs, ")"))
+				return false;
+			break;
+
+		case OFC_SEMA_EXPR_ARRAY:
+			if (!ofc_colstr_atomic_writef(cs, "(/")
+				|| !ofc_colstr_atomic_writef(cs, " "))
+				return false;
+			if (expr->array && !ofc_sema_expr_list_print(cs, expr->array))
+				return false;
+			if (!ofc_colstr_atomic_writef(cs, " ")
+				|| !ofc_colstr_atomic_writef(cs, "/)"))
 				return false;
 			break;
 

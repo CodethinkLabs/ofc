@@ -1246,6 +1246,15 @@ bool ofc_sema_lhs_init(
 	if (!lhs || !init)
 		return false;
 
+	if (init->type == OFC_SEMA_EXPR_ARRAY)
+	{
+		if (!init->array)
+			return true;
+		return ofc_sema_lhs_init_array(
+			lhs, NULL, init->array->count,
+			(const ofc_sema_expr_t**)init->array->expr);
+	}
+
 	ofc_sema_decl_t* decl
 		= ofc_sema_lhs_decl(lhs);
 

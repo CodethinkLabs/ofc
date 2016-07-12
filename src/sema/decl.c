@@ -982,6 +982,14 @@ bool ofc_sema_decl_init(
 	if (!ofc_sema_decl_type_finalize(decl))
 		return false;
 
+	if (init->type == OFC_SEMA_EXPR_ARRAY)
+	{
+		if (!init->array) return true;
+		return ofc_sema_decl_init_array(
+			decl, NULL, init->array->count,
+			(const ofc_sema_expr_t**)init->array->expr);
+	}
+
 	if (!ofc_sema_expr_is_constant(init))
 	{
 		ofc_sparse_ref_error(init->src,

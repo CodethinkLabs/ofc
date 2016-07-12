@@ -24,6 +24,7 @@ typedef enum
 	OFC_PARSE_EXPR_UNARY,
 	OFC_PARSE_EXPR_BINARY,
 	OFC_PARSE_EXPR_IMPLICIT_DO,
+	OFC_PARSE_EXPR_ARRAY,
 } ofc_parse_expr_e;
 
 
@@ -59,11 +60,14 @@ struct ofc_parse_expr_s
 		} binary;
 
 		ofc_parse_expr_implicit_do_t* implicit_do;
+
+		ofc_parse_expr_list_t* array;
 	};
 };
 
 struct ofc_parse_expr_list_s
 {
+	ofc_sparse_ref_t   src;
 	unsigned           count;
 	ofc_parse_expr_t** expr;
 };
