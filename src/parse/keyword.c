@@ -111,6 +111,8 @@ static const char* ofc_parse_keyword__name[] =
 	"ACCEPT",
 	"DEFINE FILE",
 
+	"RESHAPE",
+
 	NULL
 };
 

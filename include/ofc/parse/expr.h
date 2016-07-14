@@ -25,6 +25,7 @@ typedef enum
 	OFC_PARSE_EXPR_BINARY,
 	OFC_PARSE_EXPR_IMPLICIT_DO,
 	OFC_PARSE_EXPR_ARRAY,
+	OFC_PARSE_EXPR_RESHAPE,
 } ofc_parse_expr_e;
 
 
@@ -62,6 +63,14 @@ struct ofc_parse_expr_s
 		ofc_parse_expr_implicit_do_t* implicit_do;
 
 		ofc_parse_expr_list_t* array;
+
+		struct
+		{
+			ofc_parse_expr_t* source;
+			ofc_parse_expr_t* shape;
+			ofc_parse_expr_t* pad;
+			ofc_parse_expr_t* order;
+		} reshape;
 	};
 };
 

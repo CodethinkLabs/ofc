@@ -989,6 +989,13 @@ bool ofc_sema_decl_init(
 			decl, NULL, init->array->count,
 			(const ofc_sema_expr_t**)init->array->expr);
 	}
+	else if (init->type == OFC_SEMA_EXPR_RESHAPE)
+	{
+		if (!init->reshape.source) return true;
+		return ofc_sema_decl_init_array(
+			decl, NULL, init->reshape.source->count,
+			(const ofc_sema_expr_t**)init->reshape.source->expr);
+	}
 
 	if (!ofc_sema_expr_is_constant(init))
 	{

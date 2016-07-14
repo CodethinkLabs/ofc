@@ -25,6 +25,7 @@ typedef enum
 	OFC_SEMA_EXPR_FUNCTION,
 	OFC_SEMA_EXPR_IMPLICIT_DO,
 	OFC_SEMA_EXPR_ARRAY,
+	OFC_SEMA_EXPR_RESHAPE,
 
 	OFC_SEMA_EXPR_POWER,
 	OFC_SEMA_EXPR_MULTIPLY,
@@ -105,6 +106,12 @@ struct ofc_sema_expr_s
 		} implicit_do;
 
 		ofc_sema_expr_list_t* array;
+
+		struct
+		{
+			ofc_sema_expr_list_t* source;
+			ofc_sema_array_t*     shape;
+		} reshape;
 	};
 };
 

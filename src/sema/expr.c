@@ -72,6 +72,7 @@ static ofc_sema_expr__rule_t ofc_sema_expr__rule[] =
 	{ NULL, 0, 0, 0, 0, 0, 0 }, /* FUNCTION */
 	{ NULL, 0, 0, 0, 0, 0, 0 }, /* IMPLICIT_DO */
 	{ NULL, 0, 0, 0, 0, 0, 0 }, /* ARRAY */
+	{ NULL, 0, 0, 0, 0, 0, 0 }, /* RESHAPE */
 
 	{ NULL, 0, 1, 1, 1, 0, 0 }, /* POWER */
 	{ NULL, 0, 1, 1, 1, 0, 1 }, /* MULTIPLY */
@@ -161,6 +162,7 @@ static ofc_sema_typeval_t* (*ofc_sema_expr__resolve[])(
 	NULL, /* FUNCTION */
 	NULL, /* IMPLICIT_DO */
 	NULL, /* ARRAY */
+	NULL, /* RESHAPE */
 
 	ofc_sema_typeval_power,
 	ofc_sema_typeval_multiply,
@@ -241,6 +243,10 @@ static ofc_sema_expr_t* ofc_sema_expr__create(
 			break;
 		case OFC_SEMA_EXPR_ARRAY:
 			expr->array = NULL;
+			break;
+		case OFC_SEMA_EXPR_RESHAPE:
+			expr->reshape.source = NULL;
+			expr->reshape.shape  = NULL;
 			break;
 		default:
 			expr->a = NULL;
@@ -369,6 +375,16 @@ ofc_sema_expr_t* ofc_sema_expr_copy_replace(
 		case OFC_SEMA_EXPR_ARRAY:
 			copy->array = ofc_sema_expr_list_copy(expr->array);
 			if (expr->array && !copy->array)
+				success = false;
+			break;
+
+		case OFC_SEMA_EXPR_RESHAPE:
+			copy->reshape.source = ofc_sema_expr_list_copy(
+				expr->reshape.source);
+			copy->reshape.shape = ofc_sema_array_copy(
+				expr->reshape.shape);
+			if (!copy->reshape.source
+				|| !copy->reshape.shape)
 				success = false;
 			break;
 
@@ -923,6 +939,77 @@ static ofc_sema_expr_t* ofc_sema_expr__array(
 	return expr;
 }
 
+static ofc_sema_expr_t* ofc_sema_expr__reshape(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_expr_t* pexpr)
+{
+	if (!pexpr
+		|| (pexpr->type != OFC_PARSE_EXPR_RESHAPE)
+		|| !pexpr->reshape.source
+		|| !pexpr->reshape.shape)
+		return NULL;
+
+	if (pexpr->reshape.pad)
+	{
+		/* TODO - Support PAD in RESHAPE */
+		ofc_sparse_ref_error(pexpr->reshape.pad->src,
+			"PAD parameter not supported in RESHAPE");
+		return NULL;
+	}
+
+	if (pexpr->reshape.order)
+	{
+		/* TODO - Support ORDER in RESHAPE */
+		ofc_sparse_ref_error(pexpr->reshape.order->src,
+			"ORDER parameter not supported in RESHAPE");
+		return NULL;
+	}
+
+	if (pexpr->reshape.source->type != OFC_PARSE_EXPR_ARRAY)
+	{
+		ofc_sparse_ref_error(pexpr->reshape.source->src,
+			"RESHAPE SOURCE parameter must be an array");
+		return NULL;
+	}
+
+	if (pexpr->reshape.shape->type != OFC_PARSE_EXPR_ARRAY)
+	{
+		ofc_sparse_ref_error(pexpr->reshape.shape->src,
+			"RESHAPE SHAPE parameter must be an array");
+		return NULL;
+	}
+
+	ofc_sema_expr_list_t* source
+		= ofc_sema_expr_list(scope,
+			pexpr->reshape.source->array);
+	if (!source) return NULL;
+
+	ofc_sema_array_t* shape
+		= ofc_sema_array_array(scope,
+			pexpr->reshape.shape->array);
+	if (!shape)
+	{
+		ofc_sema_expr_list_delete(source);
+		return NULL;
+	}
+
+	ofc_sema_expr_t* expr
+		= ofc_sema_expr__create(
+			OFC_SEMA_EXPR_RESHAPE);
+	if (!expr)
+	{
+		ofc_sema_array_delete(shape);
+		ofc_sema_expr_list_delete(source);
+		return NULL;
+	}
+
+	expr->reshape.source = source;
+	expr->reshape.shape = shape;
+	expr->src = pexpr->src;
+	return expr;
+}
+
+
 static ofc_sema_expr_t* ofc_sema_expr__intrinsic(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_lhs_t* name,
@@ -1299,6 +1386,9 @@ ofc_sema_expr_t* ofc_sema_expr(
 		case OFC_PARSE_EXPR_ARRAY:
 			return ofc_sema_expr__array(
 				scope, expr->array);
+		case OFC_PARSE_EXPR_RESHAPE:
+			return ofc_sema_expr__reshape(
+				scope, expr);
 		default:
 			break;
 	}
@@ -1722,6 +1812,10 @@ void ofc_sema_expr_delete(
 		case OFC_SEMA_EXPR_ARRAY:
 			ofc_sema_expr_list_delete(expr->array);
 			break;
+		case OFC_SEMA_EXPR_RESHAPE:
+			ofc_sema_expr_list_delete(expr->reshape.source);
+			ofc_sema_array_delete(expr->reshape.shape);
+			break;
 		default:
 			ofc_sema_expr_delete(expr->b);
 			ofc_sema_expr_delete(expr->a);
@@ -1808,6 +1902,17 @@ bool ofc_sema_expr_elem_count(
 
 		return ofc_sema_expr_list_elem_count(
 			expr->array, count);
+	}
+	else if (expr->type == OFC_SEMA_EXPR_RESHAPE)
+	{
+		if (!expr->reshape.source)
+		{
+			if (count) *count = 0;
+			return true;
+		}
+
+		return ofc_sema_expr_list_elem_count(
+			expr->reshape.source, count);
 	}
 
 	const ofc_sema_array_t* array
@@ -1980,6 +2085,10 @@ ofc_sema_expr_t* ofc_sema_expr_elem_get(
 			return ofc_sema_expr_list_elem_get(
 				expr->array, offset);
 
+		case OFC_SEMA_EXPR_RESHAPE:
+			return ofc_sema_expr_list_elem_get(
+				expr->reshape.source, offset);
+
 		default:
 			break;
 	}
@@ -2051,6 +2160,12 @@ bool ofc_sema_expr_compare(
 				return true;
 			return ofc_sema_expr_list_compare(
 				a->array, b->array);
+
+		case OFC_SEMA_EXPR_RESHAPE:
+			return (ofc_sema_expr_list_compare(
+				a->reshape.source, b->reshape.source)
+				&& ofc_sema_array_compare(
+					a->reshape.shape, b->reshape.shape));
 
 		default:
 			break;
@@ -2154,6 +2269,7 @@ const ofc_sema_type_t* ofc_sema_expr_type(
 				expr->function);
 		case OFC_SEMA_EXPR_IMPLICIT_DO:
 		case OFC_SEMA_EXPR_ARRAY:
+		case OFC_SEMA_EXPR_RESHAPE:
 			return NULL;
 		default:
 			break;
@@ -2588,6 +2704,12 @@ bool ofc_sema_expr_foreach(
 			return ofc_sema_expr_list_foreach(
 				expr->array, param, func);
 
+		case OFC_SEMA_EXPR_RESHAPE:
+			if (!expr->reshape.source)
+				return true;
+			return ofc_sema_expr_list_foreach(
+				expr->reshape.source, param, func);
+
 		default:
 			if ((expr->a && !func(expr->a, param))
 				|| (expr->b && !func(expr->b, param)))
@@ -2627,6 +2749,7 @@ static const char* ofc_sema_expr__operator[] =
 	NULL, /* FUNCTION */
 	NULL, /* IMPLICIT_DO */
 	NULL, /* ARRAY */
+	NULL, /* RESHAPE */
 
 	"**",
 	"*",
@@ -2766,6 +2889,21 @@ bool ofc_sema_expr_print(
 				|| !ofc_colstr_atomic_writef(cs, "/)"))
 				return false;
 			break;
+
+		case OFC_SEMA_EXPR_RESHAPE:
+			return ofc_colstr_atomic_writef(cs, "RESHAPE")
+				&& ofc_colstr_atomic_writef(cs, "(")
+				&& ofc_colstr_atomic_writef(cs, "(/")
+				&& ofc_colstr_atomic_writef(cs, " ")
+				&& ofc_sema_expr_list_print(cs, expr->reshape.source)
+				&& ofc_colstr_atomic_writef(cs, ",")
+				&& ofc_colstr_atomic_writef(cs, " ")
+				&& ofc_colstr_atomic_writef(cs, "(/")
+				&& ofc_colstr_atomic_writef(cs, " ")
+				&& ofc_sema_array_print(cs, expr->reshape.shape)
+				&& ofc_colstr_atomic_writef(cs, " ")
+				&& ofc_colstr_atomic_writef(cs, "/)")
+				&& ofc_colstr_atomic_writef(cs, ")");
 
 		default:
 			if (expr->type >= OFC_SEMA_EXPR_COUNT)

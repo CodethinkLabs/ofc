@@ -139,6 +139,51 @@ ofc_sema_array_t* ofc_sema_array(
 	return array;
 }
 
+ofc_sema_array_t* ofc_sema_array_array(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_expr_list_t* list)
+{
+	if (!list || (list->count == 0))
+		return NULL;
+
+	ofc_sema_array_t* array
+		= (ofc_sema_array_t*)malloc(sizeof(ofc_sema_array_t)
+			+ (list->count * sizeof(ofc_sema_array_dims_t)));
+	if (!array) return NULL;
+	array->dimensions = list->count;
+
+	unsigned i;
+	for (i = 0; i < list->count; i++)
+	{
+		array->segment[i].first = NULL;
+		array->segment[i].last  = NULL;
+	}
+
+	for (i = 0; i < list->count; i++)
+	{
+		ofc_sema_expr_t* expr
+			= ofc_sema_expr(scope, list->expr[i]);
+		if (!expr)
+		{
+			ofc_sema_array_delete(array);
+			return NULL;
+		}
+
+		array->segment[i].last = expr;
+
+		if (!ofc_sema_expr_is_constant(expr)
+			|| !ofc_sema_expr_validate_uint(expr))
+		{
+			ofc_sparse_ref_error(expr->src,
+				"Expected positive INTEGER in SHAPE definition");
+			ofc_sema_array_delete(array);
+			return NULL;
+		}
+	}
+
+	return array;
+}
+
 ofc_sema_array_t* ofc_sema_array_copy_replace(
 	const ofc_sema_array_t* array,
 	const ofc_sema_decl_t*  replace,

@@ -114,6 +114,118 @@ static ofc_parse_expr_t* ofc_parse_expr__array(
 	return expr;
 }
 
+static ofc_parse_expr_t* ofc_parse_expr__reshape(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug, unsigned* len)
+{
+	unsigned dpos = ofc_parse_debug_position(debug);
+
+	unsigned i = ofc_parse_keyword(
+		src, ptr, debug, OFC_PARSE_KEYWORD_RESHAPE);
+	if (i == 0) return NULL;
+
+	if (ptr[i++] != '(')
+	{
+		ofc_parse_debug_rewind(debug, dpos);
+		return NULL;
+	}
+
+	unsigned l;
+	ofc_parse_expr_t* source
+		= ofc_parse_expr(src, &ptr[i], debug, &l);
+	if (!source)
+	{
+		ofc_parse_debug_rewind(debug, dpos);
+		return NULL;
+	}
+	i += l;
+
+	if (ptr[i++] != ',')
+	{
+		ofc_parse_expr_delete(source);
+		ofc_parse_debug_rewind(debug, dpos);
+		return NULL;
+	}
+
+	ofc_parse_expr_t* shape
+		= ofc_parse_expr(src, &ptr[i], debug, &l);
+	if (!source)
+	{
+		ofc_parse_expr_delete(source);
+		ofc_parse_debug_rewind(debug, dpos);
+		return NULL;
+	}
+	i += l;
+
+	ofc_parse_expr_t* pad = NULL;
+	if (ptr[i] == ',')
+	{
+		i += 1;
+
+		pad = ofc_parse_expr(src, &ptr[i], debug, &l);
+		if (!pad)
+		{
+			ofc_parse_expr_delete(shape);
+			ofc_parse_expr_delete(source);
+			ofc_parse_debug_rewind(debug, dpos);
+			return NULL;
+		}
+		i += l;
+	}
+
+	ofc_parse_expr_t* order = NULL;
+	if (ptr[i] == ',')
+	{
+		i += 1;
+
+		order = ofc_parse_expr(src, &ptr[i], debug, &l);
+		if (!order)
+		{
+			ofc_parse_expr_delete(pad);
+			ofc_parse_expr_delete(shape);
+			ofc_parse_expr_delete(source);
+			ofc_parse_debug_rewind(debug, dpos);
+			return NULL;
+		}
+		i += l;
+	}
+
+
+	if (ptr[i++] != ')')
+	{
+		ofc_parse_expr_delete(order);
+		ofc_parse_expr_delete(pad);
+		ofc_parse_expr_delete(shape);
+		ofc_parse_expr_delete(source);
+		ofc_parse_debug_rewind(debug, dpos);
+		return NULL;
+	}
+
+	ofc_parse_expr_t* expr
+		= (ofc_parse_expr_t*)malloc(
+			sizeof(ofc_parse_expr_t));
+	if (!expr)
+	{
+		ofc_parse_expr_delete(order);
+		ofc_parse_expr_delete(pad);
+		ofc_parse_expr_delete(shape);
+		ofc_parse_expr_delete(source);
+		ofc_parse_debug_rewind(debug, dpos);
+		return NULL;
+	}
+
+	expr->type = OFC_PARSE_EXPR_RESHAPE;
+	expr->src  = ofc_sparse_ref(src, ptr, i);
+
+	expr->reshape.source = source;
+	expr->reshape.shape  = shape;
+	expr->reshape.pad    = pad;
+	expr->reshape.order  = order;
+
+	if (len) *len = i;
+	return expr;
+}
+
 ofc_parse_expr_t* ofc_parse_expr_integer(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug, unsigned* len)
@@ -187,6 +299,10 @@ static ofc_parse_expr_t* ofc_parse_expr__primary(
 	ofc_parse_expr_t* expr
 		= ofc_parse_expr__literal(
 			src, ptr, debug, len);
+	if (expr) return expr;
+
+	expr = ofc_parse_expr__reshape(
+		src, ptr, debug, len);
 	if (expr) return expr;
 
 	unsigned dpos = ofc_parse_debug_position(debug);
@@ -596,6 +712,13 @@ void ofc_parse_expr_delete(
 			ofc_parse_expr_list_delete(expr->array);
 			break;
 
+		case OFC_PARSE_EXPR_RESHAPE:
+			ofc_parse_expr_delete(expr->reshape.source);
+			ofc_parse_expr_delete(expr->reshape.shape);
+			ofc_parse_expr_delete(expr->reshape.pad);
+			ofc_parse_expr_delete(expr->reshape.order);
+			break;
+
 		default:
 			break;
 	}
@@ -651,6 +774,33 @@ bool ofc_parse_expr_print(
 			if (!ofc_colstr_atomic_writef(cs, " ")
 				|| !ofc_colstr_atomic_writef(cs, "/)"))
 				return false;
+			break;
+
+		case OFC_PARSE_EXPR_RESHAPE:
+			if (!ofc_colstr_atomic_writef(cs, "RESHAPE")
+				|| !ofc_colstr_atomic_writef(cs, "(")
+				|| !ofc_parse_expr_print(cs, expr->reshape.source)
+				|| !ofc_colstr_atomic_writef(cs, ",")
+				|| !ofc_colstr_atomic_writef(cs, " ")
+				|| !ofc_parse_expr_print(cs, expr->reshape.shape))
+				return false;
+			if (expr->reshape.pad)
+			{
+				if (!ofc_colstr_atomic_writef(cs, ",")
+					|| !ofc_colstr_atomic_writef(cs, " ")
+					|| !ofc_parse_expr_print(cs, expr->reshape.pad))
+					return false;
+			}
+			if (expr->reshape.order)
+			{
+				if (!ofc_colstr_atomic_writef(cs, ",")
+					|| !ofc_colstr_atomic_writef(cs, " ")
+					|| !ofc_parse_expr_print(cs, expr->reshape.order))
+					return false;
+			}
+			if (!ofc_colstr_atomic_writef(cs, ")"))
+				return false;
+			break;
 
 		default:
 			return false;
@@ -713,6 +863,32 @@ ofc_parse_expr_t* ofc_parse_expr_copy(
 			copy->binary.b
 				= ofc_parse_expr_copy(expr->binary.b);
 			if (!copy->binary.b)
+				success = false;
+			break;
+
+		case OFC_PARSE_EXPR_ARRAY:
+			copy->array = ofc_parse_expr_list_copy(expr->array);
+			if (!copy->array)
+				success = false;
+			break;
+
+		case OFC_PARSE_EXPR_RESHAPE:
+			copy->reshape.source = ofc_parse_expr_copy(
+				expr->reshape.source);
+			copy->reshape.shape = ofc_parse_expr_copy(
+				expr->reshape.shape);
+			if (!copy->reshape.source
+				|| !copy->reshape.shape)
+				success = false;
+			copy->reshape.pad = ofc_parse_expr_copy(
+				expr->reshape.pad);
+			if (expr->reshape.pad
+				&& !copy->reshape.pad)
+				success = false;
+			copy->reshape.order = ofc_parse_expr_copy(
+				expr->reshape.order);
+			if (expr->reshape.order
+				&& !copy->reshape.order)
 				success = false;
 			break;
 
