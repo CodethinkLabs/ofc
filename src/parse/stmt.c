@@ -114,6 +114,10 @@ unsigned ofc_parse_stmt_if(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
 	ofc_parse_stmt_t* stmt);
+unsigned ofc_parse_stmt_select_case(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_stmt_t* stmt);
 unsigned ofc_parse_stmt_do(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
@@ -334,6 +338,18 @@ static void ofc_parse_stmt__cleanup(
 			ofc_parse_stmt_list_delete(stmt.if_then.block_then);
 			ofc_parse_stmt_list_delete(stmt.if_then.block_else);
 			break;
+		case OFC_PARSE_STMT_SELECT_CASE:
+			ofc_parse_expr_delete(
+				stmt.select_case.case_expr);
+			ofc_parse_list_delete(
+				stmt.select_case.count,
+				(void**)stmt.select_case.case_value,
+				(void*)ofc_parse_array_index_delete);
+			ofc_parse_list_delete(
+				stmt.select_case.count,
+				(void**)stmt.select_case.case_block,
+				(void*)ofc_parse_stmt_list_delete);
+			break;
 		case OFC_PARSE_STMT_DO_LABEL:
 			ofc_parse_expr_delete(stmt.do_label.end_label);
 			ofc_parse_assign_delete(stmt.do_label.init);
@@ -540,6 +556,7 @@ ofc_parse_stmt_t* ofc_parse_stmt(
 			if (i == 0) i = ofc_parse_stmt_decl_attr_static(src, ptr, debug, &stmt);
 			if (i == 0) i = ofc_parse_stmt_structure(src, ptr, debug, &stmt);
 			if (i == 0) i = ofc_parse_stmt_sequence(src, ptr, debug, &stmt);
+			if (i == 0) i = ofc_parse_stmt_select_case(src, ptr, debug, &stmt);
 			break;
 
 		case 'T':
@@ -648,6 +665,9 @@ bool ofc_parse_stmt_assign_print(
 bool ofc_parse_stmt_decl_print(
 	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt);
 bool ofc_parse_stmt_if_print(
+	ofc_colstr_t* cs, unsigned indent,
+	const ofc_parse_stmt_t* stmt);
+bool ofc_parse_stmt_select_case_print(
 	ofc_colstr_t* cs, unsigned indent,
 	const ofc_parse_stmt_t* stmt);
 bool ofc_parse_stmt_stop_pause_return_print(
@@ -795,6 +815,10 @@ bool ofc_parse_stmt_print(
 		case OFC_PARSE_STMT_IF_STATEMENT:
 		case OFC_PARSE_STMT_IF_THEN:
 			if (!ofc_parse_stmt_if_print(cs, indent, stmt))
+				return false;
+			break;
+		case OFC_PARSE_STMT_SELECT_CASE:
+			if (!ofc_parse_stmt_select_case_print(cs, indent, stmt))
 				return false;
 			break;
 		case OFC_PARSE_STMT_DO_LABEL:
@@ -1001,6 +1025,21 @@ bool ofc_parse_stmt_list_foreach(
 						stmt->if_then.block_else,
 						context, callback))
 					return false;
+				break;
+
+			case OFC_PARSE_STMT_SELECT_CASE:
+				if (stmt->select_case.case_block)
+				{
+					unsigned i;
+					for (i = 0; i < stmt->select_case.count; i++)
+					{
+						if (stmt->select_case.case_block[i]
+							&& !ofc_parse_stmt_list_foreach(
+								stmt->select_case.case_block[i],
+								context, callback))
+							return false;
+					}
+				}
 				break;
 
 			case OFC_PARSE_STMT_DO_BLOCK:

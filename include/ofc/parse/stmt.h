@@ -63,6 +63,7 @@ typedef enum
 	OFC_PARSE_STMT_IF_COMPUTED,
 	OFC_PARSE_STMT_IF_STATEMENT,
 	OFC_PARSE_STMT_IF_THEN,
+	OFC_PARSE_STMT_SELECT_CASE,
 	OFC_PARSE_STMT_DO_LABEL,
 	OFC_PARSE_STMT_DO_BLOCK,
 	OFC_PARSE_STMT_DO_WHILE,
@@ -190,6 +191,18 @@ struct ofc_parse_stmt_s
 			bool end_if_has_label;
 			unsigned end_if_label;
 		} if_then;
+
+		struct
+		{
+			ofc_parse_expr_t* case_expr;
+
+			unsigned                  count;
+			ofc_parse_array_index_t** case_value;
+			ofc_parse_stmt_list_t**   case_block;
+
+			bool end_select_case_has_label;
+			unsigned end_select_case_label;
+		} select_case;
 
 		struct
 		{
