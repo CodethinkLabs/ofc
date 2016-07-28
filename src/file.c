@@ -458,6 +458,7 @@ static void ofc_file__debug_va(
 	int fmt_len = vsnprintf(NULL, 0, format, nargs);
 	char fmt_str[fmt_len + 1];
 	vsprintf(fmt_str, format, args);
+	va_end(nargs);
 
 	int indent = 0;
 	if (file) indent += 2;
