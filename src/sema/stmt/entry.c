@@ -74,7 +74,7 @@ bool ofc_sema_stmt_entry_print(
 		|| (stmt->type != OFC_SEMA_STMT_ENTRY))
 		return false;
 
-	if (!ofc_colstr_atomic_writef(cs, "ENTRY")
+	if (!ofc_colstr_keyword_atomic_writef(cs, "ENTRY")
 		|| !ofc_colstr_atomic_writef(cs, " ")
 		|| !ofc_str_ref_print(cs, stmt->entry.name)
 		|| !ofc_colstr_atomic_writef(cs, "(")

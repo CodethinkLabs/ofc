@@ -1491,9 +1491,9 @@ static bool ofc_sema_scope_body__print(
 			break;
 		default:
 			if (!ofc_colstr_newline(cs, indent, NULL)
-				|| !ofc_colstr_atomic_writef(cs, "IMPLICIT")
+				|| !ofc_colstr_keyword_atomic_writef(cs, "IMPLICIT")
 				|| !ofc_colstr_atomic_writef(cs, " ")
-				|| !ofc_colstr_atomic_writef(cs, "NONE"))
+				|| !ofc_colstr_keyword_atomic_writef(cs, "NONE"))
 				return false;
 			break;
 	}
@@ -1610,7 +1610,7 @@ bool ofc_sema_scope_print(
 				return false;
 		}
 
-		if (!ofc_colstr_atomic_writef(cs, "%s ", kwstr))
+		if (!ofc_colstr_keyword_atomic_writef(cs, "%s ", kwstr))
 			return false;
 
 		if (scope->name.base)
@@ -1649,7 +1649,7 @@ bool ofc_sema_scope_print(
 		const unsigned* ulabel = (label ? &label->number : NULL);
 
 		if (!ofc_colstr_newline(cs, indent, ulabel)
-			|| !ofc_colstr_atomic_writef(cs, "END %s ", kwstr))
+			|| !ofc_colstr_keyword_atomic_writef(cs, "END %s ", kwstr))
 			return false;
 
 		if (scope->name.base)

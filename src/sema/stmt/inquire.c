@@ -1115,7 +1115,7 @@ static bool ofc_sema_inquire_print_elem(
 
 	if (!ofc_colstr_atomic_writef(cs, ",")
 		|| !ofc_colstr_atomic_writef(cs, " ")
-		|| !ofc_colstr_atomic_writef(cs, name)
+		|| !ofc_colstr_keyword_atomic_writef(cs, name)
 		|| !ofc_colstr_atomic_writef(cs, "= "))
 		return false;
 
@@ -1130,16 +1130,16 @@ bool ofc_sema_stmt_io_inquire_print(
 		|| stmt->type != OFC_SEMA_STMT_IO_INQUIRE)
 		return false;
 
-	if (!ofc_colstr_atomic_writef(cs, "INQUIRE")
+	if (!ofc_colstr_keyword_atomic_writef(cs, "INQUIRE")
 		|| !ofc_colstr_atomic_writef(cs, " ")
 		|| !ofc_colstr_atomic_writef(cs, "("))
 		return false;
 
 	if (stmt->io_inquire.unit)
-		if (!ofc_colstr_atomic_writef(cs, "UNIT= ")
+		if (!ofc_colstr_keyword_atomic_writef(cs, "UNIT= ")
 			|| !ofc_sema_expr_print(cs, stmt->io_inquire.unit)) return false;
 	if (stmt->io_inquire.file)
-		if (!ofc_colstr_atomic_writef(cs, "FILE= ")
+		if (!ofc_colstr_keyword_atomic_writef(cs, "FILE= ")
 			|| !ofc_sema_expr_print(cs, stmt->io_inquire.file)) return false;
 
     if (stmt->io_inquire.access)

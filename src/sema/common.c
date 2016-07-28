@@ -110,7 +110,7 @@ bool ofc_sema_common_print(
 		return false;
 
 	if (!ofc_colstr_newline(cs, indent, NULL)
-		|| !ofc_colstr_atomic_writef(cs, "COMMON")
+		|| !ofc_colstr_keyword_atomic_writef(cs, "COMMON")
 		|| !ofc_colstr_atomic_writef(cs, " "))
 		return false;
 

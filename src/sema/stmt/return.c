@@ -59,7 +59,7 @@ bool ofc_sema_stmt_return_print(
 	if (!cs || !stmt || (stmt->type != OFC_SEMA_STMT_RETURN))
 		return false;
 
-	if (!ofc_colstr_atomic_writef(cs, "RETURN"))
+	if (!ofc_colstr_keyword_atomic_writef(cs, "RETURN"))
 		return false;
 
 	if (stmt->alt_return

@@ -532,7 +532,7 @@ static bool ofc_sema_stmt_read__print_optional(
 
 	if (!ofc_colstr_atomic_writef(cs, ",")
 		|| !ofc_colstr_atomic_writef(cs, " ")
-		|| !ofc_colstr_atomic_writef(cs, name)
+		|| !ofc_colstr_keyword_atomic_writef(cs, name)
 		|| !ofc_colstr_atomic_writef(cs, "= ")
 		|| !ofc_sema_expr_print(cs, expr))
 		return false;
@@ -546,7 +546,7 @@ bool ofc_sema_stmt_read_print(ofc_colstr_t* cs,
 	if (!cs || (stmt->type != OFC_SEMA_STMT_IO_READ))
 		return false;
 
-	if (!ofc_colstr_atomic_writef(cs, "READ")
+	if (!ofc_colstr_keyword_atomic_writef(cs, "READ")
 		|| !ofc_colstr_atomic_writef(cs, " ")
 		|| !ofc_colstr_atomic_writef(cs, "("))
 		return false;
