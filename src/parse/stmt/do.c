@@ -488,7 +488,7 @@ static bool ofc_parse_stmt__do_while_block_print(
 	ofc_colstr_t* cs, unsigned indent,
 	const ofc_parse_stmt_t* stmt)
 {
-	if (!ofc_colstr_atomic_writef(cs, "DO WHILE")
+	if (!ofc_colstr_keyword_atomic_writef(cs, "DO WHILE")
 		|| !ofc_colstr_atomic_writef(cs, "(")
 		|| !ofc_parse_expr_print(cs, stmt->do_while_block.cond)
 		|| !ofc_colstr_atomic_writef(cs, ")"))
@@ -503,18 +503,18 @@ static bool ofc_parse_stmt__do_while_block_print(
 	if (!ofc_colstr_newline(cs, indent, ulabel))
 		return false;
 
-	return ofc_colstr_atomic_writef(cs, "END DO");
+	return ofc_colstr_keyword_atomic_writef(cs, "END DO");
 }
 
 static bool ofc_parse_stmt__do_while_print(
 	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt)
 {
-	return (ofc_colstr_atomic_writef(cs, "DO")
+	return (ofc_colstr_keyword_atomic_writef(cs, "DO")
 		&& ofc_colstr_atomic_writef(cs, " ")
 		&& ofc_parse_expr_print(cs, stmt->do_while.end_label)
 		&& ofc_colstr_atomic_writef(cs, ",")
 		&& ofc_colstr_atomic_writef(cs, " ")
-		&& ofc_colstr_atomic_writef(cs, "WHILE")
+		&& ofc_colstr_keyword_atomic_writef(cs, "WHILE")
 		&& ofc_colstr_atomic_writef(cs, "(")
 		&& ofc_parse_expr_print(cs, stmt->do_while.cond)
 		&& ofc_colstr_atomic_writef(cs, ")"));
@@ -523,7 +523,7 @@ static bool ofc_parse_stmt__do_while_print(
 static bool ofc_parse_stmt__do_label_print(
 	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt)
 {
-	if (!ofc_colstr_atomic_writef(cs, "DO")
+	if (!ofc_colstr_keyword_atomic_writef(cs, "DO")
 		|| !ofc_colstr_atomic_writef(cs, " ")
 		|| !ofc_parse_expr_print(cs, stmt->do_label.end_label)
 		|| !ofc_colstr_atomic_writef(cs, ",")
@@ -548,7 +548,7 @@ static bool ofc_parse_stmt__do_label_print(
 static bool ofc_parse_stmt__do_block_print(
 	ofc_colstr_t* cs, unsigned indent, const ofc_parse_stmt_t* stmt)
 {
-	if (!ofc_colstr_atomic_writef(cs, "DO"))
+	if (!ofc_colstr_keyword_atomic_writef(cs, "DO"))
 		return false;
 
 	if (stmt->do_block.init)
@@ -579,7 +579,7 @@ static bool ofc_parse_stmt__do_block_print(
 	if (!ofc_colstr_newline(cs, indent, ulabel))
 		return false;
 
-	return ofc_colstr_atomic_writef(cs, "END DO");
+	return ofc_colstr_keyword_atomic_writef(cs, "END DO");
 }
 
 bool ofc_parse_stmt_do_print(

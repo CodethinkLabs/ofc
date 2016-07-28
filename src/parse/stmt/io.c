@@ -43,7 +43,7 @@ ofc_colstr_t* cs, int key_val)
 	{
 		if (io_stmt__keyword[i].key_val == key_val)
 		{
-			return ofc_colstr_atomic_writef(cs, "%s",
+			return ofc_colstr_keyword_atomic_writef(cs, "%s",
         io_stmt__keyword[i].keyword);
 		}
 	}

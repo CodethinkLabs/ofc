@@ -162,7 +162,7 @@ unsigned ofc_parse_stmt_go_to(
 static bool ofc_parse_stmt_go_to_assigned_print(
 	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt)
 {
-    return (ofc_colstr_atomic_writef(cs, "GO TO ")
+    return (ofc_colstr_keyword_atomic_writef(cs, "GO TO ")
 		&& ofc_parse_expr_print(cs, stmt->go_to_list.cond)
 		&& ofc_colstr_atomic_writef(cs, ", (")
 		&& ofc_parse_expr_list_print(cs, stmt->go_to_list.label)
@@ -172,7 +172,7 @@ static bool ofc_parse_stmt_go_to_assigned_print(
 static bool ofc_parse_stmt_go_to_computed_print(
 	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt)
 {
-return (ofc_colstr_atomic_writef(cs, "GO TO ")
+return (ofc_colstr_keyword_atomic_writef(cs, "GO TO ")
 		&& ofc_colstr_atomic_writef(cs, "(")
 		&& ofc_parse_expr_list_print(cs, stmt->go_to_list.label)
 		&& ofc_colstr_atomic_writef(cs, "), ")
@@ -182,7 +182,7 @@ return (ofc_colstr_atomic_writef(cs, "GO TO ")
 static bool ofc_parse_stmt_go_to_unconditional_print(
 	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt)
 {
-	return (ofc_colstr_atomic_writef(cs, "GO TO ")
+	return (ofc_colstr_keyword_atomic_writef(cs, "GO TO ")
 		&& ofc_parse_expr_print(cs, stmt->go_to.label));
 }
 

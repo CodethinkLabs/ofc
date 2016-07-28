@@ -68,11 +68,11 @@ bool ofc_parse_stmt_assign_print(
 	if (!stmt)
 		return false;
 
-	return (ofc_colstr_atomic_writef(cs, "ASSIGN")
+	return (ofc_colstr_keyword_atomic_writef(cs, "ASSIGN")
 		&& ofc_colstr_atomic_writef(cs, " ")
 		&& ofc_parse_expr_print(cs, stmt->assign.label)
 		&& ofc_colstr_atomic_writef(cs, " ")
-		&& ofc_colstr_atomic_writef(cs, "TO")
+		&& ofc_colstr_keyword_atomic_writef(cs, "TO")
 		&& ofc_colstr_atomic_writef(cs, " ")
 		&& ofc_sparse_ref_print(cs, stmt->assign.variable));
 }

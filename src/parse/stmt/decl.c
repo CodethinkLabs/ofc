@@ -148,7 +148,7 @@ bool ofc_parse_stmt_decl_print(
 		{
 			if (!ofc_colstr_atomic_writef(cs, ",")
 				|| !ofc_colstr_atomic_writef(cs, " ")
-				|| !ofc_colstr_atomic_writef(cs, "SAVE"))
+				|| !ofc_colstr_keyword_atomic_writef(cs, "SAVE"))
 				return false;
 		}
 
@@ -156,7 +156,7 @@ bool ofc_parse_stmt_decl_print(
 		{
 			if (!ofc_colstr_atomic_writef(cs, ",")
 				|| !ofc_colstr_atomic_writef(cs, " ")
-				|| !ofc_colstr_atomic_writef(cs, "PARAMETER"))
+				|| !ofc_colstr_keyword_atomic_writef(cs, "PARAMETER"))
 				return false;
 		}
 
@@ -164,7 +164,7 @@ bool ofc_parse_stmt_decl_print(
 		{
 			if (!ofc_colstr_atomic_writef(cs, ",")
 				|| !ofc_colstr_atomic_writef(cs, " ")
-				|| !ofc_colstr_atomic_writef(cs, "DIMENSION")
+				|| !ofc_colstr_keyword_atomic_writef(cs, "DIMENSION")
 				|| !ofc_parse_array_index_print(
 					cs, stmt->decl.dimension, true))
 				return false;

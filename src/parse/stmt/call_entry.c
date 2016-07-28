@@ -120,7 +120,7 @@ bool ofc_parse_stmt_call_entry_print(
 			return false;
 	}
 
-	if (!ofc_colstr_atomic_writef(cs, "%s ", kwstr)
+	if (!ofc_colstr_keyword_atomic_writef(cs, "%s ", kwstr)
 		|| !ofc_sparse_ref_print(cs, stmt->call_entry.name)
 		|| !ofc_colstr_atomic_writef(cs, "("))
 		return false;
