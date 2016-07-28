@@ -6,7 +6,7 @@ BASE = src/
 SRC_DIR = . prep parse sema global parse/stmt sema/stmt sema/pass
 SRC_DIR_BASE = $(addprefix $(BASE),$(SRC_DIR))
 LDFLAGS = -lm
-CFLAGS_COMMON = -Wall -Wextra -Werror -MD -MP -I include
+CFLAGS_COMMON = -Wall -Wextra -Werror -std=gnu99 -MD -MP -I include
 CFLAGS += -O3 $(CFLAGS_COMMON)
 CFLAGS_DEBUG += -O0 -g $(CFLAGS_COMMON)
 
