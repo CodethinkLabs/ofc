@@ -6,8 +6,8 @@ BASE = src/
 SRC_DIR = . prep parse sema global parse/stmt sema/stmt sema/pass
 SRC_DIR_BASE = $(addprefix $(BASE),$(SRC_DIR))
 
-GCC_VER_MAJ = $(shell gcc -dumpversion | cut -f 1 -d '.')
-GCC_VER_MIN = $(shell gcc -dumpversion | cut -f 2 -d '.')
+GCC_VER_MAJ = $(shell $(CC) -dumpversion | cut -f 1 -d '.')
+GCC_VER_MIN = $(shell $(CC) -dumpversion | cut -f 2 -d '.')
 
 GCC_VER_MAJ_SUP = 4
 GCC_VER_MIN_SUP = 8
