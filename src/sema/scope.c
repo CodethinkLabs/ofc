@@ -98,6 +98,8 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 	scope->intrinsic = false;
 	scope->save = false;
 
+	scope->access = OFC_SEMA_ACCESSIBILITY_DEFAULT;
+
 	scope->decl = NULL;
 
 	scope->implicit = NULL;
@@ -1496,6 +1498,18 @@ static bool ofc_sema_scope_body__print(
 				|| !ofc_colstr_keyword_atomic_writef(cs, "NONE"))
 				return false;
 			break;
+	}
+
+	if (scope->type == OFC_SEMA_SCOPE_MODULE)
+	{
+		if ((scope->access == OFC_SEMA_ACCESSIBILITY_PUBLIC)
+			&& (!ofc_colstr_newline(cs, indent, NULL)
+				|| !ofc_colstr_keyword_atomic_writef(cs, "PUBLIC")))
+			return false;
+		if ((scope->access == OFC_SEMA_ACCESSIBILITY_PRIVATE)
+			&& (!ofc_colstr_newline(cs, indent, NULL)
+				|| !ofc_colstr_keyword_atomic_writef(cs, "PRIVATE")))
+			return false;
 	}
 
 	if (scope->structure && !ofc_sema_structure_list_print(

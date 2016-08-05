@@ -97,6 +97,9 @@ static const char* ofc_parse_keyword__name[] =
 	"PARAMETER",
 	"SAVE",
 
+	"PUBLIC",
+	"PRIVATE",
+
 	"FORMAT",
 
 	"OPEN",

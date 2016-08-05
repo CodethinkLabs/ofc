@@ -29,8 +29,10 @@ unsigned ofc_parse_stmt_decl(
 	if (!stmt->decl.type)
 		return 0;
 	stmt->decl.save = false;
-	stmt->decl.parameter = false;
-	stmt->decl.dimension = NULL;
+	stmt->decl.parameter  = false;
+	stmt->decl.is_public  = false;
+	stmt->decl.is_private = false;
+	stmt->decl.dimension  = NULL;
 
 	unsigned l;
 	if (stmt->decl.type->type
@@ -66,6 +68,28 @@ unsigned ofc_parse_stmt_decl(
 			{
 				i += (1 + l);
 				stmt->decl.parameter = true;
+				is_f90 = true;
+				continue;
+			}
+
+			if (l == 0) l = ofc_parse_keyword(
+				src, &ptr[i + 1], debug,
+				OFC_PARSE_KEYWORD_PUBLIC);
+			if (l > 0)
+			{
+				i += (1 + l);
+				stmt->decl.is_public = true;
+				is_f90 = true;
+				continue;
+			}
+
+			if (l == 0) l = ofc_parse_keyword(
+				src, &ptr[i + 1], debug,
+				OFC_PARSE_KEYWORD_PRIVATE);
+			if (l > 0)
+			{
+				i += (1 + l);
+				stmt->decl.is_private = true;
 				is_f90 = true;
 				continue;
 			}
@@ -141,7 +165,9 @@ bool ofc_parse_stmt_decl_print(
 
 	bool is_f90 = (stmt->decl.save
 		|| stmt->decl.parameter
-		|| stmt->decl.dimension);
+		|| stmt->decl.dimension
+		|| stmt->decl.is_public
+		|| stmt->decl.is_private);
 	if (is_f90)
 	{
 		if (stmt->decl.save)
@@ -157,6 +183,22 @@ bool ofc_parse_stmt_decl_print(
 			if (!ofc_colstr_atomic_writef(cs, ",")
 				|| !ofc_colstr_atomic_writef(cs, " ")
 				|| !ofc_colstr_keyword_atomic_writef(cs, "PARAMETER"))
+				return false;
+		}
+
+		if (stmt->decl.is_public)
+		{
+			if (!ofc_colstr_atomic_writef(cs, ",")
+				|| !ofc_colstr_atomic_writef(cs, " ")
+				|| !ofc_colstr_keyword_atomic_writef(cs, "PUBLIC"))
+				return false;
+		}
+
+		if (stmt->decl.is_private)
+		{
+			if (!ofc_colstr_atomic_writef(cs, ",")
+				|| !ofc_colstr_atomic_writef(cs, " ")
+				|| !ofc_colstr_keyword_atomic_writef(cs, "PRIVATE"))
 				return false;
 		}
 

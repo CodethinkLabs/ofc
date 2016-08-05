@@ -43,6 +43,8 @@ struct ofc_sema_decl_s
 	bool type_implicit;
 	const ofc_sema_type_t* type;
 
+	ofc_sema_accessibility_e access;
+
 	ofc_sema_scope_t*     func;
 	ofc_sema_array_t*     array;
 	ofc_sema_structure_t* structure;

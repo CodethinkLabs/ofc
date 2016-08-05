@@ -551,6 +551,8 @@ static bool ofc_parse_stmt_is_exec(
 		case OFC_PARSE_STMT_MAP:
 		case OFC_PARSE_STMT_NAMELIST:
 		case OFC_PARSE_STMT_POINTER:
+		case OFC_PARSE_STMT_PUBLIC:
+		case OFC_PARSE_STMT_PRIVATE:
 			return false;
 
 		default:
@@ -644,6 +646,12 @@ static bool ofc_sema_stmt_list__entry(
 				"Unsupported statement");
 			/* TODO - Support these statements. */
 			return false;
+
+		case OFC_PARSE_STMT_PUBLIC:
+			return ofc_sema_stmt_public(scope, stmt);
+
+		case OFC_PARSE_STMT_PRIVATE:
+			return ofc_sema_stmt_private(scope, stmt);
 
 		default:
 			break;
@@ -1388,6 +1396,8 @@ static const char* ofc_sema_stmt__name[] =
 	"ENTRY",
 	"CYCLE",
 	"EXIT",
+	"PUBLIC",
+	"PRIVATE",
 
 	NULL
 };

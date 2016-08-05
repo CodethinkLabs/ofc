@@ -52,6 +52,8 @@ ofc_sema_decl_t* ofc_sema_decl_create(
 	decl->type_implicit = true;
 	decl->type_final    = false;
 
+	decl->access = OFC_SEMA_ACCESSIBILITY_DEFAULT;
+
 	decl->is_static    = false;
 	decl->is_automatic = false;
 	decl->is_volatile  = false;
@@ -319,6 +321,8 @@ static bool ofc_sema_decl__elem(
 	ofc_parse_array_index_t* dimension,
 	bool                     is_static,
 	bool                     is_parameter,
+	bool                     is_public,
+	bool                     is_private,
 	const ofc_parse_decl_t*  pdecl)
 {
 	if (!pdecl || !pdecl->lhs)
@@ -680,6 +684,26 @@ static bool ofc_sema_decl__elem(
 		decl->is_static = true;
 	if (is_parameter)
 		decl->is_parameter = true;
+	if (is_public)
+		decl->access = OFC_SEMA_ACCESSIBILITY_PUBLIC;
+	if (is_private)
+		decl->access = OFC_SEMA_ACCESSIBILITY_PRIVATE;
+
+	if (is_public && is_private)
+	{
+		ofc_sparse_ref_error(decl->name,
+			"Declaration can't be both PUBLIC and PRIVATE");
+		return false;
+	}
+
+	if ((is_public || is_private)
+		&& (scope->type != OFC_SEMA_SCOPE_MODULE))
+	{
+		ofc_sparse_ref_error(decl->name,
+			"%s declaration only allowed in MODULE",
+			(is_public ? "PUBLIC" : "PRIVATE"));
+		return false;
+	}
 
 	return true;
 }
@@ -712,6 +736,8 @@ bool ofc_sema_decl(
 			stmt->decl.dimension,
 			stmt->decl.save,
 			stmt->decl.parameter,
+			stmt->decl.is_public,
+			stmt->decl.is_private,
 			stmt->decl.decl->decl[i]))
 			success = false;
 	}
@@ -749,6 +775,8 @@ bool ofc_sema_decl_member(
 			stmt->decl.dimension,
 			false,
 			stmt->decl.parameter,
+			stmt->decl.is_public,
+			stmt->decl.is_private,
 			stmt->decl.decl->decl[i]))
 			success = false;
 	}
@@ -2492,6 +2520,22 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 		if (!ofc_colstr_atomic_writef(cs, ",")
 			|| !ofc_colstr_atomic_writef(cs, " ")
 			|| !ofc_colstr_keyword_atomic_writef(cs, "POINTER"))
+			return false;
+	}
+
+	if (decl->access == OFC_SEMA_ACCESSIBILITY_PUBLIC)
+	{
+		if (!ofc_colstr_atomic_writef(cs, ",")
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_colstr_keyword_atomic_writef(cs, "PUBLIC"))
+			return false;
+	}
+
+	if (decl->access == OFC_SEMA_ACCESSIBILITY_PRIVATE)
+	{
+		if (!ofc_colstr_atomic_writef(cs, ",")
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_colstr_keyword_atomic_writef(cs, "PRIVATE"))
 			return false;
 	}
 

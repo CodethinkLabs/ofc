@@ -150,6 +150,14 @@ unsigned ofc_parse_stmt_pointer(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
 	ofc_parse_stmt_t* stmt);
+unsigned ofc_parse_stmt_public(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_stmt_t* stmt);
+unsigned ofc_parse_stmt_private(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	ofc_parse_stmt_t* stmt);
 
 unsigned ofc_parse_stmt_decl_attr_external(
 	const ofc_sparse_t* src, const char* ptr,
@@ -416,6 +424,11 @@ static void ofc_parse_stmt__cleanup(
 		case OFC_PARSE_STMT_ASSIGN:
 			ofc_parse_expr_delete(stmt.assign.label);
 			break;
+		case OFC_PARSE_STMT_PUBLIC:
+		case OFC_PARSE_STMT_PRIVATE:
+			ofc_parse_lhs_list_delete(stmt.public_private.list);
+			break;
+
 		default:
 			break;
 	}
@@ -541,6 +554,8 @@ ofc_parse_stmt_t* ofc_parse_stmt(
 			if (i == 0) i = ofc_parse_stmt_pause(src, ptr, debug, &stmt);
 			if (i == 0) i = ofc_parse_stmt_io_print_type(src, ptr, debug, &stmt);
 			if (i == 0) i = ofc_parse_stmt_pointer(src, ptr, debug, &stmt);
+			if (i == 0) i = ofc_parse_stmt_public(src, ptr, debug, &stmt);
+			if (i == 0) i = ofc_parse_stmt_private(src, ptr, debug, &stmt);
 			break;
 
 		case 'R':
@@ -683,6 +698,10 @@ bool ofc_parse_stmt_implicit_print(
 bool ofc_parse_stmt_save_print(
 	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt);
 bool ofc_parse_stmt_parameter_print(
+	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt);
+bool ofc_parse_stmt_public_print(
+	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt);
+bool ofc_parse_stmt_private_print(
 	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt);
 bool ofc_parse_stmt_continue_print(
 	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt);
@@ -875,6 +894,14 @@ bool ofc_parse_stmt_print(
 			break;
 		case OFC_PARSE_STMT_ASSIGN:
 			if (!ofc_parse_stmt_assign_print(cs, stmt))
+				return false;
+			break;
+		case OFC_PARSE_STMT_PUBLIC:
+			if (!ofc_parse_stmt_public_print(cs, stmt))
+				return false;
+			break;
+		case OFC_PARSE_STMT_PRIVATE:
+			if (!ofc_parse_stmt_private_print(cs, stmt))
 				return false;
 			break;
 		default:

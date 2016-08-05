@@ -92,6 +92,8 @@ typedef enum
 	OFC_PARSE_STMT_SAVE,
 	OFC_PARSE_STMT_PARAMETER,
 	OFC_PARSE_STMT_ASSIGN,
+	OFC_PARSE_STMT_PUBLIC,
+	OFC_PARSE_STMT_PRIVATE,
 } ofc_parse_stmt_e;
 
 struct ofc_parse_stmt_s
@@ -129,6 +131,8 @@ struct ofc_parse_stmt_s
 		{
 			bool                     save;
 			bool                     parameter;
+			bool                     is_public;
+			bool                     is_private;
 			ofc_parse_array_index_t* dimension;
 			ofc_parse_type_t*        type;
 			ofc_parse_decl_list_t*   decl;
@@ -283,6 +287,11 @@ struct ofc_parse_stmt_s
 		{
 			ofc_parse_assign_list_t* list;
 		} parameter;
+
+		struct
+		{
+			ofc_parse_lhs_list_t* list;
+		} public_private;
 
 		struct
 		{

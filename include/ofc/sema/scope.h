@@ -51,6 +51,8 @@ struct ofc_sema_scope_s
 	ofc_str_ref_t        name;
 	ofc_sema_arg_list_t* args;
 
+	ofc_sema_accessibility_e access;
+
 	bool external;
 	bool intrinsic;
 	bool save;

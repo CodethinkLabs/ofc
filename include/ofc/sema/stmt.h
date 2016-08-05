@@ -324,6 +324,12 @@ bool ofc_sema_stmt_save(
 bool ofc_sema_stmt_use(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
+bool ofc_sema_stmt_public(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt);
+bool ofc_sema_stmt_private(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt);
 
 /* Execution statement analysis. */
 ofc_sema_stmt_t* ofc_sema_stmt_assignment(
