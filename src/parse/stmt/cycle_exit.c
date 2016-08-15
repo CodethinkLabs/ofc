@@ -68,13 +68,13 @@ bool ofc_parse_stmt_cycle_exit_print(
 			return false;
 	}
 
-	if (!ofc_colstr_atomic_writef(cs, "%s", kwstr))
+	if (!ofc_colstr_keyword_atomic_writef(cs, "%s", kwstr))
 		return false;
 
 	if (stmt->cycle_exit.has_keyword)
 	{
 		if (!ofc_colstr_writef(cs, " ")
-			&& !ofc_colstr_atomic_writef(cs, "%s",
+			&& !ofc_colstr_keyword_atomic_writef(cs, "%s",
 				ofc_parse_keyword_name(stmt->cycle_exit.keyword)))
 			return false;
 	}

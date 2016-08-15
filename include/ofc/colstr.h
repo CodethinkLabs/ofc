@@ -55,6 +55,12 @@ bool ofc_colstr_atomic_writef(
 	ofc_colstr_t* cstr,
 	const char* format, ...);
 
+#include <ctype.h>
+
+bool ofc_colstr_keyword_atomic_writef(
+	ofc_colstr_t* cstr,
+	const char* format, ...);
+
 bool ofc_colstr_fdprint(ofc_colstr_t* cstr, int fd);
 
 

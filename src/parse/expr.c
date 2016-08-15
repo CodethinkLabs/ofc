@@ -69,6 +69,163 @@ static ofc_parse_expr_t* ofc_parse_expr__literal(
 	return expr;
 }
 
+static ofc_parse_expr_t* ofc_parse_expr__array(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug, unsigned* len)
+{
+	unsigned dpos = ofc_parse_debug_position(debug);
+
+	unsigned i = 0;
+	if ((ptr[i + 0] != '(')
+		|| (ptr[i + 1] != '/'))
+		return NULL;
+	i += 2;
+
+	unsigned l;
+	ofc_parse_expr_list_t* array
+		= ofc_parse_expr_list(
+			src, &ptr[i], debug, &l);
+	if (array) i += l;
+
+
+	if ((ptr[i + 0] != '/')
+		|| (ptr[i + 1] != ')'))
+	{
+		ofc_parse_expr_list_delete(array);
+		ofc_parse_debug_rewind(debug, dpos);
+		return NULL;
+	}
+	i += 2;
+
+	ofc_parse_expr_t* expr
+		= (ofc_parse_expr_t*)malloc(
+			sizeof(ofc_parse_expr_t));
+	if (!expr)
+	{
+		ofc_parse_debug_rewind(debug, dpos);
+		return NULL;
+	}
+
+	expr->type  = OFC_PARSE_EXPR_ARRAY;
+	expr->src   = ofc_sparse_ref(src, ptr, i);
+	expr->array = array;
+
+	if (len) *len = i;
+	return expr;
+}
+
+static ofc_parse_expr_t* ofc_parse_expr__reshape(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug, unsigned* len)
+{
+	unsigned dpos = ofc_parse_debug_position(debug);
+
+	unsigned i = ofc_parse_keyword(
+		src, ptr, debug, OFC_PARSE_KEYWORD_RESHAPE);
+	if (i == 0) return NULL;
+
+	if (ptr[i++] != '(')
+	{
+		ofc_parse_debug_rewind(debug, dpos);
+		return NULL;
+	}
+
+	unsigned l;
+	ofc_parse_expr_t* source
+		= ofc_parse_expr(src, &ptr[i], debug, &l);
+	if (!source)
+	{
+		ofc_parse_debug_rewind(debug, dpos);
+		return NULL;
+	}
+	i += l;
+
+	if (ptr[i++] != ',')
+	{
+		ofc_parse_expr_delete(source);
+		ofc_parse_debug_rewind(debug, dpos);
+		return NULL;
+	}
+
+	ofc_parse_expr_t* shape
+		= ofc_parse_expr(src, &ptr[i], debug, &l);
+	if (!source)
+	{
+		ofc_parse_expr_delete(source);
+		ofc_parse_debug_rewind(debug, dpos);
+		return NULL;
+	}
+	i += l;
+
+	ofc_parse_expr_t* pad = NULL;
+	if (ptr[i] == ',')
+	{
+		i += 1;
+
+		pad = ofc_parse_expr(src, &ptr[i], debug, &l);
+		if (!pad)
+		{
+			ofc_parse_expr_delete(shape);
+			ofc_parse_expr_delete(source);
+			ofc_parse_debug_rewind(debug, dpos);
+			return NULL;
+		}
+		i += l;
+	}
+
+	ofc_parse_expr_t* order = NULL;
+	if (ptr[i] == ',')
+	{
+		i += 1;
+
+		order = ofc_parse_expr(src, &ptr[i], debug, &l);
+		if (!order)
+		{
+			ofc_parse_expr_delete(pad);
+			ofc_parse_expr_delete(shape);
+			ofc_parse_expr_delete(source);
+			ofc_parse_debug_rewind(debug, dpos);
+			return NULL;
+		}
+		i += l;
+	}
+
+
+	if (ptr[i++] != ')')
+	{
+		ofc_parse_expr_delete(order);
+		ofc_parse_expr_delete(pad);
+		ofc_parse_expr_delete(shape);
+		ofc_parse_expr_delete(source);
+		ofc_parse_debug_rewind(debug, dpos);
+		return NULL;
+	}
+
+	ofc_parse_expr_t* expr
+		= (ofc_parse_expr_t*)malloc(
+			sizeof(ofc_parse_expr_t));
+	if (!expr)
+	{
+		ofc_parse_expr_delete(order);
+		ofc_parse_expr_delete(pad);
+		ofc_parse_expr_delete(shape);
+		ofc_parse_expr_delete(source);
+		ofc_parse_debug_rewind(debug, dpos);
+		return NULL;
+	}
+
+	expr->type = OFC_PARSE_EXPR_RESHAPE;
+	expr->src  = ofc_sparse_ref(src, ptr, i);
+
+	expr->reshape.source = source;
+	expr->reshape.shape  = shape;
+	expr->reshape.pad    = pad;
+	expr->reshape.order  = order;
+
+	if (len) *len = i;
+	return expr;
+}
+
 ofc_parse_expr_t* ofc_parse_expr_integer(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug, unsigned* len)
@@ -144,6 +301,10 @@ static ofc_parse_expr_t* ofc_parse_expr__primary(
 			src, ptr, debug, len);
 	if (expr) return expr;
 
+	expr = ofc_parse_expr__reshape(
+		src, ptr, debug, len);
+	if (expr) return expr;
+
 	unsigned dpos = ofc_parse_debug_position(debug);
 
 	unsigned l;
@@ -171,32 +332,37 @@ static ofc_parse_expr_t* ofc_parse_expr__primary(
 	if (ptr[0] != '(')
 		return NULL;
 
-	ofc_parse_expr_t* expr_brackets
-		= ofc_parse_expr(
-			src, &ptr[1], debug, &l);
-	if (!expr_brackets) return NULL;
+	expr = ofc_parse_expr__array(src, ptr, debug, &l);
 
-	if  (ptr[1 + l] != ')')
-	{
-		ofc_parse_expr_delete(expr_brackets);
-		ofc_parse_debug_rewind(debug, dpos);
-		return NULL;
-	}
-
-	l += 2;
-
-	expr = (ofc_parse_expr_t*)malloc(
-		sizeof(ofc_parse_expr_t));
 	if (!expr)
 	{
-		ofc_parse_expr_delete(expr_brackets);
-		ofc_parse_debug_rewind(debug, dpos);
-		return NULL;
-	}
+		ofc_parse_expr_t* expr_brackets
+			= ofc_parse_expr(
+				src, &ptr[1], debug, &l);
+		if (!expr_brackets) return NULL;
 
-	expr->type = OFC_PARSE_EXPR_BRACKETS;
-	expr->src  = ofc_sparse_ref(src, ptr, l);
-	expr->brackets.expr = expr_brackets;
+		if  (ptr[1 + l] != ')')
+		{
+			ofc_parse_expr_delete(expr_brackets);
+			ofc_parse_debug_rewind(debug, dpos);
+			return NULL;
+		}
+
+		l += 2;
+
+		expr = (ofc_parse_expr_t*)malloc(
+			sizeof(ofc_parse_expr_t));
+		if (!expr)
+		{
+			ofc_parse_expr_delete(expr_brackets);
+			ofc_parse_debug_rewind(debug, dpos);
+			return NULL;
+		}
+
+		expr->type = OFC_PARSE_EXPR_BRACKETS;
+		expr->src  = ofc_sparse_ref(src, ptr, l);
+		expr->brackets.expr = expr_brackets;
+	}
 
 	if (len) *len = l;
 	return expr;
@@ -465,6 +631,41 @@ ofc_parse_expr_t* ofc_parse_expr(
 		src, ptr, debug, len, false);
 }
 
+ofc_parse_expr_t* ofc_parse_expr_id(
+	const ofc_sparse_t* src, const char* ptr,
+	ofc_parse_debug_t* debug,
+	unsigned* len)
+{
+	unsigned dpos = ofc_parse_debug_position(debug);
+
+	unsigned l;
+	ofc_parse_expr_implicit_do_t* id
+		= ofc_parse_expr_implicit_do(
+			src, ptr, debug, &l);
+	if (id)
+	{
+		ofc_parse_expr_t* expr
+			= (ofc_parse_expr_t*)malloc(
+				sizeof(ofc_parse_expr_t));
+		if (!expr)
+		{
+			ofc_parse_expr_implicit_do_delete(id);
+			ofc_parse_debug_rewind(debug, dpos);
+			return NULL;
+		}
+
+		expr->type = OFC_PARSE_EXPR_IMPLICIT_DO;
+		expr->src  = ofc_sparse_ref(src, ptr, l);
+		expr->implicit_do = id;
+
+		if (len) *len = l;
+		return expr;
+	}
+
+	return ofc_parse__expr(
+		src, ptr, debug, len, false);
+}
+
 ofc_parse_expr_t* ofc_parse_expr_no_slash(
 	const ofc_sparse_t* src, const char* ptr,
 	ofc_parse_debug_t* debug,
@@ -501,6 +702,21 @@ void ofc_parse_expr_delete(
 		case OFC_PARSE_EXPR_BINARY:
 			ofc_parse_expr_delete(expr->binary.a);
 			ofc_parse_expr_delete(expr->binary.b);
+			break;
+
+		case OFC_PARSE_EXPR_IMPLICIT_DO:
+			ofc_parse_expr_implicit_do_delete(expr->implicit_do);
+			break;
+
+		case OFC_PARSE_EXPR_ARRAY:
+			ofc_parse_expr_list_delete(expr->array);
+			break;
+
+		case OFC_PARSE_EXPR_RESHAPE:
+			ofc_parse_expr_delete(expr->reshape.source);
+			ofc_parse_expr_delete(expr->reshape.shape);
+			ofc_parse_expr_delete(expr->reshape.pad);
+			ofc_parse_expr_delete(expr->reshape.order);
 			break;
 
 		default:
@@ -546,6 +762,43 @@ bool ofc_parse_expr_print(
 				|| !ofc_parse_operator_print(cs, expr->binary.operator)
 				|| !ofc_colstr_atomic_writef(cs, " ")
 				|| !ofc_parse_expr_print(cs, expr->binary.b))
+				return false;
+			break;
+
+		case OFC_PARSE_EXPR_ARRAY:
+			if (!ofc_colstr_atomic_writef(cs, "(/")
+				|| !ofc_colstr_atomic_writef(cs, " "))
+				return false;
+			if (expr->array && !ofc_parse_expr_list_print(cs, expr->array))
+				return false;
+			if (!ofc_colstr_atomic_writef(cs, " ")
+				|| !ofc_colstr_atomic_writef(cs, "/)"))
+				return false;
+			break;
+
+		case OFC_PARSE_EXPR_RESHAPE:
+			if (!ofc_colstr_atomic_writef(cs, "RESHAPE")
+				|| !ofc_colstr_atomic_writef(cs, "(")
+				|| !ofc_parse_expr_print(cs, expr->reshape.source)
+				|| !ofc_colstr_atomic_writef(cs, ",")
+				|| !ofc_colstr_atomic_writef(cs, " ")
+				|| !ofc_parse_expr_print(cs, expr->reshape.shape))
+				return false;
+			if (expr->reshape.pad)
+			{
+				if (!ofc_colstr_atomic_writef(cs, ",")
+					|| !ofc_colstr_atomic_writef(cs, " ")
+					|| !ofc_parse_expr_print(cs, expr->reshape.pad))
+					return false;
+			}
+			if (expr->reshape.order)
+			{
+				if (!ofc_colstr_atomic_writef(cs, ",")
+					|| !ofc_colstr_atomic_writef(cs, " ")
+					|| !ofc_parse_expr_print(cs, expr->reshape.order))
+					return false;
+			}
+			if (!ofc_colstr_atomic_writef(cs, ")"))
 				return false;
 			break;
 
@@ -613,8 +866,35 @@ ofc_parse_expr_t* ofc_parse_expr_copy(
 				success = false;
 			break;
 
+		case OFC_PARSE_EXPR_ARRAY:
+			copy->array = ofc_parse_expr_list_copy(expr->array);
+			if (!copy->array)
+				success = false;
+			break;
+
+		case OFC_PARSE_EXPR_RESHAPE:
+			copy->reshape.source = ofc_parse_expr_copy(
+				expr->reshape.source);
+			copy->reshape.shape = ofc_parse_expr_copy(
+				expr->reshape.shape);
+			if (!copy->reshape.source
+				|| !copy->reshape.shape)
+				success = false;
+			copy->reshape.pad = ofc_parse_expr_copy(
+				expr->reshape.pad);
+			if (expr->reshape.pad
+				&& !copy->reshape.pad)
+				success = false;
+			copy->reshape.order = ofc_parse_expr_copy(
+				expr->reshape.order);
+			if (expr->reshape.order
+				&& !copy->reshape.order)
+				success = false;
+			break;
+
 		default:
-			return false;
+			success = false;
+			break;
 	}
 
 	if (!success)
@@ -646,13 +926,15 @@ static ofc_parse_expr_list_t* ofc_parse_expr__list(
 		',', &list->count, (void***)&list->expr,
 		(void*)(no_slash
 			? ofc_parse_expr_no_slash
-			: ofc_parse_expr),
+			: ofc_parse_expr_id),
 		(void*)ofc_parse_expr_delete);
 	if (l == 0)
 	{
 		free(list);
 		return NULL;
 	}
+
+	list->src = ofc_sparse_ref(src, ptr, l);
 
 	if (len) *len = l;
 	return list;
@@ -689,8 +971,38 @@ ofc_parse_expr_list_t* ofc_parse_expr_clist(
 		return NULL;
 	}
 
+	clist->src = ofc_sparse_ref(src, ptr, l);
+
 	if (len) *len = i;
 	return clist;
+}
+
+ofc_parse_expr_list_t* ofc_parse_expr_list_copy(
+	const ofc_parse_expr_list_t* list)
+{
+	if (!list)
+		return NULL;
+
+	ofc_parse_expr_list_t* copy
+		= (ofc_parse_expr_list_t*)malloc(
+			sizeof(ofc_parse_expr_list_t));
+	if (!copy) return NULL;
+
+	copy->count = 0;
+	copy->expr = NULL;
+	copy->src = list->src;
+
+	if (!ofc_parse_list_copy(
+		&copy->count, (void***)&copy->expr,
+		list->count, (const void**)list->expr,
+		(void*)ofc_parse_expr_copy,
+		(void*)ofc_parse_expr_delete))
+	{
+		free(copy);
+		return NULL;
+	}
+
+	return copy;
 }
 
 void ofc_parse_expr_list_delete(

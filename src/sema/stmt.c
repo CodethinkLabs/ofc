@@ -26,6 +26,10 @@ bool ofc_sema_stmt_if_then_print(
 	ofc_colstr_t* cs, unsigned indent,
 	ofc_sema_label_map_t* label_map,
 	const ofc_sema_stmt_t* stmt);
+bool ofc_sema_stmt_select_case_print(
+	ofc_colstr_t* cs, unsigned indent,
+	ofc_sema_label_map_t* label_map,
+	const ofc_sema_stmt_t* stmt);
 bool ofc_sema_stmt_do_label_print(ofc_colstr_t* cs,
 	const ofc_sema_stmt_t* stmt);
 bool ofc_sema_stmt_do_block_print(
@@ -168,6 +172,10 @@ ofc_sema_stmt_t* ofc_sema_stmt(
 		case OFC_PARSE_STMT_IF_STATEMENT:
 		case OFC_PARSE_STMT_IF_COMPUTED:
 			s = ofc_sema_stmt_if(scope, stmt);
+			break;
+
+		case OFC_PARSE_STMT_SELECT_CASE:
+			s = ofc_sema_stmt_select_case(scope, stmt);
 			break;
 
 		case OFC_PARSE_STMT_STOP:
@@ -406,6 +414,22 @@ void ofc_sema_stmt_delete(
 			ofc_sema_stmt_list_delete(
 				stmt->if_then.block_else);
 			break;
+		case OFC_SEMA_STMT_SELECT_CASE:
+			{
+				ofc_sema_expr_delete(
+					stmt->select_case.case_expr);
+				unsigned i;
+				for (i = 0; i < stmt->select_case.count; i++)
+				{
+					ofc_sema_range_list_delete(
+						stmt->select_case.case_value[i]);
+					ofc_sema_stmt_list_delete(
+						stmt->select_case.case_block[i]);
+				}
+				free(stmt->select_case.case_value);
+				free(stmt->select_case.case_block);
+			}
+			break;
 		case OFC_SEMA_STMT_STOP:
 		case OFC_SEMA_STMT_PAUSE:
 			ofc_sema_expr_delete(
@@ -527,6 +551,8 @@ static bool ofc_parse_stmt_is_exec(
 		case OFC_PARSE_STMT_MAP:
 		case OFC_PARSE_STMT_NAMELIST:
 		case OFC_PARSE_STMT_POINTER:
+		case OFC_PARSE_STMT_PUBLIC:
+		case OFC_PARSE_STMT_PRIVATE:
 			return false;
 
 		default:
@@ -620,6 +646,12 @@ static bool ofc_sema_stmt_list__entry(
 				"Unsupported statement");
 			/* TODO - Support these statements. */
 			return false;
+
+		case OFC_PARSE_STMT_PUBLIC:
+			return ofc_sema_stmt_public(scope, stmt);
+
+		case OFC_PARSE_STMT_PRIVATE:
+			return ofc_sema_stmt_private(scope, stmt);
 
 		default:
 			break;
@@ -854,6 +886,21 @@ bool ofc_sema_stmt_list_foreach(
 					return false;
 				break;
 
+			case OFC_SEMA_STMT_SELECT_CASE:
+				if (stmt->select_case.case_block)
+				{
+					unsigned i;
+					for (i = 0; i < stmt->select_case.count; i++)
+					{
+						if (stmt->select_case.case_block[i]
+							&& !ofc_sema_stmt_list_foreach(
+								stmt->select_case.case_block[i],
+								param, func))
+							return false;
+					}
+				}
+				break;
+
 			case OFC_SEMA_STMT_DO_BLOCK:
 				if (stmt->do_block.block
 					&& !ofc_sema_stmt_list_foreach(
@@ -1082,6 +1129,21 @@ bool ofc_sema_stmt_foreach_expr(
 				return false;
 			break;
 
+		case OFC_SEMA_STMT_SELECT_CASE:
+			{
+				if (stmt->select_case.case_expr && !ofc_sema_expr_foreach(
+					stmt->select_case.case_expr, param, func))
+					return false;
+				unsigned i;
+				for (i = 0; i < stmt->select_case.count; i++)
+				{
+					if (stmt->select_case.case_block[i] && !ofc_sema_stmt_list_foreach_expr(
+						stmt->select_case.case_block[i], param, func))
+						return false;
+				}
+			}
+			break;
+
 		case OFC_SEMA_STMT_STOP:
 		case OFC_SEMA_STMT_PAUSE:
 			if (stmt->stop_pause.str && !ofc_sema_expr_foreach(
@@ -1168,6 +1230,8 @@ bool ofc_sema_stmt_foreach_expr(
 			break;
 
 		case OFC_SEMA_STMT_ENTRY:
+		case OFC_SEMA_STMT_CYCLE:
+		case OFC_SEMA_STMT_EXIT:
 			break;
 
 		default:
@@ -1237,10 +1301,10 @@ bool ofc_sema_stmt_print(
 			return ofc_sema_stmt_io_inquire_print(cs, stmt);
 
 		case OFC_SEMA_STMT_CONTAINS:
-			return ofc_colstr_atomic_writef(cs, "CONTAINS");
+			return ofc_colstr_keyword_atomic_writef(cs, "CONTAINS");
 
 		case OFC_SEMA_STMT_CONTINUE:
-			return ofc_colstr_atomic_writef(cs, "CONTINUE");
+			return ofc_colstr_keyword_atomic_writef(cs, "CONTINUE");
 
 		case OFC_SEMA_STMT_IF_COMPUTED:
 			return ofc_sema_stmt_if_comp_print(cs, stmt);
@@ -1250,6 +1314,10 @@ bool ofc_sema_stmt_print(
 
 		case OFC_SEMA_STMT_IF_THEN:
 			return ofc_sema_stmt_if_then_print(
+				cs, indent, label_map, stmt);
+
+		case OFC_SEMA_STMT_SELECT_CASE:
+			return ofc_sema_stmt_select_case_print(
 				cs, indent, label_map, stmt);
 
 		case OFC_SEMA_STMT_STOP:
@@ -1314,6 +1382,7 @@ static const char* ofc_sema_stmt__name[] =
 	"IF_COMPUTED",
 	"IF_STATEMENT",
 	"IF_THEN",
+	"SELECT_CASE",
 	"STOP",
 	"PAUSE",
 	"GO_TO",
@@ -1327,6 +1396,8 @@ static const char* ofc_sema_stmt__name[] =
 	"ENTRY",
 	"CYCLE",
 	"EXIT",
+	"PUBLIC",
+	"PRIVATE",
 
 	NULL
 };

@@ -35,6 +35,7 @@ typedef enum
 	OFC_SEMA_STMT_IF_COMPUTED,
 	OFC_SEMA_STMT_IF_STATEMENT,
 	OFC_SEMA_STMT_IF_THEN,
+	OFC_SEMA_STMT_SELECT_CASE,
 	OFC_SEMA_STMT_STOP,
 	OFC_SEMA_STMT_PAUSE,
 	OFC_SEMA_STMT_GO_TO,
@@ -95,6 +96,15 @@ struct ofc_sema_stmt_s
 			ofc_sema_stmt_list_t* block_then;
 			ofc_sema_stmt_list_t* block_else;
 		} if_then;
+
+		struct
+		{
+			ofc_sema_expr_t* case_expr;
+
+			unsigned                count;
+			ofc_sema_range_list_t** case_value;
+			ofc_sema_stmt_list_t**  case_block;
+		} select_case;
 
 		struct
 		{
@@ -314,6 +324,12 @@ bool ofc_sema_stmt_save(
 bool ofc_sema_stmt_use(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
+bool ofc_sema_stmt_public(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt);
+bool ofc_sema_stmt_private(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt);
 
 /* Execution statement analysis. */
 ofc_sema_stmt_t* ofc_sema_stmt_assignment(
@@ -347,6 +363,9 @@ ofc_sema_stmt_t* ofc_sema_stmt_io_inquire(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
 ofc_sema_stmt_t* ofc_sema_stmt_if(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt);
+ofc_sema_stmt_t* ofc_sema_stmt_select_case(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
 ofc_sema_stmt_t* ofc_sema_stmt_stop_pause(

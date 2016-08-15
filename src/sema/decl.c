@@ -52,6 +52,8 @@ ofc_sema_decl_t* ofc_sema_decl_create(
 	decl->type_implicit = true;
 	decl->type_final    = false;
 
+	decl->access = OFC_SEMA_ACCESSIBILITY_DEFAULT;
+
 	decl->is_static    = false;
 	decl->is_automatic = false;
 	decl->is_volatile  = false;
@@ -312,11 +314,16 @@ bool ofc_sema_decl_mark_used(
 
 
 static bool ofc_sema_decl__elem(
-	ofc_sema_scope_t*       scope,
-	const ofc_sema_type_t*  type,
-	ofc_sema_structure_t**  type_struct,
-	ofc_sema_structure_t*   structure,
-	const ofc_parse_decl_t* pdecl)
+	ofc_sema_scope_t*        scope,
+	const ofc_sema_type_t*   type,
+	ofc_sema_structure_t**   type_struct,
+	ofc_sema_structure_t*    structure,
+	ofc_parse_array_index_t* dimension,
+	bool                     is_static,
+	bool                     is_parameter,
+	bool                     is_public,
+	bool                     is_private,
+	const ofc_parse_decl_t*  pdecl)
 {
 	if (!pdecl || !pdecl->lhs)
 		return false;
@@ -347,12 +354,34 @@ static bool ofc_sema_decl__elem(
 		return false;
 	}
 
-	ofc_sema_array_t* array = NULL;
+	ofc_sema_array_t* array = ofc_sema_array(scope, dimension);
 	if (lhs->type == OFC_PARSE_LHS_ARRAY)
 	{
-		array = ofc_sema_array(
-			scope, lhs->array.index);
-		if (!array) return false;
+		ofc_sema_array_t* lhs_array
+			= ofc_sema_array(scope, lhs->array.index);
+		if (!lhs_array) return false;
+
+		if (array)
+		{
+			bool conflict = !ofc_sema_array_compare(array, lhs_array);
+			ofc_sema_array_delete(lhs_array);
+			if (conflict)
+			{
+				ofc_sparse_ref_error(lhs->src,
+					"Multiple incompatible definitions of array dimensions");
+				ofc_sema_array_delete(array);
+				return false;
+			}
+			else
+			{
+				ofc_sparse_ref_warning(lhs->src,
+					"Redefinition of array dimensions");
+			}
+		}
+		else
+		{
+			array = lhs_array;
+		}
 
 		lhs = lhs->parent;
 		if (!lhs)
@@ -651,6 +680,31 @@ static bool ofc_sema_decl__elem(
 		if (!initialized) return false;
 	}
 
+	if (is_static)
+		decl->is_static = true;
+	if (is_parameter)
+		decl->is_parameter = true;
+	if (is_public)
+		decl->access = OFC_SEMA_ACCESSIBILITY_PUBLIC;
+	if (is_private)
+		decl->access = OFC_SEMA_ACCESSIBILITY_PRIVATE;
+
+	if (is_public && is_private)
+	{
+		ofc_sparse_ref_error(decl->name,
+			"Declaration can't be both PUBLIC and PRIVATE");
+		return false;
+	}
+
+	if ((is_public || is_private)
+		&& (scope->type != OFC_SEMA_SCOPE_MODULE))
+	{
+		ofc_sparse_ref_error(decl->name,
+			"%s declaration only allowed in MODULE",
+			(is_public ? "PUBLIC" : "PRIVATE"));
+		return false;
+	}
+
 	return true;
 }
 
@@ -659,8 +713,8 @@ bool ofc_sema_decl(
 	const ofc_parse_stmt_t* stmt)
 {
 	if (!stmt || !scope
-		|| !stmt->decl.type || !stmt->decl.decl
-		|| (stmt->type != OFC_PARSE_STMT_DECL))
+		|| (stmt->type != OFC_PARSE_STMT_DECL)
+		|| !stmt->decl.type || !stmt->decl.decl)
 		return false;
 
 	ofc_sema_structure_t* type_struct = NULL;
@@ -677,7 +731,14 @@ bool ofc_sema_decl(
 	for (i = 0; i < count; i++)
 	{
 		if (!ofc_sema_decl__elem(
-			scope, type, &type_struct, NULL, stmt->decl.decl->decl[i]))
+			scope, type,
+			&type_struct, NULL,
+			stmt->decl.dimension,
+			stmt->decl.save,
+			stmt->decl.parameter,
+			stmt->decl.is_public,
+			stmt->decl.is_private,
+			stmt->decl.decl->decl[i]))
 			success = false;
 	}
 
@@ -690,8 +751,10 @@ bool ofc_sema_decl_member(
 	const ofc_parse_stmt_t* stmt)
 {
 	if (!stmt || !scope
+		|| (stmt->type != OFC_PARSE_STMT_DECL)
 		|| !stmt->decl.type || !stmt->decl.decl
-		|| (stmt->type != OFC_PARSE_STMT_DECL))
+		|| stmt->decl.save)
+
 		return false;
 
 	ofc_sema_structure_t* type_struct = NULL;
@@ -709,6 +772,11 @@ bool ofc_sema_decl_member(
 	{
 		if (!ofc_sema_decl__elem(
 			scope, type, &type_struct, structure,
+			stmt->decl.dimension,
+			false,
+			stmt->decl.parameter,
+			stmt->decl.is_public,
+			stmt->decl.is_private,
 			stmt->decl.decl->decl[i]))
 			success = false;
 	}
@@ -941,6 +1009,21 @@ bool ofc_sema_decl_init(
 
 	if (!ofc_sema_decl_type_finalize(decl))
 		return false;
+
+	if (init->type == OFC_SEMA_EXPR_ARRAY)
+	{
+		if (!init->array) return true;
+		return ofc_sema_decl_init_array(
+			decl, NULL, init->array->count,
+			(const ofc_sema_expr_t**)init->array->expr);
+	}
+	else if (init->type == OFC_SEMA_EXPR_RESHAPE)
+	{
+		if (!init->reshape.source) return true;
+		return ofc_sema_decl_init_array(
+			decl, NULL, init->reshape.source->count,
+			(const ofc_sema_expr_t**)init->reshape.source->expr);
+	}
 
 	if (!ofc_sema_expr_is_constant(init))
 	{
@@ -1337,7 +1420,7 @@ bool ofc_sema_decl_init_substring(
 	const ofc_sema_expr_t* first,
 	const ofc_sema_expr_t* last)
 {
-	if (!decl || !init || !first || !last
+	if (!decl || !init || !last
 		|| !ofc_sema_decl_type_finalize(decl))
 		return false;
 
@@ -1553,7 +1636,7 @@ bool ofc_sema_decl_init_substring_offset(
 	const ofc_sema_expr_t* first,
 	const ofc_sema_expr_t* last)
 {
-	if (!decl || !init || !first || !last
+	if (!decl || !init || !last
 		|| ofc_sema_decl_is_procedure(decl)
 		|| !ofc_sema_decl_type_finalize(decl))
 		return false;
@@ -2338,14 +2421,14 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 
 	if (decl->is_intrinsic)
 	{
-		return (ofc_colstr_atomic_writef(cs, "INTRINSIC")
+		return (ofc_colstr_keyword_atomic_writef(cs, "INTRINSIC")
 			&& ofc_colstr_atomic_writef(cs, " ")
 			&& ofc_sema_decl_print_name(cs, decl));
 	}
 
 	if (ofc_sema_decl_is_unknown_external(decl))
 	{
-		return (ofc_colstr_atomic_writef(cs, "EXTERNAL")
+		return (ofc_colstr_keyword_atomic_writef(cs, "EXTERNAL")
 			&& ofc_colstr_atomic_writef(cs, " ")
 			&& ofc_sema_decl_print_name(cs, decl));
 	}
@@ -2371,7 +2454,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 
 		if (ofc_sema_structure_is_derived_type(decl->structure))
 		{
-			if (!ofc_colstr_atomic_writef(cs, "TYPE")
+			if (!ofc_colstr_keyword_atomic_writef(cs, "TYPE")
 				|| !ofc_colstr_atomic_writef(cs, "(")
 				|| !ofc_sema_structure_print_name(cs, decl->structure)
 				|| !ofc_colstr_atomic_writef(cs, ")"))
@@ -2379,7 +2462,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 		}
 		else
 		{
-			return (ofc_colstr_atomic_writef(cs, "RECORD")
+			return (ofc_colstr_keyword_atomic_writef(cs, "RECORD")
 				&& ofc_colstr_atomic_writef(cs, " ")
 				&& ofc_colstr_atomic_writef(cs, "/")
 				&& ofc_sema_structure_print_name(cs, decl->structure)
@@ -2412,7 +2495,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 	{
 		if (!ofc_colstr_atomic_writef(cs, ",")
 			|| !ofc_colstr_atomic_writef(cs, " ")
-			|| !ofc_colstr_atomic_writef(cs, "VOLATILE"))
+			|| !ofc_colstr_keyword_atomic_writef(cs, "VOLATILE"))
 			return false;
 	}
 
@@ -2420,7 +2503,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 	{
 		if (!ofc_colstr_atomic_writef(cs, ",")
 			|| !ofc_colstr_atomic_writef(cs, " ")
-			|| !ofc_colstr_atomic_writef(cs, "SAVE"))
+			|| !ofc_colstr_keyword_atomic_writef(cs, "SAVE"))
 			return false;
 	}
 
@@ -2428,7 +2511,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 	{
 		if (!ofc_colstr_atomic_writef(cs, ",")
 			|| !ofc_colstr_atomic_writef(cs, " ")
-			|| !ofc_colstr_atomic_writef(cs, "PARAMETER"))
+			|| !ofc_colstr_keyword_atomic_writef(cs, "PARAMETER"))
 			return false;
 	}
 
@@ -2436,7 +2519,23 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 	{
 		if (!ofc_colstr_atomic_writef(cs, ",")
 			|| !ofc_colstr_atomic_writef(cs, " ")
-			|| !ofc_colstr_atomic_writef(cs, "POINTER"))
+			|| !ofc_colstr_keyword_atomic_writef(cs, "POINTER"))
+			return false;
+	}
+
+	if (decl->access == OFC_SEMA_ACCESSIBILITY_PUBLIC)
+	{
+		if (!ofc_colstr_atomic_writef(cs, ",")
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_colstr_keyword_atomic_writef(cs, "PUBLIC"))
+			return false;
+	}
+
+	if (decl->access == OFC_SEMA_ACCESSIBILITY_PRIVATE)
+	{
+		if (!ofc_colstr_atomic_writef(cs, ",")
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_colstr_keyword_atomic_writef(cs, "PRIVATE"))
 			return false;
 	}
 
@@ -2444,7 +2543,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 	{
 		if (!ofc_colstr_atomic_writef(cs, ",")
 			|| !ofc_colstr_atomic_writef(cs, " ")
-			|| !ofc_colstr_atomic_writef(cs, "TARGET"))
+			|| !ofc_colstr_keyword_atomic_writef(cs, "TARGET"))
 			return false;
 	}
 
@@ -2452,7 +2551,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 	{
 		if (!ofc_colstr_atomic_writef(cs, ",")
 			|| !ofc_colstr_atomic_writef(cs, " ")
-			|| !ofc_colstr_atomic_writef(cs, "DIMENSION")
+			|| !ofc_colstr_keyword_atomic_writef(cs, "DIMENSION")
 			|| !ofc_sema_array_print_brackets(cs, decl->array))
 			return false;
 	}
@@ -2470,7 +2569,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 	if (f77_parameter)
 	{
 		if (!ofc_colstr_newline(cs, indent, NULL)
-			|| !ofc_colstr_atomic_writef(cs, "PARAMETER")
+			|| !ofc_colstr_keyword_atomic_writef(cs, "PARAMETER")
 			|| !ofc_colstr_atomic_writef(cs, " ")
 			|| !ofc_colstr_atomic_writef(cs, "(")
 			|| !ofc_sema_decl_print_name(cs, decl))
@@ -2495,7 +2594,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 
 			if (reshape)
 			{
-				if (!ofc_colstr_atomic_writef(cs, "RESHAPE")
+				if (!ofc_colstr_keyword_atomic_writef(cs, "RESHAPE")
 					|| !ofc_colstr_atomic_writef(cs, "("))
 					return false;
 			}
@@ -2582,7 +2681,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 	if (decl->is_external)
 	{
 		if (!ofc_colstr_newline(cs, indent, NULL)
-			|| !ofc_colstr_atomic_writef(cs, "EXTERNAL")
+			|| !ofc_colstr_keyword_atomic_writef(cs, "EXTERNAL")
 			|| !ofc_colstr_atomic_writef(cs, " ")
 			|| !ofc_sema_decl_print_name(cs, decl))
 			return false;
@@ -2656,7 +2755,7 @@ bool ofc_sema_decl_print_data_init(ofc_colstr_t* cs,
 		return true;
 
 	if (!ofc_colstr_newline(cs, indent, NULL)
-		|| !ofc_colstr_atomic_writef(cs, "DATA")
+		|| !ofc_colstr_keyword_atomic_writef(cs, "DATA")
 		|| !ofc_colstr_atomic_writef(cs, " "))
 		return false;
 
@@ -3103,7 +3202,7 @@ bool ofc_sema_decl_list_foreach_scope(
 	ofc_sema_decl_list_t* list, void* param,
 	bool (*func)(ofc_sema_scope_t* scope, void* param))
 {
-	if (!list)
+	if (!list || !func)
 		return false;
 
 	unsigned i;

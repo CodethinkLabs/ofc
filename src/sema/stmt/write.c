@@ -426,7 +426,7 @@ static bool ofc_sema_stmt_write__print_optional(
 
 	if (!ofc_colstr_atomic_writef(cs, ",")
 		|| !ofc_colstr_atomic_writef(cs, " ")
-		|| !ofc_colstr_atomic_writef(cs, name)
+		|| !ofc_colstr_keyword_atomic_writef(cs, name)
 		|| !ofc_colstr_atomic_writef(cs, "=")
 		|| !ofc_sema_expr_print(cs, expr))
 		return false;
@@ -440,7 +440,7 @@ bool ofc_sema_stmt_write_print(ofc_colstr_t* cs,
 	if (!cs || (stmt->type != OFC_SEMA_STMT_IO_WRITE))
 		return false;
 
-	if (!ofc_colstr_atomic_writef(cs, "WRITE")
+	if (!ofc_colstr_keyword_atomic_writef(cs, "WRITE")
 		|| !ofc_colstr_atomic_writef(cs, " ")
 		|| !ofc_colstr_atomic_writef(cs, "("))
 		return false;

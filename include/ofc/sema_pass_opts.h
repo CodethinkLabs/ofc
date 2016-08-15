@@ -23,6 +23,7 @@ typedef struct
 	bool unref_label;
 	bool unlabelled_format;
 	bool unlabelled_continue;
+	bool unused_common;
 	bool integer_logical;
 
 	bool unused_decl;
@@ -36,6 +37,7 @@ static const ofc_sema_pass_opts_t
 	.unref_label         = true,
 	.unlabelled_format   = true,
 	.unlabelled_continue = true,
+	.unused_common       = true,
 	.integer_logical     = true,
 
 	.unused_decl         = false,

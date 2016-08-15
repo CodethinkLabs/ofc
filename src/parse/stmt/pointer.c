@@ -44,7 +44,7 @@ unsigned ofc_parse_stmt_pointer(
 bool ofc_parse_stmt_pointer_print(
 	ofc_colstr_t* cs, const ofc_parse_stmt_t* stmt)
 {
-	return (stmt && ofc_colstr_atomic_writef(cs, "POINTER ")
+	return (stmt && ofc_colstr_keyword_atomic_writef(cs, "POINTER ")
 		&& ofc_parse_pointer_list_print(
 			cs, stmt->pointer));
 }

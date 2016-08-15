@@ -32,6 +32,9 @@ typedef struct
 ofc_sema_array_t* ofc_sema_array(
 	ofc_sema_scope_t*              scope,
 	const ofc_parse_array_index_t* index);
+ofc_sema_array_t* ofc_sema_array_array(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_expr_list_t* list);
 
 ofc_sema_array_t* ofc_sema_array_copy_replace(
 	const ofc_sema_array_t* array,

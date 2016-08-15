@@ -3,10 +3,25 @@ FRONTEND_DEBUG = $(FRONTEND)-debug
 
 BASE = src/
 
-SRC_DIR = . prep parse sema reformat parse/stmt sema/stmt sema/pass
+SRC_DIR = . prep parse sema global parse/stmt sema/stmt sema/pass
 SRC_DIR_BASE = $(addprefix $(BASE),$(SRC_DIR))
+
+GCC_VER_MAJ = $(shell $(CC) -dumpversion | cut -f 1 -d '.')
+GCC_VER_MIN = $(shell $(CC) -dumpversion | cut -f 2 -d '.')
+
+GCC_VER_MAJ_SUP = 4
+GCC_VER_MIN_SUP = 8
+
+GCC_VER_SUPPORTED = $(shell [ $(GCC_VER_MAJ) -gt $(GCC_VER_MAJ_SUP) -o \( $(GCC_VER_MAJ) -eq $(GCC_VER_MAJ_SUP) -a $(GCC_VER_MIN) -ge $(GCC_VER_MIN_SUP) \) ] && echo true)
+
+ifeq ($(GCC_VER_SUPPORTED),true)
+	CFLAGS_WERROR = -Werror
+else
+	CFLAGS_WERROR = $(warning Your GCC version is too old to be supported, please upgrade to $(GCC_VER_MAJ_SUP).$(GCC_VER_MIN_SUP) or above)
+endif
+
 LDFLAGS = -lm
-CFLAGS_COMMON = -Wall -Wextra -Werror -MD -MP -I include
+CFLAGS_COMMON = -Wall -Wextra $(CFLAGS_WERROR) -std=gnu99 -MD -MP -I include
 CFLAGS += -O3 $(CFLAGS_COMMON)
 CFLAGS_DEBUG += -O0 -g $(CFLAGS_COMMON)
 

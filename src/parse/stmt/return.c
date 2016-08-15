@@ -94,7 +94,7 @@ bool ofc_parse_stmt_stop_pause_return_print(
 			return false;
 	}
 
-	if (!ofc_colstr_atomic_writef(cs, "%s", kwstr))
+	if (!ofc_colstr_keyword_atomic_writef(cs, "%s", kwstr))
 		return false;
 
 	if (stmt->stop_pause_return.value)

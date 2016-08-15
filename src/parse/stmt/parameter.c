@@ -62,7 +62,7 @@ bool ofc_parse_stmt_parameter_print(
 	if (!stmt)
 		return false;
 
-	return (ofc_colstr_atomic_writef(cs, "PARAMETER")
+	return (ofc_colstr_keyword_atomic_writef(cs, "PARAMETER")
 		&& ofc_colstr_atomic_writef(cs, " ")
 		&& ofc_colstr_atomic_writef(cs, "(")
 		&& ofc_parse_assign_list_print(

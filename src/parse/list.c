@@ -47,6 +47,12 @@ static unsigned ofc_parse_list__seperator_optional(
 		void* e = elem_parse(
 			sparse, &ptr[j], debug, &l);
 		if (!e) break;
+		/* Do not allow assignments on the list */
+		if (ptr[j+l] == '=')
+		{
+			elem_delete(e);
+			break;
+		}
 		j += l;
 
 		if (*elem_count >= max_count)

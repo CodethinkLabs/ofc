@@ -24,6 +24,8 @@ typedef enum
 	OFC_SEMA_EXPR_INTRINSIC,
 	OFC_SEMA_EXPR_FUNCTION,
 	OFC_SEMA_EXPR_IMPLICIT_DO,
+	OFC_SEMA_EXPR_ARRAY,
+	OFC_SEMA_EXPR_RESHAPE,
 
 	OFC_SEMA_EXPR_POWER,
 	OFC_SEMA_EXPR_MULTIPLY,
@@ -41,6 +43,7 @@ typedef enum
 	OFC_SEMA_EXPR_NOT,
 	OFC_SEMA_EXPR_AND,
 	OFC_SEMA_EXPR_OR,
+	OFC_SEMA_EXPR_XOR,
 	OFC_SEMA_EXPR_EQV,
 	OFC_SEMA_EXPR_NEQV,
 
@@ -92,7 +95,7 @@ struct ofc_sema_expr_s
 
 		struct
 		{
-			ofc_sema_expr_t* expr;
+			ofc_sema_expr_list_t* expr;
 			ofc_sema_decl_t* iter;
 			ofc_sema_expr_t* init;
 			ofc_sema_expr_t* last;
@@ -101,6 +104,14 @@ struct ofc_sema_expr_s
 			bool     count_var;
 			unsigned count;
 		} implicit_do;
+
+		ofc_sema_expr_list_t* array;
+
+		struct
+		{
+			ofc_sema_expr_list_t* source;
+			ofc_sema_array_t*     shape;
+		} reshape;
 	};
 };
 

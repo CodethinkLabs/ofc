@@ -87,7 +87,7 @@ bool ofc_parse_stmt_common_namelist_print(
 			return false;
 	}
 
-	return (stmt && ofc_colstr_atomic_writef(cs, "%s ", kwstr)
+	return (stmt && ofc_colstr_keyword_atomic_writef(cs, "%s ", kwstr)
 		&& ofc_parse_common_group_list_print(
 			cs, stmt->common_namelist));
 }

@@ -18,15 +18,22 @@
 
 #include <ofc/parse.h>
 
+typedef struct
+{
+	ofc_sparse_t*          source;
+	ofc_parse_stmt_list_t* stmt;
+} ofc_parse_file_t;
+
 bool ofc_parse_file_include(
 	const ofc_sparse_t*    src,
 	ofc_parse_stmt_list_t* list,
 	ofc_parse_debug_t*     debug);
 
-ofc_parse_stmt_list_t* ofc_parse_file(const ofc_sparse_t* src);
+ofc_parse_file_t* ofc_parse_file(ofc_sparse_t* src);
+void ofc_parse_file_delete(ofc_parse_file_t* file);
 
 bool ofc_parse_file_print(
 	ofc_colstr_t* cs,
-	const ofc_parse_stmt_list_t* list);
+	const ofc_parse_file_t* file);
 
 #endif

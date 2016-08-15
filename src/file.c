@@ -450,13 +450,37 @@ static void ofc_file__debug_va(
 		if (positional)
 			fprintf(stderr, "%u,%u:", (row + 1), col);
 
-		fprintf(stderr, "\n  ");
+		fprintf(stderr, "\n");
 	}
 
-	if (!file || !file->parent)
-		fprintf(stderr, " ");
-	vfprintf(stderr, format, args);
-	fprintf(stderr, "\n");
+	va_list nargs;
+	va_copy(nargs, args);
+	int fmt_len = vsnprintf(NULL, 0, format, nargs);
+	char fmt_str[fmt_len + 1];
+	vsprintf(fmt_str, format, args);
+	va_end(nargs);
+
+	int indent = 0;
+	if (file) indent += 2;
+	if (!file || !file->parent) indent += 1;
+
+	const char* base = fmt_str;
+	unsigned i, len;
+	for (i = 0, len = 0; i <= strlen(fmt_str); i++)
+	{
+		if ((fmt_str[i] == '\n')
+			|| (fmt_str[i] == '\0'))
+		{
+			fprintf(stderr, "%*s", indent, "");
+			fprintf(stderr, "%.*s\n", len, base);
+			base = &fmt_str[i + 1];
+			len = 0;
+		}
+		else
+		{
+			len++;
+		}
+	}
 
 	if (positional)
 	{

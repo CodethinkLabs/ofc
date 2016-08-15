@@ -192,6 +192,51 @@ ofc_parse_type_t* ofc_parse_type(
 			{
 				ofc_parse_call_arg_list_delete(
 					type.params);
+
+				if (type.type == OFC_PARSE_TYPE_CHARACTER)
+				{
+					if (!type.count_expr && !type.count_var)
+					{
+						if ((ptr[i + 1] == '*') && (ptr[i + 2] == ')'))
+						{
+							i += 3;
+							type.count_var = true;
+						}
+						else
+						{
+							ofc_parse_expr_t* expr = ofc_parse_expr(
+								src, &ptr[i + 1], debug, &l);
+							if (expr && (ptr[i + 1 + l] == ')'))
+							{
+								i += (l + 2);
+								type.count_expr = expr;
+							}
+							else
+							{
+								ofc_parse_expr_delete(expr);
+							}
+						}
+					}
+				}
+				else if (type.size == 0)
+				{
+					unsigned bsize;
+					l = ofc_parse_unsigned(
+						src, &ptr[i + 1], debug, &bsize);
+					if ((l != 0) && (ptr[i + 1 + l] == ')'))
+					{
+						if (bsize == 0)
+						{
+							ofc_sparse_error_ptr(src, &ptr[i],
+								"Type kind must be non-zero");
+							ofc_parse_expr_delete(type.count_expr);
+							return NULL;
+						}
+
+						i += (l + 2);
+						type.size = bsize;
+					}
+				}
 			}
 		}
 	}
@@ -234,7 +279,7 @@ bool ofc_parse_type_print(
 		|| (type->type == OFC_PARSE_TYPE_RECORD))
 		return false;
 
-	if (!ofc_colstr_atomic_writef(cs, "%s",
+	if (!ofc_colstr_keyword_atomic_writef(cs, "%s",
 		ofc_parse_type_str_rep(type->type)))
 		return false;
 
@@ -278,7 +323,7 @@ bool ofc_parse_type_print_f77(
 	if (type->type >= OFC_PARSE_TYPE_COUNT)
 		return false;
 
-	if (!ofc_colstr_atomic_writef(cs, "%s",
+	if (!ofc_colstr_keyword_atomic_writef(cs, "%s",
 		ofc_parse_type__name[type->type]))
 		return false;
 

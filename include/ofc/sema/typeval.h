@@ -146,6 +146,9 @@ ofc_sema_typeval_t* ofc_sema_typeval_and(
 ofc_sema_typeval_t* ofc_sema_typeval_or(
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b);
+ofc_sema_typeval_t* ofc_sema_typeval_xor(
+	const ofc_sema_typeval_t* a,
+	const ofc_sema_typeval_t* b);
 ofc_sema_typeval_t* ofc_sema_typeval_eqv(
 	const ofc_sema_typeval_t* a,
 	const ofc_sema_typeval_t* b);

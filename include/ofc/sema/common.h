@@ -46,6 +46,10 @@ bool ofc_sema_common_add(
 bool ofc_sema_common_save(
 	ofc_sema_common_t* common);
 
+bool ofc_sema_common_compatible(
+	const ofc_sema_common_t* a,
+	const ofc_sema_common_t* b);
+
 bool ofc_sema_common_print(
 	ofc_colstr_t* cs,
 	unsigned indent,
@@ -70,4 +74,5 @@ bool ofc_sema_common_map_print(
 	ofc_colstr_t* cs,
 	unsigned indent,
 	const ofc_sema_common_map_t* map);
+
 #endif

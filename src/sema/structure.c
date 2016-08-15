@@ -115,6 +115,7 @@ static ofc_sema_structure_t* ofc_sema__structure(
 				if (!ofc_sema_structure_member_add_structure(
 					structure, smember))
 				{
+					ofc_sema_structure_delete(smember);
 					ofc_sema_structure_delete(structure);
 					return NULL;
 				}

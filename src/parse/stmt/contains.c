@@ -37,7 +37,7 @@ bool ofc_parse_stmt_contains_print(
 		|| stmt->type != OFC_PARSE_STMT_CONTAINS)
 		return false;
 
-	if (!ofc_colstr_atomic_writef(cs, "CONTAINS"))
+	if (!ofc_colstr_keyword_atomic_writef(cs, "CONTAINS"))
 		return false;
 
 	return true;

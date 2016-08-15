@@ -553,7 +553,7 @@ ofc_sema_lhs_t* ofc_sema_lhs_local(
 static ofc_sema_lhs_t* ofc_sema_lhs__implicit_do(
 	ofc_sema_scope_t* scope,
 	ofc_sparse_ref_t src,
-	const ofc_parse_implicit_do_t* id)
+	const ofc_parse_lhs_implicit_do_t* id)
 {
 	if (!id || !id->init)
 		return NULL;
@@ -578,8 +578,8 @@ static ofc_sema_lhs_t* ofc_sema_lhs__implicit_do(
 	lhs->data_type = NULL;
 	lhs->refcnt = 0;
 
-	ofc_sema_lhs_t* iter_lhs = ofc_sema_lhs(
-		scope, id->init->name);
+	ofc_sema_lhs_t* iter_lhs = ofc_sema_lhs_from_expr(
+		scope, id->iter);
 	if (!iter_lhs)
 	{
 		ofc_sema_lhs_delete(lhs);
@@ -595,7 +595,7 @@ static ofc_sema_lhs_t* ofc_sema_lhs__implicit_do(
 
 	if (iter_lhs->type != OFC_SEMA_LHS_DECL)
 	{
-		ofc_sparse_ref_error(id->init->name->src,
+		ofc_sparse_ref_error(id->iter->src,
 			"Implicit do loop iterator must be a variable");
 		ofc_sema_lhs_delete(iter_lhs);
 		ofc_sema_lhs_delete(lhs);
@@ -622,7 +622,7 @@ static ofc_sema_lhs_t* ofc_sema_lhs__implicit_do(
 
 	if (!ofc_sema_type_is_scalar(iter_type))
 	{
-		ofc_sparse_ref_error(id->init->name->src,
+		ofc_sparse_ref_error(id->iter->src,
 			"Implicit do loop iterator must be a scalar type");
 		ofc_sema_lhs_delete(lhs);
 		return NULL;
@@ -630,12 +630,12 @@ static ofc_sema_lhs_t* ofc_sema_lhs__implicit_do(
 
 	if (!ofc_sema_type_is_integer(iter_type))
 	{
-		ofc_sparse_ref_warning(id->init->name->src,
+		ofc_sparse_ref_warning(id->iter->src,
 			"Using REAL in implicit do loop iterator");
 	}
 
 	lhs->implicit_do.init = ofc_sema_expr(
-		scope, id->init->init);
+		scope, id->init);
 	if (!lhs->implicit_do.init)
 	{
 		ofc_sema_lhs_delete(lhs);
@@ -735,21 +735,17 @@ static ofc_sema_lhs_t* ofc_sema_lhs__implicit_do(
 		}
 	}
 
-	if (id->dlist && (id->dlist->type == OFC_PARSE_LHS_IMPLICIT_DO))
+	if (id->dlist && (id->dlist->count > 0))
 	{
 		lhs->implicit_do.lhs
-			= ofc_sema_lhs__implicit_do(
-				scope, id->dlist->src, id->dlist->implicit_do);
+			= ofc_sema_lhs_list_id(scope, id->dlist);
+		if (!lhs->implicit_do.lhs)
+		{
+			ofc_sema_lhs_delete(lhs);
+			return NULL;
+		}
 	}
 	else
-	{
-		lhs->implicit_do.lhs = ofc_sema_lhs(
-			scope, id->dlist);
-	}
-
-	lhs->data_type = ofc_sema_lhs_type(
-		lhs->implicit_do.lhs);
-	if (!lhs->data_type)
 	{
 		ofc_sema_lhs_delete(lhs);
 		return NULL;
@@ -934,7 +930,7 @@ ofc_sema_lhs_t* ofc_sema_lhs_elem_get(
 				return NULL;
 
 			unsigned sub_elem_count;
-			if (!ofc_sema_lhs_elem_count(
+			if (!ofc_sema_lhs_list_elem_count(
 				lhs->implicit_do.lhs, &sub_elem_count))
 				return NULL;
 
@@ -980,17 +976,40 @@ ofc_sema_lhs_t* ofc_sema_lhs_elem_get(
 				return NULL;
 			}
 
-			ofc_sema_lhs_t* body
-				= ofc_sema_lhs_copy_replace(
-					lhs->implicit_do.lhs,
-					lhs->implicit_do.iter, iter_expr);
-			ofc_sema_expr_delete(iter_expr);
-			if (!body) return NULL;
+			ofc_sema_lhs_t* rval = NULL;
+			unsigned e = sub_offset;
+			unsigned i;
+			for (i = 0; i < lhs->implicit_do.lhs->count; i++)
+			{
+				ofc_sema_lhs_t* lhs_dummy
+					= lhs->implicit_do.lhs->lhs[i];
 
-			ofc_sema_lhs_t* rval
-				= ofc_sema_lhs_elem_get(
-					body, sub_offset);
-			ofc_sema_lhs_delete(body);
+				unsigned elem_count;
+				if (!ofc_sema_lhs_elem_count(
+					lhs_dummy, &elem_count))
+					return NULL;
+
+				if (e < elem_count)
+				{
+
+					ofc_sema_lhs_t* body
+						= ofc_sema_lhs_copy_replace(
+							lhs_dummy, lhs->implicit_do.iter, iter_expr);
+					if (!body) return NULL;
+
+					rval = ofc_sema_lhs_elem_get(
+						body, sub_offset);
+
+					ofc_sema_lhs_delete(body);
+				}
+				else
+				{
+					e -= elem_count;
+				}
+			}
+
+			ofc_sema_expr_delete(iter_expr);
+
 			return rval;
 		}
 
@@ -1029,7 +1048,7 @@ ofc_sema_lhs_t* ofc_sema_lhs_copy_replace(
 	else if (lhs->type == OFC_SEMA_LHS_IMPLICIT_DO)
 	{
 		copy->implicit_do.lhs
-			= ofc_sema_lhs_copy_replace(
+			= ofc_sema_lhs_list_copy_replace(
 				lhs->implicit_do.lhs, replace, with);
 		copy->implicit_do.iter
 			= (ofc_sema_decl_reference(lhs->implicit_do.iter)
@@ -1205,7 +1224,7 @@ void ofc_sema_lhs_delete(
 			break;
 
 		case OFC_SEMA_LHS_IMPLICIT_DO:
-			ofc_sema_lhs_delete(lhs->implicit_do.lhs);
+			ofc_sema_lhs_list_delete(lhs->implicit_do.lhs);
 			ofc_sema_decl_delete(lhs->implicit_do.iter);
 			ofc_sema_expr_delete(lhs->implicit_do.init);
 			ofc_sema_expr_delete(lhs->implicit_do.last);
@@ -1226,6 +1245,15 @@ bool ofc_sema_lhs_init(
 {
 	if (!lhs || !init)
 		return false;
+
+	if (init->type == OFC_SEMA_EXPR_ARRAY)
+	{
+		if (!init->array)
+			return true;
+		return ofc_sema_lhs_init_array(
+			lhs, NULL, init->array->count,
+			(const ofc_sema_expr_t**)init->array->expr);
+	}
 
 	ofc_sema_decl_t* decl
 		= ofc_sema_lhs_decl(lhs);
@@ -1307,8 +1335,7 @@ bool ofc_sema_lhs_init_substring(
 	const ofc_sema_expr_t* first,
 	const ofc_sema_expr_t* last)
 {
-	if (!lhs || !init
-		|| !first || !last)
+	if (!lhs || !init || !last)
 		return false;
 
 	ofc_sema_decl_t* decl
@@ -1539,7 +1566,7 @@ bool ofc_sema_lhs_mark_used(
 			return true;
 
 		case OFC_SEMA_LHS_IMPLICIT_DO:
-			return ofc_sema_lhs_mark_used(
+			return ofc_sema_lhs_list_mark_used(
 				lhs->implicit_do.lhs,
 				written, read);
 
@@ -1668,16 +1695,11 @@ bool ofc_sema_lhs_elem_count(
 		if (lhs->implicit_do.count_var)
 			return false;
 
-		if (lhs->implicit_do.lhs
-			&& (lhs->implicit_do.lhs->type
-				== OFC_SEMA_LHS_IMPLICIT_DO))
-		{
-			unsigned idecount;
-			if (!ofc_sema_lhs_elem_count(
-				lhs->implicit_do.lhs, &idecount))
-				return false;
-			ecount *= idecount;
-		}
+		unsigned idecount;
+		if (!ofc_sema_lhs_list_elem_count(
+			lhs->implicit_do.lhs, &idecount))
+			return false;
+		ecount *= idecount;
 
 		ecount *= lhs->implicit_do.count;
 	}
@@ -1781,7 +1803,7 @@ bool ofc_sema_lhs_print(
 
 		case OFC_SEMA_LHS_IMPLICIT_DO:
 			if (!ofc_colstr_atomic_writef(cs, "(")
-				|| !ofc_sema_lhs_print(cs, lhs->implicit_do.lhs)
+				|| !ofc_sema_lhs_list_print(cs, lhs->implicit_do.lhs)
 				|| !ofc_colstr_atomic_writef(cs, ",")
 				|| !ofc_colstr_atomic_writef(cs, " ")
 				|| !ofc_sema_decl_print_name(cs, lhs->implicit_do.iter)
@@ -1911,6 +1933,48 @@ void ofc_sema_lhs_list_delete(ofc_sema_lhs_list_t* list)
 	free(list);
 }
 
+ofc_sema_lhs_list_t* ofc_sema_lhs_list_copy_replace(
+	const ofc_sema_lhs_list_t* list,
+	const ofc_sema_decl_t* replace,
+	const ofc_sema_expr_t* with)
+{
+	if (!list) return NULL;
+
+	ofc_sema_lhs_list_t* copy
+		= (ofc_sema_lhs_list_t*)malloc(
+			sizeof(ofc_sema_lhs_list_t));
+	if (!copy) return NULL;
+
+	copy->lhs = (ofc_sema_lhs_t**)malloc(
+		(sizeof(ofc_sema_lhs_t) * list->count));
+	if (!copy->lhs)
+	{
+		free(copy);
+		return NULL;
+	}
+
+	copy->count = list->count;
+
+	bool fail = false;
+	unsigned i;
+	for (i = 0; i < copy->count; i++)
+	{
+		const ofc_sema_lhs_t* lhs = list->lhs[i];
+		copy->lhs[i] = ofc_sema_lhs_copy_replace(
+			lhs, replace, with);
+		if (copy->lhs[i] == NULL)
+			fail = true;
+	}
+
+	if (fail)
+	{
+		ofc_sema_lhs_list_delete(copy);
+		return NULL;
+	}
+
+	return copy;
+}
+
 bool ofc_sema_lhs_list_add(
 	ofc_sema_lhs_list_t* list,
 	ofc_sema_lhs_t* lhs)
@@ -2002,17 +2066,18 @@ bool ofc_sema_lhs_list_init(
 
 		bool success = ofc_sema_lhs_init(
 			lhs_elem, init_elem);
-
 		ofc_sema_lhs_delete(lhs_elem);
-		ofc_sema_expr_delete(init_elem);
 
 		if (!success)
 		{
 			/* TODO - Fail atomically? */
 			ofc_sparse_ref_error(init_elem->src,
 				"Invalid initializer");
+			ofc_sema_expr_delete(init_elem);
 			return false;
 		}
+
+		ofc_sema_expr_delete(init_elem);
 	}
 
 	return true;

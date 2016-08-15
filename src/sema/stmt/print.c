@@ -92,7 +92,7 @@ bool ofc_sema_stmt_print_print(
 		|| (stmt->type != OFC_SEMA_STMT_IO_PRINT))
 		return false;
 
-	if (!ofc_colstr_atomic_writef(cs, "PRINT")
+	if (!ofc_colstr_keyword_atomic_writef(cs, "PRINT")
 		|| !ofc_colstr_atomic_writef(cs, " "))
 		return false;
 

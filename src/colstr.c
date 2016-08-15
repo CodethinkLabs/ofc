@@ -561,6 +561,42 @@ bool ofc_colstr_atomic_writef(
 		cstr, buff, len);
 }
 
+bool ofc_colstr_keyword_atomic_writef(
+	ofc_colstr_t* cstr,
+	const char* format, ...)
+{
+	va_list args;
+	va_start(args, format);
+
+	va_list largs;
+	va_copy(largs, args);
+	int len = vsnprintf(NULL, 0, format, largs);
+	va_end(largs);
+
+	if (len <= 0)
+	{
+		va_end(args);
+		return false;
+	}
+
+	char buff[len + 1];
+	int plen = vsnprintf(buff, (len + 1), format, args);
+	va_end(args);
+
+	if (len != plen)
+		return false;
+
+	if (cstr->print_opts.lowercase_keyword)
+	{
+		unsigned i;
+		for(i = 0; buff[i]; i++)
+			buff[i] = tolower(buff[i]);
+	}
+
+	return ofc_colstr_atomic_write(
+		cstr, buff, len);
+}
+
 bool ofc_colstr_fdprint(ofc_colstr_t* cstr, int fd)
 {
 	if (!cstr || !cstr->base)

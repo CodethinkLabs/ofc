@@ -20,7 +20,8 @@
 
 typedef enum
 {
-	OFC_SEMA_SCOPE_GLOBAL = 0,
+	OFC_SEMA_SCOPE_SUPER = 0,
+	OFC_SEMA_SCOPE_GLOBAL,
 	OFC_SEMA_SCOPE_PROGRAM,
 	OFC_SEMA_SCOPE_STMT_FUNC,
 	OFC_SEMA_SCOPE_SUBROUTINE,
@@ -33,13 +34,14 @@ typedef enum
 
 typedef struct
 {
-	unsigned count;
-	ofc_sema_scope_t**       scope;
+	unsigned           count;
+	ofc_sema_scope_t** scope;
 } ofc_sema_scope_list_t;
 
 
 struct ofc_sema_scope_s
 {
+	ofc_parse_file_t* file;
 	ofc_sparse_ref_t src;
 
 	ofc_sema_scope_t*      parent;
@@ -48,6 +50,8 @@ struct ofc_sema_scope_s
 	ofc_sema_scope_e     type;
 	ofc_str_ref_t        name;
 	ofc_sema_arg_list_t* args;
+
+	ofc_sema_accessibility_e access;
 
 	bool external;
 	bool intrinsic;
@@ -65,11 +69,8 @@ struct ofc_sema_scope_s
 	ofc_sema_structure_list_t* structure;
 	ofc_sema_structure_list_t* derived_type;
 
-	union
-	{
-		ofc_sema_stmt_list_t* stmt;
-		ofc_sema_expr_t*      expr;
-	};
+	ofc_sema_stmt_list_t* stmt;
+	ofc_sema_expr_t*      expr;
 };
 
 
@@ -77,8 +78,10 @@ bool ofc_sema_scope__check_namespace_collision(
 	ofc_sema_scope_t* scope,
 	const char* name_space, ofc_sparse_ref_t ref);
 
+ofc_sema_scope_t* ofc_sema_scope_super(void);
 ofc_sema_scope_t* ofc_sema_scope_global(
-	const ofc_parse_stmt_list_t* list);
+	ofc_sema_scope_t* super,
+	ofc_parse_file_t* list);
 
 ofc_sema_scope_t* ofc_sema_scope_program(
 	ofc_sema_scope_t* scope,
@@ -206,5 +209,8 @@ bool ofc_sema_scope_foreach_expr(
 bool ofc_sema_scope_foreach_structure(
 	ofc_sema_scope_t* scope, void* param,
 	bool (*func)(ofc_sema_structure_t* structure, void* param));
+
+void ofc_sema_scope_common_usage_print(
+	const ofc_sema_scope_t* scope);
 
 #endif

@@ -43,17 +43,10 @@ void ofc_sema_scope_delete(
 
 	ofc_sema_module_list_delete(scope->module);
 
-	switch (scope->type)
-	{
-		case OFC_SEMA_SCOPE_STMT_FUNC:
-			ofc_sema_expr_delete(scope->expr);
-			break;
+	ofc_sema_expr_delete(scope->expr);
+	ofc_sema_stmt_list_delete(scope->stmt);
 
-		default:
-			ofc_sema_stmt_list_delete(
-				scope->stmt);
-			break;
-	}
+	ofc_parse_file_delete(scope->file);
 
 	free(scope);
 }
@@ -89,7 +82,8 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 			sizeof(ofc_sema_scope_t));
 	if (!scope) return NULL;
 
-	scope->src = OFC_SPARSE_REF_EMPTY;
+	scope->file = NULL;
+	scope->src  = OFC_SPARSE_REF_EMPTY;
 
 	scope->parent = parent;
 	scope->child  = NULL;
@@ -100,29 +94,35 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 
 	scope->module = NULL;
 
-	scope->decl = ofc_sema_decl_list_create(
-		global_opts.case_sensitive);
-
 	scope->external = false;
 	scope->intrinsic = false;
 	scope->save = false;
 
+	scope->access = OFC_SEMA_ACCESSIBILITY_DEFAULT;
+
+	scope->decl = NULL;
+
+	scope->implicit = NULL;
+
+	scope->common = NULL;
+	scope->equiv  = NULL;
+
+	scope->structure    = NULL;
+	scope->derived_type = NULL;
+
+	scope->label = NULL;
+
+	scope->expr = NULL;
+	scope->stmt = NULL;
+
+	if (scope->type == OFC_SEMA_SCOPE_SUPER)
+		return scope;
+
+	scope->decl = ofc_sema_decl_list_create(
+		global_opts.case_sensitive);
+
 	bool alloc_fail = !scope->decl;
-	if (scope->type == OFC_SEMA_SCOPE_STMT_FUNC)
-	{
-		scope->implicit = NULL;
-
-		scope->common = NULL;
-		scope->equiv  = NULL;
-
-		scope->structure    = NULL;
-		scope->derived_type = NULL;
-
-		scope->label = NULL;
-
-		scope->expr = NULL;
-	}
-	else
+	if (scope->type != OFC_SEMA_SCOPE_STMT_FUNC)
 	{
 		scope->implicit = (parent
 			? ofc_sema_implicit_copy(parent->implicit) : NULL);
@@ -142,7 +142,7 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 
 		scope->label = ofc_sema_label_map_create();
 
-		scope->stmt = NULL;
+
 
 		if (!scope->implicit
 			|| !scope->common
@@ -760,19 +760,32 @@ bool ofc_sema_scope_function(
 	return true;
 }
 
-ofc_sema_scope_t* ofc_sema_scope_global(
-	const ofc_parse_stmt_list_t* list)
+ofc_sema_scope_t* ofc_sema_scope_super(void)
 {
-	if (!list)
+	return ofc_sema_scope__create(
+		NULL, OFC_SEMA_SCOPE_SUPER);
+}
+
+ofc_sema_scope_t* ofc_sema_scope_global(
+	ofc_sema_scope_t* super,
+	ofc_parse_file_t* file)
+{
+	if (!file)
 		return NULL;
 
 	ofc_sema_scope_t* scope
 		= ofc_sema_scope__create(
-			NULL, OFC_SEMA_SCOPE_GLOBAL);
-	if (!scope)
-		return NULL;
+			super, OFC_SEMA_SCOPE_GLOBAL);
+	if (!scope) return NULL;
 
+	const ofc_parse_stmt_list_t* list = file->stmt;
 	if (!ofc_sema_scope__body(scope, list))
+	{
+		ofc_sema_scope_delete(scope);
+		return NULL;
+	}
+
+	if (super && !ofc_sema_scope__add_child(super, scope))
 	{
 		ofc_sema_scope_delete(scope);
 		return NULL;
@@ -794,6 +807,7 @@ ofc_sema_scope_t* ofc_sema_scope_global(
 		}
 	}
 
+	scope->file = file;
 	return scope;
 }
 
@@ -1479,11 +1493,23 @@ static bool ofc_sema_scope_body__print(
 			break;
 		default:
 			if (!ofc_colstr_newline(cs, indent, NULL)
-				|| !ofc_colstr_atomic_writef(cs, "IMPLICIT")
+				|| !ofc_colstr_keyword_atomic_writef(cs, "IMPLICIT")
 				|| !ofc_colstr_atomic_writef(cs, " ")
-				|| !ofc_colstr_atomic_writef(cs, "NONE"))
+				|| !ofc_colstr_keyword_atomic_writef(cs, "NONE"))
 				return false;
 			break;
+	}
+
+	if (scope->type == OFC_SEMA_SCOPE_MODULE)
+	{
+		if ((scope->access == OFC_SEMA_ACCESSIBILITY_PUBLIC)
+			&& (!ofc_colstr_newline(cs, indent, NULL)
+				|| !ofc_colstr_keyword_atomic_writef(cs, "PUBLIC")))
+			return false;
+		if ((scope->access == OFC_SEMA_ACCESSIBILITY_PRIVATE)
+			&& (!ofc_colstr_newline(cs, indent, NULL)
+				|| !ofc_colstr_keyword_atomic_writef(cs, "PRIVATE")))
+			return false;
 	}
 
 	if (scope->structure && !ofc_sema_structure_list_print(
@@ -1598,7 +1624,7 @@ bool ofc_sema_scope_print(
 				return false;
 		}
 
-		if (!ofc_colstr_atomic_writef(cs, "%s ", kwstr))
+		if (!ofc_colstr_keyword_atomic_writef(cs, "%s ", kwstr))
 			return false;
 
 		if (scope->name.base)
@@ -1637,7 +1663,7 @@ bool ofc_sema_scope_print(
 		const unsigned* ulabel = (label ? &label->number : NULL);
 
 		if (!ofc_colstr_newline(cs, indent, ulabel)
-			|| !ofc_colstr_atomic_writef(cs, "END %s ", kwstr))
+			|| !ofc_colstr_keyword_atomic_writef(cs, "END %s ", kwstr))
 			return false;
 
 		if (scope->name.base)
@@ -1816,7 +1842,8 @@ bool ofc_sema_scope_list_foreach(
 	unsigned i;
 	for (i = 0; i < list->count; i++)
 	{
-		if (!func(list->scope[i], param))
+		if (!ofc_sema_scope_foreach_scope(
+			list->scope[i], param, func))
 			return false;
 	}
 
@@ -1864,7 +1891,7 @@ bool ofc_sema_scope_foreach_stmt(
 	ofc_sema_scope_t* scope, void* param,
 	bool (*func)(ofc_sema_stmt_t* stmt, void* param))
 {
-	if (!scope)
+	if (!scope || !func)
 		return false;
 
 	if (scope->stmt
@@ -1931,3 +1958,46 @@ bool ofc_sema_scope_foreach_structure(
 }
 
 
+
+static bool ofc_sema_scope_common_usage_print__decl(
+	ofc_sema_decl_t* decl, void* param)
+{
+	(void)param;
+
+	if (!decl)
+		return false;
+
+	if (!decl->was_read
+		&& !decl->was_written)
+		return true;
+
+	if (!decl->common)
+		return true;
+
+	printf("/%.*s/%.*s\n",
+		decl->common->name.size,
+		decl->common->name.base,
+		decl->name.string.size,
+		decl->name.string.base);
+	return true;
+}
+
+static bool ofc_sema_scope_common_usage_print__scope(
+	ofc_sema_scope_t* scope, void* param)
+{
+	if (!scope)
+		return false;
+
+	return ofc_sema_scope_foreach_decl(
+		scope, param, ofc_sema_scope_common_usage_print__decl);
+}
+
+void ofc_sema_scope_common_usage_print(
+	const ofc_sema_scope_t* scope)
+{
+	ofc_sema_scope_common_usage_print__scope(
+		(ofc_sema_scope_t*)scope, NULL);
+	ofc_sema_scope_foreach_scope(
+		(ofc_sema_scope_t*)scope, NULL,
+		ofc_sema_scope_common_usage_print__scope);
+}

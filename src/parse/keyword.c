@@ -46,6 +46,9 @@ static const char* ofc_parse_keyword__name[] =
 	"GO TO",
 	"DO",
 	"WHILE",
+	"SELECT",
+	"CASE",
+	"DEFAULT",
 	"CONTINUE",
 	"STOP",
 	"PAUSE",
@@ -94,6 +97,9 @@ static const char* ofc_parse_keyword__name[] =
 	"PARAMETER",
 	"SAVE",
 
+	"PUBLIC",
+	"PRIVATE",
+
 	"FORMAT",
 
 	"OPEN",
@@ -110,6 +116,8 @@ static const char* ofc_parse_keyword__name[] =
 	"DECODE",
 	"ACCEPT",
 	"DEFINE FILE",
+
+	"RESHAPE",
 
 	NULL
 };

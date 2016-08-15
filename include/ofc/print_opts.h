@@ -24,14 +24,16 @@ typedef struct
 	unsigned indent_max_level;
 
 	bool     f77_parameter;
+	bool     lowercase_keyword;
 } ofc_print_opts_t;
 
 static const ofc_print_opts_t
 	OFC_PRINT_OPTS_DEFAULT =
 {
-	.indent_width     = 2,
-	.indent_max_level = 4,
-	.f77_parameter    = false,
+	.indent_width      = 2,
+	.indent_max_level  = 4,
+	.f77_parameter     = false,
+	.lowercase_keyword = false,
 };
 
 #endif

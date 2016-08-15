@@ -63,6 +63,7 @@ typedef enum
 	OFC_PARSE_STMT_IF_COMPUTED,
 	OFC_PARSE_STMT_IF_STATEMENT,
 	OFC_PARSE_STMT_IF_THEN,
+	OFC_PARSE_STMT_SELECT_CASE,
 	OFC_PARSE_STMT_DO_LABEL,
 	OFC_PARSE_STMT_DO_BLOCK,
 	OFC_PARSE_STMT_DO_WHILE,
@@ -91,6 +92,8 @@ typedef enum
 	OFC_PARSE_STMT_SAVE,
 	OFC_PARSE_STMT_PARAMETER,
 	OFC_PARSE_STMT_ASSIGN,
+	OFC_PARSE_STMT_PUBLIC,
+	OFC_PARSE_STMT_PRIVATE,
 } ofc_parse_stmt_e;
 
 struct ofc_parse_stmt_s
@@ -126,8 +129,13 @@ struct ofc_parse_stmt_s
 
 		struct
 		{
-			ofc_parse_type_t*      type;
-			ofc_parse_decl_list_t* decl;
+			bool                     save;
+			bool                     parameter;
+			bool                     is_public;
+			bool                     is_private;
+			ofc_parse_array_index_t* dimension;
+			ofc_parse_type_t*        type;
+			ofc_parse_decl_list_t*   decl;
 		} decl;
 
 		ofc_parse_common_group_list_t* common_namelist;
@@ -187,6 +195,18 @@ struct ofc_parse_stmt_s
 			bool end_if_has_label;
 			unsigned end_if_label;
 		} if_then;
+
+		struct
+		{
+			ofc_parse_expr_t* case_expr;
+
+			unsigned                  count;
+			ofc_parse_array_index_t** case_value;
+			ofc_parse_stmt_list_t**   case_block;
+
+			bool end_select_case_has_label;
+			unsigned end_select_case_label;
+		} select_case;
 
 		struct
 		{
@@ -267,6 +287,11 @@ struct ofc_parse_stmt_s
 		{
 			ofc_parse_assign_list_t* list;
 		} parameter;
+
+		struct
+		{
+			ofc_parse_lhs_list_t* list;
+		} public_private;
 
 		struct
 		{

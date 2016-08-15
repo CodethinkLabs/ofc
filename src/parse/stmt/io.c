@@ -43,7 +43,7 @@ ofc_colstr_t* cs, int key_val)
 	{
 		if (io_stmt__keyword[i].key_val == key_val)
 		{
-			return ofc_colstr_atomic_writef(cs, "%s",
+			return ofc_colstr_keyword_atomic_writef(cs, "%s",
         io_stmt__keyword[i].keyword);
 		}
 	}
@@ -441,9 +441,8 @@ static unsigned ofc_parse_stmt_io__print_type_accept(
 	stmt->io_print.format_asterisk = false;
 
 	unsigned len;
-	stmt->io_print.format
-		= ofc_parse_expr_integer_variable(
-			src, &ptr[i], debug, &len);
+	stmt->io_print.format = ofc_parse_expr(
+		src, &ptr[i], debug, &len);
 	if (!stmt->io_print.format)
 	{
 		if (ptr[i] == '*')
