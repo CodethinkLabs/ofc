@@ -53,9 +53,9 @@ struct ofc_sema_scope_s
 
 	ofc_sema_accessibility_e access;
 
-	bool external;
-	bool intrinsic;
-	bool save;
+	bool attr_external;
+	bool attr_intrinsic;
+	bool attr_save;
 
 	ofc_sema_implicit_t*  implicit;
 
@@ -64,6 +64,7 @@ struct ofc_sema_scope_s
 	ofc_sema_equiv_list_t*  equiv;
 	ofc_sema_module_list_t* module;
 	ofc_sema_label_map_t*   label;
+	ofc_sema_external_list_t* external;
 	/* namelist_list_map */
 
 	ofc_sema_structure_list_t* structure;

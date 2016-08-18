@@ -143,6 +143,16 @@ bool ofc_sema_decl_type_finalize(
 		if (!ltype) return false;
 	}
 
+	/* Externals are always functions or subroutines
+	   but we always know if a declaration is a subroutine */
+	if (decl->is_external
+		&& !ofc_sema_decl_is_subroutine(decl)
+		&& !ofc_sema_decl_is_function(decl))
+	{
+		ltype = ofc_sema_type_create_function(ltype);
+		if (!ltype) return false;
+	}
+
 	decl->type = ltype;
 	decl->type_implicit = false;
 	decl->type_final    = true;
@@ -163,6 +173,10 @@ bool ofc_sema_decl_function(
 		|| ofc_sema_decl_is_final(decl)
 		|| !ofc_sema_decl_type_finalize(decl))
 		return false;
+
+	/* Re-check in case it was finalized as a function */
+	if (ofc_sema_decl_is_function(decl))
+		return true;
 
 	const ofc_sema_type_t* ftype
 		= ofc_sema_type_create_function(decl->type);
@@ -2426,13 +2440,6 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 			&& ofc_sema_decl_print_name(cs, decl));
 	}
 
-	if (ofc_sema_decl_is_unknown_external(decl))
-	{
-		return (ofc_colstr_keyword_atomic_writez(cs, "EXTERNAL")
-			&& ofc_colstr_atomic_writef(cs, " ")
-			&& ofc_sema_decl_print_name(cs, decl));
-	}
-
 	if (!decl->type)
 		return false;
 
@@ -2701,15 +2708,6 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 	if (f77_parameter
 		&& !ofc_colstr_atomic_writef(cs, ")"))
 		return false;
-
-	if (decl->is_external)
-	{
-		if (!ofc_colstr_newline(cs, indent, NULL)
-			|| !ofc_colstr_keyword_atomic_writez(cs, "EXTERNAL")
-			|| !ofc_colstr_atomic_writef(cs, " ")
-			|| !ofc_sema_decl_print_name(cs, decl))
-			return false;
-	}
 
 	return true;
 }

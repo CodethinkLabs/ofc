@@ -52,6 +52,7 @@ typedef struct ofc_sema_format_label_list_s ofc_sema_format_label_list_t;
 #include <ofc/sema/arg.h>
 #include <ofc/sema/range.h>
 #include <ofc/sema/accessibility.h>
+#include <ofc/sema/external.h>
 
 #include <ofc/sema/stmt.h>
 #include <ofc/sema/type.h>

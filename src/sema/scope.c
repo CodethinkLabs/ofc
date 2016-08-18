@@ -37,6 +37,7 @@ void ofc_sema_scope_delete(
 	ofc_sema_decl_list_delete(scope->decl);
 	ofc_sema_equiv_list_delete(scope->equiv);
 	ofc_sema_label_map_delete(scope->label);
+	ofc_sema_external_list_delete(scope->external);
 
 	ofc_sema_structure_list_delete(scope->structure);
 	ofc_sema_structure_list_delete(scope->derived_type);
@@ -94,9 +95,9 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 
 	scope->module = NULL;
 
-	scope->external = false;
-	scope->intrinsic = false;
-	scope->save = false;
+	scope->attr_external = false;
+	scope->attr_intrinsic = false;
+	scope->attr_save = false;
 
 	scope->access = OFC_SEMA_ACCESSIBILITY_DEFAULT;
 
@@ -115,10 +116,15 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 	scope->expr = NULL;
 	scope->stmt = NULL;
 
+	scope->external = NULL;
+
 	if (scope->type == OFC_SEMA_SCOPE_SUPER)
 		return scope;
 
 	scope->decl = ofc_sema_decl_list_create(
+		global_opts.case_sensitive);
+
+	scope->external = ofc_sema_external_list_create(
 		global_opts.case_sensitive);
 
 	bool alloc_fail = !scope->decl;
@@ -141,6 +147,7 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 				global_opts.case_sensitive);
 
 		scope->label = ofc_sema_label_map_create();
+
 
 
 
@@ -1309,12 +1316,26 @@ ofc_sema_decl_t* ofc_sema_scope_decl_find__create(
 		decl = ofc_sema_decl_create(
 			ofc_sema_scope_implicit(scope), name);
 		if (!decl) return NULL;
-		decl->is_static = scope->save;
+		decl->is_static = scope->attr_save;
 
 		if (name_space != NULL)
 		{
 			ofc_sema_scope__check_namespace_collision(
 				scope, name_space, name);
+		}
+
+		ofc_sema_external_t* external
+			= ofc_sema_external_list_find_modify(
+				scope->external, name.string);
+		if (external)
+		{
+			decl->is_external = true;
+			if (!ofc_sema_decl_reference(decl))
+			{
+				ofc_sema_decl_delete(decl);
+				return NULL;
+			}
+			external->decl = decl;
 		}
 
 		if (!ofc_sema_decl_list_add(
@@ -1521,6 +1542,14 @@ static bool ofc_sema_scope_body__print(
 			&& (!ofc_colstr_newline(cs, indent, NULL)
 				|| !ofc_colstr_keyword_atomic_writez(cs, "PRIVATE")))
 			return false;
+	}
+
+	if (scope->external
+		&& !ofc_sema_external_list_print(cs, indent, scope->external))
+	{
+		ofc_file_error(NULL, NULL,
+			"Failed to print externals list");
+		return false;
 	}
 
 	if (scope->structure && !ofc_sema_structure_list_print(

@@ -623,10 +623,11 @@ static bool ofc_sema_stmt_list__entry(
 		case OFC_PARSE_STMT_DECL_ATTR_AUTOMATIC:
 		case OFC_PARSE_STMT_DECL_ATTR_STATIC:
 		case OFC_PARSE_STMT_DECL_ATTR_VOLATILE:
-		case OFC_PARSE_STMT_DECL_ATTR_EXTERNAL:
 			return ofc_sema_stmt_decl_attr(scope, stmt);
 		case OFC_PARSE_STMT_DECL_ATTR_INTRINSIC:
 			return ofc_sema_stmt_intrinsic(scope, stmt);
+		case OFC_PARSE_STMT_DECL_ATTR_EXTERNAL:
+			return ofc_sema_stmt_external(scope, stmt);
 
 		case OFC_PARSE_STMT_SAVE:
 			return ofc_sema_stmt_save(scope, stmt);
