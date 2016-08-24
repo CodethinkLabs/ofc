@@ -274,25 +274,35 @@ bool ofc_parse_stmt_if_print(
 
 	if (stmt->type == OFC_PARSE_STMT_IF_COMPUTED)
 	{
-		if (!ofc_colstr_keyword_atomic_writef(cs, "IF (")
+		if (!ofc_colstr_keyword_atomic_writez(cs, "IF")
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_colstr_atomic_writef(cs, "(")
 			|| !ofc_parse_expr_print(cs, stmt->if_comp.cond)
-			|| !ofc_colstr_atomic_writef(cs, ") ")
+			|| !ofc_colstr_atomic_writef(cs, ")")
+			|| !ofc_colstr_atomic_writef(cs, " ")
 			|| !ofc_parse_expr_list_print(cs, stmt->if_comp.label))
 			return false;
 	}
 	else if (stmt->type == OFC_PARSE_STMT_IF_STATEMENT)
 	{
-		if (!ofc_colstr_keyword_atomic_writef(cs, "IF (")
+		if (!ofc_colstr_keyword_atomic_writez(cs, "IF")
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_colstr_atomic_writef(cs, "(")
 			|| !ofc_parse_expr_print(cs, stmt->if_stmt.cond)
-			|| !ofc_colstr_atomic_writef(cs, ") ")
+			|| !ofc_colstr_atomic_writef(cs, ")")
+			|| !ofc_colstr_atomic_writef(cs, " ")
 			|| !ofc_parse_stmt_print(cs, indent, stmt->if_stmt.stmt))
 			return false;
 	}
 	else if (stmt->type == OFC_PARSE_STMT_IF_THEN)
 	{
-		if (!ofc_colstr_keyword_atomic_writef(cs, "IF (")
+		if (!ofc_colstr_keyword_atomic_writez(cs, "IF")
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_colstr_atomic_writef(cs, "(")
 			|| !ofc_parse_expr_print(cs, stmt->if_then.cond)
-			|| !ofc_colstr_keyword_atomic_writef(cs, ") THEN"))
+			|| !ofc_colstr_atomic_writef(cs, ")")
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_colstr_keyword_atomic_writez(cs, "THEN"))
 			return false;
 
 		if (stmt->if_then.block_then
@@ -312,7 +322,7 @@ bool ofc_parse_stmt_if_print(
 					return false;
 			}
 
-			if (!ofc_colstr_keyword_atomic_writef(cs, "ELSE"))
+			if (!ofc_colstr_keyword_atomic_writez(cs, "ELSE"))
 				return false;
 
 			if (!ofc_parse_stmt_list_print(
@@ -325,7 +335,7 @@ bool ofc_parse_stmt_if_print(
 		if (!ofc_colstr_newline(cs, indent, ulabel))
 				return false;
 
-		if (!ofc_colstr_keyword_atomic_writef(cs, "END IF"))
+		if (!ofc_colstr_keyword_atomic_writez(cs, "END IF"))
 			return false;
 	}
 	else

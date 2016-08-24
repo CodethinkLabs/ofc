@@ -174,7 +174,7 @@ bool ofc_parse_stmt_decl_print(
 		{
 			if (!ofc_colstr_atomic_writef(cs, ",")
 				|| !ofc_colstr_atomic_writef(cs, " ")
-				|| !ofc_colstr_keyword_atomic_writef(cs, "SAVE"))
+				|| !ofc_colstr_keyword_atomic_writez(cs, "SAVE"))
 				return false;
 		}
 
@@ -182,7 +182,7 @@ bool ofc_parse_stmt_decl_print(
 		{
 			if (!ofc_colstr_atomic_writef(cs, ",")
 				|| !ofc_colstr_atomic_writef(cs, " ")
-				|| !ofc_colstr_keyword_atomic_writef(cs, "PARAMETER"))
+				|| !ofc_colstr_keyword_atomic_writez(cs, "PARAMETER"))
 				return false;
 		}
 
@@ -190,7 +190,7 @@ bool ofc_parse_stmt_decl_print(
 		{
 			if (!ofc_colstr_atomic_writef(cs, ",")
 				|| !ofc_colstr_atomic_writef(cs, " ")
-				|| !ofc_colstr_keyword_atomic_writef(cs, "PUBLIC"))
+				|| !ofc_colstr_keyword_atomic_writez(cs, "PUBLIC"))
 				return false;
 		}
 
@@ -198,7 +198,7 @@ bool ofc_parse_stmt_decl_print(
 		{
 			if (!ofc_colstr_atomic_writef(cs, ",")
 				|| !ofc_colstr_atomic_writef(cs, " ")
-				|| !ofc_colstr_keyword_atomic_writef(cs, "PRIVATE"))
+				|| !ofc_colstr_keyword_atomic_writez(cs, "PRIVATE"))
 				return false;
 		}
 
@@ -206,7 +206,7 @@ bool ofc_parse_stmt_decl_print(
 		{
 			if (!ofc_colstr_atomic_writef(cs, ",")
 				|| !ofc_colstr_atomic_writef(cs, " ")
-				|| !ofc_colstr_keyword_atomic_writef(cs, "DIMENSION")
+				|| !ofc_colstr_keyword_atomic_writez(cs, "DIMENSION")
 				|| !ofc_parse_array_index_print(
 					cs, stmt->decl.dimension, true))
 				return false;

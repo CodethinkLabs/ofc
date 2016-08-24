@@ -406,7 +406,8 @@ bool ofc_sema_stmt_do_label_print(
 	if (!cs || (stmt->type != OFC_SEMA_STMT_DO_LABEL))
 		return false;
 
-	if (!ofc_colstr_keyword_atomic_writef(cs, "DO ")
+	if (!ofc_colstr_keyword_atomic_writez(cs, "DO")
+		|| !ofc_colstr_atomic_writef(cs, " ")
 		|| !ofc_sema_expr_print(cs, stmt->do_label.end_label)
 		|| !ofc_colstr_atomic_writef(cs, ",")
 		|| !ofc_colstr_atomic_writef(cs, " ")
@@ -443,7 +444,7 @@ bool ofc_sema_stmt_do_block_print(
 	if (!cs || (stmt->type != OFC_SEMA_STMT_DO_BLOCK))
 		return false;
 
-	if (!ofc_colstr_keyword_atomic_writef(cs, "DO"))
+	if (!ofc_colstr_keyword_atomic_writez(cs, "DO"))
 		return false;
 
 	if (stmt->do_block.iter)
@@ -483,7 +484,7 @@ bool ofc_sema_stmt_do_block_print(
 	if (label) ulabel = &label->number;
 
 	if (!ofc_colstr_newline(cs, indent, ulabel)
-		|| !ofc_colstr_keyword_atomic_writef(cs, "END DO"))
+		|| !ofc_colstr_keyword_atomic_writez(cs, "END DO"))
 		return false;
 
 	return true;
@@ -496,7 +497,7 @@ bool ofc_sema_stmt_do_while_print(
 	if (!cs || (stmt->type != OFC_SEMA_STMT_DO_WHILE))
 		return false;
 
-	if (!ofc_colstr_keyword_atomic_writef(cs, "DO WHILE")
+	if (!ofc_colstr_keyword_atomic_writez(cs, "DO WHILE")
 		|| !ofc_sema_expr_print(cs, stmt->do_while.end_label)
 		|| !ofc_sema_expr_print(cs, stmt->do_while.cond))
 		return false;
@@ -512,7 +513,7 @@ bool ofc_sema_stmt_do_while_block_print(
 	if (!cs || (stmt->type != OFC_SEMA_STMT_DO_WHILE_BLOCK))
 		return false;
 
-	if (!ofc_colstr_keyword_atomic_writef(cs, "DO WHILE")
+	if (!ofc_colstr_keyword_atomic_writez(cs, "DO WHILE")
 		|| !ofc_colstr_atomic_writef(cs, " ")
 		|| !ofc_colstr_atomic_writef(cs, "(")
 		|| !ofc_sema_expr_print(cs, stmt->do_while_block.cond)
@@ -529,7 +530,7 @@ bool ofc_sema_stmt_do_while_block_print(
 	if (label) ulabel = &label->number;
 
 	if (!ofc_colstr_newline(cs, indent, ulabel)
-		|| !ofc_colstr_keyword_atomic_writef(cs, "END DO"))
+		|| !ofc_colstr_keyword_atomic_writez(cs, "END DO"))
 		return false;
 
 	return true;
@@ -572,9 +573,9 @@ bool ofc_sema_stmt_cycle_exit_print(
 	switch (stmt->type)
 	{
 		case OFC_SEMA_STMT_CYCLE:
-			return ofc_colstr_keyword_atomic_writef(cs, "CYCLE");
+			return ofc_colstr_keyword_atomic_writez(cs, "CYCLE");
 		case OFC_SEMA_STMT_EXIT:
-			return ofc_colstr_keyword_atomic_writef(cs, "EXIT");
+			return ofc_colstr_keyword_atomic_writez(cs, "EXIT");
 		default:
 			break;
 	}

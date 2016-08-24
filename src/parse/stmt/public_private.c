@@ -83,7 +83,8 @@ bool ofc_parse_stmt__public_private_print(
 			return false;
 	}
 
-	if (!ofc_colstr_keyword_atomic_writef(cs, "%s ", kwstr))
+	if (!ofc_colstr_keyword_atomic_writez(cs, kwstr)
+		|| !ofc_colstr_atomic_writef(cs, " "))
 		return false;
 
 	if (stmt->public_private.list

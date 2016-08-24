@@ -2421,14 +2421,14 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 
 	if (decl->is_intrinsic)
 	{
-		return (ofc_colstr_keyword_atomic_writef(cs, "INTRINSIC")
+		return (ofc_colstr_keyword_atomic_writez(cs, "INTRINSIC")
 			&& ofc_colstr_atomic_writef(cs, " ")
 			&& ofc_sema_decl_print_name(cs, decl));
 	}
 
 	if (ofc_sema_decl_is_unknown_external(decl))
 	{
-		return (ofc_colstr_keyword_atomic_writef(cs, "EXTERNAL")
+		return (ofc_colstr_keyword_atomic_writez(cs, "EXTERNAL")
 			&& ofc_colstr_atomic_writef(cs, " ")
 			&& ofc_sema_decl_print_name(cs, decl));
 	}
@@ -2454,7 +2454,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 
 		if (ofc_sema_structure_is_derived_type(decl->structure))
 		{
-			if (!ofc_colstr_keyword_atomic_writef(cs, "TYPE")
+			if (!ofc_colstr_keyword_atomic_writez(cs, "TYPE")
 				|| !ofc_colstr_atomic_writef(cs, "(")
 				|| !ofc_sema_structure_print_name(cs, decl->structure)
 				|| !ofc_colstr_atomic_writef(cs, ")"))
@@ -2462,7 +2462,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 		}
 		else
 		{
-			return (ofc_colstr_keyword_atomic_writef(cs, "RECORD")
+			return (ofc_colstr_keyword_atomic_writez(cs, "RECORD")
 				&& ofc_colstr_atomic_writef(cs, " ")
 				&& ofc_colstr_atomic_writef(cs, "/")
 				&& ofc_sema_structure_print_name(cs, decl->structure)
@@ -2495,7 +2495,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 	{
 		if (!ofc_colstr_atomic_writef(cs, ",")
 			|| !ofc_colstr_atomic_writef(cs, " ")
-			|| !ofc_colstr_keyword_atomic_writef(cs, "VOLATILE"))
+			|| !ofc_colstr_keyword_atomic_writez(cs, "VOLATILE"))
 			return false;
 	}
 
@@ -2503,7 +2503,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 	{
 		if (!ofc_colstr_atomic_writef(cs, ",")
 			|| !ofc_colstr_atomic_writef(cs, " ")
-			|| !ofc_colstr_keyword_atomic_writef(cs, "SAVE"))
+			|| !ofc_colstr_keyword_atomic_writez(cs, "SAVE"))
 			return false;
 	}
 
@@ -2511,7 +2511,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 	{
 		if (!ofc_colstr_atomic_writef(cs, ",")
 			|| !ofc_colstr_atomic_writef(cs, " ")
-			|| !ofc_colstr_keyword_atomic_writef(cs, "PARAMETER"))
+			|| !ofc_colstr_keyword_atomic_writez(cs, "PARAMETER"))
 			return false;
 	}
 
@@ -2519,7 +2519,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 	{
 		if (!ofc_colstr_atomic_writef(cs, ",")
 			|| !ofc_colstr_atomic_writef(cs, " ")
-			|| !ofc_colstr_keyword_atomic_writef(cs, "POINTER"))
+			|| !ofc_colstr_keyword_atomic_writez(cs, "POINTER"))
 			return false;
 	}
 
@@ -2527,7 +2527,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 	{
 		if (!ofc_colstr_atomic_writef(cs, ",")
 			|| !ofc_colstr_atomic_writef(cs, " ")
-			|| !ofc_colstr_keyword_atomic_writef(cs, "PUBLIC"))
+			|| !ofc_colstr_keyword_atomic_writez(cs, "PUBLIC"))
 			return false;
 	}
 
@@ -2535,7 +2535,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 	{
 		if (!ofc_colstr_atomic_writef(cs, ",")
 			|| !ofc_colstr_atomic_writef(cs, " ")
-			|| !ofc_colstr_keyword_atomic_writef(cs, "PRIVATE"))
+			|| !ofc_colstr_keyword_atomic_writez(cs, "PRIVATE"))
 			return false;
 	}
 
@@ -2543,7 +2543,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 	{
 		if (!ofc_colstr_atomic_writef(cs, ",")
 			|| !ofc_colstr_atomic_writef(cs, " ")
-			|| !ofc_colstr_keyword_atomic_writef(cs, "TARGET"))
+			|| !ofc_colstr_keyword_atomic_writez(cs, "TARGET"))
 			return false;
 	}
 
@@ -2551,7 +2551,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 	{
 		if (!ofc_colstr_atomic_writef(cs, ",")
 			|| !ofc_colstr_atomic_writef(cs, " ")
-			|| !ofc_colstr_keyword_atomic_writef(cs, "DIMENSION")
+			|| !ofc_colstr_keyword_atomic_writez(cs, "DIMENSION")
 			|| !ofc_sema_array_print_brackets(cs, decl->array))
 			return false;
 	}
@@ -2569,7 +2569,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 	if (f77_parameter)
 	{
 		if (!ofc_colstr_newline(cs, indent, NULL)
-			|| !ofc_colstr_keyword_atomic_writef(cs, "PARAMETER")
+			|| !ofc_colstr_keyword_atomic_writez(cs, "PARAMETER")
 			|| !ofc_colstr_atomic_writef(cs, " ")
 			|| !ofc_colstr_atomic_writef(cs, "(")
 			|| !ofc_sema_decl_print_name(cs, decl))
@@ -2594,7 +2594,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 
 			if (reshape)
 			{
-				if (!ofc_colstr_keyword_atomic_writef(cs, "RESHAPE")
+				if (!ofc_colstr_keyword_atomic_writez(cs, "RESHAPE")
 					|| !ofc_colstr_atomic_writef(cs, "("))
 					return false;
 			}
@@ -2681,7 +2681,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 	if (decl->is_external)
 	{
 		if (!ofc_colstr_newline(cs, indent, NULL)
-			|| !ofc_colstr_keyword_atomic_writef(cs, "EXTERNAL")
+			|| !ofc_colstr_keyword_atomic_writez(cs, "EXTERNAL")
 			|| !ofc_colstr_atomic_writef(cs, " ")
 			|| !ofc_sema_decl_print_name(cs, decl))
 			return false;
@@ -2755,7 +2755,7 @@ bool ofc_sema_decl_print_data_init(ofc_colstr_t* cs,
 		return true;
 
 	if (!ofc_colstr_newline(cs, indent, NULL)
-		|| !ofc_colstr_keyword_atomic_writef(cs, "DATA")
+		|| !ofc_colstr_keyword_atomic_writez(cs, "DATA")
 		|| !ofc_colstr_atomic_writef(cs, " "))
 		return false;
 

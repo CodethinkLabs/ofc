@@ -41,7 +41,8 @@ bool ofc_parse_stmt_save_print(
 	if (!stmt)
 		return false;
 
-	if (!ofc_colstr_keyword_atomic_writef(cs, "SAVE "))
+	if (!ofc_colstr_keyword_atomic_writez(cs, "SAVE")
+		|| !ofc_colstr_atomic_writef(cs, " "))
 		return false;
 
 	return (!stmt->save.list

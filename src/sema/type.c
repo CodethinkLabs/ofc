@@ -1470,18 +1470,18 @@ bool ofc_sema_type_print(
 	bool kind_abs = false;
 	if (print_double)
 	{
-		if (!ofc_colstr_keyword_atomic_writef(cs, "DOUBLE")
+		if (!ofc_colstr_keyword_atomic_writez(cs, "DOUBLE")
 			|| !ofc_colstr_atomic_writef(cs, " "))
 			return false;
 
-		if (!ofc_colstr_keyword_atomic_writef(cs,
+		if (!ofc_colstr_keyword_atomic_writez(cs,
 			(type->type == OFC_SEMA_TYPE_COMPLEX
 				? "COMPLEX" : "PRECISION")))
 			return false;
 	}
 	else
 	{
-		if (!ofc_colstr_keyword_atomic_writef(cs, "%s",
+		if (!ofc_colstr_keyword_atomic_writez(cs,
 			ofc_sema_type__name[type->type]))
 			return false;
 
@@ -1507,7 +1507,7 @@ bool ofc_sema_type_print(
 
 		if (print_kind)
 		{
-			if (!ofc_colstr_keyword_atomic_writef(cs, "KIND")
+			if (!ofc_colstr_keyword_atomic_writez(cs, "KIND")
 				|| !ofc_colstr_atomic_writef(cs, "=")
 				|| !ofc_colstr_atomic_writef(cs, "%u", type->kind))
 				return false;
@@ -1520,7 +1520,7 @@ bool ofc_sema_type_print(
 			{
 				if (!ofc_colstr_atomic_writef(cs, ",")
 					|| !ofc_colstr_atomic_writef(cs, " ")
-					|| !ofc_colstr_keyword_atomic_writef(cs, "LEN")
+					|| !ofc_colstr_keyword_atomic_writez(cs, "LEN")
 					|| !ofc_colstr_atomic_writef(cs, "="))
 					return false;
 			}

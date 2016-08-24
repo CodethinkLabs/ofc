@@ -245,7 +245,7 @@ bool ofc_parse_stmt_structure_print(
 			return false;
 	}
 
-	if (!ofc_colstr_keyword_atomic_writef(cs, "%s", kwstr))
+	if (!ofc_colstr_keyword_atomic_writez(cs, kwstr))
 		return false;
 
 	if (!ofc_sparse_ref_empty(stmt->structure.name))
@@ -273,5 +273,5 @@ bool ofc_parse_stmt_sequence_print(
 	if (!cs || !stmt
 		|| (stmt->type != OFC_PARSE_STMT_SEQUENCE))
 		return false;
-	return ofc_colstr_keyword_atomic_writef(cs, "SEQUENCE");
+	return ofc_colstr_keyword_atomic_writez(cs, "SEQUENCE");
 }

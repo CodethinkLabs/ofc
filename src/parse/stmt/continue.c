@@ -34,5 +34,5 @@ bool ofc_parse_stmt_continue_print(
 	if (!stmt)
 		return false;
 
-	return ofc_colstr_keyword_atomic_writef(cs, "CONTINUE");
+	return ofc_colstr_keyword_atomic_writez(cs, "CONTINUE");
 }

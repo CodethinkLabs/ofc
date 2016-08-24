@@ -60,7 +60,7 @@ bool ofc_sema_stmt_io_format_print(
 		|| (stmt->type != OFC_SEMA_STMT_IO_FORMAT))
 		return false;
 
-	if (!ofc_colstr_keyword_atomic_writef(cs, "FORMAT")
+	if (!ofc_colstr_keyword_atomic_writez(cs, "FORMAT")
 		|| !ofc_colstr_atomic_writef(cs, " ")
 		|| !ofc_colstr_atomic_writef(cs, "("))
 		return false;

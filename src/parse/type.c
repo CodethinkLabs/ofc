@@ -279,7 +279,7 @@ bool ofc_parse_type_print(
 		|| (type->type == OFC_PARSE_TYPE_RECORD))
 		return false;
 
-	if (!ofc_colstr_keyword_atomic_writef(cs, "%s",
+	if (!ofc_colstr_keyword_atomic_writez(cs,
 		ofc_parse_type_str_rep(type->type)))
 		return false;
 
@@ -323,7 +323,7 @@ bool ofc_parse_type_print_f77(
 	if (type->type >= OFC_PARSE_TYPE_COUNT)
 		return false;
 
-	if (!ofc_colstr_keyword_atomic_writef(cs, "%s",
+	if (!ofc_colstr_keyword_atomic_writez(cs,
 		ofc_parse_type__name[type->type]))
 		return false;
 

@@ -67,6 +67,7 @@ bool ofc_parse_stmt_dimension_print(
 	if (!stmt)
 		return false;
 
-	return (ofc_colstr_keyword_atomic_writef(cs, "DIMENSION ")
+	return (ofc_colstr_keyword_atomic_writez(cs, "DIMENSION")
+		&& ofc_colstr_atomic_writef(cs, " ")
 		&& ofc_parse_lhs_list_print(cs, stmt->dimension, true));
 }

@@ -59,8 +59,9 @@ bool ofc_parse_stmt_implicit_print(
 		return false;
 
 	if (stmt->type == OFC_PARSE_STMT_IMPLICIT_NONE)
-		return ofc_colstr_keyword_atomic_writef(cs, "IMPLICIT NONE");
+		return ofc_colstr_keyword_atomic_writez(cs, "IMPLICIT NONE");
 
-	return (ofc_colstr_keyword_atomic_writef(cs, "IMPLICIT ")
+	return (ofc_colstr_keyword_atomic_writez(cs, "IMPLICIT")
+		&& ofc_colstr_atomic_writef(cs, " ")
 		&& ofc_parse_implicit_list_print(cs, stmt->implicit));
 }

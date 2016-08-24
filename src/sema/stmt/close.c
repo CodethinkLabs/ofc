@@ -271,7 +271,7 @@ static bool ofc_sema_stmt_close__print_optional(
 
 	if (!ofc_colstr_atomic_writef(cs, ",")
 		|| !ofc_colstr_atomic_writef(cs, " ")
-		|| !ofc_colstr_atomic_writef(cs, name)
+		|| !ofc_colstr_atomic_writef(cs, "%s", name)
 		|| !ofc_colstr_atomic_writef(cs, "= ")
 		|| !ofc_sema_expr_print(cs, expr))
 		return false;
@@ -286,7 +286,7 @@ bool ofc_sema_stmt_io_close_print(
 	if (!cs || !stmt || stmt->type != OFC_SEMA_STMT_IO_CLOSE)
 		return false;
 
-	if (!ofc_colstr_keyword_atomic_writef(cs, "CLOSE")
+	if (!ofc_colstr_keyword_atomic_writez(cs, "CLOSE")
 		|| !ofc_colstr_atomic_writef(cs, " ")
 		|| !ofc_colstr_atomic_writef(cs, "(")
 		|| !ofc_sema_expr_print(cs, stmt->io_close.unit))
