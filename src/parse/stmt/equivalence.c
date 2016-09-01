@@ -53,7 +53,8 @@ bool ofc_parse_stmt_equivalence_print(
 	if (!stmt)
 		return false;
 
-	return (ofc_colstr_keyword_atomic_writef(cs, "EQUIVALENCE ")
+	return (ofc_colstr_keyword_atomic_writez(cs, "EQUIVALENCE")
+		&& ofc_colstr_atomic_writef(cs, " ")
 		&& ofc_parse_list_print(cs,
 			stmt->equivalence.count,
 			(const void**)stmt->equivalence.group,

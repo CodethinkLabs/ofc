@@ -389,7 +389,7 @@ static bool ofc_global_pass_args__scope_decl(
 	{
 		ofc_global_pass_args__check(list, scope);
 	}
-	else
+	else if (global_opts.warn_unused_procedure)
 	{
 		ofc_file_warning(NULL, NULL, "Unused %s '%.*s'",
 			((scope->type == OFC_SEMA_SCOPE_SUBROUTINE) ? "SUBROUTINE" : "FUNCTION"),

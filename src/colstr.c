@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "ofc/colstr.h"
 
@@ -561,6 +562,31 @@ bool ofc_colstr_atomic_writef(
 		cstr, buff, len);
 }
 
+bool ofc_colstr_keyword_atomic_writez(
+	ofc_colstr_t* cstr, const char* keyword)
+{
+	if (!keyword)
+		return false;
+
+	size_t len = strlen(keyword);
+	if (len <= 0) return false;
+
+	if (cstr->print_opts.lowercase_keyword)
+	{
+		char buff[len + 1];
+		unsigned i;
+		for(i = 0; keyword[i]; i++)
+			buff[i] = tolower(keyword[i]);
+		buff[len] = '\0';
+
+		return ofc_colstr_atomic_write(
+			cstr, buff, len);
+	}
+
+	return ofc_colstr_atomic_write(
+		cstr, keyword, len);
+}
+
 bool ofc_colstr_keyword_atomic_writef(
 	ofc_colstr_t* cstr,
 	const char* format, ...)
@@ -586,16 +612,9 @@ bool ofc_colstr_keyword_atomic_writef(
 	if (len != plen)
 		return false;
 
-	if (cstr->print_opts.lowercase_keyword)
-	{
-		unsigned i;
-		for(i = 0; buff[i]; i++)
-			buff[i] = tolower(buff[i]);
-	}
-
-	return ofc_colstr_atomic_write(
-		cstr, buff, len);
+	return ofc_colstr_keyword_atomic_writez(cstr, buff);
 }
+
 
 bool ofc_colstr_fdprint(ofc_colstr_t* cstr, int fd)
 {

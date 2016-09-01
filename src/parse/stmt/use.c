@@ -108,7 +108,7 @@ bool ofc_parse_stmt_use_print(
 		|| stmt->type != OFC_PARSE_STMT_USE)
 		return false;
 
-	if (!ofc_colstr_keyword_atomic_writef(cs, "USE")
+	if (!ofc_colstr_keyword_atomic_writez(cs, "USE")
 		|| !ofc_colstr_atomic_writef(cs, " ")
 		|| !ofc_sparse_ref_print(cs, stmt->use.module))
 		return false;
@@ -122,7 +122,7 @@ bool ofc_parse_stmt_use_print(
 	if (stmt->use.only
 		&& (!ofc_colstr_atomic_writef(cs, ",")
 			|| !ofc_colstr_atomic_writef(cs, " ")
-			|| !ofc_colstr_keyword_atomic_writef(cs, "ONLY")
+			|| !ofc_colstr_keyword_atomic_writez(cs, "ONLY")
 			|| !ofc_colstr_atomic_writef(cs, ":")
 			|| !ofc_colstr_atomic_writef(cs, " ")
 			|| !ofc_parse_decl_list_print(cs, stmt->use.only)))

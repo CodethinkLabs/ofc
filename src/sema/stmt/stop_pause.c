@@ -97,12 +97,12 @@ bool ofc_sema_stmt_stop_pause_print(ofc_colstr_t* cs,
 
 	if (stmt->type == OFC_SEMA_STMT_STOP)
 	{
-		if (!ofc_colstr_keyword_atomic_writef(cs, "STOP"))
+		if (!ofc_colstr_keyword_atomic_writez(cs, "STOP"))
 			return false;
 	}
 	else if (stmt->type == OFC_SEMA_STMT_PAUSE)
 	{
-		if (!ofc_colstr_keyword_atomic_writef(cs, "PAUSE"))
+		if (!ofc_colstr_keyword_atomic_writez(cs, "PAUSE"))
 			return false;
 	}
 	else
