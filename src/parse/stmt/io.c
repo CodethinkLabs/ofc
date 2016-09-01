@@ -14,6 +14,7 @@
  */
 
 #include "ofc/parse.h"
+#include "ofc/global_opts.h"
 
 
 
@@ -492,9 +493,12 @@ unsigned ofc_parse_stmt_io_print_type(
 
 	if (toupper(ptr[0]) != 'P')
 	{
-		ofc_parse_debug_warning(debug, ofc_sparse_ref(src, ptr, i),
-			"Use of TYPE as an IO statement is deprecated and ambiguous"
-			", PRINT is preferred");
+		if (!global_opts.no_warn_type_io)
+		{
+			ofc_parse_debug_warning(debug, ofc_sparse_ref(src, ptr, i),
+				"Use of TYPE as an IO statement is deprecated and ambiguous"
+				", PRINT is preferred");
+		}
 		stmt->type = OFC_PARSE_STMT_IO_TYPE;
 	}
 	else
