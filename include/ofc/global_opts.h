@@ -27,6 +27,7 @@ typedef struct
 	bool no_warn_name_keyword;
 	bool no_warn_namespace_col;
 	bool no_warn_type_io;
+	bool warn_unused_procedure;
 	bool parse_only;
 	bool parse_print;
 	bool sema_print;
@@ -44,6 +45,7 @@ static const ofc_global_opts_t
 	.no_warn_name_keyword  = false,
 	.no_warn_namespace_col = false,
 	.no_warn_type_io       = false,
+	.warn_unused_procedure = false,
 	.parse_only            = false,
 	.parse_print           = false,
 	.sema_print            = false,

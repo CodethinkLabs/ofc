@@ -48,6 +48,9 @@ static bool ofc_cliarg_global_opts__set_flag(
 			global->no_warn_name_keyword  = true;
 			global->no_warn_namespace_col = true;
 			break;
+		case OFC_CLIARG_WARN_UNUSED_PROCEDURE:
+			global->warn_unused_procedure = true;
+			break;
 		case OFC_CLIARG_PARSE_ONLY:
 			global->parse_only = true;
 			break;
@@ -237,6 +240,7 @@ static const ofc_cliarg_body_t cliargs[] =
 	{ OFC_CLIARG_NO_WARN_NAMESPACE_COL, "no-warn-namespace-col", '\0', "Suppress namespace collision warning",       OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
 	{ OFC_CLIARG_NO_WARN_TYPE_IO,       "no-warn-type-io",       '\0', "Suppress TYPE as IO statement warning",      OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
 	{ OFC_CLIARG_NO_WARN_PEDANTIC,      "no-warn-pedantic",      'p',  "Suppress all pedantic warnings",             OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
+	{ OFC_CLIARG_WARN_UNUSED_PROCEDURE, "warn-unused-procedure", '\0', "Enable unused procedure warnings",           OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
 	{ OFC_CLIARG_PARSE_ONLY,            "parse-only",            '\0', "Runs the parser only",                       OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
 	{ OFC_CLIARG_PARSE_TREE,            "parse-tree",            '\0', "Prints the parse tree",                      OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
 	{ OFC_CLIARG_SEMA_TREE,             "sema-tree",             's',  "Prints the semantic analysis tree",          OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
