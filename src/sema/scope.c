@@ -477,7 +477,7 @@ bool ofc_sema_scope__check_namespace_collision(
 		&& ofc_str_ref_begins_with_keyword(ref.string))
 	{
 		ofc_sparse_ref_warning(ref,
-			"Symbol name begins with langauge keyword");
+			"Symbol name begins with language keyword");
 	}
 
 	if (ofc_sema_scope_common_name_exists(scope, ref.string))
