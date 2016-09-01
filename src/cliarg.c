@@ -254,7 +254,7 @@ static const ofc_cliarg_body_t cliargs[] =
 	{ OFC_CLIARG_INDENT_MAX_LEVEL,      "indent-max-level",      '\0', "Sets maximum indent level <n>",              OFC_CLIARG_PARAM_PRIN_INT,  1, true  },
 	{ OFC_CLIARG_PRINT_F77_PARAMETER,   "print-f77-parameter",   '\0', "Print PARAMETER statement separately",       OFC_CLIARG_PARAM_PRIN_NONE, 0, true  },
 	{ OFC_CLIARG_LOWERCASE_KEYWORD,     "lowercase-keyword",     '\0', "Print lower case fortran keywords",          OFC_CLIARG_PARAM_PRIN_NONE, 0, true  },
-	{ OFC_CLIARG_INCLUDE,               "include",               '\0', "Set include paths <s>",                      OFC_CLIARG_PARAM_FILE_STR,  1, false },
+	{ OFC_CLIARG_INCLUDE,               "include",               'I',  "Add include path (--include <s> or -I<s>)",  OFC_CLIARG_PARAM_FILE_STR,  1, false },
 	{ OFC_CLIARG_SEMA_STRUCT_TYPE,      "no-sema-struct-type",   '\0', "Disable struct to type semantic pass",       OFC_CLIARG_PARAM_SEMA_PASS, 0, true  },
 	{ OFC_CLIARG_SEMA_CHAR_TRANSFER,    "no-sema-char-transfer", '\0', "Disable char to transfer semantic pass",     OFC_CLIARG_PARAM_SEMA_PASS, 0, true  },
 	{ OFC_CLIARG_SEMA_UNREF_LABEL,      "no-sema-unref-label",   '\0', "Disable unreferenced label semantic pass",   OFC_CLIARG_PARAM_SEMA_PASS, 0, true  },
@@ -530,7 +530,8 @@ bool ofc_cliarg_parse(
 			{
 				const char* arg_str = argv[i] + 1;
 				unsigned flag;
-				for (flag = 0; flag < strlen(arg_str); flag++)
+				unsigned arglen = strlen(arg_str);
+				for (flag = 0; flag < arglen; flag++)
 				{
 					ofc_cliarg_t* resolved_arg = NULL;
 
@@ -540,6 +541,7 @@ bool ofc_cliarg_parse(
 					{
 						fprintf(stderr, "Error: Cannot resolve flag: %s\n", argv[i]);
 						ofc_cliarg_print_usage(program_name);
+						return false;
 					}
 					switch (arg_body->param_type)
 					{
@@ -548,6 +550,32 @@ bool ofc_cliarg_parse(
 						case OFC_CLIARG_PARAM_SEMA_PASS:
 							resolved_arg = ofc_cliarg_create(arg_body, NULL);
 							break;
+
+						case OFC_CLIARG_PARAM_FILE_STR:
+							if (flag == 0)
+							{
+								if (arg_str[1] == '\0')
+								{
+									i++;
+									if (i < (unsigned)argc && ofc_cliarg_param__resolve_str(argv[i]))
+									{
+										resolved_arg = ofc_cliarg_create(arg_body, argv[i]);
+									}
+									else
+									{
+										fprintf(stderr, "Error: Expected parameter for argument: %s\n", argv[i - 1]);
+										ofc_cliarg_print_usage(program_name);
+										return false;
+									}
+								}
+								else
+								{
+									resolved_arg = ofc_cliarg_create(arg_body, arg_str + 1);
+								}
+								flag = arglen;  /* Leave 'flag' loop as well. */
+								break;
+						}
+						/* Fall through. */
 
 						default:
 							fprintf(stderr, "Error: Cannot group flags that require a parameter: %s\n", argv[i]);
