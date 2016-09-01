@@ -1,6 +1,3 @@
 [submodule "tests"]
 	path = tests
 	url = git@github.com:CodethinkLabs/ofc-tests.git
-[submodule "ofc-tests"]
-	path = ofc-tests
-	url = https://github.com/jcburley/ofc-tests.git
