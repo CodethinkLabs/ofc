@@ -57,7 +57,8 @@ bool ofc_parse_stmt_format_print(
 	if (!stmt)
 		return false;
 
-	if (!ofc_colstr_keyword_atomic_writef(cs, "FORMAT("))
+	if (!ofc_colstr_keyword_atomic_writez(cs, "FORMAT")
+		|| !ofc_colstr_atomic_writef(cs, "("))
 		return false;
 
 	if (stmt->format

@@ -253,9 +253,9 @@ bool ofc_sema_stmt_select_case_print(
 		|| (stmt->type != OFC_SEMA_STMT_SELECT_CASE))
 		return false;
 
-	if (!ofc_colstr_keyword_atomic_writef(cs, "SELECT")
+	if (!ofc_colstr_keyword_atomic_writez(cs, "SELECT")
 		|| !ofc_colstr_atomic_writef(cs, " ")
-		|| !ofc_colstr_keyword_atomic_writef(cs, "CASE")
+		|| !ofc_colstr_keyword_atomic_writez(cs, "CASE")
 		|| !ofc_colstr_atomic_writef(cs, " ")
 		|| !ofc_colstr_atomic_writef(cs, "("))
 		return false;
@@ -271,13 +271,13 @@ bool ofc_sema_stmt_select_case_print(
 		if (!ofc_colstr_newline(cs, (indent + 1), NULL))
 			return false;
 
-		if (!ofc_colstr_keyword_atomic_writef(cs, "CASE")
+		if (!ofc_colstr_keyword_atomic_writez(cs, "CASE")
 			|| !ofc_colstr_atomic_writef(cs, " "))
 			return false;
 
 		if (!stmt->select_case.case_value[i])
 		{
-			if (!ofc_colstr_keyword_atomic_writef(cs, "DEFAULT"))
+			if (!ofc_colstr_keyword_atomic_writez(cs, "DEFAULT"))
 				return false;
 		}
 		else
@@ -301,7 +301,7 @@ bool ofc_sema_stmt_select_case_print(
 	if (label) ulabel = &label->number;
 
 	if (!ofc_colstr_newline(cs, indent, ulabel)
-		|| !ofc_colstr_keyword_atomic_writef(cs, "END SELECT"))
+		|| !ofc_colstr_keyword_atomic_writez(cs, "END SELECT"))
 		return false;
 
 	return true;

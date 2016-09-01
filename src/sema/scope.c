@@ -477,7 +477,7 @@ bool ofc_sema_scope__check_namespace_collision(
 		&& ofc_str_ref_begins_with_keyword(ref.string))
 	{
 		ofc_sparse_ref_warning(ref,
-			"Symbol name begins with langauge keyword");
+			"Symbol name begins with language keyword");
 	}
 
 	if (ofc_sema_scope_common_name_exists(scope, ref.string))
@@ -1493,9 +1493,9 @@ static bool ofc_sema_scope_body__print(
 			break;
 		default:
 			if (!ofc_colstr_newline(cs, indent, NULL)
-				|| !ofc_colstr_keyword_atomic_writef(cs, "IMPLICIT")
+				|| !ofc_colstr_keyword_atomic_writez(cs, "IMPLICIT")
 				|| !ofc_colstr_atomic_writef(cs, " ")
-				|| !ofc_colstr_keyword_atomic_writef(cs, "NONE"))
+				|| !ofc_colstr_keyword_atomic_writez(cs, "NONE"))
 				return false;
 			break;
 	}
@@ -1504,11 +1504,11 @@ static bool ofc_sema_scope_body__print(
 	{
 		if ((scope->access == OFC_SEMA_ACCESSIBILITY_PUBLIC)
 			&& (!ofc_colstr_newline(cs, indent, NULL)
-				|| !ofc_colstr_keyword_atomic_writef(cs, "PUBLIC")))
+				|| !ofc_colstr_keyword_atomic_writez(cs, "PUBLIC")))
 			return false;
 		if ((scope->access == OFC_SEMA_ACCESSIBILITY_PRIVATE)
 			&& (!ofc_colstr_newline(cs, indent, NULL)
-				|| !ofc_colstr_keyword_atomic_writef(cs, "PRIVATE")))
+				|| !ofc_colstr_keyword_atomic_writez(cs, "PRIVATE")))
 			return false;
 	}
 
@@ -1624,7 +1624,8 @@ bool ofc_sema_scope_print(
 				return false;
 		}
 
-		if (!ofc_colstr_keyword_atomic_writef(cs, "%s ", kwstr))
+		if (!ofc_colstr_keyword_atomic_writez(cs, kwstr)
+			|| !ofc_colstr_atomic_writef(cs, " "))
 			return false;
 
 		if (scope->name.base)

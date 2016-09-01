@@ -14,6 +14,7 @@
  */
 
 #include "ofc/parse.h"
+#include "ofc/global_opts.h"
 
 
 
@@ -43,8 +44,8 @@ ofc_colstr_t* cs, int key_val)
 	{
 		if (io_stmt__keyword[i].key_val == key_val)
 		{
-			return ofc_colstr_keyword_atomic_writef(cs, "%s",
-        io_stmt__keyword[i].keyword);
+			return ofc_colstr_keyword_atomic_writez(cs,
+				io_stmt__keyword[i].keyword);
 		}
 	}
 	return false;
@@ -492,9 +493,12 @@ unsigned ofc_parse_stmt_io_print_type(
 
 	if (toupper(ptr[0]) != 'P')
 	{
-		ofc_parse_debug_warning(debug, ofc_sparse_ref(src, ptr, i),
-			"Use of TYPE as an IO statement is deprecated and ambiguous"
-			", PRINT is preferred");
+		if (!global_opts.no_warn_type_io)
+		{
+			ofc_parse_debug_warning(debug, ofc_sparse_ref(src, ptr, i),
+				"Use of TYPE as an IO statement is deprecated and ambiguous"
+				", PRINT is preferred");
+		}
 		stmt->type = OFC_PARSE_STMT_IO_TYPE;
 	}
 	else

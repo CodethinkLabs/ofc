@@ -46,20 +46,25 @@ bool ofc_colstr_write(
 
 bool ofc_colstr_writef(
 	ofc_colstr_t* cstr,
-	const char* format, ...);
+	const char* format, ...)
+	__attribute__ ((format (printf, 2, 3)));
 
 bool ofc_colstr_atomic_write(
 	ofc_colstr_t* cstr, const char* base, unsigned size);
 
 bool ofc_colstr_atomic_writef(
 	ofc_colstr_t* cstr,
-	const char* format, ...);
+	const char* format, ...)
+	__attribute__ ((format (printf, 2, 3)));
 
-#include <ctype.h>
+bool ofc_colstr_keyword_atomic_writez(
+	ofc_colstr_t* cstr, const char* keyword);
 
 bool ofc_colstr_keyword_atomic_writef(
 	ofc_colstr_t* cstr,
-	const char* format, ...);
+	const char* format, ...)
+	__attribute__ ((format (printf, 2, 3)));
+
 
 bool ofc_colstr_fdprint(ofc_colstr_t* cstr, int fd);
 

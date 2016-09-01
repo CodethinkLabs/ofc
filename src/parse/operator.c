@@ -313,6 +313,6 @@ bool ofc_parse_operator_print(
 	if (operator >= OFC_PARSE_OPERATOR_COUNT)
 		return false;
 
-	return ofc_colstr_keyword_atomic_writef(cs, "%s",
+	return ofc_colstr_keyword_atomic_writez(cs,
 		ofc_parse_operator_str_rep(operator));
 }

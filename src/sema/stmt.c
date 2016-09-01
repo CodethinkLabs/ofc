@@ -1301,10 +1301,10 @@ bool ofc_sema_stmt_print(
 			return ofc_sema_stmt_io_inquire_print(cs, stmt);
 
 		case OFC_SEMA_STMT_CONTAINS:
-			return ofc_colstr_keyword_atomic_writef(cs, "CONTAINS");
+			return ofc_colstr_keyword_atomic_writez(cs, "CONTAINS");
 
 		case OFC_SEMA_STMT_CONTINUE:
-			return ofc_colstr_keyword_atomic_writef(cs, "CONTINUE");
+			return ofc_colstr_keyword_atomic_writez(cs, "CONTINUE");
 
 		case OFC_SEMA_STMT_IF_COMPUTED:
 			return ofc_sema_stmt_if_comp_print(cs, stmt);

@@ -126,7 +126,7 @@ bool ofc_sema_stmt_call_print(
 	if (!cs || (stmt->type != OFC_SEMA_STMT_CALL))
 		return false;
 
-	if (!ofc_colstr_keyword_atomic_writef(cs, "CALL")
+	if (!ofc_colstr_keyword_atomic_writez(cs, "CALL")
 		|| !ofc_colstr_atomic_writef(cs, " ")
 		|| !ofc_sema_decl_print_name(cs, stmt->call.subroutine))
 		return false;

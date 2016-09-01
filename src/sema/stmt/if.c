@@ -263,7 +263,7 @@ bool ofc_sema_stmt_if_print(
 {
 	if (!cs || !stmt) return false;
 
-	if (!ofc_colstr_keyword_atomic_writef(cs, "IF")
+	if (!ofc_colstr_keyword_atomic_writez(cs, "IF")
 		|| !ofc_colstr_atomic_writef(cs, " ")
 		|| !ofc_colstr_atomic_writef(cs, "(")
 		|| !ofc_sema_expr_print(cs, stmt->if_stmt.cond)
@@ -281,7 +281,7 @@ bool ofc_sema_stmt_if_comp_print(ofc_colstr_t* cs,
 {
 	if (!cs || !stmt) return false;
 
-	if (!ofc_colstr_keyword_atomic_writef(cs, "IF")
+	if (!ofc_colstr_keyword_atomic_writez(cs, "IF")
 		|| !ofc_colstr_atomic_writef(cs, " ")
 		|| !ofc_colstr_atomic_writef(cs, "(")
 		|| !ofc_sema_expr_print(cs, stmt->if_comp.cond)
@@ -300,13 +300,13 @@ bool ofc_sema_stmt_if_then_print(
 {
 	if (!cs || !stmt) return false;
 
-	if (!ofc_colstr_keyword_atomic_writef(cs, "IF")
+	if (!ofc_colstr_keyword_atomic_writez(cs, "IF")
 		|| !ofc_colstr_atomic_writef(cs, " ")
 		|| !ofc_colstr_atomic_writef(cs, "(")
 		|| !ofc_sema_expr_print(cs, stmt->if_then.cond)
 		|| !ofc_colstr_atomic_writef(cs, ")")
 		|| !ofc_colstr_atomic_writef(cs, " ")
-		|| !ofc_colstr_keyword_atomic_writef(cs, "THEN"))
+		|| !ofc_colstr_keyword_atomic_writez(cs, "THEN"))
 		return false;
 
 	if (stmt->if_then.block_then)
@@ -326,7 +326,7 @@ bool ofc_sema_stmt_if_then_print(
 	if (stmt->if_then.block_else)
 	{
 		if (!ofc_colstr_newline(cs, indent, NULL)
-			|| !ofc_colstr_keyword_atomic_writef(cs, "ELSE"))
+			|| !ofc_colstr_keyword_atomic_writez(cs, "ELSE"))
 			return false;
 
 		if ((stmt->if_then.block_else->count == 1)
@@ -355,7 +355,7 @@ bool ofc_sema_stmt_if_then_print(
 	if (!hide_end)
 	{
 		if (!ofc_colstr_newline(cs, indent, ulabel)
-			|| !ofc_colstr_keyword_atomic_writef(cs, "END IF"))
+			|| !ofc_colstr_keyword_atomic_writez(cs, "END IF"))
 			return false;
 	}
 
