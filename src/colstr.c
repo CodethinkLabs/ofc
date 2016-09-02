@@ -204,12 +204,22 @@ bool ofc_colstr_write_escaped(
 	if (!base)
 		return false;
 
+	bool quote_normal = ((quote == '\'') || (quote == '\"'));
+
 	unsigned esize = size;
 	unsigned i;
 	for (i = 0; i < size; i++)
 	{
-		const char* e = is_escape(base[i]);
-		if (e) esize += strlen(e);
+		if ((base[i] == quote)
+			&& quote_normal)
+		{
+			esize++;
+		}
+		else
+		{
+			const char* e = is_escape(base[i]);
+			if (e) esize += strlen(e);
+		}
 	}
 
 	char estr[esize];
@@ -217,17 +227,34 @@ bool ofc_colstr_write_escaped(
 	unsigned j;
 	for (i = 0, j = 0; i < size; i++)
 	{
-		const char* e = is_escape(base[i]);
-		if (e)
+		if ((base[i] == quote)
+			&& quote_normal)
 		{
-			estr[j++] = '\\';
-			unsigned elen = strlen(e);
-			memcpy(&estr[j], e, elen);
-			j += elen;
+			/* Use fortran style escaping for quotes where possible. */
+			estr[j++] = base[i];
+			estr[j++] = base[i];
+		}
+		else if (quote_normal
+			&& ((base[i] == '\'')
+				|| (base[i] == '\"')))
+		{
+			/* Don't escape quotes if we don't need to. */
+			estr[j++] = base[i];
 		}
 		else
 		{
-			estr[j++] = base[i];
+			const char* e = is_escape(base[i]);
+			if (e)
+			{
+				estr[j++] = '\\';
+				unsigned elen = strlen(e);
+				memcpy(&estr[j], e, elen);
+				j += elen;
+			}
+			else
+			{
+				estr[j++] = base[i];
+			}
 		}
 	}
 
