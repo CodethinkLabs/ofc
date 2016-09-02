@@ -2499,12 +2499,14 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 			return false;
 	}
 
+	bool f90_style = false;
 	if (decl->is_volatile)
 	{
 		if (!ofc_colstr_atomic_writef(cs, ",")
 			|| !ofc_colstr_atomic_writef(cs, " ")
 			|| !ofc_colstr_keyword_atomic_writez(cs, "VOLATILE"))
 			return false;
+		f90_style = true;
 	}
 
 	if (decl->is_static)
@@ -2513,6 +2515,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 			|| !ofc_colstr_atomic_writef(cs, " ")
 			|| !ofc_colstr_keyword_atomic_writez(cs, "SAVE"))
 			return false;
+		f90_style = true;
 	}
 
 	if (!f77_parameter && ofc_sema_decl_is_parameter(decl))
@@ -2521,6 +2524,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 			|| !ofc_colstr_atomic_writef(cs, " ")
 			|| !ofc_colstr_keyword_atomic_writez(cs, "PARAMETER"))
 			return false;
+		f90_style = true;
 	}
 
 	if (is_pointer)
@@ -2529,6 +2533,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 			|| !ofc_colstr_atomic_writef(cs, " ")
 			|| !ofc_colstr_keyword_atomic_writez(cs, "POINTER"))
 			return false;
+		f90_style = true;
 	}
 
 	if (decl->access == OFC_SEMA_ACCESSIBILITY_PUBLIC)
@@ -2537,6 +2542,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 			|| !ofc_colstr_atomic_writef(cs, " ")
 			|| !ofc_colstr_keyword_atomic_writez(cs, "PUBLIC"))
 			return false;
+		f90_style = true;
 	}
 
 	if (decl->access == OFC_SEMA_ACCESSIBILITY_PRIVATE)
@@ -2545,6 +2551,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 			|| !ofc_colstr_atomic_writef(cs, " ")
 			|| !ofc_colstr_keyword_atomic_writez(cs, "PRIVATE"))
 			return false;
+		f90_style = true;
 	}
 
 	if (decl->is_target)
@@ -2553,6 +2560,7 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 			|| !ofc_colstr_atomic_writef(cs, " ")
 			|| !ofc_colstr_keyword_atomic_writez(cs, "TARGET"))
 			return false;
+		f90_style = true;
 	}
 
 	if (ofc_sema_decl_is_array(decl))
@@ -2562,12 +2570,24 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 			|| !ofc_colstr_keyword_atomic_writez(cs, "DIMENSION")
 			|| !ofc_sema_array_print_brackets(cs, decl->array))
 			return false;
+		f90_style = true;
 	}
 
-	if (!ofc_colstr_atomic_writef(cs, " ")
-		|| !ofc_colstr_atomic_writef(cs, "::")
-		|| !ofc_colstr_atomic_writef(cs, " "))
+	if (!ofc_colstr_atomic_writef(cs, " "))
 		return false;
+
+	bool init_complete = false;
+	ofc_sema_decl_has_initializer(
+		decl, &init_complete);
+	if (init_complete)
+		f90_style = true;
+
+	if (f90_style)
+	{
+		if (!ofc_colstr_atomic_writef(cs, "::")
+			|| !ofc_colstr_atomic_writef(cs, " "))
+			return false;
+	}
 
 	if (!ofc_sema_decl_print_name(cs, decl))
 		return false;
@@ -2583,10 +2603,6 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 			|| !ofc_sema_decl_print_name(cs, decl))
 			return false;
 	}
-
-	bool init_complete = false;
-	ofc_sema_decl_has_initializer(
-		decl, &init_complete);
 
 	if (init_complete)
 	{
