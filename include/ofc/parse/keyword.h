@@ -119,7 +119,8 @@ typedef enum
 } ofc_parse_keyword_e;
 
 
-bool ofc_str_ref_begins_with_keyword(ofc_str_ref_t ref);
+bool ofc_sparse_ref_begins_with_keyword(
+	ofc_sparse_ref_t ref, bool* space, bool* is);
 
 unsigned ofc_parse_ident(
 	const ofc_sparse_t* src, const char* ptr,

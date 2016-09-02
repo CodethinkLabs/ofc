@@ -473,11 +473,22 @@ bool ofc_sema_scope__check_namespace_collision(
 
 	bool collision = false;
 
-	if ((!global_opts.no_warn_name_keyword)
-		&& ofc_str_ref_begins_with_keyword(ref.string))
+	if (!global_opts.no_warn_name_keyword)
 	{
-		ofc_sparse_ref_warning(ref,
-			"Symbol name begins with language keyword");
+		bool space, is;
+		if (ofc_sparse_ref_begins_with_keyword(ref, &space, &is))
+		{
+			if (is)
+			{
+				ofc_sparse_ref_warning(ref,
+					"Symbol name is a language keyword");
+			}
+			else if (space || global_opts.warn_name_keyword_all)
+			{
+				ofc_sparse_ref_warning(ref,
+					"Symbol name begins with language keyword");
+			}
+		}
 	}
 
 	if (ofc_sema_scope_common_name_exists(scope, ref.string))

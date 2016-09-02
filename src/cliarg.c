@@ -37,6 +37,9 @@ static bool ofc_cliarg_global_opts__set_flag(
 		case OFC_CLIARG_NO_WARN_NAME_KEYWORD:
 			global->no_warn_name_keyword = true;
 			break;
+		case OFC_CLIARG_WARN_NAME_KEYWORD_ALL:
+			global->warn_name_keyword_all = true;
+			break;
 		case OFC_CLIARG_NO_WARN_NAMESPACE_COL:
 			global->no_warn_namespace_col = true;
 			break;
@@ -240,6 +243,7 @@ static const ofc_cliarg_body_t cliargs[] =
 	{ OFC_CLIARG_NO_WARN,               "no-warn",               'n',  "Suppress OFC warnings",                      OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
 	{ OFC_CLIARG_NO_WARN_EQUIV_TYPE,    "no-warn-equiv-type",    '\0', "Suppress EQUIVALENCE type mismatch warning", OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
 	{ OFC_CLIARG_NO_WARN_NAME_KEYWORD,  "no-warn-name-keyword",  '\0', "Suppress language keyword in name warning",  OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
+	{ OFC_CLIARG_WARN_NAME_KEYWORD_ALL, "warn-name-keyword-all", '\0', "Warn about all keyword name collisions",     OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
 	{ OFC_CLIARG_NO_WARN_NAMESPACE_COL, "no-warn-namespace-col", '\0', "Suppress namespace collision warning",       OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
 	{ OFC_CLIARG_NO_WARN_TYPE_IO,       "no-warn-type-io",       '\0', "Suppress TYPE as IO statement warning",      OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
 	{ OFC_CLIARG_NO_WARN_PEDANTIC,      "no-warn-pedantic",      'p',  "Suppress all pedantic warnings",             OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },

@@ -25,6 +25,7 @@ typedef struct
 	bool no_warn;
 	bool no_warn_equiv_type;
 	bool no_warn_name_keyword;
+	bool warn_name_keyword_all;
 	bool no_warn_namespace_col;
 	bool no_warn_type_io;
 	bool warn_unused_procedure;
@@ -43,6 +44,7 @@ static const ofc_global_opts_t
 	.no_warn               = false,
 	.no_warn_equiv_type    = false,
 	.no_warn_name_keyword  = false,
+	.warn_name_keyword_all = false,
 	.no_warn_namespace_col = false,
 	.no_warn_type_io       = false,
 	.warn_unused_procedure = false,

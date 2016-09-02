@@ -124,17 +124,29 @@ static const char* ofc_parse_keyword__name[] =
 
 
 
-bool ofc_str_ref_begins_with_keyword(ofc_str_ref_t ref)
+bool ofc_sparse_ref_begins_with_keyword(
+	ofc_sparse_ref_t ref, bool* space, bool* is)
 {
 	unsigned i;
 	for (i = 0; ofc_parse_keyword__name[i]; i++)
 	{
 		unsigned len = strlen(ofc_parse_keyword__name[i]);
-		if (len > ref.size) continue;
+		if (len > ref.string.size) continue;
 
-		if (strncasecmp(ref.base,
+		if (strncasecmp(ref.string.base,
 			ofc_parse_keyword__name[i], len) == 0)
+		{
+			bool has_space = false;
+			if (ref.string.size > len)
+			{
+				has_space = !ofc_sparse_sequential(
+					ref.sparse, ref.string.base, (len + 1));
+			}
+
+			if (space) *space = has_space;
+			if (is) *is = (ref.string.size == len);
 			return true;
+		}
 	}
 
 	return false;
