@@ -2436,12 +2436,20 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 	if (!decl->type)
 		return false;
 
-	bool f77_parameter = false;
-	if (ofc_sema_decl_is_parameter(decl))
+	const ofc_print_opts_t* opts =
+		ofc_colstr_print_opts_get(cs);
+
+	bool f77_parameter
+		= (ofc_sema_decl_is_parameter(decl)
+			&& opts && opts->f77_parameter);
+
+	if (decl->is_automatic && opts && opts->automatic)
 	{
-		const ofc_print_opts_t* opts =
-			ofc_colstr_print_opts_get(cs);
-		f77_parameter = (opts && opts->f77_parameter);
+		if (!ofc_colstr_keyword_atomic_writez(cs, "AUTOMATIC")
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_sema_decl_print_name(cs, decl)
+			|| !ofc_colstr_newline(cs, indent, NULL))
+			return false;
 	}
 
 	const ofc_sema_type_t* type = NULL;
