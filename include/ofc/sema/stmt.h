@@ -16,6 +16,16 @@
 #ifndef __ofc_sema_stmt_h__
 #define __ofc_sema_stmt_h__
 
+/* Some standard libraries define stdin and stdout as macros. */
+#ifdef stdin
+#undef stdin
+#endif
+
+#ifdef stdout
+#undef stdout
+#endif
+
+
 typedef enum
 {
 	OFC_SEMA_STMT_ASSIGNMENT = 0,
