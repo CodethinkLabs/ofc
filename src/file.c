@@ -284,6 +284,8 @@ bool ofc_file_get_position(
 		switch (file->strz[i])
 		{
 			case '\r':
+				/* Support Windows line endings when running on cygwin. */
+				if (file->strz[i + 1] == '\n') i++;
 			case '\n':
 				r += 1;
 				c = 0;
