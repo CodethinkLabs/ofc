@@ -73,8 +73,6 @@ struct ofc_sema_lhs_s
 		};
 	};
 
-	const ofc_sema_type_t* data_type;
-
 	unsigned refcnt;
 };
 

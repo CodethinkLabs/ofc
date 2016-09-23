@@ -40,7 +40,6 @@ static ofc_sema_lhs_t* ofc_sema_lhs_index(
 	alhs->src       = lhs->src;
 	alhs->parent    = lhs;
 	alhs->index     = index;
-	alhs->data_type = lhs->data_type;
 	alhs->refcnt    = 0;
 
 	return alhs;
@@ -81,7 +80,6 @@ static ofc_sema_lhs_t* ofc_sema_lhs_slice(
 	alhs->type        = OFC_SEMA_LHS_ARRAY_SLICE;
 	alhs->src         = lhs->src;
 	alhs->parent      = lhs;
-	alhs->data_type   = lhs->data_type;
 	alhs->refcnt      = 0;
 
 	alhs->slice.slice = slice;
@@ -99,8 +97,14 @@ static ofc_sema_lhs_t* ofc_sema_lhs_substring(
 		return NULL;
 
 	if (!index
-		|| (index->count != 1)
-		|| !lhs->data_type)
+		|| (index->count != 1))
+	{
+		ofc_sema_lhs_delete(lhs);
+		return NULL;
+	}
+	const ofc_sema_type_t* data_type
+		= ofc_sema_lhs_type(lhs);
+	if (!data_type)
 	{
 		ofc_sema_lhs_delete(lhs);
 		return NULL;
@@ -138,8 +142,6 @@ static ofc_sema_lhs_t* ofc_sema_lhs_substring(
 		last = first;
 	}
 
-	unsigned len = 0;
-	bool len_var = true;
 	if ((!first || ofc_sema_expr_is_constant(first))
 		&& ofc_sema_expr_is_constant(last))
 	{
@@ -203,36 +205,12 @@ static ofc_sema_lhs_t* ofc_sema_lhs_substring(
 			return NULL;
 		}
 
-		if ((lhs->data_type->len > 0)
-			&& (ilast > lhs->data_type->len))
+		if ((data_type->len > 0)
+			&& (ilast > data_type->len))
 		{
 			ofc_sparse_ref_warning(lhs->src,
 				"Last index in character substring out-of-bounds");
 		}
-
-		int64_t ilen = (ilast - ifirst) + 1;
-		len = ilen;
-		if ((int64_t)len != ilen)
-		{
-			ofc_sema_lhs_delete(lhs);
-			if (last != first)
-				ofc_sema_expr_delete(last);
-			ofc_sema_expr_delete(first);
-			return NULL;
-		}
-		len_var = false;
-	}
-
-	const ofc_sema_type_t* type
-		= ofc_sema_type_create_character(
-			lhs->data_type->kind, len, len_var);
-	if (!type)
-	{
-		ofc_sema_lhs_delete(lhs);
-		if (last != first)
-			ofc_sema_expr_delete(last);
-		ofc_sema_expr_delete(first);
-		return NULL;
 	}
 
 	ofc_sema_lhs_t* alhs
@@ -252,7 +230,6 @@ static ofc_sema_lhs_t* ofc_sema_lhs_substring(
 	alhs->parent          = lhs;
 	alhs->substring.first = first;
 	alhs->substring.last  = last;
-	alhs->data_type       = type;
 	alhs->refcnt          = 0;
 
 	return alhs;
@@ -292,7 +269,6 @@ static ofc_sema_lhs_t* ofc_sema_lhs_member(
 	alhs->type      = OFC_SEMA_LHS_STRUCTURE_MEMBER;
 	alhs->src       = lhs->src;
 	alhs->parent    = lhs;
-	alhs->data_type = ofc_sema_decl_type(member);
 	alhs->refcnt    = 0;
 	alhs->member    = member;
 	return alhs;
@@ -379,8 +355,12 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 
 				if (!ofc_sema_lhs_is_array(parent))
 				{
+					const ofc_sema_type_t* data_type
+						= ofc_sema_lhs_type(parent);
+					if (!data_type) return NULL;
+
 					if (!ofc_sema_type_is_character(
-						parent->data_type))
+						data_type))
 					{
 						ofc_sparse_ref_error(lhs->src,
 							"Attempting to index a variable that's not an array");
@@ -496,7 +476,6 @@ static ofc_sema_lhs_t* ofc_sema__lhs(
 			return NULL;
 		}
 	}
-	slhs->data_type = decl->type;
 
 	return slhs;
 }
@@ -575,7 +554,6 @@ static ofc_sema_lhs_t* ofc_sema_lhs__implicit_do(
 	lhs->implicit_do.count_var = true;
 	lhs->implicit_do.count = 0;
 
-	lhs->data_type = NULL;
 	lhs->refcnt = 0;
 
 	ofc_sema_lhs_t* iter_lhs = ofc_sema_lhs_from_expr(
@@ -803,7 +781,12 @@ ofc_sema_lhs_t* ofc_sema_lhs_elem_get(
 		case OFC_SEMA_LHS_DECL:
 		case OFC_SEMA_LHS_ARRAY_INDEX:
 		case OFC_SEMA_LHS_STRUCTURE_MEMBER:
-			if (ofc_sema_type_is_procedure(lhs->data_type))
+		{
+			const ofc_sema_type_t* data_type
+				= ofc_sema_lhs_type(lhs);
+			if (!data_type) return NULL;
+
+			if (ofc_sema_type_is_procedure(data_type))
 				return NULL;
 
 			ofc_sema_structure_t* structure
@@ -874,10 +857,14 @@ ofc_sema_lhs_t* ofc_sema_lhs_elem_get(
 				return lhs;
 			}
 			break;
-
+		}
 		case OFC_SEMA_LHS_ARRAY_SLICE:
 		{
-			if (ofc_sema_type_is_procedure(lhs->data_type))
+			const ofc_sema_type_t* data_type
+				= ofc_sema_lhs_type(lhs);
+			if (!data_type) return NULL;
+
+			if (ofc_sema_type_is_procedure(data_type))
 				return NULL;
 
 			ofc_sema_structure_t* structure
@@ -1562,7 +1549,6 @@ bool ofc_sema_lhs_mark_used(
 			if (!ofc_sema_decl_type_finalize(lhs->decl)
 				|| !ofc_sema_decl_mark_used(lhs->decl, written, read))
 				return false;
-			lhs->data_type = ofc_sema_decl_type(lhs->decl);
 			return true;
 
 		case OFC_SEMA_LHS_IMPLICIT_DO:
@@ -1577,35 +1563,9 @@ bool ofc_sema_lhs_mark_used(
 	if (!lhs->parent)
 		return false;
 
-	const ofc_sema_type_t* ptype
-		= lhs->parent->data_type;
 	if (!ofc_sema_lhs_mark_used(
 		lhs->parent, written, read))
 		return false;
-	if (lhs->parent->data_type == ptype)
-		return true;
-
-	switch (lhs->type)
-	{
-		case OFC_SEMA_LHS_ARRAY_INDEX:
-		case OFC_SEMA_LHS_ARRAY_SLICE:
-			lhs->data_type = lhs->parent->data_type;
-			break;
-
-		case OFC_SEMA_LHS_SUBSTRING:
-			{
-				const ofc_sema_type_t* sstype
-					= ofc_sema_type_set_kind(
-						lhs->data_type, ofc_sema_type_get_kind(
-							lhs->parent->data_type));
-				if (!sstype) return false;
-				lhs->data_type = sstype;
-			}
-			break;
-
-		default:
-			break;
-	}
 
 	return true;
 }
@@ -1680,7 +1640,63 @@ ofc_sema_decl_t* ofc_sema_lhs_decl(
 const ofc_sema_type_t* ofc_sema_lhs_type(
 	const ofc_sema_lhs_t* lhs)
 {
-	return (lhs ? lhs->data_type : NULL);
+	if (!lhs)
+		return NULL;
+
+	switch (lhs->type)
+	{
+		case OFC_SEMA_LHS_DECL:
+			return ofc_sema_decl_type(lhs->decl);
+
+		case OFC_SEMA_LHS_STRUCTURE_MEMBER:
+			return ofc_sema_decl_type(lhs->member);
+
+		case OFC_SEMA_LHS_ARRAY_INDEX:
+		case OFC_SEMA_LHS_ARRAY_SLICE:
+			return ofc_sema_lhs_type(lhs->parent);
+
+		case OFC_SEMA_LHS_SUBSTRING:
+			{
+				ofc_sema_expr_t* first = lhs->substring.first;
+				ofc_sema_expr_t* last  = lhs->substring.last;
+
+				bool len_var = true;
+				unsigned len = 0;
+				if ((!first || ofc_sema_expr_is_constant(first))
+					&& ofc_sema_expr_is_constant(last))
+				{
+					const ofc_sema_typeval_t* first_ctv
+						= ofc_sema_expr_constant(first);
+					const ofc_sema_typeval_t* last_ctv
+						= ofc_sema_expr_constant(last);
+
+					int64_t ifirst = 1;
+					if (first && !ofc_sema_typeval_get_integer(
+						first_ctv, &ifirst))
+						return NULL;
+
+					int64_t ilast;
+					if (!ofc_sema_typeval_get_integer(
+						last_ctv, &ilast))
+						return NULL;
+
+					int64_t ilen = (ilast - ifirst) + 1;
+					len = ilen;
+					if ((int64_t)len != ilen)
+						return NULL;
+
+					len_var = false;
+				}
+				const ofc_sema_type_t* parent_type
+					= ofc_sema_lhs_type(lhs->parent);
+
+				return ofc_sema_type_create_character(
+					parent_type->kind, len, len_var);
+			}
+		default:
+			break;
+	}
+	return NULL;
 }
 
 bool ofc_sema_lhs_elem_count(
