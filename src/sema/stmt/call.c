@@ -42,13 +42,12 @@ ofc_sema_stmt_t* ofc_sema_stmt_call(
 	if (!ofc_sema_decl_type_finalize(subroutine))
 		return NULL;
 	ofc_sema_decl_mark_used(subroutine, false, true);
-	s.call.subroutine = subroutine;
 
-	s.call.args = NULL;
+	ofc_sema_dummy_arg_list_t* args = NULL;
 	if (stmt->call_entry.args)
 	{
-		s.call.args = ofc_sema_expr_list_create();
-		if (!s.call.args) return NULL;
+		args = ofc_sema_dummy_arg_list_create();
+		if (!args) return NULL;
 
 		unsigned i;
 		for (i = 0; i < stmt->call_entry.args->count; i++)
@@ -57,7 +56,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_call(
 				= stmt->call_entry.args->call_arg[i];
 			if (!arg)
 			{
-				ofc_sema_expr_list_delete(s.call.args);
+				ofc_sema_dummy_arg_list_delete(args);
 				return NULL;
 			}
 
@@ -65,7 +64,7 @@ ofc_sema_stmt_t* ofc_sema_stmt_call(
 			{
 				ofc_sparse_ref_error(stmt->src,
 					"CALL arguments musn't be named");
-				ofc_sema_expr_list_delete(s.call.args);
+				ofc_sema_dummy_arg_list_delete(args);
 				return NULL;
 			}
 
@@ -77,42 +76,73 @@ ofc_sema_stmt_t* ofc_sema_stmt_call(
 				default:
 					ofc_sparse_ref_error(stmt->src,
 						"CALL arguments must be an expression or return label");
-					ofc_sema_expr_list_delete(s.call.args);
+					ofc_sema_dummy_arg_list_delete(args);
 					return NULL;
 			}
 
-			ofc_sema_expr_t* expr;
+			/* Maybe simplify wrapping an expr */
+			ofc_sema_dummy_arg_t* dummy_arg;
 			if (arg->type == OFC_PARSE_CALL_ARG_RETURN)
 			{
-				expr = ofc_sema_expr_alt_return(
+				dummy_arg = ofc_sema_dummy_arg_alt_return(
 					scope, arg->expr);
 			}
 			else
 			{
-				expr = ofc_sema_expr_dummy_arg(
+				dummy_arg = ofc_sema_dummy_arg(
 					scope, arg->expr);
 			}
-			if (!expr)
+			if (!dummy_arg)
 			{
-				ofc_sema_expr_list_delete(s.call.args);
+				ofc_sema_dummy_arg_list_delete(args);
 				return NULL;
 			}
 
-			if (!ofc_sema_expr_list_add(
-				s.call.args, expr))
+			if (!ofc_sema_dummy_arg_list_add(
+				args, dummy_arg))
 			{
-				ofc_sema_expr_delete(expr);
-				ofc_sema_expr_list_delete(s.call.args);
+				ofc_sema_dummy_arg_delete(dummy_arg);
+				ofc_sema_dummy_arg_list_delete(args);
 				return NULL;
 			}
 		}
 	}
 
+	/* Add call to the list of subroutine calls in that scope */
+	if (scope->subroutine)
+	{
+		if (!ofc_sema_call_list_add(
+			scope->subroutine, subroutine, args, NULL))
+			return NULL;
+	}
+	else
+	{
+		ofc_sema_call_t* call = ofc_sema_call_create(
+			subroutine, args, NULL);
+		if (!call) return NULL;
+
+		scope->subroutine = ofc_sema_call_list_create(
+			subroutine->name.string, call);
+		if (!scope->subroutine)
+		{
+			free(call);
+			return NULL;
+		}
+	}
+
+	/* We are duplicating calls here */
+	ofc_sema_call_t* stmt_call = ofc_sema_call_create(
+		subroutine, args, NULL);
+	if (!stmt_call) return NULL;
+
+	s.call = stmt_call;
+
 	ofc_sema_stmt_t* as
 		= ofc_sema_stmt_alloc(s);
 	if (!as)
 	{
-		ofc_sema_expr_list_delete(s.call.args);
+		free(stmt_call);
+		ofc_sema_dummy_arg_list_delete(args);
 		return NULL;
 	}
 
@@ -128,13 +158,13 @@ bool ofc_sema_stmt_call_print(
 
 	if (!ofc_colstr_keyword_atomic_writez(cs, "CALL")
 		|| !ofc_colstr_atomic_writef(cs, " ")
-		|| !ofc_sema_decl_print_name(cs, stmt->call.subroutine))
+		|| !ofc_sema_decl_print_name(cs, stmt->call->subr))
 		return false;
 
-	if (stmt->call.args
+	if (stmt->call->args
 		&& (!ofc_colstr_atomic_writef(cs, " ")
 			|| !ofc_colstr_atomic_writef(cs, "(")
-			|| !ofc_sema_expr_list_print(cs, stmt->call.args)
+			|| !ofc_sema_dummy_arg_list_print(cs, stmt->call->args)
 			|| !ofc_colstr_atomic_writef(cs, ")")))
 		return false;
 

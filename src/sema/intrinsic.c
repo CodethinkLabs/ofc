@@ -218,29 +218,41 @@ typedef enum
 
 static ofc_sema_typeval_t* ofc_sema_intrinsic_op__constant_cast(
 	const ofc_sema_intrinsic_t* intrinsic,
-	const ofc_sema_expr_list_t* args)
+	const ofc_sema_dummy_arg_list_t* args)
 {
 	if (!intrinsic || !args
-		|| (args->count != 1)
-		|| !ofc_sema_expr_is_constant(args->expr[0]))
+		|| (args->count != 1))
+		return NULL;
+
+	ofc_sema_expr_t* expr
+		= ofc_sema_dummy_arg_get_expr(
+			args->dummy_arg[0]);
+	if (!expr) return NULL;
+
+	if (!ofc_sema_expr_is_constant(expr))
 		return NULL;
 
 	return ofc_sema_typeval_cast(
-		ofc_sema_expr_constant(args->expr[0]),
+		ofc_sema_expr_constant(expr),
 		ofc_sema_intrinsic_type(intrinsic, args));
 }
 
 static ofc_sema_typeval_t* ofc_sema_intrinsic_op__constant_iand(
 	const ofc_sema_intrinsic_t* intrinsic,
-	const ofc_sema_expr_list_t* args)
+	const ofc_sema_dummy_arg_list_t* args)
 {
 	if (!intrinsic || !args
 		|| (args->count != 2))
 		return NULL;
 
 	const ofc_sema_typeval_t* ctv[2];
-	ctv[0] = ofc_sema_expr_constant(args->expr[0]);
-	ctv[1] = ofc_sema_expr_constant(args->expr[1]);
+	ofc_sema_expr_t* expr[2];
+
+	expr[0] = ofc_sema_dummy_arg_get_expr(args->dummy_arg[0]);
+	expr[1] = ofc_sema_dummy_arg_get_expr(args->dummy_arg[1]);
+
+	ctv[0] = ofc_sema_expr_constant(expr[0]);
+	ctv[1] = ofc_sema_expr_constant(expr[1]);
 	if (!ctv[0] || !ctv[1]
 		|| !ctv[0]->type || !ctv[1]->type
 		|| !ofc_sema_type_is_integer(ctv[0]->type)
@@ -253,8 +265,8 @@ static ofc_sema_typeval_t* ofc_sema_intrinsic_op__constant_iand(
 
 	ofc_sparse_ref_t ref = OFC_SPARSE_REF_EMPTY;
 	ofc_sparse_ref_bridge(
-		args->expr[0]->src,
-		args->expr[1]->src, &ref);
+		expr[0]->src,
+		expr[1]->src, &ref);
 
 	ofc_sema_typeval_t* tv
 		= ofc_sema_typeval_create_integer(0, type->kind, ref);
@@ -265,15 +277,20 @@ static ofc_sema_typeval_t* ofc_sema_intrinsic_op__constant_iand(
 
 static ofc_sema_typeval_t* ofc_sema_intrinsic_op__constant_ieor(
 	const ofc_sema_intrinsic_t* intrinsic,
-	const ofc_sema_expr_list_t* args)
+	const ofc_sema_dummy_arg_list_t* args)
 {
 	if (!intrinsic || !args
 		|| (args->count != 2))
 		return NULL;
 
 	const ofc_sema_typeval_t* ctv[2];
-	ctv[0] = ofc_sema_expr_constant(args->expr[0]);
-	ctv[1] = ofc_sema_expr_constant(args->expr[1]);
+	ofc_sema_expr_t* expr[2];
+
+	expr[0] = ofc_sema_dummy_arg_get_expr(args->dummy_arg[0]);
+	expr[1] = ofc_sema_dummy_arg_get_expr(args->dummy_arg[1]);
+
+	ctv[0] = ofc_sema_expr_constant(expr[0]);
+	ctv[1] = ofc_sema_expr_constant(expr[1]);
 	if (!ctv[0] || !ctv[1]
 		|| !ctv[0]->type || !ctv[1]->type
 		|| !ofc_sema_type_is_integer(ctv[0]->type)
@@ -286,8 +303,8 @@ static ofc_sema_typeval_t* ofc_sema_intrinsic_op__constant_ieor(
 
 	ofc_sparse_ref_t ref = OFC_SPARSE_REF_EMPTY;
 	ofc_sparse_ref_bridge(
-		args->expr[0]->src,
-		args->expr[1]->src, &ref);
+		expr[0]->src,
+		expr[1]->src, &ref);
 
 	ofc_sema_typeval_t* tv
 		= ofc_sema_typeval_create_integer(0, type->kind, ref);
@@ -298,15 +315,20 @@ static ofc_sema_typeval_t* ofc_sema_intrinsic_op__constant_ieor(
 
 static ofc_sema_typeval_t* ofc_sema_intrinsic_op__constant_ior(
 	const ofc_sema_intrinsic_t* intrinsic,
-	const ofc_sema_expr_list_t* args)
+	const ofc_sema_dummy_arg_list_t* args)
 {
 	if (!intrinsic || !args
 		|| (args->count != 2))
 		return NULL;
 
 	const ofc_sema_typeval_t* ctv[2];
-	ctv[0] = ofc_sema_expr_constant(args->expr[0]);
-	ctv[1] = ofc_sema_expr_constant(args->expr[1]);
+	ofc_sema_expr_t* expr[2];
+
+	expr[0] = ofc_sema_dummy_arg_get_expr(args->dummy_arg[0]);
+	expr[1] = ofc_sema_dummy_arg_get_expr(args->dummy_arg[1]);
+
+	ctv[0] = ofc_sema_expr_constant(expr[0]);
+	ctv[1] = ofc_sema_expr_constant(expr[1]);
 	if (!ctv[0] || !ctv[1]
 		|| !ctv[0]->type || !ctv[1]->type
 		|| !ofc_sema_type_is_integer(ctv[0]->type)
@@ -319,8 +341,8 @@ static ofc_sema_typeval_t* ofc_sema_intrinsic_op__constant_ior(
 
 	ofc_sparse_ref_t ref = OFC_SPARSE_REF_EMPTY;
 	ofc_sparse_ref_bridge(
-		args->expr[0]->src,
-		args->expr[1]->src, &ref);
+		expr[0]->src,
+		expr[1]->src, &ref);
 
 	ofc_sema_typeval_t* tv
 		= ofc_sema_typeval_create_integer(0, type->kind, ref);
@@ -331,14 +353,17 @@ static ofc_sema_typeval_t* ofc_sema_intrinsic_op__constant_ior(
 
 static ofc_sema_typeval_t* ofc_sema_intrinsic_op__constant_not(
 	const ofc_sema_intrinsic_t* intrinsic,
-	const ofc_sema_expr_list_t* args)
+	const ofc_sema_dummy_arg_list_t* args)
 {
 	if (!intrinsic || !args
 		|| (args->count != 1))
 		return NULL;
 
+	ofc_sema_expr_t* expr
+		= ofc_sema_dummy_arg_get_expr(
+			args->dummy_arg[0]);
 	const ofc_sema_typeval_t* ctv
-		= ofc_sema_expr_constant(args->expr[0]);
+		= ofc_sema_expr_constant(expr);
 	if (!ctv || !ctv->type
 		|| !ofc_sema_type_is_integer(ctv->type))
 		return NULL;
@@ -359,7 +384,7 @@ typedef struct
 
 	ofc_sema_typeval_t* (*constant)(
 		const ofc_sema_intrinsic_t*,
-		const ofc_sema_expr_list_t*);
+		const ofc_sema_dummy_arg_list_t*);
 } ofc_sema_intrinsic_op_t;
 
 static const ofc_sema_intrinsic_op_t ofc_sema_intrinsic__op_list[] =
@@ -620,13 +645,13 @@ static const ofc_sema_intrinsic_op_t ofc_sema_intrinsic__op_list_override[] =
 
 
 static const ofc_sema_type_t* ofc_sema_intrinsic__len_rt(
-	const ofc_sema_expr_list_t* args)
+	const ofc_sema_dummy_arg_list_t* args)
 {
 	ofc_sema_kind_e kind = OFC_SEMA_KIND_DEFAULT;
 	if (args->count >= 2)
 	{
 		const ofc_sema_type_t* type
-			= ofc_sema_expr_type(args->expr[1]);
+			= ofc_sema_dummy_arg_type(args->dummy_arg[1]);
 		if (!type) return NULL;
 		kind = type->kind;
 	}
@@ -637,7 +662,7 @@ static const ofc_sema_type_t* ofc_sema_intrinsic__len_rt(
 
 static ofc_sema_typeval_t* ofc_sema_intrinsic__len_tv(
 	const ofc_sema_intrinsic_t* intrinsic,
-	const ofc_sema_expr_list_t* args)
+	const ofc_sema_dummy_arg_list_t* args)
 {
 	(void)intrinsic;
 
@@ -648,13 +673,16 @@ static ofc_sema_typeval_t* ofc_sema_intrinsic__len_tv(
 	if (args->count > 1)
 	{
 		const ofc_sema_type_t* kt
-			= ofc_sema_expr_type(args->expr[1]);
+			= ofc_sema_dummy_arg_type(args->dummy_arg[1]);
 		if (!kt) return NULL;
 		kind = kt->kind;
 	}
 
+	ofc_sema_expr_t* expr
+		= ofc_sema_dummy_arg_get_expr(
+			args->dummy_arg[0]);
 	const ofc_sema_typeval_t* ctv
-		= ofc_sema_expr_constant(args->expr[0]);
+		= ofc_sema_expr_constant(expr);
 	if (!ctv || !ofc_sema_type_is_character(ctv->type)
 		|| ctv->type->len_var)
 		return NULL;
@@ -664,17 +692,17 @@ static ofc_sema_typeval_t* ofc_sema_intrinsic__len_tv(
 		return NULL;
 
 	return ofc_sema_typeval_create_integer(
-		cl, kind, args->expr[0]->src);
+		cl, kind, expr->src);
 }
 
 static const ofc_sema_type_t* ofc_sema_intrinsic__char_rt(
-	const ofc_sema_expr_list_t* args)
+	const ofc_sema_dummy_arg_list_t* args)
 {
 	ofc_sema_kind_e kind = OFC_SEMA_KIND_DEFAULT;
 	if (args->count >= 2)
 	{
 		const ofc_sema_type_t* type
-			= ofc_sema_expr_type(args->expr[1]);
+			= ofc_sema_dummy_arg_type(args->dummy_arg[1]);
 		if (!type) return NULL;
 		kind = type->kind;
 	}
@@ -685,7 +713,7 @@ static const ofc_sema_type_t* ofc_sema_intrinsic__char_rt(
 
 static ofc_sema_typeval_t* ofc_sema_intrinsic__char_tv(
 	const ofc_sema_intrinsic_t* intrinsic,
-	const ofc_sema_expr_list_t* args)
+	const ofc_sema_dummy_arg_list_t* args)
 {
 	(void)intrinsic;
 
@@ -696,13 +724,16 @@ static ofc_sema_typeval_t* ofc_sema_intrinsic__char_tv(
 	if (args->count > 1)
 	{
 		const ofc_sema_type_t* kt
-			= ofc_sema_expr_type(args->expr[1]);
+			= ofc_sema_dummy_arg_type(args->dummy_arg[1]);
 		if (!kt) return NULL;
 		kind = kt->kind;
 	}
 
+	ofc_sema_expr_t* expr
+		= ofc_sema_dummy_arg_get_expr(
+			args->dummy_arg[0]);
 	const ofc_sema_typeval_t* ctv
-		= ofc_sema_expr_constant(args->expr[0]);
+		= ofc_sema_expr_constant(expr);
 	if (!ctv) return NULL;
 
 	const ofc_sema_type_t* nt = ofc_sema_type_create_character(kind, 1, false);
@@ -713,7 +744,7 @@ static ofc_sema_typeval_t* ofc_sema_intrinsic__char_tv(
 
 	if (ic < 0)
 	{
-		ofc_sparse_ref_warning(args->expr[0]->src,
+		ofc_sparse_ref_warning(expr->src,
 			"Can't convert negative INTEGER to CHARACTER");
 		return NULL;
 	}
@@ -724,23 +755,23 @@ static ofc_sema_typeval_t* ofc_sema_intrinsic__char_tv(
 
 	if ((nts < 8) && ((uint64_t)ic >= (1ULL << (nts * 8U))))
 	{
-		ofc_sparse_ref_warning(args->expr[0]->src,
+		ofc_sparse_ref_warning(expr->src,
 			"INTEGER too large to convert to CHARACTER of kind %u", kind);
 		return NULL;
 	}
 
 	return ofc_sema_typeval_create_character(
-		(char*)&ic, kind, 1, args->expr[0]->src);
+		(char*)&ic, kind, 1, expr->src);
 }
 
 static const ofc_sema_type_t* ofc_sema_intrinsic__ichar_rt(
-	const ofc_sema_expr_list_t* args)
+	const ofc_sema_dummy_arg_list_t* args)
 {
 	ofc_sema_kind_e kind = OFC_SEMA_KIND_DEFAULT;
 	if (args->count >= 2)
 	{
 		const ofc_sema_type_t* type
-			= ofc_sema_expr_type(args->expr[1]);
+			= ofc_sema_dummy_arg_type(args->dummy_arg[1]);
 		if (!type) return NULL;
 		kind = type->kind;
 	}
@@ -751,7 +782,7 @@ static const ofc_sema_type_t* ofc_sema_intrinsic__ichar_rt(
 
 static ofc_sema_typeval_t* ofc_sema_intrinsic__ichar_tv(
 	const ofc_sema_intrinsic_t* intrinsic,
-	const ofc_sema_expr_list_t* args)
+	const ofc_sema_dummy_arg_list_t* args)
 {
 	(void)intrinsic;
 
@@ -762,13 +793,16 @@ static ofc_sema_typeval_t* ofc_sema_intrinsic__ichar_tv(
 	if (args->count > 1)
 	{
 		const ofc_sema_type_t* kt
-			= ofc_sema_expr_type(args->expr[1]);
+			= ofc_sema_dummy_arg_type(args->dummy_arg[1]);
 		if (!kt) return NULL;
 		kind = kt->kind;
 	}
 
+	ofc_sema_expr_t* expr
+		= ofc_sema_dummy_arg_get_expr(
+			args->dummy_arg[0]);
 	const ofc_sema_typeval_t* ctv
-		= ofc_sema_expr_constant(args->expr[0]);
+		= ofc_sema_expr_constant(expr);
 	if (!ctv || !ofc_sema_type_is_character(ctv->type))
 		return NULL;
 
@@ -788,7 +822,7 @@ static ofc_sema_typeval_t* ofc_sema_intrinsic__ichar_tv(
 
 	if (cts > nts)
 	{
-		ofc_sparse_ref_warning(args->expr[0]->src,
+		ofc_sparse_ref_warning(expr->src,
 			"CHARACTER too large to fit in INTEGER of kind %u", kind);
 		return NULL;
 	}
@@ -801,11 +835,11 @@ static ofc_sema_typeval_t* ofc_sema_intrinsic__ichar_tv(
 	if (ic < 0) return NULL;
 
 	return ofc_sema_typeval_create_integer(
-		ic, kind, args->expr[0]->src);
+		ic, kind, expr->src);
 }
 
 static const ofc_sema_type_t* ofc_sema_intrinsic__transfer_rt(
-	const ofc_sema_expr_list_t* args)
+	const ofc_sema_dummy_arg_list_t* args)
 {
 	if (args->count < 2)
 		return NULL;
@@ -813,17 +847,17 @@ static const ofc_sema_type_t* ofc_sema_intrinsic__transfer_rt(
 	if (args->count >= 3)
 	{
 		/* TODO - INTRINSIC - Use 3rd parameter as array size if present. */
-		ofc_sparse_ref_error(args->expr[2]->src,
+		ofc_sparse_ref_error(args->dummy_arg[2]->src,
 			"TRANSFER SIZE argument not yet supported");
 		return NULL;
 	}
 
-	return ofc_sema_expr_type(args->expr[1]);
+	return ofc_sema_dummy_arg_type(args->dummy_arg[1]);
 }
 
 static ofc_sema_typeval_t* ofc_sema_intrinsic__transfer_tv(
 	const ofc_sema_intrinsic_t* intrinsic,
-	const ofc_sema_expr_list_t* args)
+	const ofc_sema_dummy_arg_list_t* args)
 {
 	(void)intrinsic;
 
@@ -832,8 +866,13 @@ static ofc_sema_typeval_t* ofc_sema_intrinsic__transfer_tv(
 		|| (args->count >= 3))
 		return NULL;
 
+	ofc_sema_expr_t* expr_atv
+		= ofc_sema_dummy_arg_get_expr(
+			args->dummy_arg[1]);
+	if (!expr_atv) return NULL;
+
 	const ofc_sema_typeval_t* atv
-		= ofc_sema_expr_constant(args->expr[1]);
+		= ofc_sema_expr_constant(expr_atv);
 	if (!atv) return NULL;
 
 	const ofc_sema_type_t* atype = atv->type;
@@ -1071,11 +1110,11 @@ typedef struct
 	ofc_sema_intrinsic__param_e return_type;
 	ofc_sema_intrinsic__param_e arg_type[4];
 
-	const ofc_sema_type_t* (*return_type_callback)(const ofc_sema_expr_list_t*);
+	const ofc_sema_type_t* (*return_type_callback)(const ofc_sema_dummy_arg_list_t*);
 
 	ofc_sema_typeval_t* (*constant)(
 		const ofc_sema_intrinsic_t*,
-		const ofc_sema_expr_list_t*);
+		const ofc_sema_dummy_arg_list_t*);
 } ofc_sema_intrinsic_func_t;
 
 static const ofc_sema_intrinsic_func_t ofc_sema_intrinsic__func_list[] =
@@ -1183,8 +1222,8 @@ static const ofc_sema_intrinsic_func_t ofc_sema_intrinsic__subr_list[] =
 
 static const ofc_sema_type_t* ofc_sema_intrinsic__param_rtype(
 	ofc_sema_intrinsic__param_e param,
-	const ofc_sema_expr_list_t* args,
-	const ofc_sema_type_t* (*callback)(const ofc_sema_expr_list_t*))
+	const ofc_sema_dummy_arg_list_t* args,
+	const ofc_sema_type_t* (*callback)(const ofc_sema_dummy_arg_list_t*))
 {
 	if (param >= IP_COUNT)
 		return NULL;
@@ -1194,7 +1233,7 @@ static const ofc_sema_type_t* ofc_sema_intrinsic__param_rtype(
 
 	const ofc_sema_type_t* stype = NULL;
 	if (args && (args->count > 0))
-		stype = ofc_sema_expr_type(args->expr[0]);
+		stype = ofc_sema_dummy_arg_type(args->dummy_arg[0]);
 
 	const ofc_sema_type_t* rtype = NULL;
 	switch (p.type_type)
@@ -1703,15 +1742,15 @@ bool ofc_sema_stmt_intrinsic(
 }
 
 static const ofc_sema_type_t* ofc_sema_intrinsic__param_type(
-	const ofc_sema_expr_t* expr,
+	const ofc_sema_dummy_arg_t* dummy_arg,
 	ofc_sema_intrinsic__param_e param,
 	bool* valid)
 {
-	if (!expr || (param >= IP_COUNT))
+	if (!dummy_arg || (param >= IP_COUNT))
 		return NULL;
 
 	const ofc_sema_type_t* type
-		= ofc_sema_expr_type(expr);
+		= ofc_sema_dummy_arg_type(dummy_arg);
 
 	ofc_sema_intrinsic__param_t p
 		= ofc_sema_intrinsic__param[param];
@@ -1791,42 +1830,42 @@ static const ofc_sema_type_t* ofc_sema_intrinsic__param_type(
 	return ctype;
 }
 
-static ofc_sema_expr_t* ofc_sema_intrinsic__param_cast(
-	const ofc_sema_expr_t* expr,
+static ofc_sema_dummy_arg_t* ofc_sema_intrinsic__param_cast(
+	const ofc_sema_dummy_arg_t* dummy_arg,
 	ofc_sema_intrinsic__param_e param,
 	bool* valid)
 {
-	if (!expr || (param >= IP_COUNT))
+	if (!dummy_arg || (param >= IP_COUNT))
 		return NULL;
 
 	const ofc_sema_type_t* type
-		= ofc_sema_expr_type(expr);
+		= ofc_sema_dummy_arg_type(dummy_arg);
 	if (!type) return NULL;
 
 	const ofc_sema_type_t* ctype
 		= ofc_sema_intrinsic__param_type(
-			expr, param, valid);
+			dummy_arg, param, valid);
 	if (!ctype) return NULL;
 
-	ofc_sema_expr_t* copy
-		= ofc_sema_expr_copy(expr);
+	ofc_sema_dummy_arg_t* copy
+		= ofc_sema_dummy_arg_copy(dummy_arg);
 	if (ofc_sema_type_compatible(type, ctype))
 		return copy;
 
-	ofc_sema_expr_t* cast
-		= ofc_sema_expr_cast(copy, ctype);
+	ofc_sema_dummy_arg_t* cast
+		= ofc_sema_dummy_arg_cast(copy, ctype);
 	if (!cast)
 	{
-		ofc_sema_expr_delete(copy);
+		ofc_sema_dummy_arg_delete(copy);
 		return NULL;
 	}
 	return cast;
 }
 
-static ofc_sema_expr_list_t* ofc_sema_intrinsic_cast__op(
+static ofc_sema_dummy_arg_list_t* ofc_sema_intrinsic_cast__op(
 	ofc_sparse_ref_t src,
 	const ofc_sema_intrinsic_t* intrinsic,
-	const ofc_sema_expr_list_t* args)
+	const ofc_sema_dummy_arg_list_t* args)
 {
 	if (!intrinsic || !args
 		|| (intrinsic->type != OFC_SEMA_INTRINSIC_OP)
@@ -1854,11 +1893,11 @@ static ofc_sema_expr_list_t* ofc_sema_intrinsic_cast__op(
 		bool valid = true;
 		const ofc_sema_type_t* atype
 			= ofc_sema_intrinsic__param_type(
-				args->expr[i], intrinsic->op->arg_type, &valid);
+				args->dummy_arg[i], intrinsic->op->arg_type, &valid);
 
 		if (!valid)
 		{
-			ofc_sparse_ref_warning(args->expr[i]->src,
+			ofc_sparse_ref_warning(args->dummy_arg[i]->src,
 				"Incorrect argument type for intrinsic.");
 		}
 
@@ -1868,43 +1907,43 @@ static ofc_sema_expr_list_t* ofc_sema_intrinsic_cast__op(
 		if (!ctype) return NULL;
 	}
 
-	ofc_sema_expr_list_t* cargs
-		= ofc_sema_expr_list_create();
+	ofc_sema_dummy_arg_list_t* cargs
+		= ofc_sema_dummy_arg_list_create();
 	if (!cargs) return NULL;
 
 	for (i = 0; i < args->count; i++)
 	{
-		ofc_sema_expr_t* carg
-			= ofc_sema_expr_copy(args->expr[i]);
+		ofc_sema_dummy_arg_t* carg
+			= ofc_sema_dummy_arg_copy(args->dummy_arg[i]);
 		if (!carg)
 		{
-			ofc_sema_expr_list_delete(cargs);
+			ofc_sema_dummy_arg_list_delete(cargs);
 			return NULL;
 		}
 
 		const ofc_sema_type_t* atype
-			= ofc_sema_expr_type(carg);
+			= ofc_sema_dummy_arg_type(carg);
 
 		if (!ofc_sema_type_compatible(
 			atype, ctype))
 		{
-			ofc_sema_expr_t* cast
-				= ofc_sema_expr_cast(carg, ctype);
+			ofc_sema_dummy_arg_t* cast
+				= ofc_sema_dummy_arg_cast(carg, ctype);
 			if (!cast)
 			{
 				ofc_sparse_ref_error(carg->src,
 					"Incompatible argument type for intrinsic.");
-				ofc_sema_expr_delete(carg);
-				ofc_sema_expr_list_delete(cargs);
+				ofc_sema_dummy_arg_delete(carg);
+				ofc_sema_dummy_arg_list_delete(cargs);
 				return NULL;
 			}
 			carg = cast;
 		}
 
-		if (!ofc_sema_expr_list_add(cargs, carg))
+		if (!ofc_sema_dummy_arg_list_add(cargs, carg))
 		{
-			ofc_sema_expr_delete(carg);
-			ofc_sema_expr_list_delete(cargs);
+			ofc_sema_dummy_arg_delete(carg);
+			ofc_sema_dummy_arg_list_delete(cargs);
 			return NULL;
 		}
 	}
@@ -1912,10 +1951,10 @@ static ofc_sema_expr_list_t* ofc_sema_intrinsic_cast__op(
 	return cargs;
 }
 
-static ofc_sema_expr_list_t* ofc_sema_intrinsic_cast__func(
+static ofc_sema_dummy_arg_list_t* ofc_sema_intrinsic_cast__func(
 	ofc_sparse_ref_t src,
 	const ofc_sema_intrinsic_t* intrinsic,
-	const ofc_sema_expr_list_t* args)
+	const ofc_sema_dummy_arg_list_t* args)
 {
 	if (!intrinsic || !args)
 		return NULL;
@@ -1943,20 +1982,20 @@ static ofc_sema_expr_list_t* ofc_sema_intrinsic_cast__func(
 
 	/* TODO - Handle array arguments. */
 
-	ofc_sema_expr_list_t* cargs
-		= ofc_sema_expr_list_create();
+	ofc_sema_dummy_arg_list_t* cargs
+		= ofc_sema_dummy_arg_list_create();
 	if (!cargs) return NULL;
 
 	unsigned i;
 	for (i = 0; i < args->count; i++)
 	{
 		bool valid = true;
-		ofc_sema_expr_t* carg
+		ofc_sema_dummy_arg_t* carg
 			= ofc_sema_intrinsic__param_cast(
-				args->expr[i], intrinsic->func->arg_type[i], &valid);
+				args->dummy_arg[i], intrinsic->func->arg_type[i], &valid);
 		if (!carg)
 		{
-			ofc_sema_expr_list_delete(cargs);
+			ofc_sema_dummy_arg_list_delete(cargs);
 			return NULL;
 		}
 
@@ -1966,10 +2005,10 @@ static ofc_sema_expr_list_t* ofc_sema_intrinsic_cast__func(
 				"Incorrect argument type for intrinsic.");
 		}
 
-		if (!ofc_sema_expr_list_add(cargs, carg))
+		if (!ofc_sema_dummy_arg_list_add(cargs, carg))
 		{
-			ofc_sema_expr_delete(carg);
-			ofc_sema_expr_list_delete(cargs);
+			ofc_sema_dummy_arg_delete(carg);
+			ofc_sema_dummy_arg_list_delete(cargs);
 			return NULL;
 		}
 	}
@@ -1977,10 +2016,10 @@ static ofc_sema_expr_list_t* ofc_sema_intrinsic_cast__func(
 	return cargs;
 }
 
-ofc_sema_expr_list_t* ofc_sema_intrinsic_cast(
+ofc_sema_dummy_arg_list_t* ofc_sema_intrinsic_cast(
 	ofc_sparse_ref_t src,
 	const ofc_sema_intrinsic_t* intrinsic,
-	const ofc_sema_expr_list_t* args)
+	const ofc_sema_dummy_arg_list_t* args)
 {
 	switch (intrinsic->type)
 	{
@@ -2000,7 +2039,7 @@ ofc_sema_expr_list_t* ofc_sema_intrinsic_cast(
 
 ofc_sema_typeval_t* ofc_sema_intrinsic_constant(
 	const ofc_sema_intrinsic_t* intrinsic,
-	const ofc_sema_expr_list_t* args)
+	const ofc_sema_dummy_arg_list_t* args)
 {
 	if (!intrinsic)
 		return NULL;
@@ -2029,7 +2068,7 @@ ofc_sema_typeval_t* ofc_sema_intrinsic_constant(
 
 const ofc_sema_type_t* ofc_sema_intrinsic_type(
 	const ofc_sema_intrinsic_t* intrinsic,
-	const ofc_sema_expr_list_t* args)
+	const ofc_sema_dummy_arg_list_t* args)
 {
 	switch (intrinsic->type)
 	{

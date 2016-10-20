@@ -143,6 +143,7 @@ bool ofc_sema_decl_type_finalize(
 		if (!ltype) return false;
 	}
 
+	/* TODO: get rid of this */
 	/* Externals are always functions or subroutines
 	   but we always know if a declaration is a subroutine */
 	if (decl->is_external

@@ -65,6 +65,11 @@ struct ofc_sema_scope_s
 	ofc_sema_module_list_t* module;
 	ofc_sema_label_map_t*   label;
 	ofc_sema_external_list_t* external;
+	/* All the subroutine calls that happen in the scope */
+	ofc_sema_call_list_t*   subroutine;
+	/* All the function calls that happen in the scope */
+	ofc_sema_call_list_t*   function;
+
 	/* namelist_list_map */
 
 	ofc_sema_structure_list_t* structure;

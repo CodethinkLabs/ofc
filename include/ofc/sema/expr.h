@@ -90,7 +90,7 @@ struct ofc_sema_expr_s
 				const ofc_sema_intrinsic_t* intrinsic;
 				const ofc_sema_decl_t*      function;
 			};
-			ofc_sema_expr_list_t* args;
+			ofc_sema_dummy_arg_list_t* args;
 		};
 
 		struct

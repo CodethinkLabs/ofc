@@ -118,6 +118,9 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 
 	scope->external = NULL;
 
+	scope->subroutine = NULL;
+	scope->function   = NULL;
+
 	if (scope->type == OFC_SEMA_SCOPE_SUPER)
 		return scope;
 
@@ -401,6 +404,26 @@ static bool ofc_sema_scope__body(
 	if (scope->stmt)
 		return false;
 
+	/* NOTE: should we be declaring arguments at all? */
+	/* Declare arguments */
+	if (scope->args)
+	{
+		unsigned i;
+		for (i = 0; i < scope->args->count; i++)
+		{
+			if (scope->args->arg[i].alt_return)
+				continue;
+
+			ofc_sparse_ref_t name
+				= scope->args->arg[i].name;
+			ofc_sema_decl_t* decl
+				= ofc_sema_scope_decl_find_create(
+					scope, name, true);
+			if (!decl) return false;
+			decl->is_argument = true;
+		}
+	}
+
 	scope->stmt = ofc_sema_stmt_list(scope, NULL, body);
 	if (!scope->stmt)
 		return false;
@@ -443,25 +466,6 @@ static bool ofc_sema_scope__body(
 	if (!ofc_sema_stmt_list_foreach(scope->stmt, scope,
 		(void*)ofc_sema_scope__body_format_validate_defaults))
 		return false;
-
-	/* Declare arguments */
-	if (scope->args)
-	{
-		unsigned i;
-		for (i = 0; i < scope->args->count; i++)
-		{
-			if (scope->args->arg[i].alt_return)
-				continue;
-
-			ofc_sparse_ref_t name
-				= scope->args->arg[i].name;
-			ofc_sema_decl_t* decl
-				= ofc_sema_scope_decl_find_create(
-					scope, name, true);
-			if (!decl) return false;
-			decl->is_argument = true;
-		}
-	}
 
 	/* Handle EQUIVALENCE statements */
 	if (!ofc_parse_stmt_list_foreach(body, scope,
@@ -604,25 +608,6 @@ bool ofc_sema_scope_subroutine(
 			ofc_sema_scope_delete(sub_scope);
 			return false;
 		}
-
-		unsigned i;
-		for (i = 0; i < sub_scope->args->count; i++)
-		{
-			if (sub_scope->args->arg[i].alt_return
-				|| ofc_sparse_ref_empty(sub_scope->args->arg[i].name))
-				continue;
-
-			ofc_sema_decl_t* decl
-				= ofc_sema_scope_decl_find_create(
-					sub_scope, sub_scope->args->arg[i].name, true);
-			if (!decl)
-			{
-				ofc_sema_scope_delete(sub_scope);
-				return false;
-			}
-
-			decl->is_argument = true;
-		}
 	}
 
 	if (stmt->program.end_has_label
@@ -698,24 +683,6 @@ bool ofc_sema_scope_function(
 		{
 			ofc_sema_scope_delete(func_scope);
 			return false;
-		}
-
-		unsigned i;
-		for (i = 0; i < func_scope->args->count; i++)
-		{
-			if (func_scope->args->arg[i].alt_return
-				|| ofc_sparse_ref_empty(func_scope->args->arg[i].name))
-				continue;
-
-			ofc_sema_decl_t* decl
-				= ofc_sema_scope_decl_find_create(
-					func_scope, func_scope->args->arg[i].name, true);
-			if (!decl)
-			{
-				ofc_sema_scope_delete(func_scope);
-				return false;
-			}
-			decl->is_argument = true;
 		}
 	}
 
@@ -1283,7 +1250,7 @@ ofc_sema_decl_t* ofc_sema_scope_decl_find_modify(
 		scope->parent, name, false);
 }
 
-ofc_sema_decl_t* ofc_sema_scope_decl_find__create(
+static ofc_sema_decl_t* ofc_sema_scope_decl_find__create(
 	ofc_sema_scope_t* scope, ofc_sparse_ref_t name,
 	bool local, bool create, const char* name_space)
 {

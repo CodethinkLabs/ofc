@@ -282,11 +282,7 @@ struct ofc_sema_stmt_s
 			ofc_sema_stmt_list_t* block;
 		} do_while_block;
 
-		struct
-		{
-			const ofc_sema_decl_t* subroutine;
-			ofc_sema_expr_list_t*  args;
-		} call;
+		ofc_sema_call_t* call;
 
 		struct
 		{

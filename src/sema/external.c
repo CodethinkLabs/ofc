@@ -141,6 +141,15 @@ void ofc_sema_external_delete(
 	free(external);
 }
 
+bool ofc_sema_external_is_decl(
+	const ofc_sema_external_t* external)
+{
+	if (!external)
+		return false;
+
+	return (external->decl != NULL);
+}
+
 bool ofc_sema_stmt_external(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt)
@@ -200,6 +209,28 @@ bool ofc_sema_stmt_external(
 	return true;
 }
 
+bool ofc_sema_external_arg_print(
+	ofc_colstr_t* cs,
+	const ofc_sema_external_t* external)
+{
+	if (!cs || !external)
+		return false;
+
+	if (external->decl)
+	{
+		if(!ofc_sema_decl_print_name(cs, external->decl))
+			return false;
+	}
+	else
+	{
+		if (!ofc_sparse_ref_print(cs, external->name))
+			return false;
+	}
+
+	return true;
+}
+
+
 bool ofc_sema_external_print(
 	ofc_colstr_t* cs, unsigned indent,
 	ofc_sema_external_t* external)
@@ -214,16 +245,8 @@ bool ofc_sema_external_print(
 		|| !ofc_colstr_atomic_writef(cs, " "))
 		return false;
 
-	if (external->decl)
-	{
-		if(!ofc_sema_decl_print_name(cs, external->decl))
-			return false;
-	}
-	else
-	{
-		if (!ofc_sparse_ref_print(cs, external->name))
-			return false;
-	}
+	if (!ofc_sema_external_arg_print(cs, external))
+		return false;
 
 	return true;
 }

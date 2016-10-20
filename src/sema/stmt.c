@@ -484,8 +484,7 @@ void ofc_sema_stmt_delete(
 				stmt->do_while_block.block);
 			break;
 		case OFC_SEMA_STMT_CALL:
-			ofc_sema_expr_list_delete(
-				stmt->call.args);
+			free(stmt->call); /* TODO: Delete properly */
 			break;
 		case OFC_SEMA_STMT_RETURN:
 			ofc_sema_expr_delete(
@@ -1219,8 +1218,8 @@ bool ofc_sema_stmt_foreach_expr(
 			break;
 
 		case OFC_SEMA_STMT_CALL:
-			if (stmt->call.args && !ofc_sema_expr_list_foreach(
-				stmt->call.args, param, func))
+			if (stmt->call->args && !ofc_sema_dummy_arg_list_foreach_expr(
+				stmt->call->args, param, func))
 				return false;
 			break;
 
