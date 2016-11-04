@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="Open Fortran Compiler : A open source frontend compiler which parses and analyses Fortran">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Open Fortran Compiler</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/CodethinkLabs/ofc">View on GitHub</a>
+
+          <h1 id="project_title">Open Fortran Compiler</h1>
+          <h2 id="project_tagline">A open source frontend compiler which parses and analyses Fortran</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/CodethinkLabs/ofc/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/CodethinkLabs/ofc/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>
+<a id="ofc---open-fortran-compiler" class="anchor" href="#ofc---open-fortran-compiler" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>OFC - Open Fortran Compiler</h1>
+
+<p><a href="https://travis-ci.org/CodethinkLabs/ofc"><img src="https://travis-ci.org/CodethinkLabs/ofc.svg?branch=master" alt="Build Status"></a></p>
+
+<h2>
+<a id="overview" class="anchor" href="#overview" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Overview</h2>
+
+<p>Currently OFC is a FORTRAN front-end capable of parsing and performing semantic
+analysis on Fortran. We're targeting legacy FORTRAN first, and can currently
+parse and semantically analyse most F77 and earlier, providing syntax and
+semantic warnings and errors.</p>
+
+<h3>
+<a id="goals" class="anchor" href="#goals" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Goals</h3>
+
+<ol>
+<li>Produce a FORTRAN static code analysis tool.</li>
+<li>Produce a FORTRAN modernizer which can reprint legacy FORTRAN as F90 where possible.</li>
+<li>Produce an alternative FORTRAN front-end for open-source compilers.</li>
+</ol>
+
+<h3>
+<a id="features" class="anchor" href="#features" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Features</h3>
+
+<ul>
+<li>Parse, semantically analyse and re-print ALL NIST F77 tests.</li>
+<li>Safe translation from F77 to F90 syntax where possible.</li>
+</ul>
+
+<h2>
+<a id="usage" class="anchor" href="#usage" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Usage</h2>
+
+<h3>
+<a id="cloning" class="anchor" href="#cloning" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Cloning</h3>
+
+<p>It's recommended that you clone ofc recursively, as it has a submodule:</p>
+
+<pre><code>git clone https://github.com/CodethinkLabs/ofc.git --recursive
+</code></pre>
+
+<h3>
+<a id="installation" class="anchor" href="#installation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Installation</h3>
+
+<p>To install ofc, do:</p>
+
+<pre><code>make install
+</code></pre>
+
+<p>Note that the ofc binary can be invoked locally without an install,
+and the tests will run using the locally built binary.</p>
+
+<h3>
+<a id="execution" class="anchor" href="#execution" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Execution</h3>
+
+<p>To invoke ofc currently, simply run it over a fortran file:</p>
+
+<pre><code>ofc tests/programs/nist/FM001.FOR
+</code></pre>
+
+<p>The compiler options will be automatically detected from the file name, but
+this can be overridden using commandline flags which are printed by invoking
+ofc with no source file.</p>
+
+<p>To print the parse and semantic trees, use the --parse-tree and --sema-tree flags.</p>
+
+<h2>
+<a id="testing" class="anchor" href="#testing" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Testing</h2>
+
+<h3>
+<a id="dependencies" class="anchor" href="#dependencies" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Dependencies</h3>
+
+<p>Test Suite:
+    gfortran
+    valgrind</p>
+
+<p>Static Code Analysis:
+    cppcheck
+    clang, scanbuild</p>
+
+<h3>
+<a id="test-suite" class="anchor" href="#test-suite" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Test Suite</h3>
+
+<p>We run a test suite including the NIST F77 tests using:</p>
+
+<pre><code>make test
+</code></pre>
+
+<p>To make a html report (tests/out/report.html) use:</p>
+
+<pre><code>make test-report
+</code></pre>
+
+<p>The full report takes a long time to build as it runs valgrind over both the debug and optimized binaries.
+To make a quick report which does every step except valgrind, use:</p>
+
+<pre><code>make test-report-lite
+</code></pre>
+
+<p>Note: Tests run from the build directory will use the built ofc rather than the installed one.</p>
+
+<h3>
+<a id="cppcheck" class="anchor" href="#cppcheck" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>CPPCheck</h3>
+
+<p>We run cppcheck over the tree using:</p>
+
+<pre><code>make cppcheck
+</code></pre>
+
+<h3>
+<a id="scanbuild" class="anchor" href="#scanbuild" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>scanbuild</h3>
+
+<p>We run scanbuild over the tree using:</p>
+
+<pre><code>make scan-build
+</code></pre>
+
+<h3>
+<a id="other" class="anchor" href="#other" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Other</h3>
+
+<p>We also have a rule to compile all files at once to produce more warnings using:</p>
+
+<pre><code>make scan
+</code></pre>
+
+<h2>
+<a id="contact" class="anchor" href="#contact" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Contact</h2>
+
+<p>You can contact us at #open-fortran-compiler on irc.freenode.net or via the e-mails used in our git commits.</p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Open Fortran Compiler maintained by <a href="https://github.com/CodethinkLabs">CodethinkLabs</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
