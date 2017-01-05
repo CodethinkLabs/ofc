@@ -56,6 +56,9 @@ struct ofc_sema_scope_s
 	bool attr_external;
 	bool attr_intrinsic;
 	bool attr_save;
+	bool attr_recursive;
+
+	bool contains_automatic;
 
 	ofc_sema_implicit_t*  implicit;
 

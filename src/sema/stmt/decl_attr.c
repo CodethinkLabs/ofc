@@ -50,6 +50,7 @@ bool ofc_sema_stmt_decl_attr(
 						decl_name.string.size, decl_name.string.base);
 				}
 				decl->is_automatic = true;
+				scope->contains_automatic = true;
 				break;
 			case OFC_PARSE_STMT_DECL_ATTR_STATIC:
 				if (decl->is_automatic)

@@ -98,6 +98,9 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 	scope->attr_external = false;
 	scope->attr_intrinsic = false;
 	scope->attr_save = false;
+	scope->attr_recursive = false;
+
+	scope->contains_automatic = false;
 
 	scope->access = OFC_SEMA_ACCESSIBILITY_DEFAULT;
 
@@ -1625,6 +1628,7 @@ bool ofc_sema_scope_print(
 	if (!scope)
 		return false;
 
+	bool is_procedure = false;
 	bool implicit = false;
 	const char* kwstr = NULL;
 	switch (scope->type)
@@ -1637,9 +1641,11 @@ bool ofc_sema_scope_print(
 			break;
 		case OFC_SEMA_SCOPE_SUBROUTINE:
 			kwstr = "SUBROUTINE";
+			is_procedure = true;
 			break;
 		case OFC_SEMA_SCOPE_FUNCTION:
 			kwstr = "FUNCTION";
+			is_procedure = true;
 			break;
 		case OFC_SEMA_SCOPE_MODULE:
 			kwstr = "MODULE";
@@ -1661,6 +1667,23 @@ bool ofc_sema_scope_print(
 			/* Decl function printing will handle the new lines
 			   as we need to specify the return type. */
 			if (!ofc_colstr_newline(cs, indent, NULL))
+				return false;
+		}
+
+		const ofc_print_opts_t* opts
+			= ofc_colstr_print_opts_get(cs);
+
+		bool is_recursive = scope->attr_recursive;
+
+		if (scope->contains_automatic
+			&& is_procedure
+			&& (!opts || !opts->automatic))
+			is_recursive = true;
+
+		if (is_recursive)
+		{
+			if (!ofc_colstr_keyword_atomic_writez(cs, "RECURSIVE")
+				|| !ofc_colstr_atomic_writef(cs, " "))
 				return false;
 		}
 
