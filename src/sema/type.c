@@ -1537,3 +1537,35 @@ bool ofc_sema_type_print(
 
 	return true;
 }
+
+bool ofc_sema_type_print_zero(
+	ofc_colstr_t* cs,
+	const ofc_sema_type_t* type)
+{
+	if (!cs || !type)
+		return false;
+
+	switch (type->type)
+	{
+		case OFC_SEMA_TYPE_LOGICAL:
+			return ofc_colstr_writef(cs, ".FALSE.");
+
+		case OFC_SEMA_TYPE_INTEGER:
+		case OFC_SEMA_TYPE_BYTE:
+			return ofc_colstr_writef(cs, "0");
+
+		case OFC_SEMA_TYPE_REAL:
+			return ofc_colstr_writef(cs, "0.0");
+
+		case OFC_SEMA_TYPE_COMPLEX:
+			return ofc_colstr_writef(cs, "(0.0, 0.0)");
+
+		case OFC_SEMA_TYPE_CHARACTER:
+			return ofc_colstr_writef(cs, "\"\"");
+
+		default:
+			break;
+	}
+
+	return false;
+}

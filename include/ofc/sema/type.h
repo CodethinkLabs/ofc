@@ -145,6 +145,9 @@ bool ofc_sema_type_cast_is_lossless(
 bool ofc_sema_type_print(
 	ofc_colstr_t* cs,
 	const ofc_sema_type_t* type);
+bool ofc_sema_type_print_zero(
+	ofc_colstr_t* cs,
+	const ofc_sema_type_t* type);
 
 
 bool ofc_sema_type_kind_size(

@@ -2642,10 +2642,34 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 	if (!ofc_colstr_atomic_writef(cs, " "))
 		return false;
 
+	bool init_zero = (opts
+		&& opts->init_zero && !decl->structure);
+
+	if (init_zero)
+	{
+		if (decl->is_argument
+			|| decl->is_return
+			|| decl->is_equiv
+			|| decl->is_external
+			|| decl->is_parameter
+			|| decl->is_stmt_func_arg
+			|| decl->is_intrinsic
+			|| decl->common)
+			init_zero = false;
+
+		if (ofc_sema_decl_is_array(decl)
+			&& !ofc_sema_array_total(decl->array, NULL))
+			init_zero = false;
+
+		if (ofc_sema_decl_is_procedure(decl))
+			init_zero = false;
+	}
+
 	bool init_complete = false;
-	ofc_sema_decl_has_initializer(
-		decl, &init_complete);
-	if (init_complete)
+	bool init_partial
+		= ofc_sema_decl_has_initializer(
+			decl, &init_complete);
+	if (init_complete || init_zero)
 		f90_style = true;
 
 	if (f90_style)
@@ -2763,6 +2787,117 @@ bool ofc_sema_decl_print(ofc_colstr_t* cs,
 				return false;
 		}
 	}
+	else if (init_zero)
+	{
+		if (!ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_colstr_atomic_writef(cs, "=")
+			|| !ofc_colstr_atomic_writef(cs, " "))
+			return false;
+
+		if (ofc_sema_decl_is_composite(decl))
+		{
+			bool reshape = (ofc_sema_decl_is_array(decl)
+				&& (decl->array->dimensions > 1));
+
+			if (reshape)
+			{
+				if (!ofc_colstr_keyword_atomic_writez(cs, "RESHAPE")
+					|| !ofc_colstr_atomic_writef(cs, "("))
+					return false;
+			}
+
+			if (!ofc_colstr_atomic_writef(cs, "(/")
+				|| !ofc_colstr_atomic_writef(cs, " "))
+				return false;
+
+			unsigned count;
+			if (!ofc_sema_decl_elem_count(decl, &count))
+				return false;
+
+			unsigned i;
+			for (i = 0; i < count; i++)
+			{
+				if (i > 0)
+				{
+					if (!ofc_colstr_atomic_writef(cs, ",")
+						|| !ofc_colstr_atomic_writef(cs, " "))
+						return false;
+				}
+
+				if (decl->init_array && ofc_sema_decl_init__used(
+					decl->init_array[i], decl->type, NULL))
+				{
+					if (decl->init_array[i].is_substring)
+					{
+						char s[type->len];
+						memset(s, ' ', type->len);
+
+						unsigned i, len = 0;
+						for (i = 0; i < type->len; i++)
+						{
+							if (decl->init_array[i].substring.mask[len])
+							{
+								s[i] = decl->init_array[i].substring.string[i];
+								len = (i + 1);
+							}
+						}
+
+						if (!ofc_colstr_write_escaped(cs, '\"', s, len))
+							return false;
+					}
+					else if (!ofc_sema_expr_print(
+						cs, decl->init_array[i].expr))
+					{
+						return false;
+					}
+				}
+				else if (!ofc_sema_type_print_zero(cs, decl->type))
+				{
+					return false;
+				}
+			}
+
+			if (!ofc_colstr_atomic_writef(cs, " ")
+				|| !ofc_colstr_atomic_writef(cs, "/)"))
+				return false;
+
+			if (reshape)
+			{
+				if (!ofc_colstr_atomic_writef(cs, ",")
+					|| !ofc_colstr_atomic_writef(cs, " ")
+					|| !ofc_colstr_atomic_writef(cs, "(/")
+					|| !ofc_colstr_atomic_writef(cs, " ")
+					|| !ofc_sema_array_print_size(cs, decl->array)
+					|| !ofc_colstr_atomic_writef(cs, " ")
+					|| !ofc_colstr_atomic_writef(cs, "/)")
+					|| !ofc_colstr_atomic_writef(cs, ")"))
+					return false;
+			}
+		}
+		else
+		{
+			if (init_partial && decl->init.is_substring)
+			{
+				char s[type->len];
+				memset(s, ' ', type->len);
+
+				unsigned i, len = 0;
+				for (i = 0; i < type->len; i++)
+				{
+					if (decl->init.substring.mask[len])
+					{
+						s[i] = decl->init.substring.string[i];
+						len = (i + 1);
+					}
+				}
+
+				if (!ofc_colstr_write_escaped(cs, '\"', s, len))
+					return false;
+			}
+			else if (!ofc_sema_type_print_zero(cs, decl->type))
+				return false;
+		}
+	}
 
 	if (f77_parameter
 		&& !ofc_colstr_atomic_writef(cs, ")"))
@@ -2835,17 +2970,40 @@ bool ofc_sema_decl_print_data_init(ofc_colstr_t* cs,
 	if (complete)
 		return true;
 
+	const ofc_print_opts_t* opts
+		= ofc_colstr_print_opts_get(cs);
+	bool init_zero = (opts && opts->init_zero);
+
+	if (init_zero)
+	{
+		if (decl->is_argument
+			|| decl->is_return
+			|| decl->is_equiv
+			|| decl->is_external
+			|| decl->is_parameter
+			|| decl->is_stmt_func_arg
+			|| decl->is_intrinsic
+			|| decl->common)
+			init_zero = false;
+
+		if (ofc_sema_decl_is_array(decl)
+			&& !ofc_sema_array_total(decl->array, NULL))
+			init_zero = false;
+
+		if (ofc_sema_decl_is_procedure(decl))
+			init_zero = false;
+	}
+
+	/* If init_zero is set, this has already been initialized. */
+	if (init_zero && !ofc_sema_decl_is_structure(decl))
+		return true;
+
 	if (!ofc_colstr_newline(cs, indent, NULL)
 		|| !ofc_colstr_keyword_atomic_writez(cs, "DATA")
 		|| !ofc_colstr_atomic_writef(cs, " "))
 		return false;
 
-	if (complete)
-	{
-		/* TODO - Print complete deferred initializers. */
-		return false;
-	}
-	else if (ofc_sema_decl_is_array(decl))
+	if (ofc_sema_decl_is_array(decl))
 	{
 		if (decl->structure)
 		{
@@ -2865,7 +3023,8 @@ bool ofc_sema_decl_print_data_init(ofc_colstr_t* cs,
 		for (i = 0, first = true; i < count; i++)
 		{
 			if (!decl->init_array[i].is_substring
-				&& !decl->init_array[i].expr)
+				&& !decl->init_array[i].expr
+				&& !init_zero)
 				continue;
 
 			if (!first)
@@ -2894,7 +3053,8 @@ bool ofc_sema_decl_print_data_init(ofc_colstr_t* cs,
 		for (i = 0, first = true; i < count; i++)
 		{
 			if (!decl->init_array[i].is_substring
-				&& !decl->init_array[i].expr)
+				&& !decl->init_array[i].expr
+				&& !init_zero)
 				continue;
 
 			if (!first)
@@ -2930,10 +3090,16 @@ bool ofc_sema_decl_print_data_init(ofc_colstr_t* cs,
 						decl->init_array[i].substring.string, l))
 					return false;
 			}
-			else
+			else if (decl->init_array[i].expr)
 			{
 				if (!ofc_sema_expr_print(
 					cs, decl->init_array[i].expr))
+					return false;
+			}
+			else
+			{
+				if (!ofc_sema_type_print_zero(
+					cs, decl->type))
 					return false;
 			}
 		}
@@ -2953,7 +3119,8 @@ bool ofc_sema_decl_print_data_init(ofc_colstr_t* cs,
 		for (i = 0, first = true; i < count; i++)
 		{
 			if (!decl->init_array[i].is_substring
-				&& !decl->init_array[i].expr)
+				&& !decl->init_array[i].expr
+				&& !init_zero)
 				continue;
 
 			if (!first)
@@ -2981,7 +3148,8 @@ bool ofc_sema_decl_print_data_init(ofc_colstr_t* cs,
 		for (i = 0, first = true; i < count; i++)
 		{
 			if (!decl->init_array[i].is_substring
-				&& !decl->init_array[i].expr)
+				&& !decl->init_array[i].expr
+				&& !init_zero)
 				continue;
 
 			if (!first)
@@ -3017,11 +3185,25 @@ bool ofc_sema_decl_print_data_init(ofc_colstr_t* cs,
 						decl->init_array[i].substring.string, l))
 					return false;
 			}
-			else
+			else if (decl->init_array[i].expr)
 			{
 				if (!ofc_sema_expr_print(
 					cs, decl->init_array[i].expr))
 					return false;
+			}
+			else
+			{
+				ofc_sema_decl_t* member
+					= ofc_sema_structure_elem_get(
+						decl->structure, i);
+				if (!member) return false;
+
+				if (!ofc_sema_decl_is_initialized(member, NULL))
+				{
+					if (!ofc_sema_type_print_zero(
+						cs, member->type))
+						return false;
+				}
 			}
 		}
 

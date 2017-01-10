@@ -54,6 +54,10 @@ bool ofc_sema_equiv_add(
 	if (!nlhs) return false;
 	equiv->lhs = nlhs;
 
+	ofc_sema_decl_t* decl
+		= ofc_sema_lhs_decl(lhs);
+	if (decl) decl->is_equiv = true;
+
 	equiv->lhs[equiv->count++] = lhs;
 	return true;
 }

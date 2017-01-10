@@ -25,6 +25,7 @@ typedef struct
 
 	bool     f77_parameter;
 	bool     automatic;
+	bool     init_zero;
 	bool     lowercase_keyword;
 } ofc_print_opts_t;
 
@@ -35,6 +36,7 @@ static const ofc_print_opts_t
 	.indent_max_level  = 4,
 	.f77_parameter     = false,
 	.automatic         = false,
+	.init_zero         = false,
 	.lowercase_keyword = false,
 };
 
