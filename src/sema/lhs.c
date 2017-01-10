@@ -1516,7 +1516,7 @@ ofc_sema_typeval_t* ofc_sema_lhs_parameter(
 
 	bool complete;
 	if (!decl || !decl->is_parameter
-		|| !ofc_sema_decl_has_initializer(decl, &complete)
+		|| !ofc_sema_decl_is_initialized(decl, &complete)
 		|| !complete)
 		return NULL;
 

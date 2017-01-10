@@ -348,7 +348,7 @@ static bool ofc_sema_scope__body_validate(
 			}
 			else if (!decl->was_written)
 			{
-				if (ofc_sema_decl_has_initializer(decl, NULL))
+				if (ofc_sema_decl_is_initialized(decl, NULL))
 				{
 					/* TODO - Advise that decl could be PARAMETER. */
 				}

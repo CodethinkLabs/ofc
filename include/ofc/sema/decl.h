@@ -232,6 +232,9 @@ bool ofc_sema_decl_is_intrinsic(
 bool ofc_sema_decl_has_initializer(
 	const ofc_sema_decl_t* decl,
 	bool* complete);
+bool ofc_sema_decl_is_initialized(
+	const ofc_sema_decl_t* decl,
+	bool* complete);
 
 const ofc_sema_type_t* ofc_sema_decl_type(
 	const ofc_sema_decl_t* decl);

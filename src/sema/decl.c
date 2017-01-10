@@ -2130,6 +2130,65 @@ bool ofc_sema_decl_has_initializer(
 		decl->init, decl->type, complete);
 }
 
+bool ofc_sema_decl_is_initialized(
+	const ofc_sema_decl_t* decl, bool* complete)
+{
+	if (!decl)
+		return false;
+
+	bool c;
+	if (ofc_sema_decl_has_initializer(decl, &c))
+	{
+		if (complete) *complete = c;
+		return true;
+	}
+
+	if (!decl->structure)
+		return false;
+
+	unsigned count;
+	if (!ofc_sema_decl_elem_count(
+		decl, &count))
+		return false;
+
+	unsigned modulo;
+	if (!ofc_sema_structure_elem_count(
+		decl->structure, &modulo))
+		return false;
+
+	unsigned i, s;
+	for (i = 0, s = 0; i < count; i++)
+	{
+		bool elem_complete = false;
+		if (decl->init_array
+			&& ofc_sema_decl_init__used(
+				decl->init_array[i], decl->type,
+				&elem_complete))
+		{
+			if (elem_complete)
+				s++;
+		}
+
+		if (!elem_complete)
+		{
+			ofc_sema_decl_t* member
+				= ofc_sema_structure_elem_get(
+					decl->structure, (count % modulo));
+			bool dc;
+			if (ofc_sema_decl_is_initialized(
+				member, &dc) && dc)
+				s++;
+		}
+	}
+
+	if (s == 0)
+		return false;
+
+	if (complete)
+		*complete = (s == count);
+	return true;
+}
+
 
 const ofc_sema_type_t* ofc_sema_decl_type(
 	const ofc_sema_decl_t* decl)
