@@ -153,6 +153,9 @@ bool ofc_sema_decl_mark_used(
 bool ofc_sema_decl(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_stmt_t* stmt);
+bool ofc_sema_decl_type_scan(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt);
 bool ofc_sema_decl_member(
 	ofc_sema_scope_t* scope,
 	ofc_sema_structure_t* structure,

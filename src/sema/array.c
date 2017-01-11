@@ -17,9 +17,10 @@
 
 
 
-ofc_sema_array_t* ofc_sema_array(
+ofc_sema_array_t* ofc_sema__array(
 	ofc_sema_scope_t*              scope,
-	const ofc_parse_array_index_t* index)
+	const ofc_parse_array_index_t* index,
+	bool scan)
 {
 	if (!index || (index->count == 0))
 		return NULL;
@@ -45,6 +46,7 @@ ofc_sema_array_t* ofc_sema_array(
 			+ (index->count * sizeof(ofc_sema_array_dims_t)));
 	if (!array) return NULL;
 
+	array->scan       = scan;
 	array->dimensions = index->count;
 
 	for (i = 0; i < index->count; i++)
@@ -52,6 +54,8 @@ ofc_sema_array_t* ofc_sema_array(
 		array->segment[i].first = NULL;
 		array->segment[i].last  = NULL;
 	}
+
+	if (scan) return array;
 
 	for (i = 0; i < index->count; i++)
 	{
@@ -138,6 +142,21 @@ ofc_sema_array_t* ofc_sema_array(
 
 	return array;
 }
+
+ofc_sema_array_t* ofc_sema_array(
+	ofc_sema_scope_t*              scope,
+	const ofc_parse_array_index_t* index)
+{
+	return ofc_sema__array(scope, index, false);
+}
+
+ofc_sema_array_t* ofc_sema_array_scan(
+	ofc_sema_scope_t*              scope,
+	const ofc_parse_array_index_t* index)
+{
+	return ofc_sema__array(scope, index, true);
+}
+
 
 ofc_sema_array_t* ofc_sema_array_array(
 	ofc_sema_scope_t* scope,
@@ -264,6 +283,9 @@ bool ofc_sema_array_compare(
 	if (a->dimensions != b->dimensions)
 		return false;
 
+	if (a->scan || b->scan)
+		return true;
+
 	unsigned i;
 	for (i = 0; i < a->dimensions; i++)
 	{
@@ -296,14 +318,18 @@ bool ofc_sema_array_compare(
 				&& a->segment[i].last)
 				return false;
 
-			int last[2];
-			if (!ofc_sema_expr_resolve_int(
-				a->segment[i].last, &last[0])
-				|| !ofc_sema_expr_resolve_int(
-					b->segment[i].last, &last[1]))
-				return false;
-			if (last[0] != last[1])
-				return false;
+			if (a->segment[i].last
+				&& b->segment[i].last)
+			{
+				int last[2];
+				if (!ofc_sema_expr_resolve_int(
+					a->segment[i].last, &last[0])
+					|| !ofc_sema_expr_resolve_int(
+						b->segment[i].last, &last[1]))
+					return false;
+				if (last[0] != last[1])
+					return false;
+			}
 		}
 	}
 

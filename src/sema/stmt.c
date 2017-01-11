@@ -714,6 +714,18 @@ static bool ofc_sema_stmt_list__entry(
 	return true;
 }
 
+static bool ofc_sema_stmt_list__type_scan(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt)
+{
+	if (!stmt) return false;
+
+	if (stmt->type != OFC_PARSE_STMT_DECL)
+		return true;
+
+	return ofc_sema_decl_type_scan(scope, stmt);
+}
+
 ofc_sema_stmt_list_t* ofc_sema_stmt_list(
 	ofc_sema_scope_t* scope,
 	ofc_sema_stmt_t*  block,
@@ -725,6 +737,21 @@ ofc_sema_stmt_list_t* ofc_sema_stmt_list(
 	ofc_sema_stmt_list_t* list
 		= ofc_sema_stmt_list_create();;
 	if (!list) return NULL;
+
+	/* Scan ahead for typed declarations. */
+	if (scope->args)
+	{
+		unsigned i;
+		for (i = 0; i < body->count; i++)
+		{
+			if (!ofc_sema_stmt_list__type_scan(
+				scope, body->stmt[i]))
+			{
+				ofc_sema_stmt_list_delete(list);
+				return NULL;
+			}
+		}
+	}
 
 	unsigned i;
 	for (i = 0; i < body->count; i++)

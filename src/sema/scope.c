@@ -151,9 +151,6 @@ static ofc_sema_scope_t* ofc_sema_scope__create(
 
 		scope->label = ofc_sema_label_map_create();
 
-
-
-
 		if (!scope->implicit
 			|| !scope->common
 			|| !scope->equiv
@@ -588,25 +585,6 @@ bool ofc_sema_scope_subroutine(
 			ofc_sema_scope_delete(sub_scope);
 			return false;
 		}
-
-		unsigned i;
-		for (i = 0; i < sub_scope->args->count; i++)
-		{
-			if (sub_scope->args->arg[i].alt_return
-				|| ofc_sparse_ref_empty(sub_scope->args->arg[i].name))
-				continue;
-
-			ofc_sema_decl_t* decl
-				= ofc_sema_scope_decl_find_create(
-					sub_scope, sub_scope->args->arg[i].name, true);
-			if (!decl)
-			{
-				ofc_sema_scope_delete(sub_scope);
-				return false;
-			}
-
-			decl->is_argument = true;
-		}
 	}
 
 	if (stmt->program.end_has_label
@@ -682,24 +660,6 @@ bool ofc_sema_scope_function(
 		{
 			ofc_sema_scope_delete(func_scope);
 			return false;
-		}
-
-		unsigned i;
-		for (i = 0; i < func_scope->args->count; i++)
-		{
-			if (func_scope->args->arg[i].alt_return
-				|| ofc_sparse_ref_empty(func_scope->args->arg[i].name))
-				continue;
-
-			ofc_sema_decl_t* decl
-				= ofc_sema_scope_decl_find_create(
-					func_scope, func_scope->args->arg[i].name, true);
-			if (!decl)
-			{
-				ofc_sema_scope_delete(func_scope);
-				return false;
-			}
-			decl->is_argument = true;
 		}
 	}
 
@@ -1502,18 +1462,44 @@ static bool ofc_sema_scope_body__print(
 		return false;
 	}
 
+	bool implicit_none = true;
 	switch (scope->type)
 	{
 		case OFC_SEMA_SCOPE_GLOBAL:
 		case OFC_SEMA_SCOPE_STMT_FUNC:
+			implicit_none = false;
 			break;
+
 		default:
-			if (!ofc_colstr_newline(cs, indent, NULL)
-				|| !ofc_colstr_keyword_atomic_writez(cs, "IMPLICIT")
-				|| !ofc_colstr_atomic_writef(cs, " ")
-				|| !ofc_colstr_keyword_atomic_writez(cs, "NONE"))
-				return false;
+			implicit_none = true;
 			break;
+	}
+
+	if (scope->args)
+	{
+		unsigned i;
+		for (i = 0; i < scope->args->count; i++)
+		{
+			if (scope->args->arg[i].alt_return
+				|| ofc_sparse_ref_empty(scope->args->arg[i].name))
+				continue;
+
+			if (!ofc_sema_decl_list_find(
+				scope->decl, scope->args->arg[i].name.string))
+			{
+				implicit_none = false;
+				break;
+			}
+		}
+	}
+
+	if (implicit_none)
+	{
+		if (!ofc_colstr_newline(cs, indent, NULL)
+			|| !ofc_colstr_keyword_atomic_writez(cs, "IMPLICIT")
+			|| !ofc_colstr_atomic_writef(cs, " ")
+			|| !ofc_colstr_keyword_atomic_writez(cs, "NONE"))
+			return false;
 	}
 
 	if (scope->type == OFC_SEMA_SCOPE_MODULE)

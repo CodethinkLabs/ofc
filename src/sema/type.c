@@ -378,10 +378,11 @@ const ofc_sema_type_t* ofc_sema_type_create_function(
 }
 
 
-const ofc_sema_type_t* ofc_sema_type(
+static const ofc_sema_type_t* ofc_sema__type(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_type_t* ptype,
-	ofc_sema_structure_t** structure)
+	ofc_sema_structure_t** structure,
+	bool type_scan)
 {
     if (!ptype)
 		return NULL;
@@ -448,7 +449,7 @@ const ofc_sema_type_t* ofc_sema_type(
 
 	unsigned len     = 0;
 	bool     len_var = ptype->count_var;
-	if (ptype->count_expr)
+	if (ptype->count_expr && !type_scan)
 	{
 		if (len_var)
 		{
@@ -518,7 +519,7 @@ const ofc_sema_type_t* ofc_sema_type(
 
 					len_var = true;
 				}
-				else
+				else if (!type_scan)
 				{
 					if (ptype->params->call_arg[i]->type
 						!= OFC_PARSE_CALL_ARG_EXPR)
@@ -663,6 +664,24 @@ const ofc_sema_type_t* ofc_sema_type(
 
 	if (structure) *structure = struct_type;
 	return type;
+}
+
+const ofc_sema_type_t* ofc_sema_type(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_type_t* ptype,
+	ofc_sema_structure_t** structure)
+{
+	return ofc_sema__type(
+		scope, ptype, structure, false);
+}
+
+const ofc_sema_type_t* ofc_sema_type_scan(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_type_t* ptype,
+	ofc_sema_structure_t** structure)
+{
+	return ofc_sema__type(
+		scope, ptype, structure, true);
 }
 
 

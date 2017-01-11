@@ -337,16 +337,51 @@ static bool ofc_sema_decl__elem(
 	bool                     is_parameter,
 	bool                     is_public,
 	bool                     is_private,
+	bool                     type_scan,
 	const ofc_parse_decl_t*  pdecl)
 {
 	if (!pdecl || !pdecl->lhs)
 		return false;
+
+	if (!ofc_sparse_ref_empty(pdecl->record)
+		&& type_scan)
+	{
+		/* TODO - Handle RECORDs in type scan pass. */
+		return true;
+	}
 
 	const ofc_parse_lhs_t* lhs = pdecl->lhs;
 
 	ofc_sparse_ref_t name;
 	if (!ofc_parse_lhs_base_name(*lhs, &name))
 		return false;
+
+	bool is_argument = false;
+	if (scope->args)
+	{
+		bool case_sensitive = false;
+		if (scope && scope->decl)
+			case_sensitive = scope->decl->case_sensitive;
+
+		unsigned i;
+		for (i = 0; i < scope->args->count; i++)
+		{
+			if (scope->args->arg[i].alt_return
+				|| ofc_sparse_ref_empty(scope->args->arg[i].name))
+				continue;
+
+			const ofc_str_ref_t arg_name
+				= scope->args->arg[i].name.string;
+
+			if (case_sensitive
+				? ofc_str_ref_equal(arg_name, name.string)
+				: ofc_str_ref_equal_ci(arg_name, name.string))
+			{
+				is_argument = true;
+				break;
+			}
+		}
+	}
 
 	ofc_sema_decl_t* decl;
 	if (structure)
@@ -361,6 +396,9 @@ static bool ofc_sema_decl__elem(
 	}
 	if (!decl) return false;
 
+	if (is_argument)
+		decl->is_argument = true;
+
 	if (decl->is_intrinsic)
 	{
 		ofc_sparse_ref_error(lhs->src,
@@ -368,11 +406,15 @@ static bool ofc_sema_decl__elem(
 		return false;
 	}
 
-	ofc_sema_array_t* array = ofc_sema_array(scope, dimension);
+	ofc_sema_array_t* array = (type_scan
+		? ofc_sema_array_scan(scope, dimension)
+		: ofc_sema_array(scope, dimension));
+
 	if (lhs->type == OFC_PARSE_LHS_ARRAY)
 	{
-		ofc_sema_array_t* lhs_array
-			= ofc_sema_array(scope, lhs->array.index);
+		ofc_sema_array_t* lhs_array = (type_scan
+			? ofc_sema_array_scan(scope, lhs->array.index)
+			: ofc_sema_array(scope, lhs->array.index));
 		if (!lhs_array) return false;
 
 		if (array)
@@ -441,7 +483,7 @@ static bool ofc_sema_decl__elem(
 			}
 			type = ntype;
 		}
-		else
+		else if (!type_scan || !ofc_sema_type_is_character(type))
 		{
 			ofc_sema_expr_t* expr
 				= ofc_sema_expr(scope, lhs->star_len.len);
@@ -613,8 +655,9 @@ static bool ofc_sema_decl__elem(
 			return false;
 		}
 
-		array = ofc_sema_array(
-			scope, lhs->array.index);
+		array = (type_scan
+			? ofc_sema_array_scan(scope, lhs->array.index)
+			: ofc_sema_array(scope, lhs->array.index));
 		if (!array) return false;
 
 		lhs = lhs->parent;
@@ -633,7 +676,8 @@ static bool ofc_sema_decl__elem(
 
 	if (array)
 	{
-		if ((structure || !ofc_sema_scope_is_procedure(scope))
+		if (!type_scan
+			&& (structure || !ofc_sema_scope_is_procedure(scope))
 			&& !ofc_sema_array_total(array, NULL))
 		{
 			ofc_sparse_ref_error(lhs->src,
@@ -652,46 +696,49 @@ static bool ofc_sema_decl__elem(
 				ofc_sema_array_delete(array);
 				return false;
 			}
-			ofc_sparse_ref_warning(lhs->src,
-				"Redefinition of array dimensions");
-			ofc_sema_array_delete(array);
+			if (!decl->array->scan)
+			{
+				ofc_sparse_ref_warning(lhs->src,
+					"Redefinition of array dimensions");
+			}
+			ofc_sema_array_delete(decl->array);
 		}
-		else
+
+		decl->array = array;
+	}
+
+	if (!type_scan)
+	{
+		if (pdecl->init_expr)
 		{
-			/* TODO - Don't re-size existing decl. */
-			decl->array = array;
+			if (!ofc_sema_decl_type_finalize(decl))
+				return false;
+
+			ofc_sema_expr_t* init_expr
+				= ofc_sema_expr(scope, pdecl->init_expr);
+			if (!init_expr) return false;
+
+			bool initialized = ofc_sema_decl_init(
+				decl, init_expr);
+			ofc_sema_expr_delete(init_expr);
+			if (!initialized) return false;
 		}
-	}
+		else if (pdecl->init_clist)
+		{
+			if (!ofc_sema_decl_type_finalize(decl))
+				return false;
 
-	if (pdecl->init_expr)
-	{
-		if (!ofc_sema_decl_type_finalize(decl))
-			return false;
+			ofc_sema_expr_list_t* init_clist
+				= ofc_sema_expr_list_clist(
+					scope, pdecl->init_clist);
+			if (!init_clist) return false;
 
-		ofc_sema_expr_t* init_expr
-			= ofc_sema_expr(scope, pdecl->init_expr);
-		if (!init_expr) return false;
-
-		bool initialized = ofc_sema_decl_init(
-			decl, init_expr);
-		ofc_sema_expr_delete(init_expr);
-		if (!initialized) return false;
-	}
-	else if (pdecl->init_clist)
-	{
-		if (!ofc_sema_decl_type_finalize(decl))
-			return false;
-
-		ofc_sema_expr_list_t* init_clist
-			= ofc_sema_expr_list_clist(
-				scope, pdecl->init_clist);
-		if (!init_clist) return false;
-
-		bool initialized = ofc_sema_decl_init_array(
-			decl, NULL, init_clist->count,
-			(const ofc_sema_expr_t**)init_clist->expr);
-		ofc_sema_expr_list_delete(init_clist);
-		if (!initialized) return false;
+			bool initialized = ofc_sema_decl_init_array(
+				decl, NULL, init_clist->count,
+				(const ofc_sema_expr_t**)init_clist->expr);
+			ofc_sema_expr_list_delete(init_clist);
+			if (!initialized) return false;
+		}
 	}
 
 	if (is_static)
@@ -722,9 +769,10 @@ static bool ofc_sema_decl__elem(
 	return true;
 }
 
-bool ofc_sema_decl(
+static bool ofc_sema__decl(
 	ofc_sema_scope_t* scope,
-	const ofc_parse_stmt_t* stmt)
+	const ofc_parse_stmt_t* stmt,
+	bool type_scan)
 {
 	if (!stmt || !scope
 		|| (stmt->type != OFC_PARSE_STMT_DECL)
@@ -732,8 +780,9 @@ bool ofc_sema_decl(
 		return false;
 
 	ofc_sema_structure_t* type_struct = NULL;
-	const ofc_sema_type_t* type = ofc_sema_type(
-		scope, stmt->decl.type, &type_struct);
+	const ofc_sema_type_t* type = (type_scan
+		? ofc_sema_type_scan(scope, stmt->decl.type, &type_struct)
+		: ofc_sema_type(scope, stmt->decl.type, &type_struct));
 	if (!type) return false;
 
 	unsigned count = stmt->decl.decl->count;
@@ -752,11 +801,26 @@ bool ofc_sema_decl(
 			stmt->decl.parameter,
 			stmt->decl.is_public,
 			stmt->decl.is_private,
+			type_scan,
 			stmt->decl.decl->decl[i]))
 			success = false;
 	}
 
 	return success;
+}
+
+bool ofc_sema_decl(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt)
+{
+	return ofc_sema__decl(scope, stmt, false);
+}
+
+bool ofc_sema_decl_type_scan(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_stmt_t* stmt)
+{
+	return ofc_sema__decl(scope, stmt, true);
 }
 
 bool ofc_sema_decl_member(
@@ -791,6 +855,7 @@ bool ofc_sema_decl_member(
 			stmt->decl.parameter,
 			stmt->decl.is_public,
 			stmt->decl.is_private,
+			false,
 			stmt->decl.decl->decl[i]))
 			success = false;
 	}

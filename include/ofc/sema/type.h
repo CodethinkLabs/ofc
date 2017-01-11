@@ -65,6 +65,10 @@ const ofc_sema_type_t* ofc_sema_type(
 	ofc_sema_scope_t* scope,
 	const ofc_parse_type_t* ptype,
 	ofc_sema_structure_t** structure);
+const ofc_sema_type_t* ofc_sema_type_scan(
+	ofc_sema_scope_t* scope,
+	const ofc_parse_type_t* ptype,
+	ofc_sema_structure_t** structure);
 
 const ofc_sema_type_t* ofc_sema_type_create_primitive(
 	ofc_sema_type_e type, ofc_sema_kind_e kind);
