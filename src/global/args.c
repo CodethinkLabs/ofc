@@ -17,8 +17,8 @@
 
 typedef struct
 {
-	const ofc_sema_decl_t* subr;
-	ofc_sema_expr_list_t*  args;
+	const ofc_sema_decl_t*     subr;
+	ofc_sema_dummy_arg_list_t* args;
 	ofc_sema_expr_t*       ret;
 } ofc_call_t;
 
@@ -30,9 +30,9 @@ typedef struct
 } ofc_subroutine_list_t;
 
 ofc_call_t* ofc_call_create(
-	const ofc_sema_decl_t* subr,
-	ofc_sema_expr_list_t*  args,
-	ofc_sema_expr_t*       ret)
+	const ofc_sema_decl_t*     subr,
+	ofc_sema_dummy_arg_list_t* args,
+	ofc_sema_expr_t*           ret)
 {
 	ofc_call_t* call
 		= (ofc_call_t*)malloc(
@@ -91,7 +91,7 @@ static ofc_str_ref_t* ofc_subroutine_list_name(
 
 static bool ofc_subroutine_list_add(
 	ofc_subroutine_list_t* list, const ofc_sema_decl_t* subr,
-	ofc_sema_expr_list_t* args, ofc_sema_expr_t* ret)
+	ofc_sema_dummy_arg_list_t* args, ofc_sema_expr_t* ret)
 {
 	if (!list || !subr)
 		return false;
@@ -268,21 +268,23 @@ static bool ofc_global_pass_args__check(
 			{
 				ofc_sema_arg_t dummy_arg
 					= scope->args->arg[l];
-				ofc_sema_expr_t* actual_arg
-					= list->call[i]->args->expr[l];
+				ofc_sema_dummy_arg_t* actual_arg
+					= list->call[i]->args->dummy_arg[l];
 
 				if (dummy_arg.alt_return
-					&& actual_arg->is_alt_return)
+					&& ofc_sema_dummy_arg_is_alt_return(actual_arg))
 					continue;
 
-				if (dummy_arg.alt_return && !actual_arg->is_alt_return)
+				if (dummy_arg.alt_return
+					&& !ofc_sema_dummy_arg_is_alt_return(actual_arg))
 				{
 					ofc_sparse_ref_warning(actual_arg->src,
 						"Incompatible argument in %s call, expected label for alternate return.",
 						ofc_sema_type_str_rep(list->call[i]->subr->type));
 					continue;
 				}
-				else if (!dummy_arg.alt_return && actual_arg->is_alt_return)
+				else if (!dummy_arg.alt_return
+					&& ofc_sema_dummy_arg_is_alt_return(actual_arg))
 				{
 					const ofc_sema_decl_t* dummy_arg_decl
 						= ofc_sema_scope_decl_find(
@@ -305,8 +307,23 @@ static bool ofc_global_pass_args__check(
 
 				const ofc_sema_type_t* dummy_arg_type
 					= ofc_sema_decl_type(dummy_arg_decl);
+
+
+				if (ofc_sema_dummy_arg_is_external(actual_arg))
+				{
+					if (!ofc_sema_type_is_function(dummy_arg_type)
+						&& !ofc_sema_type_is_subroutine(dummy_arg_type))
+					{
+						ofc_sparse_ref_warning(actual_arg->src,
+							"Incompatible argument type (EXTERNAL) in %s call, expected %s.",
+							ofc_sema_type_str_rep(list->call[i]->subr->type),
+							ofc_sema_type_str_rep(dummy_arg_type));
+					}
+					continue;
+				}
+
 				const ofc_sema_type_t* actual_arg_type
-					= ofc_sema_expr_type(actual_arg);
+					= ofc_sema_expr_type(actual_arg->expr);
 				if (!ofc_sema_type_compatible(actual_arg_type, dummy_arg_type))
 				{
 					if (!ofc_sema_type_cast_valid(
@@ -329,7 +346,8 @@ static bool ofc_global_pass_args__check(
 					}
 				}
 
-				if (ofc_sema_expr_is_constant(actual_arg)
+				if ((actual_arg->type == OFC_SEMA_DUMMY_ARG_EXPR)
+					&& ofc_sema_expr_is_constant(actual_arg->expr)
 					&& dummy_arg_decl->was_written)
 				{
 					ofc_sparse_ref_warning(actual_arg->src,

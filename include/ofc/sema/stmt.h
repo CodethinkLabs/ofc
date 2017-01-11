@@ -284,8 +284,8 @@ struct ofc_sema_stmt_s
 
 		struct
 		{
-			const ofc_sema_decl_t* subroutine;
-			ofc_sema_expr_list_t*  args;
+			const ofc_sema_decl_t*     subroutine;
+			ofc_sema_dummy_arg_list_t* args;
 		} call;
 
 		struct

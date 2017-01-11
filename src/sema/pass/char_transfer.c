@@ -141,8 +141,8 @@ static bool ofc_sema_pass_char_transfer__expr(
 		if (!cast) return false;
 	}
 
-	ofc_sema_expr_list_t* args
-		= ofc_sema_expr_list_create();
+	ofc_sema_dummy_arg_list_t* args
+		= ofc_sema_dummy_arg_list_create();
 	if (!args)
 	{
 		if (cast != expr->cast.expr)
@@ -154,7 +154,10 @@ static bool ofc_sema_pass_char_transfer__expr(
 		return false;
 	}
 
-	if (!ofc_sema_expr_list_add(args, cast))
+	ofc_sema_dummy_arg_t* cast_arg
+		= ofc_sema_dummy_arg_wrap_expr(cast);
+
+	if (!ofc_sema_dummy_arg_list_add(args, cast_arg))
 	{
 		if (cast != expr->cast.expr)
 		{
@@ -162,15 +165,19 @@ static bool ofc_sema_pass_char_transfer__expr(
 			ofc_sema_expr_delete(cast);
 		}
 
-		ofc_sema_expr_list_delete(args);
+		ofc_sema_dummy_arg_delete(cast_arg);
+		ofc_sema_dummy_arg_list_delete(args);
 		ofc_sema_expr_delete(mold);
 		return false;
 	}
 
-	if (!ofc_sema_expr_list_add(args, mold))
+	ofc_sema_dummy_arg_t* mold_arg
+		= ofc_sema_dummy_arg_wrap_expr(mold);
+
+	if (!ofc_sema_dummy_arg_list_add(args, mold_arg))
 	{
 		/* We don't want to delete expr->cast.expr */
-		args->expr[0] = NULL;
+		args->dummy_arg[0] = NULL;
 
 		if (cast != expr->cast.expr)
 		{
@@ -178,7 +185,8 @@ static bool ofc_sema_pass_char_transfer__expr(
 			ofc_sema_expr_delete(cast);
 		}
 
-		ofc_sema_expr_list_delete(args);
+		ofc_sema_dummy_arg_delete(cast_arg);
+		ofc_sema_dummy_arg_list_delete(args);
 		ofc_sema_expr_delete(mold);
 		return false;
 	}

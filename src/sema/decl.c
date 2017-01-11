@@ -143,8 +143,9 @@ bool ofc_sema_decl_type_finalize(
 		if (!ltype) return false;
 	}
 
-	/* Externals are always functions or subroutines
-	   but we always know if a declaration is a subroutine */
+	/* Externals are always functions or subroutines.
+	   Subroutines are only used in CALL statements,
+	   so we always know its type */
 	if (decl->is_external
 		&& !ofc_sema_decl_is_subroutine(decl)
 		&& !ofc_sema_decl_is_function(decl))

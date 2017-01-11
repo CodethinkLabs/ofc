@@ -33,6 +33,8 @@ typedef struct
 
 ofc_sema_external_list_t* ofc_sema_external_list_create(
 	bool case_sensitive);
+const ofc_sema_external_t* ofc_sema_external_list_find(
+	const ofc_sema_external_list_t* list, ofc_str_ref_t name);
 ofc_sema_external_t* ofc_sema_external_list_find_modify(
 	const ofc_sema_external_list_t* list, ofc_str_ref_t name);
 void ofc_sema_external_list_delete(
@@ -44,6 +46,12 @@ bool ofc_sema_stmt_external(
 void ofc_sema_external_delete(
 	ofc_sema_external_t* external);
 
+bool ofc_sema_external_is_decl(
+	const ofc_sema_external_t* external);
+
+bool ofc_sema_external_arg_print(
+	ofc_colstr_t* cs,
+	const ofc_sema_external_t* external);
 bool ofc_sema_external_list_print(
 	ofc_colstr_t* cs, unsigned indent,
 	const ofc_sema_external_list_t* list);

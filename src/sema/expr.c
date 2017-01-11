@@ -330,7 +330,7 @@ ofc_sema_expr_t* ofc_sema_expr_copy_replace(
 			copy->intrinsic = expr->intrinsic;
 			if (expr->args)
 			{
-				copy->args = ofc_sema_expr_list_copy_replace(
+				copy->args = ofc_sema_dummy_arg_list_copy_replace(
 					expr->args, replace, with);
 				success = (copy->args != NULL);
 			}
@@ -340,7 +340,7 @@ ofc_sema_expr_t* ofc_sema_expr_copy_replace(
 			copy->function = expr->function;
 			if (expr->args)
 			{
-				copy->args = ofc_sema_expr_list_copy_replace(
+				copy->args = ofc_sema_dummy_arg_list_copy_replace(
 					expr->args, replace, with);
 				success = (copy->args != NULL);
 			}
@@ -510,18 +510,20 @@ ofc_sema_expr_t* ofc_sema_expr_cast_intrinsic(
 			OFC_SEMA_EXPR_INTRINSIC);
 	if (!cast) return NULL;
 
-	ofc_sema_expr_list_t* args
-		= ofc_sema_expr_list_create();
-	if (!ofc_sema_expr_list_add(args, expr))
+	ofc_sema_dummy_arg_t* dummy_arg
+		= ofc_sema_dummy_arg_wrap_expr(expr);
+	ofc_sema_dummy_arg_list_t* args
+		= ofc_sema_dummy_arg_list_create();
+	if (!ofc_sema_dummy_arg_list_add(args, dummy_arg))
 	{
-		ofc_sema_expr_list_delete(args);
+		ofc_sema_dummy_arg_list_delete(args);
 		ofc_sema_expr_delete(cast);
 		return NULL;
 	}
 
 	cast->args = ofc_sema_intrinsic_cast(
 		expr->src, intrinsic, args);
-	ofc_sema_expr_list_delete(args);
+	ofc_sema_dummy_arg_list_delete(args);
 	if (!cast->args)
 	{
 		ofc_sema_expr_delete(cast);
@@ -1029,14 +1031,14 @@ static ofc_sema_expr_t* ofc_sema_expr__intrinsic(
 		return NULL;
 	}
 
-	ofc_sema_expr_list_t* args = NULL;
+	ofc_sema_dummy_arg_list_t* args = NULL;
 	if (name->array.index->count > 0)
 	{
 		if (!name->array.index->range)
 			return NULL;
 
-		ofc_sema_expr_list_t* rargs
-			= ofc_sema_expr_list_create();
+		ofc_sema_dummy_arg_list_t* rargs
+			= ofc_sema_dummy_arg_list_create();
 		if (!rargs) return NULL;
 
 		unsigned i;
@@ -1048,29 +1050,38 @@ static ofc_sema_expr_t* ofc_sema_expr__intrinsic(
 			if (!range || range->is_slice
 				|| range->last || range->stride)
 			{
-				ofc_sema_expr_list_delete(rargs);
+				ofc_sema_dummy_arg_list_delete(rargs);
 				return NULL;
 			}
 
 			ofc_sema_expr_t* expr
-				= ofc_sema_expr(scope, range->first);
+				= ofc_sema_expr_dummy_arg(scope, range->first);
 			if (!expr)
 			{
-				ofc_sema_expr_list_delete(rargs);
+				ofc_sema_dummy_arg_list_delete(rargs);
 				return NULL;
 			}
 
-			if (!ofc_sema_expr_list_add(rargs, expr))
+			ofc_sema_dummy_arg_t* dummy_arg
+				= ofc_sema_dummy_arg_wrap_expr(expr);
+			if (!dummy_arg)
 			{
 				ofc_sema_expr_delete(expr);
-				ofc_sema_expr_list_delete(rargs);
+				ofc_sema_dummy_arg_list_delete(rargs);
+				return NULL;
+			}
+
+			if (!ofc_sema_dummy_arg_list_add(rargs, dummy_arg))
+			{
+				ofc_sema_dummy_arg_delete(dummy_arg);
+				ofc_sema_dummy_arg_list_delete(rargs);
 				return NULL;
 			}
 		}
 
 		args = ofc_sema_intrinsic_cast(
 			name->src, intrinsic, rargs);
-		ofc_sema_expr_list_delete(rargs);
+		ofc_sema_dummy_arg_list_delete(rargs);
 		if (!args) return NULL;
 	}
 
@@ -1079,7 +1090,7 @@ static ofc_sema_expr_t* ofc_sema_expr__intrinsic(
 			OFC_SEMA_EXPR_INTRINSIC);
 	if (!expr)
 	{
-		ofc_sema_expr_list_delete(args);
+		ofc_sema_dummy_arg_list_delete(args);
 		return NULL;
 	}
 
@@ -1129,14 +1140,14 @@ static ofc_sema_expr_t* ofc_sema_expr__function(
 		}
 	}
 
-	ofc_sema_expr_list_t* args = NULL;
+	ofc_sema_dummy_arg_list_t* args = NULL;
 	if (name->array.index
 		&& (name->array.index->count > 0))
 	{
 		if (!name->array.index->range)
 			return NULL;
 
-		args = ofc_sema_expr_list_create();
+		args = ofc_sema_dummy_arg_list_create();
 		if (!args) return NULL;
 
 		unsigned i;
@@ -1148,23 +1159,22 @@ static ofc_sema_expr_t* ofc_sema_expr__function(
 			if (!range || range->is_slice
 				|| range->last || range->stride)
 			{
-				ofc_sema_expr_list_delete(args);
+				ofc_sema_dummy_arg_list_delete(args);
 				return NULL;
 			}
 
-			ofc_sema_expr_t* expr
-				= ofc_sema_expr_dummy_arg(
-					scope, range->first);
-			if (!expr)
+			ofc_sema_dummy_arg_t* dummy_arg
+				= ofc_sema_dummy_arg(scope, range->first);
+			if (!dummy_arg)
 			{
-				ofc_sema_expr_list_delete(args);
+				ofc_sema_dummy_arg_list_delete(args);
 				return NULL;
 			}
 
-			if (!ofc_sema_expr_list_add(args, expr))
+			if (!ofc_sema_dummy_arg_list_add(args, dummy_arg))
 			{
-				ofc_sema_expr_delete(expr);
-				ofc_sema_expr_list_delete(args);
+				ofc_sema_dummy_arg_delete(dummy_arg);
+				ofc_sema_dummy_arg_list_delete(args);
 				return NULL;
 			}
 		}
@@ -1177,7 +1187,7 @@ static ofc_sema_expr_t* ofc_sema_expr__function(
 			OFC_SEMA_EXPR_FUNCTION);
 	if (!expr)
 	{
-		ofc_sema_expr_list_delete(args);
+		ofc_sema_dummy_arg_list_delete(args);
 		return NULL;
 	}
 
@@ -1800,7 +1810,7 @@ void ofc_sema_expr_delete(
 			break;
 		case OFC_SEMA_EXPR_INTRINSIC:
 		case OFC_SEMA_EXPR_FUNCTION:
-			ofc_sema_expr_list_delete(expr->args);
+			ofc_sema_dummy_arg_list_delete(expr->args);
 			break;
 		case OFC_SEMA_EXPR_IMPLICIT_DO:
 			ofc_sema_expr_list_delete(expr->implicit_do.expr);
@@ -2138,11 +2148,11 @@ bool ofc_sema_expr_compare(
 
 		case OFC_SEMA_EXPR_INTRINSIC:
 			return ((a->intrinsic == b->intrinsic)
-				&& ofc_sema_expr_list_compare(a->args, b->args));
+				&& ofc_sema_dummy_arg_list_compare(a->args, b->args));
 
 		case OFC_SEMA_EXPR_FUNCTION:
 			return ((a->function == b->function)
-				&& ofc_sema_expr_list_compare(a->args, b->args));
+				&& ofc_sema_dummy_arg_list_compare(a->args, b->args));
 
 		case OFC_SEMA_EXPR_IMPLICIT_DO:
 			return (ofc_sema_expr_list_compare(
@@ -2677,8 +2687,9 @@ bool ofc_sema_expr_foreach(
 
 		case OFC_SEMA_EXPR_INTRINSIC:
 		case OFC_SEMA_EXPR_FUNCTION:
-			if (expr->args && !ofc_sema_expr_list_foreach(
-				expr->args, param, func))
+			if (expr->args
+				&& !ofc_sema_dummy_arg_list_foreach_expr(
+					expr->args, param, func))
 				return false;
 			break;
 
@@ -2839,7 +2850,7 @@ bool ofc_sema_expr_print(
 		case OFC_SEMA_EXPR_INTRINSIC:
 			if(!ofc_sema_intrinsic_print(cs, expr->intrinsic)
 				|| !ofc_colstr_atomic_writef(cs, "(")
-				|| !ofc_sema_expr_list_print(cs, expr->args)
+				|| !ofc_sema_dummy_arg_list_print(cs, expr->args)
 				|| !ofc_colstr_atomic_writef(cs, ")"))
 				return false;
 			break;
@@ -2847,7 +2858,7 @@ bool ofc_sema_expr_print(
 		case OFC_SEMA_EXPR_FUNCTION:
 			if (!ofc_sema_decl_print_name(cs, expr->function)
 				|| !ofc_colstr_atomic_writef(cs, "(")
-				|| (expr->args && !ofc_sema_expr_list_print(cs, expr->args))
+				|| (expr->args && !ofc_sema_dummy_arg_list_print(cs, expr->args))
 				|| !ofc_colstr_atomic_writef(cs, ")"))
 				return false;
 			break;
