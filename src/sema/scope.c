@@ -447,25 +447,6 @@ static bool ofc_sema_scope__body(
 		(void*)ofc_sema_scope__body_format_validate_defaults))
 		return false;
 
-	/* Declare arguments */
-	if (scope->args)
-	{
-		unsigned i;
-		for (i = 0; i < scope->args->count; i++)
-		{
-			if (scope->args->arg[i].alt_return)
-				continue;
-
-			ofc_sparse_ref_t name
-				= scope->args->arg[i].name;
-			ofc_sema_decl_t* decl
-				= ofc_sema_scope_decl_find_create(
-					scope, name, true);
-			if (!decl) return false;
-			decl->is_argument = true;
-		}
-	}
-
 	/* Handle EQUIVALENCE statements */
 	if (!ofc_parse_stmt_list_foreach(body, scope,
 		(void*)ofc_sema_scope__body_sema_equivalence))
