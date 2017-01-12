@@ -357,33 +357,6 @@ static bool ofc_sema_decl__elem(
 	if (!ofc_parse_lhs_base_name(*lhs, &name))
 		return false;
 
-	bool is_argument = false;
-	if (scope->args)
-	{
-		bool case_sensitive = false;
-		if (scope && scope->decl)
-			case_sensitive = scope->decl->case_sensitive;
-
-		unsigned i;
-		for (i = 0; i < scope->args->count; i++)
-		{
-			if (scope->args->arg[i].alt_return
-				|| ofc_sparse_ref_empty(scope->args->arg[i].name))
-				continue;
-
-			const ofc_str_ref_t arg_name
-				= scope->args->arg[i].name.string;
-
-			if (case_sensitive
-				? ofc_str_ref_equal(arg_name, name.string)
-				: ofc_str_ref_equal_ci(arg_name, name.string))
-			{
-				is_argument = true;
-				break;
-			}
-		}
-	}
-
 	ofc_sema_decl_t* decl;
 	if (structure)
 	{
@@ -396,9 +369,6 @@ static bool ofc_sema_decl__elem(
 			scope, name, false);
 	}
 	if (!decl) return false;
-
-	if (is_argument)
-		decl->is_argument = true;
 
 	if (decl->is_intrinsic)
 	{

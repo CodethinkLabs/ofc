@@ -1282,6 +1282,32 @@ ofc_sema_decl_t* ofc_sema_scope_decl_find__create(
 			external->decl = decl;
 		}
 
+		if (scope->args)
+		{
+			bool case_sensitive = false;
+			if (scope && scope->decl)
+				case_sensitive = scope->decl->case_sensitive;
+
+			unsigned i;
+			for (i = 0; i < scope->args->count; i++)
+			{
+				if (scope->args->arg[i].alt_return
+					|| ofc_sparse_ref_empty(scope->args->arg[i].name))
+					continue;
+
+				const ofc_str_ref_t arg_name
+					= scope->args->arg[i].name.string;
+
+				if (case_sensitive
+					? ofc_str_ref_equal(arg_name, name.string)
+					: ofc_str_ref_equal_ci(arg_name, name.string))
+				{
+					decl->is_argument = true;
+					break;
+				}
+			}
+		}
+
 		if (!ofc_sema_decl_list_add(
 			scope->decl, decl))
 		{
