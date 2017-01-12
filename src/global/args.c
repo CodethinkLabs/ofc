@@ -303,7 +303,8 @@ static bool ofc_global_pass_args__check(
 				const ofc_sema_decl_t* dummy_arg_decl
 					= ofc_sema_scope_decl_find(
 						scope, dummy_arg.name.string, true);
-				if (!dummy_arg_decl) return false;
+				/* Not all arguments are declared */
+				if (!dummy_arg_decl) continue;
 
 				const ofc_sema_type_t* dummy_arg_type
 					= ofc_sema_decl_type(dummy_arg_decl);
