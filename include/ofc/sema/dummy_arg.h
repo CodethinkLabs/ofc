@@ -77,6 +77,9 @@ ofc_sema_dummy_arg_t* ofc_sema_dummy_arg_wrap_expr(
 const ofc_sema_type_t* ofc_sema_dummy_arg_type(
 	const ofc_sema_dummy_arg_t* dummy_arg);
 
+bool ofc_sema_dummy_arg_mark_used(
+	ofc_sema_dummy_arg_t* dummy_arg);
+
 ofc_sema_dummy_arg_t* ofc_sema_dummy_arg_copy_replace(
 	const ofc_sema_dummy_arg_t* dummy_arg,
 	const ofc_sema_decl_t* replace,

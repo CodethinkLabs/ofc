@@ -365,6 +365,37 @@ bool ofc_sema_dummy_arg_compare(
 	return false;
 }
 
+bool ofc_sema_dummy_arg_mark_used(
+	ofc_sema_dummy_arg_t* dummy_arg)
+{
+	if (!dummy_arg)
+		return false;
+
+	switch (dummy_arg->type)
+	{
+		case OFC_SEMA_DUMMY_ARG_EXPR:
+			if (dummy_arg->expr->type == OFC_SEMA_EXPR_LHS)
+			{
+				if (!ofc_sema_lhs_mark_used(
+					dummy_arg->expr->lhs, true, true))
+					return false;
+			}
+			break;
+		case OFC_SEMA_DUMMY_ARG_EXTERNAL:
+			if (dummy_arg->external->decl)
+			{
+				if (!ofc_sema_decl_mark_used(
+					dummy_arg->external->decl, true, true))
+					return false;
+			}
+			break;
+		default:
+			break;
+	}
+
+	return true;
+}
+
 ofc_sema_dummy_arg_list_t* ofc_sema_dummy_arg_list_copy_replace(
 	const ofc_sema_dummy_arg_list_t* list,
 	const ofc_sema_decl_t* replace,

@@ -98,6 +98,14 @@ ofc_sema_stmt_t* ofc_sema_stmt_call(
 				return NULL;
 			}
 
+			/* We mark all dummy_arg as used, as we can't know if
+			   they have been read or written to in the call */
+			if (!ofc_sema_dummy_arg_mark_used(dummy_arg))
+			{
+				ofc_sema_dummy_arg_list_delete(args);
+				return NULL;
+			}
+
 			if (!ofc_sema_dummy_arg_list_add(
 				args, dummy_arg))
 			{
