@@ -25,6 +25,33 @@
 #include "ofc/global.h"
 #include "ofc/cliarg.h"
 
+#if defined __sun /* Sun workaround for non-global 'dprintf' */
+#include <stdarg.h>
+int dprintf(int fd, char *format, ...);
+
+int dprintf(int fd, char *format, ...)
+/* Use the specified 'format' to print '...' arguments to the specified 'fd'.
+ * Note that 'dprintf' is not publicly available in the standard Sun build.
+ */
+{
+    va_list  args;
+    va_start(args, format);
+
+	va_list largs;
+	va_copy(largs, args);
+    const int BUF_SIZE = 1 + vsnprintf(NULL, 0, format, largs);
+	va_end(largs);
+
+    char          *buf = malloc(BUF_SIZE);
+    int      num_chars = vsprintf(buf, format, args);
+    num_chars          = write(fd, buf, num_chars);
+
+    va_end(args);
+    free(buf);
+    return num_chars;
+}
+#endif /* END Sun workaround for non-global 'dprintf' */
+
 ofc_global_opts_t global_opts;
 
 int main(int argc, const char* argv[])
