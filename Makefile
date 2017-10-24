@@ -3,7 +3,7 @@ FRONTEND_DEBUG = $(FRONTEND)-debug
 
 BASE = src/
 
-SRC_DIR = . prep parse sema global parse/stmt sema/stmt sema/pass
+SRC_DIR = . util prep parse sema global parse/stmt sema/stmt sema/pass
 SRC_DIR_BASE = $(addprefix $(BASE),$(SRC_DIR))
 
 GCC_VER_MAJ = $(shell $(CC) -dumpversion | cut -f 1 -d '.')

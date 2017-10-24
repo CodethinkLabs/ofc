@@ -19,6 +19,7 @@
 #include <ctype.h>
 
 #include "ofc/colstr.h"
+#include "ofc/util/dprintf.h"
 
 
 struct ofc_colstr_s
