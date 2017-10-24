@@ -6,8 +6,6 @@ git:
     # If you use a depth of 1 and have a queue of jobs, Travis CI won’t build
     # commits that are in the queue when you push a new commit.
     depth: 3
-    # Handle submodules manually to avoid permission problems.
-    submodules: false
 
 # whitelist
 branches:
@@ -27,11 +25,6 @@ addons:
 # Travis CI C builder will export the CC env variable to point to gcc-4.8.
 compiler:
     - gcc-4.8
-
-before_install:
-    # Replace the SSH URL with the public URL and initialize submodules
-    - sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
-    - git submodule update --init --recursive
 
 script:
     - make -j 2 test
