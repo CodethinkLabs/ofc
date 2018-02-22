@@ -1,0 +1,22 @@
+Tools description
+=================
+
+## organise-ofc-stderr-output.py
+
+- Description:
+    usage: organise-ofc-stderr-output.py [-h] [--excel] -f FILE [-o DIR]
+
+    Classify and count warnings and errors in OFC stderr files
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      --excel               The OFC stderr analysis output will be an excel file,
+                            if not it will be multiple files in plain text
+      -f FILE, --filename FILE
+                            OFC stderr log file, produced when running OFC on a
+                            file or set of them
+      -o DIR, --output_dir DIR
+                            Output directory where to find result files
+
+- Dependencies:
+  - xlsxwriter - http://xlsxwriter.readthedocs.io/
