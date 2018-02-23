@@ -1,4 +1,4 @@
-/* Copyright 2016 Codethink Ltd.
+/* Copyright 2016-2018 Codethink Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ typedef enum
 	OFC_CLIARG_WARN_NAME_KEYWORD_ALL,
 	OFC_CLIARG_NO_WARN_NAMESPACE_COL,
 	OFC_CLIARG_NO_WARN_TYPE_IO,
+	OFC_CLIARG_NO_WARN_NO_LOGICAL_IF,
 	OFC_CLIARG_NO_WARN_PEDANTIC,
 	OFC_CLIARG_WARN_UNUSED_PROCEDURE,
 	OFC_CLIARG_PARSE_ONLY,

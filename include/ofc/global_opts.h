@@ -1,4 +1,4 @@
-/* Copyright 2016 Codethink Ltd.
+/* Copyright 2016-2018 Codethink Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ typedef struct
 	bool warn_name_keyword_all;
 	bool no_warn_namespace_col;
 	bool no_warn_type_io;
+	bool no_warn_no_logical_if;
 	bool warn_unused_procedure;
 	bool parse_only;
 	bool parse_print;
@@ -47,6 +48,7 @@ static const ofc_global_opts_t
 	.warn_name_keyword_all = false,
 	.no_warn_namespace_col = false,
 	.no_warn_type_io       = false,
+	.no_warn_no_logical_if = false,
 	.warn_unused_procedure = false,
 	.parse_only            = false,
 	.parse_print           = false,

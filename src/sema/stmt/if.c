@@ -1,4 +1,4 @@
-/* Copyright 2015 Codethink Ltd.
+/* Copyright 2015-2018 Codethink Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
  */
 
 #include "ofc/sema.h"
+#include "ofc/global.h"
 
 static ofc_sema_stmt_t* ofc_sema_stmt_if__computed(
 	ofc_sema_scope_t* scope,
@@ -126,6 +127,14 @@ static ofc_sema_stmt_t* ofc_sema_stmt_if__statement(
 			ofc_sema_expr_delete(s.if_stmt.cond);
 			return NULL;
 		}
+		else
+		{
+			if (!global_opts.no_warn_no_logical_if)
+			{
+				ofc_sparse_ref_warning(stmt->if_stmt.cond->src,
+					"IF condition type should be LOGICAL.");
+			}
+		}
 
 		s.if_stmt.cond = cast;
 	}
@@ -181,6 +190,15 @@ static ofc_sema_stmt_t* ofc_sema_stmt_if__then(
 			ofc_sema_expr_delete(s.if_then.cond);
 			return NULL;
 		}
+		else
+		{
+			if (!global_opts.no_warn_no_logical_if)
+			{
+				ofc_sparse_ref_warning(stmt->if_then.cond->src,
+					"IF condition type should be LOGICAL.");
+			}
+		}
+
 
 		s.if_then.cond = cast;
 	}
