@@ -14,6 +14,7 @@
  */
 
 #include "ofc/sema.h"
+#include "ofc/global.h"
 
 
 static void ofc_sema_decl_init__delete(
@@ -532,6 +533,13 @@ static bool ofc_sema_decl__elem(
 		{
 			ofc_sema_array_delete(array);
 			return false;
+		}
+
+		if (!global_opts.no_warn_star_in_lhs)
+		{
+			ofc_sparse_ref_warning(lhs->src,
+				"Star %s should only be used on decl type",
+				(ofc_sema_type_is_character(type) ? "LEN" : "KIND"));
 		}
 	}
 

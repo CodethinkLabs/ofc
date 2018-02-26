@@ -29,6 +29,7 @@ typedef struct
 	bool no_warn_namespace_col;
 	bool no_warn_type_io;
 	bool no_warn_no_logical_if;
+	bool no_warn_star_in_lhs;
 	bool warn_unused_procedure;
 	bool parse_only;
 	bool parse_print;
@@ -49,6 +50,7 @@ static const ofc_global_opts_t
 	.no_warn_namespace_col = false,
 	.no_warn_type_io       = false,
 	.no_warn_no_logical_if = false,
+	.no_warn_star_in_lhs   = false,
 	.warn_unused_procedure = false,
 	.parse_only            = false,
 	.parse_print           = false,
