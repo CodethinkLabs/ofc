@@ -49,6 +49,9 @@ static bool ofc_cliarg_global_opts__set_flag(
 		case OFC_CLIARG_NO_WARN_NO_LOGICAL_IF:
 			global->no_warn_no_logical_if = true;
 			break;
+		case OFC_CLIARG_NO_WARN_STAR_IN_LHS:
+			global->no_warn_star_in_lhs = true;
+			break;
 		case OFC_CLIARG_NO_WARN_PEDANTIC:
 			global->no_warn_equiv_type    = true;
 			global->no_warn_name_keyword  = true;
@@ -252,7 +255,8 @@ static const ofc_cliarg_body_t cliargs[] =
 	{ OFC_CLIARG_WARN_NAME_KEYWORD_ALL, "warn-name-keyword-all", '\0', "Warn about all keyword name collisions",     OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
 	{ OFC_CLIARG_NO_WARN_NAMESPACE_COL, "no-warn-namespace-col", '\0', "Suppress namespace collision warning",       OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
 	{ OFC_CLIARG_NO_WARN_TYPE_IO,       "no-warn-type-io",       '\0', "Suppress TYPE as IO statement warning",      OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
-	{ OFC_CLIARG_NO_WARN_NO_LOGICAL_IF, "no_warn_no_logical_if", '\0', "Suppress No logical if condition warning",   OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
+	{ OFC_CLIARG_NO_WARN_NO_LOGICAL_IF, "no-warn-no-logical-if", '\0', "Suppress No logical if condition warning",   OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
+	{ OFC_CLIARG_NO_WARN_STAR_IN_LHS,   "no-warn-star-in-lhs",   '\0', "Suppress star in lhs warning",               OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
 	{ OFC_CLIARG_NO_WARN_PEDANTIC,      "no-warn-pedantic",      'p',  "Suppress all pedantic warnings",             OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
 	{ OFC_CLIARG_WARN_UNUSED_PROCEDURE, "warn-unused-procedure", '\0', "Enable unused procedure warnings",           OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
 	{ OFC_CLIARG_PARSE_ONLY,            "parse-only",            '\0', "Runs the parser only",                       OFC_CLIARG_PARAM_GLOB_NONE, 0, true  },
