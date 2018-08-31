@@ -25,7 +25,9 @@ semantic warnings and errors.
 ### Cloning
 It's recommended that you clone ofc recursively, as it has a submodule:
 
-    git clone https://github.com/CodethinkLabs/ofc.git --recursive
+    git clone https://github.com/CodethinkLabs/ofc.git --recurse-submodules
+
+For git 2.12 or earlier use `--recursive` instead
 
 ### Installation
 To install ofc, do:
