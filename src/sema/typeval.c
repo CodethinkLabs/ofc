@@ -1116,6 +1116,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 	ofc_sema_typeval_t tv;
 	tv.type = type;
 	tv.src  = typeval->src;
+	tv.integer = 0;
 
 	unsigned tsize, csize;
 	if (!ofc_sema_type_base_size(typeval->type, &tsize)
@@ -1158,7 +1159,6 @@ ofc_sema_typeval_t* ofc_sema_typeval_cast(
 		ofc_sparse_ref_warning(typeval->src,
 			"Casting CHARACTER to INTEGER");
 
-		tv.integer = 0;
 		memcpy(&tv.integer, typeval->character, csize);
 		return ofc_sema_typeval__alloc(tv);
 	}
