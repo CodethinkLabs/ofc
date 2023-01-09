@@ -456,7 +456,7 @@ ofc_parse_lhs_t* ofc_parse_lhs_id(
 			return NULL;
 		}
 
-		lhs->type = OFC_PARSE_EXPR_IMPLICIT_DO;
+		lhs->type = OFC_PARSE_LHS_IMPLICIT_DO;
 		lhs->src  = ofc_sparse_ref(src, ptr, l);
 		lhs->implicit_do = id;
 
