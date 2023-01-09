@@ -179,6 +179,9 @@ bool ofc_colstr_write_quoted(
 	const char* prefix, char quote,
 	const char* base, unsigned size)
 {
+	if (!base)
+		return false;
+
 	if (size < 2)
 	{
 		return ofc_colstr_atomic_writef(
