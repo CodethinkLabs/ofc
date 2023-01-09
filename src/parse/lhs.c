@@ -65,7 +65,7 @@ static bool ofc_parse_lhs__clone(
 	if (!src || !dst)
 		return NULL;
 
-	ofc_parse_lhs_t clone;
+	ofc_parse_lhs_t clone = {0};
 	clone.type = src->type;
 	clone.src  = src->src;
 
