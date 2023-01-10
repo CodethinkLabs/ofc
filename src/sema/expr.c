@@ -2405,7 +2405,7 @@ static ofc_sema_expr_list_t* ofc_sema_expr__list(
 	for (i = 0; i < list->count; i++)
 	{
 		ofc_sema_expr_t* expr;
-		if ((list->expr[i]->type == OFC_PARSE_EXPR_IMPLICIT_DO))
+		if (list->expr[i]->type == OFC_PARSE_EXPR_IMPLICIT_DO)
 		{
 			if (!allow_implicit_do)
 			{
