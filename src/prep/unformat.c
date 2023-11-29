@@ -492,8 +492,8 @@ static bool ofc_prep_unformat__fixed_form(
 	unsigned label_prev = 0;
 	unsigned label_pos = 0;
 
-	unsigned row, pos;
-	for (row = 0, pos = 0; src[pos] != '\0'; row++)
+	unsigned pos = 0;
+	while (src[pos] != '\0')
 	{
 		unsigned len, col;
 
@@ -625,8 +625,8 @@ static bool ofc_prep_unformat__free_form(
 	unsigned label_prev = 0;
 	unsigned label_pos = 0;
 
-	unsigned row, pos;
-	for (row = 0, pos = 0; src[pos] != '\0'; row++)
+	unsigned pos = 0;
+	while (src[pos] != '\0')
 	{
 		unsigned len, col;
 
