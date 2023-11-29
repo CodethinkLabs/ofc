@@ -817,7 +817,7 @@ ofc_sema_typeval_t* ofc_sema_typeval_create_integer(
 }
 
 ofc_sema_typeval_t* ofc_sema_typeval_create_logical(
-	bool value, unsigned kind,
+	bool value, ofc_sema_kind_e kind,
 	ofc_sparse_ref_t ref)
 {
 	if (kind == OFC_SEMA_KIND_NONE)
