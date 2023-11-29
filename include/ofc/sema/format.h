@@ -16,6 +16,8 @@
 #ifndef __ofc_sema_format_h__
 #define __ofc_sema_format_h__
 
+#include "ofc/sema/type.h"
+
 typedef struct
 {
 	const ofc_parse_format_desc_list_t* src;
@@ -27,8 +29,8 @@ const char* ofc_sema_format_str_rep(
 	const ofc_parse_format_desc_e type);
 
 bool ofc_sema_compare_desc_expr_type(
-	unsigned type_desc,
-	unsigned type_expr);
+	ofc_parse_format_desc_e type_desc,
+	ofc_sema_type_e type_expr);
 
 bool ofc_sema_format_desc(
 	const ofc_parse_format_desc_t* desc);
